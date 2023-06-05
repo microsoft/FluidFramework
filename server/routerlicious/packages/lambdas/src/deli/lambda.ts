@@ -290,6 +290,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService,
+		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -421,19 +423,39 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	public handler(rawMessage: IQueuedMessage) {
 		// In cases where we are reprocessing messages we have already checkpointed exit early
-		if (rawMessage.offset <= this.logOffset) {
-			Lumberjack.info(
-				`rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
-				getLumberBaseProperties(this.documentId, this.tenantId),
-			);
+		if (this.logOffset !== undefined && rawMessage.offset <= this.logOffset) {
+			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
+			reprocessOpsMetric.setProperties({
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				kafkaMessageOffset: rawMessage.offset,
+				databaseLastOffset: this.logOffset,
+			});
 
 			this.updateCheckpointMessages(rawMessage);
-
-			if (this.checkpointInfo.currentKafkaCheckpointMessage) {
-				this.context.checkpoint(this.checkpointInfo.currentKafkaCheckpointMessage);
+			try {
+				if (
+					this.checkpointInfo.currentKafkaCheckpointMessage &&
+					this.kafkaCheckpointOnReprocessingOp
+				) {
+					this.context.checkpoint(
+						this.checkpointInfo.currentKafkaCheckpointMessage,
+						this.restartOnCheckpointFailure,
+					);
+				}
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
+				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
-
 			return undefined;
+		} else if (this.logOffset === undefined) {
+			Lumberjack.error(
+				`No value for logOffset`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 		}
 
 		this.logOffset = rawMessage.offset;
@@ -1891,7 +1913,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}
-				void this.checkpointContext.checkpoint(checkpointParams);
+				void this.checkpointContext.checkpoint(
+					checkpointParams,
+					this.restartOnCheckpointFailure,
+				);
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
 				const lumberjackProperties = {

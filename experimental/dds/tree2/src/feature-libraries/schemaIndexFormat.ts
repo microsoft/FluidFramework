@@ -30,29 +30,6 @@ import {
 } from "../core";
 import { brand, fail } from "../util";
 
-const Baz = Type.Recursive((Baz2) =>
-	Type.Object({
-		child: Type.Optional(Baz2),
-	}),
-);
-
-type Baz = Static<typeof Baz>;
-
-const _baz: Baz = { child: { child: {} } };
-
-const Foo = Type.Recursive((Foo2) =>
-	Type.Object({
-		child1: Type.Object({
-			child2: Type.Optional(Foo2),
-		}),
-	}),
-);
-
-type Foo = Static<typeof Foo>;
-type Bar = Required<Foo>["child1"];
-
-const _bar: Bar = { child2: { child1: {} } };
-
 const version = "1.0.0" as const;
 
 const FieldSchemaFormatBase = Type.Object({

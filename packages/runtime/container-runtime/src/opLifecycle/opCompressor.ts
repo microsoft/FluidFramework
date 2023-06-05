@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { estimateSocketSize } from "./batchManager";
@@ -20,7 +19,7 @@ import { IBatch, BatchMessage } from "./definitions";
 export class OpCompressor {
 	private readonly logger;
 
-	constructor(logger: ITelemetryLogger) {
+	constructor(logger: ITelemetryLoggerExt) {
 		this.logger = ChildLogger.create(logger, "OpCompressor");
 	}
 
@@ -47,10 +46,7 @@ export class OpCompressor {
 		// Add empty placeholder messages to reserve the sequence numbers
 		for (const message of batch.content.slice(1)) {
 			messages.push({
-				deserializedContent: {
-					contents: undefined,
-					type: message.deserializedContent.type,
-				},
+				type: message.type,
 				localOpMetadata: message.localOpMetadata,
 				metadata: message.metadata,
 				referenceSequenceNumber: message.referenceSequenceNumber,
@@ -79,7 +75,7 @@ export class OpCompressor {
 
 	private serializeBatch(batch: IBatch): string {
 		try {
-			return JSON.stringify(batch.content.map((message) => message.deserializedContent));
+			return `[${batch.content.map((message) => message.contents).join(",")}]`;
 		} catch (e: any) {
 			if (e.message === "Invalid string length") {
 				// This is how JSON.stringify signals that

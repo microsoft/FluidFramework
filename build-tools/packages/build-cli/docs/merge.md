@@ -19,10 +19,12 @@ FLAGS
   -b, --batchSize=<value>    (required) Maximum number of commits to include in the pull request
   -d, --description=<value>  (required) PR description
   -o, --owner=<value>        (required) Owner name
-  -r, --repo=<value>         (required) Repsoitory name
+  -r, --repo=<value>         (required) Repository name
   -s, --source=<value>       (required) Source branch name
   -t, --target=<value>       (required) Target branch name
-  -v, --verbose              Verbose logging.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Sync branches depending on the batch size passed
@@ -38,10 +40,10 @@ USAGE
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.
-  -v, --verbose            Verbose logging.
 
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.

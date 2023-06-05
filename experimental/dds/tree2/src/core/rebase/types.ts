@@ -4,14 +4,16 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { generateStableId, isStableId } from "@fluidframework/container-runtime";
+import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { brandedStringType } from "../../util";
+import { brandedStringType, generateStableId } from "../../util";
+import { ReadonlyRepairDataStore } from "../repair";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
  */
 export type SessionId = string;
+export const SessionIdSchema = brandedStringType<SessionId>();
 
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
@@ -50,10 +52,10 @@ export function mintRevisionTag(): RevisionTag {
 export interface GraphCommit<TChange> {
 	/** The tag for this commit. If this commit is rebased, the corresponding rebased commit will retain this tag. */
 	readonly revision: RevisionTag;
-	/** An identifier representing the session/user/client that made this commit */
-	readonly sessionId: SessionId;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
+	/* The repair data associated with the commit */
+	readonly repairData?: ReadonlyRepairDataStore;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
 }
@@ -70,11 +72,11 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, sessionId, change } = commit;
+	const { revision, change, repairData } = commit;
 	return {
 		revision,
-		sessionId,
 		change,
 		parent,
+		repairData,
 	};
 }

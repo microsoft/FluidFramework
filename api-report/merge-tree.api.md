@@ -12,14 +12,14 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import type { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @alpha
-export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
 export interface AttributionPolicy {
@@ -93,7 +93,7 @@ export interface BlockAction<TClientData> {
     (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface BlockUpdateActions {
     // (undocumented)
     child: (block: IMergeBlock, index: number) => void;
@@ -103,7 +103,7 @@ export interface BlockUpdateActions {
 //
 // @public (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
-    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
+    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
@@ -119,7 +119,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -178,7 +178,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -728,6 +728,9 @@ export interface ISegmentChanges {
     replaceCurrent?: ISegment;
 }
 
+// @alpha
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible;
+
 // @public (undocumented)
 export interface ITrackingGroup {
     // (undocumented)
@@ -776,7 +779,7 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     clear(): void;
     // @internal (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
@@ -935,19 +938,8 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
-    // @deprecated (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // @deprecated (undocumented)
-    getContainingSegment(pos: number): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // @deprecated (undocumented)
-    getPosition(segment: ISegment): number;
     // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): any;
-    // @deprecated (undocumented)
-    localReferencePositionToPosition(lref: LocalReferencePosition): number;
     // (undocumented)
     removeRange(start: number, end: number): any;
 }
@@ -1114,6 +1106,7 @@ export interface ReferencePosition {
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
 }
 
 // @public
@@ -1245,6 +1238,15 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
     length: number;
 }
+
+// @public
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @public
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
