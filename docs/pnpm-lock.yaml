@@ -32,7 +32,7 @@ importers:
       markdownlint-rule-github-internal-links: ^0.1.0
       markdownlint-rule-helpers: ^0.18.0
       node-fetch: ^2.6.9
-      prettier: ^2.8.8
+      prettier: ~2.8.8
       prettier-plugin-go-template: ^0.0.13
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
