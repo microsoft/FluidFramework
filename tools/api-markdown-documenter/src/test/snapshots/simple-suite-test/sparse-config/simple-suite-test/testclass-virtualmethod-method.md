@@ -1,6 +1,6 @@
 # virtualMethod
 
-Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->.
+Overrides [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method).
 
 ## Signature {#virtualmethod-signature}
 
@@ -11,4 +11,4 @@ protected virtualMethod(): number;
 
 ## Returns {#virtualmethod-returns}
 
-<b>Return type:</b> number
+**Return type:** number

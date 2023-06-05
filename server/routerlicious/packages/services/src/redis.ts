@@ -13,53 +13,78 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    private readonly expireAfterSeconds: number = 60 * 60 * 24;
-    private readonly prefix: string = "page";
-    constructor(
-        private readonly client: Redis,
-        parameters?: IRedisParameters) {
-        if (parameters?.expireAfterSeconds) {
-            this.expireAfterSeconds = parameters.expireAfterSeconds;
-        }
+	private readonly expireAfterSeconds: number = 60 * 60 * 24;
+	private readonly prefix: string = "page";
+	constructor(private readonly client: Redis, parameters?: IRedisParameters) {
+		if (parameters?.expireAfterSeconds) {
+			this.expireAfterSeconds = parameters.expireAfterSeconds;
+		}
 
-        if (parameters?.prefix) {
-            this.prefix = parameters.prefix;
-        }
+		if (parameters?.prefix) {
+			this.prefix = parameters.prefix;
+		}
 
-        client.on("error", (err) => {
-            winston.error("Error with Redis:", err);
-            Lumberjack.error("Error with Redis", undefined, err);
-        });
-    }
-    public async delete(key: string): Promise<boolean> {
-        try {
-            await this.client.del(this.getKey(key));
-            return true;
-        } catch (error) {
-            Lumberjack.error(`Error deleting from cache.`, undefined, error);
-            return false;
-        }
-    }
+		client.on("error", (err) => {
+			winston.error("Error with Redis:", err);
+			Lumberjack.error("Error with Redis", undefined, err);
+		});
+	}
+	public async delete(key: string): Promise<boolean> {
+		try {
+			await this.client.del(this.getKey(key));
+			return true;
+		} catch (error) {
+			Lumberjack.error(`Error deleting from cache.`, undefined, error);
+			return false;
+		}
+	}
 
-    public async get(key: string): Promise<string> {
-        return this.client.get(this.getKey(key));
-    }
+	public async get(key: string): Promise<string> {
+		return this.client.get(this.getKey(key));
+	}
 
-    public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
-        const result = await this.client.set(
-            this.getKey(key),
-            value,
-            "EX",
-            expireAfterSeconds ?? this.expireAfterSeconds);
-        if (result !== "OK") {
-            return Promise.reject(result);
-        }
-    }
+	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
+		const result = await this.client.set(
+			this.getKey(key),
+			value,
+			"EX",
+			expireAfterSeconds ?? this.expireAfterSeconds,
+		);
+		if (result !== "OK") {
+			return Promise.reject(result);
+		}
+	}
 
-    /**
-     * Translates the input key to the one we will actually store in redis
-     */
-    private getKey(key: string): string {
-        return `${this.prefix}:${key}`;
-    }
+	public async incr(key: string): Promise<number> {
+		try {
+			return this.client.incr(key);
+		} catch (error) {
+			Lumberjack.error(
+				`Error while incrementing counter for ${key} in redis.`,
+				undefined,
+				error,
+			);
+			return Promise.reject(error);
+		}
+	}
+
+	public async decr(key: string): Promise<number> {
+		try {
+			return this.client.decr(key);
+		} catch (error) {
+			Lumberjack.error(
+				`Error while decrementing counter for ${key} in redis.`,
+				undefined,
+				error,
+			);
+			return Promise.reject(error);
+		}
+	}
+
+	/**
+	 * Translates the input key to the one we will actually store in redis
+	 */
+	private getKey(key: string): string {
+		return `${this.prefix}:${key}`;
+	}
 }

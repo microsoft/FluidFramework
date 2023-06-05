@@ -6,6 +6,7 @@
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -44,6 +45,7 @@ export class AzureClient {
 
 // @public
 export interface AzureClientProps {
+    readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
@@ -69,7 +71,7 @@ export interface AzureContainerVersion {
     id: string;
 }
 
-// @public
+// @public @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)

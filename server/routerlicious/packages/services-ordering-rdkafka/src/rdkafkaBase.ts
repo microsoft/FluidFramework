@@ -53,8 +53,9 @@ export abstract class RdkafkaBase extends EventEmitter {
         // To build node-rdkafka with SSL support, make sure OpenSSL libraries are available in the
         // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
         // as usual will automatically include SSL support.
-        const rdKafkaHasSSLEnabled =
-            kafka.features.filter((feature) => feature.toLowerCase().includes("ssl"));
+        const rdKafkaHasSSLEnabled = kafka.features.filter((feature) =>
+            feature.toLowerCase().includes("ssl"),
+        );
 
         if (options?.sslCACertFilePath) {
             // If the use of SSL is desired, but rdkafka has not been built with SSL support,
@@ -62,7 +63,8 @@ export abstract class RdkafkaBase extends EventEmitter {
             if (!rdKafkaHasSSLEnabled) {
                 throw new Error(
                     "Attempted to configure SSL, but rdkafka has not been built to support it. " +
-                    "Please make sure OpenSSL is available and build rdkafka again.");
+                    "Please make sure OpenSSL is available and build rdkafka again.",
+                );
             }
 
             this.sslOptions = {
@@ -73,7 +75,8 @@ export abstract class RdkafkaBase extends EventEmitter {
             if (!kafka.features.filter((feature) => feature.toLowerCase().includes("sasl_ssl"))) {
                 throw new Error(
                     "Attempted to configure SASL_SSL for Event Hubs, but rdkafka has not been built to support it. " +
-                    "Please make sure OpenSSL is available and build rdkafka again.");
+                    "Please make sure OpenSSL is available and build rdkafka again.",
+                );
             }
 
             this.sslOptions = {
@@ -135,10 +138,13 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     protected error(error: any, errorData: IContextErrorData = { restart: false }) {
-        const errorCodesToCauseRestart = this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
+        const errorCodesToCauseRestart =
+            this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
 
-        if (RdkafkaBase.isObject(error)
-            && errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)) {
+        if (
+            RdkafkaBase.isObject(error) &&
+            errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)
+        ) {
             errorData.restart = true;
         }
 
@@ -146,6 +152,6 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     protected static isObject(value: any): value is object {
-        return value !== null && typeof (value) === "object";
+        return value !== null && typeof value === "object";
     }
 }

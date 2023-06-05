@@ -27,8 +27,8 @@ export class RdkafkaResources implements IRdkafkaResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
         public consumer: IConsumer,
-        public config: Provider) {
-    }
+        public config: Provider,
+    ) {}
 
     public async dispose(): Promise<void> {
         const consumerClosedP = this.consumer.close();
@@ -40,15 +40,18 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
     constructor(
         private readonly name: string,
         private readonly lambdaModule: string | IPartitionLambdaPlugin,
-        private readonly zookeeperClientConstructor: ZookeeperClientConstructor) {
-    }
+        private readonly zookeeperClientConstructor: ZookeeperClientConstructor,
+    ) {}
 
     public async create(config: Provider): Promise<RdkafkaResources> {
-        const plugin: IPartitionLambdaPlugin = typeof this.lambdaModule === "string"
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            ? require(this.lambdaModule)
-            : this.lambdaModule;
-        const lambdaFactory = await plugin.create(config);
+        const plugin: IPartitionLambdaPlugin =
+            typeof this.lambdaModule === "string"
+                ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+                require(this.lambdaModule)
+                : this.lambdaModule;
+
+        const customizations = await (plugin.customize ? plugin.customize(config) : undefined);
+        const lambdaFactory = await plugin.create(config, customizations);
 
         // Inbound Kafka configuration
         const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
@@ -75,27 +78,18 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
             zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
         };
 
-        const consumer = new RdkafkaConsumer(
-            endpoints,
-            clientId,
-            receiveTopic,
-            groupId,
-            {
-                numberOfPartitions,
-                replicationFactor,
-                optimizedRebalance,
-                automaticConsume,
-                consumeTimeout,
-                maxConsumerCommitRetries,
-                sslCACertFilePath,
-                zooKeeperClientConstructor: this.zookeeperClientConstructor,
-                eventHubConnString,
-            },
-        );
+        const consumer = new RdkafkaConsumer(endpoints, clientId, receiveTopic, groupId, {
+            numberOfPartitions,
+            replicationFactor,
+            optimizedRebalance,
+            automaticConsume,
+            consumeTimeout,
+            maxConsumerCommitRetries,
+            sslCACertFilePath,
+            zooKeeperClientConstructor: this.zookeeperClientConstructor,
+            eventHubConnString,
+        });
 
-        return new RdkafkaResources(
-            lambdaFactory,
-            consumer,
-            config);
+        return new RdkafkaResources(lambdaFactory, consumer, config);
     }
 }

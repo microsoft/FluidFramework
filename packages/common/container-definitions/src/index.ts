@@ -17,6 +17,7 @@ export {
 } from "./browserPackage";
 export {
 	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IDeltaHandlerStrategy,
 	IDeltaManager,
 	IDeltaManagerEvents,
@@ -72,4 +73,3 @@ export {
 	IRuntime,
 	IRuntimeFactory,
 } from "./runtime";
-export { IFluidTokenProvider, IProvideFluidTokenProvider } from "./tokenProvider";

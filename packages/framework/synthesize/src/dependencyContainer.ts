@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LazyPromise } from "@fluidframework/common-utils";
 import {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -39,7 +40,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	): void {
 		if (this.providers.has(type)) {
 			throw new Error(
-				`Attempting to register a provider of type ${type} that already exists`,
+				`Attempting to register a provider of type ${String(type)} that already exists`,
 			);
 		}
 
@@ -120,7 +121,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 			const provider = this.resolveProvider(key);
 			if (provider === undefined) {
 				throw new Error(
-					`Object attempted to be created without registered required provider ${key}`,
+					`Object attempted to be created without registered required provider ${String(
+						key,
+					)}`,
 				);
 			}
 			Object.defineProperty(base, key, provider);
@@ -174,10 +177,12 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		return {
 			get() {
 				if (provider) {
-					return Promise.resolve(provider).then((p) => {
-						if (p) {
-							return p[t];
-						}
+					return new LazyPromise(async () => {
+						return Promise.resolve(provider).then((p) => {
+							if (p) {
+								return p[t];
+							}
+						});
 					});
 				}
 			},

@@ -8,3 +8,7 @@ labels:
   base-branch: "next"
 - label: "base: release"
   base-branch: "^release/.*"
+
+  # PRs from contributors without write access to the repo should be labeled
+- label: "community-contribution"
+  author-can-merge: False

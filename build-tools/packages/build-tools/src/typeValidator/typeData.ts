@@ -2,16 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as fs from "fs";
-import { Node, Project, ts } from "ts-morph";
 
-import { PackageDetails, getPackageDetails } from "./packageJson";
-
-export interface PackageAndTypeData {
-	packageDetails: PackageDetails;
-	typeData: TypeData[];
-	project: Project;
-}
+import { Node, ts } from "ts-morph";
 
 export interface TypeData {
 	readonly name: string;
@@ -23,20 +15,7 @@ export function getFullTypeName(typeData: TypeData) {
 	return `${typeData.kind}_${typeData.name}`;
 }
 
-export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal") {
-	if (Node.isJSDocableNode(data.node)) {
-		for (const doc of data.node.getJsDocs()) {
-			for (const tag of doc.getTags()) {
-				if (tag.getTagName() === tagName) {
-					return true;
-				}
-			}
-		}
-	}
-	return false;
-}
-
-function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
+export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
 	/*
         handles namespaces e.g.
         export namespace foo{
@@ -46,11 +25,11 @@ function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
         this will prefix foo and generate two type data:
         foo.first and foo.second
     */
-	if (Node.isNamespaceDeclaration(node)) {
+	if (Node.isModuleDeclaration(node)) {
 		const typeData: TypeData[] = [];
 		for (const s of node.getStatements()) {
 			// only get type data for nodes that are exported from the namespace
-			if (Node.isExportableNode(s) && s.isExported()) {
+			if (Node.isExportable(s) && s.isExported()) {
 				typeData.push(...getNodeTypeData(s, node.getName()));
 			}
 		}
@@ -137,70 +116,4 @@ export function toTypeString(prefix: string, typeData: TypeData) {
 		default:
 			return `TypeOnly<${typeStringBase}>`;
 	}
-}
-
-function tryFindDependencyPath(packageDir: string, dependencyName: string) {
-	// for lerna mono-repos we may need to look for the hoisted packages
-	//
-	let testPath = packageDir;
-	while (
-		!fs.existsSync(`${testPath}/node_modules/${dependencyName}/package.json`) &&
-		!fs.existsSync(`${testPath}/lerna.json`)
-	) {
-		testPath += "/..";
-	}
-	return `${testPath}/node_modules/${dependencyName}`;
-}
-
-function getIndexSourceFile(basePath: string) {
-	const tsConfigPath: string = `${basePath}/tsconfig.json`;
-
-	if (fs.existsSync(tsConfigPath)) {
-		const project = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: tsConfigPath,
-		});
-
-		return { project, file: project.getSourceFileOrThrow("index.ts") };
-	} else {
-		const project = new Project({
-			skipFileDependencyResolution: true,
-		});
-		project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`);
-		return { project, file: project.getSourceFileOrThrow("index.d.ts") };
-	}
-}
-
-export async function generateTypeDataForProject(
-	packageDir: string,
-	dependencyName: string | undefined,
-): Promise<PackageAndTypeData> {
-	const basePath =
-		dependencyName === undefined
-			? packageDir
-			: tryFindDependencyPath(packageDir, dependencyName);
-
-	if (!fs.existsSync(`${basePath}/package.json`)) {
-		throw new Error(
-			`package.json does not exist at ${basePath}.\nYou may need to install the package via npm install.`,
-		);
-	}
-	const { project, file } = getIndexSourceFile(basePath);
-	const typeData = new Map<string, TypeData>();
-	const exportedDeclarations = file.getExportedDeclarations();
-	for (const declarations of exportedDeclarations.values()) {
-		for (const dec of declarations) {
-			getNodeTypeData(dec).forEach((td) => {
-				const fullName = getFullTypeName(td);
-				typeData.set(fullName, td);
-			});
-		}
-	}
-
-	const packageDetails = await getPackageDetails(basePath);
-	return {
-		packageDetails,
-		typeData: Array.from(typeData.values()).sort((a, b) => a.name.localeCompare(b.name)),
-		project,
-	};
 }

@@ -27,34 +27,34 @@ export function createProducer(
     replicationFactor?: number,
     maxBatchSize?: number,
     sslCACertFilePath?: string,
-    eventHubConnString?: string): IProducer {
+    eventHubConnString?: string,
+): IProducer {
     let producer: IProducer;
 
     if (type === "rdkafka") {
-        producer = new RdkafkaProducer(
-            { kafka: [kafkaEndPoint] },
-            clientId,
-            topic,
-            {
-                enableIdempotence,
-                pollIntervalMs,
-                numberOfPartitions,
-                replicationFactor,
-                maxMessageSize: MaxKafkaMessageSize,
-                sslCACertFilePath,
-                eventHubConnString,
-            });
+        producer = new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, {
+            enableIdempotence,
+            pollIntervalMs,
+            numberOfPartitions,
+            replicationFactor,
+            maxMessageSize: MaxKafkaMessageSize,
+            sslCACertFilePath,
+            eventHubConnString,
+        });
 
         producer.on("error", (error, errorData: IContextErrorData) => {
             if (errorData?.restart) {
                 throw new Error(error);
             } else {
-                winston.error("Kafka Producer emitted an error that is not configured to restart the process.");
+                winston.error(
+                    "Kafka Producer emitted an error that is not configured to restart the process.",
+                );
                 winston.error(inspect(error));
                 Lumberjack.error(
                     "Kafka Producer emitted an error that is not configured to restart the process.",
                     undefined,
-                    error);
+                    error,
+                );
             }
         });
     } else {

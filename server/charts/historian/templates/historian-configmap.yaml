@@ -37,12 +37,15 @@ data:
             "endpoint": "{{ .Values.historian.error.endpoint }}"
         },
         "throttling": {
-            "maxRequestsPerMs": {{ .Values.historian.throttling.maxRequestsPerMs }},
-            "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
-            "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
-            "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }},
-            "maxInMemoryCacheSize": {{ .Values.historian.throttling.maxInMemoryCacheSize }},
-            "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.maxInMemoryCacheAgeInMs }}
+            "restCallsPerTenant": {
+                "generalRestCall": {{ toJson .Values.historian.throttling.restCallsPerTenant.generalRestCall }},
+                "getSummary": {{ toJson .Values.historian.throttling.restCallsPerTenant.getSummary }},
+                "createSummary": {{ toJson .Values.historian.throttling.restCallsPerTenant.createSummary }}
+            },
+            "restCallsPerCluster": {
+                "getSummary": {{ toJson .Values.historian.throttling.restCallsPerCluster.getSummary }},
+                "createSummary": {{ toJson .Values.historian.throttling.restCallsPerCluster.createSummary }}
+            }
         },
         "restGitService": {
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}

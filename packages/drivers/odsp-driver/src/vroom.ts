@@ -4,8 +4,8 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
@@ -33,6 +33,7 @@ interface IJoinSessionBody {
  * which is used when establishing websocket connection with collab session backend service.
  * @param options - Options to fetch the token.
  * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
+ * @param isRefreshingJoinSession - whether call is to refresh the session before expiry.
  * @param guestDisplayName - display name used to identify guest user joining a session.
  * This is optional and used only when collab session is being joined via invite.
  */
@@ -40,12 +41,13 @@ export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
 	method: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
 	requestSocketToken: boolean,
 	options: TokenFetchOptionsEx,
 	disableJoinSessionRefresh: boolean | undefined,
+	isRefreshingJoinSession: boolean,
 	guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
 	const token = await getStorageToken(options, "JoinSession");
@@ -57,6 +59,7 @@ export async function fetchJoinSession(
 		refreshedToken: options.refresh,
 		requestSocketToken,
 		...tokenRefreshProps,
+		refreshingSession: isRefreshingJoinSession,
 	};
 
 	return PerformanceEvent.timedExecAsync(

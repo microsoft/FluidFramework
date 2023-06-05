@@ -10,6 +10,7 @@ const webpack = require("webpack");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
+	const fluidClient = env?.FLUID_CLIENT || "";
 
 	return merge(
 		{
@@ -18,6 +19,9 @@ module.exports = (env) => {
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js"],
+				fallback: {
+					assert: require.resolve("assert/"),
+				},
 			},
 			module: {
 				rules: [
@@ -37,6 +41,9 @@ module.exports = (env) => {
 				libraryTarget: "umd",
 			},
 			plugins: [
+				new webpack.DefinePlugin({
+					"process.env.FLUID_CLIENT": JSON.stringify(fluidClient),
+				}),
 				new webpack.ProvidePlugin({
 					process: "process/browser",
 				}),

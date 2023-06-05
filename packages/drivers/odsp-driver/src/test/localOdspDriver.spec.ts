@@ -57,13 +57,6 @@ describe("Local Odsp driver", () => {
 			assert.doesNotThrow(() => new LocalOdspDocumentServiceFactory(localSnapshot));
 		});
 
-		it("Protocol name is correct", () => {
-			assert.strictEqual(
-				new LocalOdspDocumentServiceFactory("sample data").protocolName,
-				"fluid-odsp:",
-			);
-		});
-
 		it("createContainer throws error", async () => {
 			await assertThrowsUsageError(async () =>
 				new LocalOdspDocumentServiceFactory("sample data").createContainer(
@@ -92,9 +85,6 @@ describe("Local Odsp driver", () => {
 				const factory = new LocalOdspDocumentServiceFactory("sample data");
 				await assert.doesNotReject(async () =>
 					factory.createDocumentService(fakeOdspResolvedUrl),
-				);
-				await assert.rejects(async () =>
-					factory.createDocumentService({ type: "web", data: "" }),
 				);
 			});
 		});

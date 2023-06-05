@@ -28,7 +28,7 @@ interface BranchMergeInfo {
 	commits: string[];
 }
 
-export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand.flags> {
+export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand> {
 	static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
 
 	static enableJsonFlag = true;
@@ -54,7 +54,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 	];
 
 	public async run(): Promise<BranchMergeInfo> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const branchFlags = flags.branch;
 
 		let branch1: string;
@@ -87,14 +87,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 		this.verbose(`Remote is: ${remote}`);
 
 		// get merge base
-		const base = await repo.gitClient
-			.fetch() // make sure we have the latest remote refs
-			.raw(
-				"merge-base",
-				`refs/remotes/${remote}/${branch1}`,
-				`refs/remotes/${remote}/${branch2}`,
-			);
-
+		const base = await repo.getMergeBase(branch1, remote, `refs/remotes/${remote}/${branch2}`);
 		const rawRevs = await repo.gitClient.raw(
 			"rev-list",
 			`${base}..refs/remotes/${remote}/${branch1}`,

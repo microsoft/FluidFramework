@@ -5,7 +5,7 @@
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { registerSchemas } from "@fluid-experimental/schemas";
+import { registerSchemas } from "@fluid-example/schemas";
 
 import { PropertyTreeContainerRuntimeFactory, IPropertyTreeAppModel } from "./containerCode";
 import { renderApp } from "./inspector";

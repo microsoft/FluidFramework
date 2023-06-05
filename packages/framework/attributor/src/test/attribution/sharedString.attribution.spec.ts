@@ -35,6 +35,7 @@ import {
 import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 import { IAttributor, OpStreamAttributor } from "../../attributor";
 import {
 	AttributorSerializer,
@@ -242,7 +243,12 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-			dataStoreRuntime.options = { attribution: { track: makeSerializer !== undefined } };
+			dataStoreRuntime.options = {
+				attribution: {
+					track: makeSerializer !== undefined,
+					policyFactory: createInsertOnlyAttributionPolicy,
+				},
+			};
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,

@@ -29,9 +29,10 @@ export interface IFluidFileConverter {
 	getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
 
 	/**
-	 * Scope object to provide at Loader creation
+	 * Get scope object to provide at Loader creation
+	 * @param logger - created logger object to pass to scope object
 	 */
-	scope?: FluidObject;
+	getScope?(logger: ITelemetryBaseLogger): Promise<FluidObject>;
 
 	/**
 	 * Executes code on container and returns the result

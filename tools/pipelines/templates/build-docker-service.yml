@@ -66,6 +66,20 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
+
 trigger: none
 
 variables:
@@ -157,6 +171,7 @@ stages:
             componentDetection=${{ variables.componentDetection }}
             publish=${{ variables.publish }}
             canRelease=${{ variables.canRelease }}
+            interdependencyRange='${{ parameters.interdependencyRange }}'
 
             pushImage=${{ variables.pushImage }}
             releaseImage=${{ variables.releaseImage }}
@@ -201,9 +216,9 @@ stages:
 
     # for npm ci in component detection and set version
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 16.x
       inputs:
-        version: 14.x
+        version: 16.x
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
@@ -212,13 +227,27 @@ stages:
           buildDirectory: ${{ parameters.buildDirectory }}
           requireNotice: ${{ eq(variables.releaseImage, true) }}
 
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+      - template: include-install-pnpm.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
+      - task: Bash@3
+        displayName: Install dependencies
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            ${{ parameters.packageManagerInstallCommand }}
+
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+          interdependencyRange: ${{ parameters.interdependencyRange }}
           tagName: ${{ parameters.tagName }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
@@ -377,6 +406,16 @@ stages:
           customCommand: rmi ${{ variables.latestContainerTag }}
         continueOnError: true
         condition: succeededOrFailed()
+
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+      # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+      - task: Bash@3
+        displayName: Prune pnpm store
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            pnpm store prune
 
 # Publish stage
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:

@@ -7,14 +7,14 @@ An interface with an index signature.
 ## Signature {#testinterfacewithindexsignature-signature}
 
 ```typescript
-export interface TestInterfaceWithIndexSignature 
+export interface TestInterfaceWithIndexSignature
 ```
 
 ## Index Signatures
 
-|  IndexSignature | Description |
-|  --- | --- |
-|  [[foo: number]: { bar: string; }](./simple-suite-test/testinterfacewithindexsignature-interface#_indexer_-indexsignature) | Test index signature. |
+| IndexSignature | Description |
+| --- | --- |
+| [\[foo: number\]: { bar: string; }](./simple-suite-test/testinterfacewithindexsignature-interface#_indexer_-indexsignature) | Test index signature. |
 
 ## Index Signature Details
 

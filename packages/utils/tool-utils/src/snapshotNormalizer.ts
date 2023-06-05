@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import { ITree, TreeEntry, ITreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
@@ -103,6 +103,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		}
 		if (metadata.summaryCount !== undefined) {
 			metadata.summaryCount = 0;
+		}
+		// "telemetryDocumentId" is not a deterministic property (random guid), so we need to set it to something consistent
+		if (metadata.telemetryDocumentId !== undefined) {
+			metadata.telemetryDocumentId = "x";
 		}
 		content = JSON.stringify(metadata);
 	}

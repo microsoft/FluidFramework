@@ -54,8 +54,6 @@ module.exports = {
 		"eslint-plugin-tsdoc",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
 		"unused-imports",
-		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
-		"react",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
 	],
@@ -172,12 +170,6 @@ module.exports = {
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/typedef": "off",
-
-		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 * @remarks This rule also directly conflicts with prettier's formatting of nested ternary expressions.
-		 */
-		"unicorn/no-nested-ternary": "off",
 
 		/**
 		 * Disabled because we want to encourage documenting different events separately.
@@ -355,6 +347,23 @@ module.exports = {
 			settings: {
 				jsdoc: {
 					mode: "typescript",
+				},
+			},
+		},
+		{
+			// Rules only for React files
+			files: ["*.jsx", "*.tsx"],
+			plugins: [
+				// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
+				"react",
+
+				// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react-hooks
+				"react-hooks",
+			],
+			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			settings: {
+				react: {
+					version: "detect",
 				},
 			},
 		},

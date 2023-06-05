@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -67,8 +67,9 @@ export class OdspDocumentService implements IDocumentService {
 	public static async create(
 		resolvedUrl: IResolvedUrl,
 		getStorageToken: InstrumentedStorageTokenFetcher,
+		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		epochTracker: EpochTracker,
@@ -116,7 +117,7 @@ export class OdspDocumentService implements IDocumentService {
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
@@ -126,6 +127,7 @@ export class OdspDocumentService implements IDocumentService {
 		this._policies = {
 			// load in storage-only mode if a file version is specified
 			storageOnly: odspResolvedUrl.fileVersion !== undefined,
+			summarizeProtocolTree: true,
 		};
 
 		this.mc = loggerToMonitoringContext(
@@ -285,7 +287,7 @@ export class OdspDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
-		// Error might indicate mismatch between client & server knowlege about file
+		// Error might indicate mismatch between client & server knowledge about file
 		// (DriverErrorType.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
 		// In such case client cached info is stale and has to be removed.

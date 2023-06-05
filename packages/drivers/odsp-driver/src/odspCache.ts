@@ -9,8 +9,11 @@ import {
 	IEntry,
 	IPersistedCache,
 	ICacheEntry,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
+
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  */
@@ -32,13 +35,13 @@ export class LocalPersistentCache implements IPersistedCache {
 	public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
 
 	async get(entry: ICacheEntry): Promise<any> {
-		const key = this.keyFromEntry(entry);
+		const key = getKeyForCacheEntry(entry);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.cache.get(key);
 	}
 
 	async put(entry: ICacheEntry, value: any) {
-		const key = this.keyFromEntry(entry);
+		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
 		this.updateExpirationEntry(entry.file.docId);
 	}
@@ -78,10 +81,6 @@ export class LocalPersistentCache implements IPersistedCache {
 			}, this.snapshotExpiryPolicy),
 		);
 	}
-
-	private keyFromEntry(entry: ICacheEntry): string {
-		return `${entry.file.docId}_${entry.type}_${entry.key}`;
-	}
 }
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
 	constructor(removeOnError?: (e: any) => boolean) {
@@ -105,6 +104,12 @@ export interface INonPersistentCache {
 	 * Cache of resolved/resolving file URLs
 	 */
 	readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
+
+	/**
+	 * Used to store the snapshot fetch promise if the prefetch has been made using the prefetchLatestSnapshot api.
+	 * This is then used later to look for the promise during the container load.
+	 */
+	readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 /**
@@ -124,4 +129,14 @@ export class NonPersistentCache implements INonPersistentCache {
 	>();
 
 	public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
+
+	public readonly snapshotPrefetchResultCache = new PromiseCache<
+		string,
+		IPrefetchSnapshotContents
+	>();
+}
+
+export interface IPrefetchSnapshotContents extends ISnapshotContents {
+	fluidEpoch: string;
+	prefetchStartTime: number;
 }

@@ -11,8 +11,12 @@ import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 // @public (undocumented)
 export type CacheContentType = "snapshot" | "ops";
 
+// @public
+export function getKeyForCacheEntry(entry: ICacheEntry): string;
+
 // @public (undocumented)
 export interface HostStoragePolicy {
+    avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;
     // (undocumented)
     concurrentOpsBatches?: number;
@@ -170,19 +174,15 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 // @public (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public (undocumented)
+// @public
 export enum OdspErrorType {
-    // (undocumented)
     cannotCatchUp = "cannotCatchUp",
-    // (undocumented)
     fetchTimeout = "fetchTimeout",
     // (undocumented)
     fetchTokenError = "fetchTokenError",
-    // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
     outOfStorageError = "outOfStorageError",
-    // (undocumented)
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }

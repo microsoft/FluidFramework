@@ -5,5 +5,5 @@ An empty interface
 ## Signature {#testemptyinterface-signature}
 
 ```typescript
-export interface TestEmptyInterface 
+export interface TestEmptyInterface
 ```

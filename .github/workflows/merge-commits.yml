@@ -56,7 +56,8 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             // Peek at messages in the queue
-            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 5 });
+            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 10 });
+            if(peekedMessages.peekedMessageItems.length === 0) { return false; }
             let firstMessage;
             for (i = 0; i < peekedMessages.peekedMessageItems.length; i++) {
                 // Display the peeked message
@@ -71,6 +72,7 @@ jobs:
       LABEL: ${{ fromJSON(steps.dequeue-message.outputs.result).label }}
       AUTHOR: ${{ fromJSON(steps.dequeue-message.outputs.result).author }}
       SHA: ${{ fromJSON(steps.dequeue-message.outputs.result).sha }}
+      VAL: ${{ steps.dequeue-message.outputs.result }}
   create-branch:
     runs-on: ubuntu-latest
     permissions:
@@ -82,7 +84,7 @@ jobs:
       pull-requests: write
       statuses: write
     needs: [dequeue]
-    if: (needs.dequeue.result) == 'success'
+    if: (needs.dequeue.outputs.VAL) != 'false'
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
@@ -116,7 +118,7 @@ jobs:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
-            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const token = `${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
             const description = `
@@ -163,7 +165,6 @@ jobs:
               labels: [
                 'main-next-integrate',
                 'do-not-squash-merge',
-                'msftbot: merge-next'
               ]
             })
   remove-from-queue:
@@ -174,11 +175,6 @@ jobs:
     needs: [pull-request]
     if: needs.pull-request.result == 'success'
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
-        with:
-          node-version: 14
-      - run: npm ci
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:
@@ -189,7 +185,7 @@ jobs:
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueClient = queueServiceClient.getQueueClient(queueName);
             // Get up to 5 messages from the queue
-            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 5, visibilityTimeout: 5 * 60 });
+            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 10, visibilityTimeout: 5 * 60 });
             for (i = 0; i < receivedMsgsResp.receivedMessageItems.length; i++) {
                 message = receivedMsgsResp.receivedMessageItems[i];
                 console.log("Dequeuing message: ", message.messageText);

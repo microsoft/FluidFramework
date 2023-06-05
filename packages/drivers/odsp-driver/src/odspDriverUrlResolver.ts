@@ -141,21 +141,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
-		let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
+		const documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
 			path,
 		)}`;
 
-		if (request.url.length > 0) {
-			// In case of any additional parameters add them back to the url
-			const requestURL = new URL(request.url);
-			const searchParams = requestURL.search;
-			if (searchParams) {
-				documentUrl += searchParams;
-			}
-		}
-
 		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
-
 		return {
 			type: "fluid",
 			odspResolvedUrl: true,

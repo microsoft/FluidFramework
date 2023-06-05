@@ -13,7 +13,7 @@ import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
 	private readonly _server = LocalDeltaConnectionServer.create();
-
+	public readonly endpointName = "local";
 	public readonly type = "local";
 	public get version() {
 		return this.api.version;

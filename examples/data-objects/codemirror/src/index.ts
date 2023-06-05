@@ -15,11 +15,14 @@ import {
 	RuntimeFactoryHelper,
 } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+
+import React from "react";
+
 import { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-import { CodeMirrorView } from "./codeMirrorView";
+import { CodeMirrorReactView } from "./codeMirrorView";
 
 export { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-export { CodeMirrorView } from "./codeMirrorView";
+export { CodeMirrorReactView } from "./codeMirrorView";
 
 const defaultComponentId = "default";
 
@@ -38,7 +41,10 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 		return {
 			status: 200,
 			mimeType: "fluid/view",
-			value: new CodeMirrorView(codeMirror.text, codeMirror.presenceManager),
+			value: React.createElement(CodeMirrorReactView, {
+				text: codeMirror.text,
+				presenceManager: codeMirror.presenceManager,
+			}),
 		};
 	}
 };

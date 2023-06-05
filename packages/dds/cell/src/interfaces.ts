@@ -5,6 +5,7 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.
@@ -145,28 +146,4 @@ export interface ICellOptions {
  */
 export interface ICellAttributionOptions {
 	track?: boolean;
-}
-
-/**
- * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
- *
- * @alpha
- */
-export interface AttributionKey {
-	/**
-	 * The type of attribution this key corresponds to.
-	 *
-	 * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
-	 * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-	 *
-	 * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
-	 * AttributionKey a discriminated union on the 'type' field. This would empower
-	 * consumers with the ability to implement different attribution policies.
-	 */
-	type: "op";
-
-	/**
-	 * The sequenceNumber of the op this attribution key is for.
-	 */
-	seq: number;
 }

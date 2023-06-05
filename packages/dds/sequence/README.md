@@ -1,5 +1,27 @@
 # @fluidframework/sequence
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
+scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
+[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Description
+
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
 Its main export is [SharedString][], a DDS for storing and simultaneously editing a sequence of text.
 
@@ -14,7 +36,7 @@ For that reason, all of the examples in this README use `SharedString`. However,
 
 For the remainder of this document, the term _sequence_ will refer to this base class.
 
-*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
+_Items_ are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific _position_ starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
@@ -328,8 +350,8 @@ The following example illustrates these properties and highlights the major APIs
 
 const comments = sharedString.getIntervalCollection("comments");
 const comment = comments.add(
-	3,
-	7, // (inclusive range): references "world"
+	3, // (inclusive)
+	8, // (exclusive): references "world"
 	IntervalType.SlideOnRemove,
 	{
 		creator: "my-user-id",
@@ -338,7 +360,7 @@ const comment = comments.add(
 );
 //   content: hi world!
 // positions: 012345678
-//   comment:    [   ]
+//   comment:    [    )
 
 // Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
 const allIntervalsInCollection = Array.from(comments);
@@ -347,14 +369,14 @@ const allProperties = comments.map((comment) => comment.properties);
 const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
 
 // Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
-const startPosition = sharedString.localReferencePositionToPosition(comment.start);
-const endPosition = sharedString.localReferencePositionToPosition(comment.end);
+const startPosition = sharedString.localReferencePositionToPosition(comment.start); // returns 3
+const endPosition = sharedString.localReferencePositionToPosition(comment.end); // returns 8: note this is exclusive!
 
 // Intervals can be modified:
 comments.change(comment.getIntervalId(), 0, 1);
 //   content: hi world!
 // positions: 012345678
-//   comment: []
+//   comment: [)
 
 // their properties can be changed:
 comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
@@ -408,17 +430,34 @@ Using the interval collection API has two main benefits:
 
 SharedString supports storing information attributing each character position to the user who inserted it and the time at which that insertion happened.
 This functionality is off by default.
-Enable it by setting `{ attribution: { track: true } }` on the `IFluidDataStoreRuntime` options used to initialize the SharedString.
-If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the runtime options one.
+To enable this functionality, first ensure that all clients are created with an attribution policy factory in the loader settings:
 
-Attribution information is stored on the `attribution` field of the SharedString's segments.
+```typescript
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+// Use these options in the IContainerContext used to instantiate your container runtime.
+const options: ILoaderOptions = {
+	attribution: {
+		policyFactory: createInsertOnlyAttributionPolicy,
+	},
+};
+```
+
+This ensures that the client is able to load existing documents containing attribution information,
+and specifies which kinds of operations should be attributed at the SharedString level (currently, only insertions).
+The stored attribution information can be found on the `attribution` field of the SharedString's segments.
+
+Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start tracking attribution information for new files.
 
 ```typescript
 const { segment, offset } = sharedString.getContainingSegment(5);
 const key = segment.attribution.getAtOffset(offset);
 // `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
-// See the @fluidframework/attributor package for more details.
+// See the @fluid-experimental/attributor package for more details.
 ```
+
+For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
+
+There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
 ### Examples
 

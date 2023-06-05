@@ -77,12 +77,16 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  * Use when violations are logic errors in the program.
  * @param condition - A condition to assert is truthy
  * @param message - Message to be printed if assertion fails. Will print "Assertion failed" by default
- * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
+ * @param notLogSafe - boolean flag for whether the message passed in contains data that shouldn't be logged for privacy reasons.
+ *
+ * @remarks
+ * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
+ * When a non constant message is not needed, use `assert` from `@fluidframework/common-utils`;
  */
-export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
+export function assertWithMessage(condition: unknown, message?: string, notLogSafe = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
-		fail(message, containsPII);
+		fail(message, notLogSafe);
 	}
 }
 
@@ -90,15 +94,15 @@ export function assert(condition: unknown, message?: string, containsPII = false
  * Fails an assertion. Throws an Error that the assertion failed.
  * Use when violations are logic errors in the program.
  * @param message - Message to be printed if assertion fails. Will print "Assertion failed" by default
- * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
+ * @param notLogSafe - boolean flag for whether the message passed in contains data that shouldn't be logged for privacy reasons.
  */
-export function fail(message: string = defaultFailMessage, containsPII = false): never {
+export function fail(message: string = defaultFailMessage, notLogSafe = false): never {
 	if (process.env.NODE_ENV !== 'production') {
 		debugger;
 		console.error(message);
 	}
 
-	throw new SharedTreeAssertionError(containsPII ? 'Assertion failed' : message);
+	throw new SharedTreeAssertionError(notLogSafe ? 'Assertion failed' : message);
 }
 
 /**
@@ -125,7 +129,7 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
  * @param message - Message to be printed if assertion fails.
  */
 export function assertNotUndefined<T>(value: T | undefined, message = 'value must not be undefined'): T {
-	assert(value !== undefined, message);
+	assertWithMessage(value !== undefined, message);
 	return value;
 }
 
@@ -135,7 +139,7 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
  * @param message - Message to be printed if assertion fails.
  */
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
-	assert(array.length === 1, message);
+	assertWithMessage(array.length === 1, message);
 	return array[0];
 }
 
@@ -275,31 +279,6 @@ function compareIterators<T, TReturn extends T = T>(
 
 	// If one iterator is done, but not the other, then they are not equivalent
 	return a.done === b.done;
-}
-
-/**
- * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - The first array to compare
- * @param arrayB - The second array to compare
- * @param elementComparator - The function used to check if two `T`s are equivalent.
- * Defaults to `Object.is()` equality (a shallow compare)
- */
-export function compareArrays<T>(
-	arrayA: readonly T[],
-	arrayB: readonly T[],
-	elementComparator: (a: T, b: T) => boolean = Object.is
-): boolean {
-	if (arrayA.length !== arrayB.length) {
-		return false;
-	}
-
-	for (let i = 0; i < arrayA.length; i++) {
-		if (!elementComparator(arrayA[i], arrayB[i])) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**

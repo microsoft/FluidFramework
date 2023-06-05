@@ -7,29 +7,29 @@ A test abstract class.
 ## Signature {#testabstractclass-signature}
 
 ```typescript
-export declare abstract class TestAbstractClass 
+export declare abstract class TestAbstractClass
 ```
 
 ## Constructors
 
-|  Constructor | Description |
-|  --- | --- |
-|  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a constructor. |
+| Constructor | Description |
+| --- | --- |
+| [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a constructor. |
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | <code>readonly</code> | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
+| Property | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+| [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | `readonly` | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |
+| Method | Modifiers | Return Type | Description |
+| --- | --- | --- | --- |
+| [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
+| [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
+| [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | `virtual` | number | A test `@virtual` method. |
 
 ## Constructor Details
 
@@ -45,10 +45,10 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 
 #### Parameters {#_constructor_-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  privateProperty | number |  |
-|  protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) |  |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| privateProperty | number |  |
+| protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) |  |
 
 ## Property Details
 
@@ -99,7 +99,7 @@ protected sealedMethod(): string;
 
 A string!
 
-<b>Return type:</b> string
+**Return type:** string
 
 ### virtualMethod {#virtualmethod-method}
 
@@ -116,4 +116,4 @@ protected virtualMethod(): number;
 
 A number!
 
-<b>Return type:</b> number
+**Return type:** number

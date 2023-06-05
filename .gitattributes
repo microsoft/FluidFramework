@@ -16,5 +16,7 @@ yarn.lock                    merge=binary
 /.vscode/*.json              linguist-language=JSON5
 fence.json                   linguist-language=JSON5
 
+.git-blame-ignore-revs       linguist-language=Ignore List
+
 # Hide docs from GitHub's language detection
 /docs/**                     linguist-documentation

@@ -15,7 +15,6 @@ export {
 	IDeliLambdaEvents,
 	OpEventType,
 } from "./deli";
-export { ForemanLambda, ForemanLambdaFactory } from "./foreman";
 export { MoiraLambda, MoiraLambdaFactory } from "./moira";
 export {
 	CheckpointManager,
@@ -37,7 +36,6 @@ export {
 	createRoomLeaveMessage,
 	createSessionMetric,
 	generateClientId,
-	getRandomInt,
 	isDocumentSessionValid,
 	isDocumentValid,
 	logCommonSessionEndMetrics,

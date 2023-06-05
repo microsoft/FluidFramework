@@ -1,4 +1,4 @@
-# @fluid-experimental/property-inspector
+# @fluid-example/property-inspector
 
 An app for inspecting documents created by PropertyDDS using an efficient table-tree.
 
@@ -12,7 +12,7 @@ Go back to the root folder and run:
 pnpm install
 alias fb='clear && node "$(git rev-parse --show-toplevel)/node_modules/.bin/fluid-build"'
 fb --install --symlink:full
-fb --all @fluid-experimental/property-inspector tinylicious
+fb --all @fluid-example/property-inspector tinylicious
 ```
 
 You can then run the example with:

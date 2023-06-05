@@ -16,15 +16,13 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
-import {
-	gcTreeKey,
-	gcBlobPrefix,
-	IGarbageCollectionState,
-} from "@fluidframework/runtime-definitions";
+import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc";
 import { defaultGCConfig } from "./gcTestConfigs";
 
 /**
@@ -52,14 +50,14 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const dds = SharedMap.create(mainDataStore._runtime);
 		mainDataStore._root.set("dds", dds.handle);
 
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 		let summaryResult = await waitForSummary(summarizer1);
 
 		// Change ds1 but not the root dds
 		dds.set("change", "change1");
 
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			summaryResult.summaryVersion,
@@ -75,7 +73,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const dds = SharedMap.create(mainDataStore._runtime);
 		mainDataStore._root.set("dds", dds.handle);
 
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 		let summaryResult = await waitForSummary(summarizer1);
 
 		// Change ds1 but not the root dds so that the root dds routes are pulled by default
@@ -88,7 +86,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		await dataStore.trySetAlias("ARootDataStore");
 
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			summaryResult.summaryVersion,

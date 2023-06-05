@@ -24,12 +24,36 @@ An example application demonstrating how to use the azure-client package.
 
 See the [package README](./packages/external-controller/README.md) for more information.
 
-## Help
+# Developer notes
+
+## Dependencies
+
+### Adding/updating dependencies
+
+For information on adding and removing dependencies, see [Managing
+dependencies](https://github.com/microsoft/FluidFramework/wiki/Managing-dependencies) in our wiki.
+
+### Dependency overrides
+
+The root package.json of this release group contains the following dependency adjustments/overrides.
+
+```json
+"pnpm": {
+  "peerDependencyRules": {
+    "ignoreMissing": [
+      "fluid-framework"
+    ]
+  }
+}
+```
+
+Peer dependencies on fluid-framework are never fulfilled since itt's an in-repo dependency; we expect customers to
+install it as a dependency when using azure-client, but we don't install it alongside azure-client here in the repo.
+
+# Help
 
 Not finding what you're looking for in this README?
 Check out our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
 Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 Thank you!
-
-<!-- AUTO-GENERATED-CONTENT:END -->

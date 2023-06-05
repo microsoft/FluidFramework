@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -13,7 +12,7 @@ import {
 	IChannelFactory,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	createSingleBlobSummary,
@@ -21,13 +20,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import {
-	ISharedCell,
-	ISharedCellEvents,
-	ICellLocalOpMetadata,
-	AttributionKey,
-	ICellOptions,
-} from "./interfaces";
+import { ISharedCell, ISharedCellEvents, ICellLocalOpMetadata, ICellOptions } from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -114,28 +107,14 @@ export class SharedCell<T = any>
 	 * Constructs a new `SharedCell`.
 	 * If the object is non-local an id and service interfaces will be provided.
 	 *
-	 * @alpha
-	 *
 	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-	constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		options?: ICellOptions,
-	) {
+	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
 		super(id, runtime, attributes, "fluid_cell_");
 
-		this.options ??= options;
-
-		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
-			"Fluid.Attribution.EnableOnNewFile",
-		);
-		if (configSetAttribution !== undefined) {
-			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
-		}
+		this.options = runtime.options as ICellOptions;
 	}
 
 	/**
@@ -156,6 +135,7 @@ export class SharedCell<T = any>
 
 		// Set the value locally.
 		const previousValue = this.setCore(value);
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -175,6 +155,7 @@ export class SharedCell<T = any>
 	public delete(): void {
 		// Delete the value locally.
 		const previousValue = this.deleteCore();
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -203,11 +184,16 @@ export class SharedCell<T = any>
 	}
 
 	/**
-	 * Set the attribution through the SequencedDocumentMessage
+	 * Set the Op-based attribution through the SequencedDocumentMessage,
+	 * or set the local/detached attribution.
 	 */
-	private setAttribution(message: ISequencedDocumentMessage): void {
+	private setAttribution(message?: ISequencedDocumentMessage): void {
 		if (this.options?.attribution?.track ?? false) {
-			this.attribution = { type: "op", seq: message.sequenceNumber };
+			this.attribution = message
+				? { type: "op", seq: message.sequenceNumber }
+				: this.isAttached()
+				? { type: "local" }
+				: { type: "detached", id: 0 };
 		}
 	}
 
@@ -217,7 +203,10 @@ export class SharedCell<T = any>
 	 * @returns The summary of the current state of the Cell.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const content: ICellValue = { value: this.data, attribution: this.attribution };
+		const content: ICellValue =
+			this.attribution?.type === "local"
+				? { value: this.data, attribution: undefined }
+				: { value: this.data, attribution: this.attribution };
 		return createSingleBlobSummary(
 			snapshotFileName,
 			serializer.stringify(content, this.handle),

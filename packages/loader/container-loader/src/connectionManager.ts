@@ -4,20 +4,17 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import {
-	IDisposable,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
+	DriverErrorType,
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
@@ -28,8 +25,6 @@ import {
 	createWriteError,
 	createGenericNetworkError,
 	getRetryDelayFromError,
-	waitForConnectedState,
-	DeltaStreamConnectionForbiddenError,
 	logNetworkFailure,
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils";
@@ -49,7 +44,11 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	TelemetryLogger,
+	normalizeError,
+} from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
@@ -134,6 +133,19 @@ class NoDeltaStream
 		this._disposed = true;
 	}
 }
+
+const waitForOnline = async (): Promise<void> => {
+	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
+	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
+		return new Promise<void>((resolve) => {
+			const resolveAndRemoveListener = () => {
+				resolve();
+				globalThis.removeEventListener("online", resolveAndRemoveListener);
+			};
+			globalThis.addEventListener("online", resolveAndRemoveListener);
+		});
+	}
+};
 
 /**
  * Interface to track the current in-progress connection attempt.
@@ -266,9 +278,21 @@ export class ConnectionManager implements IConnectionManager {
 
 	public shouldJoinWrite(): boolean {
 		// We don't have to wait for ack for topmost NoOps. So subtract those.
-		return (
-			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore
-		);
+		const outstandingOps =
+			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore;
+
+		// Previous behavior was to force write mode here only when there are outstanding ops (besides
+		// no-ops). The dirty signal from runtime should provide the same behavior, but also support
+		// stashed ops that weren't submitted to container layer yet. For safety, we want to retain the
+		// same behavior whenever dirty is false.
+		const isDirty = this.containerDirty();
+		if (outstandingOps !== isDirty) {
+			this.logger.sendTelemetryEvent({
+				eventName: "DesiredConnectionModeMismatch",
+				details: JSON.stringify({ outstandingOps, isDirty }),
+			});
+		}
+		return outstandingOps || isDirty;
 	}
 
 	/**
@@ -281,10 +305,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * and do not know if user has write access to a file.
 	 */
 	private get readonly(): boolean | undefined {
-		if (this._forceReadonly) {
-			return true;
-		}
-		return this._readonlyPermissions;
+		return this.readOnlyInfo.readonly;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
@@ -302,11 +323,13 @@ export class ConnectionManager implements IConnectionManager {
 		return { readonly: this._readonlyPermissions };
 	}
 
-	private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
+	private static detailsFromConnection(
+		connection: IDocumentDeltaConnection,
+		reason: string,
+	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,
-			existing: connection.existing,
 			checkpointSequenceNumber: connection.checkpointSequenceNumber,
 			get initialClients() {
 				return connection.initialClients;
@@ -314,14 +337,16 @@ export class ConnectionManager implements IConnectionManager {
 			mode: connection.mode,
 			serviceConfiguration: connection.serviceConfiguration,
 			version: connection.version,
+			reason,
 		};
 	}
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
+		public readonly containerDirty: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
 	) {
 		this.clientDetails = this.client.details;
@@ -355,10 +380,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason =
-			error !== undefined
-				? `Closing DeltaManager (${error.message})`
-				: "Closing DeltaManager";
+		const disconnectReason = "Closing DeltaManager";
 
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
@@ -437,7 +459,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.props.readonlyChangeHandler(this.readonly);
 			if (reconnect) {
 				// reconnect if we disconnected from before.
-				this.triggerConnect("read");
+				this.triggerConnect("Force Readonly", "read");
 			}
 		}
 	}
@@ -450,14 +472,14 @@ export class ConnectionManager implements IConnectionManager {
 		}
 	}
 
-	public connect(connectionMode?: ConnectionMode) {
-		this.connectCore(connectionMode).catch((error) => {
+	public connect(reason: string, connectionMode?: ConnectionMode) {
+		this.connectCore(reason, connectionMode).catch((error) => {
 			const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
 			this.props.closeHandler(normalizedError);
 		});
 	}
 
-	private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
+	private async connectCore(reason: string, connectionMode?: ConnectionMode): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
 		if (this.connection !== undefined) {
@@ -492,7 +514,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (docService.policies?.storageOnly === true) {
 			connection = new NoDeltaStream();
-			this.setupNewSuccessfulConnection(connection, "read");
+			this.setupNewSuccessfulConnection(connection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
@@ -543,7 +565,7 @@ export class ConnectionManager implements IConnectionManager {
 				if (
 					typeof origError === "object" &&
 					origError !== null &&
-					origError?.errorType === DeltaStreamConnectionForbiddenError.errorType
+					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
 				) {
 					connection = new NoDeltaStream();
 					requestedMode = "read";
@@ -572,12 +594,25 @@ export class ConnectionManager implements IConnectionManager {
 				lastError = origError;
 
 				const retryDelayFromError = getRetryDelayFromError(origError);
-				delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
-
 				if (retryDelayFromError !== undefined) {
+					// If the error told us to wait, then we wait.
 					this.props.reconnectionDelayHandler(retryDelayFromError, origError);
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, retryDelayFromError);
+					});
+				} else if (globalThis.navigator?.onLine !== false) {
+					// If the error didn't tell us to wait, let's still wait a little bit before retrying.
+					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, delayMs);
+						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+					});
 				}
-				await waitForConnectedState(delayMs);
+
+				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
+				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+				// should probably live in the driver.
+				await waitForOnline();
 			}
 		}
 
@@ -606,7 +641,7 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
-		this.setupNewSuccessfulConnection(connection, requestedMode);
+		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
 
 	/**
@@ -614,8 +649,8 @@ export class ConnectionManager implements IConnectionManager {
 	 * And report the error if it escapes for any reason.
 	 * @param args - The connection arguments
 	 */
-	private triggerConnect(connectionMode: ConnectionMode) {
-		// reconnect() has async await of waitForConnectedState(), and that causes potential race conditions
+	private triggerConnect(reason: string, connectionMode: ConnectionMode) {
+		// reconnect() includes async awaits, and that causes potential race conditions
 		// where we might already have a connection. If it were to happen, it's possible that we will connect
 		// with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
 		// fine (if needed, reconnect flow will get triggered again). Places where new mode matters should encode it
@@ -625,15 +660,16 @@ export class ConnectionManager implements IConnectionManager {
 		if (this.reconnectMode !== ReconnectMode.Enabled) {
 			return;
 		}
-		this.connect(connectionMode);
+		this.connect(reason, connectionMode);
 	}
 
 	/**
 	 * Disconnect the current connection.
 	 * @param reason - Text description of disconnect reason to emit with disconnect event
+	 * @param error - Error causing the disconnect if any.
 	 * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
 	 */
-	private disconnectFromDeltaStream(reason: string): boolean {
+	private disconnectFromDeltaStream(reason: string, error?: IAnyDriverError): boolean {
 		this.pendingReconnect = false;
 
 		if (this.connection === undefined) {
@@ -664,9 +700,9 @@ export class ConnectionManager implements IConnectionManager {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
 		this._outbound.clear();
-		this.props.disconnectHandler(reason);
-
 		connection.dispose();
+
+		this.props.disconnectHandler(reason, error);
 
 		this._connectionVerboseProps = {};
 
@@ -694,6 +730,7 @@ export class ConnectionManager implements IConnectionManager {
 	private setupNewSuccessfulConnection(
 		connection: IDocumentDeltaConnection,
 		requestedMode: ConnectionMode,
+		reason: string,
 	) {
 		// Old connection should have been cleaned up before establishing a new one
 		assert(
@@ -794,7 +831,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		const details = ConnectionManager.detailsFromConnection(connection);
+		const details = ConnectionManager.detailsFromConnection(connection, reason);
 		details.checkpointSequenceNumber = checkpointSequenceNumber;
 		this.props.connectHandler(details);
 
@@ -861,7 +898,7 @@ export class ConnectionManager implements IConnectionManager {
 		// If we're already disconnected/disconnecting it's not appropriate to call this again.
 		assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-		this.disconnectFromDeltaStream(disconnectMessage);
+		this.disconnectFromDeltaStream(disconnectMessage, error);
 
 		// We will always trigger reconnect, even if canRetry is false.
 		// Any truly fatal error state will result in container close upon attempted reconnect,
@@ -888,13 +925,26 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
+		// If the error tells us to wait before retrying, then do so.
 		const delayMs = getRetryDelayFromError(error);
 		if (error !== undefined && delayMs !== undefined) {
 			this.props.reconnectionDelayHandler(delayMs, error);
-			await waitForConnectedState(delayMs);
+			await new Promise<void>((resolve) => {
+				setTimeout(resolve, delayMs);
+			});
 		}
 
-		this.triggerConnect(requestedMode);
+		// If we believe we're offline, we assume there's no point in trying again until we at least think we're online.
+		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+		// should probably live in the driver.
+		await waitForOnline();
+
+		this.triggerConnect(
+			error !== undefined
+				? "Reconnect on Error"
+				: `Reconnecting due to: ${disconnectMessage}`,
+			requestedMode,
+		);
 	}
 
 	public prepareMessageToSend(

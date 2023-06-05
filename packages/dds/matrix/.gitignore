@@ -51,5 +51,8 @@ nyc
 intel_modules/
 temp_modules/
 
+# Output folder for memory profiling tests
+.memoryTestsOutput
+
 bench/dist/
 bench/profile.txt

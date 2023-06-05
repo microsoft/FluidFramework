@@ -10,7 +10,7 @@ import {
 	DataObjectFactory,
 	PureDataObject,
 } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -31,16 +31,16 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
-	ITestFluidObject,
 	ITestObjectProvider,
 	wrapDocumentServiceFactory,
 	waitForContainerConnection,
+	summarizeNow,
+	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {
@@ -114,12 +114,12 @@ async function loadSummarizer(
 		);
 	});
 
-	const defaultDataStore = await requestFluidObject<ITestFluidObject>(
+	const defaultDataStore = await requestFluidObject<TestDataObject1>(
 		summarizerContainer,
 		"default",
 	);
 	return {
-		containerRuntime: defaultDataStore.context.containerRuntime as ContainerRuntime,
+		containerRuntime: defaultDataStore._context.containerRuntime as ContainerRuntime,
 		summaryCollection,
 	};
 }
@@ -132,7 +132,7 @@ async function loadSummarizer(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken = neverCancelledSummaryToken,
 ) {
@@ -248,16 +248,17 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		summaryOptions: {
 			summaryConfigOverrides: { state: "disabled" },
 		},
-		gcOptions: { gcAllowed: false },
+		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
+	const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
+	]);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		dataStoreFactory1,
-		[
-			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
-		],
+		registryStoreEntries,
 		undefined,
 		[innerRequestHandler],
 		runtimeOptions,
@@ -273,6 +274,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject1;
+	let mainContainerRuntime: ContainerRuntime;
 
 	const createContainer = async (): Promise<IContainer> => {
 		return provider.createContainer(runtimeFactory);
@@ -356,6 +358,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
 			mainDataStore = await requestFluidObject<TestDataObject1>(mainContainer, "default");
 			mainDataStore._root.set("anytest", "anyvalue");
+			mainContainerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(mainContainer);
 		});
 
@@ -431,6 +434,73 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 
 			// The assert 0x1a6 should be hit now.
 			await summarizerClient2.containerRuntime.refreshLatestSummaryAck({
+				proposalHandle: ackedSummary.summaryOp.contents.handle,
+				ackHandle: ackedSummary.summaryAck.contents.handle,
+				summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+				summaryLogger: logger,
+			});
+		});
+
+		it("Data store with GC data realized after summarize", async () => {
+			// Create a summarizer client.
+			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
+				provider,
+				mainContainer,
+				dataStoreFactory1,
+				undefined,
+				undefined,
+				registryStoreEntries,
+			);
+
+			// Create a second data store.
+			const ds2 = await requestFluidObject<TestDataObject2>(
+				await mainContainerRuntime.createDataStore(TestDataObjectType2),
+				"",
+			);
+			mainDataStore._root.set("dataStore2", ds2.handle);
+
+			await provider.ensureSynchronized();
+
+			// Summarize with the above data store.
+			const summary1 = await summarizeNow(summarizer1);
+			summarizer1.close();
+
+			// Create a new summarizer from the above summary.
+			const summarizer2 = await getNewSummarizer(summary1.summaryVersion);
+
+			const summarySequenceNumber =
+				summarizer2.containerRuntime.deltaManager.lastSequenceNumber;
+			// Submit a summary and wait for the summary op.
+			const result = await summarizer2.containerRuntime.submitSummary({
+				fullTree: false,
+				refreshLatestAck: false,
+				summaryLogger: logger,
+				cancellationToken: neverCancelledSummaryToken,
+			});
+			assert(result.stage === "submit", "The summary was not submitted");
+			await waitForSummaryOp(summarizer2.containerRuntime);
+
+			// Before refresh is called, request the second data store in the summarizer. This will create summarizer
+			// nodes for its child DDSes. The data store's summarizer node should update the pending used routes
+			// of the child's summarizer node.
+			const ds2MainDataStore = await requestFluidObject<TestDataObject1>(
+				summarizer2.containerRuntime,
+				"default",
+			);
+			const ds2MainDataStoreHandle =
+				ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>("dataStore2");
+			assert(
+				ds2MainDataStoreHandle !== undefined,
+				"Data store2 handle not present in summarizer",
+			);
+			await ds2MainDataStoreHandle.get();
+
+			// Wait for the above summary to be ack'd.
+			const ackedSummary = await summarizer2.summaryCollection.waitSummaryAck(
+				summarySequenceNumber,
+			);
+			// Refresh the summary. This should not result in any errors.
+			await summarizer2.containerRuntime.refreshLatestSummaryAck({
 				proposalHandle: ackedSummary.summaryOp.contents.handle,
 				ackHandle: ackedSummary.summaryAck.contents.handle,
 				summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,

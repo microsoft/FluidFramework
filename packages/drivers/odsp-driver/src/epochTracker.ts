@@ -5,14 +5,19 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+	normalizeError,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
 	RateLimiter,
 	NonRetryableError,
 	LocationRedirectionError,
 } from "@fluidframework/driver-utils";
-import { IConnected } from "@fluidframework/protocol-definitions";
 import {
 	snapshotKey,
 	ICacheEntry,
@@ -24,12 +29,6 @@ import {
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-	PerformanceEvent,
-	isFluidError,
-	normalizeError,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,
@@ -64,6 +63,15 @@ export const Odsp409Error = "Odsp409Error";
 export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
+ * In ODSP, the concept of "epoch" refers to binary updates to files. For example, this might include using
+ * version restore, or if the user downloads a Fluid file and then uploads it again. These result in the epoch
+ * value being incremented.
+ *
+ * The implications of these binary updates is that the Fluid state is disrupted: the sequence number might
+ * go backwards, the data might be inconsistent with the latest state of collaboration, etc. As a result, it's
+ * not safe to continue collaboration across an epoch change. We need to detect these epoch changes and
+ * error out from the collaboration.
+ *
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
@@ -80,7 +88,7 @@ export class EpochTracker implements IPersistedFileCache {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		// Limits the max number of concurrent requests to 24.
@@ -182,13 +190,12 @@ export class EpochTracker implements IPersistedFileCache {
 		return this._fluidEpoch;
 	}
 
-	public async validateEpochFromPush(details: IConnected) {
-		const epoch = details.epoch;
-		assert(epoch !== undefined, 0x09d /* "Connection details should contain epoch" */);
+	public async validateEpoch(epoch: string | undefined, fetchType: FetchType) {
+		assert(epoch !== undefined, 0x584 /* response should contain epoch */);
 		try {
-			this.validateEpochFromResponse(epoch, "push");
+			this.validateEpochFromResponse(epoch, fetchType);
 		} catch (error) {
-			await this.checkForEpochError(error, epoch, "push");
+			await this.checkForEpochError(error, epoch, fetchType);
 			throw error;
 		}
 	}
@@ -426,7 +433,6 @@ export class EpochTracker implements IPersistedFileCache {
 			if (epochError !== undefined) {
 				epochError.addTelemetryProperties({
 					fromCache,
-					clientEpoch: this.fluidEpoch,
 					fetchType,
 				});
 				this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
@@ -455,7 +461,7 @@ export class EpochTracker implements IPersistedFileCache {
 			return new NonRetryableError(
 				"Epoch mismatch",
 				DriverErrorType.fileOverwrittenInStorage,
-				{ driverVersion },
+				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
 			);
 		}
 	}
@@ -471,7 +477,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		super(cache, fileEntry, logger, clientIsSummarizer);
@@ -595,7 +601,7 @@ export function createOdspCacheAndTracker(
 	persistedCacheArg: IPersistedCache,
 	nonpersistentCache: INonPersistentCache,
 	fileEntry: IFileEntry,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	clientIsSummarizer?: boolean,
 ): ICacheAndTracker {
 	const epochTracker = new EpochTrackerWithRedemption(

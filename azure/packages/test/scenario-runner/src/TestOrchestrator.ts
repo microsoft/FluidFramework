@@ -94,7 +94,8 @@ export class TestOrchestrator {
 			runId: this.runId,
 			scenarioName: this.doc?.title,
 			namespace: "scenario:runner",
-			endpoint: connConfig.endpoint,
+			endpoint: connConfig.endpoint ?? process.env.azure__fluid__relay__service__endpoint,
+			region: connConfig.endpoint ?? process.env.azure__fluid__relay__service__region,
 		});
 
 		const success = await PerformanceEvent.timedExecAsync(

@@ -4,10 +4,14 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
+import { assert, delay, performance } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
+import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -15,6 +19,7 @@ import {
 	ISnapshotOptions,
 	OdspErrorType,
 	InstrumentedStorageTokenFetcher,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import {
 	IDocumentStorageGetVersionsResponse,
@@ -24,12 +29,13 @@ import {
 } from "./contracts";
 import {
 	downloadSnapshot,
+	evalBlobsAndTrees,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
@@ -39,17 +45,6 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
-
-// An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(
-	promises: Promise<T>[],
-): Promise<{ index: number; value: T }> {
-	return new Promise((resolve, reject) => {
-		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
-		});
-	});
-}
 
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;
@@ -82,7 +77,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -193,6 +188,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
 			return null;
@@ -201,6 +197,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
@@ -233,9 +230,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
-					let retrievedSnapshot: ISnapshotContents | undefined;
+					let retrievedSnapshot:
+						| ISnapshotContents
+						| IPrefetchSnapshotContents
+						| undefined;
 
 					let method: string;
+					let prefetchWaitStartTime: number = performance.now();
 					if (fetchSource === FetchSource.noCache) {
 						retrievedSnapshot = await this.fetchSnapshot(
 							hostSnapshotOptions,
@@ -324,6 +325,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
+								prefetchWaitStartTime = performance.now();
 								retrievedSnapshot = await this.fetchSnapshot(
 									hostSnapshotOptions,
 									scenarioName,
@@ -334,7 +336,19 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
-					event.end({ ...props, method });
+					const prefetchStartTime: number | undefined = (
+						retrievedSnapshot as IPrefetchSnapshotContents
+					).prefetchStartTime;
+					event.end({
+						...props,
+						method,
+						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+						...evalBlobsAndTrees(retrievedSnapshot),
+						prefetchSavedDuration:
+							prefetchStartTime !== undefined && method !== "cache"
+								? prefetchWaitStartTime - prefetchStartTime
+								: undefined,
+					});
 					return retrievedSnapshot;
 				},
 			);
@@ -414,7 +428,35 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async fetchSnapshotCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		scenarioName?: string,
-	) {
+	): Promise<ISnapshotContents | IPrefetchSnapshotContents> {
+		// Don't look into cache, if the host specifically tells us so.
+		if (!this.hostPolicy.avoidPrefetchSnapshotCache) {
+			const prefetchCacheKey = getKeyForCacheEntry(
+				createCacheSnapshotKey(this.odspResolvedUrl),
+			);
+			const result = await this.cache.snapshotPrefetchResultCache
+				?.get(prefetchCacheKey)
+				?.then(async (response) => {
+					// Validate the epoch from the prefetched snapshot result.
+					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
+					return response;
+				})
+				.catch(async (err) => {
+					this.logger.sendTelemetryEvent(
+						{
+							eventName: "PrefetchSnapshotError",
+							concurrentSnapshotFetch: this.hostPolicy.concurrentSnapshotFetch,
+						},
+						err,
+					);
+					return undefined;
+				});
+			// If the prefetch call, is successful, then return the contents otherwise as backup for now, just
+			// proceed with the old snapshot fetch flow.
+			if (result !== undefined) {
+				return result;
+			}
+		}
 		const snapshotOptions: ISnapshotOptions = {
 			mds: this.maxSnapshotSizeLimit,
 			...hostSnapshotOptions,
@@ -567,14 +609,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		assert(
 			this.odspSummaryUploadManager !== undefined,
-			"summary upload manager should have been initialized",
+			0x56e /* summary upload manager should have been initialized */,
 		);
 		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
 		return id;
 	}
 
 	private async getDelayLoadedSummaryManager() {
-		assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
+		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
 		)

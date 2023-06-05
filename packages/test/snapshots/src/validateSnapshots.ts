@@ -22,9 +22,9 @@ const metadataBlobName = ".metadata";
 /**
  * Validates snapshots in the source directory with corresponding snapshots in the destination directory:
  * - Loads a new container with each snapshot in `srcDir`.
- * - Snapshots the continer and validates that the snapshot matches with the corresponding snapshot in `destDir`.
+ * - Snapshots the container and validates that the snapshot matches with the corresponding snapshot in `destDir`.
  * @param srcDir - The directory containing source snapshots that are to be loaded and validated.
- * @param destDir - The directory containing destination snapshots against which the above snaphost are validated.
+ * @param destDir - The directory containing destination snapshots against which the above snapshots are validated.
  * @param seqToMessage - A map of sequence number to message for the messages in this document.
  */
 export async function validateSnapshots(

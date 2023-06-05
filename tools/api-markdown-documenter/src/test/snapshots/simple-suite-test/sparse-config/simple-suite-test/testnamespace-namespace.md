@@ -5,7 +5,7 @@ Test Namespace
 ## Signature {#testnamespace-signature}
 
 ```typescript
-export declare namespace TestNamespace 
+export declare namespace TestNamespace
 ```
 
 ## Remarks {#testnamespace-remarks}
@@ -32,42 +32,42 @@ const bar = foo
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
+| Interface | Description |
+| --- | --- |
+| [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
 
 ## Classes
 
-|  Class | Description |
-|  --- | --- |
-|  [TestClass](docs/simple-suite-test/testnamespace-testclass-class) | Test class |
+| Class | Description |
+| --- | --- |
+| [TestClass](docs/simple-suite-test/testnamespace-testclass-class) | Test class |
 
 ## Enumerations
 
-|  Enum | Description |
-|  --- | --- |
-|  [TestEnum](docs/simple-suite-test/testnamespace-testenum-enum) | Test Enum |
+| Enum | Description |
+| --- | --- |
+| [TestEnum](docs/simple-suite-test/testnamespace-testenum-enum) | Test Enum |
 
 ## Types
 
-|  TypeAlias | Description |
-|  --- | --- |
-|  [TestTypeAlias](docs/simple-suite-test/testnamespace-testtypealias-typealias) | Test Type-Alias |
+| TypeAlias | Description |
+| --- | --- |
+| [TestTypeAlias](docs/simple-suite-test/testnamespace-testtypealias-typealias) | Test Type-Alias |
 
 ## Functions
 
-|  Function | Return Type | Description |
-|  --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test/testnamespace-testfunction-function) | number | Test function |
+| Function | Return Type | Description |
+| --- | --- | --- |
+| [testFunction(testParameter)](docs/simple-suite-test/testnamespace-testfunction-function) | number | Test function |
 
 ## Variables
 
-|  Variable | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | <code>readonly</code> | Test Constant |
+| Variable | Modifiers | Description |
+| --- | --- | --- |
+| [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | `readonly` | Test Constant |
 
 ## Namespaces
 
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |
+| Namespace | Description |
+| --- | --- |
+| [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |

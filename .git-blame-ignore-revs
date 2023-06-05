@@ -1,0 +1,50 @@
+# This file contains a list of git hashes of revisions recommended to be ignored by git blame.
+# These revisions are considered "unimportant" in that they are unlikely to be what you are
+# interested in when blaming.
+#
+# To ignore all such commits, change your git configuration as follows:
+#
+# git config --local blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# You could configure at a wider scope than local (this filename is conventional), but beware
+# this will break `git blame` for repositories that don't have this file.
+#
+# When adding to this list:
+# - Only add large, disruptive commits with little semantic meaning (ex: formatting, line ending
+#   change, mass rename).
+# - Append in chronological order
+# - Write a brief comment stating the contents of the ignored commits. Grouping commits with
+#   similar purpose is acceptable.
+
+# Prettier enablement
+59c689eba3dfac177ef12eb24b1ff9fcd3d9218a
+0dee69d94a4d68e44a9c768de555698e5be73e64
+27c3bd28e855373a4c42974029fb173f9cbd77da
+ff827f9e77cb2692415b68ce2889c039bce43db0
+93d8de420da331d1f74a15114f2642d48ce8994e
+680c50036c82c38448932acb9058fcaa8d0ad5fd
+c3aaa1c9b339e3369f9e66845d84489c65e7cb7a
+f18ad83e9cf119b71d8cf4ae4f0eb01d674a9bde
+446b4ea9fcea8b761ec5de6800821299095afcc0
+6af8667d8e5ea20b85e3962de90d91a674371bc8
+2a8dc7618595ce4c193702b2d416f06381bf5c5a
+4fa4e137a7bfe9e5fc815cde0f56100289dd03d4
+dc1dae7e351a1d6c1c0666a8deb1edf5a1b7fd75
+d8d72f0998137f169013e4c2ebb00baba942039f
+301eabdcb43d8b23a80a2e3e440363f8d3edc04b
+1aa7ab525423e73aab85b7ae4080cf43fd843efd
+42f3e40a2dd3f8dc31bfdd17b005620b19a2281d
+79fd2dc7a0091a4484073c2a138283947b978113
+e6ee436d3072d2d795690bf3957e9365db4ad8aa
+7f7efc7b1c99635b378fdeb1c868f4066c4bcb8d
+1ab47083ccd868a58a0ae5413b4dd8dfad556c13
+bca129719269169b2fcd3d15bf09fa6b0bd660ed
+df8532a463fa2460ce6cc504109ffa38f63d0cae
+6680d425ddfd1443b851cc8e1e1234c2f088e1d1
+18093a590976f15b03c6e5c9e6a6c67c76cac652
+6e1a6937cc009c2a10d0cb2787aaae75c29124f0
+a33ffd0ca60351d694438281cb6879e71dcfac37
+92a5d7aafb47304664893e0a40e96ea7db6aae11
+45cd69ec472e35e4ed1a178f6fe764f0e66e9556
+be68e1b80389db0221158ff6362e75dcd895b07a
+38e1d64612ca1b65f5c1098a63b439afb53afd55

@@ -15,18 +15,18 @@ contributions are acceptably compatible and the code is reasonably clean.
 
 The following overview shows the various levels and their corresponding contracts:
 
-- Common: @fluidframework/common-definitions
-  - Common utils/definitions that might be shared at all levels of the stack
-- Protocol: @fluidframework/protocol-definitions
-  - Definition of protocol between the server and the client (ops and summary structure, etc.)
-- Driver: @fluidframework/driver-definitions
-  - API of driver for access to storage and web socket connections
-- Loader: @fluidframework/container-definitions
-  - The core framework responsible for loading runtime code into a container
-- Runtime: @fluidframework/runtime-definitions
-  - A base set of runtime code that supports the Fluid model, summarization, and other core Fluid features
-- Framework: @fluidframework/framework-definitions
-  - A set of base implementations and helper utilities to support developers building on Fluid
+-   Common: @fluidframework/common-definitions
+    -   Common utils/definitions that might be shared at all levels of the stack
+-   Protocol: @fluidframework/protocol-definitions
+    -   Definition of protocol between the server and the client (ops and summary structure, etc.)
+-   Driver: @fluidframework/driver-definitions
+    -   API of driver for access to storage and web socket connections
+-   Loader: @fluidframework/container-definitions
+    -   The core framework responsible for loading runtime code into a container
+-   Runtime: @fluidframework/runtime-definitions
+    -   A base set of runtime code that supports the Fluid model, summarization, and other core Fluid features
+-   Framework: @fluidframework/framework-definitions
+    -   A set of base implementations and helper utilities to support developers building on Fluid
 
 This document will focus on a few specific layer boundaries.
 
@@ -59,10 +59,10 @@ Runtime       | |     |     |
 2.x           | | FC  | C   | BC
 3.x           | | X   | FC  | C
 
-- C - Fully compatible
-- BC - Driver/loader backwards compatible with runtime
-- FC - Driver/loader forwards compatible with runtime (runtime backwards compatible with driver and loader)
-- X - May not be compatible
+-   C - Fully compatible
+-   BC - Driver/loader backwards compatible with runtime
+-   FC - Driver/loader forwards compatible with runtime (runtime backwards compatible with driver and loader)
+-   X - May not be compatible
 
 ### Runtime
 
@@ -90,9 +90,9 @@ our own container-level runtime code can load our own data-store-level runtime c
 
 Specific interfaces to monitor:
 
-- `IContainerRuntime` - interfaces container runtime to loaded data store runtime
-- `IFluidDataStoreContext` - interfaces data store context to loaded data store runtime
-- `IFluidDataStoreRuntime` - interfaces loaded data store runtime to its context
+-   `IContainerRuntime` - interfaces container runtime to loaded data store runtime
+-   `IFluidDataStoreContext` - interfaces data store context to loaded data store runtime
+-   `IFluidDataStoreRuntime` - interfaces loaded data store runtime to its context
 
 ## Guidelines for compatible contributions
 

@@ -9,7 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     IConsumer,
     IPartition,
-    IPartitionWithEpoch,
     IQueuedMessage,
     IZookeeperClient,
     ZookeeperClientConstructor,
@@ -51,7 +50,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
         clientId: string,
         topic: string,
         public readonly groupId: string,
-        options?: Partial<IKafkaConsumerOptions>) {
+        options?: Partial<IKafkaConsumerOptions>,
+    ) {
         super(endpoints, clientId, topic, options);
 
         this.defaultRestartOnKafkaErrorCodes = [
@@ -94,9 +94,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
         }
 
         const zookeeperEndpoints = this.endpoints.zooKeeper;
-        if (!this.consumerOptions.eventHubConnString && zookeeperEndpoints && zookeeperEndpoints.length > 0 && this.consumerOptions.zooKeeperClientConstructor) {
-            const zooKeeperEndpoint = zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
-            this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(zooKeeperEndpoint);
+        if (
+            !this.consumerOptions.eventHubConnString &&
+            zookeeperEndpoints &&
+            zookeeperEndpoints.length > 0 &&
+            this.consumerOptions.zooKeeperClientConstructor
+        ) {
+            const zooKeeperEndpoint =
+                zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
+            this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(
+                zooKeeperEndpoint,
+            );
         }
 
         // eslint-disable-next-line prefer-const
@@ -112,15 +120,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
             "fetch.min.bytes": 1,
             "fetch.max.bytes": 1024 * 1024,
             "offset_commit_cb": true,
-            "rebalance_cb": this.consumerOptions.optimizedRebalance ?
-                (err: kafkaTypes.LibrdKafkaError, assignments: kafkaTypes.Assignment[]) => this.rebalance(consumer, err, assignments) :
-                true,
+            "rebalance_cb": this.consumerOptions.optimizedRebalance
+                ? (err: kafkaTypes.LibrdKafkaError, assignments: kafkaTypes.Assignment[]) =>
+                    this.rebalance(consumer, err, assignments)
+                : true,
             ...this.consumerOptions.additionalOptions,
             ...this.sslOptions,
         };
 
-        consumer = this.consumer =
-            new this.kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
+        consumer = this.consumer = new this.kafka.KafkaConsumer(options, {
+            "auto.offset.reset": "latest",
+        });
 
         consumer.setDefaultConsumeTimeout(this.consumerOptions.consumeTimeout);
         consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
@@ -197,12 +207,18 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         consumer.on("rebalance", async (err, topicPartitions) => {
-            if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
-                err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-                const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
+            if (
+                err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
+                err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
+            ) {
+                const newAssignedPartitions = new Set<number>(
+                    topicPartitions.map((tp) => tp.partition),
+                );
 
-                if (newAssignedPartitions.size === this.assignedPartitions.size &&
-                    Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))) {
+                if (
+                    newAssignedPartitions.size === this.assignedPartitions.size &&
+                    Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))
+                ) {
                     // the consumer is already up to date
                     return;
                 }
@@ -214,7 +230,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
                     if (this.isRebalancing) {
                         this.isRebalancing = false;
                     } else {
-                        this.emit("rebalancing", this.getPartitions(this.assignedPartitions), err.code);
+                        this.emit(
+                            "rebalancing",
+                            this.getPartitions(this.assignedPartitions),
+                            err.code,
+                        );
                     }
                 }
 
@@ -224,8 +244,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
                 try {
                     this.isRebalancing = true;
                     const partitions = this.getPartitions(this.assignedPartitions);
-                    const partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
-                    this.emit("rebalanced", partitionsWithEpoch, err.code);
+                    this.emit("rebalanced", partitions, err.code);
 
                     // cleanup things left over from the lost partitions
                     for (const partition of originalAssignedPartitions) {
@@ -237,7 +256,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
                             const deferredCommit = this.pendingCommits.get(partition);
                             if (deferredCommit) {
                                 this.pendingCommits.delete(partition);
-                                deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
+                                deferredCommit.reject(
+                                    new Error(`Partition for commit was unassigned. ${partition}`),
+                                );
                             }
                         }
                     }
@@ -322,7 +343,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
     public async commitCheckpoint(
         partitionId: number,
         queuedMessage: IQueuedMessage,
-        retries: number = 0): Promise<void> {
+        retries: number = 0,
+    ): Promise<void> {
         const startTime = Date.now();
         try {
             if (!this.consumer) {
@@ -330,7 +352,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
             }
 
             if (this.pendingCommits.has(partitionId)) {
-                throw new Error(`There is already a pending commit for partition ${partitionId}`);
+                const pendingCommitError = new Error(
+                    `There is already a pending commit for partition ${partitionId}`,
+                );
+                pendingCommitError.name = "PendingCommitError";
+                throw pendingCommitError;
             }
 
             // this will be resolved in the "offset.commit" event
@@ -351,12 +377,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
             return result;
         } catch (ex) {
             const hasPartition = this.assignedPartitions.has(partitionId);
-            const willRetry = this.consumer?.isConnected()
-                && retries < this.consumerOptions.maxConsumerCommitRetries
-                && hasPartition;
+            const willRetry =
+                this.consumer?.isConnected() &&
+                retries < this.consumerOptions.maxConsumerCommitRetries &&
+                hasPartition;
 
             const latency = Date.now() - startTime;
-            this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry, ex);
+            this.emit(
+                "checkpoint_error",
+                partitionId,
+                queuedMessage,
+                retries,
+                latency,
+                willRetry,
+                ex,
+            );
 
             if (willRetry) {
                 return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
@@ -441,7 +476,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
      * The default node-rdkafka consumer rebalance callback with the addition
      * of continuing from the last seen offset for assignments that have not changed
      */
-    private rebalance(consumer: kafkaTypes.KafkaConsumer | undefined, err: kafkaTypes.LibrdKafkaError, assignments: kafkaTypes.Assignment[]) {
+    private rebalance(
+        consumer: kafkaTypes.KafkaConsumer | undefined,
+        err: kafkaTypes.LibrdKafkaError,
+        assignments: kafkaTypes.Assignment[],
+    ) {
         if (!consumer) {
             return;
         }
@@ -467,30 +506,5 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
                 consumer.emit("rebalance.error", ex);
             }
         }
-    }
-
-    private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
-        let epochs: number[];
-
-        if (this.zooKeeperClient) {
-            const epochsP = new Array<Promise<number>>();
-            for (const partition of partitions) {
-                epochsP.push(this.zooKeeperClient.getPartitionLeaderEpoch(this.topic, partition.partition));
-            }
-
-            epochs = await Promise.all(epochsP);
-        } else {
-            epochs = new Array(partitions.length).fill(0);
-        }
-
-        const partitionsWithEpoch: IPartitionWithEpoch[] = [];
-
-        for (let i = 0; i < partitions.length; ++i) {
-            const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
-            partitionWithEpoch.leaderEpoch = epochs[i];
-            partitionsWithEpoch.push(partitionWithEpoch);
-        }
-
-        return partitionsWithEpoch;
     }
 }

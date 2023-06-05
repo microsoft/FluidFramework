@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IHostLoader,
+	IFluidCodeDetails,
+	LoaderHeader,
+	ILoader,
+} from "@fluidframework/container-definitions";
 import {
 	ITelemetryGenericEvent,
 	ITelemetryBaseLogger,
@@ -21,7 +27,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -107,6 +112,9 @@ export interface ITestContainerConfig {
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/** Temporary flag: simulate read connection using delay connection, default is true */
+	simulateReadConnectionUsingDelay?: boolean;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -137,8 +145,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();
@@ -154,10 +161,18 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  */
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
-	/** Even if these error events are logged, tests should still be allowed to pass */
-	private readonly allowedErrors: string[] = [
+	/**
+	 * Even if these error events are logged, tests should still be allowed to pass
+	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
+	 */
+	private readonly allowedErrors: { eventName: string; downgrade?: true }[] = [
 		// This log was removed in current version as unnecessary, but it's still present in previous versions
-		"fluid:telemetry:Container:NoRealStorageInDetachedContainer",
+		{
+			eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer",
+			downgrade: true,
+		},
+		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
+		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
 	];
 
 	constructor(private readonly baseLogger: ITelemetryBaseLogger) {
@@ -207,10 +222,15 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
 			}
 		}
 		if (event.category === "error") {
-			if (this.allowedErrors.includes(event.eventName)) {
-				event.category = "generic";
-			} else {
+			// Check to see if this error is allowed and if its category should be downgraded
+			const allowedError = this.allowedErrors.find(
+				({ eventName }) => eventName === event.eventName,
+			);
+
+			if (allowedError === undefined) {
 				this.unexpectedErrors.push(event);
+			} else if (allowedError.downgrade) {
+				event.category = "generic";
 			}
 		}
 
@@ -364,10 +384,44 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return loader.resolve({
+		return this.resolveContainer(loader, requestHeader);
+	}
+
+	private async resolveContainer(
+		loader: ILoader,
+		requestHeader?: IRequestHeader,
+		delay: boolean = true,
+	) {
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
+		// to load "delayed" across the board. Remove the following code.
+		const delayConnection =
+			delay &&
+			(requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false);
+		const headers: IRequestHeader | undefined = delayConnection
+			? {
+					[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+					...requestHeader,
+			  }
+			: requestHeader;
+
+		const container = await loader.resolve({
 			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
+			headers,
 		});
+
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
+		// to load "delayed" across the board. Remove the following code.
+		if (delayConnection) {
+			// Older version may not have connect/disconnect. It was add in PR#9439, and available >= 0.59.1000
+			const maybeContainer = container as Partial<IContainer>;
+			if (maybeContainer.connect !== undefined) {
+				container.connect();
+			} else {
+				// back compat. Remove when we don't support < 0.59.1000
+				(container as any).resume();
+			}
+		}
+		return container;
 	}
 
 	/**
@@ -419,10 +473,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
-		});
+
+		const container = await this.resolveContainer(
+			loader,
+			requestHeader,
+			testContainerConfig?.simulateReadConnectionUsingDelay,
+		);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
@@ -441,10 +497,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronizedWithTimeout
-			? this._loaderContainerTracker.ensureSynchronizedWithTimeout(timeoutDuration)
-			: this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized();
 	}
 
 	public async waitContainerToCatchUp(container: IContainer) {

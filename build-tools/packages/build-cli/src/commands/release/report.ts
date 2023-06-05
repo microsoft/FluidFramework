@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { CliUx, Flags } from "@oclif/core";
+import { ux, Flags, Interfaces, Command } from "@oclif/core";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
@@ -16,6 +16,7 @@ import { Context, VersionDetails } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
+	VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
@@ -65,13 +66,17 @@ export type ReleaseSelectionMode =
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
+// type Flags<T extends typeof BaseCommand> = Interfaces.InferredFlags<
+//   typeof BaseCommand["baseFlags"] & typeof ReleaseReportBaseCommand["baseFlags"] & T["flags"]
+// >;
+
+// type Args<T extends typeof BaseCommand> = Interfaces.InferredArgs<T["args"]>;
+
 /**
  * A base class for release reporting commands. It contains some shared properties and methods and are used by
  * subclasses, which implement the individual command logic.
  */
-export abstract class ReleaseReportBaseCommand<
-	T extends typeof ReleaseReportBaseCommand.flags,
-> extends BaseCommand<T> {
+export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends BaseCommand<T> {
 	protected releaseData: PackageReleaseData | undefined;
 
 	/**
@@ -105,9 +110,10 @@ export abstract class ReleaseReportBaseCommand<
 	 * Collect release data from the repo. Subclasses should call this in their init or run methods.
 	 *
 	 * @param context - The {@link Context}.
+	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
 	 * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
 	 * group and its direct Fluid dependencies.
-	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
+	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
 	protected async collectReleaseData(
 		context: Context,
@@ -155,11 +161,11 @@ export abstract class ReleaseReportBaseCommand<
 
 		// Only start/show the spinner in non-interactive mode.
 		if (mode !== "interactive") {
-			CliUx.ux.action.start("Collecting version data from git tags");
+			ux.action.start("Collecting version data from git tags");
 		}
 
 		for (const rg of rgs) {
-			CliUx.ux.action.status = `${rg} (release group)`;
+			ux.action.status = `${rg} (release group)`;
 			// eslint-disable-next-line no-await-in-loop
 			const data = await this.collectRawReleaseData(
 				context,
@@ -176,7 +182,7 @@ export abstract class ReleaseReportBaseCommand<
 			const repoVersion = pkgVerMap?.[pkg] ?? context.fullPackageMap.get(pkg)?.version;
 			assert(repoVersion !== undefined, `version of ${pkg} is undefined.`);
 
-			CliUx.ux.action.status = `${pkg} (package)`;
+			ux.action.status = `${pkg} (package)`;
 			// eslint-disable-next-line no-await-in-loop
 			const data = await this.collectRawReleaseData(context, pkg, repoVersion, mode);
 			if (data !== undefined) {
@@ -184,7 +190,7 @@ export abstract class ReleaseReportBaseCommand<
 			}
 		}
 
-		CliUx.ux.action.stop("Done!");
+		ux.action.stop("Done!");
 		return versionData;
 	}
 
@@ -326,9 +332,9 @@ export abstract class ReleaseReportBaseCommand<
 	}
 }
 
-export default class ReleaseReportCommand<
-	T extends typeof ReleaseReportCommand.flags,
-> extends ReleaseReportBaseCommand<T> {
+export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
+	typeof ReleaseReportCommand
+> {
 	static description = `Generates a report of Fluid Framework releases.
 
     The release report command is used to produce a report of all the packages that were released and their version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
@@ -392,7 +398,7 @@ export default class ReleaseReportCommand<
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 
 		const shouldOutputFiles = flags.output !== undefined;
 		const outputPath = flags.output ?? process.cwd();
@@ -631,9 +637,10 @@ interface PackageReleaseData {
 	[packageName: string]: RawReleaseData;
 }
 
-interface RawReleaseData {
+export interface RawReleaseData {
 	repoVersion: VersionDetails;
 	latestReleasedVersion: VersionDetails;
+	latestReleaseType?: VersionBumpType;
 	previousReleasedVersion?: VersionDetails;
 	versions: readonly VersionDetails[];
 }

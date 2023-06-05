@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -25,7 +24,7 @@ import {
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
+import { IAttributionCollection } from "./attributionCollection";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -40,12 +39,12 @@ export class SnapshotV1 {
 	private readonly segments: JsonSegmentSpecs[];
 	private readonly segmentLengths: number[];
 	private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,
@@ -95,6 +94,13 @@ export class SnapshotV1 {
 			}
 			segmentCount++;
 		}
+
+		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
+		assert(
+			!hasAttribution || attributionSerializer !== undefined,
+			0x55a /* attribution serializer must be provided when there are segments with attribution. */,
+		);
+
 		return {
 			version: "1",
 			segmentCount,
@@ -103,7 +109,7 @@ export class SnapshotV1 {
 			startIndex,
 			headerMetadata: undefined,
 			attribution: hasAttribution
-				? AttributionCollection.serializeAttributionCollections(collections)
+				? attributionSerializer?.serializeAttributionCollections(collections)
 				: undefined,
 		};
 	}
@@ -190,6 +196,13 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegment) => {
 			if (segment) {
+				if (
+					segment.properties !== undefined &&
+					Object.keys(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
 				pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution);
 			}
 		};
@@ -241,6 +254,13 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
+				if (
+					segment.properties !== undefined &&
+					Object.keys(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
 				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -293,7 +313,7 @@ export class SnapshotV1 {
 	public static async loadChunk(
 		storage: IChannelStorageService,
 		path: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): Promise<MergeTreeChunkV1> {
@@ -305,7 +325,7 @@ export class SnapshotV1 {
 	public static processChunk(
 		path: string,
 		chunk: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {

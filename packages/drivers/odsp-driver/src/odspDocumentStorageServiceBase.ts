@@ -10,6 +10,7 @@ import {
 	ISummaryContext,
 	LoaderCachingPolicy,
 	FiveDaysMs,
+	FetchSource,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
@@ -188,6 +189,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		let id: string;
 		if (!version || !version.id) {
@@ -221,9 +223,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 
 	public abstract getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
+		fetchSource?: FetchSource,
 	): Promise<api.IVersion[]>;
 
 	public abstract uploadSummaryWithContext(

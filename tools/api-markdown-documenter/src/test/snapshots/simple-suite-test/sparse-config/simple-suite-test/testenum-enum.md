@@ -5,7 +5,7 @@ Test Enum
 ## Signature {#testenum-signature}
 
 ```typescript
-export declare enum TestEnum 
+export declare enum TestEnum
 ```
 
 ## Remarks {#testenum-remarks}
@@ -32,13 +32,11 @@ const bar = TestEnum.TestEnumValue2
 
 ## Flags
 
-|  Flag | Description |
-|  --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
-|  [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
-|  [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
-
-## FlagDetails
+| Flag | Description |
+| --- | --- |
+| [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+| [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+| [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
 Test enum value 1 (string)
 

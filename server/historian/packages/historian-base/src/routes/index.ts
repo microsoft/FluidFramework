@@ -4,7 +4,11 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";
@@ -21,40 +25,117 @@ import * as summaries from "./summaries";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
-    git: {
-        blobs: Router;
-        commits: Router;
-        refs: Router;
-        tags: Router;
-        trees: Router;
-    };
-    repository: {
-        commits: Router;
-        contents: Router;
-        headers: Router;
-    };
-    summaries: Router;
+	git: {
+		blobs: Router;
+		commits: Router;
+		refs: Router;
+		tags: Router;
+		trees: Router;
+	};
+	repository: {
+		commits: Router;
+		contents: Router;
+		headers: Router;
+	};
+	summaries: Router;
 }
 
 export function create(
-    config: nconf.Provider,
-    tenantService: ITenantService,
-    throttler: IThrottler,
-    cache?: ICache,
-    asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
-    return {
-        git: {
-            blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
-        },
-        repository: {
-            commits: repositoryCommits.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
-        },
-        summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
-    };
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
+): IRoutes {
+	return {
+		git: {
+			blobs: blobs.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			commits: commits.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			refs: refs.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			tags: tags.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			trees: trees.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+		},
+		repository: {
+			commits: repositoryCommits.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			contents: contents.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+			headers: headers.create(
+				config,
+				tenantService,
+				storageNameRetriever,
+				restTenantThrottlers,
+				cache,
+				asyncLocalStorage,
+				tokenRevocationManager,
+			),
+		},
+		summaries: summaries.create(
+			config,
+			tenantService,
+			storageNameRetriever,
+			restTenantThrottlers,
+			restClusterThrottlers,
+			cache,
+			asyncLocalStorage,
+			tokenRevocationManager,
+		),
+	};
 }

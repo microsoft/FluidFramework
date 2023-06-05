@@ -42,6 +42,7 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
+import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
@@ -57,6 +58,19 @@ export enum FlushMode {
 	 * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
 	 */
 	TurnBased,
+}
+
+export enum FlushModeExperimental {
+	/**
+	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+	 * batch when all micro-tasks are complete.
+	 *
+	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
+	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
+	 *
+	 * @experimental - Not ready for use
+	 */
+	Async = 2,
 }
 
 /**
@@ -214,15 +228,6 @@ export interface IContainerRuntimeBase
 }
 
 /**
- * @deprecated Used only in deprecated API bindToContext
- */
-export enum BindState {
-	NotBound = "NotBound",
-	Binding = "Binding",
-	Bound = "Bound",
-}
-
-/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
@@ -236,7 +241,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 */
 	readonly attachState: AttachState;
 
-	readonly visibilityState?: VisibilityState;
+	readonly visibilityState: VisibilityState;
 
 	/**
 	 * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
@@ -373,6 +378,7 @@ export interface IFluidDataStoreContext
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
+	readonly idCompressor?: IIdCompressor;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -469,6 +475,8 @@ export interface IFluidDataStoreContext
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 *
 	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
 	 * and its children with the GC details from the previous summary.
 	 */

@@ -17,9 +17,9 @@ import {
 	describeFullCompat,
 	describeNoCompat,
 	itExpects,
-} from "@fluidframework/test-version-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+} from "@fluid-internal/test-version-utils";
+import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
@@ -170,7 +170,7 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let dataStore: ITestFluidObject;
 	let sharedCounter: SharedCounter;
@@ -190,7 +190,7 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 				}),
 			},
 		};
-		container = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
+		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
@@ -202,11 +202,6 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 		[
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorType.dataProcessingError,
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
 				error: "RollbackError: rollback not supported",
 				errorType: ContainerErrorType.dataProcessingError,
 			},

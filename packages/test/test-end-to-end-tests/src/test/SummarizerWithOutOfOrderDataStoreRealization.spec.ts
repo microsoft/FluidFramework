@@ -18,7 +18,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { pkgVersion } from "../packageVersion";
 
@@ -148,7 +148,7 @@ async function createSummarizer(
 	container: IContainer,
 	summaryVersion?: string,
 ): Promise<ISummarizer> {
-	return createSummarizerFromFactory(
+	const createSummarizerResult = await createSummarizerFromFactory(
 		provider,
 		container,
 		dataStoreFactory1,
@@ -156,6 +156,7 @@ async function createSummarizer(
 		containerRuntimeFactoryWithDefaultDataStore,
 		registryStoreEntries,
 	);
+	return createSummarizerResult.summarizer;
 }
 
 function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {

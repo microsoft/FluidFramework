@@ -25,7 +25,6 @@ data:
             "globalDbEnabled": {{ .Values.mongodb.globalDbEnabled }},
             "expireAfterSeconds": {{ .Values.mongodb.expireAfterSeconds }},
             "createCosmosDBIndexes": {{ .Values.mongodb.createCosmosDBIndexes }},
-            "bufferMaxEntries": {{ .Values.mongodb.bufferMaxEntries }},
             "softDeletionRetentionPeriodMs": {{ .Values.mongodb.softDeletionRetentionPeriodMs }},
             "offlineWindowMs": {{ .Values.mongodb.offlineWindowMs }},
             "softDeletionEnabled": {{ .Values.mongodb.softDeletionEnabled }},
@@ -34,6 +33,7 @@ data:
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
+                "checkpoints": "checkpoints",
                 "partitions": "partitions",
                 "tenants": "tenants",
                 "nodes": "nodes",
@@ -61,49 +61,33 @@ data:
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
+        "checkpoints": {
+            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
+            },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
+            "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "restCalls": {
-                    "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.restCalls.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCalls.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCalls.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCalls.enableEnhancedTelemetry }}
+                "restCallsPerTenant": {
+                    "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
+                    "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerTenant.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getSession }}}
                 },
-                "socketConnections": {
-                    "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.socketConnections.enableEnhancedTelemetry }}
+                "restCallsPerCluster": {
+                    "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerCluster.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}}
                 },
-                "submitOps": {
-                    "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.submitOps.enableEnhancedTelemetry }}
-                },
-                "submitSignal": {
-                    "maxPerMs": {{ .Values.alfred.throttling.submitSignal.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.submitSignal.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.submitSignal.enableEnhancedTelemetry }}
-                }
+                "socketConnectionsPerTenant": {{ toJson .Values.alfred.throttling.socketConnectionsPerTenant }},
+                "socketConnectionsPerCluster": {{ toJson .Values.alfred.throttling.socketConnectionsPerCluster }},
+                "submitOps": {{ toJson .Values.alfred.throttling.submitOps }},
+                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}}
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
@@ -134,9 +118,16 @@ data:
                 "send": "{{ .Values.kafka.topics.deltas }}"
             },
             "kafkaClientId": "{{ template "deli.fullname" . }}",
+            "checkpointHeuristics": {
+                "enable": {{ .Values.deli.checkpointHeuristics.enable }},
+                "idleTime": {{ .Values.deli.checkpointHeuristics.idleTime }},
+                "maxTime": {{ .Values.deli.checkpointHeuristics.maxTime }},
+                "maxMessages": {{ .Values.deli.checkpointHeuristics.maxMessages }}
+            },
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
-            "checkpointTimeIntervalMsec": 1000
+            "checkpointTimeIntervalMsec": 1000,
+            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }}
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",
@@ -145,7 +136,11 @@ data:
                 "idleTime": {{ .Values.scribe.checkpointHeuristics.idleTime }},
                 "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
-            }
+            },
+            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
+            "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
         },
         "system": {
             "httpServer": {
@@ -158,6 +153,9 @@ data:
         "usage": {
             "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
+        },
+        "shared": {
+            "transientTenants": {{ toJson .Values.shared.transientTenants }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",
@@ -176,10 +174,6 @@ data:
             "scribe": {
                 "group": "{{ template "scribe.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
-            },
-            "foreman": {
-                "group": "{{ template "foreman.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
         "scriptorium": {
@@ -187,19 +181,8 @@ data:
             "kafkaClientId": "{{ template "scriptorium.fullname" . }}",
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
-            "checkpointTimeIntervalMsec": 1000
-        },
-        "foreman": {
-            "alfred": "http://{{ template "alfred.fullname" . }}",
-            "topic": "{{ .Values.kafka.topics.deltas }}",
-            "kafkaClientId": "{{ template "foreman.fullname" . }}",
-            "groupId": "{{ template "foreman.fullname" . }}",
-            "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-            "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-                "augloopQueue": ["augmentation"],
-                "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
-            }
+            "checkpointTimeIntervalMsec": 1000,
+            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
         },
         "paparazzi": {
             "queue": "paparazziQueue"

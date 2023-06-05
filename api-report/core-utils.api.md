@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
 // (No @packageDocumentation comment for this package)

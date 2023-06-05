@@ -4,6 +4,12 @@
  */
 
 import {
+	booleanCases,
+	generatePairwiseOptions,
+	OptionsMatrix,
+	numberCases,
+} from "@fluid-internal/test-pairwise-generator";
+import {
 	OdspDocumentServiceFactory,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
@@ -15,12 +21,6 @@ import {
 	IOpsCachingPolicy,
 	ICollabSessionOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import {
-	booleanCases,
-	generatePairwiseOptions,
-	OptionsMatrix,
-	numberCases,
-} from "@fluidframework/test-pairwise-generator";
 import { pkgVersion } from "./packageVersion";
 
 export const OdspDriverApi = {
@@ -66,6 +66,7 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		isolateSocketCache: [true],
 		enableShareLinkWithCreate: [false],
 		enableSingleRequestForShareLinkWithCreate: [false],
+		avoidPrefetchSnapshotCache: booleanCases,
 	};
 	return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

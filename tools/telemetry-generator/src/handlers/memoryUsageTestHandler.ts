@@ -4,6 +4,12 @@
  */
 
 module.exports = function handler(fileData, logger) {
+	if (process.env.FLUID_ENDPOINTNAME !== undefined) {
+		console.log("ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
+	} else {
+		console.log("ENDPOINTNAME not defined using local as default.");
+	}
+
 	fileData.tests.forEach((testData) => {
 		logger.send({
 			category: "performance",
@@ -11,8 +17,9 @@ module.exports = function handler(fileData, logger) {
 			benchmarkType: "MemoryUsage",
 			suiteName: fileData.suiteName,
 			testName: testData.testName,
-			heapUsedAvg: testData.testData.stats.mean,
-			heapUsedStdDev: testData.testData.stats.deviation,
+			heapUsedAvg: testData.testData.stats.arithmeticMean,
+			heapUsedStdDev: testData.testData.stats.standardDeviation,
+			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	});
 };

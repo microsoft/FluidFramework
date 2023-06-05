@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
 
@@ -71,9 +72,11 @@ const endBatchEmptyMessage: ISequencedDocumentMessage = {
 };
 
 describe("OpDecompressor", () => {
+	const mockLogger = new MockLogger();
 	let decompressor: OpDecompressor;
 	beforeEach(() => {
-		decompressor = new OpDecompressor();
+		mockLogger.clear();
+		decompressor = new OpDecompressor(mockLogger);
 	});
 
 	it("Processes single compressed op", () => {
@@ -82,6 +85,25 @@ describe("OpDecompressor", () => {
 		assert.strictEqual(result.message.contents.contents, "value0");
 		assert.strictEqual(result.message.metadata?.compressed, undefined);
 		assert.strictEqual(result.message.compression, undefined);
+	});
+
+	// Back-compat self healing mechanism for ADO:3538
+	it("Processes single compressed op without compression markers", () => {
+		const result = decompressor.processMessage({
+			...generateCompressedBatchMessage(1),
+			compression: undefined,
+		});
+		assert.equal(result.state, "Processed");
+		assert.strictEqual(result.message.contents.contents, "value0");
+		assert.strictEqual(result.message.metadata?.compressed, undefined);
+		assert.strictEqual(result.message.compression, undefined);
+
+		mockLogger.assertMatch([
+			{
+				eventName: "OpDecompressor:LegacyCompression",
+				category: "generic",
+			},
+		]);
 	});
 
 	it("Expecting only lz4 compression", () => {
@@ -159,14 +181,67 @@ describe("OpDecompressor", () => {
 	});
 
 	it("Ignores ops without compression", () => {
-		const rootMessage = {
-			...generateCompressedBatchMessage(5),
-			metadata: undefined,
-			compression: undefined,
-		};
-		const firstMessageResult = decompressor.processMessage(rootMessage);
+		const rootMessages = [
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				// the message should have a `packedContents` property.
+				contents: { some: "contents" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				contents: { packedContents: "packedContents is not base64 encoded" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				contents: { packedContents: "YmFzZTY0IGNvbnRlbnQ=", some: "contents" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+		];
 
-		assert.equal(firstMessageResult.state, "Skipped");
-		assert.deepStrictEqual(firstMessageResult.message, rootMessage);
+		for (const rootMessage of rootMessages) {
+			const firstMessageResult = decompressor.processMessage(
+				rootMessage as ISequencedDocumentMessage,
+			);
+
+			assert.equal(firstMessageResult.state, "Skipped");
+			assert.deepStrictEqual(firstMessageResult.message, rootMessage);
+		}
 	});
 });

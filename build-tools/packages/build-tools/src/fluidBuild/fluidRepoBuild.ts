@@ -5,6 +5,7 @@
 import * as path from "path";
 
 import { FluidRepo } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepoKind } from "../common/monoRepo";
 import { MonoRepo } from "../common/monoRepo";
@@ -15,7 +16,7 @@ import { FluidPackageCheck } from "./fluidPackageCheck";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 
-const { verbose } = defaultLogger;
+const { log, verbose } = defaultLogger;
 
 export interface IPackageMatchedOptions {
 	match: string[];
@@ -74,12 +75,34 @@ export class FluidRepoBuild extends FluidRepo {
 				});
 				if (!pkgDir) {
 					throw new Error(
-						"Directory specified in --dir is not a package. package.json not found.",
+						`Path specified '${arg}' is not a package. package.json not found.`,
 					);
 				}
+
+				let matchedMonoRepo = false;
+				for (const monoRepo of this.releaseGroups.values()) {
+					if (isSameFileOrDir(monoRepo.repoPath, pkgDir)) {
+						log(`Release group matched: ${arg} => ${monoRepo.kind}`);
+						if (
+							!this.matchWithFilter((pkg) => MonoRepo.isSame(pkg.monoRepo, monoRepo))
+						) {
+							throw new Error(
+								`Release group path specified '${arg}' does not have any packages`,
+							);
+						}
+						matched = true;
+						matchedMonoRepo = true;
+						break;
+					}
+				}
+
+				if (matchedMonoRepo) {
+					return;
+				}
+
 				if (!this.matchWithFilter((pkg) => isSameFileOrDir(pkg.directory, pkgDir))) {
 					throw new Error(
-						`Directory specified in --dir is not in a Fluid repo. ${arg} -> ${path.join(
+						`Path specified '${arg}' is not a package in a Fluid repo. ${arg} -> ${path.join(
 							pkgDir,
 							"package.json",
 						)}`,
@@ -116,7 +139,12 @@ export class FluidRepoBuild extends FluidRepo {
 
 	public async checkPackages(fix: boolean) {
 		for (const pkg of this.packages.packages) {
+			if (!pkg.matched) {
+				// Only check package that matched to build
+				continue;
+			}
 			// TODO: Make this configurable and/or teach fluid-build about new scripts
+
 			if (uncheckedPackages.includes(pkg.name)) {
 				verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
 				continue;
@@ -164,12 +192,17 @@ export class FluidRepoBuild extends FluidRepo {
 		);
 	}
 
-	public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
-		return new BuildGraph(this.packages.packages, buildScriptNames, (pkg: Package) => {
-			return (dep: Package) => {
-				return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
-			};
-		});
+	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+		return new BuildGraph(
+			this.createPackageMap(),
+			buildTargetNames,
+			getFluidBuildConfig(this.resolvedRoot)?.tasks,
+			(pkg: Package) => {
+				return (dep: Package) => {
+					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+				};
+			},
+		);
 	}
 
 	private matchWithFilter(callback: (pkg: Package) => boolean) {

@@ -5,7 +5,7 @@
 		"module": "esnext",
 		"outDir": "lib",
 		"jsx": "react",
-		"types": [],
+		"types": ["react"],
 	},
 	"include": ["src/**/*"],
 }

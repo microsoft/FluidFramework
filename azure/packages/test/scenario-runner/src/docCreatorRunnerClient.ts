@@ -4,13 +4,12 @@
  */
 import commander from "commander";
 
-import { ConnectionState } from "fluid-framework";
-
 import { AzureClient } from "@fluidframework/azure-client";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerFactorySchema } from "./interface";
 import { getLogger, loggerP } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
@@ -52,6 +51,7 @@ export interface DocCreatorRunnerConfig {
 	childId: number;
 	connType: string;
 	connEndpoint: string;
+	region?: string;
 }
 
 async function main() {
@@ -73,6 +73,7 @@ async function main() {
 		.option("-tk, --tenantKey <tenantKey>", "Tenant Key")
 		.option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
 		.option("-st, --secureTokenProvider", "Enable use of secure token provider")
+		.option("-rg, --region <region>", "Alias of Azure region where the tenant is running from")
 		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -91,6 +92,7 @@ async function main() {
 		functionUrl:
 			commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
 		secureTokenProvider: commander.secureTokenProvider,
+		region: commander.region ?? process.env.azure__fluid__relay__service__region,
 	};
 
 	if (commander.log !== undefined) {
@@ -102,6 +104,7 @@ async function main() {
 			runId: config.runId,
 			scenarioName: config.scenarioName,
 			endpoint: config.connEndpoint,
+			region: config.region,
 		},
 		["scenario:runner"],
 		eventMap,
@@ -131,6 +134,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
 			scenarioName: config.scenarioName,
 			namespace: "scenario:runner:DocCreator",
 			endpoint: config.connEndpoint,
+			region: config.region,
 		},
 		["scenario:runner"],
 		eventMap,

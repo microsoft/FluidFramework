@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import path from "path";
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
 
-import { LayerGraph, Timer, writeFileAsync } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import { LayerGraph, Timer } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 
 const packagesMdFileName = "PACKAGES.md";
 
-export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
+export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 	static description =
 		"Checks that the dependencies between Fluid Framework packages are properly layered.";
 
@@ -37,7 +38,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
 	};
 
 	async run() {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const timer = new Timer(flags.timer);
 
 		const context = await this.getContext();
@@ -57,7 +58,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
 				flags.md,
 				packagesMdFileName,
 			);
-			await writeFileAsync(
+			await writeFile(
 				packagesMdFilePath,
 				layerGraph.generatePackageLayersMarkdown(resolvedRoot),
 			);
@@ -65,7 +66,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
 
 		// Write machine-readable dot file used to render a dependency graph
 		if (flags.dot !== undefined) {
-			await writeFileAsync(flags.dot, layerGraph.generateDotGraph());
+			await writeFile(flags.dot, layerGraph.generateDotGraph());
 		}
 
 		const success: boolean = layerGraph.verify();

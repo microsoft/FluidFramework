@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -24,16 +24,14 @@ import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definition
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	wrapDocumentServiceFactory,
-	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -116,7 +114,7 @@ class ControlledCancellationToken implements ISummaryCancellationToken {
 async function submitFailingSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
 	fullTree: boolean = false,
 ) {
@@ -148,7 +146,7 @@ async function submitFailingSummary(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -218,13 +216,8 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	const isTreeHandle = true;
 	const isTree = false;
 
-	const settings = {
-		"Fluid.GarbageCollection.TrackGCState": "true",
-	};
-	const configProvider = mockConfigProvider(settings);
-
 	const createContainer = async (): Promise<IContainer> => {
-		return provider.createContainer(runtimeFactory, { configProvider });
+		return provider.createContainer(runtimeFactory);
 	};
 
 	const getNewSummarizer = async (summaryVersion?: string) => {
@@ -233,7 +226,6 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 			runtimeFactory,
 			mainContainer.deltaManager.lastSequenceNumber,
 			summaryVersion,
-			{ configProvider },
 		);
 	};
 

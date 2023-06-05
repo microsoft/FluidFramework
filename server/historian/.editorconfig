@@ -9,11 +9,6 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# C-style doc comments
-block_comment_start = /*
-block_comment = *
-block_comment_end = */
-
 [*.{js,jsx,ts,tsx}]
 indent_size = 4
 

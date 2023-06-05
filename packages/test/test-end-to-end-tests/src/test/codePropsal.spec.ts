@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -137,15 +137,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 				error: "Existing context does not satisfy incoming proposal",
 			},
 			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "Existing context does not satisfy incoming proposal",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Existing context does not satisfy incoming proposal",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
 				error: "Existing context does not satisfy incoming proposal",
 			},
 		],

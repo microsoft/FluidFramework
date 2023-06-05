@@ -1,0 +1,5 @@
+{
+	"tags": ["shared-tree-core"],
+	"exports": ["index"],
+	"imports": ["codec", "core", "events", "util", "rebase"]
+}

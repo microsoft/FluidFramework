@@ -1,0 +1,100 @@
+name: "pr-check-changeset"
+
+# This workflow checks PRs for the presence of a new changeset file. When a PR is opened, it will be checked for a
+# changeset. The results of the check are uploaded as a pipeline artifact. After this workflow is completed it triggers
+# the changeset-reporter workflow, which adds a comment to the PR depending on the results of the check.
+#
+# The workflows are separated for security reasons. This workflow does not require write access to the repo, but the
+# changeset-reporter workflow does.
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, synchronize, reopened]
+
+jobs:
+  # When a PR has the changeset-required label, check if it has a changeset.
+  changeset-required:
+    name: Changeset required
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }} # Check out the head commit, not the merge commit
+
+      # install and configure node, pnpm and the changeset tools
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install tools
+        run: |
+          # We only need to install the root dependencies
+          pnpm install -w --frozen-lockfile
+
+      # Add the remote in forked repos so we can more easily test in forks
+      - run: git remote add upstream https://github.com/microsoft/FluidFramework
+        if: github.repository_owner != 'microsoft'
+      - run: git fetch upstream
+        if: github.repository_owner != 'microsoft'
+      - run: git log -1
+        if: github.repository_owner != 'microsoft'
+
+      # Check whether a changeset was added. This step will have the outcome '1' if there is no changeset.
+      - name: Changeset metadata
+        run: |
+          # JSON output is piped through jq to compact it to a single line
+          pnpm exec flub check changeset --branch=${{ github.base_ref }} --json | jq -c > changeset-metadata.json
+
+      # We save the PR number because downstream pipelines are triggered by workflow_run, and the PR number is not easily
+      # retrievable in such workflows
+      - name: Add PR number to metadata
+        run: |
+          echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
+
+      # Sets required = true/false based on the changeset-required label on the PR
+      - name: Changeset required
+        if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        run: |
+          echo $(jq -c '. += {required: true}' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Changeset not required
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
+        run: |
+          echo $(jq -c '. += {required: false}' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Upload changeset metadata
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        with:
+          name: changeset-metadata
+          path: ./changeset-metadata.json
+          retention-days: 3
+
+  # Any PR without the changeset-required label will be ignored.
+  changeset-not-required:
+    name: Changeset not required
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
+    steps:
+      # Always output changesetFound = true and required = false to signal that changesets aren't needed. changesetFound
+      # must be set because it's not nullable.
+      - name: Changeset metadata
+        run: |
+          echo "{\"branch\": \"${{ github.base_ref }}\", \"required\": false, \"changesetFound\": true}" > ./changeset-metadata.json
+
+      # We save the PR number because downstream pipelines are triggered by workflow_run, and the PR number is not easily
+      # retrievable in such workflows
+      - name: Add PR number to metadata
+        run: |
+          echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Upload changeset metadata
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        with:
+          name: changeset-metadata
+          path: ./changeset-metadata.json
+          retention-days: 3

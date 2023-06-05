@@ -20,7 +20,6 @@ import { FileDocumentService } from "./fileDocumentService";
  * use the local file storage as underlying storage.
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
-	public readonly protocolName = "fluid-file:";
 	constructor(
 		private readonly storage: IDocumentStorageService,
 		private readonly deltaStorage: FileDeltaStorageService,
@@ -34,11 +33,16 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @returns file document service.
 	 */
 	public async createDocumentService(
-		fileURL: IResolvedUrl,
+		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
+		return new FileDocumentService(
+			resolvedUrl,
+			this.storage,
+			this.deltaStorage,
+			this.deltaConnection,
+		);
 	}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.

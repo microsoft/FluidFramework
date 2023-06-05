@@ -5,6 +5,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { UsageError } from "@fluidframework/container-utils";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
@@ -20,6 +21,7 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -129,7 +131,9 @@ export class AgentScheduler
 	public async register(...taskUrls: string[]): Promise<void> {
 		for (const taskUrl of taskUrls) {
 			if (this.registeredTasks.has(taskUrl)) {
-				throw new Error(`${taskUrl} is already registered`);
+				throw new UsageError(`Task is already registered`, {
+					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
+				});
 			}
 		}
 		const unregisteredTasks: string[] = [];
@@ -146,7 +150,9 @@ export class AgentScheduler
 
 	public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
 		if (this.locallyRunnableTasks.has(taskId)) {
-			throw new Error(`${taskId} is already attempted`);
+			throw new UsageError(`Task is already attempted`, {
+				taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskId },
+			});
 		}
 		this.locallyRunnableTasks.set(taskId, worker);
 
@@ -171,13 +177,29 @@ export class AgentScheduler
 		const active = this.isActive();
 		for (const taskUrl of taskUrls) {
 			if (!this.locallyRunnableTasks.has(taskUrl)) {
-				throw new Error(`${taskUrl} was never registered`);
+				throw new UsageError(`Task was never registered`, {
+					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
+				});
 			}
-			// Note - the assumption is - we are connected.
-			// If not - all tasks should have been dropped already on disconnect / attachment
+			if (!this.runningTasks.has(taskUrl)) {
+				// If we got disconnected (and are attached), tasks that we WERE picked for at the time of disconnect
+				// will still show us as holding the task according to getTaskClientId (the CRC is stale), but we
+				// should not try to release because our disconnect will already result in either someone else or
+				// ourselves clearing the task upon reconnect.
+				// This UsageError is to enforce that the caller should check AgentScheduler.pickedTasks before trying
+				// to release a task.
+				throw new UsageError(`Task is not currently picked`, {
+					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
+				});
+			}
+			// We may only release tasks that we KNOW we hold (detached state or connected and own the CRC).  If we're
+			// attached+disconnected then we'll lose the task automatically, and so may not release manually (someone
+			// else might hold it by the time we reconnect)
 			assert(active, 0x119 /* "This agent became inactive while releasing" */);
 			if (this.getTaskClientId(taskUrl) !== this.clientId) {
-				throw new Error(`${taskUrl} was never picked`);
+				throw new UsageError(`Task was never picked`, {
+					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
+				});
 			}
 		}
 		return this.releaseCore([...taskUrls]);

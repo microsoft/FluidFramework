@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -22,7 +22,6 @@ import {
 	IMergeTreeDeltaOp,
 	IMergeTreeGroupMsg,
 	IMergeTreeOp,
-	IMergeTreeOptions,
 	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	ISegment,
@@ -36,6 +35,7 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -49,9 +49,10 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
+	IIntervalCollection,
 	IntervalCollection,
 	SequenceInterval,
 	SequenceIntervalCollectionValueType,
@@ -197,22 +198,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
-		const mergeTreeOptions = {
-			...(dataStoreRuntime.options as IMergeTreeOptions),
-		};
-
-		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
-			"Fluid.Attribution.EnableOnNewFile",
-		);
-		if (configSetAttribution !== undefined) {
-			mergeTreeOptions.attribution ??= {};
-			mergeTreeOptions.attribution.track = configSetAttribution;
-		}
-
 		this.client = new Client(
 			segmentFromSpec,
 			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-			mergeTreeOptions,
+			dataStoreRuntime.options,
 		);
 
 		this.client.on("delta", (opArgs, deltaArgs) => {
@@ -232,6 +221,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -320,8 +310,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		return this.client.createLocalReferencePosition(segment, offset, refType, properties);
+		return this.client.createLocalReferencePosition(
+			segment,
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+		);
 	}
 
 	/**
@@ -455,7 +452,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}
 
@@ -647,7 +644,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			const handled = this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,

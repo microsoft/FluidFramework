@@ -3,23 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	loggerToMonitoringContext,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager } from "./batchManager";
+import {
+	BatchManager,
+	BatchSequenceNumbers,
+	estimateSocketSize,
+	sequenceNumbersMatch,
+} from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
-	readonly enableOpReentryCheck?: boolean;
+	readonly disablePartialFlush: boolean;
 }
 
 export interface IOutboxParameters {
@@ -29,15 +40,41 @@ export interface IOutboxParameters {
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
+	readonly groupingManager: OpGroupingManager;
+	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
+}
+
+function getLongStack(action: () => Error): Error {
+	// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+	try {
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		(Error as any).stackTraceLimit = 50;
+		const result = action();
+		(Error as any).stackTraceLimit = originalStackTraceLimit;
+		return result;
+	} catch (error) {
+		return action();
+	}
 }
 
 export class Outbox {
+	private readonly mc: MonitoringContext;
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
-	private readonly defaultAttachFlowSoftLimitInBytes = 64 * 1024;
+	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
+
+	/**
+	 * Track the number of ops which were detected to have a mismatched
+	 * reference sequence number, in order to self-throttle the telemetry events.
+	 *
+	 * This should be removed as part of ADO:2322
+	 */
+	private readonly maxMismatchedOpsToReport = 3;
+	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
+		this.mc = loggerToMonitoringContext(ChildLogger.create(params.logger, "Outbox"));
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
@@ -45,29 +82,69 @@ export class Outbox {
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 		const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
-		this.attachFlowBatch = new BatchManager(
-			{
-				hardLimit,
-				softLimit,
-				enableOpReentryCheck: params.config.enableOpReentryCheck,
-			},
-			params.logger,
-		);
-		this.mainBatch = new BatchManager(
-			{
-				hardLimit,
-				enableOpReentryCheck: params.config.enableOpReentryCheck,
-			},
-			params.logger,
-		);
+		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
+		this.mainBatch = new BatchManager({ hardLimit });
 	}
 
 	public get isEmpty(): boolean {
 		return this.attachFlowBatch.length === 0 && this.mainBatch.length === 0;
 	}
 
+	/**
+	 * If we detect that the reference sequence number of the incoming message does not match
+	 * what was already in the batch managers, this means that batching has been interrupted so
+	 * we will flush the accumulated messages to account for that and create a new batch with the new
+	 * message as the first message.
+	 */
+	private maybeFlushPartialBatch() {
+		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
+		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
+		assert(
+			this.params.config.disablePartialFlush ||
+				sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums),
+			0x58d /* Reference sequence numbers from both batches must be in sync */,
+		);
+
+		const currentSequenceNumbers = this.params.getCurrentSequenceNumbers();
+
+		if (
+			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers)
+		) {
+			// The reference sequence numbers are stable, there is nothing to do
+			return;
+		}
+
+		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
+			this.mc.logger.sendTelemetryEvent(
+				{
+					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					eventName: "ReferenceSequenceNumberMismatch",
+					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
+					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
+					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
+					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
+					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+				},
+				getLongStack(() => new UsageError("Submission of an out of order message")),
+			);
+		}
+
+		if (!this.params.config.disablePartialFlush) {
+			this.flush();
+		}
+	}
+
 	public submit(message: BatchMessage) {
-		if (!this.mainBatch.push(message)) {
+		this.maybeFlushPartialBatch();
+
+		if (
+			!this.mainBatch.push(
+				message,
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				opSize: message.contents?.length ?? 0,
 				batchSize: this.mainBatch.contentSizeInBytes,
@@ -78,12 +155,24 @@ export class Outbox {
 	}
 
 	public submitAttach(message: BatchMessage) {
-		if (!this.attachFlowBatch.push(message)) {
+		this.maybeFlushPartialBatch();
+
+		if (
+			!this.attachFlowBatch.push(
+				message,
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
 			this.flushInternal(this.attachFlowBatch.popBatch());
-			if (!this.attachFlowBatch.push(message)) {
+			if (
+				!this.attachFlowBatch.push(
+					message,
+					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+				)
+			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
 					opSize: message.contents?.length ?? 0,
 					batchSize: this.attachFlowBatch.contentSizeInBytes,
@@ -113,71 +202,85 @@ export class Outbox {
 
 	private flushInternal(rawBatch: IBatch) {
 		const processedBatch = this.compressBatch(rawBatch);
-		const clientSequenceNumber = this.sendBatch(processedBatch);
+		this.sendBatch(processedBatch);
 
-		this.persistBatch(clientSequenceNumber, rawBatch.content);
+		this.persistBatch(rawBatch.content);
 	}
 
 	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
-			this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes
+			this.params.config.compressionOptions.minimumBatchSizeInBytes >
+				batch.contentSizeInBytes ||
+			this.params.containerContext.submitBatchFn === undefined
 		) {
-			// Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
-			return batch;
+			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
+			return this.params.groupingManager.groupBatch(batch);
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(batch);
-		if (compressedBatch.contentSizeInBytes <= this.params.config.maxBatchSizeInBytes) {
-			// If we don't reach the maximum supported size of a batch, it can safely be sent as is
-			return compressedBatch;
-		}
+		const compressedBatch = this.params.compressor.compressBatch(
+			this.params.groupingManager.groupBatch(batch),
+		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
-			return this.params.splitter.splitCompressedBatch(compressedBatch);
+			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
+				? compressedBatch
+				: this.params.splitter.splitFirstBatchMessage(compressedBatch);
 		}
 
-		// If we've reached this point, the runtime would attempt to send a batch larger than the allowed size
-		throw new GenericError("BatchTooLarge", /* error */ undefined, {
-			batchSize: batch.contentSizeInBytes,
-			compressedBatchSize: compressedBatch.contentSizeInBytes,
-			count: compressedBatch.content.length,
-			limit: this.params.config.maxBatchSizeInBytes,
-			chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-			compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-		});
+		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				batchSize: batch.contentSizeInBytes,
+				compressedBatchSize: compressedBatch.contentSizeInBytes,
+				count: compressedBatch.content.length,
+				limit: this.params.config.maxBatchSizeInBytes,
+				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+				socketSize: estimateSocketSize(batch),
+			});
+		}
+
+		return compressedBatch;
 	}
 
 	/**
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
 	 * @param batch - batch to be sent
-	 * @returns the client sequence number of the last batched op which was sent and
-	 * -1 if there are no ops or the container cannot send ops.
 	 */
-	private sendBatch(batch: IBatch): number {
-		let clientSequenceNumber: number = -1;
+	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
 
 		// Did we disconnect in the middle of turn-based batch?
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		if (length === 0 || !this.params.shouldSend()) {
-			return clientSequenceNumber;
+			return;
+		}
+
+		const socketSize = estimateSocketSize(batch);
+		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
+			this.mc.logger.sendPerformanceEvent({
+				eventName: "LargeBatch",
+				length: batch.content.length,
+				sizeInBytes: batch.contentSizeInBytes,
+				socketSize,
+			});
 		}
 
 		if (this.params.containerContext.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
-			for (const message of batch.content) {
-				// Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
-				if (message.metadata?.compressed) {
-					delete message.metadata.compressed;
-				}
+			assert(
+				batch.content[0].compression === undefined,
+				0x5a6 /* Compression should not have happened if the loader does not support it */,
+			);
 
-				clientSequenceNumber = this.params.containerContext.submitFn(
+			for (const message of batch.content) {
+				this.params.containerContext.submitFn(
 					MessageType.Operation,
-					message.deserializedContent,
+					// For back-compat (submitFn only works on deserialized content)
+					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
 				);
@@ -185,37 +288,33 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
-			// returns clientSequenceNumber of last message in a batch
-			clientSequenceNumber = this.params.containerContext.submitBatchFn(
+			assert(
+				batch.referenceSequenceNumber !== undefined,
+				0x58e /* Batch must not be empty */,
+			);
+			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
 					compression: message.compression,
+					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
+				batch.referenceSequenceNumber,
 			);
 		}
-
-		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-		clientSequenceNumber -= length - 1;
-		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-		return clientSequenceNumber;
 	}
 
-	private persistBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
-		let clientSequenceNumber = initialClientSequenceNumber;
+	private persistBatch(batch: BatchMessage[]) {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
-				message.deserializedContent.type,
-				clientSequenceNumber,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
 				message.referenceSequenceNumber,
-				message.deserializedContent.contents,
 				message.localOpMetadata,
 				message.metadata,
 			);
-
-			clientSequenceNumber++;
 		}
 	}
 

@@ -21,8 +21,15 @@ import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService } from "./services";
+import {
+    DeltaService,
+    StorageNameAllocator,
+    IDocumentDeleteService,
+    DocumentDeleteService,
+} from "./services";
+import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -47,8 +54,7 @@ export class OrdererManager implements core.IOrdererManager {
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
         private readonly kafkaFactory: KafkaOrdererFactory,
-    ) {
-    }
+    ) {}
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -85,8 +91,10 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restTenantThrottlers: Map<string, core.IThrottler>,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -97,9 +105,13 @@ export class AlfredResources implements core.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
-        public documentsCollection: core.ICollection<core.IDocument>,
+        public documentRepository: core.IDocumentRepository,
+        public documentDeleteService: IDocumentDeleteService,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
+        public redisCache?: core.ICache,
+        public socketTracker?: core.IWebSocketTracker,
+        public tokenManager?: core.ITokenRevocationManager,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -108,18 +120,23 @@ export class AlfredResources implements core.IResources {
             this.redisConfig,
             socketIoAdapterConfig,
             httpServerConfig,
-            socketIoConfig);
+            socketIoConfig,
+        );
     }
 
     public async dispose(): Promise<void> {
         const producerClosedP = this.producer.close();
         const mongoClosedP = this.mongoManager.close();
-        await Promise.all([producerClosedP, mongoClosedP]);
+        const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
+        await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
     }
 }
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
-    public async create(config: Provider): Promise<AlfredResources> {
+    public async create(
+        config: Provider,
+        customizations?: IAlfredResourcesCustomizations,
+    ): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
@@ -144,7 +161,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaReplicationFactor,
             kafkaMaxBatchSize,
             kafkaSslCACertFilePath,
-            eventHubConnString);
+            eventHubConnString,
+        );
 
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
@@ -184,6 +202,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         // Database connection for operations db
         const operationsDbMongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
+        const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
         // Create the index on the documents collection
         const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
@@ -194,14 +213,36 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 documentId: 1,
                 tenantId: 1,
             },
-            true);
+            true,
+        );
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
         const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
+
+        // Setup for checkpoint collection
+        const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
+        const operationsDb = await operationsDbMongoManager.getDatabase();
+        const checkpointsCollection =
+            operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+        await checkpointsCollection.createIndex(
+            {
+                documentId: 1,
+            },
+            true,
+        );
+        await checkpointsCollection.createIndex(
+            {
+                tenantId: 1,
+            },
+            false,
+        );
 
         // Foreman agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
         const foremanConfig = config.get("foreman");
-        const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
+        const taskMessageSender = services.createMessageSender(
+            config.get("rabbitmq"),
+            foremanConfig,
+        );
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
@@ -210,7 +251,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const reservationManager = new ReservationManager(
             nodeManager,
             operationsDbMongoManager,
-            config.get("mongo:collectionNames:reservations"));
+            config.get("mongo:collectionNames:reservations"),
+        );
 
         const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
         const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
@@ -228,23 +270,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             };
         }
         const redisParamsForThrottling = {
-            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
+                | number
+                | undefined,
         };
 
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
         const redisThrottleAndUsageStorageManager =
-            new services.RedisThrottleAndUsageStorageManager(redisClientForThrottling, redisParamsForThrottling);
+            new services.RedisThrottleAndUsageStorageManager(
+                redisClientForThrottling,
+                redisParamsForThrottling,
+            );
 
-        interface IThrottleConfig {
-            maxPerMs: number;
-            maxBurst: number;
-            minCooldownIntervalInMs: number;
-            minThrottleIntervalInMs: number;
-            maxInMemoryCacheSize: number;
-            maxInMemoryCacheAgeInMs: number;
-            enableEnhancedTelemetry?: boolean;
-        }
-        const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
+        const configureThrottler = (
+            throttleConfig: Partial<utils.IThrottleConfig>,
+        ): core.IThrottler => {
             const throttlerHelper = new services.ThrottlerHelper(
                 redisThrottleAndUsageStorageManager,
                 throttleConfig.maxPerMs,
@@ -261,25 +301,111 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             );
         };
 
-        // Rest API Throttler
-        const restApiThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCalls") ?? {};
-        const restThrottler = configureThrottler(restApiThrottleConfig);
+        // Per-tenant Rest API Throttlers
+        const restApiTenantThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerTenant:generalRestCall"),
+        );
+        const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+
+        const restApiTenantCreateDocThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerTenant:createDoc"),
+        );
+        const restTenantCreateDocThrottler = configureThrottler(
+            restApiTenantCreateDocThrottleConfig,
+        );
+
+        const restApiTenantGetDeltasThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerTenant:getDeltas"),
+        );
+        const restTenantGetDeltasThrottler = configureThrottler(
+            restApiTenantGetDeltasThrottleConfig,
+        );
+
+        const restApiTenantGetSessionThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerTenant:getSession"),
+        );
+        const restTenantGetSessionThrottler = configureThrottler(
+            restApiTenantGetSessionThrottleConfig,
+        );
+
+        const restTenantThrottlers = new Map<string, core.IThrottler>();
+        restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
+        restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
+        restTenantThrottlers.set(
+            Constants.getSessionThrottleIdPrefix,
+            restTenantGetSessionThrottler,
+        );
+        restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
+
+        // Per-cluster Rest API Throttlers
+        const restApiCreateDocThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerCluster:createDoc"),
+        );
+        const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
+
+        const restApiGetDeltasThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerCluster:getDeltas"),
+        );
+        const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
+
+        const restApiGetSessionThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:restCallsPerCluster:getSession"),
+        );
+        const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
+
+        const restClusterThrottlers = new Map<string, core.IThrottler>();
+        restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+        restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
+        restClusterThrottlers.set(Constants.getSessionThrottleIdPrefix, restGetSessionThrottler);
 
         // Socket Connection Throttler
-        const socketConnectionThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:socketConnections") ?? {};
-        const socketConnectThrottler = configureThrottler(socketConnectionThrottleConfig);
+        const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
+            config.get("alfred:throttling:socketConnectionsPerTenant"),
+        );
+        const socketConnectTenantThrottler = configureThrottler(
+            socketConnectionThrottleConfigPerTenant,
+        );
+
+        const socketConnectionThrottleConfigPerCluster = utils.getThrottleConfig(
+            config.get("alfred:throttling:socketConnectionsPerCluster"),
+        );
+        const socketConnectClusterThrottler = configureThrottler(
+            socketConnectionThrottleConfigPerCluster,
+        );
 
         // Socket SubmitOp Throttler
-        const submitOpThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:submitOps") ?? {};
+        const submitOpThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:submitOps"),
+        );
         const socketSubmitOpThrottler = configureThrottler(submitOpThrottleConfig);
 
         // Socket SubmitSignal Throttler
-        const submitSignalThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:submitSignals") ?? {};
+        const submitSignalThrottleConfig = utils.getThrottleConfig(
+            config.get("alfred:throttling:submitSignals"),
+        );
         const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
+        const documentRepository =
+            customizations?.documentRepository ??
+            new core.MongoDocumentRepository(documentsCollection);
+        const deliCheckpointRepository = new core.MongoCheckpointRepository(
+            checkpointsCollection,
+            "deli",
+        );
+        const scribeCheckpointRepository = new core.MongoCheckpointRepository(
+            checkpointsCollection,
+            "scribe",
+        );
+
+        const deliCheckpointService = new core.CheckpointService(
+            deliCheckpointRepository,
+            documentRepository,
+            localCheckpointEnabled,
+        );
+        const scribeCheckpointService = new core.CheckpointService(
+            scribeCheckpointRepository,
+            documentRepository,
+            localCheckpointEnabled,
+        );
 
         const databaseManager = new core.MongoDatabaseManager(
             globalDbEnabled,
@@ -287,11 +413,24 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             globalDbMongoManager,
             nodeCollectionName,
             documentsCollectionName,
+            checkpointsCollectionName,
             deltasCollectionName,
-            scribeCollectionName);
+            scribeCollectionName,
+        );
 
         const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
-        const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
+        const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+        const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+        const storageNameAllocator = storagePerDocEnabled
+            ? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
+            : undefined;
+        const storage = new services.DocumentStorage(
+            documentRepository,
+            tenantManager,
+            enableWholeSummaryUpload,
+            opsCollection,
+            storageNameAllocator,
+        );
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         // Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
@@ -299,24 +438,45 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
 
+        // This cache will be used to store connection counts for logging connectionCount metrics.
+        let redisCache: core.ICache;
+        if (config.get("alfred:enableConnectionCountLogging")) {
+            const redisOptions: Redis.RedisOptions = {
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.pass,
+            };
+            if (redisConfig.tls) {
+                redisOptions.tls = {
+                    servername: redisConfig.host,
+                };
+            }
+            const redisClientForLogging = new Redis(redisOptions);
+            redisCache = new services.RedisCache(redisClientForLogging);
+        }
+
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
             address,
             storage,
             databaseManager,
+            documentRepository,
+            deliCheckpointRepository,
+            scribeCheckpointRepository,
+            deliCheckpointService,
+            scribeCheckpointService,
             60000,
             () => new NodeWebSocketServer(4000),
-            taskMessageSender,
-            tenantManager,
-            foremanConfig.permissions,
             maxSendMessageSize,
-            utils.generateToken,
-            winston);
+            winston,
+        );
+
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
             maxSendMessageSize,
-            core.DefaultServiceConfiguration);
+            core.DefaultServiceConfiguration,
+        );
         const serverUrl = config.get("worker:serverUrl");
 
         const orderManager = new OrdererManager(
@@ -324,15 +484,28 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             serverUrl,
             tenantManager,
             localOrderManager,
-            kafkaOrdererFactory);
+            kafkaOrdererFactory,
+        );
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as { id: string; key: string; }[];
+        const appTenants = config.get("alfred:tenants") as { id: string; key: string }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+        const documentDeleteService =
+            customizations?.documentDeleteService ?? new DocumentDeleteService();
+
+        // Set up token revocation if enabled
+        const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+        let socketTracker: core.IWebSocketTracker | undefined;
+        let tokenManager: core.ITokenRevocationManager | undefined;
+        if (tokenRevocationEnabled) {
+            socketTracker = new utils.WebSocketTracker();
+            tokenManager = new utils.DummyTokenRevocationManager();
+            await tokenManager.initialize();
+        }
 
         return new AlfredResources(
             config,
@@ -342,8 +515,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
-            socketConnectThrottler,
+            restTenantThrottlers,
+            restClusterThrottlers,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler,
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,
@@ -354,9 +529,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             port,
             documentsCollectionName,
             metricClientConfig,
-            documentsCollection,
+            documentRepository,
+            documentDeleteService,
             redisThrottleAndUsageStorageManager,
-            verifyMaxMessageSize);
+            verifyMaxMessageSize,
+            redisCache,
+            socketTracker,
+            tokenManager,
+        );
     }
 }
 
@@ -368,8 +548,10 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.port,
             resources.orderManager,
             resources.tenantManager,
-            resources.restThrottler,
-            resources.socketConnectThrottler,
+            resources.restTenantThrottlers,
+            resources.restClusterThrottlers,
+            resources.socketConnectTenantThrottler,
+            resources.socketConnectClusterThrottler,
             resources.socketSubmitOpThrottler,
             resources.socketSubmitSignalThrottler,
             resources.singleUseTokenCache,
@@ -379,8 +561,13 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.deltaService,
             resources.producer,
             resources.metricClientConfig,
-            resources.documentsCollection,
+            resources.documentRepository,
+            resources.documentDeleteService,
             resources.throttleAndUsageStorageManager,
-            resources.verifyMaxMessageSize);
+            resources.verifyMaxMessageSize,
+            resources.redisCache,
+            resources.socketTracker,
+            resources.tokenManager,
+        );
     }
 }

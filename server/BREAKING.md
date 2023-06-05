@@ -1,5 +1,38 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 1.0.0 Breaking Changes
+- [auth.ts Refactor function validateTokenRevocationClaims to validateTokenScopeClaims]
+#### `auth.ts` Refactor function validateTokenRevocationClaims to validateTokenScopeClaims 
+Before: `validateTokenRevocationClaims()`
+Now: `validateTokenScopeClaims(expectedScopes: string)`
+Valid expectedScopes are either DocDeleteScopeType or TokenRevokeScopeType
+- [IDocumentDeleteService class take one additional IDocumentDeleteService parameter]
+#### `IDocumentDeleteService` added to alfred `runnerFactory` and `resource`
+```ts
+export class AlfredResources implements core.IResources {
+...
+	constructor(
+    ...
+		public documentRepository: core.IDocumentRepository,
+		public documentDeleteService: IDocumentDeleteService,
+		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+    ...
+  )
+...
+}
+
+```
+- [DocumentStorage class take one additional IStorageNameAllocator parameter](#DocumentStorage-class-take-one-additional-IStorageNameAllocator-parameter)
+
+#### `DocumentStorage` class take one additional `IStorageNameAllocator` parameter
+One more `IStorageNameAllocator` parameter need for DocumentStorage class to assign a storage name while initial upload
+
+-  [The foreman lambda was removed](#the-foreman-lambda-was-removed)
+
+### The foreman lambda was removed
+
+The foreman lambda in `server` has not been in use for a while so we are removing it.
+
 ## 0.1038 Breaking Changes
 - [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
 #### `aggregate` function from `MongoCollection` became async
@@ -21,8 +54,10 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restTenantThrottlers: Map<string, core.IThrottler>,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -35,7 +70,7 @@ export class AlfredResources implements core.IResources {
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-    ) 
+    )
     ....
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
@@ -49,8 +84,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
-            socketConnectThrottler,
+            restTenantThrottlers,
+            restClusterThrottler,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,

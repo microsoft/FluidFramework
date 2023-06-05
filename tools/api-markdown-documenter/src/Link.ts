@@ -4,16 +4,22 @@
  */
 
 /**
+ * Represents the target URL of a link.
+ * @remarks Can be fully realized, a heading ID, relative file path, etc.
+ */
+export type UrlTarget = string;
+
+/**
  * Represents a link to some documentation element.
  */
 export interface Link {
 	/**
 	 * Link text to be rendered.
 	 */
-	text: string;
+	readonly text: string;
 
 	/**
 	 * Link target URL.
 	 */
-	url: string;
+	readonly target: UrlTarget;
 }

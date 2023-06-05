@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
@@ -26,19 +27,49 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 
 /**
+ * Stringified blobs from a summary/snapshot tree.
+ * @internal
+ */
+export interface ISerializableBlobContents {
+	[id: string]: string;
+}
+
+/**
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
-	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
-	constructor(
+	private _summarizeProtocolTree: boolean | undefined;
+	/**
+	 * Whether the adapter will enforce sending combined summary trees.
+	 */
+	public get summarizeProtocolTree() {
+		return this._summarizeProtocolTree === true;
+	}
+
+	/**
+	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
+	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
+	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
+	 * @param logger - Telemetry logger
+	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
+	 * upload, and fix it up with a protocol tree if needed
+	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
+	 */
+	public constructor(
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
-		private readonly captureProtocolSummary?: () => ISummaryTree,
+		private readonly logger: ITelemetryLoggerExt,
+		/**
+		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
+		 */
+		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
+		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
+		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -58,11 +89,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			this.logger,
 		));
 
-		if (this.captureProtocolSummary !== undefined) {
+		this._summarizeProtocolTree =
+			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
+		if (this.summarizeProtocolTree) {
 			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 			this._storageService = new ProtocolTreeStorageService(
 				retriableStorage,
-				this.captureProtocolSummary,
+				this.addProtocolSummaryIfMissing,
 			);
 		}
 
@@ -107,9 +140,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
-		const blob = this.blobContents[id];
-		if (blob !== undefined) {
-			return blob;
+		const maybeBlob = this.blobContents[id];
+		if (maybeBlob !== undefined) {
+			if (typeof maybeBlob === "string") {
+				const blob = stringToBuffer(maybeBlob, "utf8");
+				return blob;
+			}
+			return maybeBlob;
 		}
 		return this._storageService.readBlob(id);
 	}
@@ -146,7 +183,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
@@ -189,5 +226,60 @@ class BlobOnlyStorage implements IDocumentStorageService {
 			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
 			throw err;
 		}
+	}
+}
+
+/**
+ * Get blob contents of a snapshot tree from storage (or, ideally, cache)
+ */
+export async function getBlobContentsFromTree(
+	snapshot: ISnapshotTree,
+	storage: IDocumentStorageService,
+): Promise<ISerializableBlobContents> {
+	const blobs = {};
+	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+	return blobs;
+}
+
+async function getBlobContentsFromTreeCore(
+	tree: ISnapshotTree,
+	blobs: ISerializableBlobContents,
+	storage: IDocumentStorageService,
+) {
+	const treePs: Promise<any>[] = [];
+	for (const subTree of Object.values(tree.trees)) {
+		treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage));
+	}
+	for (const id of Object.values(tree.blobs)) {
+		const blob = await storage.readBlob(id);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
+	}
+	return Promise.all(treePs);
+}
+
+/**
+ * Extract blob contents from a snapshot tree with blob contents
+ */
+export function getBlobContentsFromTreeWithBlobContents(
+	snapshot: ISnapshotTreeWithBlobContents,
+): ISerializableBlobContents {
+	const blobs = {};
+	getBlobContentsFromTreeWithBlobContentsCore(snapshot, blobs);
+	return blobs;
+}
+
+function getBlobContentsFromTreeWithBlobContentsCore(
+	tree: ISnapshotTreeWithBlobContents,
+	blobs: ISerializableBlobContents,
+) {
+	for (const subTree of Object.values(tree.trees)) {
+		getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs);
+	}
+	for (const id of Object.values(tree.blobs)) {
+		const blob = tree.blobsContents[id];
+		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
 	}
 }

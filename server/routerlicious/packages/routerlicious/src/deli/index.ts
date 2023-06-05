@@ -5,7 +5,11 @@
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
-import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
+import {
+    LocalKafka,
+    LocalContext,
+    LocalLambdaController,
+} from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -13,7 +17,10 @@ import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
-export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function deliCreate(
+    config: Provider,
+    customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -30,18 +37,27 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const reverseSendTopic = config.get("alfred:topic");
 
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
+    const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
+
+    const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
+
+    const restartOnCheckpointFailure =
+        (config.get("deli:restartOnCheckpointFailure") as boolean) ?? true;
+
+    const kafkaCheckpointOnReprocessingOp =
+        (config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
     const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
     const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
     const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
-
     // Database connection for global db if enabled
     const factory = await services.getDbFactory(config);
 
-    const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
-        core.ICheckpointHeuristicsServerConfiguration;
+    const checkpointHeuristics = config.get(
+        "deli:checkpointHeuristics",
+    ) as core.ICheckpointHeuristicsServerConfiguration;
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (checkpointHeuristics && checkpointHeuristics.enable) {
         core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
@@ -49,7 +65,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     let globalDb: core.IDb;
     if (globalDbEnabled) {
-        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
         const globalDbManager = new core.MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbManager.getDatabase();
     }
@@ -61,6 +77,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<core.IDocument>(documentsCollectionName);
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const localCollection = await operationsDb.collection<core.ICheckpoint>(
+        checkpointsCollectionName,
+    );
+    const documentRepository =
+        customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
+    const checkpointRepository = new core.MongoCheckpointRepository(localCollection, "deli");
 
     const forwardProducer = services.createProducer(
         kafkaLibrary,
@@ -73,7 +96,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaReplicationFactor,
         kafkaMaxBatchSize,
         kafkaSslCACertFilePath,
-        eventHubConnString);
+        eventHubConnString,
+    );
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
@@ -85,7 +109,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaReplicationFactor,
         kafkaMaxBatchSize,
         kafkaSslCACertFilePath,
-        eventHubConnString);
+        eventHubConnString,
+    );
 
     const redisConfig = config.get("redis");
     const redisOptions: RedisOptions = {
@@ -114,7 +139,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         undefined,
         localContext,
         async (_, context: LocalContext) =>
-            new BroadcasterLambda(publisher, context, core.DefaultServiceConfiguration, undefined));
+            new BroadcasterLambda(publisher, context, core.DefaultServiceConfiguration, undefined),
+    );
 
     await broadcasterLambda.start();
 
@@ -126,19 +152,32 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         enforceDiscoveryFlow,
     };
 
+    const checkpointService = new core.CheckpointService(
+        checkpointRepository,
+        documentRepository,
+        localCheckpointEnabled,
+    );
+
     return new DeliLambdaFactory(
         operationsDbManager,
-        collection,
+        documentRepository,
+        checkpointService,
         tenantManager,
         undefined,
         combinedProducer,
         undefined,
         reverseProducer,
-        serviceConfiguration);
+        serviceConfiguration,
+        restartOnCheckpointFailure,
+        kafkaCheckpointOnReprocessingOp,
+    );
 }
 
-export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function create(
+    config: Provider,
+    customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
     // Nconf has problems with prototype methods which prevents us from storing this as a class
     config.set("documentLambda", { create: deliCreate });
-    return createDocumentRouter(config);
+    return createDocumentRouter(config, customizations);
 }

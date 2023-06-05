@@ -6,5 +6,5 @@
 // import { PlotCoordinateView } from "..";
 
 describe("PlotCoordinateView", function () {
-    it("Runs this test", function () {});
+	it("Runs this test", function () {});
 });

@@ -32,8 +32,8 @@ export {
 export {
 	createSummarizer,
 	createSummarizerFromFactory,
-	createSummarizerWithContainer,
 	summarizeNow,
+	createSummarizerWithTestConfig,
 } from "./TestSummaryUtils";
 export {
 	defaultTimeoutDurationMs,
@@ -42,4 +42,4 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { ensureContainerConnected, waitForContainerConnection } from "./containerUtils";
+export { waitForContainerConnection } from "./containerUtils";

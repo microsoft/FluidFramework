@@ -7,21 +7,6 @@
 import { FluidObject } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
-export interface IFluidHTMLOptions {
-    // (undocumented)
-    display?: "block" | "inline";
-}
-
-// @public (undocumented)
-export const IFluidHTMLView: keyof IProvideFluidHTMLView;
-
-// @public
-export interface IFluidHTMLView extends IProvideFluidHTMLView {
-    remove?(): void;
-    render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
-}
-
-// @public (undocumented)
 export const IFluidMountableView: keyof IProvideFluidMountableView;
 
 // @public
@@ -38,17 +23,10 @@ export interface IFluidMountableViewClass {
 }
 
 // @public (undocumented)
-export interface IProvideFluidHTMLView {
-    // (undocumented)
-    readonly IFluidHTMLView: IFluidHTMLView;
-}
-
-// @public (undocumented)
 export interface IProvideFluidMountableView {
     // (undocumented)
     readonly IFluidMountableView: IFluidMountableView;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

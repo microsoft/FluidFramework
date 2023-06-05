@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { generateToken, generateUser, validateTokenClaims, validateTokenClaimsExpiration } from "./auth";
+export {
+	generateToken,
+	generateUser,
+	validateTokenClaims,
+	validateTokenClaimsExpiration,
+} from "./auth";
 export { convertSortedNumberArrayToRanges } from "./array";
 export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
 export {
@@ -21,7 +26,20 @@ export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export { BasicRestWrapper, RestWrapper } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
-export { canRead, canSummarize, canWrite } from "./scopes";
+export {
+	canRead,
+	canSummarize,
+	canWrite,
+	canRevokeToken,
+	canDeleteDoc,
+	TokenRevokeScopeType,
+	DocDeleteScopeType,
+} from "./scopes";
+export {
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+	generateServiceProtocolEntries,
+} from "./scribeHelper";
 export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
@@ -60,5 +78,5 @@ export {
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
 } from "./storageUtils";
 export { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
-export { getOrCreateRepository } from "./utils";
+export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";

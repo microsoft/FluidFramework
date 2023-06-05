@@ -13,7 +13,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
-	ensureFluidResolvedUrl,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
 	TokenFetchOptions,
@@ -29,7 +29,7 @@ import {
 	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { LocalPersistentCache, NonPersistentCache } from "./odspCache";
+import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
 import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import {
@@ -49,10 +49,12 @@ import {
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-	public readonly protocolName = "fluid-odsp:";
-
-	private readonly nonPersistentCache = new NonPersistentCache();
+	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
+
+	public get snapshotPrefetchResultCache() {
+		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
@@ -60,21 +62,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(createNewResolvedUrl);
-
 		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		const [, queryString] = odspResolvedUrl.url.split("?");
-
-		const searchParams = new URLSearchParams(queryString);
-		const filePath = searchParams.get("path");
-		if (filePath === undefined || filePath === null) {
-			throw new Error("File path should be provided!!");
-		}
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
 		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
@@ -86,6 +79,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 				itemId: odspResolvedUrl.itemId,
 			};
 		} else if (odspResolvedUrl.fileName) {
+			const [, queryString] = odspResolvedUrl.url.split("?");
+			const searchParams = new URLSearchParams(queryString);
+			const filePath = searchParams.get("path");
+			if (filePath === undefined || filePath === null) {
+				throw new Error("File path should be provided!!");
+			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
@@ -99,10 +98,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			throw new Error("A new or existing file must be specified to create container!");
 		}
 
-		const protocolSummary = createNewSummary?.tree[".protocol"];
-		if (protocolSummary) {
+		if (isCombinedAppAndProtocolSummary(createNewSummary)) {
 			const documentAttributes = getDocAttributesFromProtocolSummary(
-				protocolSummary as ISummaryTree,
+				createNewSummary.tree[".protocol"],
 			);
 			if (documentAttributes?.sequenceNumber !== 0) {
 				throw new Error("Seq number in detached ODSP container should be 0");
@@ -206,9 +204,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
 	 * response payload.
-	 * @param storageFetchWrapper - if not provided FetchWrapper will be used
-	 * @param deltasFetchWrapper - if not provided FetchWrapper will be used
 	 * @param persistedCache - PersistedCache provided by host for use in this session.
+	 * @param hostPolicy - Policy for storage provided by host.
 	 */
 	constructor(
 		private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,

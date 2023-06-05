@@ -10,21 +10,20 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
-1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
-1. Run `npm start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
+      `pnpm run build:fast --nolint @fluid-example/app-integration-external-controller`
+1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
@@ -34,6 +33,12 @@ This example runs against the `tinylicious` service by default, but you can also
 To run against `azure`, run `npm run start:azure`.
 
 Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
+
+### Devtools
+
+This example is configured to opt into our [developer tools suite](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
+To view the Devtools view, first install our [Devtools browser extension](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension).
+After launching the application, press `F12` to launch the browser's devtools panel and navigate to the `Fluid Framework Devtools` tab.
 
 ## Testing
 
@@ -68,8 +73,30 @@ the endpoint URL would point to the Tinylicious instance on the default values o
 
 To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
-When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
-`AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
+When using a live Azure Fluid Relay instance, we need to provide the tenant ID, tenant secret and service discovery endpoint URL for our Azure Fluid Relay instance.
+
+We can use the `InsecureTokenProvider` or a custom token provider similar to `AzureFunctionTokenProvider` to authorize requests to the live Azure Fluid Relay Instance.
+
+**Note for Fluid developers:** You can use [this tool](../../../tools/getkeys) to retrieve test tenant details. After running getkeys, the env variable `fluid__test__driver__frs` will contain the tenant details.
+
+We can run the `AzureClient` with the `InsecureTokenProvider` with code like this:
+
+```typescript
+const connectionConfig: AzureConnectionConfig = useAzure
+	? {
+			type: "remote",
+			tenantId: "YOUR-TENANT-ID-HERE",
+			tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
+			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+	  }
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+	  };
+```
+
+We use the `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
 making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
 userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
 to generate and sign the token such that the service will accept it.
@@ -99,8 +126,7 @@ secret key in the client-side code whereas while running the service locally for
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
@@ -127,15 +153,16 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
 Thank you!
 
 <!-- prettier-ignore-end -->
@@ -145,13 +172,15 @@ Thank you!
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->

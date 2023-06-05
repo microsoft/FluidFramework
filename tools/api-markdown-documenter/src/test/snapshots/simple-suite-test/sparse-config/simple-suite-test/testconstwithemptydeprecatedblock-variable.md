@@ -1,7 +1,6 @@
 # testConstWithEmptyDeprecatedBlock
 
-> <b>\[Warning\]: Deprecated</b>
-> 
+> **\[Warning\]: Deprecated**
 > 
 > 
 

@@ -5,15 +5,13 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { AttributionCollection } from "./attributionCollection";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
@@ -54,12 +52,12 @@ export class SnapshotLegacy {
 	private header: SnapshotHeader | undefined;
 	private seq: number | undefined;
 	private segments: ISegment[] | undefined;
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
@@ -95,6 +93,11 @@ export class SnapshotLegacy {
 			0x4bf /* all or no segments should have attribution */,
 		);
 
+		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
+		assert(
+			segsWithAttribution === 0 || attributionSerializer !== undefined,
+			0x559 /* attribution serializer must be provided when there are segments with attribution. */,
+		);
 		return {
 			version: undefined,
 			chunkStartSegmentIndex: startIndex,
@@ -106,7 +109,7 @@ export class SnapshotLegacy {
 			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
 			attribution:
 				segsWithAttribution > 0
-					? AttributionCollection.serializeAttributionCollections(segs)
+					? attributionSerializer?.serializeAttributionCollections(segs)
 					: undefined,
 		};
 	}
@@ -230,6 +233,10 @@ export class SnapshotLegacy {
 		let totalLength: number = 0;
 		segs.map((segment) => {
 			totalLength += segment.cachedLength;
+			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
+				segment.properties = undefined;
+				segment.propertyManager = undefined;
+			}
 			this.segments!.push(segment);
 		});
 

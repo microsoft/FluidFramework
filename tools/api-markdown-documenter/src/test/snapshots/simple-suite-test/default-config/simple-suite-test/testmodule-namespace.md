@@ -4,9 +4,9 @@
 
 ## Variables
 
-|  Variable | Modifiers | Description |
-|  --- | --- | --- |
-|  [foo](./simple-suite-test/testmodule-namespace#foo-variable) | <code>readonly</code> | Test constant in module. |
+| Variable | Modifiers | Description |
+| --- | --- | --- |
+| [foo](./simple-suite-test/testmodule-namespace#foo-variable) | `readonly` | Test constant in module. |
 
 ## Variable Details
 

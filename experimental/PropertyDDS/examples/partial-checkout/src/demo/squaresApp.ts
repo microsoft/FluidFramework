@@ -8,7 +8,7 @@ import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property
 // import { IPropertyTree } from "../dataObject";
 import { DataBinder } from "@fluid-experimental/property-binder";
 import _ from "lodash";
-import { SQUARES_DEMO_SCHEMAS } from "@fluid-experimental/schemas";
+import { SQUARES_DEMO_SCHEMAS } from "@fluid-example/schemas";
 import { assert } from "@fluidframework/common-utils";
 import { IPropertyTree } from "../dataObject";
 import { renderMoveButton } from "../view";
@@ -83,7 +83,7 @@ export class SquaresApp {
 			(property) => {
 				assert(
 					property instanceof ContainerProperty,
-					"Property should always be a ContainerProperty.",
+					0x5eb /* Property should always be a ContainerProperty. */,
 				);
 
 				const values = property.getValues<any>();

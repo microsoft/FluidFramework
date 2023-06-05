@@ -10,15 +10,15 @@ testClassMethod(testParameter: string): Promise<string>;
 
 ## Parameters {#testclassmethod-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testParameter | string | A string |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| testParameter | string | A string |
 
 ## Returns {#testclassmethod-returns}
 
 A Promise
 
-<b>Return type:</b> Promise&lt;string&gt;
+**Return type:** Promise&lt;string&gt;
 
 ## Throws {#testclassmethod-throws}
 

@@ -8,7 +8,6 @@ import {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
-	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockFluidDataStoreContext,
@@ -52,7 +51,6 @@ describe("RemoteChannelContext Tests", () => {
 				sharedObjectRegistry,
 				undefined,
 				undefined as unknown as CreateChildSummarizerNodeFn,
-				async () => undefined as unknown as IGarbageCollectionDetailsBase,
 				"SomeAttachMessageType",
 			);
 		assert.throws(
