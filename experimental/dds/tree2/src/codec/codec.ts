@@ -35,11 +35,11 @@ export interface IDecoder<TDecoded, TEncoded> {
  * Implementations are typically created by a {@link JsonValidator}.
  * @alpha
  */
-export interface SchemaValidationFunction {
+export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
 	 * @returns - Whether the data matches a schema.
 	 */
-	check(data: any): boolean;
+	check(data: any): data is Static<Schema>;
 }
 
 /**
@@ -51,7 +51,7 @@ export interface JsonValidator {
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
 	 */
-	compile(schema: TAnySchema): SchemaValidationFunction;
+	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
 
 /**
@@ -62,10 +62,10 @@ export interface JsonValidator {
  * (i.e. a JSON validator is only included in an application's bundle if that application references it)
  */
 export const typeboxValidator: JsonValidator = {
-	compile: (schema: TAnySchema) => {
+	compile: <Schema extends TSchema>(schema: Schema) => {
 		const compiledFormat = TypeCompiler.Compile(schema);
 		return {
-			check: (data) => compiledFormat.Check(data),
+			check: (data): data is Static<Schema> => compiledFormat.Check(data),
 		};
 	},
 };
@@ -77,7 +77,7 @@ export const typeboxValidator: JsonValidator = {
  * @alpha
  */
 export const noopValidator: JsonValidator = {
-	compile: () => ({ check: () => true }),
+	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),
 };
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
+import { Static, TAnySchema, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
@@ -145,7 +145,7 @@ function makeV0Codec(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction;
+			compiledSchema?: SchemaValidationFunction<TAnySchema>;
 			codec: IMultiFormatCodec<FieldChangeset>;
 		}
 	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
@@ -156,7 +156,10 @@ function makeV0Codec(
 
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
-	): { codec: IMultiFormatCodec<FieldChangeset>; compiledSchema?: SchemaValidationFunction } => {
+	): {
+		codec: IMultiFormatCodec<FieldChangeset>;
+		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
 		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
 		return entry;

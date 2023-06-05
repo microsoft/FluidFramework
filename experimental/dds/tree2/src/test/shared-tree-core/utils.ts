@@ -10,7 +10,11 @@ import { typeboxValidator } from "../../codec";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
 
-/** A `SharedTreeCore` with protected methods exposed but no additional behavior */
+/**
+ * A `SharedTreeCore` with
+ * - some protected methods exposed
+ * - encoded data schema validation enabled
+ */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	private static readonly attributes: IChannelAttributes = {
 		type: "TestSharedTreeCore",
@@ -29,6 +33,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			new DefaultChangeFamily({ validator: typeboxValidator }),
 			anchors,
 			new MockRepairDataStoreProvider(),
+			{ validator: typeboxValidator },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

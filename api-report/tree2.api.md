@@ -12,7 +12,9 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
+import { Static } from '@sinclair/typebox';
 import { TAnySchema } from '@sinclair/typebox';
+import { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {
@@ -1140,7 +1142,7 @@ value: ValueSchema.String;
 
 // @alpha
 export interface JsonValidator {
-    compile(schema: TAnySchema): SchemaValidationFunction;
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
 
 // @alpha (undocumented)
@@ -1633,9 +1635,9 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 }
 
 // @alpha
-export interface SchemaValidationFunction {
+export interface SchemaValidationFunction<Schema extends TSchema> {
     // (undocumented)
-    check(data: any): boolean;
+    check(data: any): data is Static<Schema>;
 }
 
 // @alpha (undocumented)

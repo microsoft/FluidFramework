@@ -100,6 +100,7 @@ export class SharedTree
 			changeFamily,
 			forest.anchors,
 			repairProvider,
+			options,
 			id,
 			runtime,
 			attributes,
