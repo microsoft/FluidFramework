@@ -82,10 +82,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
+    // (undocumented)
+    compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
     create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
 }
@@ -170,6 +172,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
+    // (undocumented)
+    findIntervalsWithEndInRange(endPosition: number, range: number): TInterval[];
+    // (undocumented)
+    findIntervalsWithStartInRange(startPosition: number, range: number): TInterval[];
     // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;

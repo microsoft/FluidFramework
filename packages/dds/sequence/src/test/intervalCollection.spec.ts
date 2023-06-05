@@ -1475,5 +1475,78 @@ describe("SharedString interval collections", () => {
 				assert.equal(collection.detachIndex(mockIntervalIndex), false);
 			});
 		});
+
+		describe("support querying intervals with start in range", () => {
+			let collection;
+
+			beforeEach(() => {
+				sharedString.initializeLocal();
+				collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "xyzabc");
+			});
+
+			it("the intervals whose startpoints within a range", () => {
+				collection.add(1, 1, IntervalType.SlideOnRemove);
+				collection.add(1, 3, IntervalType.SlideOnRemove);
+				collection.add(2, 4, IntervalType.SlideOnRemove);
+				collection.add(3, 5, IntervalType.SlideOnRemove);
+				collection.add(4, 5, IntervalType.SlideOnRemove);
+
+				const results = collection.findIntervalsWithStartInRange(1, 2);
+				assertIntervalEquals(sharedString, results[0], {
+					start: 1,
+					end: 1,
+				});
+				assertIntervalEquals(sharedString, results[1], {
+					start: 1,
+					end: 3,
+				});
+				assertIntervalEquals(sharedString, results[2], {
+					start: 2,
+					end: 4,
+				});
+				assertIntervalEquals(sharedString, results[3], {
+					start: 3,
+					end: 5,
+				});
+			});
+		});
+
+		describe("support querying intervals with endpoint in range", () => {
+			let collection;
+
+			beforeEach(() => {
+				sharedString.initializeLocal();
+				collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "xyzabc");
+			});
+
+			it("the intervals whose endpoints within a range", () => {
+				collection.add(1, 1, IntervalType.SlideOnRemove);
+				collection.add(1, 3, IntervalType.SlideOnRemove);
+				collection.add(2, 4, IntervalType.SlideOnRemove);
+				collection.add(3, 5, IntervalType.SlideOnRemove);
+				collection.add(4, 5, IntervalType.SlideOnRemove);
+
+				const results = collection.findIntervalsWithEndInRange(3, 2);
+				assertIntervalEquals(sharedString, results[0], {
+					start: 1,
+					end: 3,
+				});
+				assertIntervalEquals(sharedString, results[1], {
+					start: 2,
+					end: 4,
+				});
+				assertIntervalEquals(sharedString, results[2], {
+					start: 3,
+					end: 5,
+				});
+				/*
+				assertIntervalEquals(sharedString, results[3], {
+					start: 4,
+					end: 5,
+				}); */
+			});
+		});
 	});
 });

@@ -28,6 +28,7 @@ import {
 	maxReferencePosition,
 	createDetachedLocalReferencePosition,
 	DetachedReferencePosition,
+	PropertyAction,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -172,8 +173,12 @@ export interface ISerializableInterval extends IInterval {
 	getIntervalId(): string | undefined;
 }
 
+/**
+ * @sealed
+ */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	compareEnds(a: TInterval, b: TInterval): number;
+	compareStarts?(a: TInterval, b: TInterval): number;
 	/**
 	 *
 	 * @param label - label of the interval collection this interval is being added to. This parameter is
@@ -1036,11 +1041,113 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
 	}
 }
 
+class EndInRangeIndex<TInterval extends ISerializableInterval> implements IntervalIndex<TInterval> {
+	private readonly intervalTree;
+
+	constructor(
+		private readonly client: Client,
+		private readonly helpers: IIntervalHelpers<TInterval>,
+	) {
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+	}
+
+	public add(interval: TInterval): void {
+		this.intervalTree.put(interval, interval);
+	}
+
+	public remove(interval: TInterval): void {
+		this.intervalTree.remove(interval);
+	}
+
+	/**
+	 * @returns an array of all intervals contained in this collection that locate within the range
+	 * `[startPosition, startPosition + range)`. [5, 10)
+	 */
+	public findIntervalsWithEndInRange(endPosition: number, range: number) {
+		const results: TInterval[] = [];
+		const action: PropertyAction<TInterval, TInterval> = (node) => {
+			results.push(node.key);
+			return true;
+		};
+		const transientStartInterval = this.helpers.create(
+			"transient",
+			endPosition,
+			endPosition,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		const transientEndInterval = this.helpers.create(
+			"transient",
+			endPosition + range,
+			endPosition + range,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
+		return results;
+	}
+}
+
+class StartInRangeIndex<TInterval extends ISerializableInterval>
+	implements IntervalIndex<TInterval>
+{
+	private readonly intervalTree;
+
+	constructor(
+		private readonly client: Client,
+		private readonly helpers: IIntervalHelpers<TInterval>,
+	) {
+		if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareStarts);
+		}
+	}
+
+	public add(interval: TInterval): void {
+		this.intervalTree.put(interval, interval);
+	}
+
+	public remove(interval: TInterval): void {
+		this.intervalTree.remove(interval);
+	}
+
+	public findIntervalsWithStartInRange(startPosition: number, range: number) {
+		const results: TInterval[] = [];
+		const action: PropertyAction<TInterval, TInterval> = (node) => {
+			results.push(node.key);
+			return true;
+		};
+		const transientStartInterval = this.helpers.create(
+			"transient",
+			startPosition,
+			startPosition,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		const transientEndInterval = this.helpers.create(
+			"transient",
+			startPosition + range,
+			startPosition + range,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
+		return results;
+	}
+}
+
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	private static readonly legacyIdPrefix = "legacy";
 	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IdIntervalIndex<TInterval>;
 	public readonly endIntervalIndex: EndpointIndex<TInterval>;
+	public readonly startInRangeIndex: StartInRangeIndex<TInterval>;
+	public readonly endInRangeIndex: EndInRangeIndex<TInterval>;
 	private readonly indexes: Set<IntervalIndex<TInterval>>;
 
 	constructor(
@@ -1056,10 +1163,13 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = new IdIntervalIndex();
 		this.endIntervalIndex = new EndpointIndex(client, helpers);
+		this.startInRangeIndex = new StartInRangeIndex(client, helpers);
+		this.endInRangeIndex = new EndInRangeIndex(client, helpers);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
 			this.endIntervalIndex,
+			this.endInRangeIndex,
 		]);
 	}
 
@@ -1251,6 +1361,18 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.end, b.end);
 
+export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
+	compareReferencePositions(a.start, b.start);
+
+export const createSequenceIntervalHelper = (): IIntervalHelpers<SequenceInterval> => {
+	const helpers: IIntervalHelpers<SequenceInterval> = {
+		compareEnds: compareSequenceIntervalEnds,
+		compareStarts: compareSequenceIntervalStarts,
+		create: createSequenceInterval,
+	};
+	return helpers;
+};
+
 class SequenceIntervalCollectionFactory
 	implements IValueFactory<IntervalCollection<SequenceInterval>>
 {
@@ -1260,6 +1382,7 @@ class SequenceIntervalCollectionFactory
 	): IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
 			compareEnds: compareSequenceIntervalEnds,
+			compareStarts: compareSequenceIntervalStarts,
 			create: createSequenceInterval,
 		};
 		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
@@ -2449,6 +2572,25 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			startPosition,
 			endPosition,
 		);
+	}
+
+	public findIntervalsWithStartInRange(startPosition: number, range: number): TInterval[] {
+		if (!this.localCollection) {
+			throw new LoggingError("attachSequence must be called");
+		}
+
+		return this.localCollection.startInRangeIndex.findIntervalsWithStartInRange(
+			startPosition,
+			range,
+		);
+	}
+
+	public findIntervalsWithEndInRange(endPosition: number, range: number): TInterval[] {
+		if (!this.localCollection) {
+			throw new LoggingError("attachSequence must be called");
+		}
+
+		return this.localCollection.endInRangeIndex.findIntervalsWithEndInRange(endPosition, range);
 	}
 
 	/**
