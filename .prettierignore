@@ -78,6 +78,12 @@ docs/**/*.html
 # Ignore docs markdown files since those are formatted using markdownlint
 docs/**/*.md
 
+# This is a generated file
+docs/themes/thxvscode/assets/js/bundle.js
+
+# This is a test file
+tools/markdown-magic/test/include.md
+
 # github config yaml files are prone to breaking when reformatted
 .github/**/*.yml
 
@@ -89,6 +95,3 @@ server/**/templates/*.yaml
 
 # These files are auto-generated according to the comments in the files
 **/charts/**/Chart.yaml
-
-# Kubernetes
-**/kubernetes/**
