@@ -116,6 +116,10 @@
 			"tsc": [
 				"...",
 				"@fluid-experimental/property-inspector-table#build:copy-resources"
+			],
+			"webpack": [
+				"...",
+				"@fluid-experimental/property-inspector-table#build:copy-resources"
 			]
 		},
 		"buildDependencies": {
