@@ -303,15 +303,26 @@ stages:
                   workingDir: ${{ parameters.buildDirectory }}
                   customCommand: 'run ${{ taskTestStep }}:coverage'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-            # Test - No coverage
-            - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
-                - task: Npm@1
-                  displayName: npm run ${{ taskTestStep }}
-                  inputs:
-                    command: 'custom'
-                    workingDir: ${{ parameters.buildDirectory }}
-                    customCommand: 'run ${{ taskTestStep }}'
-                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
+
+              # Test - No coverage
+            - ${{ else }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
