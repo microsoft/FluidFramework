@@ -170,9 +170,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		// fetch name of owner associated to the pull request
 		const pr = await pullRequestInfo(flags.auth, unmergedCommitList[commitIndex], this.logger);
-		this.info(
-			`Fetch pull request info for commit id ${commitIndex} and assignee ${pr.data[0].assignee.login}`,
-		);
+		const author = pr.data[0].assignee.login;
+		this.info(`Fetch pull request info for commit id ${commitIndex} and assignee ${author}`);
 		const user = await getUserAccess(flags.auth, this.logger);
 		this.info(`List users with push access to main branch ${user}`);
 
@@ -180,7 +179,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			flags.auth,
 			branchName,
 			flags.target,
-			pr.data[0].assignee.login,
+			author,
 			this.logger,
 		);
 		this.log(
