@@ -9,7 +9,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { browser, window as maybeWindow } from "../Globals";
+import { browser, window } from "../Globals";
 import { extensionMessageSource, relayMessageToPort } from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
@@ -17,10 +17,6 @@ import {
 } from "./Logging";
 
 type Port = chrome.runtime.Port;
-
-// `window` should always be defined in the Content script context.
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const window = maybeWindow!;
 
 /**
  * This module is the extension's Content Script.
@@ -37,6 +33,13 @@ const window = maybeWindow!;
  */
 
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
+
+// `window` should always be defined in the Content script context.
+if (window === undefined) {
+	throw new Error("Window object is not defined.");
+}
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 // Only establish messaging when activated by the Background Worker.
 browser.runtime.onConnect.addListener((backgroundPort: Port) => {
@@ -63,7 +66,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	}
 
 	// Relay messages to the Background Worker as appropriate.
-	window.addEventListener("message", relayMessageFromPageToBackground);
+	window!.addEventListener("message", relayMessageFromPageToBackground);
 
 	// Relay messages from the Background Worker to the inspected window.
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
@@ -76,13 +79,15 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 				),
 				message,
 			);
-			window.postMessage(message, "*");
+			window!.postMessage(message, "*");
 		}
 	});
 
 	// When the extension disconnects, clean up listeners.
 	backgroundPort.onDisconnect.addListener(() => {
 		// Unbind window listener
-		window.removeEventListener("message", relayMessageFromPageToBackground);
+		window!.removeEventListener("message", relayMessageFromPageToBackground);
 	});
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
