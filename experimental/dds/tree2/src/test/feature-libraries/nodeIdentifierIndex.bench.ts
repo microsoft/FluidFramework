@@ -205,9 +205,9 @@ describe("Node Identifiers", () => {
 					// TODO: report these sizes as benchmark output which can be tracked over time.
 					const sizeDelta = sizeWithIds - sizeBaseline;
 					const relativeDelta = sizeDelta / sizeBaseline;
-					// Arbitrary limit of 10% increase. Re-adjust when identifier index is more performant.
+					// Arbitrary limit. Re-adjust when identifier index is more performant.
 					assert(
-						relativeDelta < 0.1,
+						relativeDelta < identifierDensityPercentage / 100,
 						`Increased summary size by ${sizeDelta} bytes (${(
 							relativeDelta * 100
 						).toFixed(2)}% increase)`,

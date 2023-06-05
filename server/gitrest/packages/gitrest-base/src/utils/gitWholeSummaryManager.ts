@@ -289,7 +289,7 @@ function convertFullSummaryToWholeSummaryEntries(
 		});
 	});
 
-	// Inspired by `buildHeirarchy` from services-client
+	// Inspired by `buildSummaryTreeHeirarchy` from services-client
 	const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree } } =
 		{};
 	const rootPath = ""; // This would normally be parentHandle, but only important when there are handles

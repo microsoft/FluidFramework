@@ -7,7 +7,7 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).
@@ -28,7 +28,7 @@ function runFindOverlappingIntervalsBenchmark({
 	type: BenchmarkType;
 }) {
 	let sharedString: SharedString;
-	let intervalCollection: IntervalCollection<SequenceInterval>;
+	let intervalCollection: IIntervalCollection<SequenceInterval>;
 
 	const setupSharedString = () => {
 		sharedString = new SharedStringFactory().create(new MockFluidDataStoreRuntime(), "id");

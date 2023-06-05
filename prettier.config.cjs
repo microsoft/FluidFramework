@@ -40,14 +40,5 @@ module.exports = {
 				quoteProps: "preserve",
 			},
 		},
-		{
-			// Line break parsing in GitHub and elsewhere is inconsistent. Sometimes line breaks result in a `<br/>`, and
-			// other times they follow the CommonMark spec and ignore single line breaks. Setting proseWrap=never will
-			// condense all "markdown paragraphs" to a single line.
-			files: ["*.md", "*.mdown", "*.markdown"],
-			options: {
-				proseWrap: "never",
-			},
-		},
 	],
 };

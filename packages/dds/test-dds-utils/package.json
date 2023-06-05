@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-dds-utils",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -82,6 +82,14 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"@fluid-internal/stochastic-test-utils#build:test"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

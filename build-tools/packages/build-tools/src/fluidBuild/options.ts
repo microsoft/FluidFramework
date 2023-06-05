@@ -30,7 +30,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	nohoist: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	samples: boolean;
 	fix: boolean;
 	services: boolean;
 	worker: boolean;
@@ -56,8 +55,7 @@ export const options: FastBuildOptions = {
 	install: false,
 	nohoist: false,
 	uninstall: false,
-	concurrency: os.cpus().length, // TODO: argument?
-	samples: true,
+	concurrency: os.cpus().length,
 	fix: false,
 	all: false,
 	server: false,
@@ -174,11 +172,6 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--nosamples") {
-			options.samples = false;
-			continue;
-		}
-
 		if (arg === "--fix") {
 			options.fix = true;
 			setBuild(false);
@@ -283,6 +276,21 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
+		if (arg === "--concurrency") {
+			if (i !== process.argv.length - 1) {
+				const concurrency = parseInt(process.argv[++i]);
+				if (!isNaN(concurrency) && concurrency > 0) {
+					options.concurrency = concurrency;
+					continue;
+				}
+				errorLog("Argument for --concurrency is not a number > 0");
+			} else {
+				errorLog("Missing argument for --concurrency");
+			}
+			error = true;
+			break;
+		}
+
 		if (arg === "--worker") {
 			options.worker = true;
 			continue;
@@ -303,7 +311,7 @@ export function parseOptions(argv: string[]) {
 				}
 				errorLog("Argument for --workerMemoryLimitMB is not a number");
 			} else {
-				errorLog("Missing argument for --workerMemoryLimit");
+				errorLog("Missing argument for --workerMemoryLimitMB");
 			}
 			error = true;
 			break;

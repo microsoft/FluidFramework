@@ -5,17 +5,17 @@
 
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	IFluidErrorBase,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
@@ -47,7 +47,7 @@ export class SummarizingWarning
 		super(errorMessage);
 	}
 
-	static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
+	static wrap(error: any, logged: boolean = false, logger: ITelemetryLoggerExt) {
 		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
@@ -66,7 +66,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return this;
 	}
 
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private runningSummarizer?: RunningSummarizer;
 	private _disposed: boolean = false;
 	private starting: boolean = false;
@@ -152,7 +152,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		// This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
 		// unless stop() was called earlier
 		this.dispose();
-		(this.runtime.disposeFn ?? this.runtime.closeFn)();
+		this.runtime.disposeFn();
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {

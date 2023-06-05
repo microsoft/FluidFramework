@@ -140,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
-    dispose?(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

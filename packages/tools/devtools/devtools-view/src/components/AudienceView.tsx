@@ -45,7 +45,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[AudienceSummary.MessageType]: (untypedMessage) => {
+			[AudienceSummary.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as AudienceSummary.Message;
 
 				setAudienceData(message.data);
