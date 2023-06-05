@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/register-collection",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Consensus Register",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,7 +66,7 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~"

@@ -121,6 +121,18 @@
 			"RemovedInterfaceDeclaration_ILocalSequencedClient": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_AttachmentTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_BlobTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_TreeTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

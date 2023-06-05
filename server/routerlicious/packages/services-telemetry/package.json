@@ -86,6 +86,9 @@
 			},
 			"EnumDeclaration_LumberEventName": {
 				"backCompat": false
+			},
+			"EnumDeclaration_CommonProperties": {
+				"backCompat": false
 			}
 		}
 	}
