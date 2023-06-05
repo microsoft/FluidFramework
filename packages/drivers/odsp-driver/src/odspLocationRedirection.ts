@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getOdspResolvedUrl } from "./odspUtils";
 
@@ -14,7 +14,7 @@ import { getOdspResolvedUrl } from "./odspUtils";
  * @returns - Resolved url after patching the correct siteUrl.
  */
 export function patchOdspResolvedUrl(
-	resolvedUrl: IFluidResolvedUrl,
+	resolvedUrl: IResolvedUrl,
 	redirectLocation: string,
 ): IOdspResolvedUrl {
 	const odspResolvedUrl = { ...getOdspResolvedUrl(resolvedUrl) };

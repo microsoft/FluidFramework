@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver-definitions",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -56,6 +56,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_OdspError": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

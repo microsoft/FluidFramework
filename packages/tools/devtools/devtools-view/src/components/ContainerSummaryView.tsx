@@ -14,7 +14,6 @@ import {
 	TableCellLayout,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
-	Tooltip,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
@@ -204,7 +203,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateChange.MessageType]: (untypedMessage) => {
+			[ContainerStateChange.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChange.Message;
 				if (message.data.containerKey === containerKey) {
 					setContainerState(message.data.containerState);
@@ -358,40 +357,34 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		props;
 
 	const changeConnectionStateButton = isContainerConnected ? (
-		<Tooltip content="Disconnect Container" relationship="description">
-			<Button
-				size="small"
-				icon={<PlugDisconnected20Regular />}
-				onClick={forceDisconnect}
-				disabled={forceDisconnect === undefined || isContainerClosed}
-			>
-				Disconnect Container
-			</Button>
-		</Tooltip>
+		<Button
+			size="small"
+			icon={<PlugDisconnected20Regular />}
+			onClick={forceDisconnect}
+			disabled={forceDisconnect === undefined || isContainerClosed}
+		>
+			Disconnect Container
+		</Button>
 	) : (
-		<Tooltip content="Connect Container" relationship="description">
-			<Button
-				size="small"
-				icon={<PlugConnected20Regular />}
-				onClick={tryConnect}
-				disabled={tryConnect === undefined || isContainerClosed}
-			>
-				Connect Container
-			</Button>
-		</Tooltip>
+		<Button
+			size="small"
+			icon={<PlugConnected20Regular />}
+			onClick={tryConnect}
+			disabled={tryConnect === undefined || isContainerClosed}
+		>
+			Connect Container
+		</Button>
 	);
 
 	const disposeContainerButton = (
-		<Tooltip content="Close Container" relationship="description">
-			<Button
-				size="small"
-				icon={<Delete20Regular />}
-				onClick={closeContainer}
-				disabled={closeContainer === undefined || isContainerClosed}
-			>
-				Close Container
-			</Button>
-		</Tooltip>
+		<Button
+			size="small"
+			icon={<Delete20Regular />}
+			onClick={closeContainer}
+			disabled={closeContainer === undefined || isContainerClosed}
+		>
+			Close Container
+		</Button>
 	);
 
 	const itemStyles: IStackItemStyles = {
