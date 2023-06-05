@@ -523,6 +523,42 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 }
 
+export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+	constructor(
+		public readonly LoaderConstructor: typeof Loader,
+		public readonly driver: ITestDriver,
+		public readonly createFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+		public readonly versionedCreateFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+	) {
+		super(LoaderConstructor, driver, createFluidEntryPoint);
+	}
+
+	private makeTestLoaderForLoading(testContainerConfig?: ITestContainerConfig) {
+		return this.createLoader(
+			[[defaultCodeDetails, this.versionedCreateFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+		);
+	}
+
+	public async loadTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		const loader = this.makeTestLoaderForLoading(testContainerConfig);
+		const container = await loader.resolve({
+			url: await this.driver.createContainerUrl(this.documentId),
+			headers: requestHeader,
+		});
+		await this.waitContainerToCatchUp(container);
+
+		return container;
+	}
+}
+
 export function getUnexpectedLogErrorException(
 	logger: EventAndErrorTrackingLogger | undefined,
 	prefix?: string,

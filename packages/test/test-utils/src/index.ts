@@ -28,6 +28,7 @@ export {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider";
 export {
 	createSummarizer,

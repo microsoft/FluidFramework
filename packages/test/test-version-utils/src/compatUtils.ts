@@ -19,11 +19,13 @@ import {
 	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
 import { pkgVersion } from "./packageVersion";
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
+import { InternalVersion } from "./compatConfig";
 
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
@@ -137,4 +139,58 @@ export async function getVersionedTestObjectProvider(
 	};
 
 	return new TestObjectProvider(loaderApi.Loader, driver, containerFactoryFn);
+}
+
+export async function getInternalVersionedTestObjectProvider(
+	createVersion: InternalVersion,
+	loadVersion: InternalVersion,
+	driverConfig?: {
+		type?: TestDriverTypes;
+		config?: FluidTestDriverConfig;
+	},
+): Promise<TestObjectProvider> {
+	const loaderApi = getLoaderApi(createVersion.base, createVersion.delta);
+	const createContainerRuntimeApi = getContainerRuntimeApi(
+		createVersion.base,
+		createVersion.delta,
+	);
+	const loadContainerRuntimeApi = getContainerRuntimeApi(loadVersion.base, loadVersion.delta);
+	const dataRuntimeApi = getDataRuntimeApi(createVersion.base, createVersion.delta);
+	const driver = await createVersionedFluidTestDriver(createVersion.base, driverConfig);
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		runtime.IFluidHandleContext.resolveHandle(request);
+
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
+	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			createContainerRuntimeApi.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			loadContainerRuntimeApi.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return new TestObjectProviderWithVersionedLoad(
+		loaderApi.Loader,
+		driver,
+		createContainerFactoryFn,
+		loadContainerFactoryFn,
+	);
 }

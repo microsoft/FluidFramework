@@ -30,10 +30,12 @@ interface CompatConfig {
 	dataRuntime?: string | number;
 }
 
-// N and N - 1
-const defaultVersions = [0, -1];
-// we are currently supporting 1.3.4 long-term
-const LTSVersions = ["^1.3.4"];
+const DefaultCompatVersions = {
+	// N and N - 1
+	CurrentVersionDeltas: [0, -1],
+	// we are currently supporting 1.3.4 long-term
+	LTSVersions: ["^1.3.4"],
+};
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -179,6 +181,38 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+export interface InternalVersion {
+	base: string;
+	delta: number;
+}
+
+export interface InternalVersionCompatConfig {
+	name: string;
+	createWith: InternalVersion;
+	loadWith: InternalVersion;
+}
+
+export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
+	const allDefaultDeltaVersions = DefaultCompatVersions.CurrentVersionDeltas.map((delta) => ({
+		base: pkgVersion,
+		// temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
+		delta: delta * 10,
+	}));
+
+	return allDefaultDeltaVersions
+		.map((createVersion) =>
+			allDefaultDeltaVersions.map((loadVersion) => ({
+				name: `Internal compat \
+create with [${createVersion.base} ${createVersion.delta === 0 ? "" : createVersion.delta}], \
+load with [${loadVersion.base} ${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
+				createWith: createVersion,
+				loadWith: loadVersion,
+			})),
+		)
+		.reduce((a, b) => a.concat(b))
+		.filter((config) => config.createWith !== config.loadWith);
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -194,19 +228,19 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	let _configList: CompatConfig[] = [];
 	if (!compatVersions || compatVersions.length === 0) {
-		defaultVersions.forEach((value) => {
+		DefaultCompatVersions.CurrentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
-		LTSVersions.forEach((value) => {
+		DefaultCompatVersions.LTSVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
 	} else {
 		compatVersions.forEach((value) => {
 			if (value === "LTS") {
-				LTSVersions.forEach((lts) => {
+				DefaultCompatVersions.LTSVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
 			} else if (value === "FULL") {

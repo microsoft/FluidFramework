@@ -343,6 +343,21 @@ export class TestObjectProvider implements ITestObjectProvider {
 }
 
 // @public (undocumented)
+export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    // (undocumented)
+    readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+    // (undocumented)
+    readonly driver: ITestDriver;
+    // (undocumented)
+    readonly LoaderConstructor: typeof Loader;
+    // (undocumented)
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    // (undocumented)
+    readonly versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+}
+
+// @public (undocumented)
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public (undocumented)
