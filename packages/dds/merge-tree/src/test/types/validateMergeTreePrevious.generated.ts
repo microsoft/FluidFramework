@@ -1763,6 +1763,7 @@ declare function get_current_InterfaceDeclaration_MergeTreeRevertibleDriver():
 declare function use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
     use: TypeOnly<old.MergeTreeRevertibleDriver>);
 use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_MergeTreeRevertibleDriver());
 
 /*

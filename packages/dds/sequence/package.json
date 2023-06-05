@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -141,6 +141,22 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_IntervalCollection": {
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_CompressedSerializedInterval": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_IntervalCollection": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_IntervalCollectionIterator": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}

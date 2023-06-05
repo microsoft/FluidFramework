@@ -117,17 +117,11 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  * Intervals are of the format:
  *
  * [start, end, sequenceNumber, intervalType, properties, stickiness?]
- *
- * @deprecated - Public export was never intended and will be removed.
  */
 export type CompressedSerializedInterval =
 	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
 	| [number, number, number, IntervalType, PropertySet];
 
-/**
- * @internal
- * @deprecated - Public export will be removed.
- */
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
 	version: 2;
@@ -322,7 +316,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IntervalCollection<Interval>`
+	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */
@@ -1558,11 +1552,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-/**
- * @deprecated - Public export will be removed. Use an appropriate iterator creation method on
- * {@link IIntervalCollection} to iterate intervals instead.
- */
-export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
+class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	implements Iterator<TInterval>
 {
 	private readonly results: TInterval[];
@@ -1655,10 +1645,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
- * This class is not a DDS in its own right, but emits events on mutating operations such that it's possible to
- * integrate into a DDS.
- * This aligns with its usage in `SharedSegmentSequence`, which allows associating intervals to positions in the
- * sequence DDS which are broadcast to all other clients in an eventually consistent fashion.
+ * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
@@ -1691,11 +1678,18 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param end - interval end position (exclusive)
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
+	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
 	 * @returns - the created interval
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
-	add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+	add(
+		start: number,
+		end: number,
+		intervalType: IntervalType,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
 	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
@@ -1776,7 +1770,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 }
 
 /**
- * @deprecated - Use {@link IIntervalCollection} instead.
+ * {@inheritdoc IIntervalCollection}
  */
 export class IntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>>
