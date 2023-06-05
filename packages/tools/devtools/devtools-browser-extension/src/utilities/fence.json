@@ -1,5 +1,0 @@
-{
-	"tags": ["utilities"],
-	"exports": ["index", "Globals"],
-	"imports": []
-}

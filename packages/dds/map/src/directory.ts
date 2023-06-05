@@ -2182,7 +2182,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (localOpMetadata.type === "deleteSubDir") {
 					assert(
 						pendingDeleteCount !== undefined && pendingDeleteCount > 0,
-						"pendingDeleteCount should exist",
+						0x6c2 /* pendingDeleteCount should exist */,
 					);
 					this.decrementPendingSubDirCount(
 						this.pendingDeleteSubDirectoriesTracker,
@@ -2191,7 +2191,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				} else if (localOpMetadata.type === "createSubDir") {
 					assert(
 						pendingCreateCount !== undefined && pendingCreateCount > 0,
-						"pendingCreateCount should exist",
+						0x6c3 /* pendingCreateCount should exist */,
 					);
 					this.decrementPendingSubDirCount(
 						this.pendingCreateSubDirectoriesTracker,

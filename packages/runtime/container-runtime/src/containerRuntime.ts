@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -45,6 +41,7 @@ import {
 	MonitoringContext,
 	loggerToMonitoringContext,
 	wrapError,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -584,9 +581,6 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
-	public get IContainerRuntime() {
-		return this;
-	}
 	public get IFluidRouter() {
 		return this;
 	}
@@ -828,7 +822,7 @@ export class ContainerRuntime
 		opMetadata: Record<string, unknown> | undefined,
 	) => void {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		return this.reSubmit;
+		return this.reSubmitCore;
 	}
 
 	public get disposeFn(): (error?: ICriticalContainerError) => void {
@@ -1054,7 +1048,7 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLogger,
+		public readonly logger: ITelemetryLoggerExt,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -1305,7 +1299,6 @@ export class ContainerRuntime
 				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
-				rollback: this.rollback.bind(this),
 				orderSequentially: this.orderSequentially.bind(this),
 			},
 			pendingRuntimeState?.pending,
@@ -1818,7 +1811,23 @@ export class ContainerRuntime
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
-	private async applyStashedOp(type: ContainerMessageType, contents: unknown): Promise<unknown> {
+	/**
+	 * Parse an op's type and actual content from given serialized content
+	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
+	 */
+	private parseOpContent(serializedContent?: string): {
+		type: ContainerMessageType;
+		contents: unknown;
+	} {
+		assert(serializedContent !== undefined, "content must be defined");
+		const parsed = JSON.parse(serializedContent);
+		assert(parsed.type !== undefined, "incorrect op content format");
+		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
+	}
+
+	private async applyStashedOp(op: string): Promise<unknown> {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseOpContent(op);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents as IEnvelope);
@@ -2158,11 +2167,7 @@ export class ContainerRuntime
 				// This will throw and close the container if rollback fails
 				try {
 					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(
-							message.deserializedContent.type,
-							message.deserializedContent.contents,
-							message.localOpMetadata,
-						),
+						this.rollback(message.contents, message.localOpMetadata),
 					);
 				} catch (err) {
 					const error2 = wrapError(err, (message) => {
@@ -2415,7 +2420,7 @@ export class ContainerRuntime
 		/** True to track the state for this summary in the SummarizerNodes; defaults to true */
 		trackState?: boolean;
 		/** Logger to use for correlated summary events */
-		summaryLogger?: ITelemetryLogger;
+		summaryLogger?: ITelemetryLoggerExt;
 		/** True to run garbage collection before summarizing; defaults to true */
 		runGC?: boolean;
 		/** True to generate full GC data */
@@ -2632,7 +2637,7 @@ export class ContainerRuntime
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -2979,10 +2984,10 @@ export class ContainerRuntime
 				};
 				idAllocationBatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
-					deserializedContent: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
 					localOpMetadata: this.idCompressor?.serialize(true),
+					type: ContainerMessageType.IdAllocation,
 				};
 			}
 
@@ -3020,7 +3025,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
+			type,
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -3175,13 +3180,23 @@ export class ContainerRuntime
 		}
 	}
 
+	private reSubmit(
+		content: string,
+		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
+	) {
+		// Need to parse from string for back-compat
+		const { contents, type } = this.parseOpContent(content);
+		this.reSubmitCore(type, contents, localOpMetadata, opMetadata);
+	}
+
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(
+	private reSubmitCore(
 		type: ContainerMessageType,
 		content: any,
 		localOpMetadata: unknown,
@@ -3195,7 +3210,13 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
+				this.submit(type, content, localOpMetadata);
+				break;
 			case ContainerMessageType.IdAllocation:
+				// Remove the stashedState from the op if it's a stashed op
+				if (content.stashedState !== undefined) {
+					delete content.stashedState;
+				}
 				this.submit(type, content, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
@@ -3211,12 +3232,14 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+	private rollback(content: string | undefined, localOpMetadata: unknown) {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(content, localOpMetadata);
+				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
 				break;
 			default:
 				throw new Error(`Can't rollback ${type}`);
@@ -3225,7 +3248,7 @@ export class ContainerRuntime
 
 	private async waitForDeltaManagerToCatchup(
 		latestSnapshotRefSeq: number,
-		summaryLogger: ITelemetryLogger,
+		summaryLogger: ITelemetryLoggerExt,
 	): Promise<void> {
 		if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
 			// We need to catch up to the latest summary's reference sequence number before proceeding.
@@ -3337,7 +3360,7 @@ export class ContainerRuntime
 	 * @returns downloaded snapshot's reference sequence number
 	 */
 	private async refreshLatestSummaryAckFromServer(
-		summaryLogger: ITelemetryLogger,
+		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const { snapshotTree, versionId, latestSnapshotRefSeq } =
@@ -3371,7 +3394,7 @@ export class ContainerRuntime
 	}
 
 	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
@@ -3379,7 +3402,7 @@ export class ContainerRuntime
 	}
 
 	private async fetchSnapshotFromStorage(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,

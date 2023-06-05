@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
 export function logNetworkFailure(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	event: ITelemetryErrorEvent,
 	error?: any,
 ) {

@@ -4,11 +4,10 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
@@ -93,7 +92,7 @@ export async function exportFile(
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
 ): Promise<string> {
