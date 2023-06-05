@@ -236,6 +236,15 @@ export class GitRepo {
 		);
 	}
 
+	public async checkMerge(commit: string) {
+		try {
+			await this.exec(`merge ${commit} --no-commit`, `check if ${commit} has conflicts`);
+			return "No Conflicts";
+		} catch (error: unknown) {
+			return "Abort";
+		}
+	}
+
 	/**
 	 *
 	 * @param commitId - Commit id to merge
