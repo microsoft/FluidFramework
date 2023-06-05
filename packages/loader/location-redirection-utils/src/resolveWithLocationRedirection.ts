@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	DriverErrorType,
@@ -35,7 +35,7 @@ export async function resolveWithLocationRedirectionHandling<T>(
 	api: (request: IRequest) => Promise<T>,
 	request: IRequest,
 	urlResolver: IUrlResolver,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryLoggerExt,
 ): Promise<T> {
 	let req: IRequest = request;
 	for (;;) {

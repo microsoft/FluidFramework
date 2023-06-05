@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -17,8 +13,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
+import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -60,6 +55,7 @@ import {
 import {
 	ChildLogger,
 	generateStack,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -163,7 +159,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.clientDetails;
 	}
 
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this._containerRuntime.logger;
 	}
 

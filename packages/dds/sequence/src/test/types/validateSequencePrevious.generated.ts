@@ -16,27 +16,14 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_CompressedSerializedInterval": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_CompressedSerializedInterval": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_CompressedSerializedInterval():
-    TypeOnly<old.CompressedSerializedInterval>;
-declare function use_current_TypeAliasDeclaration_CompressedSerializedInterval(
-    use: TypeOnly<current.CompressedSerializedInterval>);
-use_current_TypeAliasDeclaration_CompressedSerializedInterval(
-    get_old_TypeAliasDeclaration_CompressedSerializedInterval());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_CompressedSerializedInterval": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_CompressedSerializedInterval": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_CompressedSerializedInterval():
-    TypeOnly<current.CompressedSerializedInterval>;
-declare function use_old_TypeAliasDeclaration_CompressedSerializedInterval(
-    use: TypeOnly<old.CompressedSerializedInterval>);
-use_old_TypeAliasDeclaration_CompressedSerializedInterval(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_TypeAliasDeclaration_CompressedSerializedInterval());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -257,27 +244,14 @@ use_old_InterfaceDeclaration_ISerializedInterval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2():
-    TypeOnly<old.ISerializedIntervalCollectionV2>;
-declare function use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
-    use: TypeOnly<current.ISerializedIntervalCollectionV2>);
-use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
-    get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2():
-    TypeOnly<current.ISerializedIntervalCollectionV2>;
-declare function use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
-    use: TypeOnly<old.ISerializedIntervalCollectionV2>);
-use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -402,51 +376,26 @@ use_old_ClassDeclaration_Interval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IntervalCollection": {"forwardCompat": false}
+* "RemovedClassDeclaration_IntervalCollection": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_IntervalCollection():
-    TypeOnly<old.IntervalCollection<any>>;
-declare function use_current_ClassDeclaration_IntervalCollection(
-    use: TypeOnly<current.IntervalCollection<any>>);
-use_current_ClassDeclaration_IntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_IntervalCollection());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IntervalCollection": {"backCompat": false}
+* "RemovedClassDeclaration_IntervalCollection": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_IntervalCollection():
-    TypeOnly<current.IntervalCollection<any>>;
-declare function use_old_ClassDeclaration_IntervalCollection(
-    use: TypeOnly<old.IntervalCollection<any>>);
-use_old_ClassDeclaration_IntervalCollection(
-    get_current_ClassDeclaration_IntervalCollection());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IntervalCollectionIterator": {"forwardCompat": false}
+* "RemovedClassDeclaration_IntervalCollectionIterator": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_IntervalCollectionIterator():
-    TypeOnly<old.IntervalCollectionIterator<any>>;
-declare function use_current_ClassDeclaration_IntervalCollectionIterator(
-    use: TypeOnly<current.IntervalCollectionIterator<any>>);
-use_current_ClassDeclaration_IntervalCollectionIterator(
-    get_old_ClassDeclaration_IntervalCollectionIterator());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IntervalCollectionIterator": {"backCompat": false}
+* "RemovedClassDeclaration_IntervalCollectionIterator": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_IntervalCollectionIterator():
-    TypeOnly<current.IntervalCollectionIterator<any>>;
-declare function use_old_ClassDeclaration_IntervalCollectionIterator(
-    use: TypeOnly<old.IntervalCollectionIterator<any>>);
-use_old_ClassDeclaration_IntervalCollectionIterator(
-    get_current_ClassDeclaration_IntervalCollectionIterator());
 
 /*
 * Validate forward compat by using old type in place of current type
