@@ -18,6 +18,7 @@ import {
 
 type Port = chrome.runtime.Port;
 
+// `window` should always be defined in the Content script context.
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const window = maybeWindow!;
 
