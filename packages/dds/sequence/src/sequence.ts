@@ -52,6 +52,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
+	IIntervalCollection,
 	IntervalCollection,
 	SequenceInterval,
 	SequenceIntervalCollectionValueType,
@@ -451,7 +452,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}
 

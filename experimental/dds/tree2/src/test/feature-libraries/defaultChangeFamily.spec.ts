@@ -31,12 +31,14 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
+	ModularChangeset,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
 import { noopValidator } from "../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
+const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
@@ -86,15 +88,15 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore(forest);
+	const repairStore = new ForestRepairDataStore(forest, defaultIntoDelta);
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
+			repairStore.capture(change, currentRevision);
 			const delta = defaultChangeFamily.intoDelta(change);
-			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();

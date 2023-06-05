@@ -40,6 +40,7 @@ import {
 	SchemaEditor,
 	NodeIdentifierIndex,
 	NodeIdentifier,
+	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly } from "../util";
@@ -88,10 +89,15 @@ export class SharedTree
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(runtime, forest);
-		const repairProvider = new ForestRepairDataStoreProvider(forest, schema);
+		const changeFamily = new DefaultChangeFamily(options);
+		const repairProvider = new ForestRepairDataStoreProvider(
+			forest,
+			schema,
+			(change: ModularChangeset) => changeFamily.intoDelta(change),
+		);
 		super(
 			[schemaSummarizer, forestSummarizer],
-			new DefaultChangeFamily(options),
+			changeFamily,
 			forest.anchors,
 			repairProvider,
 			id,

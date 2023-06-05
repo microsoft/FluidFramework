@@ -36,6 +36,7 @@ import {
 	DefaultEditBuilder,
 	NewFieldContent,
 	ForestRepairDataStore,
+	ModularChangeset,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -249,7 +250,7 @@ export function createSharedTreeView(args?: {
 	changeFamily?: DefaultChangeFamily;
 	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider;
+	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	identifierIndex?: NodeIdentifierIndex<typeof nodeIdentifierKey>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
@@ -257,8 +258,11 @@ export function createSharedTreeView(args?: {
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ validator: noopValidator });
 	const repairDataStoreProvider =
-		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema);
-	const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, changeFamily);
+		args?.repairProvider ??
+		new ForestRepairDataStoreProvider(forest, schema, (change) =>
+			changeFamily.intoDelta(change),
+		);
+	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -267,6 +271,7 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
+			repairDataStoreProvider,
 			undoRedoManager,
 			forest.anchors,
 		);
@@ -341,7 +346,11 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
-			this.branch.startTransaction(new ForestRepairDataStore(this.forest));
+			this.branch.startTransaction(
+				new ForestRepairDataStore(this.forest, (change) =>
+					this.changeFamily.intoDelta(change),
+				),
+			);
 			this.branch.editor.enterTransaction();
 		},
 		commit: () => {
@@ -384,7 +393,11 @@ export class SharedTreeView implements ISharedTreeView {
 		const anchors = new AnchorSet();
 		const storedSchema = this._storedSchema.clone();
 		const forest = this._forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
+		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
+			forest,
+			storedSchema,
+			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
+		);
 		const branch = this.branch.fork(repairDataStoreProvider, anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeView(

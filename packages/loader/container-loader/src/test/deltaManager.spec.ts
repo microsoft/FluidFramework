@@ -9,8 +9,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IDocumentMessage,
@@ -29,7 +28,7 @@ describe("Loader", () => {
 		describe("Delta Manager", () => {
 			let clock: SinonFakeTimers;
 			let deltaManager: DeltaManager<ConnectionManager>;
-			let logger: ITelemetryLogger;
+			let logger: ITelemetryLoggerExt;
 			let deltaConnection: MockDocumentDeltaConnection;
 			let clientSeqNumber = 0;
 			let emitter: EventEmitter;

@@ -498,7 +498,11 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			new MockRepairDataStoreProvider(),
+		);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -510,7 +514,8 @@ describe("Branches", () => {
 		return new SharedTreeBranch(
 			from.getHead(),
 			defaultChangeFamily,
-			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			new MockRepairDataStoreProvider(),
+			UndoRedoManager.create(defaultChangeFamily),
 		);
 	}
 
