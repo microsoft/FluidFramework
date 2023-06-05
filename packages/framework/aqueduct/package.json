@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/aqueduct",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "A set of implementations for Fluid Framework interfaces.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -109,6 +109,13 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DataObject": {
+				"backCompat": false
+			},
+			"ClassDeclaration_PureDataObject": {
+				"backCompat": false
+			}
+		}
 	}
 }

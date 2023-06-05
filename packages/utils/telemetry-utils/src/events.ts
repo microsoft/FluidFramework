@@ -4,14 +4,14 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export const connectedEventName = "connected";
 export const disconnectedEventName = "disconnected";
 
 export function safeRaiseEvent(
 	emitter: EventEmitter,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	event: string,
 	...args
 ) {
@@ -31,7 +31,7 @@ export function safeRaiseEvent(
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
  */
 export function raiseConnectedEvent(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	emitter: EventEmitter,
 	connected: boolean,
 	clientId?: string,

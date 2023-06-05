@@ -6,6 +6,7 @@ export {
 	DefaultChangeset,
 	DefaultChangeFamily,
 	defaultChangeFamily,
+	defaultIntoDelta,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
@@ -133,11 +134,7 @@ export {
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export {
-	ForestRepairDataStore,
-	ForestRepairDataStoreProvider,
-	repairDataStoreFromForest,
-} from "./forestRepairDataStore";
+export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
