@@ -5,6 +5,8 @@
 "@fluidframework/fluid-static": major
 ---
 
-`PureDataObject.getFluidObjectFromDirectory` was deprecated in a previous release and has been removed.
+The following functions and classes were deprecated in previous releases and have been removed:
 
-`IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+- `PureDataObject.getFluidObjectFromDirectory`
+- `IProvideContainerRuntime` and its `IContainerRuntime` member.
+- `ContainerRuntime`'s `IProvideContainerRuntime` has also been removed.
