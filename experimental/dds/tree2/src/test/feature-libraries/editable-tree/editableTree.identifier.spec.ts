@@ -72,18 +72,6 @@ describe("editable-tree: identifiers", () => {
 
 	it("can read identifiers", () => {
 		const { view, parentIdentifier, childAIdentifier, childBIdentifier } = initializeView();
-
-		// const typedRootField = typedView.context.root as unknown as SchemaAware.TypedField<
-		// 	typeof rootField
-		// >;
-		// const parentNode = typedRootField[0];
-		// const childA = parentNode.children[0];
-		// const childB = parentNode.children[1];
-		// // TODO: how best to read without cast?
-		// assert.equal((parentNode as any)[nodeIdentifierSymbol], parentIdentifier);
-		// assert.equal((childA as any)[nodeIdentifierSymbol], childAIdentifier);
-		// assert.equal((childB as any)[nodeIdentifierSymbol], childBIdentifier);
-
 		const typedRootField = view.context.root;
 		const parentNode = typedRootField.getNode(0);
 		const childA = parentNode[getField](brand("children")).getNode(0);
@@ -123,8 +111,3 @@ describe("editable-tree: identifiers", () => {
 		assert.throws(() => (parentNode[nodeIdentifierSymbol] = view.nodeIdentifier.generate()));
 	});
 });
-
-// Notes: SchemaAware type inference doesn't work very well with recursive types
-// Global fields don't compile error if absent even if they are required
-// Local fields don't runtime error if absent even if they are required
-// Global fields can't be read via schema aware APIs without compile error
