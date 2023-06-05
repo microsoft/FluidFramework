@@ -276,8 +276,8 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 
 	// if the baseVersion passed is an internal version
 	if (isInternal) {
-		if(requested === -10){
-			return "^1.3.6"
+		if (requested === -10) {
+			return "^1.3.6";
 		}
 		const internalVersions = baseVersion.split("-internal.");
 		return internalSchema(internalVersions[0], internalVersions[1], requested);

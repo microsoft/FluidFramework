@@ -181,18 +181,18 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
-export interface InternalVersion {
+export interface CompatVersion {
 	base: string;
 	delta: number;
 }
 
-export interface InternalVersionCompatConfig {
+export interface CompatVersionConfig {
 	name: string;
-	createWith: InternalVersion;
-	loadWith: InternalVersion;
+	createWith: CompatVersion;
+	loadWith: CompatVersion;
 }
 
-export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
+export const getMajorCompatConfig = (): CompatVersionConfig[] => {
 	const allDefaultDeltaVersions = DefaultCompatVersions.CurrentVersionDeltas.map((delta) => ({
 		base: pkgVersion,
 		// temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
@@ -202,7 +202,7 @@ export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
 	return allDefaultDeltaVersions
 		.map((createVersion) =>
 			allDefaultDeltaVersions.map((loadVersion) => ({
-				name: `Internal compat \
+				name: `Major compat \
 create with [${createVersion.base} ${createVersion.delta === 0 ? "" : createVersion.delta}], \
 load with [${loadVersion.base} ${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
 				createWith: createVersion,

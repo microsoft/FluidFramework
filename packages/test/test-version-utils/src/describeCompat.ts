@@ -9,11 +9,11 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { configList, getInternalCompatConfig } from "./compatConfig";
+import { configList, getMajorCompatConfig } from "./compatConfig";
 import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions";
 import {
 	getVersionedTestObjectProvider,
-	getInternalVersionedTestObjectProvider,
+	getCompatVersionedTestObjectProvider,
 } from "./compatUtils";
 
 /*
@@ -21,7 +21,7 @@ import {
  */
 function createCompatSuite(
 	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
-	enableInternalCompat: boolean,
+	enableVersionCompat: boolean,
 	compatFilter?: CompatKind[],
 ) {
 	return function (this: Mocha.Suite) {
@@ -49,11 +49,10 @@ function createCompatSuite(
 			);
 		}
 
-		if (enableInternalCompat) {
-			getInternalCompatConfig().forEach((config) => {
+		if (enableVersionCompat) {
+			getMajorCompatConfig().forEach((config) => {
 				wrapTest(config.name, tests, async () =>
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					getInternalVersionedTestObjectProvider(config.createWith, config.loadWith, {
+					getCompatVersionedTestObjectProvider(config.createWith, config.loadWith, {
 						type: driver,
 						config: {
 							r11s: { r11sEndpointName },
@@ -135,17 +134,17 @@ export type DescribeCompat = DescribeCompatSuite &
 	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
 function createCompatDescribe(
-	enableInternalCompat: boolean,
+	enableVersionCompat: boolean,
 	compatFilter?: CompatKind[],
 ): DescribeCompat {
 	const d: DescribeCompat = (name, tests) =>
-		describe(name, createCompatSuite(tests, enableInternalCompat, compatFilter));
+		describe(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
 	d.skip = (name, tests) =>
-		describe.skip(name, createCompatSuite(tests, enableInternalCompat, compatFilter));
+		describe.skip(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
 	d.only = (name, tests) =>
-		describe.only(name, createCompatSuite(tests, enableInternalCompat, compatFilter));
+		describe.only(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
 	d.noCompat = (name, tests) =>
-		describe(name, createCompatSuite(tests, enableInternalCompat, [CompatKind.None]));
+		describe(name, createCompatSuite(tests, enableVersionCompat, [CompatKind.None]));
 	return d;
 }
 
@@ -157,4 +156,4 @@ export const describeLoaderCompat: DescribeCompat = createCompatDescribe(false, 
 ]);
 
 export const describeFullCompat: DescribeCompat = createCompatDescribe(false);
-export const describeFullInternalCompat: DescribeCompat = createCompatDescribe(true);
+export const describeFullVersionCompat: DescribeCompat = createCompatDescribe(true);

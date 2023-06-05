@@ -14,7 +14,7 @@ export {
 	DescribeCompat,
 	DescribeCompatSuite,
 	describeFullCompat,
-	describeFullInternalCompat,
+	describeFullVersionCompat,
 	describeLoaderCompat,
 	describeNoCompat,
 	ITestObjectProviderOptions,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFullInternalCompat } from "@fluid-internal/test-version-utils";
+import { describeFullVersionCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	DataObjectFactoryType,
@@ -14,7 +14,7 @@ import {
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-describeFullInternalCompat(
+describeFullVersionCompat(
 	"Tests with different versions used for creating vs loading a container",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
