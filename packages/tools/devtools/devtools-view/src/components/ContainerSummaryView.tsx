@@ -203,7 +203,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateChange.MessageType]: (untypedMessage) => {
+			[ContainerStateChange.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChange.Message;
 				if (message.data.containerKey === containerKey) {
 					setContainerState(message.data.containerState);

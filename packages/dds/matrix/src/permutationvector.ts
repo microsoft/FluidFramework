@@ -19,7 +19,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
-	ReferenceType,
+	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -69,35 +69,6 @@ export class PermutationSegment extends BaseSegment {
 		);
 
 		this._start = value;
-	}
-
-	/**
-	 * Invoked by '_undoRow/ColRemove' to prepare the newly inserted destination
-	 * segment to serve as the replacement for this removed segment.  This moves handle
-	 * allocations from this segment to the replacement as well as maintains tracking
-	 * groups for the undo/redo stack.
-	 */
-	public transferToReplacement(destination: PermutationSegment) {
-		// When this segment was removed, it may have been split from a larger original
-		// segment.  In this case, it will have been added to an undo/redo tracking group
-		// that associates all of the fragments from the original insertion.
-		//
-		// Move this association from the this removed segment to its replacement so that
-		// it is included if the undo stack continues to unwind to the original insertion.
-		//
-		// Out of paranoia we link and unlink in separate loops to avoid mutating the underlying
-		// set during enumeration.  In practice, this is unlikely to matter since there should be
-		// exactly 0 or 1 items in the enumeration.
-		for (const group of this.trackingCollection.trackingGroups) {
-			group.link(destination);
-		}
-		for (const group of this.trackingCollection.trackingGroups) {
-			group.unlink(this);
-		}
-
-		// Move handle allocations from this segment to its replacement.
-		destination._start = this._start;
-		this.reset();
 	}
 
 	public reset() {
@@ -170,6 +141,7 @@ export class PermutationVector extends Client {
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
+				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
@@ -179,18 +151,6 @@ export class PermutationVector extends Client {
 
 	public insert(start: number, length: number) {
 		return this.insertSegmentLocal(start, new PermutationSegment(length));
-	}
-
-	public insertRelative(segment: ISegment, length: number) {
-		const inserted = new PermutationSegment(length);
-
-		return {
-			op: this.insertAtReferencePositionLocal(
-				this.createLocalReferencePosition(segment, 0, ReferenceType.Transient, undefined),
-				inserted,
-			),
-			inserted,
-		};
 	}
 
 	public remove(start: number, length: number) {
@@ -346,10 +306,10 @@ export class PermutationVector extends Client {
 
 	private readonly onDelta = (
 		opArgs: IMergeTreeDeltaOpArgs,
-		{ operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
+		deltaArgs: IMergeTreeDeltaCallbackArgs,
 	) => {
 		// Apply deltas in descending order to prevent positions from shifting.
-		const ranges = deltaSegments
+		const ranges = deltaArgs.deltaSegments
 			.map(({ segment }) => ({
 				segment: segment as PermutationSegment,
 				position: this.getPosition(segment),
@@ -360,10 +320,10 @@ export class PermutationVector extends Client {
 
 		// Notify the undo provider, if any is attached.
 		if (this.undo !== undefined && isLocal) {
-			this.undo.record(operation, ranges);
+			this.undo.record(deltaArgs);
 		}
 
-		switch (operation) {
+		switch (deltaArgs.operation) {
 			case MergeTreeDeltaType.INSERT:
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
@@ -452,4 +412,31 @@ export class PermutationVector extends Client {
 
 		return s.join("");
 	}
+}
+
+export function reinsertSegmentIntoVector(
+	vector: PermutationVector,
+	pos: number,
+	spec: IJSONSegment,
+) {
+	const original = PermutationSegment.fromJSONObject(spec);
+
+	// (Re)insert the removed number of rows at the original position.
+	const op = vector.insertSegmentLocal(pos, original);
+	const inserted = vector.getContainingSegment(pos).segment as PermutationSegment;
+
+	// we reuse the original handle here
+	// so if cells exist, they can be found, and re-inserted
+	if (isHandleValid(original.start)) {
+		inserted.start = original.start;
+	}
+
+	// Invalidate the handleCache in case it was populated during the 'rowsChanged'
+	// callback, which occurs before the handle span is populated.
+	vector.handleCache.itemsChanged(
+		pos,
+		/* removedCount: */ 0,
+		/* insertedCount: */ inserted.cachedLength,
+	);
+	return { op, inserted };
 }

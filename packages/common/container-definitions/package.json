@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-definitions",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid container definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -64,6 +64,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_IConnectionDetailsInternal": {
 				"forwardCompat": false
 			}

@@ -71,6 +71,7 @@ export {
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	DevtoolsDisposed,
 	DevtoolsFeatures,
 	devtoolsMessageSource,
 	DisconnectContainer,

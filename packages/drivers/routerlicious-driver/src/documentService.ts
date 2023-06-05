@@ -9,8 +9,7 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -60,7 +59,7 @@ export class DocumentService implements api.IDocumentService {
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
 		private storageUrl: string,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		protected tokenProvider: ITokenProvider,
 		protected tenantId: string,
 		protected documentId: string,
@@ -70,7 +69,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
-		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
+		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,

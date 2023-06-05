@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -73,8 +73,6 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/garbage-collector": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
@@ -121,6 +119,7 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ContainerRuntimeMessage": {
@@ -128,6 +127,9 @@
 			},
 			"InterfaceDeclaration_IChunkedOp": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}
