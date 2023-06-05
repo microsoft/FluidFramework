@@ -164,6 +164,7 @@ export {
 	verifyChangeRebaser,
 	tagRollbackInverse,
 	SessionId,
+	SessionIdSchema,
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
@@ -180,6 +181,6 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
+export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { IRepairDataStoreProvider, UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";

@@ -6,7 +6,6 @@
 import {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
-	ITelemetryLogger,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
@@ -17,7 +16,11 @@ import {
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase";
-import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+import {
+	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryLoggerExt,
+	TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -220,7 +223,7 @@ export function wrapError<T extends LoggingError>(
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	const newError = wrapError(innerError, newErrorFn);
 

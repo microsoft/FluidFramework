@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LazyPromise, assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -19,7 +18,11 @@ import {
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, ThresholdCounter } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	ITelemetryLoggerExt,
+	ThresholdCounter,
+} from "@fluidframework/telemetry-utils";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -37,7 +40,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly subLogger: ITelemetryLogger;
+	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
