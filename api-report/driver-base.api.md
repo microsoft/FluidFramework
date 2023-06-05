@@ -17,13 +17,13 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
 
 // @public
 export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean, connectionId?: string | undefined);
+    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLoggerExt, enableLongPollingDowngrades?: boolean, connectionId?: string | undefined);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
@@ -71,7 +71,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get initialMessages(): ISequencedDocumentMessage[];
     get initialSignals(): ISignalMessage[];
     // @deprecated (undocumented)
-    protected get logger(): ITelemetryLogger;
+    protected get logger(): ITelemetryLoggerExt;
     get maxMessageSize(): number;
     get mode(): ConnectionMode;
     // (undocumented)

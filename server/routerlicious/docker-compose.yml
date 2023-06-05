@@ -8,6 +8,7 @@ services:
             - "3003:3003"
             - "3001:3001"
     alfred:
+        platform: linux/amd64
         build:
             context: .
             target: runner
@@ -20,6 +21,7 @@ services:
             - IS_FLUID_SERVER=true
         restart: always
     deli:
+        platform: linux/amd64
         build:
             context: .
             target: runner
@@ -30,6 +32,7 @@ services:
             - IS_FLUID_SERVER=true
         restart: always
     scriptorium:
+        platform: linux/amd64
         build:
             context: .
             target: runner
@@ -40,6 +43,7 @@ services:
             - IS_FLUID_SERVER=true
         restart: always
     copier:
+        platform: linux/amd64
         build:
             context: .
             target: runner
@@ -50,6 +54,7 @@ services:
             - IS_FLUID_SERVER=true
         restart: always
     scribe:
+        platform: linux/amd64
         build:
             context: .
             target: runner
@@ -60,6 +65,7 @@ services:
             - IS_FLUID_SERVER=true
         restart: always
     riddler:
+        platform: linux/amd64
         build:
             context: .
             target: runner

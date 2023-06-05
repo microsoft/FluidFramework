@@ -292,6 +292,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      nconf:
+        specifier: ^0.12.0
+        version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
@@ -1347,8 +1350,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       node-rdkafka:
-        specifier: ^2.16.0
-        version: 2.16.0
+        specifier: ^2.16.1
+        version: 2.16.1
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
@@ -3659,7 +3662,7 @@ packages:
       '@fluidframework/server-services-core': 0.1040.1000
       events: 3.3.0
       nconf: 0.12.0
-      node-rdkafka: 2.16.0
+      node-rdkafka: 2.16.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -12450,8 +12453,8 @@ packages:
       process-on-spawn: 1.0.0
     dev: true
 
-  /node-rdkafka@2.16.0:
-    resolution: {integrity: sha512-xM1wu6f084AbNkUpteOSMiIHSPXZaXQWKoEuu9vAo45b/o0PQ21+STlXmY/YuJbhrleV6ypitfvvjNrRE3u8yw==}
+  /node-rdkafka@2.16.1:
+    resolution: {integrity: sha512-fiZJGl/w9QnACLhfVTYuS4V4WxSmVSbxhXyxL+B0SgRWEa8kA1NpdiB+gHPG71C3CqjbvYEfTJWhjd/1y0OeSA==}
     engines: {node: '>=6.0.0'}
     requiresBuild: true
     dependencies:

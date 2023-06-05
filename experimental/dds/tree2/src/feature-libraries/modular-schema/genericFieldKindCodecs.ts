@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
@@ -33,5 +34,6 @@ function makeV0Codec(
 				}),
 			);
 		},
+		encodedSchema: EncodedGenericChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
