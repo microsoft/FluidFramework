@@ -9,7 +9,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { browser, window } from "../Globals";
+import { browser, window as maybeWindow } from "../Globals";
 import { extensionMessageSource, relayMessageToPort } from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
@@ -17,6 +17,9 @@ import {
 } from "./Logging";
 
 type Port = chrome.runtime.Port;
+
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const window = maybeWindow!;
 
 /**
  * This module is the extension's Content Script.
