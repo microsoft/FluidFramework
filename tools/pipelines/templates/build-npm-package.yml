@@ -295,7 +295,7 @@ stages:
 
           - ${{ each taskTestStep in parameters.taskTest }}:
             # Test - With coverage
-            - ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
+            ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
               - task: Npm@1
                 displayName: npm run ${{ taskTestStep }}:coverage
                 inputs:
