@@ -13,10 +13,10 @@ export {
 	JsonValidator,
 	makeCodecFamily,
 	makeValueCodec,
-	noopValidator,
 	SchemaValidationFunction,
-	typeboxValidator,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
 } from "./codec";
+export { noopValidator } from "./noopValidator";
+export { typeboxValidator } from "./typeboxValidator";

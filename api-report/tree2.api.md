@@ -12,9 +12,9 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
-import { Static } from '@sinclair/typebox';
-import { TAnySchema } from '@sinclair/typebox';
-import { TSchema } from '@sinclair/typebox';
+import type { Static } from '@sinclair/typebox';
+import type { TAnySchema } from '@sinclair/typebox';
+import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {

@@ -269,10 +269,9 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 	JsonValidator,
-	noopValidator,
 	SchemaValidationFunction,
-	typeboxValidator,
 } from "./codec";
+export { noopValidator, typeboxValidator } from "./codec";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

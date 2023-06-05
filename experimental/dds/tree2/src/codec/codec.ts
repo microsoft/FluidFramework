@@ -4,10 +4,7 @@
  */
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-// This export is documented as supported in typebox's documentation.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
@@ -53,32 +50,6 @@ export interface JsonValidator {
 	 */
 	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
-
-/**
- * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.
- * @alpha
- * @privateRemarks - Take care to not reference this validator directly in SharedTree code:
- * the intent of factoring JSON validation into an interface is to make validation more pay-to-play
- * (i.e. a JSON validator is only included in an application's bundle if that application references it)
- */
-export const typeboxValidator: JsonValidator = {
-	compile: <Schema extends TSchema>(schema: Schema) => {
-		const compiledFormat = TypeCompiler.Compile(schema);
-		return {
-			check: (data): data is Static<Schema> => compiledFormat.Check(data),
-		};
-	},
-};
-
-/**
- * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
- * @privateRemarks - This is useful to avoid conditional branching in codecs when the SharedTree configurer
- * passes no validator.
- * @alpha
- */
-export const noopValidator: JsonValidator = {
-	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),
-};
 
 /**
  * @alpha
