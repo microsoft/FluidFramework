@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchema, ValueSchema } from "../../core";
-import { forbidden } from "../defaultFieldKinds";
+import { assert } from "@fluidframework/common-utils";
+import { isStableId } from "@fluidframework/container-runtime";
+import { GlobalFieldKey, TreeStoredSchema, ValueSchema, symbolFromKey } from "../../core";
+import { brand } from "../../util";
+import { valueSymbol } from "../contextuallyTyped";
+import { FieldKinds, forbidden } from "../defaultFieldKinds";
+import { NodeIdentifier } from "../node-identifier";
+import { EditableTree, getField, typeSymbol } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -65,4 +71,34 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
 	const index = Number(key);
 	if (typeof key === "string" && String(index) !== key) return false;
 	return Number.isInteger(index) && 0 <= index && index < length;
+}
+
+/**
+ * Retrieve a {@link NodeIdentifier} on the given {@link EditableTree} node.
+ * @param identifierFieldKey - the key of the field under which the identifier resides
+ * @param node - the {@link EditableTree} node from which to retrieve the identifier
+ * @returns the {@link NodeIdentifier} on `node`, or undefined if there is none.
+ */
+export function getNodeIdentifier(
+	identifierFieldKey: GlobalFieldKey,
+	node: EditableTree,
+): NodeIdentifier | undefined {
+	const identifierFieldKeySymbol = symbolFromKey(identifierFieldKey);
+	if (identifierFieldKeySymbol in node) {
+		const type = node[typeSymbol];
+		if (type.extraGlobalFields || type.globalFields.has(identifierFieldKey)) {
+			// Get the ID via a wrapped node rather than an unwrapped node (`node[identifierFieldKeySymbol]`)
+			// so that the field kind can be checked
+			const field = node[getField](identifierFieldKeySymbol);
+			if (field.fieldSchema.kind.identifier === FieldKinds.nodeIdentifier.identifier) {
+				const identifierNode = field.getNode(0);
+				const id = identifierNode[valueSymbol];
+				assert(
+					typeof id === "string" && isStableId(id),
+					"Malformed value encountered in identifier field",
+				);
+				return brand(id);
+			}
+		}
+	}
 }

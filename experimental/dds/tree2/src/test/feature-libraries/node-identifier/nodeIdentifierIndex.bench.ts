@@ -7,26 +7,26 @@ import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { ISharedTree } from "../../shared-tree";
-import { TestTreeProviderLite } from "../utils";
+import { ISharedTree } from "../../../shared-tree";
+import { TestTreeProviderLite } from "../../utils";
 import {
 	NodeIdentifier,
 	SequenceFieldEditBuilder,
 	singleTextCursor,
-} from "../../feature-libraries";
+} from "../../../feature-libraries";
 import {
 	rootFieldKeySymbol,
 	ITreeCursor,
 	moveToDetachedField,
 	JsonableTree,
 	symbolFromKey,
-} from "../../core";
-import { nodeIdentifierSchema } from "../../domains";
+} from "../../../core";
+import { nodeIdentifierSchema } from "../../../domains";
 import { nodeSchema, nodeSchemaData } from "./nodeIdentifierIndex.spec";
 
 const { field: nodeIdentifierField, type: nodeIdentifierType } = nodeIdentifierSchema();
 
-describe("Node Identifiers", () => {
+describe("Node Identifier Index Benchmarks", () => {
 	// TODO: Increase these numbers when the identifier index is more efficient
 	for (const nodeCount of [50, 100]) {
 		describe(`In a tree with ${nodeCount} nodes`, () => {
@@ -69,7 +69,7 @@ describe("Node Identifiers", () => {
 							const ids: (NodeIdentifier | undefined)[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								const nodeIdentifier =
-									i % period === 0 ? tree.generateNodeIdentifier() : undefined;
+									i % period === 0 ? tree.nodeIdentifier.generate() : undefined;
 
 								ids.push(nodeIdentifier);
 								cursors.push(createNode(nodeIdentifier));
@@ -93,7 +93,7 @@ describe("Node Identifiers", () => {
 									assert.equal(cursor.value, ids[i]);
 									cursor.exitNode();
 									cursor.exitField();
-									const node = tree.identifiedNodes.get(
+									const node = tree.nodeIdentifier.map.get(
 										ids[i] ?? fail("Expected node identifier to be in list"),
 									);
 									assert(node !== undefined);
@@ -125,7 +125,7 @@ describe("Node Identifiers", () => {
 							const ids: NodeIdentifier[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									const nodeIdentifier = tree.generateNodeIdentifier();
+									const nodeIdentifier = tree.nodeIdentifier.generate();
 									field.insert(i, createNode(nodeIdentifier));
 									ids.push(nodeIdentifier);
 								} else {
@@ -137,7 +137,7 @@ describe("Node Identifiers", () => {
 
 							// Measure how long it takes to lookup a randomly selected ID that is known to be in the document
 							const before = state.timer.now();
-							const node = tree.identifiedNodes.get(id);
+							const node = tree.nodeIdentifier.map.get(id);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node !== undefined);
@@ -160,15 +160,15 @@ describe("Node Identifiers", () => {
 							const [tree, field] = makeTree();
 							for (let i = 0; i < nodeCount; i++) {
 								const identifier =
-									i % period === 0 ? tree.generateNodeIdentifier() : undefined;
+									i % period === 0 ? tree.nodeIdentifier.generate() : undefined;
 
 								field.insert(i, createNode(identifier));
 							}
 
 							// Measure how long it takes to lookup an ID that is not in the document
-							const nodeIdentifier = tree.generateNodeIdentifier();
+							const nodeIdentifier = tree.nodeIdentifier.generate();
 							const before = state.timer.now();
-							const node = tree.identifiedNodes.get(nodeIdentifier);
+							const node = tree.nodeIdentifier.map.get(nodeIdentifier);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node === undefined);
@@ -191,7 +191,7 @@ describe("Node Identifiers", () => {
 					const [treeWithIds, fieldWithIds, providerWithIds] = makeTree();
 					for (let i = 0; i < nodeCount; i++) {
 						const identifier =
-							i % period === 0 ? treeBaseline.generateNodeIdentifier() : undefined;
+							i % period === 0 ? treeBaseline.nodeIdentifier.generate() : undefined;
 
 						fieldWithIds.insert(i, createNode(identifier));
 					}

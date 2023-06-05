@@ -11,6 +11,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
+import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 
 // @alpha
@@ -234,6 +235,16 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
+export function compareCompressedNodeIdentifiers(a: CompressedNodeIdentifier, b: CompressedNodeIdentifier): -1 | 0 | 1;
+
+// @alpha
+export interface CompressedNodeIdentifier extends Opaque<Brand<SessionSpaceCompressedId, "Compressed Node Identifier">> {
+}
+
+// @alpha
+export const compressedNodeIdentifierSymbol: unique symbol;
+
+// @alpha
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 infer Head,
 ...infer Tail
@@ -395,6 +406,7 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
+    readonly [compressedNodeIdentifierSymbol]: CompressedNodeIdentifier | undefined;
     readonly [contextSymbol]: EditableTreeContext;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
@@ -946,9 +958,14 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
-    generateNodeIdentifier(): NodeIdentifier;
-    readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
     merge(view: SharedTreeView): void;
+    readonly nodeIdentifier: {
+        generate(): NodeIdentifier;
+        generateCompressed(): CompressedNodeIdentifier;
+        compress(identifier: NodeIdentifier): CompressedNodeIdentifier;
+        decompress(identifier: CompressedNodeIdentifier): NodeIdentifier;
+        map: ReadonlyMap<NodeIdentifier, EditableTree>;
+    };
     rebase(view: SharedTreeView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
@@ -1640,13 +1657,11 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     fork(): SharedTreeView;
     // (undocumented)
-    generateNodeIdentifier(): NodeIdentifier;
-    // (undocumented)
-    get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree>;
-    // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
     merge(fork: SharedTreeView): void;
+    // (undocumented)
+    readonly nodeIdentifier: ISharedTreeView["nodeIdentifier"];
     // (undocumented)
     rebase(fork: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;

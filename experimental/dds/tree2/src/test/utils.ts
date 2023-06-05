@@ -217,6 +217,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
+					enableRuntimeIdCompressor: true,
 				},
 			);
 

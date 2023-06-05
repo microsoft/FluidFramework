@@ -4,13 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isStableId } from "@fluidframework/container-runtime";
-import { GlobalFieldKey, GlobalFieldKeySymbol, SchemaData, symbolFromKey } from "../core";
-import { brand } from "../util";
-import { EditableTree, EditableTreeContext, getField, typeSymbol } from "./editable-tree";
-import { valueSymbol } from "./contextuallyTyped";
+import { GlobalFieldKey, SchemaData } from "../../core";
+import { brand } from "../../util";
+import { nodeIdentifier } from "../defaultFieldKinds";
+import { EditableTree, EditableTreeContext, getNodeIdentifier } from "../editable-tree";
 import { NodeIdentifier } from "./nodeIdentifier";
-import { nodeIdentifier } from "./defaultFieldKinds";
 
 /**
  * The identifier index allows nodes that have a special identifier field to be looked up via a query.
@@ -18,7 +16,6 @@ import { nodeIdentifier } from "./defaultFieldKinds";
 export class NodeIdentifierIndex<TField extends GlobalFieldKey>
 	implements ReadonlyMap<NodeIdentifier, EditableTree>
 {
-	private readonly identifierFieldKeySymbol: GlobalFieldKeySymbol;
 	// TODO: The data structure that holds the nodes can likely be optimized to better support cloning
 	private readonly nodes: Map<NodeIdentifier, EditableTree>;
 
@@ -26,7 +23,6 @@ export class NodeIdentifierIndex<TField extends GlobalFieldKey>
 		public readonly identifierFieldKey: TField,
 		identifiers: Iterable<[NodeIdentifier, EditableTree]> = [],
 	) {
-		this.identifierFieldKeySymbol = symbolFromKey(identifierFieldKey);
 		this.nodes = new Map(identifiers);
 	}
 
@@ -107,22 +103,9 @@ export class NodeIdentifierIndex<TField extends GlobalFieldKey>
 	private *findIdentifiers(
 		node: EditableTree,
 	): Iterable<[identifier: NodeIdentifier, node: EditableTree]> {
-		if (this.identifierFieldKeySymbol in node) {
-			const type = node[typeSymbol];
-			if (type.extraGlobalFields || type.globalFields.has(this.identifierFieldKey)) {
-				// Get the ID via a wrapped node rather than an unwrapped node (`node[identifierFieldKeySymbol]`)
-				// so that the field kind can be checked
-				const field = node[getField](this.identifierFieldKeySymbol);
-				if (field.fieldSchema.kind.identifier === nodeIdentifier.identifier) {
-					const identifierNode = field.getNode(0);
-					const id = identifierNode[valueSymbol];
-					assert(
-						typeof id === "string" && isStableId(id),
-						"Malformed value encountered in identifier field",
-					);
-					yield [brand(id), node];
-				}
-			}
+		const identifier = getNodeIdentifier(this.identifierFieldKey, node);
+		if (identifier !== undefined) {
+			yield [brand(identifier), node];
 		}
 
 		for (const f of node) {

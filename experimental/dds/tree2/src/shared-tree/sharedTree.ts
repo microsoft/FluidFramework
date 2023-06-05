@@ -35,10 +35,9 @@ import {
 	ContextuallyTypedNodeData,
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
-	EditableTree,
 	SchemaEditor,
 	NodeIdentifierIndex,
-	NodeIdentifier,
+	createNodeIdentifierManager,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly } from "../util";
@@ -103,6 +102,7 @@ export class SharedTree
 			schema,
 			forest,
 			repairProvider,
+			nodeIdentifierManager: createNodeIdentifierManager(this.runtime.idCompressor),
 			identifierIndex: this.identifierIndex,
 		});
 		this.events = createEmitter<ViewEvents>();
@@ -121,10 +121,6 @@ export class SharedTree
 		return this.view.forest;
 	}
 
-	public get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree> {
-		return this.view.identifiedNodes;
-	}
-
 	public get root(): UnwrappedEditableField {
 		return this.view.root;
 	}
@@ -141,10 +137,6 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public generateNodeIdentifier(): NodeIdentifier {
-		return this.view.generateNodeIdentifier();
-	}
-
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
@@ -153,6 +145,10 @@ export class SharedTree
 
 	public get transaction(): SharedTreeView["transaction"] {
 		return this.view.transaction;
+	}
+
+	public get nodeIdentifier(): SharedTreeView["nodeIdentifier"] {
+		return this.view.nodeIdentifier;
 	}
 
 	public fork(): SharedTreeView {

@@ -11,24 +11,23 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
-import { brand, compareSets } from "../../util";
-import { TestTreeProviderLite, initializeTestTree } from "../utils";
+import { nodeIdentifierSchema } from "../../../domains";
+import { symbolFromKey } from "../../../core";
 import {
-	FieldKinds,
-	NodeIdentifierIndex,
 	SchemaBuilder,
+	FieldKinds,
 	NodeIdentifier,
-} from "../../feature-libraries";
-import { symbolFromKey } from "../../core";
-import { nodeIdentifierSchema } from "../../domains";
+	NodeIdentifierIndex,
+} from "../../../feature-libraries";
+import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
+import { brand, compareSets } from "../../../util";
+import { TestTreeProviderLite, initializeTestTree } from "../../utils";
 
 const {
 	schema: nodeIdentifierSchemaLibrary,
 	field: nodeIdentifierField,
 	type: nodeIdentifierType,
 } = nodeIdentifierSchema();
-assert.equal(nodeIdentifierField.key, nodeIdentifierField.key);
 
 const builder = new SchemaBuilder("identifier index tests", nodeIdentifierSchemaLibrary);
 export const nodeSchema = builder.objectRecursive("node", {
@@ -45,14 +44,14 @@ describe("Node Identifier Index", () => {
 	}
 
 	function assertIds(tree: ISharedTreeView, ids: NodeIdentifier[]): void {
-		assert.equal(tree.identifiedNodes.size, ids.length);
+		assert.equal(tree.nodeIdentifier.map.size, ids.length);
 		for (const id of ids) {
-			assert(tree.identifiedNodes.has(id));
-			const node = tree.identifiedNodes.get(id);
+			assert(tree.nodeIdentifier.map.has(id));
+			const node = tree.nodeIdentifier.map.get(id);
 			assert(node !== undefined);
 			assert.equal(node[symbolFromKey(nodeIdentifierField.key)], id);
 		}
-		assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
+		assert(compareSets({ a: new Set(tree.nodeIdentifier.map.keys()), b: new Set(ids) }));
 	}
 
 	it("can look up a node that was inserted", () => {
@@ -161,7 +160,7 @@ describe("Node Identifier Index", () => {
 			nodeSchemaData,
 		);
 
-		const node = tree.identifiedNodes.get(idA);
+		const node = tree.nodeIdentifier.map.get(idA);
 		assert(node !== undefined);
 		const idB = makeId();
 		node.child = { [symbolFromKey(nodeIdentifierField.key)]: idB };
@@ -347,7 +346,9 @@ describe("Node Identifier Index", () => {
 			nodeSchemaDataNoIdentifier,
 		);
 		assertIds(tree, []);
-		const index = tree.identifiedNodes as NodeIdentifierIndex<typeof nodeIdentifierField.key>;
+		const index = tree.nodeIdentifier.map as NodeIdentifierIndex<
+			typeof nodeIdentifierField.key
+		>;
 		assert(
 			!NodeIdentifierIndex.identifiersAreInSchema(
 				tree.context.schema,

@@ -31,6 +31,7 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	compressedNodeIdentifierSymbol,
 } from "./editable-tree";
 
 export {
@@ -143,9 +144,16 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
-
-export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export {
+	buildNodeIdentifierSchema,
+	compareCompressedNodeIdentifiers,
+	CompressedNodeIdentifier,
+	createNodeIdentifierManager,
+	createMockNodeIdentifierManager,
+	NodeIdentifier,
+	NodeIdentifierIndex,
+	NodeIdentifierManager,
+} from "./node-identifier";
 
 export {
 	FieldKinds,

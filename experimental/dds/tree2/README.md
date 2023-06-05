@@ -341,14 +341,17 @@ flowchart
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
+            schema-aware-->defaultSchema
+            schema-aware-->contextuallyTyped
             editable-tree-->contextuallyTyped
+            editable-tree-->node-identifier
             defaultRebaser
             contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
-            schema-aware-->defaultSchema
-            schema-aware-->contextuallyTyped
             modular-schema
+            node-identifier-->modular-schema
+            node-identifier-->defaultFieldKinds
             object-forest-->mapTreeCursor-->treeCursorUtils
             chunked-forest-->treeCursorUtils
             schemaIndex

@@ -8,7 +8,7 @@ import {
 	SchemaLibrary,
 	GlobalFieldSchema,
 	NodeIdentifierFieldKind,
-	buildNodeIdentifierSchema as keyedNodeIdentifierSchema,
+	buildNodeIdentifierSchema,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 
@@ -21,7 +21,7 @@ import { brand } from "../../util";
  */
 export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");
 
-const schema = keyedNodeIdentifierSchema(nodeIdentifierKey);
+const schema = buildNodeIdentifierSchema(nodeIdentifierKey);
 
 /**
  * Get the schema for working with {@link NodeIdentifier}s in a shared tree.

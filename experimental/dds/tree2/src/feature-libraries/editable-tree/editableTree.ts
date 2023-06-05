@@ -31,7 +31,8 @@ import {
 	valueSymbol,
 	allowsValue,
 } from "../contextuallyTyped";
-import { AdaptingProxyHandler, adaptWithProxy } from "./utilities";
+import { CompressedNodeIdentifier } from "../node-identifier";
+import { AdaptingProxyHandler, adaptWithProxy, getNodeIdentifier } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -45,6 +46,7 @@ import {
 	typeSymbol,
 	contextSymbol,
 	NewFieldContent,
+	compressedNodeIdentifierSymbol,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -272,6 +274,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.context;
 			case on:
 				return target.on.bind(target);
+			case compressedNodeIdentifierSymbol:
+				return getCompressedNodeIdentifier(target);
 			default:
 				return undefined;
 		}
@@ -316,6 +320,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
+			case compressedNodeIdentifierSymbol:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -406,6 +411,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
+			case compressedNodeIdentifierSymbol:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: getCompressedNodeIdentifier(target),
+					writable: false,
+				};
 			default:
 				return undefined;
 		}
@@ -421,4 +433,24 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 		typeof field === "object" &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
+}
+
+/**
+ * Retrieves the compressed node identifier for the given node.
+ * @remarks TODO: Optimize this to be a fast path that gets a compressed identifier directly from the
+ * forest rather than getting the uncompressed identifier and the compressing it.
+ */
+function getCompressedNodeIdentifier(
+	target: NodeProxyTarget,
+): CompressedNodeIdentifier | undefined {
+	if (target.context.nodeIdentifierKey === undefined) {
+		return undefined;
+	}
+
+	const nodeIdentifier = getNodeIdentifier(target.context.nodeIdentifierKey, target.proxy);
+	if (nodeIdentifier === undefined) {
+		return undefined;
+	}
+
+	return target.context.nodeIdentifiers.compressNodeIdentifier(nodeIdentifier);
 }
