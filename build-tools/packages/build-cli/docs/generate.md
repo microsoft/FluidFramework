@@ -7,7 +7,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate packageJson`](#flub-generate-packagejson)
-* [`flub generate readme`](#flub-generate-readme)
 
 ## `flub generate buildVersion`
 

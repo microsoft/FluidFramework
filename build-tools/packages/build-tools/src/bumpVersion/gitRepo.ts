@@ -236,12 +236,12 @@ export class GitRepo {
 		);
 	}
 
-	public async checkMerge(commit: string) {
+	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
 		try {
 			await this.exec(`merge ${commit} --no-commit`, `check if ${commit} has conflicts`);
-			return "No Conflicts";
+			return true;
 		} catch (error: unknown) {
-			return "Abort";
+			return false;
 		}
 	}
 
@@ -271,6 +271,10 @@ export class GitRepo {
 			`rev-list ${commitId}..HEAD --reverse`,
 			`lists commit objects in chronological order`,
 		);
+	}
+
+	public async cherryPick(commit: string) {
+		return await this.exec(`cherry-pick ${commit}`, `cherry pick ${commit}`);
 	}
 
 	public async resetBranch(commitId: string) {

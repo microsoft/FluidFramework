@@ -6,6 +6,7 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base";
 import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "../../lib";
+import { GitRepo } from "@fluidframework/build-tools";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -54,6 +55,48 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		...BaseCommand.flags,
 	};
 
+	// `findConflictIndex` return the index of the conflicting commit. If there are no conflicts found, then it would return the last index
+	async findConflictIndex(commitIds: string[], gitRepo: GitRepo): Promise<number> {
+		const length = commitIds.length;
+
+		if (length === 0) {
+			return -1;
+		}
+
+		// Check the first commit separately
+		const firstCommit = commitIds[0];
+		const firstResponse = await gitRepo.canMergeWithoutConflicts(firstCommit);
+		this.log(`Response from merge check for ${commitIds[0]}: ${firstResponse}`);
+		if (firstResponse === false) {
+			return 0;
+		}
+
+		// Check the rest of the commitIds
+		for (let i = 1; i < length; i++) {
+			const commit = commitIds[i];
+			// eslint-disable-next-line no-await-in-loop
+			const response = await gitRepo.canMergeWithoutConflicts(commit);
+			this.log(`Response from merge check for ${commitIds[i]}: ${response}`);
+			if (response === false) {
+				return i;
+			}
+		}
+
+		return length - 1; // No conflicts found, return the last index
+	}
+
+	/**
+	 * `cherryPickAllCommits` function will merge all commitIds in next branch
+	 * we cannot use gitRepo.merge as it would create a merge commit for individual commit.
+	 */
+	async cherryPickAllCommits(commitIds: string[], gitRepo: GitRepo): Promise<void> {
+		for (const commit of commitIds) {
+			// eslint-disable-next-line no-await-in-loop
+			const response = await gitRepo.cherryPick(commit);
+			this.log(`Merging commit ${commit}: ${response}`);
+		}
+	}
+
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
@@ -92,51 +135,15 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.exit(-1);
 		}
 
-		// `findConflictIndex` return the index of the conflicting commit. If there are no conflicts found, then it would return the last index
-		const findConflictIndex = async (commitIds: string[]): Promise<number> => {
-			const length = commitIds.length;
-
-			if (length === 0) {
-				return -1;
-			}
-
-			// Check the first commit separately
-			const firstCommit = commitIds[0];
-			const firstResponse = await gitRepo.checkMerge(firstCommit);
-			this.log(`Response from merge check for ${commitIds[0]}: ${firstResponse}`);
-			if (firstResponse === "Abort") {
-				return 0;
-			}
-
-			// Check the rest of the commitIds
-			for (let i = 1; i < length; i++) {
-				const commit = commitIds[i];
-				// eslint-disable-next-line no-await-in-loop
-				const response = await gitRepo.checkMerge(commit);
-				this.log(`Response from merge check for ${commitIds[i]}: ${response}`);
-				if (response === "Abort") {
-					return i;
-				}
-			}
-
-			return length - 1; // No conflicts found, return the last index
-		};
-
-		// `mergeAllCommits` function will merge all commitIds in next branch
-		const mergeAllCommits = async (commitIds: string[]): Promise<void> => {
-			for (const commit of commitIds) {
-				// eslint-disable-next-line no-await-in-loop
-				const response = await gitRepo.merge(commit);
-				this.log(`Merging commit ${commit}: ${response}`);
-			}
-		};
-
 		const commitSize = Math.min(flags.batchSize, unmergedCommitList.length);
 
 		await gitRepo.switchBranch(flags.target);
 		await gitRepo.createBranch(`${flags.target}-automation`);
 
-		const commitIndex = await findConflictIndex(unmergedCommitList.slice(0, commitSize));
+		const commitIndex = await this.findConflictIndex(
+			unmergedCommitList.slice(0, commitSize),
+			gitRepo,
+		);
 
 		const branchName = `${flags.source}-${flags.target}-${unmergedCommitList[commitIndex]}`;
 
@@ -158,7 +165,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			await gitRepo.createBranch(branchName);
 			await gitRepo.setUpstream(branchName);
 			// merge all commits in next branch
-			await mergeAllCommits(unmergedCommitList.slice(0, commitIndex));
+			await this.cherryPickAllCommits(unmergedCommitList.slice(0, commitIndex), gitRepo);
 		}
 
 		// fetch name of owner associated to the pull request
@@ -177,7 +184,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.logger,
 		);
 		this.log(
-			`Open pull request ${prNumber} for commit id ${commitIndex}. Please resolve the merge conflicts.`,
+			`Opened pull request ${prNumber} for commit id ${commitIndex}. Please resolve the merge conflicts.`,
 		);
 	}
 }
