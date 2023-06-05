@@ -101,7 +101,6 @@ export abstract class LeafTask extends Task {
 		}
 		return this._parentLeafTasks;
 	}
-	// End function used by initialWeight phase
 
 	protected get taskWeight() {
 		return 1;
