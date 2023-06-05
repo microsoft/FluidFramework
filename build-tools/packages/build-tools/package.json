@@ -31,7 +31,7 @@
 		"build:full:compile": "npm run build:full",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"bump": "node dist/bumpVersion/bumpVersionCli.js",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob dist lib *.tsbuildinfo *.build.log",
 		"debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

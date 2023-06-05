@@ -20,7 +20,7 @@
 		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob dist *.tsbuildinfo *.build.log",
 		"copier": "node dist/copier/index.js",
 		"copier:debug": "node --inspect=0.0.0.0:5858 dist/copier/index.js",
 		"deli": "node dist/deli/index.js",

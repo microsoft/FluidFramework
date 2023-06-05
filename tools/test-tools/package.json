@@ -19,7 +19,7 @@
 		"build:compile": "tsc && tsc --project ./src/test/tsconfig.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"clean": "rimraf dist *.tsbuildinfo",
+		"clean": "rimraf --glob dist *.tsbuildinfo",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
