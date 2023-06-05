@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-scenario-runner",
-	"version": "2.0.0-internal.5.0.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
