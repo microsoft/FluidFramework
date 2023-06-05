@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TSchema, Type } from "@sinclair/typebox";
+import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
 import { Brand, brandedNumberType } from "../util";
 import { SessionId, SessionIdSchema, RevisionTag, RevisionTagSchema } from "../core";
 
@@ -17,15 +17,20 @@ export interface Commit<TChangeset> {
 	readonly sessionId: SessionId;
 }
 
-const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+
+const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
-		// Enforce that `parent` isn't present. Commits are generally encoded from `GraphCommit`s, which can
-		// have parent pointers which are problematic to serialize.
-		parent: Type.Optional(Type.Never()),
 	});
+/**
+ * @privateRemarks - Commits are generally encoded from `GraphCommit`s, which often contain extra data.
+ * This `noAdditionalProps` is especially important in that light.
+ */
+const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+	Type.Composite([CommitBase(tChange)], noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 const SeqNumber = brandedNumberType<SeqNumber>();
@@ -37,7 +42,10 @@ export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
 	sequenceNumber: SeqNumber;
 }
 const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Intersect([Commit(tChange), Type.Object({ sequenceNumber: SeqNumber })]);
+	Type.Composite(
+		[CommitBase(tChange), Type.Object({ sequenceNumber: SeqNumber })],
+		noAdditionalProps,
+	);
 
 /**
  * A branch off of the trunk for use in summaries
