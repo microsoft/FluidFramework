@@ -44,7 +44,7 @@ as well as `NodeProperty`, `NamedProperty`, `NamedNodeProperty` and `Relationshi
 
 ### Limitations
 
-_The main limitation is that a lack of a static type generation, which might be required for migrating the applications to the `SharedTree`. Thus, the current implementation allows to..._
+The main limitation is probably a runtime nature of the converter, which will only allow the developers to buid applications using the general purpose APIs of the `EditableTree` without static types. It is clear, however, that the resulting schema can be used to generate static types using e.g. a `schema-aware` API (see [`schema-aware`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/schema-aware/README.md)) of the `SharedTree`. This is a work in progress.
 
 In addition, the following concepts are currently not supported by the schema converter and/or the `SharedTree`:
 
