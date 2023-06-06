@@ -13,7 +13,7 @@
 		},
 		"default_popup": "popup/popup.html"
 	},
-	"permissions": ["activeTab", "scripting"],
+	"permissions": ["activeTab"],
 	"devtools_page": "devtools/devtools.html",
 	"background": {
 		"service_worker": "background/BackgroundScript.js"
