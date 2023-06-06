@@ -51,6 +51,7 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 
 	public root!: ISharedMap;
 	private readonly innerHandle: IFluidHandle<this>;
+	private initializeP: Promise<void> | undefined;
 
 	/**
 	 * Creates a new TestFluidObject.
@@ -92,18 +93,31 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 	}
 
 	public async initialize(existing: boolean) {
-		if (!existing) {
-			this.root = SharedMap.create(this.runtime, "root");
+		const doInitialization = async () => {
+			if (!existing) {
+				this.root = SharedMap.create(this.runtime, "root");
 
-			this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
-				const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
-				this.root.set(key, sharedObject.handle);
-			});
+				this.factoryEntriesMap.forEach(
+					(sharedObjectFactory: IChannelFactory, key: string) => {
+						const sharedObject = this.runtime.createChannel(
+							key,
+							sharedObjectFactory.type,
+						);
+						this.root.set(key, sharedObject.handle);
+					},
+				);
 
-			this.root.bindToContext();
+				this.root.bindToContext();
+			}
+
+			this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		};
+
+		if (this.initializeP === undefined) {
+			this.initializeP = doInitialization();
 		}
 
-		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		return this.initializeP;
 	}
 }
 
