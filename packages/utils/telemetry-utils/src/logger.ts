@@ -15,7 +15,12 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
-import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
+import {
+	CachedConfigProvider,
+	loggerIsMonitoringContext,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+} from "./config";
 import {
 	isILoggingError,
 	extractLogSafeErrorProperties,
@@ -329,11 +334,17 @@ export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
+	samplingConfiguration?: Map<string, number>;
 }): ITelemetryLoggerExt {
 	if (props === undefined) {
 		return new TelemetryNullLogger();
 	}
-	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
+	return ChildLogger.create(
+		props?.logger,
+		props?.namespace,
+		props?.properties,
+		props?.samplingConfiguration,
+	);
 }
 
 /**
@@ -354,6 +365,7 @@ export class ChildLogger extends TelemetryLogger {
 		baseLogger?: ITelemetryBaseLogger,
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
+		sampling?: Map<string, number>,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
@@ -383,28 +395,45 @@ export class ChildLogger extends TelemetryLogger {
 					? baseLogger.namespace
 					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
-			return new ChildLogger(baseLogger.baseLogger, combinedNamespace, combinedProperties);
+			return new ChildLogger(
+				baseLogger.baseLogger,
+				combinedNamespace,
+				combinedProperties,
+				sampling,
+			);
 		}
 
 		return new ChildLogger(
 			baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
 			namespace,
 			properties,
+			sampling,
 		);
 	}
+
+	private readonly isSamplingDisabled: boolean = false;
 
 	private constructor(
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
+		private readonly samplingParams?: Map<string, number>,
 	) {
 		super(namespace, properties);
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
 			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
+
+			// Read config flag only once, so we don't pay the price every time an event is logged.
+			const mc = loggerToMonitoringContext(this);
+			if (mc.config.getBoolean("Fluid.Telemetry.DisableSampling") === true) {
+				this.isSamplingDisabled = true;
+			}
 		}
 	}
+
+	private readonly actualSampling: { [key: string]: number } = {};
 
 	/**
 	 * Send an event with the logger
@@ -412,7 +441,23 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+		if (this.isSamplingDisabled) {
+			this.baseLogger.send(this.prepareEvent(event));
+			return;
+		}
+		const params = this.samplingParams?.get(event.eventName);
+		if (params !== undefined) {
+			if (this.actualSampling[event.eventName] === undefined) {
+				this.actualSampling[event.eventName] = 0;
+			}
+			this.actualSampling[event.eventName]++;
+			if (this.actualSampling[event.eventName] % params === 1) {
+				this.baseLogger.send(this.prepareEvent(event));
+				this.actualSampling[event.eventName] = 1;
+			}
+		} else {
+			this.baseLogger.send(this.prepareEvent(event));
+		}
 	}
 }
 
