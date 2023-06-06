@@ -944,6 +944,67 @@ export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	remove(interval: TInterval): void;
 }
 
+export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
+	findOverlappingIntervalsBySegoff(
+		startSegment: ISegment,
+		startOffset: number,
+		endSegment: ISegment,
+		endOffset: number,
+	): Iterable<TInterval>;
+}
+
+export class OverlappingSequenceIntervalsIndex
+	implements IOverlappingIntervalsIndex<SequenceInterval>
+{
+	private readonly intervalTree = new IntervalTree<SequenceInterval>();
+
+	constructor(
+		private readonly client: Client,
+		private readonly helpers: IIntervalHelpers<SequenceInterval>,
+	) {}
+
+	public remove(interval: SequenceInterval) {
+		this.intervalTree.removeExisting(interval);
+	}
+
+	public add(interval: SequenceInterval) {
+		this.intervalTree.put(interval);
+	}
+
+	public findOverlappingIntervalsBySegoff(
+		startSegment: ISegment,
+		startOffset: number,
+		endSegment: ISegment,
+		endOffset: number,
+	): Iterable<SequenceInterval> {
+		if (this.intervalTree.intervals.isEmpty()) {
+			return [];
+		}
+		// initialize a default transient interval
+		const transientInterval = this.helpers.create(
+			"transient",
+			0,
+			0,
+			this.client,
+			IntervalType.Transient,
+		);
+		// reset the start/end for the transient interval
+		transientInterval.start = createPositionReferenceFromSegoff(
+			this.client,
+			{ segment: startSegment, offset: startOffset },
+			transientInterval.start.refType,
+		);
+		transientInterval.end = createPositionReferenceFromSegoff(
+			this.client,
+			{ segment: endSegment, offset: endOffset },
+			transientInterval.end.refType,
+		);
+		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
+		return overlappingIntervalNodes.map((node) => node.key);
+	}
+}
+
 class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
 {
