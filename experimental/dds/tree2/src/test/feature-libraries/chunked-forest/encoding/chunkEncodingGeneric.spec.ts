@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
 import {
@@ -12,6 +12,9 @@ import {
 	handleShapesAndIdentifiers,
 	IdentifierToken,
 	Shape,
+	ChunkEncoderLibrary,
+	BufferFormat,
+	NamedChunkEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingGeneric";
 
@@ -25,6 +28,10 @@ import {
 	DeduplicationTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingUtilities";
+import { ReferenceCountedBase, getOrCreate } from "../../../../util";
+import { TreeChunk } from "../../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk";
 
 export const Constant = Type.Literal(0);
 
@@ -65,6 +72,66 @@ class TestShape extends Shape<EncodedChunkShape> {
 		return { b: this.data };
 	}
 }
+
+type TestManager = Map<string, TestShape>;
+
+class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
+	public readonly topLevelLength: number = 1;
+
+	public constructor(public value: string) {
+		super();
+	}
+
+	public clone(): TestChunk1 {
+		return new TestChunk1(this.value);
+	}
+
+	public cursor(): ChunkedCursor {
+		fail("not implemented");
+	}
+
+	protected dispose(): void {}
+}
+
+class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
+	public readonly topLevelLength: number = 1;
+
+	public constructor(public value: number) {
+		super();
+	}
+
+	public clone(): TestChunk2 {
+		return new TestChunk2(this.value);
+	}
+
+	public cursor(): ChunkedCursor {
+		fail("not implemented");
+	}
+
+	protected dispose(): void {}
+}
+
+const encoder1: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk1> = {
+	type: TestChunk1,
+	encode(
+		chunk: TestChunk1,
+		shapes: TestManager,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+	): void {
+		const shape = getOrCreate(shapes, chunk.value, (value) => new TestShape(value));
+		outputBuffer.push(shape);
+	},
+};
+const encoder2: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk2> = {
+	type: TestChunk2,
+	encode(
+		chunk: TestChunk2,
+		shapes: TestManager,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+	): void {
+		outputBuffer.push(chunk.value);
+	},
+};
 
 describe("chunkEncodingGeneric", () => {
 	describe("handleShapesAndIdentifiers", () => {
@@ -171,10 +238,21 @@ describe("chunkEncodingGeneric", () => {
 		});
 	});
 
-	// TODO: finish tests
-	describe("ChunkEncoderLibrary", () => {
-		it("Usage", () => {});
+	it("ChunkEncoderLibrary", () => {
+		const library = new ChunkEncoderLibrary<TestManager, EncodedChunkShape>(encoder1, encoder2);
+
+		const buffer: BufferFormat<EncodedChunkShape> = [];
+		const manager: TestManager = new Map();
+		const chunk = new TestChunk1("x");
+		library.encode(chunk, manager, buffer);
+		assert.equal(manager.size, 1);
+		const shape = manager.get("x");
+		assert(shape instanceof TestShape);
+		assert.equal(shape.data, "x");
+		assert.deepEqual(buffer, [shape]);
 	});
+
+	// TODO: finish tests
 	it("encode", () => {});
 	it("decode", () => {});
 	it("roundtrip", () => {});

@@ -67,13 +67,11 @@ export interface NamedChunkEncoder<
 export class ChunkEncoderLibrary<TManager, TEncodedShape>
 	implements GeneralChunkEncoder<TManager, TreeChunk>
 {
-	private readonly map: Map<
-		new (...args: ContravariantUnknown) => unknown,
-		GeneralChunkEncoder<TManager, TEncodedShape>
-	> = new Map();
+	// Map from prototype to encoder
+	private readonly map: Map<unknown, GeneralChunkEncoder<TManager, TEncodedShape>> = new Map();
 	public constructor(...encoders: readonly NamedChunkEncoder<TManager, TEncodedShape, any>[]) {
 		for (const encoder of encoders) {
-			this.map.set(encoder.type, encoder);
+			this.map.set(encoder.type.prototype, encoder);
 		}
 	}
 
