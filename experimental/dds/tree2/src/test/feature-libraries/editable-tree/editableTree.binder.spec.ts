@@ -233,6 +233,140 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
+		it("registers to root, explicit flush, matches paths with any index, multiple callbacks, different BindingTypes", () => {
+			const { tree, root, address } = retrieveNodes();
+			// the syntax tree explicits multiple paths in a compact form
+			const insertSyntaxTree1: BindSyntaxTree = {
+				address: {
+					zip: true,
+				},
+			};
+			const insertSyntaxTree2: BindSyntaxTree = {
+				address: {
+					street: true,
+				},
+			};
+			const insertTree1: BindTree = compileSyntaxTree(insertSyntaxTree1);
+			const insertTree2: BindTree = compileSyntaxTree(insertSyntaxTree2);
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlush: false,
+				autoFlushPolicy: "afterBatch",
+			});
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log1: DownPath[] = [];
+			const log2: DownPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree1],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log1.push(downPath);
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Delete,
+				[insertTree2],
+				({ path, count }: DeleteBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log2.push(downPath);
+				},
+			);
+			address.zip = "33428";
+			address.street = "street xyz";
+			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			dataBinder.flush();
+			// zip should be logged by log1
+			assert.deepEqual(log1, [
+				[
+					{ field: "address", index: 0 },
+					{ field: "zip", index: 1 },
+				],
+			]);
+			// street should be logged by log2
+			assert.deepEqual(log2, [
+				[
+					{ field: "address", index: 0 },
+					{ field: "street", index: 0 },
+				],
+			]);
+			dataBinder.unregister();
+			log1.length = 0;
+			log2.length = 0;
+			address.zip = "92629";
+			assert.deepEqual(log1, []);
+			assert.deepEqual(log2, []);
+		});
+
+		it("registers to root, explicit flush, matches paths with any index, multiple callbacks, same BindingType", () => {
+			const { tree, root, address } = retrieveNodes();
+			// the syntax tree explicits multiple paths in a compact form
+			const insertSyntaxTree1: BindSyntaxTree = {
+				address: {
+					zip: true,
+				},
+			};
+			const insertSyntaxTree2: BindSyntaxTree = {
+				address: {
+					street: true,
+				},
+			};
+			const insertTree1: BindTree = compileSyntaxTree(insertSyntaxTree1);
+			const insertTree2: BindTree = compileSyntaxTree(insertSyntaxTree2);
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlush: false,
+				autoFlushPolicy: "afterBatch",
+			});
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log1: DownPath[] = [];
+			const log2: DownPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree1],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log1.push(downPath);
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree2],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log2.push(downPath);
+				},
+			);
+			address.zip = "33428";
+			address.street = "street xyz";
+			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			dataBinder.flush();
+			// zip should be logged by log1
+			assert.deepEqual(log1, [
+				[
+					{ field: "address", index: 0 },
+					{ field: "zip", index: 1 },
+				],
+			]);
+			// street should be logged by log2
+			assert.deepEqual(log2, [
+				[
+					{ field: "address", index: 0 },
+					{ field: "street", index: 1 },
+				],
+			]);
+			dataBinder.unregister();
+			log1.length = 0;
+			log2.length = 0;
+			address.zip = "92629";
+			assert.deepEqual(log1, []);
+			assert.deepEqual(log2, []);
+		});
+
 		it("registers to root, matches paths with subtree policy and any index, sorts using a custom prescribed order. Native sort algorithm. Explicit flush.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertSyntaxTree: BindSyntaxTree = {

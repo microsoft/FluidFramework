@@ -13,8 +13,8 @@ import {
 	getDepth,
 	topDownPath,
 } from "../../core";
-import { Events, IEmitter, ISubscribable, createEmitter } from "../../events";
-import { brand } from "../../util";
+import { Events, ISubscribable } from "../../events";
+import { brand, getOrCreate } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
@@ -243,34 +243,32 @@ export interface BatchBindingContext extends AbstractBindingContext {
 	readonly events: BindingContext[];
 }
 
-abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisitor {
-	protected readonly registeredPaths: Map<BindingContextType, Set<BindPath>> = new Map();
-	public constructor(
-		protected readonly emitter: IEmitter<B>,
-		protected readonly options: BinderOptions,
-	) {}
+abstract class AbstractPathVisitor implements PathVisitor {
+	protected readonly registeredPaths: Map<
+		BindingContextType,
+		Map<BindPath, Set<(...args: unknown[]) => any>>
+	> = new Map();
+	public constructor(protected readonly options: BinderOptions) {}
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public abstract onSetValue(path: UpPath, value: TreeValue): void;
 
-	protected matchesAny(visitPaths: Set<BindPath> | undefined, downPath: BindPath): boolean {
-		if (visitPaths !== undefined) {
+	protected matchesPath(visitPath: BindPath | undefined, downPath: BindPath): boolean {
+		if (visitPath !== undefined) {
 			const matchPolicy = this.options.matchPolicy;
-			for (const path of visitPaths) {
-				switch (matchPolicy) {
-					case "subtree":
-						if (this.pathsMatchSubtree(path, downPath)) {
-							return true;
-						}
-						break;
-					case "path":
-						if (this.pathsMatchExact(path, downPath)) {
-							return true;
-						}
-						break;
-					default:
-						unreachableCase(matchPolicy);
-				}
+			switch (matchPolicy) {
+				case "subtree":
+					if (this.pathsMatchSubtree(visitPath, downPath)) {
+						return true;
+					}
+					break;
+				case "path":
+					if (this.pathsMatchExact(visitPath, downPath)) {
+						return true;
+					}
+					break;
+				default:
+					unreachableCase(matchPolicy);
 			}
 		}
 		return false;
@@ -294,19 +292,74 @@ abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisito
 		return true;
 	}
 
-	public registerPaths(contextType: BindingContextType, paths: BindPath[]): void {
-		this.registeredPaths.set(
+	public registerPaths(
+		contextType: BindingContextType,
+		paths: BindPath[],
+		listener: (...args: unknown[]) => any,
+	): () => void {
+		const contextPaths = getOrCreate(
+			this.registeredPaths,
 			contextType,
-			new Set([...(this.registeredPaths.get(contextType) ?? []), ...paths]),
+			() => new Map<BindPath, Set<(...args: unknown[]) => any>>(),
 		);
+		for (const path of paths) {
+			const pathListeners = getOrCreate(contextPaths, path, () => new Set());
+			pathListeners.add(listener);
+			contextPaths.set(path, pathListeners);
+		}
+		this.registeredPaths.set(contextType, contextPaths);
+		return () => {
+			this.unregisterPaths(contextType, paths, listener);
+		};
+	}
+
+	public unregisterPaths(
+		contextType: BindingContextType,
+		paths: BindPath[],
+		listener: (...args: unknown[]) => any,
+	): void {
+		const contextPaths = this.registeredPaths.get(contextType);
+		if (contextPaths === undefined) {
+			return;
+		}
+		for (const path of paths) {
+			const pathListeners = contextPaths.get(path);
+			if (pathListeners === undefined) {
+				continue;
+			}
+			pathListeners.delete(listener);
+			if (pathListeners.size === 0) {
+				contextPaths.delete(path);
+			}
+		}
+		if (contextPaths.size === 0) {
+			this.registeredPaths.delete(contextType);
+		}
 	}
 
 	public hasRegisteredContextType(contextType: BindingContextType): boolean {
 		return this.registeredPaths.has(contextType);
 	}
 
-	public getRegisteredPaths(contextType: BindingContextType): Set<BindPath> | undefined {
-		return this.registeredPaths.get(contextType);
+	public getRegisteredPaths(contextType: BindingContextType):
+		| Set<{
+				path: BindPath;
+				callbacks: Set<(...args: unknown[]) => any>;
+		  }>
+		| undefined {
+		const contextPaths = this.registeredPaths.get(contextType);
+		if (contextPaths === undefined) {
+			return undefined;
+		}
+		const registeredPaths: Set<{
+			path: BindPath;
+			callbacks: Set<(...args: unknown[]) => any>;
+		}> = new Set();
+		for (const [path, callbacks] of contextPaths.entries()) {
+			registeredPaths.add({ path, callbacks });
+		}
+
+		return registeredPaths;
 	}
 
 	public dispose(): void {
@@ -314,141 +367,212 @@ abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisito
 	}
 }
 
-class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
-	public constructor(emitter: IEmitter<OperationBinderEvents>, options: BinderOptions) {
-		super(emitter, options);
+class DirectPathVisitor extends AbstractPathVisitor {
+	public constructor(options: BinderOptions) {
+		super(options);
 	}
 
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Delete);
-		if (this.matchesAny(visitPaths, current)) {
-			this.emitter.emit(BindingType.Delete, {
-				path,
-				count,
-				type: BindingType.Delete,
-			});
+		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					for (const callback of callbacks) {
+						callback({
+							path,
+							count,
+							type: BindingType.Delete,
+						});
+					}
+				}
+			}
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Insert);
-		if (this.matchesAny(visitPaths, current)) {
-			this.emitter.emit(BindingType.Insert, {
-				path,
-				content,
-				type: BindingType.Insert,
-			});
+		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					for (const callback of callbacks) {
+						callback({
+							path,
+							content,
+							type: BindingType.Insert,
+						});
+					}
+				}
+			}
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.SetValue);
-		if (this.matchesAny(visitPaths, current)) {
-			this.emitter.emit(BindingType.SetValue, {
-				path,
-				value,
-				type: BindingType.SetValue,
-			});
+		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					for (const callback of callbacks) {
+						callback({
+							path,
+							value,
+							type: BindingType.SetValue,
+						});
+					}
+				}
+			}
 		}
 	}
 }
 
 class InvalidatingPathVisitor
-	extends AbstractPathVisitor<InvalidationBinderEvents>
+	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
-	protected invalidation = false;
-	public constructor(emitter: IEmitter<InvalidationBinderEvents>, options: BinderOptions) {
-		super(emitter, options);
+	protected callbacks: Set<(...args: unknown[]) => any> | undefined;
+	public constructor(options: BinderOptions) {
+		super(options);
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
-		if (this.matchesAny(visitPaths, current)) {
-			this.invalidation = true;
+		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.callbacks = callbacks;
+				}
+			}
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
-		if (this.matchesAny(visitPaths, current)) {
-			this.invalidation = true;
+		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.callbacks = callbacks;
+				}
+			}
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
-		if (this.matchesAny(visitPaths, current)) {
-			this.invalidation = true;
+		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.callbacks = callbacks;
+				}
+			}
 		}
 	}
 
 	public flush(): InvalidatingPathVisitor {
-		if (this.invalidation) {
-			this.emitter.emit(BindingType.Invalidation, {
-				type: BindingType.Invalidation,
-			});
+		if (this.callbacks !== undefined) {
+			for (const callback of this.callbacks) {
+				callback({
+					type: BindingType.Invalidation,
+				});
+			}
 		}
-		this.invalidation = false;
+		this.callbacks = undefined;
 		return this;
 	}
 }
 
-class BufferingPathVisitor
-	extends AbstractPathVisitor<OperationBinderEvents>
-	implements Flushable<BufferingPathVisitor>
-{
-	private readonly eventQueue: BindingContext[] = [];
+type CallableBindingContext = BindingContext & {
+	callbacks: Set<(...args: unknown[]) => any>;
+};
 
-	public constructor(emitter: IEmitter<OperationBinderEvents>, options: BinderOptions) {
-		super(emitter, options);
+class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
+	private readonly eventQueue: CallableBindingContext[] = [];
+
+	public constructor(options: BinderOptions) {
+		super(options);
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Delete);
-		if (this.matchesAny(visitPaths, current)) {
-			this.eventQueue.push({ type: BindingType.Delete, path, count });
+		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.eventQueue.push({
+						path,
+						count,
+						type: BindingType.Delete,
+						callbacks,
+					});
+				}
+			}
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.Insert);
-		if (this.matchesAny(visitPaths, current)) {
-			this.eventQueue.push({ type: BindingType.Insert, path, content });
+		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.eventQueue.push({
+						path,
+						content,
+						type: BindingType.Insert,
+						callbacks,
+					});
+				}
+			}
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.SetValue);
-		if (this.matchesAny(visitPaths, current)) {
-			this.eventQueue.push({ type: BindingType.SetValue, path, value });
+		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
+		if (visitPaths !== undefined) {
+			for (const { path: visitPath, callbacks } of visitPaths) {
+				if (this.matchesPath(visitPath, current)) {
+					this.eventQueue.push({
+						path,
+						value,
+						type: BindingType.SetValue,
+						callbacks,
+					});
+				}
+			}
 		}
 	}
 
 	public flush(): BufferingPathVisitor {
-		const sortedQueue: BindingContext[] = nativeSort(
+		const sortedQueue: CallableBindingContext[] = nativeSort(
 			this.eventQueue,
 			this.options.sortFn ?? compareBinderEventsDeleteFirst,
 		);
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
 			assert(batchPaths !== undefined, "batch paths confirmed registered");
+			const collected = new Set<(...args: unknown[]) => any>();
 			const batchEvents = sortedQueue.filter((event) => {
 				const current = toDownPath<BindPath>(event.path);
-				return this.matchesAny(batchPaths, current);
+				let filtered = false;
+				for (const { path: visitPath, callbacks } of batchPaths) {
+					if (this.matchesPath(visitPath, current)) {
+						callbacks.forEach((callback) => collected.add(callback));
+						filtered = true;
+						break;
+					}
+				}
+				return filtered;
 			});
 			if (batchEvents.length > 0) {
-				this.emitter.emit(BindingType.Batch, {
-					type: BindingType.Batch,
-					events: batchEvents,
-				});
+				for (const callback of collected) {
+					callback({
+						type: BindingType.Batch,
+						events: batchEvents,
+					});
+				}
 			}
 			for (const event of batchEvents) {
 				const index = sortedQueue.indexOf(event);
@@ -456,19 +580,34 @@ class BufferingPathVisitor
 				sortedQueue.splice(index, 1);
 			}
 		}
-		for (const cmd of sortedQueue) {
-			switch (cmd.type) {
+		for (const callableContext of sortedQueue) {
+			switch (callableContext.type) {
 				case BindingType.Delete:
-					this.emitter.emit(BindingType.Delete, cmd);
+					for (const callback of callableContext.callbacks) {
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const { callbacks, ...context } = callableContext;
+						const typedContext = { ...context, type: BindingType.Delete };
+						callback(typedContext);
+					}
 					break;
 				case BindingType.Insert:
-					this.emitter.emit(BindingType.Insert, cmd);
+					for (const callback of callableContext.callbacks) {
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const { callbacks, ...context } = callableContext;
+						const typedContext = { ...context, type: BindingType.Insert };
+						callback(typedContext);
+					}
 					break;
 				case BindingType.SetValue:
-					this.emitter.emit(BindingType.SetValue, cmd);
+					for (const callback of callableContext.callbacks) {
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const { callbacks, ...context } = callableContext;
+						const typedContext = { ...context, type: BindingType.SetValue };
+						callback(typedContext);
+					}
 					break;
 				default:
-					unreachableCase(cmd);
+					unreachableCase(callableContext);
 			}
 		}
 		this.eventQueue.length = 0;
@@ -483,7 +622,7 @@ class BufferingPathVisitor
 
 class AbstractDataBinder<
 	B extends BinderEvents,
-	V extends AbstractPathVisitor<B>,
+	V extends AbstractPathVisitor,
 	O extends BinderOptions,
 > implements DataBinder<B>
 {
@@ -491,7 +630,6 @@ class AbstractDataBinder<
 	protected readonly visitorLocations = new Map<V, UpPath>();
 	protected readonly unregisterHandles: Set<() => void> = new Set();
 	public constructor(
-		protected readonly events: IEmitter<B> & ISubscribable<B>,
 		protected readonly options: O,
 		protected readonly visitorFactory: (anchor: EditableTree) => V,
 	) {}
@@ -520,9 +658,14 @@ class AbstractDataBinder<
 		const contextType: BindingContextType = eventType as BindingContextType;
 		for (const eventTree of eventTrees) {
 			const bindPaths = this.extractBindPaths(eventTree);
-			visitor.registerPaths(contextType, bindPaths);
+			this.unregisterHandles.add(
+				visitor.registerPaths(
+					contextType,
+					bindPaths,
+					listener as unknown as (...args: unknown[]) => any,
+				),
+			);
 		}
-		this.unregisterHandles.add(this.events.on(eventType, listener));
 	}
 	public unregister(): void {
 		for (const unregisterHandle of this.unregisterHandles) {
@@ -562,8 +705,7 @@ class BufferingDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		const events = createEmitter<OperationBinderEvents>();
-		super(events, options, (anchor: EditableTree) => new BufferingPathVisitor(events, options));
+		super(options, (anchor: EditableTree) => new BufferingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {
@@ -604,8 +746,7 @@ class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 	BinderOptions
 > {
 	public constructor(view: ISubscribable<E>, options: BinderOptions) {
-		const events = createEmitter<OperationBinderEvents>();
-		super(events, options, (anchor: EditableTree) => new DirectPathVisitor(events, options));
+		super(options, (anchor: EditableTree) => new DirectPathVisitor(options));
 	}
 }
 
@@ -620,12 +761,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		const events = createEmitter<InvalidationBinderEvents>();
-		super(
-			events,
-			options,
-			(anchor: EditableTree) => new InvalidatingPathVisitor(events, options),
-		);
+		super(options, (anchor: EditableTree) => new InvalidatingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {
