@@ -551,7 +551,6 @@ export class ConnectionManager implements IConnectionManager {
 
 			try {
 				this.client.mode = requestedMode;
-				this.props.establishConnectionHandler(requestedMode);
 				connection = await docService.connectToDeltaStream({
 					...this.client,
 					mode: requestedMode,
@@ -594,6 +593,7 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				if (retryDelayFromError !== undefined) {
 					// If the error told us to wait, then we wait.
@@ -614,6 +614,14 @@ export class ConnectionManager implements IConnectionManager {
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
 				await waitForOnline();
+				this.logger.sendTelemetryEvent({
+					eventName: "WaitBetweenConnectionAttempts",
+					duration: performance.now() - waitStartTime,
+					details: JSON.stringify({
+						retryDelayFromError,
+						delayMs,
+					}),
+				});
 			}
 		}
 

@@ -60,7 +60,6 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
-	(event: "establisingConnection", listener: (mode: ConnectionMode) => void);
 }
 
 /**
@@ -366,7 +365,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
-			establishConnectionHandler: (mode: ConnectionMode) => this.establishingConnection(mode),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -404,10 +402,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Initially, all queues are created paused.
 		// - outbound is flipped back and forth in setupNewSuccessfulConnection / disconnectFromDeltaStream
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
-	}
-
-	private establishingConnection(mode: ConnectionMode) {
-		this.emit("establisingConnection", mode);
 	}
 
 	private connectHandler(connection: IConnectionDetailsInternal) {

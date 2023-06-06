@@ -50,7 +50,6 @@ import {
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
-	ConnectionMode,
 	IClient,
 	IClientConfiguration,
 	IClientDetails,
@@ -700,6 +699,7 @@ export class Container
 			);
 		});
 
+		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		this.clientDetailsOverride = config.clientDetailsOverride;
 		this._resolvedUrl = config.resolvedUrl;
 		if (config.canReconnect !== undefined) {
@@ -871,11 +871,17 @@ export class Container
 	}
 
 	public dispose?(error?: ICriticalContainerError) {
+		if (this.connectionState === ConnectionState.EstablishingConnection) {
+			this.connectionStateHandler.disconnect("ContainerDisposed");
+		}
 		this._deltaManager.close(error, true /* doDispose */);
 		this.verifyClosed();
 	}
 
 	public close(error?: ICriticalContainerError) {
+		if (this.connectionState === ConnectionState.EstablishingConnection) {
+			this.connectionStateHandler.disconnect("ContainerClose");
+		}
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
@@ -1358,20 +1364,12 @@ export class Container
 		return versions[0];
 	}
 
-	private recordConnectStartTime() {
-		if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-			this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
-		}
-	}
-
 	private connectToDeltaStream(args: IConnectionArgs) {
-		this.recordConnectStartTime();
-
 		// All agents need "write" access, including summarizer.
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
 			args.mode = "write";
 		}
-
+		this.connectionStateHandler.establishingConnection(args.reason);
 		this._deltaManager.connect(args);
 	}
 
@@ -1843,10 +1841,6 @@ export class Container
 		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
-		});
-
-		deltaManager.on("establisingConnection", (mode: ConnectionMode) => {
-			this.connectionStateHandler.establishingConnection(mode);
 		});
 
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {

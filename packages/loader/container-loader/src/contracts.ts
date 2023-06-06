@@ -167,11 +167,6 @@ export interface IConnectionManagerFactoryArgs {
 	 * `undefined` indicates that user permissions are not yet known.
 	 */
 	readonly readonlyChangeHandler: (readonly?: boolean) => void;
-
-	/**
-	 * Called whenever we try to start establishing a new connection.
-	 */
-	readonly establishConnectionHandler: (mode: ConnectionMode) => void;
 }
 
 /**
