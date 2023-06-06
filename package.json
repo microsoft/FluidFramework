@@ -61,7 +61,7 @@
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",
 		"prettier:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream prettier:fix",
-    "prettier:repo": "prettier --check . --ignore-path ./.prettierignore",
+		"prettier:repo": "prettier --check . --ignore-path ./.prettierignore",
 		"prettier:repo:fix": "prettier --write . --ignore-path ./.prettierignore",
 		"prettier:root": "prettier --check ./*.* --ignore-path .prettierignore",
 		"prettier:root:fix": "prettier --write ./*.* --ignore-path .prettierignore",
