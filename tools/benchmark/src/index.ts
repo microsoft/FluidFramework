@@ -26,6 +26,7 @@ export {
 	HookArguments,
 	isInPerformanceTestingMode,
 	validateBenchmarkArguments,
+	qualifiedTitle,
 	Titled,
 	BenchmarkTimingOptions,
 	BenchmarkRunningOptions,
@@ -38,7 +39,7 @@ export {
 	CustomBenchmarkArguments,
 } from "./Configuration";
 export { benchmark, benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./mocha";
-export { prettyNumber, geometricMean, qualifiedTitle, Stats } from "./ReporterUtilities";
+export { prettyNumber, geometricMean, Stats } from "./ReporterUtilities";
 export { BenchmarkReporter } from "./Reporter";
 export {
 	BenchmarkData,

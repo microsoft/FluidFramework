@@ -11,9 +11,9 @@ import {
 	isInPerformanceTestingMode,
 	Titled,
 	MochaExclusiveOptions,
+	qualifiedTitle,
 } from "../Configuration";
 import { BenchmarkResult, Phase, runBenchmark } from "../runBenchmark";
-import { qualifiedTitle } from "../ReporterUtilities";
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
