@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
+import { strict as assert } from "assert";
 import { expect } from "chai";
 import {
 	IContainer,
@@ -35,7 +36,6 @@ import {
 	NamedProperty,
 	Int32Property,
 } from "@fluid-experimental/property-properties";
-import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(

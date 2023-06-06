@@ -15,24 +15,17 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { IMultiFormatCodec } from "../codec";
-import { JsonCompatibleReadOnly, mapIterable } from "../util";
+import { IJsonCodec } from "../codec";
 import {
 	cachedValue,
 	ChangeFamily,
 	ICachedValue,
 	recordDependency,
-	SessionId,
 	ChangeFamilyEditor,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
-import {
-	Commit,
-	EditManager,
-	SequencedCommit,
-	SummarySessionBranch,
-	SummaryData,
-} from "./editManager";
+import { EditManager, SummaryData } from "./editManager";
+import { makeEditManagerCodec } from "./editManagerCodecs";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -56,7 +49,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	// (the one for the current persisted configuration) and resolve codecs for different versions
 	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
 	// and an op needs to be interpreted which isn't written with the current configuration).
-	private readonly changesetCodec: IMultiFormatCodec<TChangeset>;
+	private readonly codec: IJsonCodec<SummaryData<TChangeset>, string>;
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly editManager: EditManager<
@@ -65,15 +58,13 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
 	) {
-		this.changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
+		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
+		this.codec = makeEditManagerCodec(changesetCodec);
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);
-			const dataString = stringifySummary(
-				this.editManager.getSummaryData(),
-				this.changesetCodec,
-			);
+			const encodedSummary = this.codec.encode(this.editManager.getSummaryData());
 			// For now we are not chunking the edit data, but still put it in a reusable blob:
-			return this.runtime.uploadBlob(IsoBuffer.from(dataString));
+			return this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify(encodedSummary)));
 		});
 	}
 
@@ -83,7 +74,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = stringifySummary(this.editManager.getSummaryData(), this.changesetCodec);
+		const dataString = this.codec.encode(this.editManager.getSummaryData());
 		return createSingleBlobSummary(stringKey, dataString);
 	}
 
@@ -135,61 +126,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		);
 
 		const dataString = bufferToString(schemaBuffer, "utf-8");
-		const data = parseSummary(dataString, this.changesetCodec);
+		const data = this.codec.decode(dataString);
 		this.editManager.loadSummaryData(data);
 	}
-}
-
-/**
- * The in-memory data that summaries contain, in a JSON-compatible format.
- * Used as an implementation detail of {@link parseSummary} and {@link stringifySummary}.
- */
-interface ReadonlyJsonSummaryData {
-	readonly trunk: readonly Readonly<SequencedCommit<JsonCompatibleReadOnly>>[];
-	readonly branches: readonly [
-		SessionId,
-		Readonly<SummarySessionBranch<JsonCompatibleReadOnly>>,
-	][];
-}
-
-export function parseSummary<TChangeset>(
-	summary: string,
-	codec: IMultiFormatCodec<TChangeset>,
-): SummaryData<TChangeset> {
-	const decodeCommit = <T extends Commit<JsonCompatibleReadOnly>>(commit: T) => ({
-		...commit,
-		change: codec.json.decode(commit.change),
-	});
-
-	const json: ReadonlyJsonSummaryData = JSON.parse(summary);
-
-	return {
-		trunk: json.trunk.map(decodeCommit),
-		branches: new Map(
-			mapIterable(json.branches, ([sessionId, branch]) => [
-				sessionId,
-				{ ...branch, commits: branch.commits.map(decodeCommit) },
-			]),
-		),
-	};
-}
-
-export function stringifySummary<TChangeset>(
-	data: SummaryData<TChangeset>,
-	codec: IMultiFormatCodec<TChangeset>,
-): string {
-	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
-		...commit,
-		change: codec.json.encode(commit.change),
-	});
-
-	const json: ReadonlyJsonSummaryData = {
-		trunk: data.trunk.map(encodeCommit),
-		branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{ ...branch, commits: branch.commits.map(encodeCommit) },
-		]),
-	};
-
-	return JSON.stringify(json);
 }

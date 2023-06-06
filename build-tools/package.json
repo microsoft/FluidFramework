@@ -52,7 +52,7 @@
 		"test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
 		"test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
 		"tsc": "lerna run tsc --stream",
-		"tsc:fast": "fluid-build --root .. -s tsc --buildTools",
+		"tsc:fast": "fluid-build --root .. -t tsc --buildTools",
 		"typetests:prepare": "flub generate typetests --prepare --releaseGroup build-tools --verbose",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",

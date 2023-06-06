@@ -231,7 +231,7 @@ Right now, this is implemented on a per-package basis, with a [shared base confi
     `npm run format:changed` from the root of the repo to format only files changed since the main branch.
     If your change is for the next branch instead, you can run `npm run format:changed:next`.
 -   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
-    script argument: `fluid-build -s format` or `npm run build:fast -- -s format`
+    script argument: `fluid-build -t format` or `npm run build:fast -- -t format`
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 
