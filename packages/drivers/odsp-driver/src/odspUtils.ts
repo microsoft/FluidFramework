@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryProperties,
-	ITelemetryBaseLogger,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -19,6 +15,7 @@ import {
 import { assert, performance } from "@fluidframework/common-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	wrapError,
@@ -322,7 +319,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 }
 
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
@@ -454,7 +451,7 @@ export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	if (messages.length !== 0) {
 		const start = messages[0].sequenceNumber;

@@ -57,6 +57,7 @@ import {
 	RevisionMetadataSource,
 	NodeExistsConstraint,
 	ValueConstraint,
+	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -578,7 +579,7 @@ export class ModularChangeFamily
 			const rebaseChild = (
 				child: NodeChangeset | undefined,
 				baseChild: NodeChangeset | undefined,
-				deleted: boolean | undefined,
+				stateChange: NodeExistenceStateChange | undefined,
 			) =>
 				this.rebaseNodeChange(
 					child,
@@ -589,7 +590,7 @@ export class ModularChangeFamily
 					fieldFilter,
 					revisionMetadata,
 					constraintState,
-					deleted,
+					stateChange,
 					amend,
 				);
 
@@ -686,7 +687,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
-		deletedByBase: boolean = false,
+		existenceStateChange: NodeExistenceStateChange = NodeExistenceStateChange.Unchanged,
 		amend: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over.change?.fieldChanges === undefined) {
@@ -736,25 +737,31 @@ export class ModularChangeFamily
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
 		if (rebasedChange.valueConstraint !== undefined && over.change?.valueChange !== undefined) {
-			const violatedByOver =
+			const violatedAfter =
 				over.change.valueChange.value !== rebasedChange.valueConstraint.value;
 
-			if (rebasedChange.valueConstraint.violated !== violatedByOver) {
+			if (rebasedChange.valueConstraint.violated !== violatedAfter) {
 				rebasedChange.valueConstraint = {
 					...rebasedChange.valueConstraint,
-					violated: violatedByOver,
+					violated: violatedAfter,
 				};
-				constraintState.violationCount += violatedByOver ? 1 : -1;
+				constraintState.violationCount += violatedAfter ? 1 : -1;
 			}
 		}
 
-		// If there's a node exists constraint and we deleted the node, increment the violation count
-		if (rebasedChange.nodeExistsConstraint !== undefined && deletedByBase) {
-			// Only increment the violation count if the constraint wasn't already violated
-			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
-			if (!rebasedChange.nodeExistsConstraint.violated) {
-				rebasedChange.nodeExistsConstraint.violated = true;
-				constraintState.violationCount += 1;
+		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		if (
+			rebasedChange.nodeExistsConstraint !== undefined &&
+			existenceStateChange !== NodeExistenceStateChange.Unchanged
+		) {
+			const violatedAfter = existenceStateChange === NodeExistenceStateChange.Deleted;
+
+			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {
+				rebasedChange.nodeExistsConstraint = {
+					...rebasedChange.nodeExistsConstraint,
+					violated: violatedAfter,
+				};
+				constraintState.violationCount += violatedAfter ? 1 : -1;
 			}
 		}
 
@@ -774,6 +781,11 @@ export class ModularChangeFamily
 	}
 
 	public intoDelta(change: ModularChangeset): Delta.Root {
+		// Return an empty delta for changes with constraint violations
+		if ((change.constraintViolationCount ?? 0) > 0) {
+			return new Map();
+		}
+
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 

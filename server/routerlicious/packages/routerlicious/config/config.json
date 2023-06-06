@@ -52,7 +52,8 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"kafkaCheckpointOnReprocessingOp": false
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -139,7 +140,9 @@
 			"maxMessages": 500
 		},
 		"getDeltasViaAlfred": true,
-		"restartOnCheckpointFailure": true
+		"verifyLastOpPersistence": false,
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true
 	},
 	"system": {
 		"httpServer": {

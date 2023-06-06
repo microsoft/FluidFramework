@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
  * Utility counter which will send event only if the provided value
@@ -12,7 +12,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 export class ThresholdCounter {
 	public constructor(
 		private readonly threshold: number,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private thresholdMultiple = threshold,
 	) {}
 

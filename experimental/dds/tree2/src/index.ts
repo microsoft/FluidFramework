@@ -99,15 +99,8 @@ export {
 
 export {
 	Brand,
-	BrandedType,
 	Opaque,
 	extractFromOpaque,
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	ExtractFromOpaque,
-	isAny,
 	brand,
 	brandOpaque,
 	ValueFromBranded,
@@ -118,7 +111,6 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
-	Assume,
 } from "./util";
 
 export {
@@ -141,6 +133,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
+	nodeIdentifierKey,
+	nodeIdentifierSchema,
 } from "./domains";
 
 export {
@@ -199,7 +193,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	Identifier,
+	NodeIdentifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -240,6 +234,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -251,11 +246,10 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {
-	identifierKey,
-	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	runSynchronous,
@@ -273,3 +267,7 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 } from "./codec";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+import * as InternalTypes from "./internal";
+export { InternalTypes };

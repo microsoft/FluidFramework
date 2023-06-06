@@ -6,20 +6,7 @@
 // Used by public types, but not part of the desired API surface
 export { RecursiveTreeSchemaSpecification, RecursiveTreeSchema } from "./schemaBuilder";
 
-export {
-	ObjectToMap,
-	WithDefault,
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
-	Unbrand,
-	UnbrandList,
-	_InlineTrick,
-	_RecursiveTrick,
-	FlattenKeys,
-	AllowOptionalNotFlattened,
-	ArrayToUnion,
-} from "./typeUtils";
+export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./typeUtils";
 
 export {
 	TreeSchemaSpecification,
