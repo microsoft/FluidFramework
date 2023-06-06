@@ -420,9 +420,6 @@ export class FluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
-		// TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-		// we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-		// it doesn't exist
 		const context = this.contexts.get(id);
 		if (context === undefined) {
 			throw new Error("Channel does not exist");
