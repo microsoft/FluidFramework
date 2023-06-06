@@ -1317,8 +1317,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Constraints", () => {
-		it.only("handles ancestor delete", () => {
+	describe.only("Constraints", () => {
+		it("handles ancestor delete for sequence", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");

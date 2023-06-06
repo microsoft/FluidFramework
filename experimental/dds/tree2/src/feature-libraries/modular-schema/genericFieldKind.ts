@@ -19,6 +19,7 @@ import {
 import { FieldKind, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { ConstraintState } from "./modularChangeFamily";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -107,6 +108,11 @@ function rebaseGenericChange(
 	change: GenericChangeset,
 	{ change: over }: TaggedChange<GenericChangeset>,
 	rebaseChild: NodeChangeRebaser,
+	genId: IdAllocator,
+	crossFieldManager: CrossFieldManager,
+	revisionMetadata: RevisionMetadataSource,
+	deletedSubtree: boolean,
+	constraintState: ConstraintState,
 ): GenericChangeset {
 	const rebased: GenericChangeset = [];
 	let iChange = 0;
@@ -141,7 +147,23 @@ function rebaseGenericChange(
 			});
 		}
 	}
-	rebased.push(...change.slice(iChange));
+
+	const slice = change.slice(iChange);
+	slice.forEach((c) => {
+		if (c.nodeChange.nodeExistsConstraint !== undefined && deletedSubtree) {
+			const violatedAfter = deletedSubtree === true;
+
+			if (c.nodeChange.nodeExistsConstraint.violated !== violatedAfter) {
+				c.nodeChange.nodeExistsConstraint = {
+					...c.nodeChange.nodeExistsConstraint,
+					violated: violatedAfter,
+				};
+				constraintState.violationCount += violatedAfter ? 1 : -1;
+			}
+		}
+	});
+
+	rebased.push(...slice);
 	return rebased;
 }
 

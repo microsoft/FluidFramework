@@ -554,6 +554,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		amend: boolean = false,
+		existenceStateChange: NodeExistenceStateChange = NodeExistenceStateChange.Unchanged,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -602,6 +603,8 @@ export class ModularChangeFamily
 						genId,
 						manager,
 						revisionMetadata,
+						existenceStateChange === NodeExistenceStateChange.Deleted,
+						constraintState,
 				  )
 				: fieldKind.changeHandler.rebaser.amendRebase(
 						fieldChangeset,
@@ -610,6 +613,8 @@ export class ModularChangeFamily
 						genId,
 						manager,
 						revisionMetadata,
+						existenceStateChange === NodeExistenceStateChange.Deleted,
+						constraintState,
 				  );
 
 			if (!fieldKind.changeHandler.isEmpty(rebasedField)) {
@@ -665,6 +670,8 @@ export class ModularChangeFamily
 					genId,
 					manager,
 					revisionMetadata,
+					existenceStateChange === NodeExistenceStateChange.Deleted,
+					constraintState,
 				);
 				const rebasedFieldChange: FieldChange = {
 					fieldKind: fieldKind.identifier,
@@ -715,6 +722,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 			constraintState,
 			amend,
+			existenceStateChange,
 		);
 
 		const rebasedChange: NodeChangeset = {};
@@ -907,7 +915,7 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
-interface ConstraintState {
+export interface ConstraintState {
 	violationCount: number;
 }
 

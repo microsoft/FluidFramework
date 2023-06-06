@@ -7,6 +7,7 @@ import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag 
 import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
+import { ConstraintState } from "./modularChangeFamily";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -95,6 +96,8 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		deletedSubtree: boolean,
+		constraintState: ConstraintState,
 	): TChangeset;
 
 	/**
@@ -107,6 +110,8 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		deletedSubtree: boolean,
+		constraintState: ConstraintState,
 	): TChangeset;
 }
 
