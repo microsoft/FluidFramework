@@ -323,6 +323,11 @@ export class ModularChangeFamily
 		isRollback: boolean,
 		repairStore?: ReadonlyRepairDataStore,
 	): ModularChangeset {
+		// Return an empty inverse for changes with constraint violations
+		if ((change.change.constraintViolationCount ?? 0) > 0) {
+			return makeModularChangeset(new Map());
+		}
+
 		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
