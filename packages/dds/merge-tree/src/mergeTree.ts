@@ -102,9 +102,9 @@ function isRemovedAndAcked(segment: ISegment): boolean {
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
-function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
+function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
 	if (!node.isLeaf()) {
-		return node.cachedLength;
+		return node.nullableCachedLength;
 	}
 	return mergeTree.localNetLength(node);
 }
@@ -614,7 +614,7 @@ export class MergeTree {
 		const removalInfo = toRemovalInfo(segment);
 		if (localSeq === undefined) {
 			if (removalInfo !== undefined) {
-				if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
+				if (this.options?.mergeTreeUseNewLengthCalculations !== false) {
 					const normalizedRemovedSeq =
 						removalInfo.removedSeq === UnassignedSequenceNumber
 							? Number.MAX_SAFE_INTEGER
@@ -647,7 +647,7 @@ export class MergeTree {
 			) {
 				return 0;
 			}
-			return segment.cachedLength;
+			return segment.nullableCachedLength;
 		} else {
 			assert(
 				segment.localSeq !== undefined,
@@ -660,7 +660,7 @@ export class MergeTree {
 			) {
 				return 0;
 			}
-			return segment.cachedLength;
+			return segment.nullableCachedLength;
 		}
 	}
 
@@ -754,7 +754,7 @@ export class MergeTree {
 		return this.collabWindow;
 	}
 
-	public getLength(refSeq: number, clientId: number) {
+	public getLength(refSeq: number, clientId: number): number {
 		return this.blockLength(this.root, refSeq, clientId);
 	}
 
@@ -881,7 +881,7 @@ export class MergeTree {
 		}
 	}
 
-	private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
+	private blockLength(node: IMergeBlock, refSeq: number, clientId: number): number {
 		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
 			? node.partialLengths!.getPartialLength(refSeq, clientId)
 			: node.cachedLength;
@@ -913,13 +913,18 @@ export class MergeTree {
 		this.localPartialsComputed = true;
 	}
 
-	private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
+	private nodeLength(
+		node: IMergeNode,
+		refSeq: number,
+		clientId: number,
+		localSeq?: number,
+	): number | undefined {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
 			} else if (localSeq === undefined) {
 				// Local client sees all segments, even when collaborating
-				return node.cachedLength;
+				return node.nullableCachedLength;
 			} else {
 				this.computeLocalPartials(refSeq);
 				// Local client should see all segments except those after localSeq.
@@ -960,7 +965,7 @@ export class MergeTree {
 					}
 
 					return seq <= refSeq || segment.clientId === clientId
-						? segment.cachedLength
+						? segment.nullableCachedLength
 						: 0;
 				}
 
@@ -982,9 +987,9 @@ export class MergeTree {
 					if (removalInfo !== undefined) {
 						return removalInfo.removedClientIds.includes(clientId)
 							? 0
-							: segment.cachedLength;
+							: segment.nullableCachedLength;
 					} else {
-						return segment.cachedLength;
+						return segment.nullableCachedLength;
 					}
 				} else {
 					// the segment was inserted and removed before the
@@ -1599,19 +1604,13 @@ export class MergeTree {
 		localSeq: number | undefined,
 		newSegments: T[],
 	) {
-		let segIsLocal = false;
-		const checkSegmentIsLocal = (segment: ISegment) => {
-			if (segment.seq === UnassignedSequenceNumber) {
-				segIsLocal = true;
-			}
-			// Only need to look at first segment that follows finished node
-			return false;
-		};
-
 		const continueFrom = (node: IMergeBlock) => {
-			segIsLocal = false;
-			forwardExcursion(node, checkSegmentIsLocal);
-			return segIsLocal;
+			let siblingExists = false;
+			forwardExcursion(node, () => {
+				siblingExists = true;
+				return false;
+			});
+			return siblingExists;
 		};
 
 		let segmentGroup: SegmentGroup;
@@ -1650,7 +1649,6 @@ export class MergeTree {
 		// TODO: build tree from segs and insert all at once
 		let insertPos = pos;
 		for (const newSegment of newSegments) {
-			segIsLocal = false;
 			if (newSegment.cachedLength > 0) {
 				newSegment.seq = seq;
 				newSegment.localSeq = localSeq;
@@ -1744,6 +1742,7 @@ export class MergeTree {
 		clientId: number,
 		seq: number,
 		context: InsertContext,
+		isLastChildBlock: boolean = true,
 	) {
 		let _pos = pos;
 		const children = block.children;
@@ -1753,7 +1752,11 @@ export class MergeTree {
 		let fromSplit: IMergeBlock | undefined;
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
 			child = children[childIndex];
-			const len = this.nodeLength(child, refSeq, clientId);
+			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
+			const isLastNonLeafBlock =
+				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
+			const len =
+				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
 			if (len === undefined) {
 				// if the seg len in undefined, the segment
 				// will be removed, so should just be skipped for now
@@ -1774,6 +1777,7 @@ export class MergeTree {
 						clientId,
 						seq,
 						context,
+						isLastNonLeafBlock,
 					);
 					if (splitNode === undefined) {
 						if (context.structureChange) {
@@ -1815,11 +1819,7 @@ export class MergeTree {
 		}
 		if (!newNode) {
 			if (_pos === 0) {
-				if (
-					seq !== UnassignedSequenceNumber &&
-					context.continuePredicate &&
-					context.continuePredicate(block)
-				) {
+				if (context.continuePredicate?.(block)) {
 					return MergeTree.theUnfinishedNode;
 				} else {
 					const segmentChanges = context.leaf(undefined, _pos, context);
@@ -2390,7 +2390,7 @@ export class MergeTree {
 	}
 
 	private blockUpdate(block: IMergeBlock) {
-		let len = 0;
+		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
 			hierBlock.rightmostTiles = createMap<Marker>();
@@ -2399,7 +2399,11 @@ export class MergeTree {
 		}
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
-			len += nodeTotalLength(this, child) ?? 0;
+			const nodeLength = nodeTotalLength(this, child);
+			if (nodeLength !== undefined) {
+				len ??= 0;
+				len += nodeLength;
+			}
 			if (hierBlock) {
 				addNodeReferences(
 					this,
@@ -2413,7 +2417,8 @@ export class MergeTree {
 				this.blockUpdateActions.child(block, i);
 			}
 		}
-		block.cachedLength = len;
+
+		block.nullableCachedLength = len;
 	}
 
 	public blockUpdatePathLengths(

@@ -953,4 +953,32 @@ describe("Matrix", () => {
 
 		runGCTests(GCSharedMatrixProvider);
 	});
+
+	describe("inserting and deleting many cells", () => {
+		it("is connected", () => {
+			const matrix = createConnectedMatrix("foo", new MockContainerRuntimeFactory());
+
+			for (let i = 0; i < 10_000; i++) {
+				matrix.insertCols(0, 1);
+				matrix.insertRows(0, 1);
+				matrix.removeCols(0, 1);
+				matrix.removeRows(0, 1);
+			}
+		});
+
+		it("is disconnected", () => {
+			const matrix = new SharedMatrix(
+				new MockFluidDataStoreRuntime(),
+				"matrix1",
+				SharedMatrixFactory.Attributes,
+			);
+
+			for (let i = 0; i <= 10_000; i++) {
+				matrix.insertCols(0, 1);
+				matrix.insertRows(0, 1);
+				matrix.removeCols(0, 1);
+				matrix.removeRows(0, 1);
+			}
+		});
+	});
 });

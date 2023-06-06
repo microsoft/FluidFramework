@@ -38,6 +38,10 @@ export interface IMergeNodeCommon {
 	 */
 	cachedLength: number;
 	/**
+	 * TODO: docs
+	 */
+	nullableCachedLength: number | undefined;
+	/**
 	 * The index of this node in its parent's list of children.
 	 */
 	index: number;
@@ -307,7 +311,16 @@ export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
 	parent?: IMergeBlock;
-	cachedLength: number = 0;
+
+	set cachedLength(n: number | undefined) {
+		this.nullableCachedLength = n;
+	}
+
+	get cachedLength(): number {
+		return this.nullableCachedLength ?? 0;
+	}
+
+	nullableCachedLength: number | undefined = 0;
 
 	isLeaf() {
 		return false;
@@ -541,7 +554,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			);
 		}
 
-		this.cachedLength += other.cachedLength;
+		if (other.nullableCachedLength !== undefined) {
+			this.nullableCachedLength ??= 0;
+			this.nullableCachedLength += other.nullableCachedLength;
+		}
 	}
 
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;

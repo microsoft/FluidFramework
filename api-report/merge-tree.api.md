@@ -427,6 +427,7 @@ export interface IMergeNodeCommon {
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
+    nullableCachedLength: number | undefined;
     ordinal: string;
     // (undocumented)
     parent?: IMergeBlock;
@@ -839,12 +840,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 
 // @public (undocumented)
 export class MergeNode implements IMergeNodeCommon {
+    set cachedLength(n: number | undefined);
     // (undocumented)
-    cachedLength: number;
+    get cachedLength(): number;
     // (undocumented)
     index: number;
     // (undocumented)
     isLeaf(): boolean;
+    // (undocumented)
+    nullableCachedLength: number | undefined;
     // (undocumented)
     ordinal: string;
     // (undocumented)

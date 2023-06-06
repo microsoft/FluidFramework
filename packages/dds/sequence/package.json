@@ -113,6 +113,25 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISequenceDeltaRange": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceDeltaEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SubSequence": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
