@@ -274,10 +274,11 @@ export class GitRepo {
 	}
 
 	public async mergeBranch(branchName: string, commitMsg: string) {
-		await this.exec(`merge ${branchName}`, `merge branch ${branchName}`);
-		await this.exec(`add .`, ``);
-		await this.exec(`commit -m ${commitMsg}`, ``);
-		await this.exec(`push`, ``);
+		await this.exec(
+			`merge ${branchName} -m ${commitMsg}`,
+			`merge branch ${branchName} and commit to a feature branch with commit message ${commitMsg}`,
+		);
+		await this.exec(`push`, `Push to the feature branch`);
 	}
 
 	public async resetBranch(commitId: string) {

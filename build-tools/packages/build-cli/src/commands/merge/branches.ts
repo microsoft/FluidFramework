@@ -61,7 +61,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	};
 
 	/**
-	 * `findConflictIndex` return an object `CommitStatus` which return the index and isConflict property which is set 
+	 * `findConflictIndex` return an object `CommitStatus` which return the index and isConflict property which is set
 	 * to true if there is a conflict else false.
 	 */
 	async findConflictIndex(commitIds: string[], gitRepo: GitRepo): Promise<CommitStatus> {
@@ -131,6 +131,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		await gitRepo.switchBranch(flags.target);
 		await gitRepo.createBranch(`${flags.target}-automation`);
+		await gitRepo.setUpstream(`${flags.target}-automation`);
 
 		const commitInfo = await this.findConflictIndex(
 			unmergedCommitList.slice(0, commitSize),
@@ -141,6 +142,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		const branchName = `${flags.source}-${flags.target}-${commitId}`;
 
+		await gitRepo.deleteBranch(`${flags.target}-automation`);
 		await gitRepo.switchBranch(flags.source);
 		await gitRepo.createBranch(branchName);
 		await gitRepo.setUpstream(branchName);
