@@ -4,6 +4,16 @@
  */
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+// TODO:
+// It is unclear if we would want to use the TypeBox compiler
+// (which generates code at runtime for maximum validation perf).
+// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
+// We could disable validation or pull in a different validator (like ajv).
+// Only using its validation when testing is another option.
+// typebox documents using this internal module, so it should be ok to access.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
@@ -33,7 +43,9 @@ export interface IJsonCodec<
 	TDecoded,
 	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
 > extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {}
+		IDecoder<TDecoded, TEncoded> {
+	encodedSchema?: TAnySchema;
+}
 
 /**
  * @remarks - TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
@@ -190,18 +202,17 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * This type of encoding is only appropriate if the persisted type (which should be defined in a persisted format file)
  * happens to be convenient for in-memory usage as well.
  *
- * @remarks - Beware that this encoder doesn't validate its input and isn't typesafe.
- * It would be great to be able to constrain T to a reasonable type, but due to how typechecking
- * of index signatures works, JsonCompatibleReadOnly isn't sufficient.
- *
- * TODO: This API is an anti-pattern for production code: using the same type for persisted and in-memory data
- * without any validation is prone to bugs involving extraneous data in the persisted format.
+ * @remarks - Beware that this API can cause accidental extraneous data in the persisted format.
  * Consider the following example:
  * ```typescript
  * interface MyPersistedType {
  *     foo: string;
  *     id: number;
  * }
+ * const MyPersistedType = Type.Object({
+ *     foo: Type.String(),
+ *     id: Type.Number()
+ * });
  *
  * const codec = makeValueCodec<MyPersistedType>();
  *
@@ -218,17 +229,50 @@ export const unitCodec: IMultiFormatCodec<0> = {
  *
  * const encoded = codec.encode(someInMemoryObject);
  * ```
- * This all typechecks, but the persisted format will contain the extraneous `someOtherProperty` field.
+ * This all typechecks and passes at runtime, but the persisted format will contain the extraneous
+ * `someOtherProperty` field.
  * It's unlikely a real-life example would be this simple, but the principle is the same.
  *
- * This issue can be avoided using schema validation with schemas that generally shouldn't accept additional properties.
+ * This issue can be avoided by using JSON schema that doesn't accept additional properties:
  *
- * AB#4074 tracks making this function take a typebox schema and using it to validate objects.
- * Note: this might allow usage of Jsonable, since the type parameter would be inferrable from the schema.
+ * ```typescript
+ * const MyPersistedType = Type.Object({
+ *     foo: Type.String(),
+ *     id: Type.Number()
+ * }, {
+ *     additionalProperties: false
+ * });
+ * ```
  */
-export function makeValueCodec<T>(): IJsonCodec<T> {
+export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCodec<Static<Schema>> {
+	return withSchemaValidation(schema, {
+		encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
+		decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+	});
+}
+
+/**
+ * Wraps a codec with JSON schema validation for its encoded type.
+ * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
+ */
+export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
+	schema: EncodedSchema,
+	codec: IJsonCodec<TInMemoryFormat>,
+): IJsonCodec<TInMemoryFormat> {
+	const CompiledFormat = TypeCompiler.Compile(schema);
 	return {
-		encode: (obj: T) => obj as unknown as JsonCompatibleReadOnly,
-		decode: (obj: JsonCompatibleReadOnly) => obj as unknown as T,
+		encode: (obj: TInMemoryFormat) => {
+			const encoded = codec.encode(obj);
+			if (!CompiledFormat.Check(encoded)) {
+				fail("Encoded schema should validate");
+			}
+			return encoded;
+		},
+		decode: (encoded: JsonCompatibleReadOnly) => {
+			if (!CompiledFormat.Check(encoded)) {
+				fail("Encoded schema should validate");
+			}
+			return codec.decode(encoded) as unknown as TInMemoryFormat;
+		},
 	};
 }

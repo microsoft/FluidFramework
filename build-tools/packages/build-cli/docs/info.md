@@ -17,10 +17,10 @@ FLAGS
   -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --[no-]private           Include private packages (default true).
-  -v, --verbose                Verbose logging.
 
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Get info about the repo, release groups, and packages.

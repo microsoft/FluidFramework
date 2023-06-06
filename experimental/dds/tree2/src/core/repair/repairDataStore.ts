@@ -45,12 +45,12 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag =
  * An object that captures document data being deleted by changes, and can be queried to retrieve that data.
  * @alpha
  */
-export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown>
+export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown>
 	extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
 	/**
 	 * Updates the store so it retains the document data being deleted by the given `change`.
 	 * @param change - A change that may be deleting document data that this store should retain.
 	 * @param revision - The revision associated with the change.
 	 */
-	capture(change: Delta.Root, revision: TRevisionTag): void;
+	capture(change: TChange, revision: TRevisionTag): void;
 }

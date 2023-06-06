@@ -34,17 +34,11 @@ export const rootFieldSchema = SchemaBuilder.fieldValue(stringTaskSchema, listTa
 export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
 
 // Schema aware types
-export type StringTask = SchemaAware.NodeDataFor<
-	SchemaAware.ApiMode.Editable,
-	typeof stringTaskSchema
->;
+export type StringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;
 
-export type ListTask = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Editable, typeof listTaskSchema>;
+export type ListTask = SchemaAware.TypedNode<typeof listTaskSchema>;
 
-type FlexibleListTask = SchemaAware.NodeDataFor<
-	SchemaAware.ApiMode.Flexible,
-	typeof listTaskSchema
->;
+type FlexibleListTask = SchemaAware.TypedNode<typeof listTaskSchema, SchemaAware.ApiMode.Flexible>;
 
 type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<
 	SchemaAware.ApiMode.Flexible,

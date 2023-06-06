@@ -20,9 +20,9 @@ export const pointSchema = builder.object("point", {
 export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
 
 // Schema aware types
-export type Number = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Editable, typeof numberSchema>;
+export type Number = SchemaAware.TypedNode<typeof numberSchema>;
 
-export type Point = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Editable, typeof pointSchema>;
+export type Point = SchemaAware.TypedNode<typeof pointSchema>;
 
 // Example Use
 function dotProduct(a: Point, b: Point): number {
@@ -31,12 +31,9 @@ function dotProduct(a: Point, b: Point): number {
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.NodeDataFor<
-		SchemaAware.ApiMode.Flexible,
-		typeof numberSchema
-	>;
+	type FlexibleNumber = SchemaAware.TypedNode<typeof numberSchema, SchemaAware.ApiMode.Flexible>;
 
-	type FlexiblePoint = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Flexible, typeof pointSchema>;
+	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema, SchemaAware.ApiMode.Flexible>;
 
 	const point: FlexiblePoint = {
 		x: 1,

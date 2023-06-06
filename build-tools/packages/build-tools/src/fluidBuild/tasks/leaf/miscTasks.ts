@@ -5,7 +5,6 @@
 import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
-import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
@@ -15,16 +14,18 @@ import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./
 const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		return true;
 	}
 }
 
 export class LesscTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		// TODO: assume lessc <src> <dst>
 		const args = this.command.split(" ");
@@ -39,12 +40,12 @@ export class LesscTask extends LeafTask {
 			const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
 			const result = srcTime <= dstTime;
 			if (!result) {
-				this.logVerboseNotUpToDate();
+				this.traceNotUpToDate();
 			}
 			return result;
 		} catch (e: any) {
 			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
-			this.logVerboseTrigger("failed to get file stats");
+			this.traceTrigger("failed to get file stats");
 			return false;
 		}
 	}
@@ -56,8 +57,8 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly copySrcArg: string = "";
 	private readonly copyDstArg: string = "";
 
-	constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
-		super(node, command, scriptDeps);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -84,22 +85,12 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		this.parsed = true;
 	}
 
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		if (this.parsed) {
-			if (this.copySrcArg.startsWith("src")) {
-				return;
-			}
-
-			if (this.copySrcArg.startsWith("./_api-extractor-temp/doc-models/")) {
-				this.addChildTask(dependentTasks, this.node, "api-extractor run --local");
-				return;
-			}
-		}
-		this.addAllDependentPackageTasks(dependentTasks);
-	}
-
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
+
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async getInputFiles() {
 		if (!this.parsed) {
 			// If we can't parse the argument, we don't know what we are doing.
@@ -142,8 +133,9 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
@@ -152,20 +144,20 @@ export class GenVerTask extends LeafTask {
 				/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m,
 			);
 			if (match === null) {
-				this.logVerboseTrigger("src/packageVersion.ts content not matched");
+				this.traceTrigger("src/packageVersion.ts content not matched");
 				return false;
 			}
 			if (this.node.pkg.name !== match[1]) {
-				this.logVerboseTrigger("package name in src/packageVersion.ts not matched");
+				this.traceTrigger("package name in src/packageVersion.ts not matched");
 				return false;
 			}
 			if (this.node.pkg.version !== match[2]) {
-				this.logVerboseTrigger("package version in src/packageVersion.ts not matched");
+				this.traceTrigger("package version in src/packageVersion.ts not matched");
 				return false;
 			}
 			return true;
 		} catch {
-			this.logVerboseTrigger(`failed to read src/packageVersion.ts`);
+			this.traceTrigger(`failed to read src/packageVersion.ts`);
 			return false;
 		}
 	}
@@ -175,15 +167,13 @@ export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		return JSON.stringify(this.package.packageJson);
 	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	private inputFiles: string[] | undefined;
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
 	protected async getInputFiles(): Promise<string[]> {
 		if (!this.inputFiles) {
 			const fenceGlob = path.join(this.node.pkg.directory, "**/fence.json");

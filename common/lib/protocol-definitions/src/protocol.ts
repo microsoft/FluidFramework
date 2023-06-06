@@ -58,12 +58,6 @@ export enum MessageType {
 	Operation = "op",
 
 	/**
-	 * Message to indicate the need of a remote agent for a document.
-	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	RemoteHelp = "remoteHelp",
-
-	/**
 	 * Message to indicate that no active clients are present.
 	 */
 	NoClient = "noClient",
@@ -402,29 +396,6 @@ export interface ISummaryNack {
 	 * If specified, the client should wait this many seconds before retrying.8
 	 */
 	retryAfter?: number;
-}
-
-/**
- * Represents a message containing tasks.
- */
-export interface IHelpMessage {
-	tasks: string[];
-
-	// Temporary version field for back-compat.
-	version?: string;
-}
-
-/**
- * Represents a message in task queue to be processed.
- */
-export interface IQueueMessage {
-	message: IHelpMessage;
-
-	tenantId: string;
-
-	documentId: string;
-
-	token: string;
 }
 
 /**

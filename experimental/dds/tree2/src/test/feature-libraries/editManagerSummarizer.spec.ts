@@ -8,7 +8,7 @@ import { withDefaultBinaryEncoding } from "../../codec";
 import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { SummaryData, parseSummary, stringifySummary } from "../../shared-tree-core";
+import { SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
 
 describe("EditManagerSummarizer", () => {
 	it("roundtrip", () => {
@@ -60,11 +60,11 @@ describe("EditManagerSummarizer", () => {
 				],
 			]),
 		};
-		const codec = withDefaultBinaryEncoding(TestChange.codec);
-		const s1 = stringifySummary(input, codec);
-		const output = parseSummary(s1, codec);
+		const codec = makeEditManagerCodec(withDefaultBinaryEncoding(TestChange.codec));
+		const s1 = codec.encode(input);
+		const output = codec.decode(s1);
 		assert.deepEqual(output, input);
-		const s2 = stringifySummary(output, codec);
+		const s2 = codec.encode(output);
 		assert.equal(s1, s2);
 	});
 
