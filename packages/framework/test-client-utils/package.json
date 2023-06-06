@@ -48,7 +48,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.4.1.0",
+		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",
