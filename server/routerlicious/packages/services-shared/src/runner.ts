@@ -26,7 +26,7 @@ export async function run<T extends IResources>(
 		? resourceFactory.customize(config)
 		: undefined);
 	const resources = await resourceFactory.create(config, customizations);
-	const runner = await runnerFactory.create(resources);
+	const runner = await runnerFactory.create(resources); 
 
 	// Start the runner and then listen for the message to stop it
 	const runningP = runner.start(logger).catch(async (error) => {
@@ -45,6 +45,20 @@ export async function run<T extends IResources>(
 		runner.stop().catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
+		});
+	});
+
+	process.on("uncaughtException", (error, origin) => {
+		Lumberjack.error(`Encountered uncaughtException while running service`, { origin }, error);
+		runner.stop().catch((innerError) => {
+			logger?.error(
+				`Could not stop runner after uncaughtException event due to error: ${innerError}`,
+			);
+			Lumberjack.error(
+				`Could not stop runner after uncaughtException event due to error`,
+				undefined,
+				innerError,
+			);
 		});
 	});
 
