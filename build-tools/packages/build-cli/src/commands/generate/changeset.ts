@@ -223,7 +223,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (state.aborted) {
-						process.nextTick(() => this.exit(1));
+						process.nextTick(() => this.exit(0));
 					}
 				},
 			} as any, // Typed as any because the typings don't include the optionsPerPage property.
@@ -234,7 +234,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (state.aborted) {
-						process.nextTick(() => this.exit(1));
+						process.nextTick(() => this.exit(0));
 					}
 				},
 			},
@@ -245,7 +245,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (state.aborted) {
-						process.nextTick(() => this.exit(1));
+						process.nextTick(() => this.exit(0));
 					}
 				},
 			},
