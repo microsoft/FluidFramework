@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { applyStorageCompression, ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -258,9 +258,11 @@ export class AzureClient {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
 			await container.attach(createNewRequest);
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return container.resolvedUrl.id;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;

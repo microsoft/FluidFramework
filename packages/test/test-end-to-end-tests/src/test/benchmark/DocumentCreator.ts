@@ -4,14 +4,13 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DocumentType,
 	BenchmarkType,
 	isMemoryTest,
 	DocumentTypeInfo,
 } from "@fluid-internal/test-version-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	benchmark,
@@ -33,7 +32,7 @@ export interface IDocumentCreatorProps {
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
-	logger: ITelemetryLogger | undefined;
+	logger: ITelemetryLoggerExt | undefined;
 }
 
 export interface ISummarizeResult {
@@ -44,7 +43,7 @@ export interface ISummarizeResult {
 
 export interface IDocumentLoader {
 	mainContainer: IContainer | undefined;
-	logger: ITelemetryLogger | undefined;
+	logger: ITelemetryLoggerExt | undefined;
 	initializeDocument(): Promise<void>;
 	loadDocument(): Promise<IContainer>;
 }

@@ -203,7 +203,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateChange.MessageType]: (untypedMessage) => {
+			[ContainerStateChange.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChange.Message;
 				if (message.data.containerKey === containerKey) {
 					setContainerState(message.data.containerState);
@@ -227,7 +227,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
 		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
 		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
-		// eslint-disable-next-line unicorn/no-useless-undefined
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerKey

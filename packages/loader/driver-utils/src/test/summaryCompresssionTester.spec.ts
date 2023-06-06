@@ -152,7 +152,7 @@ function isOriginalStorage(storage: IDocumentStorageService): boolean {
 
 class InternalTestDocumentService implements IDocumentService {
 	constructor() {}
-	resolvedUrl: IResolvedUrl = { type: "web", data: "" };
+	resolvedUrl: IResolvedUrl = {} as any;
 	policies?: IDocumentServicePolicies | undefined;
 	storage: IDocumentStorageService = new InternalTestStorage();
 	async connectToStorage(): Promise<IDocumentStorageService> {
@@ -200,7 +200,7 @@ async function buildCompressionStorage(
 			new InternalTestDocumentServiceFactory(),
 			config,
 		);
-		const documentService = await factory.createContainer(undefined, { type: "web", data: "" });
+		const documentService = await factory.createContainer(undefined, {} as any);
 		const storage = await documentService.connectToStorage();
 		return storage;
 	}
