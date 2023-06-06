@@ -18,7 +18,6 @@ import {
 	createRemoveRangeOp,
 	ICombiningOp,
 	IJSONSegment,
-	IMergeTreeAttributionOptions,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
 	IMergeTreeGroupMsg,
@@ -51,7 +50,7 @@ import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import { DefaultMap, IMapOperation } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
+import { IMapMessageLocalMetadata, IValueChanged, SequenceOptions } from "./defaultMapInterfaces";
 import {
 	IIntervalCollection,
 	IntervalCollection,
@@ -110,10 +109,6 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
 	);
-}
-
-export interface SequenceOptions {
-	attribution: IMergeTreeAttributionOptions;
 }
 
 export abstract class SharedSegmentSequence<T extends ISegment>

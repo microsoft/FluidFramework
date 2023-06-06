@@ -12,7 +12,7 @@ import {
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { pkgVersion } from "./packageVersion";
 import { SharedString, SharedStringSegment } from "./sharedString";
-import { SequenceOptions } from "./sequence";
+import { SequenceOptions } from "./defaultMapInterfaces";
 
 export interface ISharedStringAttributes extends IChannelAttributes {
 	attribution?: {

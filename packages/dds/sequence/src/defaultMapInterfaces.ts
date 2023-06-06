@@ -6,6 +6,7 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IMergeTreeAttributionOptions } from "@fluidframework/merge-tree";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -54,12 +55,13 @@ export interface IMapMessageLocalMetadata {
  * Optional flags that configure options for sequence DDSs
  */
 export interface SequenceOptions {
+	attribution: IMergeTreeAttributionOptions;
 	/**
 	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
 	 * other than "end"
 	 */
 	intervalStickinessEnabled: boolean;
-	[key: string]: boolean;
+	[key: string]: any;
 }
 
 /**

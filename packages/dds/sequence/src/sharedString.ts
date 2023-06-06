@@ -19,7 +19,8 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence, SequenceOptions } from "./sequence";
+import { SharedSegmentSequence } from "./sequence";
+import { SequenceOptions } from "./defaultMapInterfaces";
 import { SharedStringFactory } from "./sequenceFactory";
 
 /**
