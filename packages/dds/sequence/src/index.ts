@@ -22,20 +22,29 @@ export {
 	IIntervalHelpers,
 	Interval,
 	IntervalIndex,
-	IntervalCollection,
-	IntervalCollectionIterator,
+	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
+	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+	appendAddIntervalToRevertibles,
+	appendChangeIntervalToRevertibles,
+	appendDeleteIntervalToRevertibles,
+	appendIntervalPropertyChangedToRevertibles,
+	appendSharedStringDeltaToRevertibles,
+	discardSharedStringRevertibles,
+	IntervalRevertible,
+	revertSharedStringRevertibles,
+	SharedStringRevertible,
+} from "./revertibles";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
 export {
 	ISequenceDeltaRange,

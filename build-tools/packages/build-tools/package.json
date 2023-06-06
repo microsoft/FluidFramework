@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.18.0",
+	"version": "0.19.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,6 @@
 		"lodash.isequal": "^4.5.0",
 		"lodash.merge": "^4.6.2",
 		"minimatch": "^7.3.0",
-		"npm-package-json-lint": "^6.0.0",
 		"replace-in-file": "^6.0.0",
 		"rimraf": "^2.6.2",
 		"semver": "^7.3.7",
