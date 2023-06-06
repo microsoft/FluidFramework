@@ -201,7 +201,7 @@ function composeMarks<TNodeChange>(
 				0x68f /* Only move marks have move IDs */,
 			);
 
-			// `baseMark`must be a move destination since it is filling cells, and `newMark` must be a move source.
+			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
