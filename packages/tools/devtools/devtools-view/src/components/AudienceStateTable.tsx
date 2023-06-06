@@ -13,8 +13,15 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { EditRegular, Search20Regular, Person24Regular } from "@fluentui/react-icons";
+import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
+import {
+	clientIdTooltipText,
+	userIdTooltipText,
+	clientModeTooltipText,
+	clientScopesTooltipText,
+} from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents audience state data filtered to the attributes that will be displayed in the state table.
@@ -42,16 +49,43 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 	];
 
 	return (
-		<Table size="small" aria-label="Audience state table">
+		<Table size="extra-small" aria-label="Audience state table">
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Person24Regular />}
-							{column.columnKey === "userId" && <Person24Regular />}
-							{column.columnKey === "mode" && <EditRegular />}
-							{column.columnKey === "scopes" && <Search20Regular />}
-							{column.label}
+							{column.columnKey === "clientId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "userId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={userIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "mode" && (
+								<LabelCellLayout
+									icon={<EditRegular />}
+									infoTooltipContent={clientModeTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "scopes" && (
+								<LabelCellLayout
+									icon={<Search12Regular />}
+									infoTooltipContent={clientScopesTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import {
@@ -138,7 +138,7 @@ function runAttributionCollectionSuite(
 }
 
 // Note: channel functionality is left unimplemented.
-export class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
+class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
 	private readonly entries: RedBlackTree<number, AttributionKey | null> = new RedBlackTree(
 		compareNumbers,
 	);
@@ -154,9 +154,9 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 	}
 
 	public getAtOffset(offset: number): AttributionKey | undefined {
-		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
+		assert(offset >= 0 && offset < this._length, "Requested offset should be valid");
 		const node = this.entries.floor(offset);
-		assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
+		assert(node !== undefined, "Collection should have at least one entry");
 		return node.data === null ? undefined : node.data;
 	}
 
@@ -224,7 +224,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		const { seqs, posBreakpoints } = summary;
 		assert(
 			seqs.length === posBreakpoints.length && seqs.length > 0,
-			0x445 /* Invalid attribution summary blob provided */,
+			"Invalid attribution summary blob provided",
 		);
 		let curIndex = 0;
 		let cumulativeSegPos = 0;
@@ -295,7 +295,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 
 		assert(
 			segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
-			0x446 /* Expected either all segments or no segments to have attribution information. */,
+			"Expected either all segments or no segments to have attribution information.",
 		);
 
 		const blobContents: SerializedAttributionCollection = {

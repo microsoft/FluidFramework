@@ -174,7 +174,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "rebase") {
+			if (type === "replace") {
 				changeEventCount += 1;
 			}
 		});
@@ -192,7 +192,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "rebase") {
+			if (type === "replace") {
 				changeEventCount += 1;
 			}
 		});
@@ -240,12 +240,15 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 1);
 	});
 
-	it("emit change events during but not after committing a transaction", () => {
+	it("emit correct change events during and after committing a transaction", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
+		let replaceEventCount = 0;
 		const branch = create(({ type }) => {
 			if (type === "append") {
 				changeEventCount += 1;
+			} else if (type === "replace") {
+				replaceEventCount += 1;
 			}
 		});
 		// Begin a transaction
@@ -255,16 +258,30 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 1);
 		change(branch);
 		assert.equal(changeEventCount, 2);
+		assert.equal(replaceEventCount, 0);
 		// Commit the transaction. No change event should be emitted since the commits, though squashed, are still equivalent
 		branch.commitTransaction();
 		assert.equal(changeEventCount, 2);
+		assert.equal(replaceEventCount, 1);
+	});
+
+	it("do not emit a change event after committing an empty transaction", () => {
+		// Create a branch and count the change events emitted
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		// Start and immediately abort a transaction
+		branch.startTransaction();
+		branch.commitTransaction();
+		assert.equal(changeEventCount, 0);
 	});
 
 	it("emit a change event after aborting a transaction", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
 		const branch = create(({ type }) => {
-			if (type === "rollback") {
+			if (type === "remove") {
 				changeEventCount += 1;
 			}
 		});
@@ -284,7 +301,7 @@ describe("Branches", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
 		const branch = create(({ type }) => {
-			if (type === "rollback") {
+			if (type === "remove") {
 				changeEventCount += 1;
 			}
 		});
@@ -476,10 +493,13 @@ describe("Branches", () => {
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: defaultChangeFamily.rebaser.compose([]),
 			revision: nullRevisionTag,
-			sessionId: "testSession",
 		};
 
-		const branch = new SharedTreeBranch(initCommit, "testSession", defaultChangeFamily);
+		const branch = new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			new MockRepairDataStoreProvider(),
+		);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -490,9 +510,9 @@ describe("Branches", () => {
 	function createRevertible(from: DefaultBranch): DefaultBranch {
 		return new SharedTreeBranch(
 			from.getHead(),
-			from.sessionId,
 			defaultChangeFamily,
-			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			new MockRepairDataStoreProvider(),
+			UndoRedoManager.create(defaultChangeFamily),
 		);
 	}
 

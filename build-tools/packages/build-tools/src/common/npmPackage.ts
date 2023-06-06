@@ -29,8 +29,7 @@ import {
 	unlinkAsync,
 } from "./utils";
 
-const { info, verbose, errorLog: error } = defaultLogger;
-export type ScriptDependencies = { [key: string]: string[] };
+const { log, verbose, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -87,7 +86,6 @@ export class Package {
 	private _packageJson: PackageJson;
 	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
-	private _markForBuild: boolean = false;
 
 	private _indent: string;
 	public readonly packageManager: PackageManager;
@@ -132,12 +130,15 @@ export class Package {
 		return PackageName.getUnscopedName(this.name);
 	}
 
-	public get version(): string {
-		return this.packageJson.version;
+	/**
+	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
+	 */
+	public get scope(): string {
+		return PackageName.getScope(this.name);
 	}
 
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.packageJson.fluidBuild;
+	public get version(): string {
+		return this.packageJson.version;
 	}
 
 	public get isPublished(): boolean {
@@ -154,15 +155,6 @@ export class Package {
 
 	public setMatched() {
 		this._matched = true;
-		this._markForBuild = true;
-	}
-
-	public get markForBuild() {
-		return this._markForBuild;
-	}
-
-	public setMarkForBuild() {
-		this._markForBuild = true;
 	}
 
 	public get dependencies() {
@@ -272,7 +264,7 @@ export class Package {
 			throw new Error("Package in a monorepo shouldn't be installed");
 		}
 
-		info(`${this.nameColored}: Installing - ${this.installCommand}`);
+		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
 	}
 }
@@ -294,7 +286,7 @@ async function queueExec<TItem, TResult>(
 				const startTime = Date.now();
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
 						3,
 					)}s`,
@@ -373,7 +365,7 @@ export class Packages {
 
 			const globPkg = globPath + "/package.json";
 			for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-				info(`Loading from glob: ${pkg}`);
+				log(`Loading from glob: ${pkg}`);
 				packages.push(new Package(pkg, group, monoRepo));
 			}
 		} else {
@@ -442,7 +434,7 @@ export class Packages {
 
 			if (status) {
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${cleanP.length}] ${
 						pkg.nameColored
 					}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,

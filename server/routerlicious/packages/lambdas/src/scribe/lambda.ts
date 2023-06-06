@@ -104,7 +104,9 @@ export class ScribeLambda implements IPartitionLambda {
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
+		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -114,11 +116,37 @@ export class ScribeLambda implements IPartitionLambda {
 	public async handler(message: IQueuedMessage) {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
-		if (message.offset <= this.lastOffset) {
+		if (this.lastOffset !== undefined && message.offset <= this.lastOffset) {
+			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
+			reprocessOpsMetric.setProperties({
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				kafkaMessageOffset: message.offset,
+				databaseLastOffset: this.lastOffset,
+			});
+
 			this.updateCheckpointMessages(message);
-			this.context.checkpoint(message, this.restartOnCheckpointFailure);
+			try {
+				if (this.kafkaCheckpointOnReprocessingOp) {
+					this.context.checkpoint(message, this.restartOnCheckpointFailure);
+				}
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
+				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
+			}
 			return;
+		} else if (this.lastOffset === undefined) {
+			Lumberjack.error(
+				`No value for lastOffset`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 		}
+		// if lastOffset is undefined or we have skipped all the previously processed ops,
+		// we want to set the offset we store in the database equal to the kafka message offset
+		this.lastOffset = message.offset;
 
 		const boxcar = extractBoxcar(message);
 
@@ -310,11 +338,13 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-					const isTransientTenant = this.transientTenants.has(this.tenantId);
+					const enableServiceSummaryForTenant =
+						this.disableTransientTenantFiltering ||
+						!this.transientTenants.has(this.tenantId);
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
-						!isTransientTenant
+						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);

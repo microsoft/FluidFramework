@@ -14,6 +14,7 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { Partition } from "./partition";
 
 /**
@@ -31,6 +32,7 @@ export class PartitionManager extends EventEmitter {
 		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 		listenForConsumerErrors = true,
 	) {
 		super();
@@ -57,23 +59,37 @@ export class PartitionManager extends EventEmitter {
 				this.emit("error", error, errorData);
 			});
 
-			this.consumer.on("checkpoint_success", (partitionId, queuedMessage) => {
-				if (this.sampleMessages(100)) {
-					Lumberjack.info(`Kafka checkpoint successful`, {
-						msgOffset: queuedMessage.offset,
-						topic: queuedMessage.topic,
-						msgPartition: queuedMessage.partition,
-					});
-				}
-			});
+			this.consumer.on(
+				"checkpoint_success",
+				(partitionId, queuedMessage, retries, latency) => {
+					if (this.sampleMessages(100)) {
+						Lumberjack.info(`Kafka checkpoint successful`, {
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						});
+					}
+				},
+			);
 
-			this.consumer.on("checkpoint_error", (partitionId, queuedMessage) => {
-				Lumberjack.error(`Kafka checkpoint failed`, {
-					msgOffset: queuedMessage.offset,
-					topic: queuedMessage.topic,
-					msgPartition: queuedMessage.partition,
-				});
-			});
+			this.consumer.on(
+				"checkpoint_error",
+				(partitionId, queuedMessage, retries, latency, ex) => {
+					Lumberjack.error(
+						`Kafka checkpoint failed`,
+						{
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						},
+						ex,
+					);
+				},
+			);
 		}
 	}
 
@@ -195,6 +211,7 @@ export class PartitionManager extends EventEmitter {
 				this.factory,
 				this.consumer,
 				this.logger,
+				this.config,
 			);
 
 			// Listen for error events to know when the partition has stopped processing due to an error

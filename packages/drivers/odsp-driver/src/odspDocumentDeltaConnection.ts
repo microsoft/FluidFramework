@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IConnect,
@@ -59,7 +63,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLogger) {
+	public static find(key: string, logger: ITelemetryLoggerExt) {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -239,7 +243,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLogger,
+		telemetryLogger: ITelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
@@ -295,8 +299,30 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			enableMultiplexing,
 		);
 
-		await deltaConnection.initialize(connectMessage, timeoutMs);
-		await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
+		try {
+			await deltaConnection.initialize(connectMessage, timeoutMs);
+			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
+		} catch (errorObject: any) {
+			if (errorObject !== null && typeof errorObject === "object") {
+				// We have to special-case error types here in terms of what is re-triable.
+				// These errors have to re-retried, we just need new joinSession result to connect to right server:
+				//    400: Invalid tenant or document id. The WebSocket is connected to a different document
+				//         Document is full (with retryAfter)
+				//    404: Invalid document. The document \"local/w1-...\" does not exist
+				// But this has to stay not-retriable:
+				//    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+				//    409: Epoch Version Mismatch. Client epoch and server epoch does not match, so app needs
+				//         to be refreshed.
+				// This one is fine either way
+				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
+				//         and on join Session path.
+				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
+				if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
+					errorObject.canRetry = true;
+				}
+			}
+			throw errorObject;
+		}
 
 		return deltaConnection;
 	}
@@ -333,7 +359,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): SocketReference {
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
@@ -364,7 +390,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
 	) {
 		super(socket, documentId, logger, false, uuid());

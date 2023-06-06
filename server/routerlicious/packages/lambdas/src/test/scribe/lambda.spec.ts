@@ -137,8 +137,11 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 					false,
 					false,
+					false,
 					[],
+					true,
 					testCheckpointService,
+					true,
 					true,
 				);
 

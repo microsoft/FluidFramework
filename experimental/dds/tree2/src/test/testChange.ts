@@ -4,6 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { Type } from "@sinclair/typebox";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -14,7 +15,7 @@ import {
 	FieldKey,
 	emptyDelta,
 } from "../core";
-import { makeValueCodec, makeCodecFamily } from "../codec";
+import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
 import { deepFreeze } from "./utils";
 
@@ -196,7 +197,7 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-const codec = makeValueCodec<TestChange>();
+const codec: IJsonCodec<TestChange> = makeValueCodec(Type.Any());
 
 export const TestChange = {
 	emptyChange,

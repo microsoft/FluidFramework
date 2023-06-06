@@ -15,26 +15,37 @@
  *
  * @packageDocumentation
  */
-export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
+export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
 export {
 	DeserializeCallback,
 	IIntervalCollectionEvent,
 	IIntervalHelpers,
 	Interval,
-	IntervalCollection,
-	IntervalCollectionIterator,
+	IntervalIndex,
+	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
+	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
+	IntervalStickiness,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence, SequenceOptions } from "./sequence";
+export {
+	appendAddIntervalToRevertibles,
+	appendChangeIntervalToRevertibles,
+	appendDeleteIntervalToRevertibles,
+	appendIntervalPropertyChangedToRevertibles,
+	appendSharedStringDeltaToRevertibles,
+	discardSharedStringRevertibles,
+	IntervalRevertible,
+	revertSharedStringRevertibles,
+	SharedStringRevertible,
+} from "./revertibles";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,

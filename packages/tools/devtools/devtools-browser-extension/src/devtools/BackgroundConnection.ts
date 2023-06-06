@@ -13,6 +13,7 @@ import {
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
 
+import { browser } from "../Globals";
 import {
 	devToolsInitAcknowledgementType,
 	DevToolsInitMessage,
@@ -21,7 +22,6 @@ import {
 	postMessageToPort,
 	TypedPortConnection,
 } from "../messaging";
-import { browser } from "../utilities";
 import {
 	devtoolsScriptMessageLoggingOptions,
 	formatDevtoolsScriptMessageForLogging,
@@ -59,7 +59,7 @@ export class BackgroundConnection
 	/**
 	 * Port connection to the Background Script
 	 */
-	private readonly backgroundServiceConnection: TypedPortConnection;
+	private backgroundServiceConnection!: TypedPortConnection;
 
 	public static async Initialize(): Promise<BackgroundConnection> {
 		const connection = new BackgroundConnection(extensionMessageSource);
@@ -82,32 +82,7 @@ export class BackgroundConnection
 	) {
 		super();
 
-		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
-
-		// Create a connection to the background page
-		this.backgroundServiceConnection = browser.runtime.connect({
-			name: "Background Script",
-		});
-
-		// Relay the tab ID to the background service worker.
-		const initMessage: DevToolsInitMessage = {
-			source: this.messageSource,
-			type: devToolsInitMessageType,
-			data: {
-				tabId: browser.devtools.inspectedWindow.tabId,
-			},
-		};
-		postMessageToPort(
-			initMessage,
-			this.backgroundServiceConnection,
-			devtoolsScriptMessageLoggingOptions,
-		);
-
-		// Bind listeners
-		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
-		this.backgroundServiceConnection.onDisconnect.addListener(
-			this.onBackgroundServiceDisconnect,
-		);
+		this.connectToBackgroundService();
 	}
 
 	/**
@@ -164,13 +139,50 @@ export class BackgroundConnection
 
 	/**
 	 * Handler for a disconnect event coming from the background service.
-	 * Immediately throws, since this type is currently not capable of recovering from this state.
+	 * Log the disconnection and re-establish the connection.
 	 */
 	private readonly onBackgroundServiceDisconnect = (): void => {
-		throw new Error(
+		console.log(
 			formatDevtoolsScriptMessageForLogging(
-				"The Background Script disconnected. Further use of the message relay is not allowed.",
+				"Disconnected from Background script. Attempting to reconnect.",
 			),
+		);
+		/**
+		 * No need to clean up the disconnected event listener here since if the event emitter is not accessible,
+		 * even if it has listeners attached to it, it will be garbage collected.
+		 */
+		this.connectToBackgroundService();
+	};
+
+	/**
+	 * Connects to the Background Script.
+	 */
+	private readonly connectToBackgroundService = (): void => {
+		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
+
+		// Create a connection to the background page
+		this.backgroundServiceConnection = browser.runtime.connect({
+			name: "Background Script",
+		});
+
+		// Relay the tab ID to the background service worker.
+		const initMessage: DevToolsInitMessage = {
+			source: this.messageSource,
+			type: devToolsInitMessageType,
+			data: {
+				tabId: browser.devtools.inspectedWindow.tabId,
+			},
+		};
+		postMessageToPort(
+			initMessage,
+			this.backgroundServiceConnection,
+			devtoolsScriptMessageLoggingOptions,
+		);
+
+		// Bind listeners
+		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
+		this.backgroundServiceConnection.onDisconnect.addListener(
+			this.onBackgroundServiceDisconnect,
 		);
 	};
 }

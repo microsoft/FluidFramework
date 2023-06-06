@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerMetadata } from "../../ContainerMetadata";
+import { ContainerKey } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -26,15 +26,15 @@ export namespace ContainerList {
 	 */
 	export interface MessageData {
 		/**
-		 * Metadata list of Containers with active Client Debugger sessions registered.
+		 * List of keys for the Containers registered with the Devtools.
 		 */
-		containers: ContainerMetadata[];
+		containers: ContainerKey[];
 	}
 
 	/**
 	 * Outbound message containing the list of Container-level devtools instances tracked by the root Devtools.
 	 *
-	 * Includes the new list of active Container IDs associated with active Container Devtools instances.
+	 * Includes the new list of active {@link ContainerKey}s associated with active Container Devtools instances.
 	 *
 	 * @internal
 	 */

@@ -12,14 +12,14 @@ import { IClient } from "@fluidframework/protocol-definitions";
  */
 export enum MemberChangeKind {
 	/**
-	 * An audience member was added.
+	 * An audience member joined.
 	 */
-	Added = "Added",
+	Joined = "Joined",
 
 	/**
-	 * An audience member was removed.
+	 * An audience member left.
 	 */
-	Removed = "Removed",
+	Left = "Left",
 }
 
 /**
