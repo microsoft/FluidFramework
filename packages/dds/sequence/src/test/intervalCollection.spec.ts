@@ -31,6 +31,7 @@ import {
 	IIntervalHelpers,
 	Interval,
 	EndInRangeIndex,
+	StartInRangeIndex,
 } from "../intervalCollection";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -1770,7 +1771,7 @@ describe("SharedString interval collections", () => {
 					compareEnds: (a: Interval, b: Interval) => a.end - b.end,
 					create: createInterval,
 				};
-				// sort the query result by the end value
+				// sort the query result by the interval endpoint value
 				compareFn = (a: Interval, b: Interval) => {
 					if (a.end === b.end) {
 						return a.start - b.start;
@@ -1831,6 +1832,82 @@ describe("SharedString interval collections", () => {
 
 				results = endInRangeIndex.findIntervalsWithEndInRange(3, 5);
 				assertPlainNumberInterval(results[0], { start: 2, end: 4 });
+			});
+		});
+
+		describe("support querying intervals with starpoint in a range", () => {
+			let helpers: IIntervalHelpers<Interval>;
+			let startInRangeIndex: StartInRangeIndex<Interval>;
+			let compareFn;
+			let results;
+
+			beforeEach(() => {
+				helpers = {
+					compareEnds: (a: Interval, b: Interval) => a.end - b.end,
+					compareStarts: (a: Interval, b: Interval) => a.start - b.start,
+					create: createInterval,
+				};
+				// sort the query result by the interval startpoint value
+				compareFn = (a: Interval, b: Interval) => {
+					if (a.start === b.start) {
+						return a.end - b.end;
+					}
+					return a.start - b.start;
+				};
+				startInRangeIndex = new StartInRangeIndex(helpers);
+			});
+
+			it("can not return result if the input does not meet specified requirement", () => {
+				results = startInRangeIndex.findIntervalsWithStartInRange(1, 1);
+				assert.equal(
+					results.length,
+					0,
+					"Should not return anything once the index is empty",
+				);
+				startInRangeIndex.add(new Interval(1, 1));
+				startInRangeIndex.add(new Interval(3, 4));
+				results = startInRangeIndex.findIntervalsWithStartInRange(1, 1);
+				assert.equal(
+					results.length,
+					0,
+					"The end should be larger than start by at least 1",
+				);
+				results = startInRangeIndex.findIntervalsWithStartInRange(2, 3);
+				assert.equal(results.length, 0, "The end value should be exclusive");
+			});
+
+			it("can find correct results after adding multiple intervals", () => {
+				startInRangeIndex.add(new Interval(1, 1));
+				startInRangeIndex.add(new Interval(3, 4));
+				results = startInRangeIndex.findIntervalsWithStartInRange(1, 2);
+				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
+				results = startInRangeIndex.findIntervalsWithStartInRange(2, 4);
+				assertPlainNumberInterval(results[0], { start: 3, end: 4 });
+
+				startInRangeIndex.add(new Interval(2, 4));
+				startInRangeIndex.add(new Interval(4, 5));
+				results = startInRangeIndex.findIntervalsWithStartInRange(3, 5);
+				results.sort(compareFn);
+				assertPlainNumberInterval(results[0], { start: 3, end: 4 });
+				assertPlainNumberInterval(results[1], { start: 4, end: 5 });
+			});
+
+			it("can find correct results after removing intervals", () => {
+				const interval1 = new Interval(1, 1);
+				const interval2 = new Interval(3, 4);
+				startInRangeIndex.add(interval1);
+				startInRangeIndex.add(interval2);
+				startInRangeIndex.remove(interval1);
+
+				results = startInRangeIndex.findIntervalsWithStartInRange(1, 2);
+				assert.equal(results.length, 0);
+
+				const interval3 = new Interval(4, 5);
+				startInRangeIndex.add(interval3);
+				startInRangeIndex.remove(interval2);
+
+				results = startInRangeIndex.findIntervalsWithStartInRange(3, 5);
+				assertPlainNumberInterval(results[0], { start: 4, end: 5 });
 			});
 		});
 	});

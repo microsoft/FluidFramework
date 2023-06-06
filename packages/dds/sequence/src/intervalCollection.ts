@@ -1236,6 +1236,9 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end)
 	 */
 	public findIntervalsWithStartInRange(start: number, end: number) {
+		if (start <= 0 || start > end - 1 || this.intervalTree.isEmpty()) {
+			return [];
+		}
 		const results: TInterval[] = [];
 		const action: PropertyAction<TInterval, TInterval> = (node) => {
 			results.push(node.key);
@@ -1251,8 +1254,8 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
-			end,
-			end,
+			end - 1,
+			end - 1,
 			undefined as any as Client,
 			IntervalType.Transient,
 		);
