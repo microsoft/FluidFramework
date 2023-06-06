@@ -83,7 +83,7 @@
 		"@fluidframework/test-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.18.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
