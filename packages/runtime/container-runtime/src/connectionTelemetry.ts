@@ -95,8 +95,8 @@ class OpPerfTelemetry {
 			"this.deltaManager.deltaManager.connectionManager: ",
 			JSON.stringify((this.deltaManager as unknown as any).deltaManager?.connectionManager),
 		);
-		// debugger;
-		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
+		const samplingConfiguration = new Map<string, number>([["OpRoundtripTime", 5]]);
+		this.logger = createChildLogger({ logger, namespace: "OpPerf", samplingConfiguration });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));

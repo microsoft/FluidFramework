@@ -36,6 +36,7 @@ export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
+    samplingConfiguration?: Map<string, number>;
 }): ITelemetryLoggerExt;
 
 // @public (undocumented)
