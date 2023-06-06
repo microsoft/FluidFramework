@@ -201,12 +201,7 @@ function composeMarks<TNodeChange>(
 				0x68f /* Only move marks have move IDs */,
 			);
 
-			// TODO: Is `baseMark` always a destination and `newMark` always a source?
-			assert(
-				(baseMark as Mark).type === "ReturnTo" || baseMark.type === "MoveIn",
-				"Unhandled case",
-			);
-			assert(newMark.type === "ReturnFrom" || newMark.type === "MoveOut", "Unhandled case");
+			// `baseMark`must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -218,6 +213,7 @@ function composeMarks<TNodeChange>(
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
 			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
+				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
 				srcEffect.modifyAfter = composeChildChanges(
 					srcEffect.modifyAfter,
 					nodeChange,
@@ -261,12 +257,17 @@ function composeMarks<TNodeChange>(
 		return { count: 0 };
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
+			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
 			const nodeChanges = getMoveEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
 				baseMark.revision,
 				baseMark.id,
 			).modifyAfter;
+
+			// We return a placeholder instead of a modify because there may be more node changes on `newMark`'s source mark
+			// which need to be included here.
+			// We will remove the placeholder during `amendCompose`.
 			return {
 				type: "Placeholder",
 				count: baseMark.count,
@@ -643,7 +644,7 @@ interface ComposeMarks<T> {
 
 /**
  * Returns whether `baseMark` and `newMark` are inverses.
- * Both marks are assumed to be active.
+ * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
  */
 function areInverseMoves(
 	baseMark: MoveMark<unknown>,
@@ -651,17 +652,17 @@ function areInverseMoves(
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
-	if (
-		(baseMark.type === "ReturnTo" || baseMark.type === "ReturnFrom") &&
-		baseMark.detachEvent?.revision === newIntention
-	) {
+	assert(
+		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
+			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
+		"baseMark should be an attach and newMark should be a detach",
+	);
+
+	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}
 
-	if (
-		(newMark.type === "ReturnTo" || newMark.type === "ReturnFrom") &&
-		newMark.detachEvent?.revision === baseIntention
-	) {
+	if (newMark.type === "ReturnFrom" && newMark.detachEvent?.revision === baseIntention) {
 		return true;
 	}
 

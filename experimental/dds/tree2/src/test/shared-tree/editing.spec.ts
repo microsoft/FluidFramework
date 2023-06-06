@@ -5,10 +5,9 @@
 import { strict as assert } from "assert";
 
 import { singleJsonCursor } from "../../domains";
-import { rootFieldKeySymbol, UpPath, moveToDetachedField, JsonableTree } from "../../core";
+import { rootFieldKeySymbol, UpPath, moveToDetachedField } from "../../core";
 import { JsonCompatible, brand } from "../../util";
-import { makeTreeFromJson, remove, insert, expectJsonTree, makeTreeFromCursor } from "../utils";
-import { singleTextCursor } from "../../feature-libraries";
+import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
@@ -269,12 +268,6 @@ describe("Editing", () => {
 
 			expectJsonTree(tree1, ["B", "A"]);
 		});
-
-		// it("can rebase value change of node over cross-field move of that node", () => {
-		// 	const tree1 = makeTreeFromJson({ foo: ["A"], bar: ["B"] });
-		// 	const tree2 = tree1.fork();
-
-		// });
 
 		it.skip("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);

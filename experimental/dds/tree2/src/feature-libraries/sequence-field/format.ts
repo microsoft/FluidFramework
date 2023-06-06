@@ -416,30 +416,7 @@ export interface MovePlaceholder<TNodeChange>
 
 export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
 	type: "Modify";
-
-	/**
-	 * The modifications to the target node.
-	 * This field may only be left undefined in temporary changesets used in part of a change handling operation.
-	 * In particular, this mark may be used as a placeholder in the output of the sequence change handler's `compose`
-	 * but should always be removed or have this field defined in the final output of `amendCompose`.
-	 * When composing a move mark with its inverse, we may not know whether there will be a mark at the origin of the move
-	 * until after processing the cancellation at the destination of the move.
-	 * We use a modify mark with the modifications from the first move (if any) as a placeholder to allow us to add the
-	 * modifications from the second move (if any) to the correct position.
-	 */
-	changes?: TNodeChange;
-
-	/**
-	 * The revision of a move which originated at this location.
-	 * This should only be defined when this mark is being used as a placeholder as described above.
-	 */
-	moveRevision?: RevisionTag;
-
-	/**
-	 * The ID of a move which originated at this location.
-	 * This should only be defined when this mark is being used as a placeholder as described above.
-	 */
-	moveId?: MoveId;
+	changes: TNodeChange;
 }
 export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
@@ -447,8 +424,6 @@ export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 		Type.Object({
 			type: Type.Literal("Modify"),
 			changes: tNodeChange,
-			moveRevision: Type.Optional(Type.Never()),
-			moveId: Type.Optional(Type.Never()),
 		}),
 	]);
 

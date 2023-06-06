@@ -48,10 +48,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					assert(
-						mark.changes !== undefined,
-						"Modify marks in input changeset should always have changes",
-					);
 					const modify = deltaFromChild(mark.changes);
 					if (
 						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
