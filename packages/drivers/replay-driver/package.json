@@ -47,7 +47,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-internal.4.1.0",
+		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
@@ -62,14 +62,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ReplayDocumentService": {
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_StaticStorageDocumentService": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

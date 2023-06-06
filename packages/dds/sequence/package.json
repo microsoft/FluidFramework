@@ -95,7 +95,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/gitresources": "^0.1039.1000",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.4.1.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.5.0.0",
 		"@fluidframework/server-services-client": "^0.1039.1000",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -127,38 +127,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAliasDeclaration_CompressedSerializedInterval": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ISerializedIntervalCollectionV2": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IntervalLocator": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceInterval": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_IntervalCollection": {
-				"forwardCompat": false
-			},
-			"RemovedTypeAliasDeclaration_CompressedSerializedInterval": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_IntervalCollection": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_IntervalCollectionIterator": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
