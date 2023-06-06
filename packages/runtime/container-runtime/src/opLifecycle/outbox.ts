@@ -150,7 +150,6 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		// TODO: change to message.type in "2.0.0-internal.5.0.0"
 		if (message.type === ContainerMessageType.BlobAttach) {
 			return this.submitBlobAttach(message);
 		}
