@@ -2,7 +2,9 @@
 
 This example experiments with an approach for migrating data in an existing Fluid container to enable a different schema or code running on it. It does the migration within the same container, that is the container ID is the same before and after the migration completes.
 
-Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production.
+## DISCLAIMER
+
+Please note that the ideas explored here are experimental and under development. Do not use them in production. This README is not updated to reflect the current behavior as it is still in development.
 
 ## Scenario
 

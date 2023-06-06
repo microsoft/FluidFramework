@@ -219,7 +219,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			return;
 		}
 		await Promise.race([submitV1Summary(v1SummaryHandle), this._v1SummaryP]);
-		// (this.context.containerRuntime as any).summarizeOnDemand({ reason: "because" });
 	};
 
 	private readonly ensureQuorumCodeDetails = async () => {
@@ -253,6 +252,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		this.overseeMigration().catch(console.error);
 	}
 
+	// TODO: Consider splitting into two parts - a sync setupMigration that sets up the promises, vs. the async overseeMigration.
+	// This might make it more obvious/protected that the setup of promises must happen synchronously before awaiting anything.
 	private async overseeMigration() {
 		// The overall strategy here is to set up all of our state observers synchronously during initialization.
 		// This lets us get them ALL ready BEFORE we start processing ANY ops on top of the summary, including
@@ -400,7 +401,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				if (this._v1SummaryDone && op.type === MessageType.SummaryAck) {
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
-					// Or maybe set that up in ensureV1Summary().
+					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.
 					if (acksSeen === 2) {
 						this.context.deltaManager.off("op", watchForV2Ack);
 						this._v2SummaryDone = true;

@@ -87,8 +87,12 @@ export class SameContainerMigrator
 		// }
 		// TODO: One responsibility here will be generating the v2 summary
 
-		// TODO: Just logging these to quiet the "unused member" error.
-		console.log(this.ensureMigrating, this.ensureLoading);
+		// TODO: Remove this log when actually using.
+		console.info(
+			"Just logging these to quiet the 'unused member' error: ",
+			this.ensureMigrating,
+			this.ensureLoading,
+		);
 	};
 
 	private readonly ensureMigrating = () => {
