@@ -15,6 +15,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.6.0.0
+
+## 2.0.0-internal.6.0.0 Upcoming changes
+
+## 2.0.0-internal.6.0.0 Breaking changes
+
+-   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
+
+### FluidDataStoreRuntime.getChannel throws for channels that do not exist
+
+Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
+
 # 2.0.0-internal.5.0.0
 
 ## 2.0.0-internal.5.0.0 Upcoming changes
@@ -39,7 +51,6 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
 -   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
 -   [IntervalCollection removed](#IntervalCollection-removed)
--   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -127,10 +138,6 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 ### IntervalCollection removed
 
 The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
-
-### FluidDataStoreRuntime.getChannel throws for channels that do not exist
-
-Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
 
 # 2.0.0-internal.4.4.0
 
