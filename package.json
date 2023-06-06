@@ -23,6 +23,7 @@
 		"bump-version": "fluid-bump-version --root .",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
+		"changeset": "flub changeset add",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
 		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
