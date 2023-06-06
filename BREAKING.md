@@ -39,6 +39,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
 -   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
 -   [IntervalCollection removed](#IntervalCollection-removed)
+-   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -126,6 +127,10 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 ### IntervalCollection removed
 
 The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### FluidDataStoreRuntime.getChannel throws for channels that do not exist
+
+Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption.  The call will instead now throw for non-existent channels.
 
 # 2.0.0-internal.4.4.0
 
