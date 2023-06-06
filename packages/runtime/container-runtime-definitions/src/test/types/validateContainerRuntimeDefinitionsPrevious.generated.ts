@@ -16,18 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IContainerRuntime": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IContainerRuntime": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntime():
@@ -47,7 +35,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntime():
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
     use: TypeOnly<old.IContainerRuntime>);
 use_old_InterfaceDeclaration_IContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -121,15 +108,3 @@ declare function use_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprec
     use: TypeOnly<old.IDataStoreWithBindToContext_Deprecated>);
 use_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
     get_current_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideContainerRuntime": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
-*/
