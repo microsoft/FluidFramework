@@ -88,7 +88,7 @@ export class GapTracker {
 			this.map.clear();
 		} else {
 			assert(
-				!isNoopMark(mark) && !isModify(mark),
+				!isNoopMark(mark) && !isModify(mark) && mark.type !== "Placeholder",
 				0x6a5 /* These marks have no cell effects */,
 			);
 			const revision = mark.revision;

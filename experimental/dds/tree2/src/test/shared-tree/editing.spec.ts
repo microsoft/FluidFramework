@@ -5,9 +5,10 @@
 import { strict as assert } from "assert";
 
 import { singleJsonCursor } from "../../domains";
-import { rootFieldKeySymbol, UpPath, moveToDetachedField } from "../../core";
-import { brand } from "../../util";
-import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
+import { rootFieldKeySymbol, UpPath, moveToDetachedField, JsonableTree } from "../../core";
+import { JsonCompatible, brand } from "../../util";
+import { makeTreeFromJson, remove, insert, expectJsonTree, makeTreeFromCursor } from "../utils";
+import { singleTextCursor } from "../../feature-libraries";
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
@@ -269,6 +270,12 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
+		// it("can rebase value change of node over cross-field move of that node", () => {
+		// 	const tree1 = makeTreeFromJson({ foo: ["A"], bar: ["B"] });
+		// 	const tree2 = tree1.fork();
+
+		// });
+
 		it.skip("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();
@@ -286,6 +293,46 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 			expectJsonTree(tree1, ["B", "A", "C"]);
 			expectJsonTree(tree2, ["B", "A", "C"]);
+		});
+
+		it("can rebase cross-field move over unrelated change", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+				bar: ["B"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			// Change value of A to C
+			tree1.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+
+			// Move A after B.
+			tree2.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				1,
+				{ parent: barList, field: brand("") },
+				1,
+			);
+
+			const expectedState: JsonCompatible = {
+				foo: [],
+				bar: ["B", "C"],
+			};
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree(tree1, [expectedState]);
+			expectJsonTree(tree2, [expectedState]);
 		});
 
 		it("move under move-out", () => {

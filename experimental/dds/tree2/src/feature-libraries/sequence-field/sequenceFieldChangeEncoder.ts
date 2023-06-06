@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
-import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark, NoopMarkType } from "./format";
@@ -52,6 +52,10 @@ function makeV0Codec<TNodeChange>(
 						break;
 					}
 					case "Modify":
+						assert(
+							mark.changes !== undefined,
+							"Modify marks in serialized changesets should always have changes",
+						);
 						jsonMarks.push({
 							...mark,
 							changes: childCodec.encode(mark.changes),
@@ -62,6 +66,8 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnTo":
 						jsonMarks.push(mark as unknown as JsonCompatible);
 						break;
+					case "Placeholder":
+						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}
@@ -75,6 +81,10 @@ function makeV0Codec<TNodeChange>(
 				const type = mark.type;
 				switch (type) {
 					case "Modify": {
+						assert(
+							mark.changes !== undefined,
+							"Modify marks in serialized changesets should always have changes",
+						);
 						marks.push({
 							...mark,
 							changes: childCodec.decode(mark.changes),
@@ -116,6 +126,8 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnTo":
 						marks.push(mark);
 						break;
+					case "Placeholder":
+						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}

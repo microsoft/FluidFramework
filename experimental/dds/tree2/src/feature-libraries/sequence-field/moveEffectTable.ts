@@ -268,20 +268,28 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (effect.shouldRemove !== true) {
+
+	let nodeChange = mark.changes;
+	if (effect.modifyAfter !== undefined) {
+		assert(
+			composeChildren !== undefined,
+			0x569 /* Must provide a change composer if modifying moves */,
+		);
+		nodeChange = composeChildren(mark.changes, effect.modifyAfter);
+	}
+
+	if (effect.shouldRemove ?? false) {
+		if (nodeChange !== undefined) {
+			result.push({ type: "Modify", changes: nodeChange });
+		}
+	} else {
 		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
-		if (effect.modifyAfter !== undefined) {
-			assert(
-				composeChildren !== undefined,
-				0x569 /* Must provide a change composer if modifying moves */,
-			);
-			const changes = composeChildren(newMark.changes, effect.modifyAfter);
-			if (changes !== undefined) {
-				newMark.changes = changes;
-			} else {
-				delete newMark.changes;
-			}
+
+		if (nodeChange !== undefined) {
+			newMark.changes = nodeChange;
+		} else {
+			delete newMark.changes;
 		}
 		if (effect.pairedMarkStatus !== undefined) {
 			assert(

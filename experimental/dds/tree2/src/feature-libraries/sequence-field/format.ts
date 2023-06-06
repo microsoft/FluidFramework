@@ -404,9 +404,42 @@ export type Detach<TNodeChange = NodeChangeType> =
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
+export interface MovePlaceholder<TNodeChange>
+	extends CellTargetingMark,
+		HasRevisionTag,
+		HasMoveId,
+		HasChanges<TNodeChange>,
+		CellTargetingMark {
+	type: "Placeholder";
+	count: NodeCount;
+}
+
 export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
 	type: "Modify";
-	changes: TNodeChange;
+
+	/**
+	 * The modifications to the target node.
+	 * This field may only be left undefined in temporary changesets used in part of a change handling operation.
+	 * In particular, this mark may be used as a placeholder in the output of the sequence change handler's `compose`
+	 * but should always be removed or have this field defined in the final output of `amendCompose`.
+	 * When composing a move mark with its inverse, we may not know whether there will be a mark at the origin of the move
+	 * until after processing the cancellation at the destination of the move.
+	 * We use a modify mark with the modifications from the first move (if any) as a placeholder to allow us to add the
+	 * modifications from the second move (if any) to the correct position.
+	 */
+	changes?: TNodeChange;
+
+	/**
+	 * The revision of a move which originated at this location.
+	 * This should only be defined when this mark is being used as a placeholder as described above.
+	 */
+	moveRevision?: RevisionTag;
+
+	/**
+	 * The ID of a move which originated at this location.
+	 * This should only be defined when this mark is being used as a placeholder as described above.
+	 */
+	moveId?: MoveId;
 }
 export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
@@ -414,6 +447,8 @@ export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 		Type.Object({
 			type: Type.Literal("Modify"),
 			changes: tNodeChange,
+			moveRevision: Type.Optional(Type.Never()),
+			moveId: Type.Optional(Type.Never()),
 		}),
 	]);
 
@@ -422,6 +457,7 @@ export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
  */
 export type ExistingCellMark<TNodeChange> =
 	| NoopMark
+	| MovePlaceholder<TNodeChange>
 	| Delete<TNodeChange>
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>
@@ -451,6 +487,7 @@ export const EmptyInputCellMark = <Schema extends TSchema>(tNodeChange: Schema) 
 export type Mark<TNodeChange = NodeChangeType> =
 	| NoopMark
 	| Modify<TNodeChange>
+	| MovePlaceholder<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>

@@ -1167,22 +1167,15 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it.skip("can rebase cross-field move over unrelated change", () => {
+		it("can rebase cross-field move over unrelated change", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
-					foo: [
-						{ type: brand("Node"), value: "a" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "e" },
-					],
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [{ type: brand("Node"), value: "b" }],
 				},
 			};
 			initializeTestTree(tree1, initialState);
@@ -1194,20 +1187,20 @@ describe("SharedTree", () => {
 				parentIndex: 0,
 			};
 
-			// Change value of c to f
+			// Change value of a to c
 			runSynchronous(tree1, () => {
 				tree1.editor.setValue(
-					{ parent: rootPath, parentField: brand("foo"), parentIndex: 2 },
-					"f",
+					{ parent: rootPath, parentField: brand("foo"), parentIndex: 0 },
+					"c",
 				);
 			});
 
-			// Move bc between d and e.
+			// Move a after b.
 			runSynchronous(tree2, () => {
 				tree2.editor.move(
 					{ parent: rootPath, field: brand("foo") },
+					0,
 					1,
-					2,
 					{ parent: rootPath, field: brand("bar") },
 					1,
 				);
@@ -1218,12 +1211,9 @@ describe("SharedTree", () => {
 			const expectedState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
-					foo: [{ type: brand("Node"), value: "a" }],
 					bar: [
-						{ type: brand("Node"), value: "d" },
 						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "f" },
-						{ type: brand("Node"), value: "e" },
+						{ type: brand("Node"), value: "c" },
 					],
 				},
 			};
@@ -1285,6 +1275,60 @@ describe("SharedTree", () => {
 						{ type: brand("Node"), value: "d" },
 						{ type: brand("Node"), value: "b" },
 						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
+		it("can rebase value change of node over cross-field move of that node", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [{ type: brand("Node"), value: "b" }],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+			provider.processMessages();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Move a after b
+			runSynchronous(tree1, () => {
+				tree1.editor.move(
+					{ parent: rootPath, field: brand("foo") },
+					0,
+					1,
+					{ parent: rootPath, field: brand("bar") },
+					1,
+				);
+			});
+
+			// Change a's value to c
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(
+					{ parent: rootPath, parentField: brand("foo"), parentIndex: 0 },
+					"c",
+				);
+			});
+
+			provider.processMessages();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					bar: [
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
 					],
 				},
 			};

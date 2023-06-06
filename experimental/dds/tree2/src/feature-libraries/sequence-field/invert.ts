@@ -148,6 +148,10 @@ function invertMark<TNodeChange>(
 		}
 		case "Modify": {
 			if (mark.detachEvent === undefined) {
+				assert(
+					mark.changes !== undefined,
+					"Modify in changeset to invert should have changes",
+				);
 				return [
 					{
 						type: "Modify",

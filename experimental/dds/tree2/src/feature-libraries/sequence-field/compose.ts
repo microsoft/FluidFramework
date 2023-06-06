@@ -200,6 +200,13 @@ function composeMarks<TNodeChange>(
 				isMoveMark(baseMark) && isMoveMark(newMark),
 				0x68f /* Only move marks have move IDs */,
 			);
+
+			// TODO: Is `baseMark` always a destination and `newMark` always a source?
+			assert(
+				(baseMark as Mark).type === "ReturnTo" || baseMark.type === "MoveIn",
+				"Unhandled case",
+			);
+			assert(newMark.type === "ReturnFrom" || newMark.type === "MoveOut", "Unhandled case");
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -208,21 +215,15 @@ function composeMarks<TNodeChange>(
 				true,
 			);
 
-			const dstEffect = getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				newMark.revision ?? newRev,
-				newMark.id,
-				true,
-			);
-
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
 			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
-				// BUG 4280: This will drop any node changes the marks had.
-				// In practice the node changes will typically also be inverses so this problem should rarely be noticeable.
-				srcEffect.shouldRemove = true;
-				dstEffect.shouldRemove = true;
+				srcEffect.modifyAfter = composeChildChanges(
+					srcEffect.modifyAfter,
+					nodeChange,
+					undefined,
+					composeChild,
+				);
 			} else {
 				srcEffect.mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
 			}
@@ -259,6 +260,21 @@ function composeMarks<TNodeChange>(
 		// TODO: Create modify mark for transient node.
 		return { count: 0 };
 	} else {
+		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
+			const nodeChanges = getMoveEffect(
+				moveEffects,
+				CrossFieldTarget.Source,
+				baseMark.revision,
+				baseMark.id,
+			).modifyAfter;
+			return {
+				type: "Placeholder",
+				count: baseMark.count,
+				revision: baseMark.revision,
+				id: baseMark.id,
+				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+			};
+		}
 		const length = getMarkLength(baseMark);
 		return createModifyMark(length, nodeChange);
 	}
@@ -370,6 +386,26 @@ function amendComposeI<TNodeChange>(
 				mark = effect.mark ?? mark;
 				delete effect.mark;
 				break;
+			}
+			case "Placeholder": {
+				const effect = getMoveEffect(
+					moveEffects,
+					CrossFieldTarget.Source,
+					mark.revision,
+					mark.id,
+				);
+				if (effect.modifyAfter !== undefined) {
+					const changes = composeChildChanges(
+						mark.changes,
+						effect.modifyAfter,
+						undefined,
+						composeChild,
+					);
+					delete effect.modifyAfter;
+					mark = createModifyMark(mark.count, changes);
+				} else {
+					mark = createModifyMark(mark.count, mark.changes);
+				}
 			}
 			default:
 				break;
@@ -607,7 +643,7 @@ interface ComposeMarks<T> {
 
 /**
  * Returns whether `baseMark` and `newMark` are inverses.
- * It is assumed that both marks are active and `baseMark` is an attach.
+ * Both marks are assumed to be active.
  */
 function areInverseMoves(
 	baseMark: MoveMark<unknown>,
@@ -615,15 +651,17 @@ function areInverseMoves(
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
-	assert(
-		baseMark.type === "MoveIn" || baseMark.type === "ReturnTo",
-		0x698 /* TODO: Handle case where `baseMark` is a detach */,
-	);
-	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
+	if (
+		(baseMark.type === "ReturnTo" || baseMark.type === "ReturnFrom") &&
+		baseMark.detachEvent?.revision === newIntention
+	) {
 		return true;
 	}
 
-	if (newMark.type === "ReturnFrom" && newMark.detachEvent?.revision === baseIntention) {
+	if (
+		(newMark.type === "ReturnTo" || newMark.type === "ReturnFrom") &&
+		newMark.detachEvent?.revision === baseIntention
+	) {
 		return true;
 	}
 
