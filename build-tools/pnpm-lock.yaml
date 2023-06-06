@@ -154,8 +154,8 @@ importers:
         specifier: ~2.6.2
         version: 2.6.2
       prompts:
-        specifier: npm:prompts-ncu@^3.0.0
-        version: /prompts-ncu@3.0.0
+        specifier: ^2.4.2
+        version: 2.4.2
       read-pkg-up:
         specifier: ^7.0.1
         version: 7.0.1
@@ -217,6 +217,9 @@ importers:
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.38
+      '@types/prompts':
+        specifier: ^2.4.4
+        version: 2.4.4
       '@types/semver':
         specifier: ^7.3.10
         version: 7.3.12
@@ -3368,6 +3371,13 @@ packages:
 
   /@types/parse-json@4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
+    dev: true
+
+  /@types/prompts@2.4.4:
+    resolution: {integrity: sha512-p5N9uoTH76lLvSAaYSZtBCdEXzpOOufsRjnhjVSrZGXikVGHX9+cc9ERtHRV4hvBKHyZb1bg4K+56Bd2TqUn4A==}
+    dependencies:
+      '@types/node': 14.18.38
+      kleur: 3.0.3
     dev: true
 
   /@types/responselike@1.0.0:
@@ -8183,6 +8193,10 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /kleur@3.0.3:
+    resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
+    engines: {node: '>=6'}
+
   /kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
@@ -10061,11 +10075,11 @@ packages:
       sisteransi: 1.0.5
     dev: false
 
-  /prompts-ncu@3.0.0:
-    resolution: {integrity: sha512-qyz9UxZ5MlPKWVhWrCmSZ1ahm2GVYdjLb8og2sg0IPth1KRuhcggHGuijz0e41dkx35p1t1q3GRISGH7QGALFA==}
-    engines: {node: '>= 14'}
+  /prompts@2.4.2:
+    resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
+    engines: {node: '>= 6'}
     dependencies:
-      kleur: 4.1.5
+      kleur: 3.0.3
       sisteransi: 1.0.5
     dev: false
 
