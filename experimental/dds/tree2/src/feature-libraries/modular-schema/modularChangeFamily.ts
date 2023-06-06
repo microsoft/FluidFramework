@@ -781,6 +781,11 @@ export class ModularChangeFamily
 	}
 
 	public intoDelta(change: ModularChangeset): Delta.Root {
+		// Return an empty delta for changes with constraint violations
+		if ((change.constraintViolationCount ?? 0) > 0) {
+			return new Map();
+		}
+
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 
