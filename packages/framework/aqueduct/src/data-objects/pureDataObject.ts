@@ -19,6 +19,17 @@ import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
+// Note: Not part of public exports
+export interface IProvideInternalFluidReferenceInfo {
+	IInternalFluidReferenceInfo: IInternalFluidReferenceInfo;
+}
+
+// Note: Not part of public exports
+export interface IInternalFluidReferenceInfo extends IProvideInternalFluidReferenceInfo {
+	unreferencedTime?: number;
+	state: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
+}
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this data store directly unless
@@ -28,6 +39,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends EventForwarder<I["Events"] & IEvent>
+	// implements IProvideInternalFluidReferenceInfo, implicitly so we don't export
 	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
 {
 	private _disposed = false;
@@ -194,4 +206,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	public dispose(): void {
 		super.dispose();
 	}
+
+	private get referencedState
 }
