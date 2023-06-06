@@ -422,7 +422,7 @@ export class FluidDataStoreRuntime
 
 		const context = this.contexts.get(id);
 		if (context === undefined) {
-			throw new Error("Channel does not exist");
+			throw new LoggingError("Channel does not exist");
 		}
 
 		return context.getChannel();

@@ -130,7 +130,7 @@ The exports deprecated in [IntervalCollection public export deprecated](#interva
 
 ### FluidDataStoreRuntime.getChannel throws for channels that do not exist
 
-Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption.  The call will instead now throw for non-existent channels.
+Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
 
 # 2.0.0-internal.4.4.0
 
