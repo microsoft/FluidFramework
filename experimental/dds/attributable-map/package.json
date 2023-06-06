@@ -77,7 +77,7 @@
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {
-		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.4.1.0",
+		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.5.0.0",
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.47.0",

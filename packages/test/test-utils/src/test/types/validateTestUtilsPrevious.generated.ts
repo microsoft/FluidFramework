@@ -544,6 +544,30 @@ use_old_FunctionDeclaration_createSummarizerFromFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerWithTestConfig": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSummarizerWithTestConfig():
+    TypeOnly<typeof old.createSummarizerWithTestConfig>;
+declare function use_current_FunctionDeclaration_createSummarizerWithTestConfig(
+    use: TypeOnly<typeof current.createSummarizerWithTestConfig>);
+use_current_FunctionDeclaration_createSummarizerWithTestConfig(
+    get_old_FunctionDeclaration_createSummarizerWithTestConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerWithTestConfig": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSummarizerWithTestConfig():
+    TypeOnly<typeof current.createSummarizerWithTestConfig>;
+declare function use_old_FunctionDeclaration_createSummarizerWithTestConfig(
+    use: TypeOnly<typeof old.createSummarizerWithTestConfig>);
+use_old_FunctionDeclaration_createSummarizerWithTestConfig(
+    get_current_FunctionDeclaration_createSummarizerWithTestConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createTestContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createTestContainerRuntimeFactory():
