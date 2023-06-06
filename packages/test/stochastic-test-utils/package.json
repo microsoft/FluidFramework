@@ -19,8 +19,6 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run build:test",
 		"build:compile:min": "npm run build:compile",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",

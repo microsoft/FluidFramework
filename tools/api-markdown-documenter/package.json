@@ -19,8 +19,6 @@
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles \"src/**/test-data/**\" dist --up 1",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:tsc": "tsc --pretty",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",

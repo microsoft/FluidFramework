@@ -19,8 +19,6 @@
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:compile:min": "npm run build:compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",

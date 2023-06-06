@@ -18,8 +18,6 @@
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",

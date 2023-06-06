@@ -19,8 +19,6 @@
 		"build:codegen": "npm run build:plugins && graphql-codegen --config codegen.yml && prettier --write src/graphql-generated/*",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:plugins": "tsc --project ./tsconfig-graphql-plugins.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",

@@ -20,8 +20,6 @@
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",

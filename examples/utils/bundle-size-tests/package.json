@@ -14,8 +14,6 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib bundleAnalysis *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

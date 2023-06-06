@@ -25,8 +25,6 @@
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test && npm run build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
 		"clean": "rimraf dist lib es5 *.tsbuildinfo *.build.log",
