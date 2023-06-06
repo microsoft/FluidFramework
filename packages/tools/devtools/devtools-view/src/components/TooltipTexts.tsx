@@ -39,6 +39,14 @@ export const containerStatusTooltipText = (
 );
 
 /**
+ * Description of the Container "Container ID" property in the summary view.
+ */
+export const containerIdTooltipText =
+	"Id that uniquely identifies the Fluid Container within the service where it lives. " +
+	"NOTE: it is not the same thing as the 'containerId' field found in some telemetry events, " +
+	"which is an ephemeral id generated locally as part of creating/loading a Fluid Container.";
+
+/**
  * Description of the Container "Resolved URL" property in the summary view.
  */
 export const containerResolvedUrlTooltipText = "Fluid-internal URL that identifies the container.";

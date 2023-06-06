@@ -48,6 +48,7 @@ import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import {
 	clientIdTooltipText,
+	containerIdTooltipText,
 	containerResolvedUrlTooltipText,
 	containerStatusTooltipText,
 	deltaStorageUrlTooltipText,
@@ -316,6 +317,15 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
+						label="Container ID"
+						infoTooltipContent={containerIdTooltipText}
+						value={
+							(containerState.resolvedUrl as IResolvedUrl)?.id ??
+							"Container is not attached"
+						}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
 						label="Resolved URL"
 						infoTooltipContent={containerResolvedUrlTooltipText}
 						value={
@@ -337,8 +347,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						label="Delta Storage URL"
 						infoTooltipContent={ordererUrlTooltipText}
 						value={
-							resolvedUrl?.endpoints?.ordererUrl ??
-							waitingForContainerToAttachText
+							resolvedUrl?.endpoints?.ordererUrl ?? waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
@@ -346,8 +355,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						label="Delta Storage URL"
 						infoTooltipContent={storageUrlTooltipText}
 						value={
-							resolvedUrl?.endpoints?.storageUrl ??
-							waitingForContainerToAttachText
+							resolvedUrl?.endpoints?.storageUrl ?? waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
