@@ -93,6 +93,7 @@ export class ChunkEncoderLibrary<TManager, TEncodedShape>
  * Encode
  */
 export function encode<TManager, TEncodedShape>(
+	version: string,
 	encoderLibrary: GeneralChunkEncoder<TManager, TEncodedShape, TreeChunk>,
 	shapeManager: TManager,
 	chunk: TreeChunk,
@@ -101,7 +102,7 @@ export function encode<TManager, TEncodedShape>(
 	// Populate buffer, including shape and identifier references
 	encoderLibrary.encode(chunk, shapeManager, buffer);
 
-	return handleShapesAndIdentifiers(buffer);
+	return handleShapesAndIdentifiers(version, buffer);
 }
 
 export function decode<TDecoderCache, TEncodedShape extends object>(
@@ -126,6 +127,7 @@ export function decode<TDecoderCache, TEncodedShape extends object>(
  * Note that this modifies `buffer` to avoid having to copy it.
  */
 export function handleShapesAndIdentifiers<TEncodedShape>(
+	version: string,
 	buffer: BufferFormat<TEncodedShape>,
 ): EncodedChunkGeneric<TEncodedShape> {
 	const identifiers = new Counter<string>();
@@ -176,6 +178,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 	);
 
 	return {
+		version,
 		// TODO: fix readonly typing issues to remove this cast.
 		identifiers: identifierTable.indexToValue as string[],
 		shapes: encodedShapes,

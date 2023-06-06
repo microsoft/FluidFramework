@@ -38,11 +38,13 @@ const EncodedChunkShape = Type.Object(
 	unionOptions,
 );
 
+const version = "test format";
+
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
 type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-const EncodedChunk = EncodedChunkGeneric(EncodedChunkShape);
+const EncodedChunk = EncodedChunkGeneric(version, EncodedChunkShape);
 type EncodedChunk = Static<typeof EncodedChunk>;
 
 class TestShape extends Shape<EncodedChunkShape> {
@@ -67,7 +69,8 @@ class TestShape extends Shape<EncodedChunkShape> {
 describe("chunkEncodingGeneric", () => {
 	describe("handleShapesAndIdentifiers", () => {
 		it("Empty", () => {
-			assert.deepEqual(handleShapesAndIdentifiers([]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, []), {
+				version,
 				identifiers: [],
 				shapes: [],
 				data: [],
@@ -75,14 +78,16 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("data", () => {
 			const input = ["x", 1, [1, 2], { a: 1, b: 2 }];
-			assert.deepEqual(handleShapesAndIdentifiers(input), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, input), {
+				version,
 				identifiers: [],
 				shapes: [],
 				data: input,
 			});
 		});
 		it("identifier: inline", () => {
-			assert.deepEqual(handleShapesAndIdentifiers([new IdentifierToken("x")]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [new IdentifierToken("x")]), {
+				version,
 				identifiers: [],
 				shapes: [],
 				data: ["x"],
@@ -90,20 +95,16 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("identifier: deduplicated", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers([
+				handleShapesAndIdentifiers(version, [
 					new IdentifierToken("long string"),
 					new IdentifierToken("long string"),
 				]),
-				{
-					identifiers: ["long string"],
-					shapes: [],
-					data: [0, 0],
-				},
+				{ version, identifiers: ["long string"], shapes: [], data: [0, 0] },
 			);
 		});
 		it("identifier: mixed", () => {
 			assert.deepEqual(
-				handleShapesAndIdentifiers([
+				handleShapesAndIdentifiers(version, [
 					new IdentifierToken("long string"),
 					5,
 					"test string",
@@ -111,6 +112,7 @@ describe("chunkEncodingGeneric", () => {
 					new IdentifierToken("used once"),
 				]),
 				{
+					version,
 					identifiers: ["long string"],
 					shapes: [],
 					data: [0, 5, "test string", 0, "used once"],
@@ -118,7 +120,8 @@ describe("chunkEncodingGeneric", () => {
 			);
 		});
 		it("shape: minimal", () => {
-			assert.deepEqual(handleShapesAndIdentifiers([new TestShape("shape data")]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [new TestShape("shape data")]), {
+				version,
 				identifiers: [],
 				shapes: [{ b: "shape data" }],
 				data: [0],
@@ -129,8 +132,16 @@ describe("chunkEncodingGeneric", () => {
 			const shape2 = new TestShape("2");
 			const shape3 = new TestShape("3");
 			assert.deepEqual(
-				handleShapesAndIdentifiers([shape1, shape3, shape3, shape2, shape3, shape2]),
+				handleShapesAndIdentifiers(version, [
+					shape1,
+					shape3,
+					shape3,
+					shape2,
+					shape3,
+					shape2,
+				]),
 				{
+					version,
 					identifiers: [],
 					// Ensure shapes are sorted by most frequent first
 					shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
@@ -150,7 +161,8 @@ describe("chunkEncodingGeneric", () => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});
-			assert.deepEqual(handleShapesAndIdentifiers([shape3, shape3]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [shape3, shape3]), {
+				version,
 				identifiers: ["deduplicated-id"],
 				// Ensure shapes are sorted by most frequent first
 				shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],

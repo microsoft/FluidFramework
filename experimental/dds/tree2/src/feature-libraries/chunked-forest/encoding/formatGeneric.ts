@@ -28,6 +28,7 @@ export const unionOptions = {
 
 const EncodedChunkBase = Type.Object(
 	{
+		version: Type.String(),
 		identifiers: Type.Array(Type.String()),
 		// TreeValues mixed with indexes into "shapes" and occasional lengths (for specific shapes that require them).
 		data: Type.Array(Type.Any()),
@@ -35,11 +36,20 @@ const EncodedChunkBase = Type.Object(
 	{ additionalProperties: false },
 );
 
-export const EncodedChunkGeneric = <TShapeSchema extends TSchema>(shape: TShapeSchema) =>
+/**
+ * Format for encoding a tree chunk.
+ * @param version - format version. Must be changed if there is any change to the generic schema, or the `shape` schema.
+ * @param shape - schema for union of shape format, see {@link DiscriminatedUnionDispatcher}.
+ */
+export const EncodedChunkGeneric = <TShapeSchema extends TSchema>(
+	version: string,
+	shape: TShapeSchema,
+) =>
 	Type.Composite(
 		[
 			EncodedChunkBase,
 			Type.Object({
+				version: Type.Literal(version),
 				shapes: Type.Array(shape),
 			}),
 		],
