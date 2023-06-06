@@ -190,67 +190,6 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
-// @public
-export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // (undocumented)
-    [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
-    // @internal
-    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
-    // @internal (undocumented)
-    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage, localOpMetadata: IMapMessageLocalMetadata | undefined): TInterval | undefined;
-    // @internal (undocumented)
-    ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage, localOpMetadata: IMapMessageLocalMetadata | undefined): void;
-    // @internal (undocumented)
-    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
-    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
-    // @deprecated (undocumented)
-    addConflictResolver(_: IntervalConflictResolver<TInterval>): void;
-    // (undocumented)
-    attachDeserializer(onDeserialize: DeserializeCallback): void;
-    // (undocumented)
-    get attached(): boolean;
-    // @internal (undocumented)
-    attachGraph(client: Client, label: string): void;
-    attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, start?: number, end?: number): TInterval | undefined;
-    changeProperties(id: string, props: PropertySet): void;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
-    detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // (undocumented)
-    findIntervalsWithEndInRange(endPosition: number, range: number): TInterval[];
-    // (undocumented)
-    findIntervalsWithStartInRange(startPosition: number, range: number): TInterval[];
-    // (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): TInterval | undefined;
-    map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
-    nextInterval(pos: number): TInterval | undefined;
-    // (undocumented)
-    previousInterval(pos: number): TInterval | undefined;
-    // @internal
-    rebaseLocalInterval(opName: string, serializedInterval: SerializedIntervalDelta, localSeq: number): SerializedIntervalDelta | undefined;
-    removeIntervalById(id: string): TInterval | undefined;
-    // @internal (undocumented)
-    serializeInternal(): ISerializedIntervalCollectionV2;
-}
-
-// @public (undocumented)
-export class IntervalCollectionIterator<TInterval extends ISerializableInterval> implements Iterator<TInterval> {
-    constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
-    // (undocumented)
-    next(): IteratorResult<TInterval>;
-}
-
 // @public @deprecated (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 

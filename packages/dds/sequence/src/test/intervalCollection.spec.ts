@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import {
+	ReferenceType,
+	SlidingPreference,
+	reservedRangeLabelsKey,
+	PropertySet,
+} from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -23,6 +28,9 @@ import {
 	SequenceInterval,
 	IntervalIndex,
 	ISerializableInterval,
+	IIntervalHelpers,
+	Interval,
+	EndInRangeIndex,
 } from "../intervalCollection";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -100,6 +108,25 @@ function assertIntervalEquals(
 		endpoints.end,
 		"mismatched end",
 	);
+}
+
+function assertPlainNumberInterval(
+	interval: Interval,
+	endpoints: { start: number; end: number },
+): void {
+	assert(interval);
+	assert.equal(interval.start, endpoints.start, "mismatched start");
+	assert.equal(interval.end, endpoints.end, "mismatched end");
+}
+
+function createInterval(label: string, start: number, end: number): Interval {
+	const rangeProp: PropertySet = {};
+
+	if (label && label.length > 0) {
+		rangeProp[reservedRangeLabelsKey] = [label];
+	}
+
+	return new Interval(start, end, rangeProp);
 }
 
 describe("SharedString interval collections", () => {
@@ -1732,76 +1759,78 @@ describe("SharedString interval collections", () => {
 			});
 		});
 
-		describe("support querying intervals with start in range", () => {
-			let collection;
+		describe("support querying intervals with endpoint in a range", () => {
+			let helpers: IIntervalHelpers<Interval>;
+			let endInRangeIndex: EndInRangeIndex<Interval>;
+			let compareFn;
+			let results;
 
 			beforeEach(() => {
-				sharedString.initializeLocal();
-				collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "xyzabc");
+				helpers = {
+					compareEnds: (a: Interval, b: Interval) => a.end - b.end,
+					create: createInterval,
+				};
+				// sort the query result by the end value
+				compareFn = (a: Interval, b: Interval) => {
+					if (a.end === b.end) {
+						return a.start - b.start;
+					}
+					return a.end - b.end;
+				};
+				endInRangeIndex = new EndInRangeIndex(helpers);
 			});
 
-			it("the intervals whose startpoints within a range", () => {
-				collection.add(1, 1, IntervalType.SlideOnRemove);
-				collection.add(1, 3, IntervalType.SlideOnRemove);
-				collection.add(2, 4, IntervalType.SlideOnRemove);
-				collection.add(3, 5, IntervalType.SlideOnRemove);
-				collection.add(4, 5, IntervalType.SlideOnRemove);
-
-				const results = collection.findIntervalsWithStartInRange(1, 2);
-				assertIntervalEquals(sharedString, results[0], {
-					start: 1,
-					end: 1,
-				});
-				assertIntervalEquals(sharedString, results[1], {
-					start: 1,
-					end: 3,
-				});
-				assertIntervalEquals(sharedString, results[2], {
-					start: 2,
-					end: 4,
-				});
-				assertIntervalEquals(sharedString, results[3], {
-					start: 3,
-					end: 5,
-				});
-			});
-		});
-
-		describe("support querying intervals with endpoint in range", () => {
-			let collection;
-
-			beforeEach(() => {
-				sharedString.initializeLocal();
-				collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "xyzabc");
+			it("can not return result if the input does not meet specified requirement", () => {
+				results = endInRangeIndex.findIntervalsWithEndInRange(1, 1);
+				assert.equal(
+					results.length,
+					0,
+					"Should not return anything once the index is empty",
+				);
+				endInRangeIndex.add(new Interval(1, 1));
+				endInRangeIndex.add(new Interval(1, 3));
+				results = endInRangeIndex.findIntervalsWithEndInRange(1, 1);
+				assert.equal(
+					results.length,
+					0,
+					"The end should be larger than start by at least 1",
+				);
+				results = endInRangeIndex.findIntervalsWithEndInRange(2, 3);
+				assert.equal(results.length, 0, "The end value should be exclusive");
 			});
 
-			it("the intervals whose endpoints within a range", () => {
-				collection.add(1, 1, IntervalType.SlideOnRemove);
-				collection.add(1, 3, IntervalType.SlideOnRemove);
-				collection.add(2, 4, IntervalType.SlideOnRemove);
-				collection.add(3, 5, IntervalType.SlideOnRemove);
-				collection.add(4, 5, IntervalType.SlideOnRemove);
+			it("can find correct results after adding multiple intervals", () => {
+				endInRangeIndex.add(new Interval(1, 1));
+				endInRangeIndex.add(new Interval(1, 3));
+				results = endInRangeIndex.findIntervalsWithEndInRange(1, 2);
+				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
+				results = endInRangeIndex.findIntervalsWithEndInRange(1, 3);
+				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
 
-				const results = collection.findIntervalsWithEndInRange(3, 2);
-				assertIntervalEquals(sharedString, results[0], {
-					start: 1,
-					end: 3,
-				});
-				assertIntervalEquals(sharedString, results[1], {
-					start: 2,
-					end: 4,
-				});
-				assertIntervalEquals(sharedString, results[2], {
-					start: 3,
-					end: 5,
-				});
-				/*
-				assertIntervalEquals(sharedString, results[3], {
-					start: 4,
-					end: 5,
-				}); */
+				endInRangeIndex.add(new Interval(2, 4));
+				endInRangeIndex.add(new Interval(3, 5));
+				results = endInRangeIndex.findIntervalsWithEndInRange(3, 5);
+				results.sort(compareFn);
+				assertPlainNumberInterval(results[0], { start: 1, end: 3 });
+				assertPlainNumberInterval(results[1], { start: 2, end: 4 });
+			});
+
+			it("can find correct results after removing intervals", () => {
+				const interval1 = new Interval(1, 1);
+				const interval2 = new Interval(1, 3);
+				endInRangeIndex.add(interval1);
+				endInRangeIndex.add(interval2);
+				endInRangeIndex.remove(interval1);
+
+				results = endInRangeIndex.findIntervalsWithEndInRange(1, 3);
+				assert.equal(results.length, 0);
+
+				const interval3 = new Interval(2, 4);
+				endInRangeIndex.add(interval3);
+				endInRangeIndex.remove(interval2);
+
+				results = endInRangeIndex.findIntervalsWithEndInRange(3, 5);
+				assertPlainNumberInterval(results[0], { start: 2, end: 4 });
 			});
 		});
 	});

@@ -1161,13 +1161,12 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
 	}
 }
 
-class EndInRangeIndex<TInterval extends ISerializableInterval> implements IntervalIndex<TInterval> {
+export class EndInRangeIndex<TInterval extends ISerializableInterval>
+	implements IntervalIndex<TInterval>
+{
 	private readonly intervalTree;
 
-	constructor(
-		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<TInterval>,
-	) {
+	constructor(private readonly helpers: IIntervalHelpers<TInterval>) {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
 	}
@@ -1181,10 +1180,12 @@ class EndInRangeIndex<TInterval extends ISerializableInterval> implements Interv
 	}
 
 	/**
-	 * @returns an array of all intervals contained in this collection that locate within the range
-	 * `[startPosition, startPosition + range)`. [5, 10)
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end)
 	 */
-	public findIntervalsWithEndInRange(endPosition: number, range: number) {
+	public findIntervalsWithEndInRange(start: number, end: number) {
+		if (start <= 0 || start > end - 1 || this.intervalTree.isEmpty()) {
+			return [];
+		}
 		const results: TInterval[] = [];
 		const action: PropertyAction<TInterval, TInterval> = (node) => {
 			results.push(node.key);
@@ -1192,17 +1193,17 @@ class EndInRangeIndex<TInterval extends ISerializableInterval> implements Interv
 		};
 		const transientStartInterval = this.helpers.create(
 			"transient",
-			endPosition,
-			endPosition,
-			this.client,
+			start,
+			start,
+			undefined as any as Client,
 			IntervalType.Transient,
 		);
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
-			endPosition + range,
-			endPosition + range,
-			this.client,
+			end - 1,
+			end - 1,
+			undefined as any as Client,
 			IntervalType.Transient,
 		);
 
@@ -1211,15 +1212,12 @@ class EndInRangeIndex<TInterval extends ISerializableInterval> implements Interv
 	}
 }
 
-class StartInRangeIndex<TInterval extends ISerializableInterval>
+export class StartInRangeIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
 {
 	private readonly intervalTree;
 
-	constructor(
-		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<TInterval>,
-	) {
+	constructor(private readonly helpers: IIntervalHelpers<TInterval>) {
 		if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareStarts);
@@ -1234,7 +1232,10 @@ class StartInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithStartInRange(startPosition: number, range: number) {
+	/**
+	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end)
+	 */
+	public findIntervalsWithStartInRange(start: number, end: number) {
 		const results: TInterval[] = [];
 		const action: PropertyAction<TInterval, TInterval> = (node) => {
 			results.push(node.key);
@@ -1242,17 +1243,17 @@ class StartInRangeIndex<TInterval extends ISerializableInterval>
 		};
 		const transientStartInterval = this.helpers.create(
 			"transient",
-			startPosition,
-			startPosition,
-			this.client,
+			start,
+			start,
+			undefined as any as Client,
 			IntervalType.Transient,
 		);
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
-			startPosition + range,
-			startPosition + range,
-			this.client,
+			end,
+			end,
+			undefined as any as Client,
 			IntervalType.Transient,
 		);
 
@@ -1266,8 +1267,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IdIntervalIndex<TInterval>;
 	public readonly endIntervalIndex: EndpointIndex<TInterval>;
-	public readonly startInRangeIndex: StartInRangeIndex<TInterval>;
-	public readonly endInRangeIndex: EndInRangeIndex<TInterval>;
 	private readonly indexes: Set<IntervalIndex<TInterval>>;
 
 	constructor(
@@ -1283,13 +1282,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = new IdIntervalIndex();
 		this.endIntervalIndex = new EndpointIndex(client, helpers);
-		this.startInRangeIndex = new StartInRangeIndex(client, helpers);
-		this.endInRangeIndex = new EndInRangeIndex(client, helpers);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
 			this.endIntervalIndex,
-			this.endInRangeIndex,
 		]);
 	}
 
@@ -2822,25 +2818,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			startPosition,
 			endPosition,
 		);
-	}
-
-	public findIntervalsWithStartInRange(startPosition: number, range: number): TInterval[] {
-		if (!this.localCollection) {
-			throw new LoggingError("attachSequence must be called");
-		}
-
-		return this.localCollection.startInRangeIndex.findIntervalsWithStartInRange(
-			startPosition,
-			range,
-		);
-	}
-
-	public findIntervalsWithEndInRange(endPosition: number, range: number): TInterval[] {
-		if (!this.localCollection) {
-			throw new LoggingError("attachSequence must be called");
-		}
-
-		return this.localCollection.endInRangeIndex.findIntervalsWithEndInRange(endPosition, range);
 	}
 
 	/**
