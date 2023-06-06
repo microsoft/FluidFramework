@@ -27,7 +27,6 @@ export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
-	SharedTreeObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,

@@ -13,7 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedTreeFactory, ISharedTree } from "@fluid-experimental/tree2";
+import { SharedTreeFactoryObject, ISharedTree } from "@fluid-experimental/tree2";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
@@ -24,16 +24,6 @@ import {
 	VisualChildNode,
 	VisualTreeNode,
 } from "./VisualTree";
-
-/**
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class SharedTreeObject {
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
-	}
-}
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -249,6 +239,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
-	[SharedTreeObject.getFactory().type]: visualizeSharedTree,
+	[SharedTreeFactoryObject.getFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };

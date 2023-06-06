@@ -14,7 +14,6 @@ export {
 	VisualizerNode,
 } from "./DataVisualization";
 export {
-	SharedTreeObject,
 	defaultVisualizers,
 	visualizeSharedCell,
 	visualizeSharedCounter,

@@ -241,3 +241,15 @@ export class SharedTreeFactory implements IChannelFactory {
 		return tree;
 	}
 }
+
+/**
+ * SharedTree class object containing static factory method use for {@link @fluidframework/fluid-static#IFluidContainer}.
+ *
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SharedTreeFactoryObject {
+	public static getFactory(): SharedTreeFactory {
+		return new SharedTreeFactory();
+	}
+}

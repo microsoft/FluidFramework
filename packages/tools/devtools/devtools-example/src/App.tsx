@@ -12,7 +12,7 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
-import { ContainerKey, HasContainerKey, SharedTreeObject } from "@fluid-experimental/devtools-core";
+import { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
 import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -23,6 +23,7 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import {
+	SharedTreeFactoryObject,
 	AllowedUpdateType,
 	FieldKinds,
 	ISharedTree,
@@ -68,7 +69,7 @@ const containerSchema: ContainerSchema = {
 		SharedMap,
 		SharedMatrix,
 		SharedString,
-		SharedTreeObject,
+		SharedTreeFactoryObject,
 	],
 };
 
@@ -112,12 +113,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
 
 	// Set up SharedTree for visualization
-	const sharedTreeFactoryObject = SharedTreeObject as unknown as SharedObjectClass<ISharedTree>;
-	const sharedTree = await container.create(sharedTreeFactoryObject);
+	const sharedTreeFactory = SharedTreeFactoryObject as unknown as SharedObjectClass<ISharedTree>;
+	const sharedTree = await container.create(sharedTreeFactory);
 
 	// Populate SharedTree using Schema
 	const builder = new SchemaBuilder("SchemaAware");
-	const stringSchema = builder.primitive("string", ValueSchema.String);
+	const stringSchema = builder.primitive("stringProp", ValueSchema.String);
 	const rootNodeSchema = builder.object("Test", {
 		local: {
 			children: SchemaBuilder.fieldSequence(stringSchema),
