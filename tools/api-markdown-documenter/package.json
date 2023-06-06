@@ -68,7 +68,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "^1.3.6",
 		"@fluidframework/test-utils": "^1.3.6",
