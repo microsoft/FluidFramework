@@ -8,6 +8,11 @@ import { BaseCommand } from "../../base";
 import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "../../lib";
 import { GitRepo } from "@fluidframework/build-tools";
 
+interface CommitStatus {
+	index: number;
+	isConflict: boolean;
+}
+
 /**
  * This command class is used to merge two branches based on the batch size provided.
  * It looks for the last common commit between two branches and computes the remaining commits to be merged.
@@ -55,20 +60,19 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		...BaseCommand.flags,
 	};
 
-	// `findConflictIndex` return the index of the conflicting commit. If there are no conflicts found, then it would return the last index
-	async findConflictIndex(commitIds: string[], gitRepo: GitRepo): Promise<number> {
+	/**
+	 * `findConflictIndex` return an object `CommitStatus` which return the index and isConflict property which is set 
+	 * to true if there is a conflict else false.
+	 */
+	async findConflictIndex(commitIds: string[], gitRepo: GitRepo): Promise<CommitStatus> {
 		const length = commitIds.length;
-
-		if (length === 0) {
-			return -1;
-		}
 
 		// Check the first commit separately
 		const firstCommit = commitIds[0];
 		const firstResponse = await gitRepo.canMergeWithoutConflicts(firstCommit);
 		this.log(`Response from merge check for ${commitIds[0]}: ${firstResponse}`);
 		if (firstResponse === false) {
-			return 0;
+			return { index: 0, isConflict: true };
 		}
 
 		// Check the rest of the commitIds
@@ -78,23 +82,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			const response = await gitRepo.canMergeWithoutConflicts(commit);
 			this.log(`Response from merge check for ${commitIds[i]}: ${response}`);
 			if (response === false) {
-				return i;
+				return { index: i - 1, isConflict: false };
 			}
 		}
 
-		return length - 1; // No conflicts found, return the last index
-	}
-
-	/**
-	 * `cherryPickAllCommits` function will merge all commitIds in next branch
-	 * we cannot use gitRepo.merge as it would create a merge commit for individual commit.
-	 */
-	async cherryPickAllCommits(commitIds: string[], gitRepo: GitRepo): Promise<void> {
-		for (const commit of commitIds) {
-			// eslint-disable-next-line no-await-in-loop
-			const response = await gitRepo.cherryPick(commit);
-			this.log(`Merging commit ${commit}: ${response}`);
-		}
+		return { index: length - 1, isConflict: false }; // No conflicts found, return the last index
 	}
 
 	public async run(): Promise<void> {
@@ -140,38 +132,31 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		await gitRepo.switchBranch(flags.target);
 		await gitRepo.createBranch(`${flags.target}-automation`);
 
-		const commitIndex = await this.findConflictIndex(
+		const commitInfo = await this.findConflictIndex(
 			unmergedCommitList.slice(0, commitSize),
 			gitRepo,
 		);
 
-		const branchName = `${flags.source}-${flags.target}-${unmergedCommitList[commitIndex]}`;
+		const commitId = unmergedCommitList[commitInfo.index];
 
-		if (commitIndex === 0) {
-			// implies commit id `unmergedCommitList[commitIndex]` has merge commits with next branch. do not merge next
-			this.log(
-				`Commit ${unmergedCommitList[commitIndex]} has merge conflicts with ${flags.target}`,
+		const branchName = `${flags.source}-${flags.target}-${commitId}`;
+
+		await gitRepo.switchBranch(flags.source);
+		await gitRepo.createBranch(branchName);
+		await gitRepo.setUpstream(branchName);
+		await gitRepo.resetBranch(commitId);
+
+		if (commitInfo.isConflict === false) {
+			await gitRepo.mergeBranch(
+				flags.target,
+				`Automation: ${flags.source} ${flags.target} integrate`,
 			);
-			await gitRepo.switchBranch(flags.source);
-			await gitRepo.createBranch(branchName);
-			await gitRepo.setUpstream(branchName);
-			await gitRepo.resetBranch(unmergedCommitList[commitIndex]);
-		} else {
-			// implies commitIndex has no conflicts with next. Merge next
-			this.log(
-				`Commits till ${unmergedCommitList[commitIndex]} has no merge conflicts with ${flags.target}`,
-			);
-			await gitRepo.switchBranch(flags.target);
-			await gitRepo.createBranch(branchName);
-			await gitRepo.setUpstream(branchName);
-			// merge all commits in next branch
-			await this.cherryPickAllCommits(unmergedCommitList.slice(0, commitIndex), gitRepo);
 		}
 
 		// fetch name of owner associated to the pull request
-		const pr = await pullRequestInfo(flags.auth, unmergedCommitList[commitIndex], this.logger);
+		const pr = await pullRequestInfo(flags.auth, commitId, this.logger);
 		const author = pr.data[0].assignee.login;
-		this.info(`Fetch pull request info for commit id ${commitIndex} and assignee ${author}`);
+		this.info(`Fetch pull request info for commit id ${commitInfo} and assignee ${author}`);
 		const user = await getUserAccess(flags.auth, this.logger);
 		this.info(`List users with push access to main branch ${user}`);
 
@@ -183,7 +168,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.logger,
 		);
 		this.log(
-			`Opened pull request ${prNumber} for commit id ${commitIndex}. Please resolve the merge conflicts.`,
+			`Opened pull request ${prNumber} for commit id ${commitId}. Please resolve the merge conflicts.`,
 		);
 	}
 }

@@ -273,8 +273,11 @@ export class GitRepo {
 		);
 	}
 
-	public async cherryPick(commit: string) {
-		return await this.exec(`cherry-pick ${commit}`, `cherry pick ${commit}`);
+	public async mergeBranch(branchName: string, commitMsg: string) {
+		await this.exec(`merge ${branchName}`, `merge branch ${branchName}`);
+		await this.exec(`add .`, ``);
+		await this.exec(`commit -m ${commitMsg}`, ``);
+		await this.exec(`push`, ``);
 	}
 
 	public async resetBranch(commitId: string) {
