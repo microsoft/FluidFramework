@@ -644,7 +644,7 @@ function convertToBasePropertyTypeUntagged(
 		case "undefined":
 			return x;
 		case "object":
-			// We assume this is an array based on the input types
+			// We assume this is an array or flat object based on the input types
 			return JSON.stringify(x);
 		default:
 			// should never reach this case based on the input types
