@@ -91,8 +91,8 @@
 		"watch:esnext": "pnpm run -r --parallel build:esnext --watch",
 		"watch:tsc": "pnpm run -r --parallel tsc --watch",
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
-		"webpack": "fluid-build -t webpack",
-		"webpack:profile": "fluid-build -t webpack:profile"
+		"webpack": "fluid-build --task webpack",
+		"webpack:profile": "fluid-build --task webpack:profile"
 	},
 	"c8": {
 		"all": true,
