@@ -428,8 +428,6 @@ export interface IContainerRuntimeOptions {
 	 *
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
-	 *
-	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
 }
@@ -678,7 +676,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor = false,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
-			enableGroupedBatching = false,
+			enableGroupedBatching = true,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -3575,10 +3573,10 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		const killSwitch = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		return (
+			this.runtimeOptions.enableGroupedBatching &&
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableGroupedBatching") !== true
 		);
-		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
 	}
 }
 
