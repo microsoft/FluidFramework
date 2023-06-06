@@ -6,11 +6,11 @@
 import {
 	IDisposable,
 	ITelemetryGenericEvent,
-	ITelemetryLogger,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 interface Measurements {
 	// The names of the properties in this interface are the ones that will get stamped in the
@@ -75,7 +75,7 @@ export class SampledTelemetryHelper implements IDisposable {
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEvent,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryProperties>(),

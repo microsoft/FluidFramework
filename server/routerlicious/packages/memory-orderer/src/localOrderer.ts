@@ -395,6 +395,7 @@ export class LocalOrderer implements IOrderer {
 			new Set<string>(),
 			true,
 			true,
+			true,
 		);
 	}
 

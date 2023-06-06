@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { CompressedSerializedInterval } from '@fluidframework/sequence';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
@@ -35,6 +34,7 @@ import { IDirectoryValueChanged } from '@fluidframework/map';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IFluidContainerEvents } from '@fluidframework/fluid-static';
 import { IInterval } from '@fluidframework/sequence';
+import { IIntervalCollection } from '@fluidframework/sequence';
 import { IIntervalCollectionEvent } from '@fluidframework/sequence';
 import { IIntervalHelpers } from '@fluidframework/sequence';
 import { IJSONRunSegment } from '@fluidframework/sequence';
@@ -42,8 +42,6 @@ import { ILocalValue } from '@fluidframework/map';
 import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
 import { IMember } from '@fluidframework/fluid-static';
 import { Interval } from '@fluidframework/sequence';
-import { IntervalCollection } from '@fluidframework/sequence';
-import { IntervalCollectionIterator } from '@fluidframework/sequence';
 import { IntervalConflictResolver } from '@fluidframework/sequence';
 import { IntervalLocator } from '@fluidframework/sequence';
 import { intervalLocatorFromEndpoint } from '@fluidframework/sequence';
@@ -53,7 +51,6 @@ import { ISequenceDeltaRange } from '@fluidframework/sequence';
 import { ISerializableInterval } from '@fluidframework/sequence';
 import { ISerializableValue } from '@fluidframework/map';
 import { ISerializedInterval } from '@fluidframework/sequence';
-import { ISerializedIntervalCollectionV2 } from '@fluidframework/sequence';
 import { ISerializedValue } from '@fluidframework/map';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
@@ -94,8 +91,6 @@ import { SharedStringSegment } from '@fluidframework/sequence';
 import { SubSequence } from '@fluidframework/sequence';
 
 export { AttachState }
-
-export { CompressedSerializedInterval }
 
 export { ConnectionState }
 
@@ -155,6 +150,8 @@ export { IFluidContainerEvents }
 
 export { IInterval }
 
+export { IIntervalCollection }
+
 export { IIntervalCollectionEvent }
 
 export { IIntervalHelpers }
@@ -168,10 +165,6 @@ export { IMapMessageLocalMetadata }
 export { IMember }
 
 export { Interval }
-
-export { IntervalCollection }
-
-export { IntervalCollectionIterator }
 
 export { IntervalConflictResolver }
 
@@ -190,8 +183,6 @@ export { ISerializableInterval }
 export { ISerializableValue }
 
 export { ISerializedInterval }
-
-export { ISerializedIntervalCollectionV2 }
 
 export { ISerializedValue }
 

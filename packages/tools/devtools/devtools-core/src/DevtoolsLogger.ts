@@ -66,7 +66,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * Handlers for inbound messages related to the logger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetTelemetryHistory.MessageType]: (untypedMessage) => {
+		[GetTelemetryHistory.MessageType]: async (untypedMessage) => {
 			this.postLogHistory();
 			return true;
 		},

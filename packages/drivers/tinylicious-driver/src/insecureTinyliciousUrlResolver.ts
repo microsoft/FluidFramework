@@ -4,12 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	DriverHeader,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.
@@ -68,7 +63,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		const deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
 		const storageUrl = `${this.tinyliciousEndpoint}/repos/tinylicious`;
 
-		const response: IFluidResolvedUrl = {
+		const response: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl,
 				ordererUrl: this.tinyliciousEndpoint,
@@ -82,10 +77,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		return response;
 	}
 
-	public async getAbsoluteUrl(
-		resolvedUrl: IFluidResolvedUrl,
-		relativeUrl: string,
-	): Promise<string> {
+	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
 		const documentId = decodeURIComponent(
 			resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}/tinylicious/`, ""),
 		);

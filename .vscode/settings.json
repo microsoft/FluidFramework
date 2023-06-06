@@ -25,19 +25,23 @@
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
 		"endregion",
+		"handlecache",
+		"handletable",
 		"injective",
 		"losslessly",
 		"mitigations",
+		"mocharc",
 		"multinomial",
-		"nacked",
 		"nonfinite",
 		"pseudorandomly",
-		"retriable",
+		"snapshotlegacy",
+		"testconsumer",
 		"Tinylicious",
 		"tombstoned",
 		"TSDoc",
 		"unacked",
-		"unaugmented"
+		"unaugmented",
+		"undoprovider"
 	],
 
 	// Enable prettier as default formatter, and disable rules that disagree with it
