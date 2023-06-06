@@ -1183,10 +1183,10 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end)
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (both ends inclusively)
 	 */
 	public findIntervalsWithEndInRange(start: number, end: number) {
-		if (start <= 0 || start > end - 1 || this.intervalTree.isEmpty()) {
+		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
 		const results: TInterval[] = [];
@@ -1204,8 +1204,8 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
-			end - 1,
-			end - 1,
+			end,
+			end,
 			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
@@ -1242,7 +1242,7 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end)
 	 */
 	public findIntervalsWithStartInRange(start: number, end: number) {
-		if (start <= 0 || start > end - 1 || this.intervalTree.isEmpty()) {
+		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
 		const results: TInterval[] = [];
@@ -1260,8 +1260,8 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
-			end - 1,
-			end - 1,
+			end,
+			end,
 			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
