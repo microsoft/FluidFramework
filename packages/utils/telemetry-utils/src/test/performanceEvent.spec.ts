@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 
@@ -45,6 +45,6 @@ describe("PerformanceEvent", () => {
 		};
 
 		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, callback);
-		assert(logger.errorsLogged === 0, "Shouldn't have logged any errors");
+		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 });
