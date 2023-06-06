@@ -96,6 +96,10 @@ export function encode<TManager, TEncodedShape>(
 	shapeManager: TManager,
 	chunk: TreeChunk,
 ): EncodedChunkGeneric<TEncodedShape> {
+	if (chunk === emptyChunk) {
+		return { version, identifiers: [], shapes: [], data: [] };
+	}
+
 	const buffer: BufferFormat<TEncodedShape> = [];
 	// Populate buffer, including shape and identifier references
 	encoderLibrary.encode(chunk, shapeManager, buffer);
@@ -112,6 +116,12 @@ export function decode<TDecoderCache, TEncodedShape extends object>(
 	cache: TDecoderCache,
 	chunk: EncodedChunkGeneric<TEncodedShape>,
 ): TreeChunk {
+	if (chunk.data.length === 0) {
+		assert(chunk.identifiers.length === 0, "chunk without shapes should be empty.");
+		assert(chunk.shapes.length === 0, "chunk without shapes should be empty.");
+		return emptyChunk;
+	}
+
 	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
 	const stream = { data: chunk.data, offset: 0 };
 	const result = generalDecoder(decoders, stream);
