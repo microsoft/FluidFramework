@@ -44,14 +44,14 @@ export class TscTask extends LeafTask {
 		// Using tsc incremental information
 		const tsBuildInfo = await this.readTsBuildInfo();
 		if (tsBuildInfo === undefined) {
-			this.logVerboseTrigger("tsBuildInfo not found");
+			this.traceTrigger("tsBuildInfo not found");
 			return false;
 		}
 
 		// Check previous build errors
 		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
 		if (diag?.some((item) => Array.isArray(item))) {
-			this.logVerboseTrigger("previous build error");
+			this.traceTrigger("previous build error");
 			return false;
 		}
 		// Check dependencies file hashes
@@ -61,7 +61,7 @@ export class TscTask extends LeafTask {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
 			if (fileName === undefined) {
-				this.logVerboseTrigger(`missing file name for file info id ${i}`);
+				this.traceTrigger(`missing file name for file info id ${i}`);
 				return false;
 			}
 			try {
@@ -75,11 +75,11 @@ export class TscTask extends LeafTask {
 				const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
-					this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
+					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
 					return false;
 				}
 			} catch (e: any) {
-				this.logVerboseTrigger(`exception generating hash for ${fileName}`);
+				this.traceTrigger(`exception generating hash for ${fileName}`);
 				verbose(e.stack);
 				return false;
 			}
@@ -367,7 +367,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify({ tsBuildInfoFiles, config });
 		} catch (e) {
-			this.logVerboseTask(`error generating done file content ${e}`);
+			this.traceExec(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}

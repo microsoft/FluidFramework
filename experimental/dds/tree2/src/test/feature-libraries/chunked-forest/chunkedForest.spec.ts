@@ -36,6 +36,7 @@ import {
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
+import { mockIntoDelta } from "../../utils";
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -64,7 +65,7 @@ describe("ChunkedForest", () => {
 		assert(!chunk.isShared());
 		compareForest(forest, [initialState]);
 
-		const repairStore = new ForestRepairDataStore(forest);
+		const repairStore = new ForestRepairDataStore(forest, mockIntoDelta);
 		const delta: Delta.Root = new Map([
 			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
 		]);

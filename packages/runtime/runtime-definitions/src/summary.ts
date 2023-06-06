@@ -74,56 +74,6 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * The garbage collection data of each node in the reference graph.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
- */
-export interface IGarbageCollectionNodeData {
-	/**
-	 * The set of routes to other nodes in the graph.
-	 */
-	outboundRoutes: string[];
-	/**
-	 * If the node is unreferenced, the timestamp of when it was marked unreferenced.
-	 */
-	unreferencedTimestampMs?: number;
-}
-
-/**
- * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
- * GC data.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
- */
-export interface IGarbageCollectionState {
-	gcNodes: { [id: string]: IGarbageCollectionNodeData };
-}
-
-/**
- * @deprecated - IGarbageCollectionState is written in the root of the summary now.
- * Legacy GC details from when the GC details were written at the data store's summary tree.
- */
-export interface IGarbageCollectionSummaryDetailsLegacy {
-	/** A list of routes to Fluid objects that are used in this node. */
-	usedRoutes?: string[];
-	/** The GC data of this node. */
-	gcData?: IGarbageCollectionData;
-	/** If this node is unreferenced, the time when it was marked as such. */
-	unrefTimestamp?: number;
-}
-
-/**
- * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
- */
-export interface IGarbageCollectionSnapshotData {
-	gcState: IGarbageCollectionState;
-	tombstones: string[] | undefined;
-	deletedNodes: string[] | undefined;
-}
-
-/**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
  */

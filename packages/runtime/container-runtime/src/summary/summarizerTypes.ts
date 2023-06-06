@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IEvent,
-	IEventProvider,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
-import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
+import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -72,17 +67,17 @@ export interface IConnectableRuntime {
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	disposeFn?(): void;
+	disposeFn(): void;
 	closeFn(): void;
-	on?(
+	on(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
 	): this;
-	off?(
+	off(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
 	): this;
@@ -107,12 +102,12 @@ export interface IRefreshSummaryAckOptions {
 	/** Reference sequence number from the ack's summary op */
 	readonly summaryRefSeq: number;
 	/** Telemetry logger to which telemetry events will be forwarded. */
-	readonly summaryLogger: ITelemetryLogger;
+	readonly summaryLogger: ITelemetryLoggerExt;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/** Logger to use for correlated summary events */
-	readonly summaryLogger: ITelemetryLogger;
+	readonly summaryLogger: ITelemetryLoggerExt;
 	/** Tells when summary process should be cancelled */
 	readonly cancellationToken: ISummaryCancellationToken;
 }

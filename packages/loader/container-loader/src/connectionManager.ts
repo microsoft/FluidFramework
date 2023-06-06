@@ -4,11 +4,7 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import {
-	IDisposable,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
@@ -48,7 +44,11 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	TelemetryLogger,
+	normalizeError,
+} from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
@@ -346,7 +346,7 @@ export class ConnectionManager implements IConnectionManager {
 		public readonly containerDirty: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
 	) {
 		this.clientDetails = this.client.details;
