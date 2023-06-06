@@ -5,6 +5,10 @@
 
 import { assert } from "chai";
 import {
+	BenchmarkDescription,
+	BenchmarkType,
+	TestType,
+	Titled,
 	benchmarkTypes,
 	performanceTestSuiteTag,
 	testTypes,
@@ -38,6 +42,24 @@ export function getName(name: string): string {
 		s = s.slice(0, indexOfSplitter);
 	}
 	return s.trim();
+}
+
+/**
+ * Tags and formats the provided Title from the supplied BenchmarkDescription to create a
+ * tagged and formatted Title for the Reporter.
+ * 
+ * @param args - see {@link BenchmarkDescription} and {@link Titled}
+ * @returns - a formatted tagged title from the supplied BenchmarkDescription
+ */
+export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
+	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
+	const testTypeTag = TestType[TestType.ExecutionTime];
+	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+
+	if (args.category !== "") {
+		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+	}
+	return qualifiedTitle;
 }
 
 /**
