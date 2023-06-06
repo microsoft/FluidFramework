@@ -243,7 +243,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 /**
- * SharedTree class object containing static factory method use for {@link @fluidframework/fluid-static#IFluidContainer}.
+ * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
  *
  * @public
  */

@@ -15435,9 +15435,6 @@ importers:
 
   packages/tools/devtools/devtools-core:
     dependencies:
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../../experimental/dds/tree
       '@fluid-experimental/tree2':
         specifier: workspace:~
         version: link:../../../../experimental/dds/tree2
@@ -15586,15 +15583,9 @@ importers:
       '@fluid-experimental/react-inputs':
         specifier: workspace:~
         version: link:../../../../experimental/framework/react-inputs
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../../experimental/dds/tree
       '@fluid-experimental/tree2':
         specifier: workspace:~
         version: link:../../../../experimental/dds/tree2
-      '@fluidframework/aqueduct':
-        specifier: workspace
-        version: link:../../../framework/aqueduct
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../../dds/cell
