@@ -14,6 +14,7 @@ import {
 	ChunkEncoderLibrary,
 	BufferFormat,
 	NamedChunkEncoder,
+	decode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingGeneric";
 
@@ -23,8 +24,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/formatGeneric";
 import {
+	ChunkDecoder,
 	Counter,
 	DeduplicationTable,
+	DiscriminatedUnionDispatcher,
+	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingUtilities";
 import { ReferenceCountedBase, getOrCreate } from "../../../../util";
@@ -155,7 +159,30 @@ const encoder2: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk2> = 
 	},
 };
 
-const library = new ChunkEncoderLibrary<TestManager, EncodedChunkShape>(encoder1, encoder2);
+const encodeLibrary = new ChunkEncoderLibrary<TestManager, EncodedChunkShape>(encoder1, encoder2);
+
+type DecoderSharedCache = 0;
+
+const decoderLibrary = new DiscriminatedUnionDispatcher<
+	EncodedChunkShape,
+	[cache: DecoderSharedCache],
+	ChunkDecoder
+>({
+	a(shape: Constant, cache): ChunkDecoder {
+		return {
+			decode(decoders, stream): TreeChunk {
+				return new TestChunk2(readStreamNumber(stream));
+			},
+		};
+	},
+	b(shape: StringShape, cache): ChunkDecoder {
+		return {
+			decode(decoders, stream): TreeChunk {
+				return new TestChunk1(shape);
+			},
+		};
+	},
+});
 
 describe("chunkEncodingGeneric", () => {
 	describe("handleShapesAndIdentifiers", () => {
@@ -266,7 +293,7 @@ describe("chunkEncodingGeneric", () => {
 		const buffer: BufferFormat<EncodedChunkShape> = [];
 		const manager: TestManager = new Map();
 		const chunk = new TestChunk1("x");
-		library.encode(chunk, manager, buffer);
+		encodeLibrary.encode(chunk, manager, buffer);
 		assert.equal(manager.size, 1);
 		const shape = manager.get("x");
 		assert(shape instanceof TestShape);
@@ -276,7 +303,7 @@ describe("chunkEncodingGeneric", () => {
 
 	it("encode: empty", () => {
 		const manager: TestManager = new Map();
-		const encoded = encode(version, library, manager, emptyChunk);
+		const encoded = encode(version, encodeLibrary, manager, emptyChunk);
 		assert.deepEqual(encoded, {
 			version,
 			identifiers: [],
@@ -288,7 +315,7 @@ describe("chunkEncodingGeneric", () => {
 	it("encode: constant shape", () => {
 		const manager: TestManager = new Map();
 		const chunk = new TestChunk2(5);
-		const encoded = encode(version, library, manager, chunk);
+		const encoded = encode(version, encodeLibrary, manager, chunk);
 		assert.deepEqual(encoded, {
 			version,
 			identifiers: [],
@@ -300,7 +327,7 @@ describe("chunkEncodingGeneric", () => {
 	it("encode: flexible shape", () => {
 		const manager: TestManager = new Map();
 		const chunk = new TestChunk1("content");
-		const encoded = encode(version, library, manager, chunk);
+		const encoded = encode(version, encodeLibrary, manager, chunk);
 		assert.deepEqual(encoded, {
 			version,
 			identifiers: [],
@@ -309,7 +336,25 @@ describe("chunkEncodingGeneric", () => {
 		});
 	});
 
-	// TODO: finish tests
-	it("decode", () => {});
-	it("roundtrip", () => {});
+	it("decode: constant shape", () => {
+		const chunk = decode(decoderLibrary, 0, {
+			version,
+			identifiers: [],
+			shapes: [{ a: 0 }],
+			data: [0, 5],
+		});
+		assert(chunk instanceof TestChunk2);
+		assert.equal(chunk.value, 5);
+	});
+
+	it("decode: flexible shape", () => {
+		const chunk = decode(decoderLibrary, 0, {
+			version,
+			identifiers: [],
+			shapes: [{ b: "content" }],
+			data: [0],
+		});
+		assert(chunk instanceof TestChunk1);
+		assert.equal(chunk.value, "content");
+	});
 });
