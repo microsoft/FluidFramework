@@ -36,7 +36,7 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 			// where the binary blob is converted to a string using UTF-8 encoding
 			// which is producing incorrect results for compressed data.
 			const configForInitial = {
-				algorithm: this._config.algorithm,
+				...this._config,
 				minSizeToCompress: Number.POSITIVE_INFINITY,
 			};
 			const newAppSumary =
