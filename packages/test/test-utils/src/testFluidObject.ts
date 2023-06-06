@@ -205,10 +205,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 		});
 
 		const instance: TestFluidObject = new TestFluidObject(
-			runtime,
-			// This works because 'runtime' is an instance of runtimeClass (which is a FluidDataStoreRuntime and
-			// thus implements IFluidDataStoreChannel) which passes itself as the parameter to this function.
-			runtime,
+			runtime, // runtime
+			runtime, // channel
 			context,
 			factoryEntriesMapForObject,
 		);
