@@ -95,7 +95,7 @@ tools/markdown-magic/test/include.md
 .github/fabricbot.json
 
 # These are actually templates, not pure YAML files
-server/**/templates/*.yaml
+**/templates/*.yaml
 
 # These files are auto-generated according to the comments in the files
 **/charts/**/Chart.yaml
