@@ -1166,7 +1166,10 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 {
 	private readonly intervalTree;
 
-	constructor(private readonly helpers: IIntervalHelpers<TInterval>) {
+	constructor(
+		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly client?: Client,
+	) {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
 	}
@@ -1195,7 +1198,7 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			undefined as any as Client,
+			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
 
@@ -1203,7 +1206,7 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end - 1,
 			end - 1,
-			undefined as any as Client,
+			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
 
@@ -1217,7 +1220,10 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 {
 	private readonly intervalTree;
 
-	constructor(private readonly helpers: IIntervalHelpers<TInterval>) {
+	constructor(
+		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly client?: Client,
+	) {
 		if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareStarts);
@@ -1248,7 +1254,7 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			undefined as any as Client,
+			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
 
@@ -1256,7 +1262,7 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end - 1,
 			end - 1,
-			undefined as any as Client,
+			this.client ?? (undefined as any as Client),
 			IntervalType.Transient,
 		);
 
