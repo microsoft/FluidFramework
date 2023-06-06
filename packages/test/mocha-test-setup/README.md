@@ -91,6 +91,15 @@ Where `${packageDir}` is the location of the package being tested, and `${packag
 If a value for `testReportPrefix` is passed to `getFluidTestMochaConfig()`, `${testReportPrefix}-` will be prepended to
 the output file name, and ` - ${testReportPrefix}` will be appended to the suiteName.
 
+### FLUID_LOGGER_PROPS
+
+In case there is a need to override telemetry metrics, one can make use of an environment variable `FLUID_LOGGER_PROPS`,
+that to override them during execution time:
+
+```
+FLUID_LOGGER_PROPS='{ "hostName": "Benchmark" }'
+```
+
 ## Mapping of package paths to account for Lerna hoisting
 
 The way we use Lerna to manage our monorepo, package dependencies are sometimes moved out of the `node_modules` folder

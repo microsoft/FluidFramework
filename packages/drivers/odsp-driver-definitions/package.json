@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver-definitions",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,9 +40,9 @@
 		"@fluidframework/driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.18.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.4.1.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -56,6 +56,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_OdspError": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

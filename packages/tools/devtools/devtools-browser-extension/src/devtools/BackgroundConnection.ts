@@ -13,6 +13,7 @@ import {
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
 
+import { browser } from "../Globals";
 import {
 	devToolsInitAcknowledgementType,
 	DevToolsInitMessage,
@@ -21,7 +22,6 @@ import {
 	postMessageToPort,
 	TypedPortConnection,
 } from "../messaging";
-import { browser } from "../utilities";
 import {
 	devtoolsScriptMessageLoggingOptions,
 	formatDevtoolsScriptMessageForLogging,

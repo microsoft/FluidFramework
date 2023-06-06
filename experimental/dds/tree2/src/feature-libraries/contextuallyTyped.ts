@@ -305,10 +305,10 @@ function shallowCompatibilityTest(
 	type: TreeSchemaIdentifier,
 	data: ContextuallyTypedNodeData,
 ): boolean {
-	assert(!areCursors(data), "cursors cannot be used as contextually typed data.");
+	assert(!areCursors(data), 0x6b1 /* cursors cannot be used as contextually typed data. */);
 	assert(
 		data !== undefined,
-		"undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData.",
+		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	const schema = lookupTreeSchema(schemaData, type);
 	if (isPrimitiveValue(data)) {
@@ -458,11 +458,15 @@ export function applyTypesFromContext(
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
 		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
+		return {
+			value: undefined,
+			type,
+			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
+		};
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
-			assert(!fields.has(key), "Keys should not be duplicated");
+			assert(!fields.has(key), 0x6b3 /* Keys should not be duplicated */);
 			const childSchema = getFieldSchema(key, schemaData, schema);
 			const children = applyFieldTypesFromContext(schemaData, childSchema, data[key]);
 			if (children.length > 0) {

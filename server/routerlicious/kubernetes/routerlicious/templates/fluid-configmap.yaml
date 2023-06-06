@@ -138,7 +138,9 @@ data:
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
-            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
+            "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
         },
         "system": {
             "httpServer": {

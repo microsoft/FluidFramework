@@ -43,9 +43,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.18.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/async": "^3.2.9",
@@ -76,6 +76,7 @@
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"pnpm": {
 		"overrides": {
+			"@types/node": "^16.18.16",
 			"qs": "^6.11.0"
 		}
 	}
