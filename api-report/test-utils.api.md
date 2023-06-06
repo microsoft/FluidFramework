@@ -279,9 +279,9 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    get ITestFluidObject(): this;
+    initialize(existing: boolean): Promise<void>;
     // (undocumented)
-    static load(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntries: Map<string, IChannelFactory>, existing: boolean): Promise<TestFluidObject>;
+    get ITestFluidObject(): this;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
