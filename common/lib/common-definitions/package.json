@@ -42,9 +42,9 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.18.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
