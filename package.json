@@ -89,7 +89,7 @@
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
 		"test:stress": "pnpm run -r --no-sort --stream --no-bail test:stress",
 		"tsc": "pnpm run -r --stream tsc",
-		"tsc:fast": "fluid-build --root . -s tsc",
+		"tsc:fast": "fluid-build --root . -t tsc",
 		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub typetests -g client --reset --previous --normalize",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
