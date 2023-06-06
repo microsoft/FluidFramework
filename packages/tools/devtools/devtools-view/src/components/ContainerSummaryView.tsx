@@ -319,19 +319,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					<DataRow
 						label="Container ID"
 						infoTooltipContent={containerIdTooltipText}
-						value={
-							(containerState.resolvedUrl as IResolvedUrl)?.id ??
-							"Container is not attached"
-						}
+						value={resolvedUrl?.id ?? waitingForContainerToAttachText}
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
 						label="Resolved URL"
 						infoTooltipContent={containerResolvedUrlTooltipText}
-						value={
-							(containerState.resolvedUrl as IResolvedUrl)?.url ??
-							"Container is not attached"
-						}
+						value={resolvedUrl?.url ?? waitingForContainerToAttachText}
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
