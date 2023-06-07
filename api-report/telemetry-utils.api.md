@@ -322,7 +322,10 @@ export enum TelemetryDataTag {
 }
 
 // @public
-export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[];
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
+    [key: string]: // Flat objects can have the same properties as the event itself
+    string | number | boolean | undefined | (string | number | boolean)[];
+};
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;

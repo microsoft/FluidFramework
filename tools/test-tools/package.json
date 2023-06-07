@@ -17,8 +17,6 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "tsc && tsc --project ./src/test/tsconfig.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"clean": "rimraf dist *.tsbuildinfo",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -31,7 +29,7 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/mocha": "^10.0.0",
 		"@types/node": "^14.18.0",
