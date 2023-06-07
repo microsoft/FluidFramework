@@ -1094,6 +1094,56 @@ describe("editable-tree: data binder", () => {
 			address.phones = [113, 114];
 			assert.equal(invalidationCount, 0);
 		});
+		it("registers to root, enables autoFlush, matches paths with path policy and any index. multiple callbacks", () => {
+			const { tree, root, address } = retrieveNodes();
+			const syntaxTree1: BindSyntaxTree = {
+				address: {
+					zip: true,
+				},
+			};
+			const syntaxTree2: BindSyntaxTree = {
+				address: {
+					street: true,
+				},
+			};
+			const bindTree1: BindTree = compileSyntaxTree(syntaxTree1);
+			const bindTree2: BindTree = compileSyntaxTree(syntaxTree2);
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlushPolicy: "afterBatch",
+				matchPolicy: "path",
+			});
+			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
+				createDataBinderInvalidating(tree.events, options);
+			let invalidationCount1 = 0;
+			dataBinder.register(
+				root,
+				BindingType.Invalidation,
+				[bindTree1],
+				(invalidStateContext: InvalidStateBindingContext) => {
+					invalidationCount1++;
+				},
+			);
+			let invalidationCount2 = 0;
+			dataBinder.register(
+				root,
+				BindingType.Invalidation,
+				[bindTree2],
+				(invalidStateContext: InvalidStateBindingContext) => {
+					invalidationCount2++;
+				},
+			);
+			address.zip = "11111";
+			address.street = "11111";
+			assert.equal(invalidationCount1, 1);
+			assert.equal(invalidationCount2, 1);
+			dataBinder.unregister();
+			invalidationCount1 = 0;
+			invalidationCount2 = 0;
+			address.zip = "11111";
+			address.street = "11111";
+			assert.equal(invalidationCount1, 0);
+			assert.equal(invalidationCount2, 0);
+		});
 	});
 
 	describe("direct data binder", () => {

@@ -420,55 +420,45 @@ class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
-	protected callbacks: Set<(...args: unknown[]) => any> | undefined;
+	private readonly callbacks: Set<(...args: unknown[]) => any> = new Set();
+
 	public constructor(options: BinderOptions) {
 		super(options);
 	}
-	public onDelete(path: UpPath, count: number): void {
+
+	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
 		if (visitPaths !== undefined) {
 			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
-					this.callbacks = callbacks;
+					for (const callback of callbacks) {
+						this.callbacks.add(callback);
+					}
 				}
 			}
 		}
+	}
+
+	public onDelete(path: UpPath, count: number): void {
+		this.processRegisteredPaths(path);
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.callbacks = callbacks;
-				}
-			}
-		}
+		this.processRegisteredPaths(path);
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.callbacks = callbacks;
-				}
-			}
-		}
+		this.processRegisteredPaths(path);
 	}
 
 	public flush(): InvalidatingPathVisitor {
-		if (this.callbacks !== undefined) {
-			for (const callback of this.callbacks) {
-				callback({
-					type: BindingType.Invalidation,
-				});
-			}
+		for (const callback of this.callbacks) {
+			callback({
+				type: BindingType.Invalidation,
+			});
 		}
-		this.callbacks = undefined;
+		this.callbacks.clear();
 		return this;
 	}
 }
