@@ -4,8 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-
-import { EmptyKey, GlobalFieldKey, MapTree, ValueSchema, symbolFromKey } from "../../core";
+import { v4 as uuid } from "uuid";
+import {
+	EmptyKey,
+	FieldKey,
+	FieldStoredSchema,
+	GlobalFieldKey,
+	MapTree,
+	ValueSchema,
+	symbolFromKey,
+} from "../../core";
 
 import {
 	allowsValue,
@@ -13,6 +21,8 @@ import {
 	applyTypesFromContext,
 	ContextuallyTypedNodeDataObject,
 	cursorFromContextualData,
+	defaultGetFieldGenerator,
+	FieldGenerator,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
@@ -72,7 +82,8 @@ describe("ContextuallyTyped", () => {
 		const numbersObject = builder.object("numbers", { local: { numbers: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext(
-			{ schemaData: schema, typeSet: new Set([numbersObject.name]) },
+			{ schema, getFieldGenerator: defaultGetFieldGenerator },
+			new Set([numbersObject.name]),
 			{
 				numbers: [],
 			},
@@ -88,7 +99,8 @@ describe("ContextuallyTyped", () => {
 		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext(
-			{ schemaData: schema, typeSet: new Set([primaryObject.name]) },
+			{ schema, getFieldGenerator: defaultGetFieldGenerator },
+			new Set([primaryObject.name]),
 			[],
 		);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
@@ -116,13 +128,30 @@ describe("ContextuallyTyped", () => {
 			const globalFieldKey: GlobalFieldKey = brand("identifier");
 			const contextualData: ContextuallyTypedNodeDataObject = {};
 
+			const getFieldGenerator = (
+				key: FieldKey,
+				schema: FieldStoredSchema,
+			): FieldGenerator => {
+				const fieldGenerator = (): MapTree[] => {
+					return [
+						{
+							value: uuid(),
+							type: identifierSchema.name,
+							fields: new Map(),
+						},
+					];
+				};
+				return fieldGenerator;
+			};
+
 			const treeFromContextualData = jsonableTreeFromCursor(
 				cursorFromContextualData(
 					{
-						schemaData: nodeSchemaData,
-						typeSet: new Set([nodeSchema.name]),
-						globalFieldKeySymbol: symbolFromKey(globalFieldKey),
+						schema: nodeSchemaData,
+						getFieldGenerator,
+						requiredField: symbolFromKey(globalFieldKey),
 					},
+					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);
@@ -146,16 +175,31 @@ describe("ContextuallyTyped", () => {
 			const nodeSchemaData = builder.intoDocumentSchema(
 				SchemaBuilder.fieldOptional(nodeSchema),
 			);
-			const globalFieldKey: GlobalFieldKey = brand("identifier");
 			const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
+
+			const getFieldGenerator = (
+				key: FieldKey,
+				schema: FieldStoredSchema,
+			): FieldGenerator => {
+				const fieldGenerator = (): MapTree[] => {
+					return [
+						{
+							value: uuid(),
+							type: identifierSchema.name,
+							fields: new Map(),
+						},
+					];
+				};
+				return fieldGenerator;
+			};
 
 			const treeFromContextualData = jsonableTreeFromCursor(
 				cursorFromContextualData(
 					{
-						schemaData: nodeSchemaData,
-						typeSet: new Set([nodeSchema.name]),
-						globalFieldKeySymbol: symbolFromKey(globalFieldKey),
+						schema: nodeSchemaData,
+						getFieldGenerator,
 					},
+					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);

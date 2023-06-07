@@ -30,6 +30,8 @@ import {
 	mintRevisionTag,
 	ValueSchema,
 	tagChange,
+	FieldStoredSchema,
+	FieldKey,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
 import {
@@ -59,7 +61,13 @@ const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 // TODO: Figure out issue with deepfreezing here
 const tree1 = jsonableTreeFromCursor(
 	cursorFromContextualData(
-		{ schemaData, typeSet: new Set([nodeSchema.name]) },
+		{
+			schema: schemaData,
+			getFieldGenerator: (key: FieldKey, schema: FieldStoredSchema): undefined => {
+				return;
+			},
+		},
+		new Set([nodeSchema.name]),
 		tree1ContextuallyTyped,
 	),
 );

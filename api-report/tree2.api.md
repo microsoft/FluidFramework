@@ -241,16 +241,6 @@ infer Head,
 ] ? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>] : [];
 
 // @alpha
-export interface ContextObject {
-    // (undocumented)
-    globalFieldKeySymbol?: GlobalFieldKeySymbol;
-    // (undocumented)
-    schemaData: SchemaDataAndPolicy;
-    // (undocumented)
-    typeSet: TreeTypeSet;
-}
-
-// @alpha
 export const contextSymbol: unique symbol;
 
 // @alpha
@@ -309,10 +299,10 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
-export function cursorForTypedTreeData<T extends TreeSchema>(schemaData: SchemaDataAndPolicy, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
+export function cursorForTypedTreeData<T extends TreeSchema>(context: TreeDataContext, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
 
 // @alpha
-export function cursorFromContextualData(context: ContextObject, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
 export const enum CursorLocationType {
@@ -328,6 +318,9 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
     fork(): CursorWithNode<TNode>;
     getNode(): TNode;
 }
+
+// @alpha
+export const defaultGetFieldGenerator: (key: FieldKey, schema: FieldStoredSchema) => undefined;
 
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -559,6 +552,9 @@ export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
+
+// @alpha
+export type FieldGenerator = () => MapTree[];
 
 // @alpha
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
@@ -1146,6 +1142,12 @@ interface LocalFields {
 
 // @alpha
 export interface MakeNominal {
+}
+
+// @alpha
+export interface MapTree extends NodeData {
+    // (undocumented)
+    fields: Map<FieldKey, MapTree[]>;
 }
 
 // @alpha
@@ -1747,6 +1749,14 @@ export interface TreeAdapter {
     readonly input: TreeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeSchemaIdentifier;
+}
+
+// @alpha
+export interface TreeDataContext {
+    getFieldGenerator(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+    // (undocumented)
+    readonly requiredField?: GlobalFieldKeySymbol;
+    readonly schema: SchemaDataAndPolicy;
 }
 
 // @alpha (undocumented)
