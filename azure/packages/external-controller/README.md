@@ -10,20 +10,21 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
-1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `pnpm run build:fast --nolint @fluid-example/app-integration-external-controller`
-1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
+      `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
+1. Run `npm start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
@@ -98,7 +99,8 @@ secret key in the client-side code whereas while running the service locally for
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Contribution Guidelines
 
@@ -125,7 +127,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Help
 
@@ -142,7 +145,8 @@ Thank you!
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
 

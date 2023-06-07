@@ -9,7 +9,8 @@ To run Azure Local Service e2e tests: `test:realsvc`.
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Contribution Guidelines
 
@@ -36,7 +37,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Help
 
@@ -53,7 +55,8 @@ Thank you!
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
 
