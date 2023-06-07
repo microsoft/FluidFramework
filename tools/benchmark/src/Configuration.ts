@@ -418,7 +418,7 @@ export function benchmarkArgumentsIsCustom(
 /**
  * Tags and formats the provided Title from the supplied BenchmarkDescription to create a
  * tagged and formatted Title for the Reporter.
- * 
+ *
  * @param args - see {@link BenchmarkDescription} and {@link Titled}
  * @returns - a formatted tagged title from the supplied BenchmarkDescription
  */

@@ -47,6 +47,6 @@ export {
 	BenchmarkResult,
 	isResultError,
 	Phase,
-	runBenchmark
+	runBenchmark,
 } from "./runBenchmark";
 export { Timer } from "./timer";
