@@ -86,7 +86,7 @@ describe("parseBundleAndExportFile", () => {
 		assert(!result.success, "result should not be successful");
 		assert(
 			result.error?.message.toLowerCase().includes("network fetch"),
-			`error message does not contain "timed out" [${result.error?.message}]`,
+			`error message does not contain "network fetch" [${result.error?.message}]`,
 		);
 	});
 
