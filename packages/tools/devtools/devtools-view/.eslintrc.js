@@ -22,6 +22,12 @@ module.exports = {
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
 
+		/**
+		 * TODO: remove this override once dependency on base config has been updated
+		 * (newer versions will have this rule disabled).
+		 */
+		"unicorn/no-useless-undefined": "off",
+
 		"import/no-internal-modules": [
 			"error",
 			{

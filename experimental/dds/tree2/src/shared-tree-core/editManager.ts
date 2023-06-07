@@ -5,7 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
+import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	AnchorSet,
 	assertIsRevisionTag,
@@ -25,21 +25,7 @@ import {
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, SharedTreeBranch } from "./branch";
-
-export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-/**
- * Contains a single change to the `SharedTree` and associated metadata
- */
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {
-	/** An identifier representing the session/user/client that made this commit */
-	readonly sessionId: SessionId;
-}
-/**
- * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
- */
-export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
-	sequenceNumber: SeqNumber;
-}
+import { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
@@ -521,14 +507,6 @@ export class EditManager<
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);
 	}
-}
-
-/**
- * A branch off of the trunk for use in summaries
- */
-export interface SummarySessionBranch<TChangeset> {
-	readonly base: RevisionTag;
-	readonly commits: Commit<TChangeset>[];
 }
 
 /**
