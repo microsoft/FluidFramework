@@ -73,7 +73,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "^1.0.0",
 		"@microsoft/api-extractor": "^7.34.4",

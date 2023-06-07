@@ -67,7 +67,7 @@
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/property-proxy": "workspace:~",
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@storybook/addon-actions": "^6.4.22",
 		"@storybook/addon-essentials": "^6.4.22",
 		"@storybook/addon-links": "^6.4.22",

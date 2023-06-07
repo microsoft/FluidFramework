@@ -84,7 +84,7 @@
 		"valid-url": "^1.0.9"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/cors": "^2.8.4",

@@ -10,7 +10,7 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/../../../node_modules/mocha/bin/_mocha",
 			"args": ["dist/test", " --recursive", "--no-timeouts", "--exit"],
-			"cwd": "${workspaceRoot}"
-		}
-	]
+			"cwd": "${workspaceRoot}",
+		},
+	],
 }

@@ -78,7 +78,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/azure-local-service": "workspace:~",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
