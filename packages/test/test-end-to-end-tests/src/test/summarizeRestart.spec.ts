@@ -191,18 +191,8 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			const counter = SharedCounter.create(dataObject.runtime, "counter");
 			dataObject.root.set("counter", counter.handle);
 
-			const { container: summarizingContainer, summarizer } = await createSummarizer(
-				provider,
-				container,
-				undefined,
-				undefined,
-				mockConfigProvider(settings),
-			);
-
 			// summary1
-			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
-			summarizer.close();
-			summarizingContainer.close();
+			await provider.ensureSynchronized();
 
 			const summaryConfigOverrides = {
 				...DefaultSummaryConfiguration,
@@ -220,17 +210,21 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			};
 
 			const loader = provider.makeTestLoader(configWithMissingChannelFactory);
-			const { container: summarizingContainer2, summarizer: summarizer2 } =
-				await createSummarizerCore(container, loader, summaryVersion1);
+			const { container: summarizingContainer, summarizer } = await createSummarizerCore(
+				container,
+				loader,
+			);
 
 			await provider.ensureSynchronized();
 
 			// The summarizer should now fail as we have a missing channel factory
-			await summarizer2.run("test");
+			await summarizer.run("test");
 			await provider.ensureSynchronized();
 
-			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
-			assert(summarizingContainer.closed, "summarizer1 should be closed");
+			assert(
+				summarizingContainer.closed,
+				"summarizer should be closed after failing to summarize",
+			);
 			assert(!container.closed, "Original container should not be closed");
 		},
 	);
