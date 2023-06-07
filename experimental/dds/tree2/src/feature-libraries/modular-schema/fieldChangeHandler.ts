@@ -96,8 +96,8 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
-		deletedSubtree: boolean,
 		constraintState: ConstraintState,
+		existenceStateChange?: NodeExistenceStateChange,
 	): TChangeset;
 
 	/**
@@ -110,8 +110,8 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
-		deletedSubtree: boolean,
 		constraintState: ConstraintState,
+		existenceStateChange?: NodeExistenceStateChange,
 	): TChangeset;
 }
 

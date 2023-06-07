@@ -15,6 +15,7 @@ import {
 	NodeChangeRebaser,
 	IdAllocator,
 	RevisionMetadataSource,
+	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
@@ -111,8 +112,8 @@ function rebaseGenericChange(
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
-	deletedSubtree: boolean,
 	constraintState: ConstraintState,
+	existenceStateChange: NodeExistenceStateChange = NodeExistenceStateChange.Unchanged,
 ): GenericChangeset {
 	const rebased: GenericChangeset = [];
 	let iChange = 0;
@@ -150,8 +151,12 @@ function rebaseGenericChange(
 
 	const slice = change.slice(iChange);
 	slice.forEach((c) => {
-		if (c.nodeChange.nodeExistsConstraint !== undefined && deletedSubtree) {
-			const violatedAfter = deletedSubtree === true;
+		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		if (
+			c.nodeChange.nodeExistsConstraint !== undefined &&
+			existenceStateChange !== NodeExistenceStateChange.Unchanged
+		) {
+			const violatedAfter = existenceStateChange === NodeExistenceStateChange.Deleted;
 
 			if (c.nodeChange.nodeExistsConstraint.violated !== violatedAfter) {
 				c.nodeChange.nodeExistsConstraint = {
