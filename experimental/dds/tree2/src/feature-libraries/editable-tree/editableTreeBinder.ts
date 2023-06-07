@@ -365,58 +365,54 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		super(options);
 	}
 
-	public onDelete(path: UpPath, count: number): void {
+	private processCallbacks(
+		path: UpPath,
+		callbacks: Set<(...args: unknown[]) => any>,
+		otherArgs: object,
+	): void {
+		for (const callback of callbacks) {
+			callback({
+				path,
+				...otherArgs,
+			});
+		}
+	}
+
+	private processRegisteredPaths(
+		path: UpPath,
+		type: BindingContextType,
+		otherArgs: object,
+	): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
+		const visitPaths = this.getRegisteredPaths(type);
 		if (visitPaths !== undefined) {
 			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
-					for (const callback of callbacks) {
-						callback({
-							path,
-							count,
-							type: BindingType.Delete,
-						});
-					}
+					this.processCallbacks(path, callbacks, otherArgs);
 				}
 			}
 		}
+	}
+
+	public onDelete(path: UpPath, count: number): void {
+		this.processRegisteredPaths(path, BindingType.Delete, {
+			count,
+			type: BindingType.Delete,
+		});
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					for (const callback of callbacks) {
-						callback({
-							path,
-							content,
-							type: BindingType.Insert,
-						});
-					}
-				}
-			}
-		}
+		this.processRegisteredPaths(path, BindingType.Insert, {
+			content,
+			type: BindingType.Insert,
+		});
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					for (const callback of callbacks) {
-						callback({
-							path,
-							value,
-							type: BindingType.SetValue,
-						});
-					}
-				}
-			}
-		}
+		this.processRegisteredPaths(path, BindingType.SetValue, {
+			value,
+			type: BindingType.SetValue,
+		});
 	}
 }
 
