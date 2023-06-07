@@ -84,8 +84,11 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		let text: string;
 		let blobHandle: IFluidHandle<ArrayBufferLike>;
 
-		beforeEach(async () => {
+		beforeEach(async function () {
 			provider = getTestObjectProvider();
+			if (!driverSupportsBlobs(provider.driver)) {
+				this.skip();
+			}
 			detachedBlobStorage = new MockDetachedBlobStorage();
 			loader = provider.makeTestLoader({
 				...testContainerConfig,
@@ -160,13 +163,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("after container is attached with map", async function () {
 			detachedDataStore.root.set("map", map.handle);
 			map.set("my blob", blobHandle);
-			const attachP = container.attach(
-				provider.driver.createCreateNewRequest(provider.documentId),
-			);
-			if (!driverSupportsBlobs(provider.driver)) {
-				return;
-			}
-			await attachP;
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 			detachedBlobStorage.blobs.clear();
 			checkForAttachedHandles(map);
 		});
@@ -174,26 +171,14 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("after container is attached with directory", async function () {
 			detachedDataStore.root.set(directoryId, directory.handle);
 			directory.set("my blob", blobHandle);
-			const attachP = container.attach(
-				provider.driver.createCreateNewRequest(provider.documentId),
-			);
-			if (!driverSupportsBlobs(provider.driver)) {
-				return;
-			}
-			await attachP;
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 			detachedBlobStorage.blobs.clear();
 			checkForAttachedHandles(directory);
 		});
 
 		it("after container is attached and dds is detached in map", async function () {
 			map.set("my blob", blobHandle);
-			const attachP = container.attach(
-				provider.driver.createCreateNewRequest(provider.documentId),
-			);
-			if (!driverSupportsBlobs(provider.driver)) {
-				return;
-			}
-			await attachP;
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 			assert.strictEqual(
 				map.handle.isAttached,
 				false,
@@ -220,13 +205,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("after container is attached and dds is detached in directory", async function () {
 			directory.set("my blob", blobHandle);
-			const attachP = container.attach(
-				provider.driver.createCreateNewRequest(provider.documentId),
-			);
-			if (!driverSupportsBlobs(provider.driver)) {
-				return;
-			}
-			await attachP;
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 			assert.strictEqual(
 				directory.handle.isAttached,
 				false,
