@@ -21,22 +21,6 @@ export interface IComparer<T> {
 }
 
 /**
- * A comparer for numbers.
- */
-export const NumberComparer: IComparer<number> = {
-	/**
-	 * The compare function for numbers.
-	 * @returns The difference of the two numbers.
-	 */
-	compare: (a, b): number => a - b,
-
-	/**
-	 * The minimum value of a JavaScript number, which is `Number.MIN_VALUE`.
-	 */
-	min: Number.MIN_VALUE,
-};
-
-/**
  * Interface to a node in {@link Heap}.
  */
 export interface IHeapNode<T> {

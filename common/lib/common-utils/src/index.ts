@@ -31,7 +31,7 @@ export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
 export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";
-export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
+export { IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";
 export { safelyParseJSON } from "./safeParser";
 export {
@@ -42,6 +42,6 @@ export {
 	setLongTimeout,
 	Timer,
 } from "./timer";
-export { ITraceEvent, Trace } from "./trace";
+export { Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";
