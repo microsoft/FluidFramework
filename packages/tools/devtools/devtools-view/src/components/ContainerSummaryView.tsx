@@ -329,16 +329,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
-						label="Delta Storage URL"
-						infoTooltipContent={deltaStorageUrlTooltipText}
-						value={
-							resolvedUrl?.endpoints?.deltaStorageUrl ??
-							waitingForContainerToAttachText
-						}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="Delta Storage URL"
+						label="Orderer URL"
 						infoTooltipContent={ordererUrlTooltipText}
 						value={
 							resolvedUrl?.endpoints?.ordererUrl ?? waitingForContainerToAttachText
@@ -346,10 +337,19 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
-						label="Delta Storage URL"
+						label="Storage URL"
 						infoTooltipContent={storageUrlTooltipText}
 						value={
 							resolvedUrl?.endpoints?.storageUrl ?? waitingForContainerToAttachText
+						}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Delta Storage URL"
+						infoTooltipContent={deltaStorageUrlTooltipText}
+						value={
+							resolvedUrl?.endpoints?.deltaStorageUrl ??
+							waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
