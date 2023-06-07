@@ -909,23 +909,25 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError) {
-		if (this.connectionState === ConnectionState.EstablishingConnection) {
-			this.connectionStateHandler.disconnect("ContainerDisposed");
-		}
+		this.switchFromEstablishingConnectionToDisconnect("ContainerDisposed");
 		this._deltaManager.close(error, true /* doDispose */);
 		this.verifyClosed();
 	}
 
 	public close(error?: ICriticalContainerError) {
-		if (this.connectionState === ConnectionState.EstablishingConnection) {
-			this.connectionStateHandler.disconnect("ContainerClose");
-		}
+		this.switchFromEstablishingConnectionToDisconnect("ContainerClose");
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
 		this._deltaManager.close(error);
 		this.verifyClosed();
+	}
+
+	private switchFromEstablishingConnectionToDisconnect(reason: string) {
+		if (this.connectionState === ConnectionState.EstablishingConnection) {
+			this.connectionStateHandler.disconnect(reason);
+		}
 	}
 
 	private verifyClosed(): void {
@@ -1307,6 +1309,7 @@ export class Container
 	private disconnectInternal() {
 		assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
 
+		this.switchFromEstablishingConnectionToDisconnect("disconnect");
 		// Set Auto Reconnect Mode
 		const mode = ReconnectMode.Disabled;
 		this.setAutoReconnectInternal(mode);
