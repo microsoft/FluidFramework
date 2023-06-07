@@ -867,6 +867,13 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
+			if (roomMap.size >= 1) {
+				const rooms = Array.from(roomMap.values());
+				const documentId = rooms[0].documentId;
+				const tenantId = rooms[0].tenantId;
+				disconnectMetric.setProperties({ ...getLumberBaseProperties(documentId, tenantId) });
+			}
+
 			try {
 				clearExpirationTimer();
 				const removeAndStoreP: Promise<void>[] = [];
@@ -938,16 +945,7 @@ export function configureWebSocketServices(
 					socketTracker.removeSocket(socket.id);
 				}
 				await Promise.all(removeAndStoreP);
-				if (roomMap.size >= 1) {
-					const rooms = Array.from(roomMap.values());
-					const documentId = rooms[0].documentId;
-					const tenantId = rooms[0].tenantId;
-					const clients = await clientManager.getClients(tenantId, documentId);
-					disconnectMetric.setProperties({
-						...getLumberBaseProperties(documentId, tenantId),
-						[CommonProperties.clientCount]: clients.length,
-					});
-				}
+				
 				disconnectMetric.success(`Successfully disconnected.`);
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
