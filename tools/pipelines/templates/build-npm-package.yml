@@ -555,7 +555,7 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
 
-        - ${{ if or(ne(parameters.publishDocs, false), ne(parameters.taskBuildDocs, false)) }}:
+        - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:
