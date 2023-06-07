@@ -1,4 +1,4 @@
 {
 	"tags": ["devtools"],
-	"imports": ["messaging", "utilities"]
+	"imports": ["globals", "messaging"]
 }

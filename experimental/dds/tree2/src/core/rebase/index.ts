@@ -12,6 +12,7 @@ export {
 	RevisionTag,
 	RevisionTagSchema,
 	SessionId,
+	SessionIdSchema,
 } from "./types";
 export {
 	ChangeRebaser,

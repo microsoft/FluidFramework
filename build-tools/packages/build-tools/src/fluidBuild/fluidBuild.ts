@@ -144,7 +144,9 @@ async function main() {
 				log(
 					`Execution time: ${totalElapsedTime.toFixed(
 						3,
-					)}s, Concurrency: ${concurrency.toFixed(3)}`,
+					)}s, Concurrency: ${concurrency.toFixed(
+						3,
+					)}, Queue Wait time: ${buildGraph.totalQueueWaitTime.toFixed(3)}s`,
 				);
 				log(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
 			} else {
@@ -183,7 +185,7 @@ function buildResultString(buildResult: BuildResult) {
 	}
 }
 
-main().catch((error) => {
-	error(`Unexpected error. ${error.message}`);
-	error(error.stack);
+main().catch((e) => {
+	error(`Unexpected error. ${e.message}`);
+	error(e.stack);
 });
