@@ -3,6 +3,11 @@
 Here we detail the vision for the first implementation of undo/redo.
 This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
+Note that the system described here allows for changes to subtrees that were concurrently deleted to have an impact on that subtree,
+even when the deletion is sequenced before the subtree-impacting change.
+This system does not, however support editing of subtrees that were deleted prior,
+though the system may be extended to do so.
+
 Related:
 
 -   [V1 Undo Example Flow](./v1-undo-example-flow.md)
@@ -13,7 +18,7 @@ To that end, we mostly reuse the existing code paths for changesets by always se
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
-Sending concrete undo edits alleviates the need to establish and maintain distributed consensus on an undo window.It also means summaries do not need to include repair data.
+Sending concrete undo edits alleviates the need to establish and maintain distributed consensus on an undo window.
 It does however require sending rebased changes over the wire
 (although that is also needed for resubmitting ops, so concrete undo does not make this a new requirement).
 Rebased changes may contain lineage entries, which we haven't sent over the wire before.
@@ -22,13 +27,12 @@ or of any other issue or special requirement associated with sending rebased cha
 
 Using concrete undos even when the change to be undone has not been sequenced is somewhat problematic
 because we cannot know in advance the exact impact of the change to undo.
-
-For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
-This could lead to some data loss in scenarios where the change to be undone deletes a subtree under which content is concurrently inserted.
+Despite that, we anticipate no data loss and no decoherence from it.
 
 ### Creating Concrete Redo Edits
 
-Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
+Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.
+This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
 
 -   It is better at mitigating data-loss caused by undo.
     For example, undoing an insert will delete any content that has since been added under the inserted node.
@@ -44,14 +48,12 @@ To that end, we need to maintain a tree of undoable commits where each node may 
 interface UndoableCommit<TChange> {
 	/* The commit to undo */
 	readonly commit: GraphCommit<TChange>;
-	/* The repair data associated with the commit */
-	readonly repairData: ReadonlyRepairDataStore;
 	/* The next undoable commit. */
 	readonly parent?: UndoableCommit<TChange>;
 }
 ```
 
-That tree is a sparse copy of the commit tree maintained by `EditManager` and `Checkout`s for branch management.
+That tree is a sparse copy of the commit tree maintained by `EditManager` and `SharedTreeBranch`es for branch management.
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
 Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.
@@ -95,17 +97,17 @@ The redo and undo commit lists for a branch are updated as follows in the face o
 When a branch is forked, the new branch can simply obtain the head undoable and redoable commit pointers from the parent branch.
 This helps keep forking cheap.
 
-## Pulling
+## Rebasing
 
-When a branch is pulled, it must re-attach whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
+When a branch is rebased onto another branch, it must re-create whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
 This can be done by finding the lowest common ancestor in between the two branches,
 and attaching to the tip of the parent branch all of the commits on the child branch that lie under the common ancestor.
 
-Note that all the commits from the child branch will undergo rebasing so the undoable/redoable commit nodes for them will need to be remade.
-It would not be valid to simply update the existing child branch's undo commit node objects by updating the edits and repair data (see below) within.
-That's because it's possible that the child branch may itself be the parent branch of some other child branch,
+Note that all the commits from the rebased branch will undergo rebasing so the undoable/redoable commit nodes for them will need to be remade.
+It would not be valid to simply update the rebased branch's existing undo commit node objects by updating the edits within.
+That's because it's possible that the rebased branch may itself be the parent branch of some other child branch,
 whose undo queue includes those commit nodes.
-The child-most branch's commit nodes should not be affected by the fact that its parent branch executed a pull.
+The child-most branch's commit nodes should not be affected by the fact that its parent branch was rebased.
 
 One simple way to characterize what needs to happen
 (and possibly to implement it)
@@ -123,52 +125,130 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 ## Repair Data
 
-Creating a concrete undo (or redo) edit requires access to the repair data associated with the edit to be undone/redone.
+Repair data is needed in the following cases:
 
-### Deriving Repair Data
+-   Creating an undo (or redo) edit for a local branch.
+-   Applying an undo (or redo) edit from the local branch.
+-   Applying an undo (or redo) edit from a peer.
+-   Applying the effect of a move (peer or local) that pulls a subtree out from deleted content and moves into the document tree.
+-   Applying the effect of rebasing local destructive changes (i.e., overwrites and deletions) that were predicated on a constraint that was violated as part of the rebase.
 
-Repair data needs to be created when an edit is made on a local branch.
+Note that,
+while these are the only cases where we need to know what the repair data is,
+they require that the repair data be kept up to date,
+which then forces to consider cases where the repair data is not needed but is edited.
+This can happen when a client edits a region of the document tree while that region is concurrently deleted by another client.
 
-#### For New Local Edits
+### The Stygian Forest
 
-This can be done by creating a repair store with access to the forest that drives the application UI for this branch
-and passing the `Delta` for the edit to the repair data store _before_ that same delta is applied to the forest.
-This is the same data-flow as what is currently being used to rollback transactions (whether they are aborted or not).
-In the future this may change to a model where the repair data is queried from the forest as part of applying the `Delta` to it.
+(Stygian)[https://www.merriam-webster.com/dictionary/stygian],
+is used here to mean (Styx)[https://en.wikipedia.org/wiki/Styx]-like in its ability to span the realms of undeleted (living) content and deleted (dead) content,
+and ferry data across it.
 
-#### For Rebased Local Edits
+The responsibility of a `StygianForest` is to maintain,
+in addition to the undeleted document data,
+the repair data that may be needed handle the cases listed above.
 
-Repair data also needs to be (re)created when a local edit is rebased in the face of changes on the parent branch (possibly the trunk).
-In that case, we need to reapply the rebased version of the original edits to a separate forest solely for the purpose of generating the repair data.
-"Separate" here means that the forest is not the forest that drives updates to the application's UI.
+This coupling of repair data with the in-document data is motivated by the following points:
 
-The reason we need to use a separate forest is that the normal forest gets updated with a more efficient delta
-(which takes into account the fact that the original version of the rebased changes had already been applied).
-For example, if a local edit deleted some node foo,
-and that edit needed to be rebased over an incoming edit that edits foo in some way,
-then the forest that drives the UI should receive an empty `Delta`.
-However, for the purpose of getting the correct repair data for the rebased edits,
-we do need to get some forest into the state where foo exists and the incoming edit has been applied to it,
-so that we can gather the correct repair data for foo and associate that repair data with the rebased edit.
+-   Aside from some a pair of performance-motivated exceptions (covered below) the repair data is solely relevant to applying changes.
+-   The needs of repair data storage, reading, and editing, are identical to that of in-document data.
+-   Storing both in the same forest makes it easy, when it is appealing to do so,
+    to efficiently remove/restore deleted content because it saves us from having to export/import it from and to the forest.
 
-There are two ways we can get a forest into that state:
+The alternative, coupling repair data with the changesets that birthed them, is undesirable for the following reasons:
 
-1. Fork the forest that drives the UI for that branch,
-   apply the inverse of the original (i.e., unrebased) local edits,
-   then apply the incoming edit(s).
-2. Fork the forest that drives the UI for the parent branch.
+-   While, once rebased, a changeset is fixed, the repair data that this changeset produces may change.
+-   Several components/layers of the `SharedTree` system deal with changesets, not all of them need to care about repair data.
+-   Decoupling repair data from changesets frees the rebasing system from having to plumb through a repair data querying interface,
+    making it more self-contained and therefor easier to implement and test.
+    This is made possible by the fact that repair data is **not** required for the purpose of rebasing changesets.
 
-Option #2 is bound to be more efficient but may require a more complex contract between parent and child branches.
-These options should be explored during implementation.
+#### Implementation
 
-### Managing Repair Data
+Each `StygianForest` wraps a "normal" forest (henceforth referred to as the "inner forest").
+This enables the `StygianForest` to leverage the capabilities of the forest (i.e., storage, reading, and editing) for the purpose of managing repair data.
+In effect, the `StygianForest` meets the more advanced requirements of our repair data system
+(understanding the difference between normal document data vs. repair data, and supporting the more complex lifecycle of the latter)
+by appropriately driving the forest it wraps.
+This allows us to cleanly separate the concerns of locally storing, reading, and editing tree data on one side
+from the the concerns of repair data on the other.
 
-This data can be stored in a repair data store that is co-located with the edit on the relevant commit tree.
-This approach has the following pros and cons:
+### Creating Repair Data On Change Application
 
--   Con: This approach fails to take advantage of repair data store's ability to store repair data for multiple edits.
-    Storing the repair data separately for each edit can lead to additional memory overhead because document paths are not shared between edits.
--   Pro: This approach does not require that repair data stores be able to remove repair data from their internal storage
-    (which is not yet supported).
-    This may also make up for the overhead mentioned above because it makes it faster to discard repair data
-    (we just drop the reference to the store that contains the repair data).
+There are two cases that can lead to the destruction of document data:
+
+-   When a subtree is deleted
+-   When the value on an node is overwritten
+
+When a `Delta` is applied to the `StygianForest`,
+for every change conveyed by the `Delta` that would destroy document data,
+the `StygianForest` must do the following:
+
+-   Translate that change into an equivalent change that preserves the otherwise destroyed data
+    (i.e., the deleted subtree or overwritten value)
+    by moving or copying it in a part of the inner forest that lies outside the scope of the document.
+-   Apply that change to the inner forest.
+-   Keep a record of where that particular piece of repair data is stored in the inner forest.
+
+### Consuming Repair Data On Change Application
+
+There are three cases that can lead the consumption of repair data:
+
+-   When a subtree's deletion is inverted
+-   When the overwrite of node's value is inverted
+-   When a deleted node is resurrected by a move that was concurrent to, but sequenced after, the deletion,
+    and that move's destination lies within the document tree.
+    (This last scenario is not yet supported and is subject to debate.)
+
+When a `Delta` is applied to the `StygianForest`,
+for every change conveyed by the `Delta` that consumes repair data,
+the `StygianForest` must do the following:
+
+-   Lookup in its records where the relevant piece of repair data is stored in the inner forest.
+-   Translate the change into an equivalent change that either
+    -   moves the repair data to the document tree.
+    -   copies the repair data to the document tree and deletes the original.
+-   Apply that change to the inner forest.
+-   Remove the entry in its records for where the relevant piece of repair data was located in the inner forest.
+
+### Editing Repair Data On Change Application
+
+It is possible for repair data to be edited by edits that were authored concurrently to the edit that lead to the creation of that repair data.
+Note that this includes cases where:
+
+-   The edit is contained within a single deleted subtree
+-   The edit spans a pair of deleted subtrees
+-   The edit spans a deleted subtree and the document tree
+
+When a `Delta` is applied to the `StygianForest`,
+for every change conveyed by the `Delta` that edits repair data,
+the `StygianForest` must do the following:
+
+-   Lookup in its records where the relevant piece of repair data is stored in the inner forest.
+-   Translate the change into an equivalent change that applies to the repair data tree in the inner forest.
+-   Apply that change to the inner forest.
+
+### Patching Repair Data After Transactions
+
+### Patching Repair Data After Rebasing
+
+### Repair Data In Summaries
+
+### Garbage-Collecting Repair Data
+
+### Querying Repair Data For Undo
+
+This is only needed because we need to remind peers of what the data is.
+The data is not removed from the `StygianForest`.
+
+### Performance Improvements
+
+#### No Repair Data On Undo of Unsequenced Edits
+
+Don't include repair data (i.e., overwritten values or removed nodes) when sending an undo for a change that has not yet been sequenced.
+This is safe because, so long that the undo is within the collab window when sequenced, the original change is guaranteed to still be in the collab window as well.
+This means the peers are guaranteed to still have the repair data for it in memory.
+If the undo is were to fall outside the collab window when sequenced, then it simply would be ignored.
+
+## Supporting Edits To Deleted Content
