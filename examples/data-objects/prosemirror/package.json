@@ -19,8 +19,6 @@
 		"build:compile": "concurrently npm:build:esnext npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",

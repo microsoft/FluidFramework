@@ -17,8 +17,6 @@
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",

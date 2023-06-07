@@ -18,8 +18,6 @@
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",

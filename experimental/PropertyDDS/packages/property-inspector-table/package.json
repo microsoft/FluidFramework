@@ -24,8 +24,6 @@
 		"build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",

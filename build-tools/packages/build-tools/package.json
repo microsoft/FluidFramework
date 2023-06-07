@@ -27,8 +27,6 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:full",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"bump": "node dist/bumpVersion/bumpVersionCli.js",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",

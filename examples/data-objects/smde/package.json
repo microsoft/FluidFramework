@@ -18,8 +18,6 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run build:esnext",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",

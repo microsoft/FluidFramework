@@ -21,8 +21,6 @@
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"dev": "npm run build:esnext -- --watch",

@@ -15,8 +15,6 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",

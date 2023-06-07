@@ -17,8 +17,6 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "tsc && tsc --project ./src/test/tsconfig.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"clean": "rimraf dist *.tsbuildinfo",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
