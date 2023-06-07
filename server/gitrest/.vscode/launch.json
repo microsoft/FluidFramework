@@ -7,7 +7,7 @@
 			"sourceMaps": true,
 			"name": "Attach",
 			"protocol": "inspector",
-			"port": 9229
+			"port": 9229,
 		},
 		{
 			"type": "node",
@@ -15,13 +15,13 @@
 			"name": "Mocha Tests",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"args": ["-u", "tdd", "--timeout", "999999", "--colors", "${workspaceRoot}/dist/test"],
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "openOnSessionStart",
 		},
 		{
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
-			"program": "${workspaceRoot}/dist/www.js"
-		}
-	]
+			"program": "${workspaceRoot}/dist/www.js",
+		},
+	],
 }

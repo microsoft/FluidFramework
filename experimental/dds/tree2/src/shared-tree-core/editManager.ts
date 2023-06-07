@@ -253,7 +253,9 @@ export class EditManager<
 				for (const [sessionId, branch] of this.peerLocalBranches) {
 					const [rebasedBranch] = rebaseBranch(
 						this.changeFamily.rebaser,
-						this.localBranch.repairDataStoreProvider,
+						// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
+						// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
+						undefined,
 						branch,
 						newTrunkTail,
 						this.trunk.getHead(),
@@ -411,6 +413,10 @@ export class EditManager<
 	 * local's after a summary load.
 	 */
 	public afterSummaryLoad(): void {
+		assert(
+			this.localBranch.repairDataStoreProvider !== undefined,
+			"Local branch must maintain repair data",
+		);
 		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
 	}
 
@@ -447,7 +453,9 @@ export class EditManager<
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = rebaseBranch(
 			this.changeFamily.rebaser,
-			this.localBranch.repairDataStoreProvider,
+			// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
+			undefined,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
 			this.trunk.getHead(),
@@ -502,7 +510,7 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunk.repairDataStoreProvider.applyChange(commit.change);
+		this.trunk.repairDataStoreProvider?.applyChange(commit.change);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);
