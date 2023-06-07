@@ -11,7 +11,7 @@
 			"program": "${workspaceFolder}\\dist\\ReplayTool.js",
 			"preLaunchTask": "tsc: build - tsconfig.json",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
-			"args": ["--indir", "d:\\docs\\all\\notes", "--stressTest"]
-		}
-	]
+			"args": ["--indir", "d:\\docs\\all\\notes", "--stressTest"],
+		},
+	],
 }

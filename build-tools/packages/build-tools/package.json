@@ -85,7 +85,7 @@
 		"yaml": "^2.1.2"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/async": "^3.2.6",
 		"@types/fs-extra": "^8.1.0",
