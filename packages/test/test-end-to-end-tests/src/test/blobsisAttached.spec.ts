@@ -15,7 +15,7 @@ import {
 	DataObjectFactoryType,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils";
-import { ExpectedEvents, describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage";
@@ -30,16 +30,6 @@ const registry: ChannelFactoryRegistry = [
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
-};
-
-const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
-
-const containerCloseAndDisposeUsageErrors = [
-	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
-];
-const ContainerCloseUsageError: ExpectedEvents = {
-	routerlicious: containerCloseAndDisposeUsageErrors,
-	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
 describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
@@ -167,40 +157,98 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			checkForDetachedHandles(directory);
 		});
 
-		itExpects(
-			"after container is attached with map",
-			ContainerCloseUsageError,
-			async function () {
-				detachedDataStore.root.set("map", map.handle);
-				map.set("my blob", blobHandle);
-				const attachP = container.attach(
-					provider.driver.createCreateNewRequest(provider.documentId),
-				);
-				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-				}
-				await attachP;
-				detachedBlobStorage.blobs.clear();
-				checkForAttachedHandles(map);
-			},
-		);
+		it("after container is attached with map", async function () {
+			detachedDataStore.root.set("map", map.handle);
+			map.set("my blob", blobHandle);
+			const attachP = container.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return;
+			}
+			await attachP;
+			detachedBlobStorage.blobs.clear();
+			checkForAttachedHandles(map);
+		});
 
-		itExpects(
-			"after container is attached with directory",
-			ContainerCloseUsageError,
-			async function () {
-				detachedDataStore.root.set(directoryId, directory.handle);
-				directory.set("my blob", blobHandle);
-				const attachP = container.attach(
-					provider.driver.createCreateNewRequest(provider.documentId),
-				);
-				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-				}
-				await attachP;
-				detachedBlobStorage.blobs.clear();
-				checkForAttachedHandles(directory);
-			},
-		);
+		it("after container is attached with directory", async function () {
+			detachedDataStore.root.set(directoryId, directory.handle);
+			directory.set("my blob", blobHandle);
+			const attachP = container.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return;
+			}
+			await attachP;
+			detachedBlobStorage.blobs.clear();
+			checkForAttachedHandles(directory);
+		});
+
+		it("after container is attached and dds is detached in map", async function () {
+			map.set("my blob", blobHandle);
+			const attachP = container.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return;
+			}
+			await attachP;
+			assert.strictEqual(
+				map.handle.isAttached,
+				false,
+				"map should be detached after container attaches",
+			);
+			assert.strictEqual(
+				blobHandle.isAttached,
+				false,
+				"blob should be detached in a detached dds and attached container",
+			);
+			detachedBlobStorage.blobs.clear();
+			detachedDataStore.root.set(mapId, map.handle);
+			assert.strictEqual(
+				map.handle.isAttached,
+				true,
+				"map should be attached after dds attaches",
+			);
+			assert.strictEqual(
+				blobHandle.isAttached,
+				true,
+				"blob should be attached in an attached dds",
+			);
+		});
+
+		it("after container is attached and dds is detached in directory", async function () {
+			directory.set("my blob", blobHandle);
+			const attachP = container.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return;
+			}
+			await attachP;
+			assert.strictEqual(
+				directory.handle.isAttached,
+				false,
+				"directory should be detached after container attaches",
+			);
+			assert.strictEqual(
+				blobHandle.isAttached,
+				false,
+				"blob should be detached in a detached dds and attached container",
+			);
+			detachedBlobStorage.blobs.clear();
+			detachedDataStore.root.set(directoryId, directory.handle);
+			assert.strictEqual(
+				directory.handle.isAttached,
+				true,
+				"directory should be attached after dds attaches",
+			);
+			assert.strictEqual(
+				blobHandle.isAttached,
+				true,
+				"blob should be attached in an attached dds",
+			);
+		});
 	});
 });
