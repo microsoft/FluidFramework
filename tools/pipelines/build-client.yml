@@ -114,6 +114,7 @@ extends:
     taskBundleAnalysis: true
     taskLint: false
     taskBuildDocs: false
+    publishBuildDocs: true
     taskTest:
     - webpack
     - ci:test:mocha
