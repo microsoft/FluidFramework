@@ -52,7 +52,8 @@ data:
                 "rdkafkaAutomaticConsume": true,
                 "rdkafkaConsumeTimeout": 5,
                 "rdkafkaMaxConsumerCommitRetries": 10
-            }
+            },
+            "customRestartOnKafkaErrorCodes": {{ .Values.kafka.customRestartOnKafkaErrorCodes }}
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"

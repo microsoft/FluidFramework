@@ -65,7 +65,7 @@ export enum IntervalType {
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
 	 * they reference is removed and acked.
-	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md` for details
+	 * See `packages\dds\merge-tree\docs\REFERENCEPOSITIONS.md` for details
 	 * SlideOnRemove is the default interval behavior and does not need to be specified.
 	 */
 	SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
@@ -214,7 +214,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param label - label of the interval collection this interval is being added to. This parameter is
 	 * irrelevant for transient intervals.
 	 * @param start - numerical start position of the interval
-	 * @param end - numberical end position of the interval
+	 * @param end - numerical end position of the interval
 	 * @param client - client creating the interval
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
@@ -470,7 +470,7 @@ export class Interval implements ISerializableInterval {
 }
 
 /**
- * Interval impelmentation whose ends are associated with positions in a mutatable sequence.
+ * Interval implementation whose ends are associated with positions in a mutatable sequence.
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
