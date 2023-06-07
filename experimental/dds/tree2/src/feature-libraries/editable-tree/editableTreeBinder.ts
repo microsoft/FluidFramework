@@ -341,24 +341,17 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		return this.registeredPaths.has(contextType);
 	}
 
-	public getRegisteredPaths(contextType: BindingContextType):
-		| Set<{
-				path: BindPath;
-				callbacks: Set<(...args: unknown[]) => any>;
-		  }>
-		| undefined {
+	public getRegisteredPaths(
+		contextType: BindingContextType,
+	): Map<BindPath, Set<(...args: unknown[]) => any>> | undefined {
 		const contextPaths = this.registeredPaths.get(contextType);
 		if (contextPaths === undefined) {
 			return undefined;
 		}
-		const registeredPaths: Set<{
-			path: BindPath;
-			callbacks: Set<(...args: unknown[]) => any>;
-		}> = new Set();
+		const registeredPaths: Map<BindPath, Set<(...args: unknown[]) => any>> = new Map();
 		for (const [path, callbacks] of contextPaths.entries()) {
-			registeredPaths.add({ path, callbacks });
+			registeredPaths.set(path, callbacks);
 		}
-
 		return registeredPaths;
 	}
 
@@ -376,7 +369,7 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					for (const callback of callbacks) {
 						callback({
@@ -394,7 +387,7 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					for (const callback of callbacks) {
 						callback({
@@ -412,7 +405,7 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					for (const callback of callbacks) {
 						callback({
@@ -439,7 +432,7 @@ class InvalidatingPathVisitor
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.callbacks = callbacks;
 				}
@@ -451,7 +444,7 @@ class InvalidatingPathVisitor
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.callbacks = callbacks;
 				}
@@ -463,7 +456,7 @@ class InvalidatingPathVisitor
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.callbacks = callbacks;
 				}
@@ -498,7 +491,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.eventQueue.push({
 						path,
@@ -515,7 +508,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.eventQueue.push({
 						path,
@@ -532,7 +525,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
 		if (visitPaths !== undefined) {
-			for (const { path: visitPath, callbacks } of visitPaths) {
+			for (const [visitPath, callbacks] of visitPaths.entries()) {
 				if (this.matchesPath(visitPath, current)) {
 					this.eventQueue.push({
 						path,
@@ -557,7 +550,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			const batchEvents = sortedQueue.filter((event) => {
 				const current = toDownPath<BindPath>(event.path);
 				let filtered = false;
-				for (const { path: visitPath, callbacks } of batchPaths) {
+				for (const [visitPath, callbacks] of batchPaths.entries()) {
 					if (this.matchesPath(visitPath, current)) {
 						callbacks.forEach((callback) => collected.add(callback));
 						filtered = true;
