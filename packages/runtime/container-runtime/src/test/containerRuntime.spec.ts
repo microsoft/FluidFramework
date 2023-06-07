@@ -1148,7 +1148,6 @@ describe("Runtime", () => {
 							disableOpReentryCheck: false,
 							disableChunking: true,
 							idCompressorEnabled: true,
-							enableGroupedBatching: true,
 						}),
 					},
 				]);
