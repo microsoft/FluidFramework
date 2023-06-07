@@ -125,6 +125,21 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blobHandle.isAttached, false, "blob handle should be detached");
 		};
 
+		const checkForAttachedHandles = (dds: SharedMap | SharedDirectory) => {
+			assert.strictEqual(
+				container.attachState,
+				AttachState.Attached,
+				"container should be attached",
+			);
+			assert.strictEqual(
+				detachedDataStore.handle.isAttached,
+				true,
+				"data store handle should be attached",
+			);
+			assert.strictEqual(dds.handle.isAttached, true, "dds handle should be attached");
+			assert.strictEqual(blobHandle.isAttached, true, "blob handle should be attached");
+		};
+
 		it("all detached", async function () {
 			checkForDetachedHandles(map);
 			checkForDetachedHandles(directory);
@@ -166,14 +181,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				}
 				await attachP;
 				detachedBlobStorage.blobs.clear();
-				assert.strictEqual(
-					container.attachState,
-					AttachState.Attached,
-					"container should be attached",
-				);
-				assert.strictEqual(detachedDataStore.handle.isAttached, true);
-				assert.strictEqual(map.handle.isAttached, true);
-				assert.strictEqual(blobHandle.isAttached, true);
+				checkForAttachedHandles(map);
 			},
 		);
 
@@ -191,10 +199,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				}
 				await attachP;
 				detachedBlobStorage.blobs.clear();
-				assert.strictEqual(container.attachState, AttachState.Attached);
-				assert.strictEqual(detachedDataStore.handle.isAttached, true);
-				assert.strictEqual(directory.handle.isAttached, true);
-				assert.strictEqual(blobHandle.isAttached, true);
+				checkForAttachedHandles(directory);
 			},
 		);
 	});
