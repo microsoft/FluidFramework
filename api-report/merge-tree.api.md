@@ -406,7 +406,6 @@ export interface IMarkerModifiedAction {
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
     cachedLength?: number;
     childCount: number;
     children: IMergeNode[];
@@ -673,7 +672,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     append(segment: ISegment): void;
     // @alpha
     attribution?: IAttributionCollection<AttributionKey>;
-    // (undocumented)
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
