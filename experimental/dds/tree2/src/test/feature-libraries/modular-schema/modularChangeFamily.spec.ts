@@ -497,7 +497,6 @@ describe("ModularChangeFamily", () => {
 					[
 						fieldA,
 						{
-							revision: change2.revision,
 							fieldKind: valueField.identifier,
 							change: brand(valueChange2),
 						},
@@ -510,7 +509,6 @@ describe("ModularChangeFamily", () => {
 					[
 						fieldA,
 						{
-							revision: change1.revision,
 							fieldKind: valueField.identifier,
 							change: brand(valueChange1a),
 						},

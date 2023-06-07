@@ -202,41 +202,35 @@ export class ModularChangeFamily
 
 		const composedFields: FieldChangeMap = new Map();
 		for (const [field, changesForField] of fieldChanges) {
-			let composedField: FieldChange;
-			if (changesForField.length === 1) {
-				// BUG: This field might be affected by cross-field effects, so we must recurse into it.
-				composedField = changesForField[0];
-			} else {
-				const { fieldKind, changesets } = this.normalizeFieldChanges(
-					changesForField,
-					genId,
-					revisionMetadata,
-				);
-				assert(
-					changesets.length === changesForField.length,
-					0x4a8 /* Number of changes should be constant when normalizing */,
-				);
+			const { fieldKind, changesets } = this.normalizeFieldChanges(
+				changesForField,
+				genId,
+				revisionMetadata,
+			);
+			assert(
+				changesets.length === changesForField.length,
+				0x4a8 /* Number of changes should be constant when normalizing */,
+			);
 
-				const manager = newCrossFieldManager(crossFieldTable);
-				const taggedChangesets = changesets.map((change, i) =>
-					tagChange(change, changesForField[i].revision),
-				);
-				const composedChange = fieldKind.changeHandler.rebaser.compose(
-					taggedChangesets,
-					(children) =>
-						this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
-					genId,
-					manager,
-					revisionMetadata,
-				);
+			const manager = newCrossFieldManager(crossFieldTable);
+			const taggedChangesets = changesets.map((change, i) =>
+				tagChange(change, changesForField[i].revision),
+			);
+			const composedChange = fieldKind.changeHandler.rebaser.compose(
+				taggedChangesets,
+				(children) =>
+					this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+				genId,
+				manager,
+				revisionMetadata,
+			);
 
-				composedField = {
-					fieldKind: fieldKind.identifier,
-					change: brand(composedChange),
-				};
+			const composedField: FieldChange = {
+				fieldKind: fieldKind.identifier,
+				change: brand(composedChange),
+			};
 
-				addFieldData(manager, composedField);
-			}
+			addFieldData(manager, composedField);
 
 			// TODO: Could optimize by checking that composedField is non-empty
 			composedFields.set(field, composedField);
