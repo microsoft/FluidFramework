@@ -6,11 +6,6 @@
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "@fluidframework/protocol-base";
-import {
 	ISequencedDocumentMessage,
 	ISummaryContent,
 	ITreeEntry,
@@ -26,6 +21,9 @@ import {
 	ISummaryTree,
 	NetworkError,
 	WholeSummaryUploadManager,
+	getQuorumTreeEntries,
+	generateServiceProtocolEntries,
+	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -113,22 +111,33 @@ export class SummaryWriter implements ISummaryWriter {
 					!existingRef ||
 					(lastSummaryHead !== content.head && existingRef.object.sha !== content.head)
 				) {
-					clientSummaryMetric.error(
-						`Proposed parent summary does not match actual parent summary`,
-					);
-					return {
-						message: {
-							message: `Proposed parent summary "${
-								content.head
-							}" does not match actual parent summary "${
-								existingRef ? existingRef.object.sha : "n/a"
-							}".`,
-							summaryProposal: {
-								summarySequenceNumber: op.sequenceNumber,
+					// In some edge cases, the client loads a latest summary while a service summary is being written.
+					// Service summaries do not submit any "summarize ack" ops, so the client cannot know that a new summary was written.
+					// However, summaries based off the latest client summary, or any service summary following that client summary,
+					// are still valid summaries, even if the parent is no longer latest due to an un-acked service summary.
+					// This check makes sure we don't reject valid summaries just because a service summary was written behind the scenes.
+					const isValidParentSummary =
+						checkpoint.validParentSummaries?.includes(content.head) ?? false;
+					if (!isValidParentSummary) {
+						clientSummaryMetric.error(
+							`Proposed parent summary does not match actual parent summary`,
+						);
+						return {
+							message: {
+								message: `Proposed parent summary "${
+									content.head
+								}" does not match actual parent summary "${
+									existingRef ? existingRef.object.sha : "n/a"
+								}" nor other valid parent summaries "[${
+									checkpoint.validParentSummaries?.join(",") ?? ""
+								}]".`,
+								summaryProposal: {
+									summarySequenceNumber: op.sequenceNumber,
+								},
 							},
-						},
-						status: false,
-					};
+							status: false,
+						};
+					}
 				}
 			} else if (existingRef) {
 				clientSummaryMetric.error(
@@ -192,10 +201,8 @@ export class SummaryWriter implements ISummaryWriter {
 
 			// At this point the summary op and its data are all valid and we can perform the write to history
 			const protocolEntries: ITreeEntry[] = getQuorumTreeEntries(
-				this.documentId,
 				checkpoint.protocolState.minimumSequenceNumber,
 				checkpoint.protocolState.sequenceNumber,
-				op.term ?? 1,
 				checkpoint.protocolState,
 			);
 
@@ -387,7 +394,7 @@ export class SummaryWriter implements ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
-	): Promise<boolean> {
+	): Promise<string | false> {
 		const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
 		this.setSummaryProperties(serviceSummaryMetric, op);
 		try {
@@ -435,8 +442,9 @@ export class SummaryWriter implements ISummaryWriter {
 				JSON.stringify(checkpoint),
 			);
 
+			let uploadedSummaryHandle: string;
 			if (this.enableWholeSummaryUpload) {
-				await requestWithRetry(
+				uploadedSummaryHandle = await requestWithRetry(
 					async () =>
 						this.createWholeServiceSummary(
 							existingRef.object.sha,
@@ -540,9 +548,12 @@ export class SummaryWriter implements ISummaryWriter {
 					shouldRetryNetworkError,
 					this.maxRetriesOnError,
 				);
+				uploadedSummaryHandle = commit.sha;
 			}
 			serviceSummaryMetric.success(`Service summary success`);
-			return true;
+			// Return the summary handle (commit sha) for the new service summary so that
+			// it can be added to validParentSummaries.
+			return uploadedSummaryHandle;
 		} catch (error) {
 			serviceSummaryMetric.error(`Service summary failed`, error);
 			if (

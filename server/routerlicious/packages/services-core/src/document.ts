@@ -36,7 +36,6 @@ export interface IDocumentStorage {
 		documentId: string,
 		summary: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
@@ -77,12 +76,6 @@ export interface IDeliState {
 	// Rolling hash at sequenceNumber
 	expHash1: string;
 
-	// Epoch of stream provider
-	epoch: number;
-
-	// Term at logOffset
-	term: number;
-
 	// Last sent minimum sequence number
 	lastSentMSN: number | undefined;
 
@@ -119,6 +112,9 @@ export interface IScribe {
 
 	// Sequence number of the last operation that was part of latest summary
 	lastSummarySequenceNumber: number | undefined;
+
+	// Refs of the service summaries generated since the last client generated summary.
+	validParentSummaries: string[] | undefined;
 }
 
 export interface IDocument {
@@ -145,4 +141,19 @@ export interface IDocument {
 	// Timestamp of when this document and related data will be hard deleted.
 	// The document is soft deleted if a scheduled deletion timestamp is present.
 	scheduledDeletionTime?: string;
+
+	// name of the storage to save the document durable artifacts
+	storageName?: string;
+}
+
+export interface ICheckpoint {
+	_id: string;
+
+	documentId: string;
+
+	tenantId: string;
+
+	scribe: string;
+
+	deli: string;
 }

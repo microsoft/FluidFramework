@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import {
@@ -26,29 +26,32 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		return this._lastSuccessfulSummary;
 	}
 
-	public numNonRuntimeOps: number = 0;
-	public totalOpsSize: number = 0;
+	public get opsSinceLastSummary(): number {
+		return this.numNonRuntimeOpsBefore + this.numRuntimeOpsBefore;
+	}
+
 	public hasMissingOpData: boolean = false;
 
+	public totalOpsSize: number = 0;
 	/**
 	 * Cumulative size in bytes of all the ops at the beginning of the summarization attempt.
 	 * Is used to adjust totalOpsSize appropriately after successful summarization.
 	 */
-	/** */
 	private totalOpsSizeBefore: number = 0;
 
+	public numNonRuntimeOps: number = 0;
 	/**
-	 * Number of system ops at beginning of attempting to summarize.
-	 * Is used to adjust numSystemOps appropriately after successful summarization.
+	 * Number of non-runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numNonRuntimeOps appropriately after successful summarization.
 	 */
-	private numSystemOpsBefore: number = 0;
+	private numNonRuntimeOpsBefore: number = 0;
 
 	public numRuntimeOps: number = 0;
 	/**
-	 * Number of non-system ops at beginning of attempting to summarize.
-	 * Is used to adjust numNonSystemOps appropriately after successful summarization.
+	 * Number of runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numRuntimeOps appropriately after successful summarization.
 	 */
-	private numNonSystemOpsBefore: number = 0;
+	private numRuntimeOpsBefore: number = 0;
 
 	constructor(
 		public lastOpSequenceNumber: number,
@@ -70,19 +73,19 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 			summaryTime: Date.now(),
 		};
 
-		this.numSystemOpsBefore = this.numNonRuntimeOps;
-		this.numNonSystemOpsBefore = this.numRuntimeOps;
+		this.numNonRuntimeOpsBefore = this.numNonRuntimeOps;
+		this.numRuntimeOpsBefore = this.numRuntimeOps;
 		this.totalOpsSizeBefore = this.totalOpsSize;
 	}
 
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		this.numNonRuntimeOps -= this.numSystemOpsBefore;
-		this.numSystemOpsBefore = 0;
+		this.numNonRuntimeOps -= this.numNonRuntimeOpsBefore;
+		this.numNonRuntimeOpsBefore = 0;
 
-		this.numRuntimeOps -= this.numNonSystemOpsBefore;
-		this.numNonSystemOpsBefore = 0;
+		this.numRuntimeOps -= this.numRuntimeOpsBefore;
+		this.numRuntimeOpsBefore = 0;
 
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;
@@ -100,7 +103,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly configuration: ISummaryConfigurationHeuristics,
 		trySummarize: (reason: SummarizeReason) => void,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
 	) {
 		this.idleTimer = new Timer(this.idleTime, () => this.runSummarize("idle"));
@@ -157,16 +160,21 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 	}
 
 	public shouldRunLastSummary(): boolean {
-		const opsSinceLastAck = this.opsSinceLastAck;
+		const weightedOpsSinceLastAck = getWeightedNumberOfOps(
+			this.heuristicData.numRuntimeOps,
+			this.heuristicData.numNonRuntimeOps,
+			this.configuration.runtimeOpWeight,
+			this.configuration.nonRuntimeOpWeight,
+		);
 		const minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
 
 		this.logger.sendTelemetryEvent({
 			eventName: "ShouldRunLastSummary",
-			opsSinceLastAck,
+			weightedOpsSinceLastAck,
 			minOpsForLastSummaryAttempt,
 		});
 
-		return opsSinceLastAck >= minOpsForLastSummaryAttempt;
+		return weightedOpsSinceLastAck >= minOpsForLastSummaryAttempt;
 	}
 
 	public dispose() {

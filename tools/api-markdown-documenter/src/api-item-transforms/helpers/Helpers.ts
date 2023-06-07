@@ -6,6 +6,7 @@ import {
 	ApiClass,
 	ApiDeclaredItem,
 	ApiDocumentedItem,
+	ApiEntryPoint,
 	ApiInterface,
 	ApiItem,
 	ApiItemKind,
@@ -18,7 +19,6 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import {
 	AlertKind,
@@ -33,7 +33,9 @@ import {
 	SingleLineDocumentationNode,
 	SingleLineSpanNode,
 	SpanNode,
+	UnorderedListNode,
 } from "../../documentation-domain";
+import { injectSeparator } from "../../utilities";
 import {
 	ApiFunctionLike,
 	doesItemKindRequireOwnDocument,
@@ -46,10 +48,10 @@ import {
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
-	injectSeparator,
-} from "../../utilities";
+} from "../ApiItemUtilities";
 import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "../Utilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
 
 /**
@@ -58,13 +60,13 @@ import { createParametersSummaryTable, createTypeParametersSummaryTable } from "
  * @remarks Displayed as a heading with a code-block under it.
  *
  * @param apiItem - The API item whose signature will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
  */
 export function createSignatureSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
@@ -96,13 +98,13 @@ export function createSignatureSection(
  * merged into a single section.
  *
  * @param apiItem - The API item whose `@see` comment blocks will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
  */
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	const seeBlocks = getSeeBlocks(apiItem);
 	if (seeBlocks === undefined || seeBlocks.length === 0) {
@@ -127,13 +129,13 @@ export function createSeeAlsoSection(
  * @remarks Displayed as a heading with a comma-separated list of heritage types by catagory under it.
  *
  * @param apiItem - The API item whose heritage types will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The paragraph containing heritage type information, if any is present. Otherwise `undefined`.
  */
 export function createHeritageTypesParagraph(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): ParagraphNode | undefined {
 	const { logger } = config;
 
@@ -219,12 +221,12 @@ export function createHeritageTypesParagraph(
  *
  * @param heritageTypes - List of types to display.
  * @param label - Label text to display before the list of types.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 function createHeritageTypeListSpan(
 	heritageTypes: readonly HeritageType[],
 	label: string,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
 		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
@@ -257,14 +259,14 @@ function createHeritageTypeListSpan(
  *
  * @param typeParameters - List of type parameters associated with some API item.
  * @param contextApiItem - The API item with which the example is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if any type parameters were provided, otherwise `undefined`.
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	if (typeParameters.length === 0) {
 		return undefined;
@@ -283,14 +285,14 @@ export function createTypeParametersSection(
  * will be rendered as plain text.
  *
  * @param excerpt - The TSDoc excerpt to render.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns A span containing the rendered contents, if non-empty.
  * Otherwise, will return `undefined`.
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SingleLineSpanNode | undefined {
 	if (excerpt.isEmpty) {
 		return undefined;
@@ -339,11 +341,11 @@ export function createExcerptSpanWithHyperlinks(
  * (see {@link DocumentBoundaries}).
  *
  * @param apiItem - The API item whose ancestory will be used to generate the breadcrumb.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): ParagraphNode {
 	// Get ordered ancestry of document items
 	const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
@@ -352,25 +354,18 @@ export function createBreadcrumbParagraph(
 
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
-	const contents: DocumentationNode[] = [];
+	const links = ancestry.map((hierarchyItem) =>
+		LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)),
+	);
 
-	// Render ancestry links
-	let writtenAnythingYet = false;
-	for (const hierarchyItem of ancestry) {
-		// TODO: join helper?
-		if (writtenAnythingYet) {
-			contents.push(breadcrumbSeparator);
-		}
-		contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)));
+	// Add link for current document item
+	links.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
 
-		writtenAnythingYet = true;
-	}
-
-	// Render entry for the item itself
-	if (writtenAnythingYet) {
-		contents.push(breadcrumbSeparator);
-	}
-	contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
+	// Inject breadcrumb separator between each link
+	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
+		links,
+		breadcrumbSeparator,
+	);
 
 	return new ParagraphNode(contents);
 }
@@ -395,7 +390,7 @@ export const betaAlert = new AlertNode(
  */
 export function createSummaryParagraph(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): ParagraphNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
@@ -410,13 +405,13 @@ export function createSummaryParagraph(
  * @remarks Displayed as a heading, with the documentation contents under it.
  *
  * @param apiItem - The API item whose `@remarks` documentation will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
 export function createRemarksSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	if (
 		!(apiItem instanceof ApiDocumentedItem) ||
@@ -440,13 +435,13 @@ export function createRemarksSection(
  * @remarks Displayed as a heading, with the documentation contents under it.
  *
  * @param apiItem - The API item whose `@throws` documentation will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
  */
 export function createThrowsSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
@@ -472,13 +467,13 @@ export function createThrowsSection(
  * @remarks Displayed as a simple note box containing the deprecation notice comment.
  *
  * @param apiItem - The API item whose `@deprecated` documentation will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): AlertNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
@@ -504,13 +499,13 @@ export function createDeprecationNoticeSection(
  * If there is only 1 example comment, that comment will be rendered under a single "Example" heading.
  *
  * @param apiItem - The API item whose `@example` documentation will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
 export function createExamplesSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
@@ -564,11 +559,11 @@ export interface DocExampleProperties {
  *
  * @param example - The example to render.
  * @param contextApiItem - The API item with which the example is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createExampleSection(
 	example: DocExampleProperties,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
 
@@ -591,13 +586,13 @@ export function createExampleSection(
  * @remarks Displayed as a heading with a table representing the different parameters under it.
  *
  * @param apiFunctionLike - The function-like API item whose parameters will be described.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the item had any parameters, otherwise `undefined`.
  */
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	if (apiFunctionLike.parameters.length === 0) {
 		return undefined;
@@ -619,13 +614,13 @@ export function createParametersSection(
  * @remarks Displayed as a heading, with the documentation contents and the return type under it.
  *
  * @param apiItem - The API item whose `@returns` documentation will be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@returns` comment, otherwise `undefined`.
  */
 export function createReturnsSection(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
@@ -700,14 +695,14 @@ export interface ChildSectionProperties {
  * The assumption is that this is used to render child contents to the same document as the parent.
  *
  * @param childItems - The child sections to be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param createChildContent - Callback to render a given child item.
  *
  * @returns The doc section if there were any child contents to render, otherwise `undefined`.
  */
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	createChildContent: (apiItem) => DocumentationNode[],
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
@@ -741,5 +736,26 @@ export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): Se
 	return new SectionNode(
 		nodes,
 		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,
+	);
+}
+
+/**
+ * Creates an {@link UnorderedListNode} containing links to each of the specified entry-points.
+ *
+ * @param apiEntryPoints - The list of entry-points to display / link to.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+export function createEntryPointList(
+	apiEntryPoints: readonly ApiEntryPoint[],
+	config: Required<ApiItemTransformationConfiguration>,
+): UnorderedListNode | undefined {
+	if (apiEntryPoints.length === 0) {
+		return undefined;
+	}
+
+	return new UnorderedListNode(
+		apiEntryPoints.map((entryPoint) =>
+			LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+		),
 	);
 }

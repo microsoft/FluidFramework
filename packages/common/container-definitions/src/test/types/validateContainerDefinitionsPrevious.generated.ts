@@ -347,8 +347,32 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: TypeOnly<old.IConnectionDetails>);
 use_old_InterfaceDeclaration_IConnectionDetails(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetailsInternal": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IConnectionDetailsInternal():
+    TypeOnly<old.IConnectionDetailsInternal>;
+declare function use_current_InterfaceDeclaration_IConnectionDetailsInternal(
+    use: TypeOnly<current.IConnectionDetailsInternal>);
+use_current_InterfaceDeclaration_IConnectionDetailsInternal(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_IConnectionDetailsInternal());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetailsInternal": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IConnectionDetailsInternal():
+    TypeOnly<current.IConnectionDetailsInternal>;
+declare function use_old_InterfaceDeclaration_IConnectionDetailsInternal(
+    use: TypeOnly<old.IConnectionDetailsInternal>);
+use_old_InterfaceDeclaration_IConnectionDetailsInternal(
+    get_current_InterfaceDeclaration_IConnectionDetailsInternal());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -360,6 +384,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>);
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -905,30 +930,6 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidTokenProvider": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidTokenProvider": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidTokenProvider": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenericError():
@@ -1093,18 +1094,6 @@ declare function use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     use: TypeOnly<old.IProvideFluidCodeDetailsComparer>);
 use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

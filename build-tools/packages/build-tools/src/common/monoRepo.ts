@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { readFileSync } from "fs-extra";
+import { InterdependencyRange } from "@fluid-tools/version-tools";
+import { getPackagesSync } from "@manypkg/get-packages";
+import { readFileSync, readJsonSync } from "fs-extra";
 import * as path from "path";
 import YAML from "yaml";
 
-import { fatal } from "../bumpVersion/utils";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
-import { Package, PackageJson, Packages } from "./npmPackage";
-import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
+import { Package, PackageJson } from "./npmPackage";
+import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
 
@@ -23,6 +24,8 @@ export enum MonoRepoKind {
 	Server = "server",
 	Azure = "azure",
 	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
 }
 
 /**
@@ -85,10 +88,12 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: MonoRepoKind,
 		public readonly repoPath: string,
+		public readonly interdependencyRange: InterdependencyRange,
 		ignoredDirs?: string[],
 		private readonly logger: Logger = defaultLogger,
 	) {
 		this.version = "";
+		this.workspaceGlobs = [];
 		const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
 		const lernaPath = path.join(repoPath, "lerna.json");
 		const yarnLockPath = path.join(repoPath, "yarn.lock");
@@ -101,59 +106,66 @@ export class MonoRepo {
 
 		this._packageJson = readJsonSync(packagePath);
 
+		const {
+			tool: packageManager,
+			rootDir,
+			packages: discoveredPackages,
+		} = getPackagesSync(repoPath);
 		this.packageManager = existsSync(pnpmWorkspace)
 			? "pnpm"
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
+
+		if (this.packageManager !== packageManager.type) {
+			throw new Error(
+				`Package manager mismatch between ${packageManager.type} and ${this.packageManager}`,
+			);
+		}
+
 		if (existsSync(lernaPath)) {
 			const lerna = readJsonSync(lernaPath);
+			if (this.packageManager === "pnpm") {
+				const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
+				this.workspaceGlobs = YAML.parse(workspaceString).packages;
+			} else if (lerna.packages !== undefined) {
+				this.workspaceGlobs = lerna.packages;
+			}
+
 			if (lerna.version !== undefined) {
 				logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
-
-			let pkgs: string[] = [];
-
-			if (this.packageManager === "pnpm") {
-				logger.verbose(`${kind}: Loading packages from ${pnpmWorkspace}`);
-				const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
-				pkgs = YAML.parse(workspaceString).packages;
-			} else if (lerna.packages !== undefined) {
-				logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
-				pkgs = lerna.packages;
+		} else {
+			// Load globs from package.json directly
+			if (this._packageJson.workspaces instanceof Array) {
+				this.workspaceGlobs = this._packageJson.workspaces;
+			} else {
+				this.workspaceGlobs = (this._packageJson.workspaces as any).packages;
 			}
-			this.workspaceGlobs = pkgs;
-
-			for (const dir of pkgs as string[]) {
-				// TODO: other glob pattern?
-				const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-				this.packages.push(
-					...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this),
-				);
-			}
-			return;
 		}
 
-		if (this._packageJson.version === undefined && !versionFromLerna) {
+		if (!versionFromLerna) {
 			this.version = this._packageJson.version;
 			logger.verbose(
 				`${kind}: Loading version (${this._packageJson.version}) from ${packagePath}`,
 			);
 		}
 
-		if (this._packageJson.workspaces !== undefined) {
-			logger.verbose(`${kind}: Loading packages from ${packagePath}`);
-			for (const dir of this._packageJson.workspaces as string[]) {
-				this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
-			}
-			this.workspaceGlobs = this._packageJson.workspaces;
-			return;
+		if (rootDir !== this.repoPath) {
+			// This is a sanity check. this.repoPath is the path passed in when creating the MonoRepo object, while rootDir is
+			// the dir that manypkg found. They should be the same.
+			throw new Error(`rootDir ${rootDir} does not match repoPath ${this.repoPath}`);
 		}
-		fatal(
-			`Couldn't find lerna.json or package.json, or they were missing expected properties.`,
-		);
+
+		logger.verbose(`${kind}: Loading packages from ${this.packageManager}`);
+		for (const pkg of discoveredPackages) {
+			if (pkg.relativeDir !== ".") {
+				this.packages.push(new Package(path.join(pkg.dir, "package.json"), kind, this));
+			}
+		}
+		return;
 	}
 
 	public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {

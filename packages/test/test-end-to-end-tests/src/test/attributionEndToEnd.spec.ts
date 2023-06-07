@@ -122,7 +122,11 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		},
 	});
 
-	it("Can attribute content from multiple collaborators", async () => {
+	it("Can attribute content from multiple collaborators", async function () {
+		// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
+		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+			this.skip();
+		}
 		const attributor = createRuntimeAttributor();
 		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 		const sharedString1 = await sharedStringFromContainer(container1);
@@ -131,6 +135,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 
 		const text = "client 1";
 		sharedString1.insertText(0, text);
+		assertAttributionMatches(sharedString1, 3, attributor, "local");
 		await provider.ensureSynchronized();
 		sharedString2.insertText(0, "client 2, ");
 		await provider.ensureSynchronized();

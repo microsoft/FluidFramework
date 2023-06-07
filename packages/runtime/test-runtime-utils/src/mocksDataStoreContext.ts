@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -12,7 +12,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -27,6 +26,8 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	IIdCompressor,
+	IIdCompressorCore,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -45,6 +46,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public storage: IDocumentStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
+	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.
@@ -60,7 +62,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLogger = DebugLogger.create(
+		public readonly logger: ITelemetryLoggerExt = DebugLogger.create(
 			"fluid:MockFluidDataStoreContext",
 		),
 	) {}

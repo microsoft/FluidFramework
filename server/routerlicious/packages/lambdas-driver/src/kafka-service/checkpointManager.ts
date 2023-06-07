@@ -6,6 +6,7 @@
 import assert from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class CheckpointManager {
 	private checkpointing = false;
@@ -22,9 +23,19 @@ export class CheckpointManager {
 	 */
 	public async checkpoint(queuedMessage: IQueuedMessage) {
 		// Checkpoint calls should always be of increasing or equal value
-		assert(
-			this.lastCheckpoint === undefined || queuedMessage.offset >= this.lastCheckpoint.offset,
-		);
+		// Exit early if already requested checkpoint for a higher offset
+		if (this.lastCheckpoint && queuedMessage.offset < this.lastCheckpoint.offset) {
+			Lumberjack.info(
+				"Skipping checkpoint since a request for checkpointing a higher offset has already been made",
+				{
+					lastCheckpointOffset: this.lastCheckpoint.offset,
+					queuedMessageOffset: queuedMessage.offset,
+					lastCheckpointPartition: this.lastCheckpoint.partition,
+					queuedMessagePartition: queuedMessage.partition,
+				},
+			);
+			return;
+		}
 
 		// Exit early if the manager has been closed
 		if (this.closed) {
@@ -79,7 +90,15 @@ export class CheckpointManager {
 			},
 			// eslint-disable-next-line @typescript-eslint/promise-function-async
 			(error) => {
-				// Enter an error state on any commit error
+				if (error.name === "PendingCommitError") {
+					Lumberjack.info(`Skipping checkpoint since ${error.message}`, {
+						queuedMessageOffset: queuedMessage.offset,
+						queuedMessagePartition: queuedMessage.partition,
+					});
+					this.checkpointing = false;
+					return;
+				}
+				// Enter an error state on any other commit error
 				this.error = error;
 				if (this.pendingCheckpoint) {
 					this.pendingCheckpoint.reject(this.error);
@@ -94,6 +113,10 @@ export class CheckpointManager {
 	 */
 	public async flush(): Promise<void> {
 		if (this.lastCheckpoint) {
+			Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
+				offset: this.lastCheckpoint.offset,
+				partition: this.lastCheckpoint.partition,
+			});
 			return this.checkpoint(this.lastCheckpoint);
 		}
 	}

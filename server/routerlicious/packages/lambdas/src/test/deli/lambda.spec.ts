@@ -6,8 +6,8 @@
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
+	CheckpointService,
 	DefaultServiceConfiguration,
-	ICollection,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
@@ -22,11 +22,14 @@ import {
 	MessageFactory,
 	TestContext,
 	TestDbFactory,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
+	TestNotImplementedCheckpointRepository,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import * as _ from "lodash";
+import Sinon from "sinon";
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -46,7 +49,6 @@ describe("Routerlicious", () => {
 				},
 			];
 
-			let testCollection: ICollection<any>;
 			let testTenantManager: TestTenantManager;
 			let testKafka: TestKafka;
 			let testForwardProducer: IProducer;
@@ -118,8 +120,31 @@ describe("Routerlicious", () => {
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				const mongoManager = new MongoManager(dbFactory);
-				const database = await mongoManager.getDatabase();
-				testCollection = database.collection("documents");
+				const documentRepository = new TestNotImplementedDocumentRepository();
+				const checkpointRepository = new TestNotImplementedCheckpointRepository();
+				const checkpointService = new CheckpointService(
+					checkpointRepository,
+					documentRepository,
+					false,
+				);
+				Sinon.replace(
+					documentRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(documentRepository, "updateOne", Sinon.fake.resolves(undefined));
+
+				Sinon.replace(
+					checkpointRepository,
+					"getCheckpoint",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(
+					checkpointRepository,
+					"writeCheckpoint",
+					Sinon.fake.resolves(undefined),
+				);
+				Sinon.replace(checkpointService, "writeCheckpoint", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();
@@ -133,16 +158,19 @@ describe("Routerlicious", () => {
 
 				factory = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
+					documentRepository,
+					checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
 					undefined,
 					testReverseProducer,
 					DefaultServiceConfiguration,
+					true,
+					true,
 				);
 				lambda = await factory.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 
@@ -151,7 +179,8 @@ describe("Routerlicious", () => {
 
 				factoryWithSignals = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
+					documentRepository,
+					checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -164,15 +193,18 @@ describe("Routerlicious", () => {
 							enableWriteClientSignals: true,
 						},
 					},
+					true,
+					true,
 				);
 				lambdaWithSignals = await factoryWithSignals.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 
 				factoryWithBatching = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
+					documentRepository,
+					checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -185,9 +217,11 @@ describe("Routerlicious", () => {
 							maintainBatches: true,
 						},
 					},
+					true,
+					true,
 				);
 				lambdaWithBatching = await factoryWithBatching.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 			});

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -15,11 +15,19 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	MockLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISummaryConfiguration } from "../../containerRuntime";
 import {
+	getFailMessage,
 	neverCancelledSummaryToken,
 	RunningSummarizer,
 	SummaryCollection,
@@ -28,11 +36,23 @@ import {
 	ISummarizeHeuristicData,
 } from "../../summary";
 
-class MockRuntime {
+class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
+	disposed = false;
+
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	) {}
+	) {
+		super();
+	}
+
+	closeFn() {
+		this.disposed = true;
+	}
 }
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -43,6 +63,7 @@ describe("Runtime", () => {
 			let refreshLatestAckRunCount: number;
 			let clock: sinon.SinonFakeTimers;
 			let mockLogger: MockLogger;
+			let settings = {};
 			let mockDeltaManager: MockDeltaManager;
 			let summaryCollection: SummaryCollection;
 			let summarizer: RunningSummarizer;
@@ -93,6 +114,7 @@ describe("Runtime", () => {
 					type,
 				};
 				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage({ type }));
 				await flushPromises();
 			}
 
@@ -105,21 +127,26 @@ describe("Runtime", () => {
 					type: MessageType.NoOp,
 				};
 				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage({ type: MessageType.NoOp }));
 				await flushPromises();
 			}
 
 			function emitBroadcast(timestamp = Date.now()) {
-				mockDeltaManager.emit("op", {
+				const referenceSequenceNumber = lastRefSeq;
+				lastSummarySeq = ++lastRefSeq;
+				const op = {
 					type: MessageType.Summarize,
 					clientId: summarizerClientId,
-					referenceSequenceNumber: lastRefSeq,
-					clientSequenceNumber: --lastClientSeq,
-					sequenceNumber: --lastSummarySeq,
+					referenceSequenceNumber,
+					clientSequenceNumber: ++lastClientSeq,
+					sequenceNumber: lastSummarySeq,
 					contents: {
 						handle: "test-broadcast-handle",
 					},
 					timestamp,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 			}
 
 			async function emitAck() {
@@ -130,11 +157,13 @@ describe("Runtime", () => {
 					handle: "test-ack-handle",
 					summaryProposal,
 				};
-				mockDeltaManager.emit("op", {
+				const op = {
 					data: JSON.stringify(contents),
 					type: MessageType.SummaryAck,
 					sequenceNumber: ++lastRefSeq,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 
 				await flushPromises(); // let summarize run
 			}
@@ -148,11 +177,13 @@ describe("Runtime", () => {
 					retryAfter: retryAfterSeconds,
 					message: "test-nack",
 				};
-				mockDeltaManager.emit("op", {
+				const op = {
 					data: JSON.stringify(contents),
 					type: MessageType.SummaryNack,
 					sequenceNumber: ++lastRefSeq,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 
 				await flushPromises();
 			}
@@ -199,6 +230,8 @@ describe("Runtime", () => {
 					async (options) => {
 						runCount++;
 
+						heuristicData.recordAttempt(lastRefSeq);
+
 						const { fullTree = false, refreshLatestAck = false } = options;
 						if (fullTree) {
 							fullTreeRunCount++;
@@ -206,6 +239,9 @@ describe("Runtime", () => {
 						if (refreshLatestAck) {
 							refreshLatestAckRunCount++;
 						}
+
+						// emitBroadcast will increment this number
+						const lastRefSeqBefore = lastRefSeq;
 
 						// immediate broadcast
 						emitBroadcast();
@@ -217,7 +253,7 @@ describe("Runtime", () => {
 						}
 						return {
 							stage: "submit",
-							referenceSequenceNumber: lastRefSeq,
+							referenceSequenceNumber: lastRefSeqBefore,
 							minimumSequenceNumber: 0,
 							generateDuration: 0,
 							uploadDuration: 0,
@@ -240,7 +276,6 @@ describe("Runtime", () => {
 					},
 					async (options) => {},
 					heuristicData,
-					() => {},
 					summaryCollection,
 					neverCancelledSummaryToken,
 					// stopSummarizerCallback
@@ -271,7 +306,11 @@ describe("Runtime", () => {
 				lastRefSeq = 0;
 				lastClientSeq = -1000; // negative/decrement for test
 				lastSummarySeq = 0; // negative/decrement for test
-				mockLogger = new MockLogger();
+				settings = {};
+				mockLogger = mixinMonitoringContext(
+					new MockLogger(),
+					configProvider(settings),
+				).logger;
 				mockDeltaManager = new MockDeltaManager();
 				mockRuntime = new MockRuntime(mockDeltaManager);
 				summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
@@ -502,7 +541,7 @@ describe("Runtime", () => {
 						"Expect nonRuntimeHeuristicThreshold to be provided",
 					);
 
-					await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 2); // SummaryAck is included
+					await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 3); // Summarize and SummaryAck are included
 					await tickAndFlushPromises(summaryConfig.minIdleTime);
 
 					assertRunCounts(1, 0, 0, "should not perform summary");
@@ -568,7 +607,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								...retryProps1,
-								reason: "summaryNack",
+								reason: getFailMessage("summaryNack"),
 							},
 							{ eventName: "Running:Summarize_generate", ...retryProps2 },
 							{ eventName: "Running:Summarize_Op", ...retryProps2 },
@@ -596,7 +635,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: "summaryNack",
+									reason: getFailMessage("summaryNack"),
 								},
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },
 								{ eventName: "Running:Summarize_Op", ...retryProps3 },
@@ -684,7 +723,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								summarizeCount: 1,
-								reason: "summaryNack",
+								reason: getFailMessage("summaryNack"),
 							},
 							{
 								eventName: "Running:SummarizeAttemptDelay",
@@ -727,7 +766,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: "summaryNack",
+									reason: getFailMessage("summaryNack"),
 								},
 								{ eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },
@@ -818,8 +857,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						3,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -895,8 +934,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						3,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -1057,8 +1096,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						10,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -1135,8 +1174,8 @@ describe("Runtime", () => {
 						"enqueued summary submitted data stage should be submit",
 					);
 
-					// 24 = 22 regular runtime ops + 2 summary ack ops
-					const expectedRefSeqNum = summaryConfig.maxOps * 2 + 24;
+					// 26 = 22 regular runtime ops + 2 summary ack ops + 2 summarize ops
+					const expectedRefSeqNum = summaryConfig.maxOps * 2 + 26;
 					assert.strictEqual(
 						submitResult.data.referenceSequenceNumber,
 						expectedRefSeqNum,
@@ -1156,8 +1195,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-3,
-						"summarize op seq number should match test negative counter",
+						expectedRefSeqNum + 1,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,

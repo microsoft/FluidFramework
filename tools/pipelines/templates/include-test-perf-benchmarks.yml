@@ -9,10 +9,6 @@ parameters:
 - name: testWorkspace
   type: string
 
-# Name of the pipeline from which artifacts will be dowloaded
-- name: artifactPipeline
-  type: string
-
 # Custom steps specified by the "caller" of this template, to actually run perf tests
 - name: customSteps
   type: stepList
@@ -21,12 +17,30 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
 jobs:
   - job: runTests
     displayName: Run tests
     pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     variables:
-      feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+    - group: ado-feeds
+    - name: isTestBranch
+      value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+      readonly: true
+    - name: feed
+      ${{ if eq(variables.isTestBranch, 'true') }}:
+        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
+      ${{ else }}:
+        value: $(ado-feeds-build) # Comes from the ado-feeds variable group
+    - name: devFeed
+      ${{ if eq(variables.isTestBranch, 'true') }}:
+        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
+      ${{ else }}:
+        value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
 
     steps:
     # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
@@ -40,6 +54,33 @@ jobs:
         version: 16.x
 
     - task: Bash@3
+      displayName: Print Parameters
+      inputs:
+        targetType: 'inline'
+        # Some of the variables
+        # Variables declared outside this template will only work with "macro syntax": $(name).
+        # Variables declared inside this template would work with "template expression syntax": ${{ variables.name }},
+        # but we use macro syntax for all variables for consistency.
+        script: |
+          echo "
+          Pipeline Parameters:
+            poolBuild=${{ parameters.poolBuild }}
+
+          Pipeline Variables:
+            isTestBranch=$(isTestBranch)
+            toolAbsolutePath=$(toolAbsolutePath)
+            artifactPipeline=$(artifactPipeline)
+            artifactBuildId=$(artifactBuildId)
+            feed=$(feed)
+            devFeed=$(devFeed)
+            testWorkspace=${{ parameters.testWorkspace }}
+            loggerPackage=${{ parameters.loggerPackage }}
+
+          Build Params
+            SourceBranch=$(Build.SourceBranch)
+          "
+
+    - task: Bash@3
       displayName: Create test directory
       inputs:
         targetType: 'inline'
@@ -51,6 +92,7 @@ jobs:
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.testWorkspace }}
+        # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
         script: |
           echo Initialize package
           npm init --yes
@@ -59,12 +101,12 @@ jobs:
           echo "registry=https://registry.npmjs.org" >> ./.npmrc
           echo "always-auth=false" >> ./.npmrc
 
-          echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+          echo "@fluidframework:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-experimental:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-tools:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-internal:registry=$(devFeed)" >> ./.npmrc
+          echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+          echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
 
@@ -89,26 +131,6 @@ jobs:
         workingDir: ${{ parameters.testWorkspace }}
         customCommand: 'install ${{ parameters.loggerPackage }}'
         customRegistry: 'useNpmrc'
-
-    - task: Bash@3
-      displayName: Print Parameters
-      inputs:
-        targetType: 'inline'
-        # Some of the variables
-        script: |
-          echo "
-          Pipeline Parameters:
-            poolBuild=${{ parameters.poolBuild }}
-
-          Task Variables:
-            toolAbsolutePath=$(toolAbsolutePath)
-            artifactPipeline=${{ parameters.artifactPipeline}}
-            feed=$(feed)
-            testWorkspace=${{ parameters.testWorkspace }}
-
-          Build Params
-            SourceBranch=$(Build.SourceBranch)
-          "
 
     - task: Bash@3
       displayName: 'Prepare telemetry-generator'

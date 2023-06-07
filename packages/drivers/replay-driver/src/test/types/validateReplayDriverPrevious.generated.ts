@@ -143,6 +143,7 @@ declare function get_old_ClassDeclaration_ReplayDocumentService():
 declare function use_current_ClassDeclaration_ReplayDocumentService(
     use: TypeOnly<current.ReplayDocumentService>);
 use_current_ClassDeclaration_ReplayDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ReplayDocumentService());
 
 /*
@@ -179,7 +180,6 @@ declare function get_current_ClassDeclaration_ReplayDocumentServiceFactory():
 declare function use_old_ClassDeclaration_ReplayDocumentServiceFactory(
     use: TypeOnly<old.ReplayDocumentServiceFactory>);
 use_old_ClassDeclaration_ReplayDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReplayDocumentServiceFactory());
 
 /*
@@ -209,26 +209,14 @@ use_old_ClassDeclaration_SnapshotStorage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_StaticStorageDocumentService": {"forwardCompat": false}
+* "RemovedClassDeclaration_StaticStorageDocumentService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_StaticStorageDocumentService():
-    TypeOnly<old.StaticStorageDocumentService>;
-declare function use_current_ClassDeclaration_StaticStorageDocumentService(
-    use: TypeOnly<current.StaticStorageDocumentService>);
-use_current_ClassDeclaration_StaticStorageDocumentService(
-    get_old_ClassDeclaration_StaticStorageDocumentService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_StaticStorageDocumentService": {"backCompat": false}
+* "RemovedClassDeclaration_StaticStorageDocumentService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_StaticStorageDocumentService():
-    TypeOnly<current.StaticStorageDocumentService>;
-declare function use_old_ClassDeclaration_StaticStorageDocumentService(
-    use: TypeOnly<old.StaticStorageDocumentService>);
-use_old_ClassDeclaration_StaticStorageDocumentService(
-    get_current_ClassDeclaration_StaticStorageDocumentService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -252,5 +240,4 @@ declare function get_current_ClassDeclaration_StaticStorageDocumentServiceFactor
 declare function use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
     use: TypeOnly<old.StaticStorageDocumentServiceFactory>);
 use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_StaticStorageDocumentServiceFactory());

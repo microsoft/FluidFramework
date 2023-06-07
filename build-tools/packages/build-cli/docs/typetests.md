@@ -15,9 +15,9 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
-    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact
-    <value> | -r | --disable] [-n | --enable]
+  $ flub typetests [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools|gitrest|historian]
+    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools|gitrest|historian] [--reset]
+    [-p | --exact <value> | -r | --disable] [-n | --enable]
 
 FLAGS
   -a, --all
@@ -28,11 +28,11 @@ FLAGS
 
   -g, --releaseGroup=<option>
       Run on all packages within this release group. Cannot be used with --all, --dir, or --packages.
-      <options: client|server|azure|build-tools>
+      <options: client|server|azure|build-tools|gitrest|historian>
 
   -g, --skipScope=<option>...
       Package scopes to filter out.
-      <options: client|server|azure|build-tools>
+      <options: client|server|azure|build-tools|gitrest|historian>
 
   -n, --normalize
       Removes any unrecognized data from "typeValidation" in the package.json
@@ -57,9 +57,6 @@ FLAGS
       Remove the test "-previous" version dependency. This is also done implicitly (without this flag) if type tests are
       disabled.
 
-  -v, --verbose
-      Verbose logging.
-
   --disable
       Set the "typeValidation.disabled" setting to "true" in the package.json
 
@@ -83,6 +80,9 @@ FLAGS
 
   --scope=<value>...
       Package scopes to filter to.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,

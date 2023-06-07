@@ -1,5 +1,25 @@
 # @fluidframework/container-loader
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
+scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
+[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 **Topics covered below:**
 
 -   [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
@@ -46,6 +66,7 @@ Please see specific sections for more details on these states and events - this 
 2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
 3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 4. [Dirty events](#Dirty-events): Host should have some reasonable UX / workflows to ensure user does not lose edits unexpectedly. I.e. there is enough signals (potentially including blocking user from closing container) ensuring that all user edits make it to storage, unless user explicitly choses to lose such edits.
+5. [Closing or disposing containers](#containerclose): For most cases, you should use the `IContainer.dispose(...)` API to free up resources. If you intend on using the container after closure, or need to pass some critical error to the container, use the `IContainer.close(...)` API.
 
 ## Expectations from container runtime and data store implementers
 
@@ -69,7 +90,7 @@ Usually container is returned when state of container (and data stores) is rehyd
 
 ### Closure
 
-Container can be closed directly by host by calling `Container.close()` and/or `Container.dispose()`. If the container is expected to be used upon closure, use the `close()` API. Otherwise, use the `dispose()` API. The differences between these methods are detailed in the sections below.
+Container can be closed directly by host by calling `Container.close()` and/or `Container.dispose()`. If the container is expected to be used upon closure, or you need to pass your own critical error to the container, use the `close()` API. Otherwise, use the `dispose()` API. The differences between these methods are detailed in the sections below.
 
 #### `Container.close()`
 
@@ -77,7 +98,9 @@ Once closed, container terminates connection to ordering service, and any local 
 
 The "closed" state effectively means the container is disconnected forever and cannot be reconnected.
 
-Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
+If after some time a closed container is no longer needed, calling `Container.dispose()` will dispose the runtime resources.
+
+Container can also be closed and/or disposed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details.
 
 When container is closed, the following is true (in no particular order):
 
@@ -86,7 +109,7 @@ When container is closed, the following is true (in no particular order):
 3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true) indicating to all data stores that container is read-only, and data stores should not allow local edits, as they are not going to make it.
 4. "disconnected" event fires, if connection was active at the moment of container closure.
 
-`"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is closed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
+`"closed"` event is available on Container for hosts.
 
 #### `Container.dispose()`
 
@@ -219,3 +242,21 @@ This information can be used by a host to build appropriate UX that allows user 
 Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
 
 `Container.isDirty` can be used to get current state of container.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

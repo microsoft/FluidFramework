@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.47.0",
+	"version": "0.48.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,6 +32,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -39,7 +40,10 @@
 		"chai": "^4.2.0",
 		"chalk": "^4.1.2",
 		"easy-table": "^1.1.1",
-		"mocha": "^10.0.0"
+		"mocha": "^10.0.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
@@ -59,5 +63,6 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"typescript": "~4.5.5"
-	}
+	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e"
 }

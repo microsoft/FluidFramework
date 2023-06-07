@@ -9,6 +9,8 @@ import * as mochaModule from "mocha";
 import { pkgName } from "./packageVersion";
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
+const propsDict =
+	process.env.FLUID_LOGGER_PROPS != null ? JSON.parse(process.env.FLUID_LOGGER_PROPS) : undefined;
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
@@ -19,10 +21,12 @@ class TestLogger implements ITelemetryBufferedLogger {
 			return;
 		}
 
-		event.testName = this.testName;
+		// The test logger is currently instantiated once and for each event triggered between begin and
+		// end of a test, in case the testName is undefined, we will use the currentTestName.
+		event.testName = this.testName ?? currentTestName;
 		event.testVariant = testVariant;
 		event.hostName = pkgName;
-		this.parentLogger.send(event);
+		this.parentLogger.send({ ...event, ...propsDict });
 	}
 	async flush() {
 		return this.parentLogger.flush();

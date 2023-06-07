@@ -46,6 +46,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		featureGates: Record<string, ConfigTypes> = {},
 	) => {
 		const configWithFeatureGates = {
+			// AB#3986 track work to removing this exception using simulateReadConnectionUsingDelay
+			simulateReadConnectionUsingDelay: false,
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
@@ -66,10 +68,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		[
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
 				error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
 			},
 		],

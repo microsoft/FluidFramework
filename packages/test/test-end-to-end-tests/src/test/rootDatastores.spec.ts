@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
-	ContainerMessageType,
 	ContainerRuntime,
 	IAckedSummary,
 	SummaryCollection,
@@ -22,7 +21,6 @@ import {
 	IContainerRuntime,
 	IDataStoreWithBindToContext_Deprecated,
 } from "@fluidframework/container-runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -36,9 +34,9 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 
-describeNoCompat("Named root data stores", (getTestObjectProvider) => {
+describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -168,19 +166,18 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
 		it("Aliases with slashes are not supported", async () => {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-			const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
-			const aliasResult1 = await ds1.trySetAlias(alias);
-
-			let error: Error | undefined;
-			try {
-				await ds2.trySetAlias(`${alias}/${alias}`);
-			} catch (err) {
-				error = err as Error;
-			}
-
-			assert.equal(aliasResult1, "Success");
-			assert.ok(error instanceof UsageError);
+			const wrongAlias = `${alias}/${alias}`;
+			await assert.rejects(
+				ds1.trySetAlias(wrongAlias),
+				() => true,
+				"Slashes should not be supported",
+			);
+			await assert.rejects(
+				getRootDataStore(dataObject1, wrongAlias, /* wait */ false),
+				() => true,
+				"The aliasing should not have happened",
+			);
 		});
 
 		it("Aliasing a datastore is idempotent", async () => {
@@ -323,31 +320,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 			}
 		});
 
-		const events = [
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "malformedDataStoreAliasMessage",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "malformedDataStoreAliasMessage",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "malformedDataStoreAliasMessage",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "malformedDataStoreAliasMessage",
-			},
-		];
-		itExpects("Receiving a bad alias message breaks the container", events, async function () {
-			const dataCorruption = allDataCorruption([container1, container2]);
-			(runtimeOf(dataObject1) as any).submit(ContainerMessageType.Alias, { id: alias });
-			assert(await dataCorruption);
-		});
-
-		it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
+		it("Assign multiple data stores to the same alias, first write wins, different containers", async function () {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
@@ -360,6 +333,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+
+			await provider.ensureSynchronized();
 			assert.ok(await getRootDataStore(dataObject3, alias));
 		});
 

@@ -15,6 +15,7 @@ import {
 	TestDbFactory,
 	TestProducer,
 	TestKafka,
+	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
 import {
 	IDocument,
@@ -26,13 +27,14 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
-import { DeltaService } from "../../alfred/services";
+import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper";
 import Sinon from "sinon";
 import { Constants } from "../../utils";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
+const checkpointsCollectionName = "testCheckpoints";
 const deltasCollectionName = "testDeltas";
 const rawDeltasCollectionName = "testRawDeltas";
 const defaultProvider = new nconf.Provider({}).defaults({
@@ -84,6 +86,7 @@ describe("Routerlicious", () => {
 				defaultMongoManager,
 				nodeCollectionName,
 				documentsCollectionName,
+				checkpointsCollectionName,
 				deltasCollectionName,
 				rawDeltasCollectionName,
 			);
@@ -112,20 +115,42 @@ describe("Routerlicious", () => {
 				scopes,
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
-			const defaultDb = await defaultMongoManager.getDatabase();
 			const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
-			const defaultDocumentsCollection =
-				defaultDb.collection<IDocument>(documentsCollectionName);
+			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
+			const defaultDocumentDeleteService = new DocumentDeleteService();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
 				const limitGetDeltas = 5;
+				const limitGetSession = 5;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(limitTenant);
+					const restTenantThrottler = new TestThrottler(limitTenant);
+					const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
+					const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
+					const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
 					const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
 					const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
+					const restGetSessionThrottler = new TestThrottler(limitGetSession);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -135,17 +160,22 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottler,
+					);
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -293,29 +323,57 @@ describe("Routerlicious", () => {
 			describe("authorization", () => {
 				const maxThrottlerLimit = 10;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
+					);
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -380,29 +438,57 @@ describe("Routerlicious", () => {
 
 				const maxThrottlerLimit = 1000000;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
+					);
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -467,29 +553,56 @@ describe("Routerlicious", () => {
 			describe("single-use JWTs", () => {
 				const limit = 1000000;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(limit);
-					const restCreateDocThrottler = new TestThrottler(limit);
-					const restGetDeltasThrottler = new TestThrottler(limit);
+					const restTenantThrottler = new TestThrottler(limit);
+					const restTenantGetDeltasThrottler = new TestThrottler(limit);
+					const restTenantCreateDocThrottler = new TestThrottler(limit);
+					const restTenantGetSessionThrottler = new TestThrottler(limit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(limit);
+					const restClusterGetDeltasThrottler = new TestThrottler(limit);
+					const restClusterGetSessionThrottler = new TestThrottler(limit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
 					);
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						new TestCache(),
 						defaultStorage,
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -519,17 +632,43 @@ describe("Routerlicious", () => {
 
 				beforeEach(() => {
 					const maxThrottlerLimit = 1000000;
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
 					);
 
 					spyGetSession = Sinon.spy(SessionHelper, "getSession");
@@ -537,14 +676,15 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -556,8 +696,10 @@ describe("Routerlicious", () => {
 				describe("documents", () => {
 					it("/:tenantId/session/:id", async () => {
 						// Create a new session
-						Sinon.stub(defaultDocumentsCollection, "upsert").returns(Promise.resolve());
-						Sinon.stub(defaultDocumentsCollection, "findOne")
+						Sinon.stub(defaultDocumentRepository, "updateOne").returns(
+							Promise.resolve(),
+						);
+						Sinon.stub(defaultDocumentRepository, "readOne")
 							.onFirstCall()
 							.returns(Promise.resolve({} as IDocument))
 							.onSecondCall()

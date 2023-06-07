@@ -49,6 +49,7 @@ trigger:
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
@@ -71,6 +72,7 @@ pr:
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 extends:
   template: templates/build-docker-service.yml
@@ -84,9 +86,9 @@ extends:
     containerName: fluidframework/routerlicious/historian
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    packageManagerInstallCommand: 'pnpm install --workspace-root --frozen-lockfile'
     packageManager: pnpm
     test: test
     tagName: historian
+    lint: true
     pack: true
-    usesPrettier: false

@@ -40,50 +40,26 @@ use_old_TypeAliasDeclaration_Factory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFetchSnapshotResult": {"forwardCompat": false}
+* "ClassDeclaration_GCDataBuilder": {"forwardCompat": false}
 */
+declare function get_old_ClassDeclaration_GCDataBuilder():
+    TypeOnly<old.GCDataBuilder>;
+declare function use_current_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<current.GCDataBuilder>);
+use_current_ClassDeclaration_GCDataBuilder(
+    get_old_ClassDeclaration_GCDataBuilder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFetchSnapshotResult": {"backCompat": false}
+* "ClassDeclaration_GCDataBuilder": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNodeWithGC": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummarizerNodeRootContract": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummarizerNodeRootContract": {"backCompat": false}
-*/
+declare function get_current_ClassDeclaration_GCDataBuilder():
+    TypeOnly<current.GCDataBuilder>;
+declare function use_old_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<old.GCDataBuilder>);
+use_old_ClassDeclaration_GCDataBuilder(
+    get_current_ClassDeclaration_GCDataBuilder());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -132,18 +108,6 @@ declare function use_old_TypeAliasDeclaration_ReadAndParseBlob(
     use: TypeOnly<old.ReadAndParseBlob>);
 use_old_TypeAliasDeclaration_ReadAndParseBlob(
     get_current_TypeAliasDeclaration_ReadAndParseBlob());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_RefreshSummaryResult": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_RefreshSummaryResult": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -508,30 +472,6 @@ use_old_FunctionDeclaration_createResponseError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNodeWithGC": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_exceptionToResponse": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_exceptionToResponse():
@@ -768,6 +708,30 @@ declare function use_old_FunctionDeclaration_seqFromTree(
     use: TypeOnly<typeof old.seqFromTree>);
 use_old_FunctionDeclaration_seqFromTree(
     get_current_FunctionDeclaration_seqFromTree());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof old.unpackChildNodesUsedRoutes>;
+declare function use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof current.unpackChildNodesUsedRoutes>);
+use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_old_FunctionDeclaration_unpackChildNodesUsedRoutes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof current.unpackChildNodesUsedRoutes>;
+declare function use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof old.unpackChildNodesUsedRoutes>);
+use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_current_FunctionDeclaration_unpackChildNodesUsedRoutes());
 
 /*
 * Validate forward compat by using old type in place of current type

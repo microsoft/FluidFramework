@@ -19,6 +19,7 @@ import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definiti
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -27,7 +28,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
@@ -85,6 +86,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    get idCompressor(): IIdCompressor | undefined;
+    // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
     get IFluidRouter(): this;
@@ -93,7 +96,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
-    get logger(): ITelemetryLogger;
+    get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;

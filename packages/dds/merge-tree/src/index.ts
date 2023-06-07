@@ -6,9 +6,11 @@
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
-	createInsertOnlyAttributionPolicy,
+	IAttributionCollectionSpec,
 	SerializedAttributionCollection,
+	SequenceOffsets,
 } from "./attributionCollection";
+export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export {
@@ -38,6 +40,7 @@ export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	LocalReferencePosition,
+	SlidingPreference,
 } from "./localReference";
 export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
@@ -93,7 +96,12 @@ export {
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-export { Trackable, TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
+export {
+	Trackable,
+	TrackingGroup,
+	ITrackingGroup,
+	TrackingGroupCollection,
+} from "./mergeTreeTracking";
 export {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -154,6 +162,7 @@ export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegme
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	isMergeTreeDeltaRevertible,
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,

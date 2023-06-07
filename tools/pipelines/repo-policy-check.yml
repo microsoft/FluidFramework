@@ -21,6 +21,8 @@ pool:
 variables:
 - name: skipComponentGovernanceDetection
   value: true
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
 - task: UseNode@1
@@ -28,18 +30,18 @@ steps:
   inputs:
     version: 16.x
 
+- template: templates/include-install-pnpm.yml
+  parameters:
+    buildDirectory: .
+
 - task: Bash@3
   displayName: Install root dependencies
   inputs:
     targetType: 'inline'
     workingDirectory: .
     script: |
-      # Install pnpm globally
-      npm i -g pnpm
-
-      # We only want to install the root package deps, so we set recursive-install to false
-      pnpm config set recursive-install false
-      pnpm install --frozen-lockfile
+      # We only need to install the root dependencies
+      pnpm install --workspace-root --frozen-lockfile
 
 - task: Npm@1
   displayName: Policy Check
@@ -52,3 +54,16 @@ steps:
   inputs:
     command: 'custom'
     customCommand: 'run layer-check'
+
+- task: Npm@1
+  displayName: npm run prettier:root
+  inputs:
+    command: 'custom'
+    customCommand: 'run prettier:root'
+
+- task: Bash@3
+  displayName: Prune pnpm store
+  inputs:
+    targetType: 'inline'
+    script: |
+      pnpm store prune
