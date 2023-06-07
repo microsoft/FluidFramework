@@ -11,7 +11,7 @@
 			"skipFiles": ["<node_internals>/**"],
 			"program": "${workspaceFolder}/packages/build-tools/src/fluidBuild/fluidBuild.ts",
 			"cwd": "${workspaceFolder}/..",
-			"outFiles": ["${workspaceFolder}/**/*.js"]
-		}
-	]
+			"outFiles": ["${workspaceFolder}/**/*.js"],
+		},
+	],
 }

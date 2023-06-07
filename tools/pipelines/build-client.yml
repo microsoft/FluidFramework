@@ -88,6 +88,7 @@ pr:
     - package.json
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
+    - fluidBuild.config.cjs
     - tools/pipelines/build-client.yml
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -111,8 +112,9 @@ extends:
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: true
-    taskLintName: ci:eslint
+    taskLint: false
+    taskBuildDocs: false
+    publishDocs: true
     taskTest:
     - webpack
     - ci:test:mocha

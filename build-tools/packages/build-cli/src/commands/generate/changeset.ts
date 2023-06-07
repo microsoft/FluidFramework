@@ -9,6 +9,7 @@ import chalk from "chalk";
 import humanId from "human-id";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
@@ -100,7 +101,6 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		const { all, branch, empty, uiMode } = this.flags;
 
 		if (empty) {
-			// TODO: This only works for the root release group (client). Is that OK?
 			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
 			// eslint-disable-next-line @typescript-eslint/no-shadow
 			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
@@ -184,7 +184,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			choices.push({
-				title: changed ? `${pkg.nameColored} ${chalk.red.bold("(changed)")}` : pkg.name,
+				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
 				value: pkg,
 				selected: changed,
 			});
@@ -211,27 +211,54 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 		}
 
-		const response = await prompts({
-			choices: [...choices, { title: " ", heading: true, disabled: true }],
-			instructions: INSTRUCTIONS,
-			message: "Choose which packages to include in the changeset. Type to filter the list.",
-			name: "selectedPackages",
-			optionsPerPage: 5,
-			type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
-			onState: (state: any) => {
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-				if (state.aborted) {
-					process.nextTick(() => this.exit(1));
-				}
+		const questions: prompts.PromptObject[] = [
+			{
+				name: "selectedPackages",
+				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
+				choices: [...choices, { title: " ", heading: true, disabled: true }],
+				instructions: INSTRUCTIONS,
+				message:
+					"Choose which packages to include in the changeset. Type to filter the list.",
+				optionsPerPage: 5,
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			} as any, // Typed as any because the typings don't include the optionsPerPage property.
+			{
+				name: "summary",
+				type: "text",
+				message: "Enter a summary of the change.",
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
 			},
-		});
+			{
+				name: "description",
+				type: "text",
+				message: "Enter a longer description of the change.",
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			},
+		];
 
+		const response = await prompts(questions);
 		const selectedPackages: Package[] = response.selectedPackages;
 		const bumpType = getDefaultBumpTypeForBranch(branch) ?? "minor";
 
 		const newFile = await createChangesetFile(
 			context.gitRepo.resolvedRoot,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
+			`${response.summary.trim()}\n\n${response.description}`,
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
 		this.logHr();
@@ -252,7 +279,10 @@ async function createChangesetFile(
 	const changesetID = humanId({ separator: "-", capitalize: false });
 	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
 	const changesetContent = await createChangesetContent(packages, body);
-	await writeFile(changesetPath, changesetContent);
+	await writeFile(
+		changesetPath,
+		prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
+	);
 	return changesetPath;
 }
 
@@ -264,7 +294,7 @@ async function createChangesetContent(
 	for (const [pkg, bump] of packages.entries()) {
 		lines.push(`"${pkg.name}": ${bump}`);
 	}
-	lines.push("---");
+	lines.push("---", "\n");
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;

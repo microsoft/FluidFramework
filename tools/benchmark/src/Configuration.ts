@@ -416,6 +416,24 @@ export function benchmarkArgumentsIsCustom(
 }
 
 /**
+ * Tags and formats the provided Title from the supplied BenchmarkDescription to create a
+ * tagged and formatted Title for the Reporter.
+ *
+ * @param args - see {@link BenchmarkDescription} and {@link Titled}
+ * @returns - a formatted tagged title from the supplied BenchmarkDescription
+ */
+export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
+	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
+	const testTypeTag = TestType[TestType.ExecutionTime];
+	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+
+	if (args.category !== "") {
+		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+	}
+	return qualifiedTitle;
+}
+
+/**
  * Determines if we are in a mode where we actually want to run benchmarks and output data.
  *
  * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be

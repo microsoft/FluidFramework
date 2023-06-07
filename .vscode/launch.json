@@ -17,8 +17,8 @@
 				"ADO_API_TOKEN": "",
 				// Your Github PAT (Personal Access Token) Your Icon > Settings > Developer settings > Personal Access Tokens > Fine-grained tokens (Public Repositories (read-only) should be enough)
 				"DANGER_GITHUB_API_TOKEN": "",
-				"TARGET_BRANCH_NAME": "main"
-			}
+				"TARGET_BRANCH_NAME": "main",
+			},
 		},
 		{
 			"name": "npm test build-cli",
@@ -27,7 +27,7 @@
 			"runtimeArgs": ["run-script", "test"],
 			"runtimeExecutable": "npm",
 			"skipFiles": ["<node_internals>/**"],
-			"type": "node"
+			"type": "node",
 		},
 		{
 			"name": "flub",
@@ -36,7 +36,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["release", "-g", "client", "-v", "--no-policyCheck"]
+			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
 		{
 			// Runs the `flub release report --all` command with a debugger attached.
@@ -46,7 +46,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["release", "report", "-g", "build-tools", "-v"]
+			"args": ["release", "report", "-g", "build-tools", "-v"],
 		},
 		{
 			// Runs the `flub generate changeset` command with a debugger attached.
@@ -56,7 +56,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["generate", "changeset", "-v", "-b", "main"]
+			"args": ["generate", "changeset", "-v", "-b", "main"],
 		},
 		{
 			"name": "flub bump deps",
@@ -75,8 +75,8 @@
 				// "-g",
 				// "azure",
 				"--no-commit",
-				"--no-install"
-			]
+				"--no-install",
+			],
 		},
 		{
 			"name": "fluid-bump-version",
@@ -84,7 +84,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["-d", "@fluidframework/common-utils@^0.33.1000"]
+			"args": ["-d", "@fluidframework/common-utils@^0.33.1000"],
 		},
 		{
 			"name": "layer-check",
@@ -93,13 +93,13 @@
 			"skipFiles": ["<node_internals>/**"],
 			"args": ["--verbose"],
 			"cwd": "${workspaceFolder}",
-			"type": "node"
+			"type": "node",
 		},
 		{
 			"type": "node",
 			"request": "attach",
 			"name": "Attach by Process ID",
-			"processId": "${command:PickProcess}"
+			"processId": "${command:PickProcess}",
 		},
 		{
 			"type": "node",
@@ -112,14 +112,14 @@
 				"-r",
 				"source-map-support/register",
 				"src/index.ts",
-				"--runInBand"
+				"--runInBand",
 			],
 			"env": {
-				"TS_NODE_PROJECT": "tsconfig.json"
+				"TS_NODE_PROJECT": "tsconfig.json",
 			},
 			// "skipFiles": ["<node_internals>/**"],
 			"console": "integratedTerminal",
-			"smartStep": true
+			"smartStep": true,
 		},
 		{
 			"type": "node",
@@ -128,7 +128,7 @@
 			"cwd": "${workspaceFolder}/",
 			"program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
 			"args": ["--recursive", "dist/test/", "--grep Checked"],
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "openOnSessionStart",
 		},
 		{
 			"name": "Chrome",
@@ -138,8 +138,8 @@
 			"sourceMaps": true,
 			"url": "localhost:3000/sharedText/oct18-3",
 			"pathMapping": {
-				"/public/scripts/dist/src/": "${workspaceFolder}/dist"
-			}
+				"/public/scripts/dist/src/": "${workspaceFolder}/dist",
+			},
 		},
 		{
 			"type": "node",
@@ -147,7 +147,7 @@
 			"sourceMaps": true,
 			"protocol": "inspector",
 			"name": "Mocha attach",
-			"port": 9229
+			"port": 9229,
 		},
 		{
 			"type": "node",
@@ -156,7 +156,7 @@
 			"sourceMaps": true,
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
+			"program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js",
 		},
 		{
 			"type": "node",
@@ -165,7 +165,7 @@
 			"sourceMaps": true,
 			"outFiles": ["${workspaceFolder}/packages/runtime/sequence/dist/test/*.js"],
 			"protocol": "inspector",
-			"program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
+			"program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js",
 		},
 		{
 			"type": "node",
@@ -178,7 +178,7 @@
 			"localRoot": "${workspaceFolder}/server/routerlicious",
 			"remoteRoot": "/usr/src/server",
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -191,7 +191,7 @@
 			"localRoot": "${workspaceFolder}/server/routerlicious",
 			"remoteRoot": "/usr/src/server",
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -205,7 +205,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -219,7 +219,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -233,7 +233,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -247,7 +247,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -261,7 +261,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -275,7 +275,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -289,7 +289,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -302,7 +302,7 @@
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
-				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd"
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
 			},
 			"sourceMaps": true,
 			"program": "${file}",
@@ -310,7 +310,7 @@
 				// "--fgrep",               // Uncomment to filter by test case name
 				// "<test case name>",
 				"--no-timeouts",
-				"--exit"
+				"--exit",
 			],
 			"cwd": "${fileDirname}",
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
@@ -323,10 +323,10 @@
 				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
-				"${fileDirname}/../../../../dist/**/*.js"
+				"${fileDirname}/../../../../dist/**/*.js",
 			],
 			"preLaunchTask": "Build Current Tests",
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "openOnSessionStart",
 		},
 		{
 			"type": "node",
@@ -345,14 +345,14 @@
 				"--exit",
 				"../../dist/test/${fileBasenameNoExtension}.js",
 				"../../../dist/test/**/${fileBasenameNoExtension}.js",
-				"../../../../dist/test/**/${fileBasenameNoExtension}.js"
+				"../../../../dist/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
 			"outFiles": [
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
-				"${fileDirname}/../../../../dist/**/*.js"
-			]
+				"${fileDirname}/../../../../dist/**/*.js",
+			],
 		},
 		{
 			"type": "node",
@@ -363,7 +363,7 @@
 			"args": ["--verbose", "-i", "--no-cache", "${file}"],
 			"runtimeArgs": ["--unhandled-rejections=strict"],
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen"
-		}
-	]
+			"internalConsoleOptions": "neverOpen",
+		},
+	],
 }

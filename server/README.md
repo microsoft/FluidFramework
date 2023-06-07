@@ -22,16 +22,17 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Tinylicious](./tinylicious) Light-weight monolithic server implementation
 
-
 ## Running the Reference Server
-To get started with Routerlicious and the Fluid reference implementation, you must install docker and allocate at least 4gb of RAM. We suggest you use our docker images, as outlined by the [docker compose](./docker-compose.yml) to start. You can run ```npm run start:docker``` from the root directory to try this.
+
+To get started with Routerlicious and the Fluid reference implementation, you must install docker and allocate at least 4gb of RAM. We suggest you use our docker images, as outlined by the [docker compose](./docker-compose.yml) to start. You can run `npm run start:docker` from the root directory to try this.
 
 1. Download and install [Docker](https://docs.docker.com/desktop/)
 2. Configure Docker to have 4gb of RAM
 3. Start the docker container with `npm run start:docker` from the repo root, which does this:
-  ```
-  "start:docker": "docker-compose -f server/docker-compose.yml up"
-  ```
+
+```
+"start:docker": "docker-compose -f server/docker-compose.yml up"
+```
 
 ### Developing the Reference Server
 
@@ -47,21 +48,25 @@ docker compose restart gitrest
 ```
 
 ### Common Issues
-* Port already allocated
-  * This can happen if you have a process already running on a port the docker-compose file expects to have available
-  * On MacOS, Disable AirPlay Receiver to free port 5000 (System Settings -> General -> AirDrop & Handoff -> AirPlay Receiver)
-* Drive Share Failure
-  * An intermittent failure most frequent on Windows, best solved by reinstalling
-* Not Enough RAM
-  * Allocate more RAM
+
+-   Port already allocated
+    -   This can happen if you have a process already running on a port the docker-compose file expects to have available
+    -   On MacOS, Disable AirPlay Receiver to free port 5000 (System Settings -> General -> AirDrop & Handoff -> AirPlay Receiver)
+-   Drive Share Failure
+    -   An intermittent failure most frequent on Windows, best solved by reinstalling
+-   Not Enough RAM
+    -   Allocate more RAM
 
 ### Using older version of published docker images
+
 By default the [docker compose](./docker-compose.yml) file pulls the latest published images. If you want to use a specific version for testing, you can make a copy of `docker-compose.yml` and change the tag from `latest` to a specific version number.
 
 ## Routerlicious for Local Development
+
 ### With Webpack Dev Server && the Webpack Fluid Loader (Yo-Fluid Output)
 
 To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker containers, and then start the webpack dev server with the docker env command.
+
 ```
     "start:docker": "webpack serve --config webpack.config.js --package package.json --env mode=docker",
 ```
@@ -71,6 +76,7 @@ To use Routerlicious with a Yo-Fluid container, you should start the Routerlicio
 Gateway is an example of a service providing its own Fluid Container host. [Gateway](./gateway) serves a Fluid Loader.
 
 You can access this loader by using the following URL Schema
+
 ```
 https://localhost:3000/loader/fluid/${container-identifier}?chaincode=${data-store-package-name}@${version}
 ```
