@@ -251,7 +251,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-	private _loaderContainerTracker = new LoaderContainerTracker();
+	protected _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	private _logger: EventAndErrorTrackingLogger | undefined;
@@ -526,7 +526,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 	constructor(
 		public readonly LoaderConstructor: typeof Loader,
+		public readonly LoaderConstructorForLoading: typeof Loader,
 		public readonly driver: ITestDriver,
+		public readonly driverForLoading: ITestDriver,
 		public readonly createFluidEntryPoint: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
@@ -537,8 +539,30 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		super(LoaderConstructor, driver, createFluidEntryPoint);
 	}
 
+	private createLoaderForLoading(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const multiSinkLogger = new MultiSinkLogger();
+		multiSinkLogger.addLogger(this.logger);
+		if (loaderProps?.logger !== undefined) {
+			multiSinkLogger.addLogger(loaderProps.logger);
+		}
+
+		const loader = new this.LoaderConstructorForLoading({
+			...loaderProps,
+			logger: multiSinkLogger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+		this._loaderContainerTracker.add(loader);
+		return loader;
+	}
+
 	private makeTestLoaderForLoading(testContainerConfig?: ITestContainerConfig) {
-		return this.createLoader(
+		return this.createLoaderForLoading(
 			[[defaultCodeDetails, this.versionedCreateFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
 		);
@@ -550,7 +574,7 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 	): Promise<IContainer> {
 		const loader = this.makeTestLoaderForLoading(testContainerConfig);
 		const container = await loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
+			url: await this.driverForLoading.createContainerUrl(this.documentId),
 			headers: requestHeader,
 		});
 		await this.waitContainerToCatchUp(container);

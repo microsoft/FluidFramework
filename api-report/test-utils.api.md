@@ -322,6 +322,8 @@ export class TestObjectProvider implements ITestObjectProvider {
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
+    // (undocumented)
+    protected _loaderContainerTracker: LoaderContainerTracker;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
@@ -344,13 +346,17 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 // @public (undocumented)
 export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
-    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructor: typeof Loader, LoaderConstructorForLoading: typeof Loader, driver: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     // (undocumented)
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)
+    readonly driverForLoading: ITestDriver;
+    // (undocumented)
     readonly LoaderConstructor: typeof Loader;
+    // (undocumented)
+    readonly LoaderConstructorForLoading: typeof Loader;
     // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

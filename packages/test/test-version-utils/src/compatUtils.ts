@@ -150,17 +150,23 @@ export async function getCompatVersionedTestObjectProvider(
 	},
 ): Promise<TestObjectProvider> {
 	const loaderApi = getLoaderApi(createVersion.base, createVersion.delta);
+	const loaderApiForLoading = getLoaderApi(loadVersion.base, loadVersion.delta);
 	const createContainerRuntimeApi = getContainerRuntimeApi(
 		createVersion.base,
 		createVersion.delta,
 	);
 	const loadContainerRuntimeApi = getContainerRuntimeApi(loadVersion.base, loadVersion.delta);
 	const dataRuntimeApi = getDataRuntimeApi(createVersion.base, createVersion.delta);
+	const dataRuntimeApiForLoading = getDataRuntimeApi(loadVersion.base, loadVersion.delta);
 	const driver = await createVersionedFluidTestDriver(createVersion.base, driverConfig);
+	const driverForLoading = await createVersionedFluidTestDriver(loadVersion.base, driverConfig);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
+	const getDataStoreFactoryFnForLoading =
+		createGetDataStoreFactoryFunction(dataRuntimeApiForLoading);
+
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
@@ -174,7 +180,7 @@ export async function getCompatVersionedTestObjectProvider(
 		);
 	};
 	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
-		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
 			loadContainerRuntimeApi.ContainerRuntime,
 		);
@@ -189,7 +195,9 @@ export async function getCompatVersionedTestObjectProvider(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return new TestObjectProviderWithVersionedLoad(
 		loaderApi.Loader,
+		loaderApiForLoading.Loader,
 		driver,
+		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
 	);
