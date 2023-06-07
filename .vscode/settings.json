@@ -1,8 +1,8 @@
 {
 	"eslint.workingDirectories": [
 		{
-			"mode": "auto"
-		}
+			"mode": "auto",
+		},
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
@@ -15,7 +15,7 @@
 		"tools/pipelines/*.yml": "azure-pipelines",
 		// good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
 		"fence.json": "jsonc",
-		".git-blame-ignore-revs": "ignore"
+		".git-blame-ignore-revs": "ignore",
 	},
 	"[azure-pipelines].customSchemaFile": "",
 	"deno.enable": false,
@@ -41,10 +41,22 @@
 		"TSDoc",
 		"unacked",
 		"unaugmented",
-		"undoprovider"
+		"undoprovider",
 	],
 
 	// Enable prettier as default formatter, and disable rules that disagree with it
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.insertSpaces": false
+	"editor.insertSpaces": false,
+	// Also configure the formatter on a per-language basis for some common languages/file-types, to make sure it is applied
+	// even if someone's User Settings specify a different formatter at this level (which overrides the root-level
+	// 'editor.defaultFormatter').
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
 }

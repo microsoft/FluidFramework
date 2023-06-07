@@ -54,7 +54,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-test-utils": "^0.1041.1000-154635",
 		"@rushstack/eslint-config": "^2.6.1",
