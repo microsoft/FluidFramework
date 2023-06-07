@@ -47,4 +47,16 @@
 	// Enable prettier as default formatter, and disable rules that disagree with it
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.insertSpaces": false,
+	// Also configure the formatter on a per-language basis for some common languages/file-types, to make sure it is applied
+	// even if someone's User Settings specify a different formatter at this level (which overrides the root-level
+	// 'editor.defaultFormatter').
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
 }

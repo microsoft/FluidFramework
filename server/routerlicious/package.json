@@ -20,6 +20,7 @@
 		"build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
 		"build:genver": "lerna run build:genver --stream --parallel",
 		"bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver",
+		"check:versions": "flub check buildVersion -g server --path .",
 		"ci:build": "npm run build:genver && lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
 		"ci:eslint": "lerna run eslint --no-sort --stream",
