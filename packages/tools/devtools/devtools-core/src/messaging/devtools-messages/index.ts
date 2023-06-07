@@ -8,6 +8,7 @@
  */
 
 export { ContainerList } from "./ContainerList";
+export { DevtoolsDisposed } from "./DevtoolsDisposed";
 export { DevtoolsFeatures } from "./DevtoolsFeatures";
 export { GetContainerList } from "./GetContainerList";
 export { GetDevtoolsFeatures } from "./GetDevtoolsFeatures";

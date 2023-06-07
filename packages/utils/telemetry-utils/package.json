@@ -80,7 +80,7 @@
 		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.4.0.0",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.4.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/debug": "^4.1.5",
 		"@types/events": "^3.0.0",
