@@ -15,7 +15,7 @@ const tscDependsOn = ["^tsc", "build:genver", "typetests:gen"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "lint", "ci:build:docs"],
+			dependsOn: ["compile", "eslint", "ci:build:docs"],
 			script: false,
 		},
 		"full": {
@@ -50,6 +50,7 @@ module.exports = {
 		"good-fences": [],
 		"prettier": [],
 		"webpack": ["^tsc", "^build:esnext"],
+		"webpack:profile": ["^tsc", "^build:esnext"],
 		"clean": [],
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.

@@ -111,8 +111,8 @@ extends:
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: true
-    taskLintName: ci:eslint
+    taskLint: false
+    taskBuildDocs: false
     taskTest:
     - webpack
     - ci:test:mocha
