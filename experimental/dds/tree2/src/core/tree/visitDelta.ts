@@ -50,7 +50,7 @@ import * as Delta from "./delta";
  *
  * Future work:
  *
- * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
+ * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial views).
  *
  * - Avoid moving the visitor through parts of the document that do not need changing in the current pass.
  * This could be done by assigning IDs to nodes of interest and asking the visitor to jump to these nodes in order to edit them.
