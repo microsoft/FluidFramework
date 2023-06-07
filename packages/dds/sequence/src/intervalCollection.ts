@@ -1161,14 +1161,40 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
 	}
 }
 
-export class EndInRangeIndex<TInterval extends ISerializableInterval>
-	implements IntervalIndex<TInterval>
+/**
+ * Collection of intervals.
+ *
+ * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
+ */
+export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
+	/**
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (both ends inclusively)
+	 */
+	findIntervalsWithEndpointInRange(start: number, end: number);
+}
+
+/**
+ * Collection of intervals.
+ *
+ * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
+ */
+export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
+	/**
+	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (inclusive)
+	 */
+	findIntervalsWithStartpointInRange(start: number, end: number);
+}
+
+class EndpointInRangeIndex<TInterval extends ISerializableInterval>
+	implements IEndpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
-		private readonly client?: Client,
+		private readonly client: Client,
 	) {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
@@ -1182,10 +1208,7 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	/**
-	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (both ends inclusively)
-	 */
-	public findIntervalsWithEndInRange(start: number, end: number) {
+	public findIntervalsWithEndpointInRange(start: number, end: number) {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
@@ -1198,7 +1221,7 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			this.client ?? (undefined as any as Client),
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -1206,7 +1229,7 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end,
 			end,
-			this.client ?? (undefined as any as Client),
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -1215,14 +1238,14 @@ export class EndInRangeIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export class StartInRangeIndex<TInterval extends ISerializableInterval>
-	implements IntervalIndex<TInterval>
+class StartpointInRangeIndex<TInterval extends ISerializableInterval>
+	implements IStartpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
-		private readonly client?: Client,
+		private readonly client: Client,
 	) {
 		if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -1238,10 +1261,7 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	/**
-	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end)
-	 */
-	public findIntervalsWithStartInRange(start: number, end: number) {
+	public findIntervalsWithStartpointInRange(start: number, end: number) {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
@@ -1254,7 +1274,7 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			this.client ?? (undefined as any as Client),
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -1262,13 +1282,27 @@ export class StartInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end,
 			end,
-			this.client ?? (undefined as any as Client),
+			this.client,
 			IntervalType.Transient,
 		);
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
 	}
+}
+
+export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
+	helpers: IIntervalHelpers<TInterval>,
+	client: Client,
+) {
+	return new EndpointInRangeIndex<TInterval>(helpers, client);
+}
+
+export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
+	helpers: IIntervalHelpers<TInterval>,
+	client: Client,
+) {
+	return new StartpointInRangeIndex<TInterval>(helpers, client);
 }
 
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
