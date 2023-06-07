@@ -290,6 +290,33 @@ describe("Editing", () => {
 			expectJsonTree(tree2, ["B", "A", "C"]);
 		});
 
+		it("can concurrently change node's value and move node", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Change value of B to C
+			tree1.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
+				"C",
+			);
+
+			// Move B before A.
+			tree2.editor.move(
+				{ parent: undefined, field: rootFieldKeySymbol },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKeySymbol },
+				0,
+			);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			const expectedState: JsonCompatible = ["C", "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
 		it("can rebase cross-field move over unrelated change", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
