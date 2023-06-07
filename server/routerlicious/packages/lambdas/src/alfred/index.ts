@@ -641,6 +641,7 @@ export function configureWebSocketServices(
 				})
 				.catch((error) => {
 					socket.emit("connect_document_error", error);
+					clearExpirationTimer();
 					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
@@ -871,7 +872,9 @@ export function configureWebSocketServices(
 				const rooms = Array.from(roomMap.values());
 				const documentId = rooms[0].documentId;
 				const tenantId = rooms[0].tenantId;
-				disconnectMetric.setProperties({ ...getLumberBaseProperties(documentId, tenantId) });
+				disconnectMetric.setProperties({
+					...getLumberBaseProperties(documentId, tenantId),
+				});
 			}
 
 			try {
@@ -945,7 +948,7 @@ export function configureWebSocketServices(
 					socketTracker.removeSocket(socket.id);
 				}
 				await Promise.all(removeAndStoreP);
-				
+
 				disconnectMetric.success(`Successfully disconnected.`);
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
