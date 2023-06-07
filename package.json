@@ -14,7 +14,7 @@
 		"build": "npm run policy-check && npm run layer-check && fluid-build --task build",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "fluid-build --task build:docs",
-		"build:fast": "fluid-build --task build",
+		"build:fast": "fluid-build --task build --worker",
 		"build:full": "fluid-build --task full",
 		"build:full:compile": "fluid-build --task compile --task webpack",
 		"build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
