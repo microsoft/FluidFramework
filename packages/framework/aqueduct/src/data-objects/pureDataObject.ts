@@ -95,8 +95,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined {
-		//* TODO: Will be this.context.internalReferenceInfo
-		return undefined;
+		//* TODO: Remove 'as' once type is put in the right spot
+		return this.context.IFluidInternalReferenceInfo as IFluidInternalReferenceInfo;
 	}
 
 	/**

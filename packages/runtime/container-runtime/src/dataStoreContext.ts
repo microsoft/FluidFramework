@@ -46,6 +46,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	VisibilityState,
+	IFluidInternalReferenceInfo,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -213,6 +214,11 @@ export abstract class FluidDataStoreContext
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	private deleted: boolean = false;
+
+	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo {
+		//* TODO: Fully implement
+		return this._tombstoned ? { state: "Tombstoned" } : {};
+	}
 
 	public get attachState(): AttachState {
 		return this._attachState;

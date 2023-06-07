@@ -233,7 +233,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 }
 
 // @public
-export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
+export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext, IProvideFluidInternalReferenceInfo {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
     // (undocumented)
@@ -313,6 +313,13 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @public
+export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
+    state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
+    // (undocumented)
+    unreferencedTime?: number;
+}
+
+// @public
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -381,6 +388,12 @@ export interface IProvideFluidDataStoreFactory {
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+}
+
+// @public (undocumented)
+export interface IProvideFluidInternalReferenceInfo {
+    // (undocumented)
+    IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
 // @public (undocumented)

@@ -348,6 +348,24 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
+//* TODO: Find final home for these
+
+export interface IProvideFluidInternalReferenceInfo {
+	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
+}
+
+/**
+ * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
+ * objects within this container.
+ */
+export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
+	//* This probably doesn't hold water. Maybe just for logging. TBD.
+	unreferencedTime?: number;
+
+	/** Describes varying states regarding whether the object is referenced or not, if known */
+	state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
+}
+
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
@@ -355,7 +373,8 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
 		Partial<IProvideFluidDataStoreRegistry>,
-		IProvideFluidHandleContext {
+		IProvideFluidHandleContext,
+		IProvideFluidInternalReferenceInfo {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
