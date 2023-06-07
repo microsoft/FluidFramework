@@ -35,7 +35,6 @@ declare function get_current_TypeAliasDeclaration_DriverEndpoint():
 declare function use_old_TypeAliasDeclaration_DriverEndpoint(
     use: TypeOnly<old.DriverEndpoint>);
 use_old_TypeAliasDeclaration_DriverEndpoint(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverEndpoint());
 
 /*
@@ -132,7 +131,6 @@ declare function get_current_TypeAliasDeclaration_RouterliciousEndpoint():
 declare function use_old_TypeAliasDeclaration_RouterliciousEndpoint(
     use: TypeOnly<old.RouterliciousEndpoint>);
 use_old_TypeAliasDeclaration_RouterliciousEndpoint(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RouterliciousEndpoint());
 
 /*

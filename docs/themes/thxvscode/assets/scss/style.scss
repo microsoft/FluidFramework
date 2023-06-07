@@ -89,3 +89,7 @@ a[href^=http]:not(.no-external-icon):visited::after
 {
   background-color: $visited-link-color;
 }
+
+#main-content a {
+  text-decoration: underline;
+}

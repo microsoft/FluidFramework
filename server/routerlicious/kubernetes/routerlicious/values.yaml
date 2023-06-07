@@ -153,6 +153,7 @@ kafka:
     deltas: deltas
   url: kafka_url:port
   libname: rdkafka
+  customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
 
 ingress:
   class: nginx-prod
