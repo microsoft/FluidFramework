@@ -13,7 +13,7 @@ const DUMMY_REVIVED_VALUE: TreeSchemaIdentifier = brand("DummyRevivedValue");
 /**
  * A `RepairDataStore` implementation that returns dummy content.
  */
-export const dummyRepairDataStore: RepairDataStore = {
+export const dummyRepairDataStore: RepairDataStore<undefined> = {
 	capture: () => {},
 	getNodes: (
 		revision: RevisionTag,

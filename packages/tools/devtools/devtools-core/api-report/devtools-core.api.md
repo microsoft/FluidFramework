@@ -171,6 +171,15 @@ export namespace DataVisualization {
 }
 
 // @internal
+export namespace DevtoolsDisposed {
+    const MessageType = "DEVTOOLS_DISPOSED";
+    export function createMessage(): Message;
+    export interface Message extends IDevtoolsMessage<undefined> {
+        type: typeof MessageType;
+    }
+}
+
+// @internal
 export enum DevtoolsFeature {
     Telemetry = "telemetry"
 }
@@ -367,7 +376,7 @@ export interface IMessageRelayEvents<TMessage extends ISourcedDevtoolsMessage = 
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: ISourcedDevtoolsMessage) => boolean;
+    [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
 // @public

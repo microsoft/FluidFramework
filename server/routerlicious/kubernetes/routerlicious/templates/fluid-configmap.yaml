@@ -139,7 +139,8 @@ data:
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
-            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
         },
         "system": {
             "httpServer": {

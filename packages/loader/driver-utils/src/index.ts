@@ -4,6 +4,7 @@
  */
 
 export { buildSnapshotTree } from "./buildSnapshotTree";
+export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
