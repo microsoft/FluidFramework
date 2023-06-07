@@ -8,11 +8,16 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ITestContainerConfig,
+	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
+	createSummarizerCore,
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { SharedCounter } from "@fluidframework/counter";
 
 describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvider) => {
 	const settings = {};
@@ -23,6 +28,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
+		registry: [[SharedCounter.getFactory().type, SharedCounter.getFactory()]],
 	};
 
 	let provider: ITestObjectProvider;
@@ -73,8 +79,9 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_cancel",
-				error: "Restarting summarizer instead of refreshing",
+				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+				message: "Restarting summarizer instead of refreshing",
+				category: "performance",
 			},
 		],
 		async () => {
@@ -118,8 +125,9 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_cancel",
-				error: "Restarting summarizer instead of refreshing",
+				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+				message: "Restarting summarizer instead of refreshing",
+				category: "performance",
 			},
 		],
 		async () => {
@@ -156,6 +164,70 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
 			// tell the summarizer to process acks.
 			await summarizer2.run("test");
+
+			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
+			assert(summarizingContainer.closed, "summarizer1 should be closed");
+			assert(!container.closed, "Original container should not be closed");
+		},
+	);
+
+	itExpects(
+		"Closes the summarizing client instead of refreshing when loading from an older summary",
+		[
+			{ eventName: "fluid:telemetry:Summarizer:Running:GarbageCollection_cancel" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
+				message: "Stopping fetch from storage",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:FailToSummarize",
+				error: "channelFactoryNotRegisteredForGivenType",
+			},
+		],
+		async () => {
+			const container = await createContainer();
+			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const counter = SharedCounter.create(dataObject.runtime, "counter");
+			dataObject.root.set("counter", counter.handle);
+
+			const { container: summarizingContainer, summarizer } = await createSummarizer(
+				provider,
+				container,
+				undefined,
+				undefined,
+				mockConfigProvider(settings),
+			);
+
+			// summary1
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
+			summarizer.close();
+			summarizingContainer.close();
+
+			const summaryConfigOverrides = {
+				...DefaultSummaryConfiguration,
+				maxOps: 1,
+			};
+
+			const configWithMissingChannelFactory: ITestContainerConfig = {
+				...testContainerConfig,
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides,
+					},
+				},
+				registry: [], // omit the sharedCounter factory from the registry to cause a summarization error
+			};
+
+			const loader = provider.makeTestLoader(configWithMissingChannelFactory);
+			const { container: summarizingContainer2, summarizer: summarizer2 } =
+				await createSummarizerCore(container, loader, summaryVersion1);
+
+			await provider.ensureSynchronized();
+
+			// The summarizer should now fail as we have a missing channel factory
+			await summarizer2.run("test");
+			await provider.ensureSynchronized();
 
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
 			assert(summarizingContainer.closed, "summarizer1 should be closed");
