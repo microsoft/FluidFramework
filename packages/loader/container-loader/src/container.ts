@@ -925,9 +925,7 @@ export class Container
 	}
 
 	private switchFromEstablishingConnectionToDisconnect(reason: string) {
-		if (this.connectionState === ConnectionState.EstablishingConnection) {
-			this.connectionStateHandler.disconnect(reason);
-		}
+		this.connectionStateHandler.switchFromEstablishingConnectionToDisconnect(reason);
 	}
 
 	private verifyClosed(): void {

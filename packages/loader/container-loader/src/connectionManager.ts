@@ -614,7 +614,7 @@ export class ConnectionManager implements IConnectionManager {
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
 				await waitForOnline();
-				this.logger.sendTelemetryEvent({
+				this.logger.sendPerformanceEvent({
 					eventName: "WaitBetweenConnectionAttempts",
 					duration: performance.now() - waitStartTime,
 					details: JSON.stringify({
