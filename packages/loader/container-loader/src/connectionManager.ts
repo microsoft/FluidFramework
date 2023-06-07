@@ -27,6 +27,7 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
+	DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -106,6 +107,9 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
+	constructor(public readonly storageOnlyReason?: string) {
+		super();
+	}
 	submit(messages: IDocumentMessage[]): void {
 		this.emit(
 			"nack",
@@ -317,6 +321,9 @@ export class ConnectionManager implements IConnectionManager {
 				forced: this._forceReadonly,
 				permissions: this._readonlyPermissions,
 				storageOnly,
+				storageOnlyReason: storageOnly
+					? (this.connection as NoDeltaStream).storageOnlyReason
+					: undefined,
 			};
 		}
 
@@ -567,7 +574,9 @@ export class ConnectionManager implements IConnectionManager {
 					origError !== null &&
 					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
 				) {
-					connection = new NoDeltaStream();
+					connection = new NoDeltaStream(
+						(origError as DeltaStreamConnectionForbiddenError).storageOnlyReason,
+					);
 					requestedMode = "read";
 					break;
 				}
@@ -960,6 +969,7 @@ export class ConnectionManager implements IConnectionManager {
 				forcedReadonly: this.readOnlyInfo.forced,
 				readonlyPermissions: this.readOnlyInfo.permissions,
 				storageOnly: this.readOnlyInfo.storageOnly,
+				storageOnlyReason: this.readOnlyInfo.storageOnlyReason,
 			});
 			this.props.closeHandler(error);
 			return undefined;

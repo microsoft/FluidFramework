@@ -551,6 +551,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

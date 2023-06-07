@@ -72,9 +72,11 @@ export class DeltaStreamConnectionForbiddenError
 	static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 	readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
 	readonly canRetry = false;
+	readonly storageOnlyReason: string | undefined;
 
-	constructor(message: string, props: DriverErrorTelemetryProps) {
+	constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string) {
 		super(message, { ...props, statusCode: 400 });
+		this.storageOnlyReason = storageOnlyReason;
 	}
 }
 

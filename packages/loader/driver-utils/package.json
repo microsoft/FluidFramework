@@ -112,6 +112,9 @@
 			"RemovedVariableDeclaration_isFluidResolvedUrl": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+				"forwardCompat": false
 			}
 		}
 	}

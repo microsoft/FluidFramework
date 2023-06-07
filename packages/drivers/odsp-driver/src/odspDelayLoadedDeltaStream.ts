@@ -287,11 +287,17 @@ export class OdspDelayLoadedDeltaStream {
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
+						case "sessionForbiddenOnCheckoutFile":
+						case "sessionForbiddenOnInvisibleMinorVersion":
 							// This document can only be opened in storage-only mode.
 							// DeltaManager will recognize this error
 							// and load without a delta stream connection.
 							this.policies = { ...this.policies, storageOnly: true };
-							throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
+							throw new DeltaStreamConnectionForbiddenError(
+								code,
+								{ driverVersion },
+								code,
+							);
 						default:
 							continue;
 					}
