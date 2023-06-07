@@ -4,5 +4,9 @@
  */
 
 export { DataObject } from "./dataObject";
-export { PureDataObject } from "./pureDataObject";
+export {
+	PureDataObject,
+	IFluidInternalReferenceInfo,
+	IProvideFluidInternalReferenceInfo,
+} from "./pureDataObject";
 export { DataObjectTypes, IDataObjectProps } from "./types";

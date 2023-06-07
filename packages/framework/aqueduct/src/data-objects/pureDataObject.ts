@@ -23,6 +23,8 @@ export interface IProvideFluidInternalReferenceInfo {
 	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
+//* TODO: Move these interface definitions somewhere else
+
 /**
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.

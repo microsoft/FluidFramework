@@ -23,7 +23,14 @@ export {
 	IRootDataObjectFactory,
 	PureDataObjectFactory,
 } from "./data-object-factories";
-export { DataObject, DataObjectTypes, IDataObjectProps, PureDataObject } from "./data-objects";
+export {
+	DataObject,
+	DataObjectTypes,
+	IDataObjectProps,
+	PureDataObject,
+	IProvideFluidInternalReferenceInfo,
+	IFluidInternalReferenceInfo,
+} from "./data-objects";
 export {
 	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
