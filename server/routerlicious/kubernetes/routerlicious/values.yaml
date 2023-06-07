@@ -8,156 +8,155 @@ imagePullPolicy: IfNotPresent
 name: routerlicious
 
 alfred:
-  name: alfred
-  replicas: 4
-  externalUrl: alfred_external_url
-  host: alfred_host
-  cert: cert
-  tenants: []
-  key: jwt_key
-  maxNumberOfClientsPerDocument: 1000000
-  numberOfMessagesPerTrace: 100
-  sessionStickinessDurationMs: 3600000
-  enableConnectionCountLogging: false
-  throttling:
-    restCallsPerTenant:
-      generalRestCall:
-        maxPerMs: 1000000
-        maxBurst: 1000000
-        minCooldownIntervalInMs: 1000000
-        minThrottleIntervalInMs: 1000000
-        maxInMemoryCacheSize: 1000
-        maxInMemoryCacheAgeInMs: 60000
-        enableEnhancedTelemetry: false
-      createDoc: disabled
-      getDeltas: disabled
-      getSession: disabled
-    restCallsPerCluster:
-      createDoc:
-        maxPerInterval: 1000000
-        intervalInMs: 1000000
-      getDeltas: disabled
-      getSession: disabled
-    socketConnectionsPerTenant: disabled
-    socketConnectionsPerCluster: disabled
-    submitOps: disabled
-    submitSignal: disabled
-  socketIoAdapter:
-    enableCustomSocketIoAdapter: true
-    shouldDisableDefaultNamespace: false
-  enforceServerGeneratedDocumentId: false
-  socketIo:
-    perMessageDeflate: true
+    name: alfred
+    replicas: 4
+    externalUrl: alfred_external_url
+    host: alfred_host
+    cert: cert
+    tenants: []
+    key: jwt_key
+    maxNumberOfClientsPerDocument: 1000000
+    numberOfMessagesPerTrace: 100
+    sessionStickinessDurationMs: 3600000
+    enableConnectionCountLogging: false
+    throttling:
+        restCallsPerTenant:
+            generalRestCall:
+                maxPerMs: 1000000
+                maxBurst: 1000000
+                minCooldownIntervalInMs: 1000000
+                minThrottleIntervalInMs: 1000000
+                maxInMemoryCacheSize: 1000
+                maxInMemoryCacheAgeInMs: 60000
+                enableEnhancedTelemetry: false
+            createDoc: disabled
+            getDeltas: disabled
+            getSession: disabled
+        restCallsPerCluster:
+            createDoc:
+                maxPerInterval: 1000000
+                intervalInMs: 1000000
+            getDeltas: disabled
+            getSession: disabled
+        socketConnectionsPerTenant: disabled
+        socketConnectionsPerCluster: disabled
+        submitOps: disabled
+        submitSignal: disabled
+    socketIoAdapter:
+        enableCustomSocketIoAdapter: true
+        shouldDisableDefaultNamespace: false
+    enforceServerGeneratedDocumentId: false
+    socketIo:
+        perMessageDeflate: true
 
 storage:
-  enableWholeSummaryUpload: false
-  storageUrl: storage_url
+    enableWholeSummaryUpload: false
+    storageUrl: storage_url
 
 checkpoints:
-  localCheckpointEnabled: false
-  kafkaCheckpointOnReprocessingOp: false
+    localCheckpointEnabled: false
+    kafkaCheckpointOnReprocessingOp: false
 
 session:
-  enforceDiscoveryFlow: false
+    enforceDiscoveryFlow: false
 
 deli:
-  name: deli
-  replicas: 8
-  checkpointHeuristics:
-    enable: false
-    idleTime: 10000
-    maxTime: 60000
-    maxMessages: 500
-  restartOnCheckpointFailure: true
+    name: deli
+    replicas: 8
+    checkpointHeuristics:
+        enable: false
+        idleTime: 10000
+        maxTime: 60000
+        maxMessages: 500
+    restartOnCheckpointFailure: true
 
 scriptorium:
-  name: scriptorium
-  replicas: 8
-  restartOnCheckpointFailure: true
+    name: scriptorium
+    replicas: 8
+    restartOnCheckpointFailure: true
 
 scribe:
-  name: scribe
-  replicas: 8
-  getDeltasViaAlfred: true
-  verifyLastOpPersistence: false
-  disableTransientTenantFiltering: true
-  checkpointHeuristics:
-    enable: false
-    idleTime: 10000
-    maxTime: 60000
-    maxMessages: 500
-  restartOnCheckpointFailure: true
+    name: scribe
+    replicas: 8
+    getDeltasViaAlfred: true
+    verifyLastOpPersistence: false
+    checkpointHeuristics:
+        enable: false
+        idleTime: 10000
+        maxTime: 60000
+        maxMessages: 500
+    restartOnCheckpointFailure: true
 
 riddler:
-  name: riddler
-  replicas: 2
-  tenants: []
+    name: riddler
+    replicas: 2
+    tenants: []
 
 historian:
-  externalUrl: historian_external_url
-  internalUrl: historian_internal_url
+    externalUrl: historian_external_url
+    internalUrl: historian_internal_url
 
 zookeeper:
-  local: false
-  url: zookeeper_url:port
+    local: false
+    url: zookeeper_url:port
 
 system:
-  httpServer:
-    connectionTimeout: 0
+    httpServer:
+        connectionTimeout: 0
 
 usage:
-  clientConnectivityCountingEnabled: false
-  signalUsageCountingEnabled: false
+    clientConnectivityCountingEnabled: false
+    signalUsageCountingEnabled: false
 
 shared:
-  transientTenants: []
+    transientTenants: []
 
 mongodb:
-  operationsDbEndpoint: mongodb_url
-  globalDbEndpoint: mongoglobaldb_url
-  globalDbEnabled: false
-  expireAfterSeconds: -1
-  createCosmosDBIndexes: false
-  softDeletionRetentionPeriodMs: 2592000000
-  offlineWindowMs: 86400000
-  softDeletionEnabled: false
-  permanentDeletionEnabled: false
-  deletionIntervalMs: 3600000
+    operationsDbEndpoint: mongodb_url
+    globalDbEndpoint: mongoglobaldb_url
+    globalDbEnabled: false
+    expireAfterSeconds: -1
+    createCosmosDBIndexes: false
+    softDeletionRetentionPeriodMs: 2592000000
+    offlineWindowMs: 86400000
+    softDeletionEnabled: false
+    permanentDeletionEnabled: false
+    deletionIntervalMs: 3600000
 
 rabbitmq:
-  connectionString: ""
+    connectionString: ""
 
 redis:
-  url: redis_url
-  port: 6379
-  tls: false
+    url: redis_url
+    port: 6379
+    tls: false
 
 redis2:
-  url: redis_url
-  port: 6379
-  tls: false
+    url: redis_url
+    port: 6379
+    tls: false
 
 redisForThrottling:
-  url: redis_url
-  port: 6379
-  tls: false
+    url: redis_url
+    port: 6379
+    tls: false
 
 redisForTenantCache:
-  url: redis_url
-  port: 6379
-  tls: false
+    url: redis_url
+    port: 6379
+    tls: false
 
 kafka:
-  topics:
-    rawdeltas: rawdeltas
-    deltas: deltas
-  url: kafka_url:port
-  libname: rdkafka
-  customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
+    topics:
+        rawdeltas: rawdeltas
+        deltas: deltas
+    url: kafka_url:port
+    libname: rdkafka
+    customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
 
 ingress:
-  class: nginx-prod
+    class: nginx-prod
 
 error:
-  track: true
-  endpoint: "error_tracking_endpoint"
+    track: true
+    endpoint: "error_tracking_endpoint"

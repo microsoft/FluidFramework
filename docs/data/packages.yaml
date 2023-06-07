@@ -1,9 +1,9 @@
 libraries:
-- "fluid-framework"
-- "@fluidframework/counter"
+    - "fluid-framework"
+    - "@fluidframework/counter"
 serviceClients:
-- "@fluidframework/azure-client"
-- "@fluidframework/tinylicious-client"
+    - "@fluidframework/azure-client"
+    - "@fluidframework/tinylicious-client"
 utilities:
-- "@fluidframework/azure-service-utils"
-- "@fluidframework/test-client-utils"
+    - "@fluidframework/azure-service-utils"
+    - "@fluidframework/test-client-utils"
