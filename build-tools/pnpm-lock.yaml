@@ -185,7 +185,7 @@ importers:
         specifier: workspace:*
         version: link:../readme-command
       '@fluidframework/build-common':
-        specifier: ^1.2.0
+        specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
@@ -399,7 +399,7 @@ importers:
         version: 2.3.1
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
+        specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
@@ -563,7 +563,7 @@ importers:
         version: 7.5.1
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
+        specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
@@ -693,7 +693,7 @@ importers:
         specifier: workspace:*
         version: link:../readme-command
       '@fluidframework/build-common':
-        specifier: ^1.2.0
+        specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
