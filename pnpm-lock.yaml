@@ -7146,7 +7146,7 @@ importers:
         version: 22.2.3
       '@types/node':
         specifier: ^14.18.38
-        version: 14.18.38
+        version: 14.18.47
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -7167,7 +7167,7 @@ importers:
         version: 2.6.2
       rimraf:
         specifier: ^4.4.0
-        version: 4.4.0
+        version: 4.4.1
       ts-jest:
         specifier: ^26.4.4
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
