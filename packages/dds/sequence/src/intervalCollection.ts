@@ -1166,10 +1166,10 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
  */
-export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
+interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
-	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (both ends inclusively)
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (include both ends)
 	 */
 	findIntervalsWithEndpointInRange(start: number, end: number);
 }
@@ -1179,10 +1179,10 @@ export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
  */
-export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
+interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
-	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (inclusive)
+	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (include both ends)
 	 */
 	findIntervalsWithStartpointInRange(start: number, end: number);
 }
@@ -1535,13 +1535,10 @@ export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInte
 export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.start, b.start);
 
-export const createSequenceIntervalHelper = (): IIntervalHelpers<SequenceInterval> => {
-	const helpers: IIntervalHelpers<SequenceInterval> = {
-		compareEnds: compareSequenceIntervalEnds,
-		compareStarts: compareSequenceIntervalStarts,
-		create: createSequenceInterval,
-	};
-	return helpers;
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
+	compareEnds: compareSequenceIntervalEnds,
+	compareStarts: compareSequenceIntervalStarts,
+	create: createSequenceInterval,
 };
 
 class SequenceIntervalCollectionFactory
@@ -1552,12 +1549,13 @@ class SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 		options?: Partial<SequenceOptions>,
 	): IntervalCollection<SequenceInterval> {
-		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: compareSequenceIntervalEnds,
-			compareStarts: compareSequenceIntervalStarts,
-			create: createSequenceInterval,
-		};
-		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw, options);
+		return new IntervalCollection<SequenceInterval>(
+			sequenceIntervalHelpers,
+			true,
+			emitter,
+			raw,
+			options,
+		);
 	}
 
 	public store(
