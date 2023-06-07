@@ -15,7 +15,7 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
@@ -138,9 +138,9 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLoggerExt, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected readonly storage: IDocumentStorageService;
 }

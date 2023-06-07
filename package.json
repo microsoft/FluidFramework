@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.5.0.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,6 +23,7 @@
 		"bump-version": "fluid-bump-version --root .",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
+		"changeset": "flub changeset add",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
 		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
@@ -49,15 +50,20 @@
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "pretty-quick --branch main",
 		"format:changed:next": "pretty-quick --branch next",
+		"format:repo": "npm run prettier:repo:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
 		"lint:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
+		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
 		"policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
+		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",
 		"prettier:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream prettier:fix",
+		"prettier:repo": "prettier --check . --ignore-path ./.prettierignore",
+		"prettier:repo:fix": "prettier --write . --ignore-path ./.prettierignore",
 		"prettier:root": "prettier --check ./*.* --ignore-path .prettierignore",
 		"prettier:root:fix": "prettier --write ./*.* --ignore-path .prettierignore",
 		"restart": "cd server/routerlicious && npm run restart",
@@ -86,7 +92,7 @@
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
 		"test:stress": "pnpm run -r --no-sort --stream --no-bail test:stress",
 		"tsc": "pnpm run -r --stream tsc",
-		"tsc:fast": "fluid-build --root . -s tsc",
+		"tsc:fast": "fluid-build --root . -t tsc",
 		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub typetests -g client --reset --previous --normalize",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
@@ -130,14 +136,13 @@
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.26.0",
-		"@fluid-tools/build-cli": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.18.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-tools": "^0.18.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@octokit/core": "^4.0.5",
-		"@types/node": "^14.18.38",
 		"auto-changelog": "^2.4.0",
 		"c8": "^7.7.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -185,7 +190,6 @@
 				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
-				"@types/node",
 				"fluid-framework"
 			]
 		}

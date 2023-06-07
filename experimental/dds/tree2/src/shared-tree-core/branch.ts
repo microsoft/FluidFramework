@@ -112,9 +112,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack();
+	private readonly transactions = new TransactionStack<TChange>();
 	private disposed = false;
-	public readonly repairStore: Map<RevisionTag, RepairDataStore> = new Map();
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -127,6 +126,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		public repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
@@ -165,13 +165,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		undoRedoType: UndoRedoManagerCommitType | undefined,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
+
+		// If this is not part of a transaction, capture the repair data
+		let repairData: RepairDataStore<TChange> | undefined;
+		if (!this.isTransacting()) {
+			repairData = this.repairDataStoreProvider.createRepairData();
+			repairData.capture(change, revision);
+		}
+
 		this.head = mintCommit(this.head, {
 			revision,
 			change,
+			repairData,
 		});
 
-		const delta = this.changeFamily.intoDelta(change);
-		this.transactions.repairStore?.capture(delta, this.head.revision);
+		this.transactions.repairStore?.capture(change, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
@@ -194,13 +202,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * all commits made since this call will be squashed into a single head commit.
 	 * @param repairStore - the repair store associated with this transaction
 	 */
-	public startTransaction(repairStore?: RepairDataStore): void {
+	public startTransaction(repairStore?: RepairDataStore<TChange>): void {
 		this.assertNotDisposed();
 		if (!this.isTransacting()) {
-			// If this is the start of a transaction stack, freeze the undo redo manager's
+			// If this is the start of a transaction stack, freeze the
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
-			this.undoRedoManager?.repairDataStoreProvider.freeze();
+			this.repairDataStoreProvider.freeze();
 		}
 		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
@@ -228,28 +236,31 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
+		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
+		const revision = mintRevisionTag();
+
+		let repairData: RepairDataStore<TChange> | undefined;
+		if (!this.isTransacting()) {
+			repairData = this.repairDataStoreProvider.createRepairData();
+			repairData?.capture(squashedChange, revision);
+		}
+
 		this.head = mintCommit(startCommit, {
-			revision: mintRevisionTag(),
-			change: this.changeFamily.rebaser.compose(anonymousCommits),
+			revision,
+			change: squashedChange,
+			repairData,
 		});
 
-		// If this transaction is not nested, add it to the undo commit tree
+		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
-				const repairData = this.undoRedoManager.trackCommit(
-					this.head,
-					UndoRedoManagerCommitType.Undoable,
-				);
-				this.repairStore.set(this.head.revision, repairData);
+				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
 			}
 		}
 
 		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
 		// then update the repair data store for that transaction
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(this.head.change),
-			this.head.revision,
-		);
+		this.transactions.repairStore?.capture(this.head.change, revision);
 
 		this.emitAndRebaseAnchors({
 			type: "replace",
@@ -304,7 +315,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private popTransaction(): [
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
-		RepairDataStore | undefined,
+		RepairDataStore<TChange> | undefined,
 	] {
 		const { startRevision, repairStore } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
@@ -365,17 +376,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
+	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
+	 * provided, then it will be cloned from this branch.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 */
 	public fork(
-		repairDataStoreProvider?: IRepairDataStoreProvider,
+		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.changeFamily,
-			this.undoRedoManager?.clone(repairDataStoreProvider),
+			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
+			this.undoRedoManager?.clone(),
 			anchors,
 		);
 		this.emit("fork", fork);
@@ -391,7 +405,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
-		repairData?: Map<RevisionTag, RepairDataStore>,
 	):
 		| [
 				change: TChange | undefined,
@@ -401,7 +414,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this.head, branch.getHead(), repairData);
+		const rebaseResult = this.rebaseBranch(this, branch.getHead());
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -416,11 +429,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				branch.undoRedoManager !== undefined,
 				0x688 /* Cannot rebase a revertible branch onto a non-revertible branch */,
 			);
-			this.undoRedoManager.updateAfterRebase(
-				sourceCommits,
-				change !== undefined,
-				branch.undoRedoManager,
-			);
+			this.undoRedoManager.updateAfterRebase(sourceCommits, branch.undoRedoManager);
 		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
@@ -448,13 +457,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
-		const rebaseResult = this.rebaseBranch(branch.head, this.head);
+		const rebaseResult = this.rebaseBranch(branch, this.head);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
 
 		// Compute the net change to this branch
-		const [newHead, netChange, { sourceCommits }] = rebaseResult;
+		const [newHead, _, { sourceCommits }] = rebaseResult;
 
 		if (this.undoRedoManager !== undefined) {
 			// TODO: We probably can merge a non-revertible branch into a revertible branch.
@@ -462,11 +471,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				branch.undoRedoManager !== undefined,
 				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
-			this.undoRedoManager.updateAfterMerge(
-				sourceCommits,
-				netChange !== undefined,
-				branch.undoRedoManager,
-			);
+			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
@@ -479,21 +484,18 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
-	private rebaseBranch(
-		branchHead: GraphCommit<TChange>,
-		onto: GraphCommit<TChange>,
-		repairData?: Map<RevisionTag, RepairDataStore>,
-	) {
-		if (branchHead === onto) {
+	private rebaseBranch(branch: SharedTreeBranch<TEditor, TChange>, onto: GraphCommit<TChange>) {
+		const { head, repairDataStoreProvider } = branch;
+		if (head === onto) {
 			return undefined;
 		}
 
 		const rebaseResult = rebaseBranch(
 			this.changeFamily.rebaser,
-			branchHead,
+			repairDataStoreProvider,
+			head,
 			onto,
 			onto,
-			repairData,
 		);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {

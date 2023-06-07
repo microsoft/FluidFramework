@@ -49,7 +49,7 @@ module.exports = {
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
-		"webpack": ["^build:esnext"],
+		"webpack": ["^tsc", "^build:esnext"],
 		"clean": [],
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.

@@ -64,26 +64,26 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerConfig": {"forwardCompat": false}
+* "InterfaceDeclaration_IContainerExperimental": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IContainerExperimental():
+    TypeOnly<old.IContainerExperimental>;
+declare function use_current_InterfaceDeclaration_IContainerExperimental(
+    use: TypeOnly<current.IContainerExperimental>);
+use_current_InterfaceDeclaration_IContainerExperimental(
+    get_old_InterfaceDeclaration_IContainerExperimental());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerConfig": {"backCompat": false}
+* "InterfaceDeclaration_IContainerExperimental": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerLoadOptions": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerLoadOptions": {"backCompat": false}
-*/
+declare function get_current_InterfaceDeclaration_IContainerExperimental():
+    TypeOnly<current.IContainerExperimental>;
+declare function use_old_InterfaceDeclaration_IContainerExperimental(
+    use: TypeOnly<old.IContainerExperimental>);
+use_old_InterfaceDeclaration_IContainerExperimental(
+    get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -208,18 +208,6 @@ use_old_InterfaceDeclaration_ILoaderServices(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingContainerState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
@@ -288,6 +276,30 @@ declare function use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     use: TypeOnly<old.ProtocolHandlerBuilder>);
 use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     get_current_TypeAliasDeclaration_ProtocolHandlerBuilder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_requestResolvedObjectFromContainer": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_requestResolvedObjectFromContainer():
+    TypeOnly<typeof old.requestResolvedObjectFromContainer>;
+declare function use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
+    use: TypeOnly<typeof current.requestResolvedObjectFromContainer>);
+use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
+    get_old_FunctionDeclaration_requestResolvedObjectFromContainer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_requestResolvedObjectFromContainer": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_requestResolvedObjectFromContainer():
+    TypeOnly<typeof current.requestResolvedObjectFromContainer>;
+declare function use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
+    use: TypeOnly<typeof old.requestResolvedObjectFromContainer>);
+use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
+    get_current_FunctionDeclaration_requestResolvedObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type

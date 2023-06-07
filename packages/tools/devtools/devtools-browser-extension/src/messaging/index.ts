@@ -12,4 +12,4 @@ export {
 	DevToolsInitAcknowledgement,
 } from "./Messages";
 export { TypedPortConnection } from "./TypedPortConnection";
-export { postMessageToPort, relayMessageToPort, relayMessageToWindow } from "./Utilities";
+export { postMessageToPort, relayMessageToPort } from "./Utilities";

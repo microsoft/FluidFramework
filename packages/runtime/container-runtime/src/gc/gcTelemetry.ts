@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import { generateStack, MonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	generateStack,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
 	disableSweepLogKey,
@@ -243,7 +247,7 @@ export class GCTelemetryTracker {
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
@@ -284,7 +288,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLogger) {
+	public async logPendingEvents(logger: ITelemetryLoggerExt) {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:
@@ -333,7 +337,7 @@ export class GCTelemetryTracker {
 	 * this will give us a view into how much deleted content a container has.
 	 */
 	public logSweepEvents(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		currentReferenceTimestampMs: number,
 		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
 		completedGCRuns: number,

@@ -14,7 +14,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { UndoRedoManagerCommitType, ReversibleCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
-import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
+import { MockRepairDataStore } from "../utils";
 
 describe("UndoRedoManager", () => {
 	describe("trackCommit", () => {
@@ -152,7 +152,6 @@ function undoRedoManagerFactory(
 	rebaser?: ChangeRebaser<TestChange>,
 ): UndoRedoManager<TestChange, ChangeFamilyEditor> {
 	return UndoRedoManager.create(
-		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
 		headUndoableCommit,
 		headRedoableCommit,
