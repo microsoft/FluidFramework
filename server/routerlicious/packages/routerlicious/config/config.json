@@ -141,7 +141,8 @@
 		},
 		"getDeltasViaAlfred": true,
 		"verifyLastOpPersistence": false,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true
 	},
 	"system": {
 		"httpServer": {

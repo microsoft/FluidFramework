@@ -14,7 +14,7 @@ import {
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
 
-import { Globals } from "../utilities";
+import { Globals } from "../Globals";
 import { DevToolsInitMessage, extensionMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
@@ -23,19 +23,20 @@ type Port = chrome.runtime.Port;
 const proxyquire = Proxyquire.noCallThru();
 
 const backgroundScriptPath = "../background/BackgroundScript"; // Relative to this file
+const globalsModulePath = "../Globals"; // Relative to this file
 
 /**
  * Require the background script using the provided `browser` APIs.
  */
 const loadBackgroundScript = (globals: Globals): void => {
 	proxyquire(backgroundScriptPath, {
-		"../utilities/Globals": {
+		[globalsModulePath]: {
 			...globals,
 		} as unknown,
 	});
 };
 
-describe("Background script unit tests", () => {
+describe("Background Script unit tests", () => {
 	const sandbox = createSandbox();
 
 	let globals: Globals = stubGlobals();
@@ -129,7 +130,9 @@ describe("Background script unit tests", () => {
 	 * Initializes the Background script with stubbed Content and Devtools script ports.
 	 * Returns the stubbed ports for interaction in tests.
 	 */
-	async function initializeBackgroundScript(browser: typeof chrome): Promise<StubbedConnection> {
+	async function initializeBackgroundScript(): Promise<StubbedConnection> {
+		const { browser } = globals;
+
 		const tabId = 37;
 		const tabPort = stubPort("tab-port");
 
@@ -196,9 +199,7 @@ describe("Background script unit tests", () => {
 	}
 
 	it("Forwards Devtools message from Tab to Devtools script", async () => {
-		const { browser } = globals;
-
-		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript();
 
 		// Spy on the Devtools port's `postMessage` so we can later verify it was called.
 		const devtoolsPostMessageSpy = sandbox.spy(devtoolsPort, "postMessage");
@@ -215,9 +216,7 @@ describe("Background script unit tests", () => {
 	});
 
 	it("Does not forward message with unrecognized source from Tab to Devtools script", async () => {
-		const { browser } = globals;
-
-		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript();
 
 		// Spy on the Devtools port's `postMessage` so we can later verify if it was called.
 		const devtoolsPostMessageSpy = sandbox.spy(devtoolsPort, "postMessage");
@@ -234,9 +233,7 @@ describe("Background script unit tests", () => {
 	});
 
 	it("Forwards Devtools message from Devtools script to Tab", async () => {
-		const { browser } = globals;
-
-		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript();
 
 		// Spy on the Devtools port's `postMessage` so we can later verify it was called.
 		const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");
@@ -253,9 +250,7 @@ describe("Background script unit tests", () => {
 	});
 
 	it("Does not forward message with unrecognized source from Devtools script to Tab", async () => {
-		const { browser } = globals;
-
-		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript();
 
 		// Spy on the Devtools port's `postMessage` so we can later verify if it was called.
 		const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");

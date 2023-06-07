@@ -13,6 +13,7 @@ import { ReadonlyRepairDataStore } from "../repair";
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
  */
 export type SessionId = string;
+export const SessionIdSchema = brandedStringType<SessionId>();
 
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
