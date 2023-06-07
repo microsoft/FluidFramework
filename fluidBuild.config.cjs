@@ -52,6 +52,20 @@ module.exports = {
 		"webpack": ["^tsc", "^build:esnext"],
 		"webpack:profile": ["^tsc", "^build:esnext"],
 		"clean": [],
+
+		// alias for back compat
+		"build:full": {
+			dependsOn: ["full"],
+			script: false,
+		},
+		"build:compile": {
+			dependsOn: ["compile"],
+			script: false,
+		},
+		"build:commonjs": {
+			dependsOn: ["commonjs"],
+			script: false,
+		},
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
