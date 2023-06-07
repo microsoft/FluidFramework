@@ -49,7 +49,6 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 	seq = 0;
 	clientId = LocalClientId;
 	cachedLength = 1;
-	nullableCachedLength = 1;
 
 	isLeaf(): this is ISegment {
 		return true;
