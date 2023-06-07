@@ -1317,8 +1317,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe.only("Constraints", () => {
-		it("handles ancestor revive for sequence", () => {
+	describe("Constraints", () => {
+		it("handles ancestor revive", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
@@ -1385,7 +1385,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, expectedState);
 		});
 
-		it("handles ancestor delete for sequence", () => {
+		it("handles ancestor delete", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
