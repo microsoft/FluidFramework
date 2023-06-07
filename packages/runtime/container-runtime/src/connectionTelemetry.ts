@@ -58,8 +58,6 @@ class OpPerfTelemetry {
 	// Collab window tracking. This is timestamp of %1000 message.
 	private sequenceNumberForMsnTracking: number | undefined;
 	private msnTrackingTimestamp: number = 0;
-	// To track round trip time for every %500 client message.
-	// private clientSequenceNumberForLatencyStatistics: number | undefined;
 	private readonly latencyStatistics = new Map<
 		number,
 		{
@@ -67,11 +65,6 @@ class OpPerfTelemetry {
 			opPerfData: Partial<IOpPerfTelemetryProperties>;
 		}
 	>();
-
-	// private opProcessingTimes: Partial<IOpPerfTimings> = {};
-
-	// Performance Data to be reported for ops round trips and processing.
-	// private opPerfData: Partial<IOpPerfTelemetryProperties> = {};
 
 	private firstConnection = true;
 	private connectionOpSeqNumber: number | undefined;
@@ -86,15 +79,6 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		console.log(
-			"Creating OpPerfTelemetry\n",
-			"this.deltaManager.clientDetails: ",
-			JSON.stringify(this.deltaManager.clientDetails),
-			"this.deltaManager.connectionManager: ",
-			JSON.stringify((this.deltaManager as unknown as any).connectionManager),
-			"this.deltaManager.deltaManager.connectionManager: ",
-			JSON.stringify((this.deltaManager as unknown as any).deltaManager?.connectionManager),
-		);
 		const samplingConfiguration = new Map<string, number>([["OpRoundtripTime", 5]]);
 		this.logger = createChildLogger({ logger, namespace: "OpPerf", samplingConfiguration });
 
@@ -103,12 +87,7 @@ class OpPerfTelemetry {
 
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
-		console.log(
-			"SETTING UP LISTENER IN OPPERFTELEMETRY. Constructor clientId: ",
-			this.clientId,
-		);
 		this.deltaManager.on("connect", (details, opsBehind) => {
-			console.log("OPPERFTELEMETRY deltaManager.on.connect", JSON.stringify(details));
 			this.clientId = details.clientId;
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
@@ -123,10 +102,7 @@ class OpPerfTelemetry {
 		});
 		this.deltaManager.on("disconnect", () => {
 			this.sequenceNumberForMsnTracking = undefined;
-			// this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.clear();
-			// this.opProcessingTimes = {};
-			// this.opPerfData = {};
 			this.connectionOpSeqNumber = undefined;
 			this.firstConnection = false;
 			this.pongCount = 0;
@@ -134,10 +110,7 @@ class OpPerfTelemetry {
 
 		this.deltaManager.outbound.on("push", (messages) => {
 			for (const msg of messages) {
-				if (
-					msg.type === MessageType.Operation
-					// && this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber
-				) {
+				if (msg.type === MessageType.Operation) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
 
@@ -169,11 +142,7 @@ class OpPerfTelemetry {
 		});
 
 		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
-			if (
-				this.clientId === message.clientId &&
-				message.type === MessageType.Operation
-				// this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
-			) {
+			if (this.clientId === message.clientId && message.type === MessageType.Operation) {
 				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber);
 				assert(latencyStats !== undefined, "Latency stats for op should exist");
 
@@ -182,7 +151,6 @@ class OpPerfTelemetry {
 					latencyStats.opPerfData.durationNetwork =
 						latencyStats.opProcessingTimes.inboundPushEventTime -
 						latencyStats.opProcessingTimes.outboundPushEventTime;
-					// opProcessingTimes.outboundPushEventTime = undefined; // Necessary?
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
 			}
@@ -319,8 +287,6 @@ class OpPerfTelemetry {
 				...latencyData.opPerfData,
 			});
 			this.latencyStatistics.delete(message.clientSequenceNumber);
-			// this.opPerfData = {};
-			// this.opProcessingTimes = {};
 		}
 	}
 }
