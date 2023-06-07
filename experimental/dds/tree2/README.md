@@ -115,7 +115,7 @@ graph TD;
         shared-tree-core-."reads".->doc
         shared-tree-core-->EditManager-->X["collab window & branches"]
         shared-tree-core-->Indexes-->ForestIndex
-        shared-tree-->view["default view"]
+        shared-tree-->view["SharedTreeView"]
         transaction-."updates".->view
         transaction-->EditBuilder
         view-."reads".->ForestIndex
