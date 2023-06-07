@@ -19,15 +19,20 @@ import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
-// Note: Not part of public exports
-export interface IProvideInternalFluidReferenceInfo {
-	IInternalFluidReferenceInfo: IInternalFluidReferenceInfo;
+export interface IProvideFluidInternalReferenceInfo {
+	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
-// Note: Not part of public exports
-export interface IInternalFluidReferenceInfo extends IProvideInternalFluidReferenceInfo {
+/**
+ * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
+ * objects within this container.
+ */
+export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
+//* This probably doesn't hold water. Maybe just for logging. TBD.
 	unreferencedTime?: number;
-	state: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
+
+	/** Describes varying states regarding whether the object is referenced or not, if known */
+	state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
 }
 
 /**
@@ -39,8 +44,7 @@ export interface IInternalFluidReferenceInfo extends IProvideInternalFluidRefere
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends EventForwarder<I["Events"] & IEvent>
-	// implements IProvideInternalFluidReferenceInfo, implicitly so we don't export
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideFluidInternalReferenceInfo
 {
 	private _disposed = false;
 
@@ -82,6 +86,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 	public get IFluidHandle() {
 		return this.handle;
+	}
+
+	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined {
+		//* TODO: Will be this.context.internalReferenceInfo
+		return undefined
 	}
 
 	/**
