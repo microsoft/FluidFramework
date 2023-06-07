@@ -34,14 +34,6 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 export interface IMergeNodeCommon {
 	parent?: IMergeBlock;
 	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number;
-	/**
-	 * TODO: docs
-	 */
-	nullableCachedLength: number | undefined;
-	/**
 	 * The index of this node in its parent's list of children.
 	 */
 	index: number;
@@ -80,6 +72,10 @@ export interface IMergeBlock extends IMergeNodeCommon {
 	 * objects are always defined.
 	 */
 	partialLengths?: PartialSequenceLengths;
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength?: number;
 	hierBlock(): IHierBlock | undefined;
 	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
 	setOrdinal(child: IMergeNode, index: number): void;
@@ -132,6 +128,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number;
 	/**
 	 * Stores attribution keys associated with offsets of this segment.
 	 * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
@@ -311,16 +311,7 @@ export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
 	parent?: IMergeBlock;
-
-	set cachedLength(n: number | undefined) {
-		this.nullableCachedLength = n;
-	}
-
-	get cachedLength(): number {
-		return this.nullableCachedLength ?? 0;
-	}
-
-	nullableCachedLength: number | undefined = 0;
+	cachedLength: number = 0;
 
 	isLeaf() {
 		return false;
@@ -554,10 +545,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			);
 		}
 
-		if (other.nullableCachedLength !== undefined) {
-			this.nullableCachedLength ??= 0;
-			this.nullableCachedLength += other.nullableCachedLength;
-		}
+		this.cachedLength ??= 0;
+		this.cachedLength += other.cachedLength;
 	}
 
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;

@@ -104,7 +104,7 @@ function isRemovedAndAcked(segment: ISegment): boolean {
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
 	if (!node.isLeaf()) {
-		return node.nullableCachedLength;
+		return node.cachedLength;
 	}
 	return mergeTree.localNetLength(node);
 }
@@ -610,7 +610,11 @@ export class MergeTree {
 	 * default is to consider the local client's current perspective. Only local sequence
 	 * numbers corresponding to un-acked operations give valid results.
 	 */
-	public localNetLength(segment: ISegment, refSeq?: number, localSeq?: number) {
+	public localNetLength(
+		segment: ISegment,
+		refSeq?: number,
+		localSeq?: number,
+	): number | undefined {
 		const removalInfo = toRemovalInfo(segment);
 		if (localSeq === undefined) {
 			if (removalInfo !== undefined) {
@@ -647,7 +651,7 @@ export class MergeTree {
 			) {
 				return 0;
 			}
-			return segment.nullableCachedLength;
+			return segment.cachedLength;
 		} else {
 			assert(
 				segment.localSeq !== undefined,
@@ -660,7 +664,7 @@ export class MergeTree {
 			) {
 				return 0;
 			}
-			return segment.nullableCachedLength;
+			return segment.cachedLength;
 		}
 	}
 
@@ -884,7 +888,7 @@ export class MergeTree {
 	private blockLength(node: IMergeBlock, refSeq: number, clientId: number): number {
 		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
 			? node.partialLengths!.getPartialLength(refSeq, clientId)
-			: node.cachedLength;
+			: node.cachedLength ?? 0;
 	}
 
 	/**
@@ -924,7 +928,7 @@ export class MergeTree {
 				return this.localNetLength(node, refSeq, localSeq);
 			} else if (localSeq === undefined) {
 				// Local client sees all segments, even when collaborating
-				return node.nullableCachedLength;
+				return node.cachedLength;
 			} else {
 				this.computeLocalPartials(refSeq);
 				// Local client should see all segments except those after localSeq.
@@ -965,7 +969,7 @@ export class MergeTree {
 					}
 
 					return seq <= refSeq || segment.clientId === clientId
-						? segment.nullableCachedLength
+						? segment.cachedLength
 						: 0;
 				}
 
@@ -987,9 +991,9 @@ export class MergeTree {
 					if (removalInfo !== undefined) {
 						return removalInfo.removedClientIds.includes(clientId)
 							? 0
-							: segment.nullableCachedLength;
+							: segment.cachedLength;
 					} else {
-						return segment.nullableCachedLength;
+						return segment.cachedLength;
 					}
 				} else {
 					// the segment was inserted and removed before the
@@ -2418,7 +2422,7 @@ export class MergeTree {
 			}
 		}
 
-		block.nullableCachedLength = len;
+		block.cachedLength = len;
 	}
 
 	public blockUpdatePathLengths(

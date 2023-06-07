@@ -24,7 +24,7 @@
 		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -109,58 +109,46 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_BaseSegment": {
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IConsensusInfo": {
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IMergeBlock": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IMergeNodeCommon": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISegmentChanges": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ITrackingGroup": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_IncrementalMapState": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_InsertContext": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_Marker": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MergeBlock": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MergeNode": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_SortedSegmentSetItem": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_TextSegment": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_Trackable": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IHierBlock": {
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"TypeAliasDeclaration_IMergeNode": {
-				"forwardCompat": false
+				"backCompat": false
 			},
-			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
-				"forwardCompat": false
+			"InterfaceDeclaration_IMergeNodeCommon": {
+				"backCompat": false
 			},
-			"ClassDeclaration_TrackingGroup": {
-				"forwardCompat": false
+			"InterfaceDeclaration_ISegmentChanges": {
+				"backCompat": false
+			},
+			"ClassDeclaration_IncrementalMapState": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_InsertContext": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MergeBlock": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MergeNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IHierBlock": {
+				"backCompat": false
 			}
 		}
 	}

@@ -52,7 +52,7 @@ describe("Zamboni Logic", () => {
 	});
 	it("zamboni with one segment to scour", () => {
 		const initialChildCount = (client.mergeTree.root.children[0] as IMergeBlock).childCount;
-		const initialCachedLength = client.mergeTree.root.cachedLength;
+		const initialCachedLength = client.mergeTree.root.cachedLength ?? 0;
 		client.removeRangeLocal(0, 1);
 		zamboniSegments(client.mergeTree);
 
