@@ -263,7 +263,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					}
 					break;
 				case "path":
-					if (this.pathsMatchExact(visitPath, downPath)) {
+					if (this.pathsMatchPath(visitPath, downPath)) {
 						return true;
 					}
 					break;
@@ -274,7 +274,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		return false;
 	}
 	// TODO optimize loop to hash check
-	protected pathsMatchExact(current: BindPath, other: BindPath) {
+	protected pathsMatchPath(current: BindPath, other: BindPath) {
 		if (current.length !== other.length) {
 			return false;
 		}
