@@ -143,7 +143,7 @@ Views may also have state from the application, including:
 [`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
 Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
 
-[transactions](./src/core/transaction/README.md) are created from `SharedTreeView`s and are currently synchronous.
+[transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
 could be added in the future.
 
