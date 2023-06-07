@@ -157,14 +157,14 @@ flowchart LR;
     subgraph "@fluid-experimental/tree2"
         shared-tree--"configures"-->shared-tree-core
         shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-        ForestIndex--"Exposed by"-->SharedTreeView
+        ForestIndex--"Exposed by"-->ISharedTreeView
     end
-    SharedTreeView--"viewed by"-->app
+    ISharedTreeView--"viewed by"-->app
 ```
 
 [`shared-tree`](./src/shared-tree/) configures [`shared-tree-core`](./src/shared-tree-core/README.md) with a set of indexes.
 `shared-tree-core` downloads the summary data from the Fluid Container, feeding the summary data (and any future edits) into the indexes.
-`shared-tree` then constructs the default `SharedTreeView`.
+`shared-tree` then constructs the default view.
 The application using the `shared-tree` can get the view from which it can read data (which the view internally gets from the indexes).
 For any given part of the application this will typically follow one of two patterns:
 
@@ -205,7 +205,7 @@ flowchart RL
         transaction--"collects edits in"-->EditBuilder
         EditBuilder--"updates anchors"-->AnchorSet
         EditBuilder--"deltas for edits"-->transaction
-        transaction--"applies deltas to"-->forest["SharedTreeView's forest"]
+        transaction--"applies deltas to"-->forest["ISharedTreeView's forest"]
     end
     command["App's command callback"]
     command--"Edits"-->transaction
