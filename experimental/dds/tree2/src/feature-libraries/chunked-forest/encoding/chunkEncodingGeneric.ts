@@ -182,7 +182,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 	}
 
 	const encodedShapes = shapeTable.indexToValue.map((shape) =>
-		shape.encode(identifierTable, shapeTable),
+		shape.encodeShape(identifierTable, shapeTable),
 	);
 
 	return {
@@ -203,7 +203,7 @@ export abstract class Shape<TEncodedShape> {
 		shapes: (shape: Shape<TEncodedShape>) => void,
 	): void;
 
-	public abstract encode(
+	public abstract encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape<TEncodedShape>>,
 	): TEncodedShape;

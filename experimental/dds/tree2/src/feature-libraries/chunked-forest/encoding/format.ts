@@ -50,6 +50,7 @@ export const EncodedFieldShape = Type.Object(
 	{ key: IdentifierOrIndex, shape: Type.Optional(ShapeIndex) },
 	{ additionalProperties: false },
 );
+export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 
 // Single node.
 // Data for this shape starts is in the form:
@@ -58,7 +59,8 @@ export const EncodedBasicShape = Type.Object(
 	{
 		type: IdentifierOrIndex,
 		// TODO: consider replacing booleans with something smaller (optional true value (default false), or even optional numbers)
-		value: Type.Boolean(),
+		// If not specified, encoded data will contain a boolean to indicate if there is a value or not.
+		value: Type.Optional(Type.Boolean()),
 		local: Type.Array(EncodedFieldShape),
 		global: Type.Array(EncodedFieldShape),
 		extraGlobalFields: Type.Boolean(),

@@ -109,6 +109,12 @@ export function readStreamNumber(stream: StreamCursor): number {
 	return content;
 }
 
+export function readStreamBoolean(stream: StreamCursor): boolean {
+	const content = readStream(stream);
+	assert(typeof content === "boolean", "expected boolean in stream");
+	return content;
+}
+
 // Decode format used by GeneralChunkEncoder
 export function generalDecoder(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 	const decoderIndex = readStreamNumber(stream);

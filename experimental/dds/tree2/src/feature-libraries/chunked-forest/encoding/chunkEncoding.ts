@@ -3,46 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { BrandedType, assertValidIndex, fail, getOrCreate } from "../../../util";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { fail, getOrCreate } from "../../../util";
 import {
 	FieldKey,
 	GlobalFieldKey,
-	GlobalFieldKeySymbol,
 	LocalFieldKey,
 	TreeSchemaIdentifier,
+	ValueSchema,
+	isGlobalFieldKey,
+	keyFromSymbol,
 	symbolFromKey,
 } from "../../../core";
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
-import { ChunkShape, FieldShape, TreeShape, UniformChunk } from "../uniformChunk";
-import {
-	EncodedArrayShape,
-	EncodedBasicShape,
-	EncodedChunk,
-	EncodedChunkShape,
-	EncodedUniformShape,
-	EncodedUniformTreeShape,
-	version,
-} from "./format";
-import {
-	ChunkDecoder,
-	Counter,
-	DeduplicationTable,
-	DiscriminatedUnionDispatcher,
-	StreamCursor,
-	getChecked,
-	readStream,
-	readStreamNumber,
-} from "./chunkEncodingUtilities";
+import { ChunkShape, UniformChunk } from "../uniformChunk";
+import { Multiplicity, TreeSchema } from "../../modular-schema";
+import { EncodedChunk, EncodedChunkShape, EncodedFieldShape, version } from "./format";
+import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
 import {
 	BufferFormat,
 	ChunkEncoderLibrary,
 	NamedChunkEncoder,
 	encode as encodeGeneric,
-	decode as genericDecode,
 	Shape as ShapeGeneric,
+	IdentifierToken,
 } from "./chunkEncodingGeneric";
 
 export function encode(chunk: TreeChunk): EncodedChunk {
@@ -51,106 +37,13 @@ export function encode(chunk: TreeChunk): EncodedChunk {
 
 type Shape = ShapeGeneric<EncodedChunkShape>;
 
-export function decode(chunk: EncodedChunk): TreeChunk {
-	const cache = new DecoderSharedCache(chunk.identifiers, chunk.shapes);
-	return genericDecode(decoderLibrary, cache, chunk);
-}
-
-const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShape,
-	[cache: DecoderSharedCache],
-	ChunkDecoder
->({
-	a(shape: EncodedUniformShape, cache): ChunkDecoder {
-		return cache.decodeUniformChunkShape(shape);
-	},
-	b(shape: EncodedBasicShape, cache): ChunkDecoder {
-		return new BasicShapeDecoder(shape, cache);
-	},
-	c(shape: EncodedArrayShape, cache): ChunkDecoder {
-		return basicArrayDecoder;
-	},
-});
-
-/**
- * Caches shared data for use in constructing decoders.
- */
-class DecoderSharedCache {
-	/**
-	 *
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 *
-	 * Unlike the other data stored in this object, identifiers and shapes are not really a cache since the decoders don't any any other way to access this information.
-	 */
-	public constructor(
-		public readonly identifiers: readonly string[],
-		public readonly shapes: readonly EncodedChunkShape[],
-	) {}
-
-	private readonly treeShapes: Map<EncodedUniformTreeShape, TreeShape> = new Map();
-	private readonly decoders: Map<EncodedUniformShape, ChunkDecoder> = new Map();
-
-	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
-		if (typeof encoded === "string") {
-			return encoded as T;
-		}
-		return getChecked(this.identifiers, encoded) as T;
-	}
-
-	/**
-	 * If decodeTreeShape recurses on the same shape due to a recursive structure, it would stack overflow.
-	 * This should never happen because UniformShapes can't be recursive (or their node count would be infinite).
-	 * Malformed could cause such a recursive case.
-	 * To detect such cases with a better error, decodingSet is used to track what calls to decodeTreeShape are running.
-	 *
-	 * Note that other kinds of shapes can be recursive.
-	 * */
-	private readonly decodingShapeSet: Set<EncodedUniformTreeShape> = new Set();
-
-	private decodeTreeShape(treeShape: EncodedUniformTreeShape): TreeShape {
-		const getInnerShape = (shapeIndex: number) => {
-			const innerShape = getChecked(this.shapes, shapeIndex);
-			const innerUniformShape = innerShape.a;
-			assert(
-				innerUniformShape !== undefined,
-				"Uniform field shape must reference a uniform chunk shape",
-			);
-			return innerUniformShape;
-		};
-
-		return getOrCreate(this.treeShapes, treeShape, (shape) => {
-			assert(
-				!this.decodingShapeSet.has(treeShape),
-				"Malformed encoded tree contains recursive uniform chunk shape",
-			);
-			this.decodingShapeSet.add(treeShape);
-			const fields = shape.local.map((field): FieldShape => {
-				const innerShape = getInnerShape(field.shape);
-				return [
-					this.identifier<LocalFieldKey>(field.key),
-					this.decodeTreeShape(innerShape.treeShape),
-					innerShape.topLevelLength,
-				];
-			});
-			for (const field of shape.global) {
-				const innerShape = getInnerShape(field.shape);
-				fields.push([
-					symbolFromKey(this.identifier<GlobalFieldKey>(field.key)),
-					this.decodeTreeShape(innerShape.treeShape),
-					innerShape.topLevelLength,
-				]);
-			}
-			this.decodingShapeSet.delete(treeShape);
-			return new TreeShape(this.identifier(shape.type), shape.hasValue, fields);
-		});
-	}
-
-	public decodeUniformChunkShape(chunkShape: EncodedUniformShape): ChunkDecoder {
-		return getOrCreate(this.decoders, chunkShape, (shape) => {
-			const treeShape: TreeShape = this.decodeTreeShape(shape.treeShape);
-			return new UniformChunkDecoder(new ChunkShape(treeShape, shape.topLevelLength));
-		});
-	}
+interface EncoderShape extends Shape {
+	encodeData(
+		chunk: TreeChunk,
+		shapes: ShapeManager,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+		prefixWithShape: boolean,
+	): void;
 }
 
 const sequenceEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, SequenceChunk> = {
@@ -160,9 +53,30 @@ const sequenceEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, Sequen
 		shapes: ShapeManager,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		fail("TODO");
+		encodeChunkArray(chunk.subChunks, shapes, outputBuffer);
 	},
 };
+
+/**
+ * Encode an array of chunks as a single chunk.
+ *
+ * Prefixed by shape used. Selects shape based on chunks.
+ */
+function encodeChunkArray(
+	chunks: readonly TreeChunk[],
+	shapes: ShapeManager,
+	outputBuffer: BufferFormat<EncodedChunkShape>,
+): void {
+	if (chunks.length === 1) {
+		encoderLibrary.encode(chunks[0], shapes, outputBuffer);
+	} else {
+		outputBuffer.push(ArrayShape.instance);
+		outputBuffer.push(chunks.length);
+		for (const subChunk of chunks) {
+			encoderLibrary.encode(subChunk, shapes, outputBuffer);
+		}
+	}
+}
 
 const basicEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, BasicChunk> = {
 	type: BasicChunk,
@@ -171,7 +85,8 @@ const basicEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, BasicChun
 		shapes: ShapeManager,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		fail("TODO");
+		const shape = shapes.basicChunkShape(chunk.type);
+		shape.encodeData(chunk, shapes, outputBuffer, true);
 	},
 };
 
@@ -183,13 +98,37 @@ class ShapeManager {
 	private readonly chunkShapes: Map<ChunkShape, Shape> = new Map();
 
 	public chunkShape(chunk: ChunkShape): Shape {
-		return getOrCreate(this.chunkShapes, chunk, (chunkShape): Shape => {
-			return new UniformShape(chunkShape);
-		});
+		return getOrCreate(
+			this.chunkShapes,
+			chunk,
+			(chunkShape): Shape => new UniformShape(chunkShape),
+		);
+	}
+
+	public basicChunkShape(typeName: TreeSchemaIdentifier): BasicShape {
+		return getOrCreate(
+			this.map,
+			typeName,
+			(type): TreeShapeManager => new TreeShapeManager(type, this),
+		).shape;
 	}
 }
 
-interface TreeShapeManager {}
+class TreeShapeManager {
+	/**
+	 * Shape purely based on schema.
+	 *
+	 * TODO: maybe have this detect monomorphic schema and use a uniform chunk for them instead?
+	 * TODO: support common shapes that are not pure schema based.
+	 */
+	public readonly shape: BasicShape;
+	public constructor(
+		public readonly type: TreeSchemaIdentifier,
+		private readonly cache: ShapeManager,
+	) {
+		this.shape = new BasicShape(type, undefined, cache);
+	}
+}
 
 class UniformShape extends ShapeGeneric<EncodedChunkShape> {
 	public constructor(private readonly chunkShape: ChunkShape) {
@@ -200,7 +139,7 @@ class UniformShape extends ShapeGeneric<EncodedChunkShape> {
 		// TODO
 	}
 
-	public encode(
+	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
@@ -220,128 +159,237 @@ const uniformEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, Uniform
 	},
 };
 
-class UniformChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: ChunkShape) {}
-	public decode(decoders: ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const content = readStream(stream);
-		// This assert could be using an encoding schema and schema validation for consistency, but its likely not worth it.
-		assert(Array.isArray(content), "expected array for uniform chunk content");
-		// The content of `content` could by checked against a tree schema here, but for not its just trusted.
-		return new UniformChunk(this.shape, content);
+class BasicShape extends ShapeGeneric<EncodedChunkShape> implements EncoderShape {
+	private readonly localShapes: { key: LocalFieldKey; shape?: EncoderShape }[] = [];
+	private extraLocalFields: boolean = true;
+
+	private readonly globalShapes: { key: GlobalFieldKey; shape?: EncoderShape }[] = [];
+	private extraGlobalFields: boolean = true;
+
+	/**
+	 * Keys handled by the lists above.
+	 */
+	private readonly explicitKeys: Set<FieldKey> = new Set();
+
+	private readonly initialized = false;
+
+	private readonly hasValue: boolean | undefined;
+
+	public constructor(
+		private readonly type: TreeSchemaIdentifier,
+		private readonly schema: TreeSchema | undefined,
+		private readonly cache: ShapeManager,
+	) {
+		super();
+		if (schema !== undefined) {
+			const value: ValueSchema = schema.value;
+			switch (value) {
+				case ValueSchema.Nothing:
+					this.hasValue = false;
+					break;
+				case ValueSchema.Number:
+				case ValueSchema.String:
+				case ValueSchema.Boolean:
+					this.hasValue = true;
+					break;
+				case ValueSchema.Serializable:
+					this.hasValue = undefined;
+					break;
+				default:
+					unreachableCase(value);
+			}
+		}
 	}
-}
 
-type BasicFieldDecoder = (
-	decoders: readonly ChunkDecoder[],
-	stream: StreamCursor,
-) => [FieldKey, TreeChunk];
+	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
+		// To handle recursive types, we don't do initialization eagerly in the constructor.
+		assert(!this.initialized, "count should not be called twice");
 
-function fieldDecoder(
-	cache: DecoderSharedCache,
-	key: FieldKey,
-	shape: number | undefined,
-): BasicFieldDecoder {
-	if (shape !== undefined) {
-		assertValidIndex(shape, cache.shapes);
-		return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
-	} else {
-		return (decoders, stream) => {
-			const shapeIndex = readStreamNumber(stream);
-			return [key, getChecked(decoders, shapeIndex).decode(decoders, stream)];
+		if (this.schema === undefined) {
+			this.extraLocalFields = true;
+			this.extraGlobalFields = true;
+		} else {
+			this.extraLocalFields = this.schema.extraLocalFields !== undefined;
+			this.extraGlobalFields = this.schema.extraGlobalFields !== undefined;
+			for (const [_key, field] of this.schema.localFields) {
+				const multiplicity = field.kind.multiplicity;
+				switch (multiplicity) {
+					case Multiplicity.Forbidden:
+						break;
+					case Multiplicity.Optional:
+						this.extraLocalFields = true;
+						break;
+					case Multiplicity.Sequence:
+						this.extraLocalFields = true;
+						break;
+					case Multiplicity.Value:
+						// TODO: determine field shapes instead of using extraLocalFields
+						this.extraLocalFields = true;
+						// this.localShapes.push({ key, shape: this.cache.basicChunkShape() });
+						break;
+					default:
+						unreachableCase(multiplicity);
+				}
+			}
+
+			if (this.schema.globalFields.size > 0) {
+				// TODO: determine field shapes instead of using extraLocalFields
+				this.extraGlobalFields = true;
+			}
+
+			for (const { key } of this.localShapes) {
+				this.explicitKeys.add(key);
+			}
+			for (const { key } of this.globalShapes) {
+				this.explicitKeys.add(symbolFromKey(key));
+			}
+
+			for (const fields of [this.localShapes, this.globalShapes]) {
+				for (const { key, shape } of fields) {
+					identifiers.add(key);
+					if (shape !== undefined) {
+						shapes(shape);
+					}
+				}
+			}
+		}
+	}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShape {
+		assert(this.initialized, "count should be called");
+
+		const local: EncodedFieldShape[] = [];
+		for (const { key, shape } of this.localShapes) {
+			local.push({
+				key: encodeIdentifier(identifiers, key),
+				shape: shape === undefined ? undefined : encodeShape(shapes, shape),
+			});
+		}
+		const global: EncodedFieldShape[] = [];
+		for (const { key, shape } of this.globalShapes) {
+			global.push({
+				key: encodeIdentifier(identifiers, key),
+				shape: shape === undefined ? undefined : encodeShape(shapes, shape),
+			});
+		}
+
+		return {
+			b: {
+				type: encodeIdentifier(identifiers, this.type),
+				local,
+				global,
+				value: this.hasValue,
+				extraLocalFields: this.extraLocalFields,
+				extraGlobalFields: this.extraGlobalFields,
+			},
 		};
 	}
-}
 
-export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
-	stream: StreamCursor,
-	cache: DecoderSharedCache,
-): T {
-	const content = readStream(stream);
-	assert(
-		typeof content === "number" || typeof content === "string",
-		"content to be a number or string",
-	);
-	return cache.identifier(content);
-}
-
-class BasicShapeDecoder implements ChunkDecoder {
-	private readonly type: TreeSchemaIdentifier;
-	private readonly fieldDecoders: readonly BasicFieldDecoder[];
-	public constructor(
-		private readonly shape: EncodedBasicShape,
-		private readonly cache: DecoderSharedCache,
-	) {
-		this.type = cache.identifier(shape.type);
-		const fieldDecoders: BasicFieldDecoder[] = [];
-		for (const field of shape.local) {
-			const key: LocalFieldKey = cache.identifier(field.key);
-			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
+	public encodeData(
+		chunk: TreeChunk,
+		shapes: ShapeManager,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+		prefixWithShape: boolean,
+	): void {
+		assert(this.initialized, "count should be called before using shape");
+		if (!(chunk instanceof BasicChunk)) {
+			// TODO: maybe make encoding work on cursor (which chunk based heuristics and fast paths) or re-chunk as needed.
+			fail("Unexpected chunk");
 		}
-		for (const field of shape.global) {
-			const key = symbolFromKey(cache.identifier<GlobalFieldKey>(field.key));
-			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
-		}
-		this.fieldDecoders = fieldDecoders;
-	}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const value = this.shape.value ? readStream(stream) : undefined;
-		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
-		// Helper to add fields, but with unneeded array chunks removed.
-		function addField(key: FieldKey, data: TreeChunk): void {
-			// TODO: when handling of ArrayChunks has better performance (for example in cursors),
-			// consider keeping array chunks here if they are longer than some threshold.
-			if (data instanceof SequenceChunk) {
-				for (const sub of data.subChunks) {
-					sub.referenceAdded();
-				}
-				fields.set(key, data.subChunks);
-				data.referenceRemoved();
+		if (prefixWithShape) {
+			outputBuffer.push(this);
+		}
+		if (this.hasValue === undefined) {
+			if (chunk.value !== undefined) {
+				outputBuffer.push(true, chunk.value);
 			} else {
-				fields.set(key, [data]);
+				outputBuffer.push(false);
+			}
+		} else {
+			assert(this.hasValue === (chunk.value !== undefined), "invalid hasValue");
+			if (this.hasValue) {
+				outputBuffer.push(chunk.value);
 			}
 		}
 
-		for (const field of this.fieldDecoders) {
-			const [key, content] = field(decoders, stream);
-			addField(key, content);
-		}
-
-		if (this.shape.extraLocalFields) {
-			const count = readStreamNumber(stream);
-			for (let index = 0; index < count; index++) {
-				const key: LocalFieldKey = readStreamIdentifier(stream, this.cache);
-				const shapeIndex = readStreamNumber(stream);
-				addField(key, getChecked(decoders, shapeIndex).decode(decoders, stream));
+		function encodeField(
+			key: FieldKey,
+			shape: undefined | EncoderShape,
+			parent: BasicChunk,
+		): void {
+			const chunks = parent.fields.get(key) ?? [];
+			if (shape === undefined) {
+				encodeChunkArray(chunks, shapes, outputBuffer);
+			} else {
+				// TODO: make this work when/if refactoring this to not assume encoding matches existing chunk structure.
+				assert(chunks.length === 1, "fixed shape must be single chunk");
+				shape.encodeData(chunks[0], shapes, outputBuffer, false);
 			}
 		}
 
-		if (this.shape.extraGlobalFields) {
-			const count = readStreamNumber(stream);
-			for (let index = 0; index < count; index++) {
-				const key: GlobalFieldKeySymbol = symbolFromKey(
-					readStreamIdentifier(stream, this.cache),
-				);
-				const shapeIndex = readStreamNumber(stream);
-				addField(key, getChecked(decoders, shapeIndex).decode(decoders, stream));
+		for (const { key, shape } of this.localShapes) {
+			encodeField(key, shape, chunk);
+		}
+		for (const { key, shape } of this.globalShapes) {
+			encodeField(symbolFromKey(key), shape, chunk);
+		}
+
+		const extraLocal: [string, TreeChunk[]][] = [];
+		const extraGlobal: [string, TreeChunk[]][] = [];
+		for (const [key, chunks] of chunk.fields) {
+			if (!this.explicitKeys.has(key)) {
+				if (isGlobalFieldKey(key)) {
+					extraGlobal.push([keyFromSymbol(key), chunks]);
+				} else {
+					extraLocal.push([key, chunks]);
+				}
 			}
 		}
 
-		return new BasicChunk(this.type, fields, value);
+		function encodeExtras(enabled: boolean, data: [string, TreeChunk[]][]): void {
+			if (enabled) {
+				outputBuffer.push(data.length);
+				for (const [key, chunks] of data) {
+					outputBuffer.push(new IdentifierToken(key));
+					encodeChunkArray(chunks, shapes, outputBuffer);
+				}
+			} else {
+				assert(data.length === 0, "had extra fields when not allowed by shape");
+			}
+		}
+
+		encodeExtras(this.extraLocalFields, extraLocal);
+		encodeExtras(this.extraGlobalFields, extraGlobal);
 	}
 }
 
-const basicArrayDecoder: ChunkDecoder = {
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const items: TreeChunk[] = [];
-		const count = readStreamNumber(stream);
-		for (let index = 0; index < count; index++) {
-			const shapeIndex = readStreamNumber(stream);
-			items.push(getChecked(decoders, shapeIndex).decode(decoders, stream));
-		}
-		return new SequenceChunk(items);
-	},
-};
+function encodeIdentifier(table: DeduplicationTable<string>, identifier: string): string | number {
+	return table.valueToIndex.get(identifier) ?? identifier;
+}
+
+function encodeShape(table: DeduplicationTable<Shape>, shape: Shape): number {
+	return table.valueToIndex.get(shape) ?? fail("unexpected shape");
+}
+
+class ArrayShape extends ShapeGeneric<EncodedChunkShape> {
+	private constructor() {
+		super();
+	}
+	public static readonly instance = new ArrayShape();
+
+	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShape {
+		return { c: 0 };
+	}
+}
 
 const encoderLibrary = new ChunkEncoderLibrary<ShapeManager, EncodedChunkShape>(
 	sequenceEncoder,

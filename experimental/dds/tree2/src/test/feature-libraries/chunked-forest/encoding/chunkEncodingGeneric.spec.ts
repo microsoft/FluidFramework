@@ -70,7 +70,7 @@ class TestShape extends Shape<EncodedChunkShape> {
 		super();
 	}
 
-	public encode(
+	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 	): EncodedChunkShape {
@@ -88,7 +88,7 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 		shapes: (shape: Shape<EncodedChunkShape>) => void,
 	): void {}
 
-	public encode(
+	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 	): EncodedChunkShape {
