@@ -131,7 +131,7 @@ The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree
 
 See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through a [`SharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
+When applications want access to the `tree`'s data, they do so through an [`ISharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
 Views may also have state from the application, including:
 
 -   [`view-schema`](./src/core/schema-view/README.md)
