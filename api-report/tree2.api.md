@@ -1768,8 +1768,6 @@ export interface TreeAdapter {
 // @alpha
 export interface TreeDataContext {
     getFieldGenerator(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
-    // (undocumented)
-    readonly requiredField?: GlobalFieldKeySymbol;
     readonly schema: SchemaDataAndPolicy;
 }
 

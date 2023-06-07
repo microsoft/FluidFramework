@@ -12,7 +12,6 @@ import {
 	GlobalFieldKey,
 	MapTree,
 	ValueSchema,
-	symbolFromKey,
 } from "../../core";
 
 import {
@@ -149,7 +148,6 @@ describe("ContextuallyTyped", () => {
 					{
 						schema: nodeSchemaData,
 						getFieldGenerator,
-						requiredField: symbolFromKey(globalFieldKey),
 					},
 					new Set([nodeSchema.name]),
 					contextualData,

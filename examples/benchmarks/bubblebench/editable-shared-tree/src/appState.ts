@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData } from "@fluid-experimental/tree2";
+import { cursorFromContextualData, defaultGetFieldGenerator } from "@fluid-experimental/tree2";
 import { ClientWrapper } from "./client";
 import { ClientsField, FlexClient, FlexBubble, rootAppStateSchema } from "./schema";
 
@@ -19,7 +19,10 @@ export class AppState implements IAppState {
 		clientsSequence.insertNodes(
 			clientsSequence.length,
 			cursorFromContextualData(
-				clientsSequence.context.schema,
+				{
+					schema: clientsSequence.context.schema,
+					getFieldGenerator: defaultGetFieldGenerator,
+				},
 				rootAppStateSchema.types,
 				this.createInitialClientNode(numBubbles),
 			),

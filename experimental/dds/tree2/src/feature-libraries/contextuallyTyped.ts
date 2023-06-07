@@ -23,7 +23,6 @@ import {
 	MapTree,
 	symbolIsFieldKey,
 	ITreeCursorSynchronous,
-	GlobalFieldKeySymbol,
 	symbolFromKey,
 } from "../core";
 // TODO:
@@ -257,8 +256,6 @@ export interface TreeDataContext {
 	 * This will be important for identifier elision optimizations in tree encoding for session based identifier generation.
 	 */
 	getFieldGenerator(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
-
-	readonly requiredField?: GlobalFieldKeySymbol;
 }
 
 /**
