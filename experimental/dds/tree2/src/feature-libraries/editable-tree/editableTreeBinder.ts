@@ -529,64 +529,57 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			this.eventQueue,
 			this.options.sortFn ?? compareBinderEventsDeleteFirst,
 		);
+		const batchEventMap = new Map<number, CallableBindingContext>();
+		const collected = new Set<(...args: unknown[]) => any>();
+
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
 			assert(batchPaths !== undefined, "batch paths confirmed registered");
-			const collected = new Set<(...args: unknown[]) => any>();
-			const batchEvents = sortedQueue.filter((event) => {
+
+			for (let i = 0; i < sortedQueue.length; i++) {
+				const event = sortedQueue[i];
 				const current = toDownPath<BindPath>(event.path);
-				let filtered = false;
 				for (const [visitPath, callbacks] of batchPaths.entries()) {
 					if (this.matchesPath(visitPath, current)) {
 						callbacks.forEach((callback) => collected.add(callback));
-						filtered = true;
+						batchEventMap.set(i, event);
 						break;
 					}
 				}
-				return filtered;
-			});
-			if (batchEvents.length > 0) {
-				for (const callback of collected) {
-					callback({
-						type: BindingType.Batch,
-						events: batchEvents,
-					});
-				}
-			}
-			for (const event of batchEvents) {
-				const index = sortedQueue.indexOf(event);
-				assert(index >= 0, "event confirmed in the queue");
-				sortedQueue.splice(index, 1);
 			}
 		}
-		for (const callableContext of sortedQueue) {
-			switch (callableContext.type) {
+
+		const batchEvents = Array.from(batchEventMap.values());
+		if (batchEvents.length > 0) {
+			for (const callback of collected) {
+				callback({
+					type: BindingType.Batch,
+					events: batchEvents,
+				});
+			}
+		}
+
+		// Remove batch events from the sortedQueue
+		const filteredQueue = sortedQueue.filter((_event, index) => !batchEventMap.has(index));
+		for (const { callbacks, ...context } of filteredQueue) {
+			switch (context.type) {
 				case BindingType.Delete:
-					for (const callback of callableContext.callbacks) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
-						const { callbacks, ...context } = callableContext;
-						const typedContext = { ...context, type: BindingType.Delete };
-						callback(typedContext);
+					for (const callback of callbacks) {
+						callback({ ...context, type: BindingType.Delete });
 					}
 					break;
 				case BindingType.Insert:
-					for (const callback of callableContext.callbacks) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
-						const { callbacks, ...context } = callableContext;
-						const typedContext = { ...context, type: BindingType.Insert };
-						callback(typedContext);
+					for (const callback of callbacks) {
+						callback({ ...context, type: BindingType.Insert });
 					}
 					break;
 				case BindingType.SetValue:
-					for (const callback of callableContext.callbacks) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
-						const { callbacks, ...context } = callableContext;
-						const typedContext = { ...context, type: BindingType.SetValue };
-						callback(typedContext);
+					for (const callback of callbacks) {
+						callback({ ...context, type: BindingType.SetValue });
 					}
 					break;
 				default:
-					unreachableCase(callableContext);
+					unreachableCase(context);
 			}
 		}
 		this.eventQueue.length = 0;
