@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  */
-export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	events: ITelemetryBaseEvent[] = [];
 
 	constructor() {
@@ -191,7 +192,7 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				"Details should a JSON stringified string if inlineDetailsProp is true",
+				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			detailsExpanded = JSON.parse(details);
 		}

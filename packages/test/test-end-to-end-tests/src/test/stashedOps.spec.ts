@@ -28,11 +28,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import {
-	ConnectionState,
-	IContainerExperimental,
-	IPendingContainerState,
-} from "@fluidframework/container-loader";
+import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -1126,6 +1122,30 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
+	it("load offline with blob redirect table", async function () {
+		// upload blob offline so an entry is added to redirect table
+		const container = await loadOffline(provider, { url });
+		const dataStore = await requestFluidObject<ITestFluidObject>(
+			container.container,
+			"default",
+		);
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		map.set("blob handle", handle);
+
+		container.connect();
+
+		// wait for summary with redirect table
+		await provider.ensureSynchronized();
+		await waitForSummary();
+
+		// should be able to load entirely offline
+		const stashBlob = await getPendingOps(provider, true);
+		await loadOffline(provider, { url }, stashBlob);
+	});
+
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
@@ -1188,8 +1208,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForDataStoreRuntimeConnection(dataStore.runtime);
 
 		const stashedChanges = container.container.closeAndGetPendingLocalState();
-		const parsedChanges = JSON.parse(stashedChanges) as IPendingContainerState;
-		const pendingBlobs = (parsedChanges.pendingRuntimeState as any).pendingAttachmentBlobs;
+		const parsedChanges = JSON.parse(stashedChanges);
+		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
 		// verify we have a blob in pending upload array
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
 

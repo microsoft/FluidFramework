@@ -139,6 +139,7 @@ describe("Routerlicious", () => {
 					false,
 					false,
 					[],
+					true,
 					testCheckpointService,
 					true,
 					true,

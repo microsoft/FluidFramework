@@ -1,103 +1,97 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "fluid-build",
-            "type": "process",
-            "command": "node",
-            "args": [
-                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
-                "--root",
-                "${workspaceRoot}",
-                "--vscode"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                {
-                    "base": "$tsc",
-                    "fileLocation": "absolute"
-                },
-                "$tslint5"
-            ]
-        },
-        {
-            "label": "Build Current Tests",
-            "type": "process",
-            "command": "node",
-            "args": [
-                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
-                "--root",
-                "${workspaceRoot}",
-                "--vscode",
-                "-s",
-                "tsc",
-                "-s",
-                "build:test",
-                "${fileDirname}"
-            ],
-            "group": "build",
-            "problemMatcher": [
-                {
-                    "base": "$tsc",
-                    "fileLocation": "absolute"
-                },
-                "$tslint5"
-            ]
-        },
-        {
-            "label": "Build up to current package",
-            "detail": "Runs fluid-build using the package of the current file as target (so all dependencies up to this package are built as necessary).",
-            "type": "process",
-            "command": "node",
-            "args": [
-                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
-                "--root",
-                "${workspaceRoot}",
-                "--vscode",
-                "${fileDirname}"
-            ],
-            "group": "build",
-            "problemMatcher": [
-                {
-                    "base": "$tsc",
-                    "fileLocation": "absolute"
-                },
-            ]
-        },
-        {
-            "label": "Start tinylicious",
-            "detail": "Starts the tinylicious server from the /server/tinylicious folder. Run the 'Stop tinylicious' task to stop it.",
-            "type": "process",
-            "command": "npm",
-            "args": [
-                "run",
-                "start"
-            ],
-            "group": "none",
-            "options": {
-                "cwd": "${workspaceRoot}/server/tinylicious"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Stop tinylicious",
-            "detail": "Stops the tinylicious server from the /server/tinylicious folder.",
-            "type": "process",
-            "command": "npm",
-            "args": [
-                "run",
-                "stop"
-            ],
-            "group": "none",
-            "options": {
-                "cwd": "${workspaceRoot}/server/tinylicious"
-            },
-            "problemMatcher": []
-        }
-    ]
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "fluid-build",
+			"type": "process",
+			"command": "node",
+			"args": [
+				"${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+				"--root",
+				"${workspaceRoot}",
+				"--vscode",
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true,
+			},
+			"problemMatcher": [
+				{
+					"base": "$tsc",
+					"fileLocation": "absolute",
+				},
+				"$tslint5",
+			],
+		},
+		{
+			"label": "Build Current Tests",
+			"type": "process",
+			"command": "node",
+			"args": [
+				"${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+				"--root",
+				"${workspaceRoot}",
+				"--vscode",
+				"-t",
+				"tsc",
+				"-t",
+				"build:test",
+				"${fileDirname}",
+			],
+			"group": "build",
+			"problemMatcher": [
+				{
+					"base": "$tsc",
+					"fileLocation": "absolute",
+				},
+				"$tslint5",
+			],
+		},
+		{
+			"label": "Build up to current package",
+			"detail": "Runs fluid-build using the package of the current file as target (so all dependencies up to this package are built as necessary).",
+			"type": "process",
+			"command": "node",
+			"args": [
+				"${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+				"--root",
+				"${workspaceRoot}",
+				"--vscode",
+				"${fileDirname}",
+			],
+			"group": "build",
+			"problemMatcher": [
+				{
+					"base": "$tsc",
+					"fileLocation": "absolute",
+				},
+			],
+		},
+		{
+			"label": "Start tinylicious",
+			"detail": "Starts the tinylicious server from the /server/tinylicious folder. Run the 'Stop tinylicious' task to stop it.",
+			"type": "process",
+			"command": "npm",
+			"args": ["run", "start"],
+			"group": "none",
+			"options": {
+				"cwd": "${workspaceRoot}/server/tinylicious",
+			},
+			"problemMatcher": [],
+		},
+		{
+			"label": "Stop tinylicious",
+			"detail": "Stops the tinylicious server from the /server/tinylicious folder.",
+			"type": "process",
+			"command": "npm",
+			"args": ["run", "stop"],
+			"group": "none",
+			"options": {
+				"cwd": "${workspaceRoot}/server/tinylicious",
+			},
+			"problemMatcher": [],
+		},
+	],
 }

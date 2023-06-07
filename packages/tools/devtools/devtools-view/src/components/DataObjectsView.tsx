@@ -44,7 +44,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 	React.useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
-			[RootDataVisualizations.MessageType]: (untypedMessage) => {
+			[RootDataVisualizations.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as RootDataVisualizations.Message;
 
 				if (message.data.containerKey === containerKey) {

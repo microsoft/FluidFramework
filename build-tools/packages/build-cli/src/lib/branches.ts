@@ -107,7 +107,7 @@ export function generateBumpDepsBranchName(
 /**
  * Generates the correct branch name for the release branch of a given release group and branch.
  *
- * @param releaseGroup - The release group for which to generate a branch name.
+ * @param releaseGroup - The release group or package for which to generate a branch name.
  * @param version - The version for the release branch. Typically this is a major.minor version, but for release groups
  * using the Fluid internal or virtualPatch version schemes the versions may differ.
  * @returns The generated branch name.
@@ -118,7 +118,10 @@ export function generateBumpDepsBranchName(
  *
  * @internal
  */
-export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string {
+export function generateReleaseBranchName(
+	releaseGroup: ReleaseGroup | ReleasePackage,
+	version: string,
+): string {
 	// An array of all the sections of a "path" branch -- a branch with slashes in the name.
 	const branchPath = ["release"];
 
@@ -134,12 +137,16 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 		branchVersion = version;
 	}
 
-	if (releaseGroup === "client") {
-		if (schemeIsInternal) {
-			branchPath.push("v2int");
+	if (isReleaseGroup(releaseGroup)) {
+		if (releaseGroup === "client") {
+			if (schemeIsInternal) {
+				branchPath.push("v2int");
+			}
+		} else {
+			branchPath.push(releaseGroup);
 		}
 	} else {
-		branchPath.push(releaseGroup);
+		branchPath.push(PackageName.getUnscopedName(releaseGroup));
 	}
 
 	const releaseBranchVersion =
