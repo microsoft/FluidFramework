@@ -677,45 +677,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		);
 
-		// SKIPPED: This test is redundant with the previous one; SweepReady calculation/timers has coverage elsewhere
-		itExpects.skip(
-			"Requesting tombstoned datastores fails in summarizing container loaded before sweep timeout",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					viaHandle: false,
-				},
-			],
-			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(
-						sweepTimeoutMs - remainingTimeUntilSweepMs,
-					);
-				// Wait enough time so that the datastore is sweep ready
-				await delay(remainingTimeUntilSweepMs);
-
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
-
-				// The datastore should be tombstoned now
-				await summarize(summarizer);
-				const { summaryVersion } = await summarize(summarizer);
-				const container = await loadContainer(summaryVersion);
-				await sendOpToUpdateSummaryTimestampToNow(container);
-
-				// Requesting a tombstoned datastore should fail!
-				await assert.rejects(
-					async () => requestFluidObject<ITestDataObject>(container, unreferencedId),
-					(error) => {
-						const correctErrorType = error.code === 404;
-						const correctErrorMessage =
-							error.message === `DataStore was deleted: ${unreferencedId}`;
-						return correctErrorType && correctErrorMessage;
-					},
-					`Should not be able to retrieve a tombstoned datastore.`,
-				);
-			},
-		);
-
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
 			"Handle request for tombstoned datastores fails in summarizing container loaded after sweep timeout",
@@ -798,47 +759,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					true,
 					"DID NOT Expect tombstone header to be set on the response",
 				);
-			},
-		);
-
-		// SKIPPED: This test is redundant with the previous one; SweepReady calculation/timers has coverage elsewhere
-		itExpects.skip(
-			"Handle request for tombstoned datastores fails in summarizing container loaded before sweep timeout",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					viaHandle: true,
-				},
-			],
-			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(
-						sweepTimeoutMs - remainingTimeUntilSweepMs,
-					);
-				// Wait enough time so that the datastore is sweep ready
-				await delay(remainingTimeUntilSweepMs);
-
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
-
-				// The datastore should be tombstoned now
-				const { summaryVersion } = await summarize(summarizer);
-				const dataObject = await getTombstonedDataObjectFromSummary(
-					summaryVersion,
-					unreferencedId,
-				);
-
-				// Note: if a user makes a request that looks like this, we will also think that the request is via handle
-				const request: IRequest = {
-					url: unreferencedId,
-					headers: { [RuntimeHeaders.viaHandle]: true },
-				};
-				const response = await dataObject._context.IFluidHandleContext.resolveHandle(
-					request,
-				);
-
-				assert(response !== undefined, `Expecting a response!`);
-				assert(response.status === 404);
-				assert(response.value === `DataStore was deleted: ${unreferencedId}`);
 			},
 		);
 
