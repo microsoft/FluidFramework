@@ -75,7 +75,7 @@ export interface IMergeBlock extends IMergeNodeCommon {
 	/**
 	 * The length of the contents of the node.
 	 */
-	cachedLength?: number;
+	cachedLength: number | undefined;
 	hierBlock(): IHierBlock | undefined;
 	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
 	setOrdinal(child: IMergeNode, index: number): void;
