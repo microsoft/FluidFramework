@@ -20,7 +20,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition } from "./localReference";
+import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
 	CollaborationWindow,
 	compareStrings,
@@ -409,12 +409,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
 			offset ?? 0,
 			refType,
 			properties,
+			slidingPreference,
 		);
 	}
 
@@ -648,14 +650,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
 	 */
 	private getClientSequenceArgsForMessage(
-		sequencedMessage: ISequencedDocumentMessage | undefined,
-	): IMergeTreeClientSequenceArgs;
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): Pick<IMergeTreeClientSequenceArgs, "referenceSequenceNumber" | "clientId">;
-	private getClientSequenceArgsForMessage(
 		sequencedMessage:
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
@@ -673,7 +667,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			};
 		} else {
 			return {
-				clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
 				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
@@ -728,6 +722,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return this.getShortClientId(longClientId);
 	}
+
 	getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
@@ -737,6 +732,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
+	}
+	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
+		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
 
 	/**
@@ -762,7 +760,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-		const NACKedSegmentGroup = this._mergeTree.pendingSegments?.shift()?.data;
+		const NACKedSegmentGroup = this._mergeTree.pendingSegments.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
 			0x034 /* "Segment group not at head of merge tree pending queue" */,
@@ -865,7 +863,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					refSeq: this.getCollabWindow().currentSeq,
 				};
 				segment.segmentGroups.enqueue(newSegmentGroup);
-				this._mergeTree.pendingSegments!.push(newSegmentGroup);
+
+				this._mergeTree.pendingSegments.push(newSegmentGroup);
 
 				const first = opList[0];
 
@@ -891,7 +890,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs) {
 		const op = opArgs.op;
 		const msg = opArgs.sequencedMessage;
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
 				this.applyInsertOp(opArgs);
@@ -953,7 +952,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
 		// Ensure client ID is registered
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		// Apply if an operation message
 		if (msg.type === MessageType.Operation) {
 			const opArgs: IMergeTreeDeltaRemoteOpArgs = {

@@ -16,6 +16,7 @@ import {
 	IRemovalInfo,
 	ISegment,
 	toMoveInfo,
+	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
@@ -379,16 +380,12 @@ export class PartialSequenceLengths {
 		);
 		combinedPartialLengths.segmentCount = block.childCount;
 
-		function seqLTE(seq: number | undefined, minSeq: number) {
-			return seq !== undefined && seq !== UnassignedSequenceNumber && seq <= minSeq;
-		}
-
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			if (child.isLeaf()) {
 				// Leaf segment
 				const segment = child;
-				if (seqLTE(segment.seq, collabWindow.minSeq)) {
+				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
 					combinedPartialLengths.minLength += segment.cachedLength;
 				} else {
 					PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
@@ -396,8 +393,10 @@ export class PartialSequenceLengths {
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
 				if (
-					seqLTE(removalInfo?.removedSeq, collabWindow.minSeq) ||
-					seqLTE(moveInfo?.movedSeq, collabWindow.minSeq)
+					(removalInfo?.removedSeq !== undefined &&
+						seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) ||
+					(moveInfo?.movedSeq !== undefined &&
+						seqLTE(moveInfo.movedSeq, collabWindow.minSeq))
 				) {
 					combinedPartialLengths.minLength -= segment.cachedLength;
 				} else if (removalInfo !== undefined || moveInfo !== undefined) {

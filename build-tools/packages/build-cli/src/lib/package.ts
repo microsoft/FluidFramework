@@ -2,25 +2,37 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "assert";
-import { compareDesc, differenceInBusinessDays } from "date-fns";
-import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType";
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-import path from "path";
-import * as semver from "semver";
-
 import {
 	Context,
 	Logger,
 	MonoRepo,
 	Package,
+	VersionBag,
 	VersionDetails,
-	readJsonAsync,
+	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
-
-import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
+import {
+	InterdependencyRange,
+	ReleaseVersion,
+	detectVersionScheme,
+	getVersionRange,
+	isInterdependencyRange,
+	isInternalVersionRange,
+	isPrereleaseVersion,
+	isRangeOperator,
+	isWorkspaceRange,
+} from "@fluid-tools/version-tools";
+import { PackageName } from "@rushstack/node-core-library";
+import { strict as assert } from "assert";
+import { compareDesc, differenceInBusinessDays } from "date-fns";
+import execa from "execa";
+import { readJson, readJsonSync, writeFile } from "fs-extra";
+import ncu from "npm-check-updates";
+import type { Index } from "npm-check-updates/build/src/types/IndexType";
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import path from "path";
+import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
+import * as semver from "semver";
 
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
@@ -157,8 +169,7 @@ export async function npmCheckUpdates(
 		if (glob.endsWith("*")) {
 			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
-				// eslint-disable-next-line no-await-in-loop
-				const { name } = await readJsonAsync(jsonPath);
+				const { name } = readJsonSync(jsonPath);
 				const pkg = context.fullPackageMap.get(name);
 				if (pkg === undefined) {
 					log?.warning(`Package not found in context: ${name}`);
@@ -176,8 +187,7 @@ export async function npmCheckUpdates(
 			}
 		} else {
 			const jsonPath = path.join(repoPath, glob, "package.json");
-			// eslint-disable-next-line no-await-in-loop
-			const { name } = await readJsonAsync(jsonPath);
+			const { name } = readJsonSync(jsonPath);
 			const pkg = context.fullPackageMap.get(name);
 			if (pkg === undefined) {
 				log?.warning(`Package not found in context: ${name}`);
@@ -443,19 +453,231 @@ export function getFluidDependencies(
 				continue;
 			}
 
-			const minVer = semver.minVersion(dep.version);
-			if (minVer === null) {
+			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
+			// range. Otherwise pick the minimum version the range represents.
+			const newVersion = dep.version.startsWith("workspace:")
+				? semver.parse(pkg.version)
+				: semver.minVersion(dep.version);
+			if (newVersion === null) {
 				throw new Error(`Failed to parse depVersion: ${dep.version}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
-				releaseGroups[pkg.monoRepo.kind] = minVer.version;
+				releaseGroups[pkg.monoRepo.kind] = newVersion.version;
 				continue;
 			}
 
-			packages[pkg.name] = minVer.version;
+			packages[pkg.name] = newVersion.version;
 		}
 	}
 
 	return [releaseGroups, packages];
+}
+
+export interface DependencyWithRange {
+	pkg: Package;
+	range: InterdependencyRange;
+}
+
+/**
+ * Sets the version of a release group or standalone package.
+ *
+ * @param context - The {@link Context}.
+ * @param releaseGroupOrPackage - A release group repo or package to bump.
+ * @param version - The version to set.
+ * @param interdependencyRange - The type of dependency to use on packages within the release group.
+ * @param log - A logger to use.
+ *
+ * @internal
+ */
+export async function setVersion(
+	context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+	version: semver.SemVer,
+	// eslint-disable-next-line default-param-last
+	interdependencyRange: InterdependencyRange = "^",
+	log?: Logger,
+): Promise<void> {
+	const translatedVersion = version;
+	const scheme = detectVersionScheme(translatedVersion);
+
+	let name: string;
+	const cmds: [string, string[], execa.Options | undefined][] = [];
+	let options: execa.Options | undefined;
+
+	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
+	if (releaseGroupOrPackage instanceof MonoRepo) {
+		name = releaseGroupOrPackage.kind;
+		options = {
+			cwd: releaseGroupOrPackage.repoPath,
+			stdio: "inherit",
+			shell: true,
+		};
+		cmds.push(
+			[
+				`flub`,
+				[
+					`exec`,
+					"-g",
+					name,
+					"--",
+					`"npm version ${translatedVersion.version} --allow-same-version"`,
+				],
+				options,
+			],
+			["pnpm", ["-r", "run", "build:genver"], options],
+		);
+	} else {
+		name = releaseGroupOrPackage.name;
+		options = {
+			cwd: releaseGroupOrPackage.directory,
+			stdio: "inherit",
+			shell: true,
+		};
+		cmds.push([`npm`, ["version", translatedVersion.version, "--allow-same-version"], options]);
+		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
+			cmds.push([`npm`, ["run", "build:genver"], options]);
+		}
+	}
+
+	for (const [cmd, args, opts] of cmds) {
+		log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
+		try {
+			// TODO: The shell option should not need to be true. AB#4067
+			// eslint-disable-next-line no-await-in-loop
+			const results = await execa(cmd, args, options);
+			if (results.all !== undefined) {
+				log?.verbose(results.all);
+			}
+		} catch (error: any) {
+			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
+			throw error;
+		}
+	}
+
+	if (releaseGroupOrPackage instanceof Package) {
+		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
+		return;
+	}
+
+	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
+	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
+	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
+	const [lernaJson, prettierConfig] = await Promise.all([
+		readJson(lernaPath),
+		resolvePrettierConfig(lernaPath),
+	]);
+
+	if (prettierConfig !== null) {
+		prettierConfig.filepath = lernaPath;
+	}
+	lernaJson.version = translatedVersion.version;
+	const output = prettier(
+		JSON.stringify(lernaJson),
+		prettierConfig === null ? undefined : prettierConfig,
+	);
+	await writeFile(lernaPath, output);
+
+	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
+		json.version = translatedVersion.version;
+	});
+
+	context.repo.reload();
+
+	// The package versions have been updated, so now we update the dependency ranges for packages within the release
+	// group. We need to account for Fluid internal versions and the requested interdependencyRange.
+	let newRange: string | undefined;
+
+	if (isWorkspaceRange(interdependencyRange)) {
+		newRange = interdependencyRange;
+	} // Fluid internal versions that use ~ or ^ need to be translated to >= < ranges.
+	else if (["internal", "internalPrerelease"].includes(scheme)) {
+		if (isRangeOperator(interdependencyRange)) {
+			newRange =
+				// If the interdependencyRange is the empty string, it means we should use an exact dependency on the version, so
+				// we set the range to the version. Otherwise, since this is a Fluid internal version, we need to calculate an
+				// appropriate range string based on the interdependencyRange.
+				interdependencyRange === ""
+					? translatedVersion.version
+					: getVersionRange(translatedVersion, interdependencyRange);
+		} else {
+			newRange = `${interdependencyRange}${translatedVersion.version}`;
+		}
+	} else {
+		newRange = `${interdependencyRange}${translatedVersion.version}`;
+	}
+
+	if (
+		newRange !== undefined &&
+		isInternalVersionRange(newRange, true) === false &&
+		!isInterdependencyRange(newRange)
+	) {
+		throw new Error(`New range is invalid: ${newRange}`);
+	}
+
+	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
+	const dependencyVersionMap = new Map<string, DependencyWithRange>();
+	for (const pkg of packagesToCheckAndUpdate) {
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange as InterdependencyRange });
+	}
+
+	for (const pkg of packagesToCheckAndUpdate) {
+		// eslint-disable-next-line no-await-in-loop
+		await setPackageDependencies(
+			pkg,
+			dependencyVersionMap,
+			/* updateWithinSameReleaseGroup */ true,
+		);
+	}
+}
+
+/**
+ * Set the version of _dependencies_ within a package according to the provided map of packages to range strings.
+ *
+ * @param pkg - The package whose dependencies should be updated.
+ * @param dependencyVersionMap - A Map of dependency names to a range string.
+ * @param updateWithinSameReleaseGroup - If true, will update dependency ranges of dependencies within the same release
+ * group. Typically this should be `false`, but in some cases you may need to set a precise dependency range string
+ * within the same release group.
+ * @returns True if the packages dependencies were changed; false otherwise.
+ *
+ * @remarks
+ * By default, dependencies on packages within the same release group -- we call these interdependencies --
+ * will not be changed (`updateWithinSameReleaseGroup === false`). This is typically the behavior you want. However,
+ * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
+ * example, when setting release group package versions in the CI release pipeline.
+ *
+ * @internal
+ */
+export async function setPackageDependencies(
+	pkg: Package,
+	dependencyVersionMap: Map<string, DependencyWithRange>,
+	// eslint-disable-next-line default-param-last
+	updateWithinSameReleaseGroup = false,
+	changedVersions?: VersionBag,
+): Promise<boolean> {
+	let changed = false;
+	let newRangeString: string;
+	for (const { name, dev } of pkg.combinedDependencies) {
+		const dep = dependencyVersionMap.get(name);
+		if (dep !== undefined) {
+			const isSameReleaseGroup = MonoRepo.isSame(dep?.pkg.monoRepo, pkg.monoRepo);
+			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
+				const dependencies = dev
+					? pkg.packageJson.devDependencies
+					: pkg.packageJson.dependencies;
+
+				newRangeString = dep.range.toString();
+				dependencies[name] = newRangeString;
+				changed = true;
+				changedVersions?.add(dep.pkg, newRangeString);
+			}
+		}
+	}
+
+	if (changed) {
+		await pkg.savePackageJson();
+	}
+
+	return changed;
 }

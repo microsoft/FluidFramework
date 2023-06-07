@@ -294,103 +294,7 @@ describe("Pending State Manager", () => {
 		}
 
 		describe("Constructor conversion", () => {
-			// TODO: Remove in 2.0.0-internal.5.0.0 once only new format is read in getLocalState() AB#2496
-			describe("flush messages", () => {
-				it("Empty local state", () => {
-					{
-						const pendingStateManager = createPendingStateManager(undefined);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-					{
-						const pendingStateManager = createPendingStateManager([]);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-				});
-
-				it("Only flush messages", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "flush" },
-						{ type: "flush" },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-				});
-
-				it("New format", () => {
-					const messages = [
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-						{ type: "message", content: undefined },
-					];
-					const pendingStateManager = createPendingStateManager(messages);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-				});
-
-				it("Ends with no flush", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "message" },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-					]);
-				});
-
-				it("Ends with flush", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "flush" },
-						{ type: "message" },
-						{ type: "flush" },
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "flush" },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-					]);
-				});
-
-				it("Mix of new and old", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "message", opMetadata: { batch: false } },
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "flush" },
-						{ type: "message" },
-						{ type: "message" },
-						{ type: "message", opMetadata: { batch: true } },
-						{ type: "message" },
-						{ type: "message" },
-						{ type: "flush" },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: true }, content: undefined },
-						{ type: "message", content: undefined },
-						{ type: "message", opMetadata: { batch: false }, content: undefined },
-					]);
-				});
-			});
-
-			// TODO: Remove in 2.0.0-internal.6.0.0 once only new format is read in getLocalState()
+			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor
 			describe("deserialized content", () => {
 				it("Empty local state", () => {
 					{
@@ -547,6 +451,7 @@ describe("Pending State Manager", () => {
 			]);
 		});
 
+		// TODO: change to new format in "2.0.0-internal.6.0.0" (AB#3826)
 		it("getLocalState writes old message format", async () => {
 			const pendingStateManager = createPendingStateManager([
 				{ type: "message", messageType: "component" },

@@ -6,7 +6,6 @@ import { readdir } from "fs/promises";
 import ignore from "ignore";
 import * as path from "path";
 
-import { ScriptDependencies } from "../../../common/npmPackage";
 import { existsSync, globFn, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
@@ -15,8 +14,8 @@ export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
 	private entries: string[] = [];
 	private ignorePath: string | undefined;
-	constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
-		super(node, command, scriptDeps);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -133,8 +132,5 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			}
 		}
 		return result;
-	}
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		// Prettier has no dependent tasks, assuming we don't lint build output files
 	}
 }

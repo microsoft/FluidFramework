@@ -162,5 +162,47 @@ describe("MockLogger", () => {
 				]),
 			);
 		});
+
+		it("Details in props are inlined or not as per inlineDetailsProp", () => {
+			const details = {
+				id: 1,
+				type: "test",
+			};
+
+			mockLogger.sendTelemetryEvent({ eventName: "A", details: JSON.stringify(details) });
+			// When inlineDetailsProp is true, the properties in details should be inlined.
+			assert(
+				mockLogger.matchEvents(
+					[{ eventName: "A", id: 1, type: "test" }],
+					true /* inlineDetailsProp */,
+				),
+			);
+
+			// When inlineDetailsProp is not true, the properties in details should not be inlined.
+			mockLogger.sendTelemetryEvent({ eventName: "A", details: JSON.stringify(details) });
+			assert(!mockLogger.matchEvents([{ eventName: "A", id: 1, type: "test" }]));
+
+			// When inlineDetailsProp is not true, the properties in details should not be inlined.
+			mockLogger.sendTelemetryEvent({ eventName: "A", details: JSON.stringify(details) });
+			assert(mockLogger.matchEvents([{ eventName: "A", details: JSON.stringify(details) }]));
+		});
+
+		it("Details in props must be a JSON stringified string when inlineDetailsProp is true", () => {
+			mockLogger.sendTelemetryEvent({ eventName: "A", details: 10 });
+			assert.throws(() =>
+				mockLogger.matchEvents(
+					[{ eventName: "A", id: 1, type: "test" }],
+					true /* inlineDetailsProp */,
+				),
+			);
+
+			mockLogger.sendTelemetryEvent({ eventName: "A", details: "details" });
+			assert.throws(() =>
+				mockLogger.matchEvents(
+					[{ eventName: "A", id: 1, type: "test" }],
+					true /* inlineDetailsProp */,
+				),
+			);
+		});
 	});
 });

@@ -117,11 +117,17 @@ describe("Runtime", () => {
 							updateDirtyContainerState: (_dirty: boolean) => {},
 							submitFn: (
 								_type: MessageType,
-								_contents: any,
+								contents: any,
 								_batch: boolean,
 								appData?: any,
 							) => {
-								submittedOpsMetdata.push(appData);
+								if (contents.type === "groupedBatch") {
+									for (const subMessage of contents.contents) {
+										submittedOpsMetdata.push(subMessage.metadata);
+									}
+								} else {
+									submittedOpsMetdata.push(appData);
+								}
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
@@ -755,7 +761,7 @@ describe("Runtime", () => {
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
-					"processing remote op, should generate telemetry event and throw an error that closes the container",
+					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -773,6 +779,22 @@ describe("Runtime", () => {
 								},
 							} as any as ISequencedDocumentMessage,
 							false /* local */,
+						);
+						containerRuntime.process(
+							{
+								type: "op",
+								clientId: "clientId",
+								sequenceNumber: 0,
+								contents: {
+									address: "address",
+									contents: {
+										chunkId: i + 1,
+										totalChunks: maxReconnects + 1,
+									},
+									type: "chunkedOp",
+								},
+							} as any as ISequencedDocumentMessage,
+							true /* local */,
 						);
 					}
 
@@ -1072,14 +1094,15 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				enableOfflineLoad: false,
 				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					minimumBatchSizeInBytes: 614400,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				maxBatchSizeInBytes: 950 * 1024,
-				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				maxBatchSizeInBytes: 700 * 1024,
+				chunkSizeInBytes: 204800,
+				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
+				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -1096,16 +1119,17 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({}),
+						featureGates: JSON.stringify({ idCompressorEnabled: false }),
 					},
 				]);
 			});
 
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
-					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.CompressionDisabled": true,
+					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
-					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
+					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1123,6 +1147,7 @@ describe("Runtime", () => {
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
+							idCompressorEnabled: true,
 						}),
 					},
 				]);

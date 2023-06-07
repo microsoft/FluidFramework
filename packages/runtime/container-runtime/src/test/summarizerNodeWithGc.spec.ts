@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { cloneGCData, GCDataBuilder } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -16,15 +15,18 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { IFetchSnapshotResult } from "../summary/summarizerNode";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
+	SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
+// eslint-disable-next-line import/no-internal-modules
+import { cloneGCData } from "../gc";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
@@ -420,6 +422,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
+			);
 		});
 
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
@@ -463,6 +472,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
+			);
 		});
 	});
 });

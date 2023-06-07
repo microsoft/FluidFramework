@@ -15,3 +15,8 @@ function createTableWithInterception<T extends ITable>(
 When a function is called that set a cell value or annotates a cell, it calls propertyInterceptionCallback with the provided properties. The callback funtion can then provide the new set of properties that it wants to set. The operation in the called function and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
 
 For example, to support a feature like simple user attribution, the app can append the user information to the properties in the callback. The user information can than be retrieved by getting the properties of the cell.
+
+## Remarks
+
+Being an example, this package should have `private: true` in `package.json` but alas there's one consumer of Fluid
+taking a dependency on it, so we can't do that yet.

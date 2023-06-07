@@ -10,7 +10,7 @@ import chalk from "chalk";
 import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 
 import { rootPathFlag } from "./flags";
-import { indentString } from "./lib";
+import { indentString, Repository } from "./lib";
 import { CommandLogger } from "./logging";
 
 /**
@@ -37,15 +37,19 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * The flags defined on the base class.
 	 */
 	static baseFlags = {
-		root: rootPathFlag(),
+		root: rootPathFlag({
+			helpGroup: "GLOBAL",
+		}),
 		verbose: Flags.boolean({
 			char: "v",
 			description: "Verbose logging.",
+			helpGroup: "GLOBAL",
 			required: false,
 		}),
 		timer: Flags.boolean({
 			default: false,
 			hidden: true,
+			helpGroup: "GLOBAL",
 		}),
 	};
 

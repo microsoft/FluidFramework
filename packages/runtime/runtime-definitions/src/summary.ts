@@ -74,53 +74,37 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * The garbage collection data of each node in the reference graph.
+ * @experimental - Can be deleted/changed at any time
+ * Contains the necessary information to allow DDSes to do incremental summaries
  */
-export interface IGarbageCollectionNodeData {
+export interface IExperimentalIncrementalSummaryContext {
 	/**
-	 * The set of routes to other nodes in the graph.
+	 * The sequence number of the summary generated that will be sent to the server.
 	 */
-	outboundRoutes: string[];
+	summarySequenceNumber: number;
 	/**
-	 * If the node is unreferenced, the timestamp of when it was marked unreferenced.
+	 * The sequence number of the most recent summary that was acknowledged by the server.
 	 */
-	unreferencedTimestampMs?: number;
-}
-
-/**
- * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
- * GC data.
- */
-export interface IGarbageCollectionState {
-	gcNodes: { [id: string]: IGarbageCollectionNodeData };
-}
-
-/**
- * @deprecated - IGarbageCollectionState is written in the root of the summary now.
- * Legacy GC details from when the GC details were written at the data store's summary tree.
- */
-export interface IGarbageCollectionSummaryDetailsLegacy {
-	/** A list of routes to Fluid objects that are used in this node. */
-	usedRoutes?: string[];
-	/** The GC data of this node. */
-	gcData?: IGarbageCollectionData;
-	/** If this node is unreferenced, the time when it was marked as such. */
-	unrefTimestamp?: number;
-}
-
-/**
- * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
- */
-export interface IGarbageCollectionSnapshotData {
-	gcState: IGarbageCollectionState;
-	tombstones: string[] | undefined;
-	deletedNodes: string[] | undefined;
+	latestSummarySequenceNumber: number;
+	/**
+	 * The path to the runtime/datastore/dds that is used to generate summary handles
+	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
+	 * instead of being a blob or tree node
+	 *
+	 * This path contains the id of the data store and dds which should not be leaked to layers below them. Ideally,
+	 * a layer should not know its own id. This is important for channel unification work and there has been a lot of
+	 * work to remove these kinds of leakages. Some still exist, which have to be fixed but we should not be adding
+	 * more dependencies.
+	 */
+	// TODO: remove summaryPath
+	summaryPath: string;
 }
 
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {

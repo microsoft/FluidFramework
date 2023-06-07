@@ -139,7 +139,7 @@ export function getReleasedPrereleaseDependencies(context: Context) {
 	const bumpPackageMap = new Map<string, { pkg: Package; rangeSpec: string }>();
 	for (const pkg of context.repo.packages.packages) {
 		for (const dep of pkg.combinedDependencies) {
-			if (semver.prerelease(dep.version) !== null) {
+			if (dep.version !== undefined && semver.prerelease(dep.version) !== null) {
 				const depPackage = context.fullPackageMap.get(dep.name);
 				// The prerelease dependence doesn't match the live version, assume that it is released already
 				if (depPackage && !prereleaseSatisfies(depPackage.version, dep.version)) {
@@ -200,12 +200,12 @@ export async function bumpPackageDependencies(
 		if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
 			const depVersion = dep.rangeSpec;
 			const dependencies = dev
-				? pkg.packageJson.devDependencies
-				: pkg.packageJson.dependencies;
+				? pkg.packageJson.devDependencies!
+				: pkg.packageJson.dependencies!;
 			if (
 				release
-					? dependencies[name].startsWith(`${depVersion}-`)
-					: dependencies[name] !== depVersion
+					? dependencies?.[name]?.startsWith(`${depVersion}-`)
+					: dependencies?.[name] !== depVersion
 			) {
 				if (changedVersion) {
 					changedVersion.add(dep.pkg, depVersion);

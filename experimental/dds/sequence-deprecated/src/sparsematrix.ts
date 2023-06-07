@@ -73,7 +73,7 @@ export class PaddingSegment extends BaseSegment {
 	}
 
 	public append(segment: ISegment) {
-		assert(PaddingSegment.is(segment), "can only append padding segment");
+		assert(PaddingSegment.is(segment), 0x5f7 /* can only append padding segment */);
 		super.append(segment);
 	}
 

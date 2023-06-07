@@ -5,7 +5,6 @@
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import {
-	ILocalSequencedClient,
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
 	ProtocolOpHandler,
@@ -13,6 +12,7 @@ import {
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
+	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
@@ -20,11 +20,25 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
+
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
 	ClientJoin = "join", // same value as MessageType.ClientJoin,
 	ClientLeave = "leave", // same value as MessageType.ClientLeave,
 	Clear = "clear", // used only by client for synthetic signals
+}
+
+/**
+ * ADO: #4277: ConnectionStateHandler can mutate Quorum members, but shouldn't
+ * This interface might go away after the above ADO item is done
+ */
+export interface ILocalSequencedClient extends ISequencedClient {
+	/**
+	 * True if the client should have left the quorum, false otherwise
+	 */
+	shouldHaveLeft?: boolean;
 }
 
 /**
@@ -51,7 +65,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			attributes.term,
+			OnlyValidTermValue,
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,

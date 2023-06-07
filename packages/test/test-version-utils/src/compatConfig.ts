@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Lazy } from "@fluidframework/common-utils";
+import { Lazy, assert } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -32,8 +32,8 @@ interface CompatConfig {
 
 // N and N - 1
 const defaultVersions = [0, -1];
-// we are currently supporting 0.45 long-term
-const LTSVersions = ["^0.45.0"];
+// we are currently supporting 1.3.4 long-term
+const LTSVersions = ["^1.3.4"];
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -130,6 +130,55 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 	];
 };
 
+const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+	return [
+		{
+			name: `compat back N${compatVersion} - older loader`,
+			kind: CompatKind.Loader,
+			compatVersion,
+			loader: compatVersion,
+		},
+		{
+			name: `compat back N${compatVersion} - older loader + older driver`,
+			kind: CompatKind.LoaderDriver,
+			compatVersion,
+			driver: compatVersion,
+			loader: compatVersion,
+		},
+	];
+};
+
+const genFullBackCompatConfig = (): CompatConfig[] => {
+	const _configList: CompatConfig[] = [];
+	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
+	// This first if statement turns the internal version to x.y.z
+	let semverInternal: string | undefined;
+	if (pkgVersion.startsWith("2.0.0-internal.")) {
+		semverInternal = pkgVersion.split("internal.")[1];
+	} else if (pkgVersion.startsWith("2.0.0-dev.")) {
+		semverInternal = pkgVersion.split("dev.")[1];
+	} else {
+		// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+		throw new Error(
+			"Unexpected back compat scenario! Expecting package versiosn to just be 2.0.0-internal.x.y.z",
+		);
+	}
+
+	assert(semverInternal !== undefined, "Unexpected pkg version");
+	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
+	const major = semverInternal.split(".")[0];
+	const greatestMajor = parseInt(major, 10);
+	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
+	// This loop goes as far back as 2.0.0.internal.1.y.z.
+	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
+	// This means as the number of majors increase the number of versions we support - this may be updated in the future.
+	for (let i = 2; i < greatestMajor; i++) {
+		_configList.push(...genBackCompatConfig(-i));
+	}
+	return _configList;
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -148,6 +197,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultVersions.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
+		if (process.env.fluid__test__backCompat === "FULL") {
+			_configList.push(...genFullBackCompatConfig());
+		}
 		LTSVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
@@ -157,6 +209,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 				LTSVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
+			} else if (value === "FULL") {
+				_configList.push(...genFullBackCompatConfig());
 			} else {
 				const num = parseInt(value, 10);
 				if (num.toString() === value) {

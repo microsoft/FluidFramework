@@ -10,6 +10,8 @@ import {
 	IWebServer,
 	IWebServerFactory,
 	IRunner,
+	ITokenRevocationManager,
+	IStorageNameRetriever,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -26,9 +28,12 @@ export class HistorianRunner implements IRunner {
 		private readonly config: Provider,
 		private readonly port: string | number,
 		private readonly riddler: ITenantService,
-		private readonly throttler: IThrottler,
+		private readonly storageNameRetriever: IStorageNameRetriever,
+		public readonly restTenantThrottlers: Map<string, IThrottler>,
+		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly cache?: ICache,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -38,9 +43,12 @@ export class HistorianRunner implements IRunner {
 		const historian = app.create(
 			this.config,
 			this.riddler,
-			this.throttler,
+			this.storageNameRetriever,
+			this.restTenantThrottlers,
+			this.restClusterThrottlers,
 			this.cache,
 			this.asyncLocalStorage,
+			this.tokenRevocationManager,
 		);
 		historian.set("port", this.port);
 
@@ -51,6 +59,13 @@ export class HistorianRunner implements IRunner {
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+
+		// Token revocation
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
+				this.runningDeferred.reject(error);
+			});
+		}
 
 		return this.runningDeferred.promise;
 	}

@@ -40,18 +40,6 @@ use_old_ClassDeclaration_BaseContainerRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BaseContainerService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BaseContainerService": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore():
@@ -76,18 +64,6 @@ use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DataObject": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DataObject():
@@ -107,6 +83,7 @@ declare function get_current_ClassDeclaration_DataObject():
 declare function use_old_ClassDeclaration_DataObject(
     use: TypeOnly<old.DataObject>);
 use_old_ClassDeclaration_DataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataObject());
 
 /*
@@ -227,6 +204,7 @@ declare function get_current_ClassDeclaration_PureDataObject():
 declare function use_old_ClassDeclaration_PureDataObject(
     use: TypeOnly<old.PureDataObject>);
 use_old_ClassDeclaration_PureDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PureDataObject());
 
 /*
@@ -300,18 +278,6 @@ declare function use_old_VariableDeclaration_defaultRouteRequestHandler(
     use: TypeOnly<typeof old.defaultRouteRequestHandler>);
 use_old_VariableDeclaration_defaultRouteRequestHandler(
     get_current_VariableDeclaration_defaultRouteRequestHandler());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_generateContainerServicesRequestHandler": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_generateContainerServicesRequestHandler": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -408,27 +374,3 @@ declare function use_old_VariableDeclaration_mountableViewRequestHandler(
     use: TypeOnly<typeof old.mountableViewRequestHandler>);
 use_old_VariableDeclaration_mountableViewRequestHandler(
     get_current_VariableDeclaration_mountableViewRequestHandler());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_serviceRoutePathRoot": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_serviceRoutePathRoot": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_waitForAttach": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_waitForAttach": {"backCompat": false}
-*/

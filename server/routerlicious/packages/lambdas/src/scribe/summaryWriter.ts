@@ -6,11 +6,6 @@
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "@fluidframework/protocol-base";
-import {
 	ISequencedDocumentMessage,
 	ISummaryContent,
 	ITreeEntry,
@@ -26,6 +21,9 @@ import {
 	ISummaryTree,
 	NetworkError,
 	WholeSummaryUploadManager,
+	getQuorumTreeEntries,
+	generateServiceProtocolEntries,
+	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -203,10 +201,8 @@ export class SummaryWriter implements ISummaryWriter {
 
 			// At this point the summary op and its data are all valid and we can perform the write to history
 			const protocolEntries: ITreeEntry[] = getQuorumTreeEntries(
-				this.documentId,
 				checkpoint.protocolState.minimumSequenceNumber,
 				checkpoint.protocolState.sequenceNumber,
-				op.term ?? 1,
 				checkpoint.protocolState,
 			);
 

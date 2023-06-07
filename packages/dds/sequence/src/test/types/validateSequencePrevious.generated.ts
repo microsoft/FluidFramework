@@ -35,6 +35,7 @@ declare function get_current_TypeAliasDeclaration_CompressedSerializedInterval()
 declare function use_old_TypeAliasDeclaration_CompressedSerializedInterval(
     use: TypeOnly<old.CompressedSerializedInterval>);
 use_old_TypeAliasDeclaration_CompressedSerializedInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_CompressedSerializedInterval());
 
 /*
@@ -276,6 +277,7 @@ declare function get_current_InterfaceDeclaration_ISerializedIntervalCollectionV
 declare function use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
     use: TypeOnly<old.ISerializedIntervalCollectionV2>);
 use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2());
 
 /*
@@ -409,6 +411,7 @@ declare function get_old_ClassDeclaration_IntervalCollection():
 declare function use_current_ClassDeclaration_IntervalCollection(
     use: TypeOnly<current.IntervalCollection<any>>);
 use_current_ClassDeclaration_IntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IntervalCollection());
 
 /*
@@ -481,6 +484,7 @@ declare function get_old_InterfaceDeclaration_IntervalLocator():
 declare function use_current_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<current.IntervalLocator>);
 use_current_InterfaceDeclaration_IntervalLocator(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IntervalLocator());
 
 /*
@@ -579,6 +583,7 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*

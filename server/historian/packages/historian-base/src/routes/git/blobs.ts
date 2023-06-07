@@ -5,7 +5,11 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -16,34 +20,41 @@ import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	async function createBlob(
 		tenantId: string,
 		authorization: string,
 		body: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createBlob(body);
 	}
 
@@ -53,14 +64,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<git.IBlob> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getBlob(sha, useCache);
 	}
 
@@ -69,8 +81,8 @@ export function create(
 	 */
 	router.get(
 		"/repos/ping",
-		throttle(throttler, winston, {
-			...commonThrottleOptions,
+		throttle(restTenantGeneralThrottler, winston, {
+			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
 		async (request, response) => {
@@ -81,7 +93,8 @@ export function create(
 	router.post(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		utils.validateRequestParams("tenantId"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const blobP = createBlob(
 				request.params.tenantId,
@@ -98,7 +111,8 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const blobP = getBlob(
@@ -117,7 +131,8 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 
@@ -133,6 +148,13 @@ export function create(
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
+					// Make sure the browser will expose specific headers for performance analysis.
+					response.setHeader(
+						"Access-Control-Expose-Headers",
+						"Content-Encoding, Content-Length, Content-Type",
+					);
+					// In order to report W3C timings, Time-Allow-Origin needs to be set.
+					response.setHeader("Timing-Allow-Origin", "*");
 					response
 						.status(200)
 						.write(Buffer.from(blob.content, "base64"), () => response.end());

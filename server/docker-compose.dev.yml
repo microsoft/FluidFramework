@@ -77,19 +77,6 @@ services:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules
     restart: on-failure
-  foreman:
-    build:
-      context: ./routerlicious
-      target: runner
-    command: node packages/routerlicious/dist/kafka-service/index.js foreman /usr/src/server/packages/routerlicious/dist/foreman/index.js
-    environment:
-      - DEBUG=fluid:*
-      - NODE_ENV=development
-      - IS_FLUID_SERVER=true
-    volumes:
-      - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules
-    restart: on-failure
   riddler:
     build:
       context: ./routerlicious
@@ -159,7 +146,7 @@ services:
   redis:
     image: "redis:alpine"
   mongodb:
-    image: "mongo:3.4.3"
+    image: "mongo:4"
   rabbitmq:
     image: "rabbitmq:alpine"
 volumes:

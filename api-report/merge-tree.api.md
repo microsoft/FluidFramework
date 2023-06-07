@@ -19,7 +19,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @alpha
-export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
 export interface AttributionPolicy {
@@ -101,7 +101,7 @@ export interface BlockAction<TClientData> {
     (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface BlockUpdateActions {
     // (undocumented)
     child: (block: IMergeBlock, index: number) => void;
@@ -127,7 +127,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -314,17 +314,18 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 export interface IAttributionCollection<T> {
     // @internal (undocumented)
     append(other: IAttributionCollection<T>): void;
+    // (undocumented)
+    readonly channelNames: Iterable<string>;
     // @internal (undocumented)
     clone(): IAttributionCollection<T>;
     // @internal
-    getAll(): Iterable<{
-        offset: number;
-        key: T;
-    }>;
-    getAtOffset(offset: number): T;
+    getAll(): IAttributionCollectionSpec<T>;
+    getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
+    // @internal
+    update(name: string | undefined, channel: IAttributionCollection<T>): any;
 }
 
 // @internal @sealed (undocumented)
@@ -335,6 +336,24 @@ export interface IAttributionCollectionSerializer {
         attribution?: IAttributionCollection<AttributionKey>;
         cachedLength: number;
     }>): SerializedAttributionCollection;
+}
+
+// @internal (undocumented)
+export interface IAttributionCollectionSpec<T> {
+    // (undocumented)
+    channels?: {
+        [name: string]: Iterable<{
+            offset: number;
+            key: T | null;
+        }>;
+    };
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    root: Iterable<{
+        offset: number;
+        key: T | null;
+    }>;
 }
 
 // @public (undocumented)
@@ -746,6 +765,20 @@ export interface ISegmentChanges {
     replaceCurrent?: ISegment;
 }
 
+// @public (undocumented)
+export interface ITrackingGroup {
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    tracked: readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
+
 // @internal (undocumented)
 export interface KeyComparer<TKey> {
     // (undocumented)
@@ -780,7 +813,7 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     clear(): void;
     // @internal (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
@@ -900,13 +933,13 @@ export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTr
 // @alpha
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.REMOVE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.ANNOTATE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
     propertyDeltas: PropertySet;
 };
 
@@ -941,18 +974,7 @@ export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    getContainingSegment(pos: number): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getPosition(segment: ISegment): number;
-    // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): any;
-    // (undocumented)
-    localReferencePositionToPosition(lref: LocalReferencePosition): number;
     // (undocumented)
     removeRange(start: number, end: number): any;
 }
@@ -991,6 +1013,8 @@ export class PropertiesManager {
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
+    // (undocumented)
+    hasPendingProperty(key: string): boolean;
 }
 
 // @public (undocumented)
@@ -1117,6 +1141,7 @@ export interface ReferencePosition {
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
 }
 
 // @public
@@ -1233,13 +1258,30 @@ export class SegmentGroupCollection {
 }
 
 // @internal (undocumented)
-export interface SerializedAttributionCollection {
-    // (undocumented)
-    length: number;
+export interface SequenceOffsets {
     // (undocumented)
     posBreakpoints: number[];
-    seqs: (number | AttributionKey)[];
+    seqs: (number | AttributionKey | null)[];
 }
+
+// @internal (undocumented)
+export interface SerializedAttributionCollection extends SequenceOffsets {
+    // (undocumented)
+    channels?: {
+        [name: string]: SequenceOffsets;
+    };
+    // (undocumented)
+    length: number;
+}
+
+// @public
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @public
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
@@ -1345,7 +1387,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 export type Trackable = ISegment | LocalReferencePosition;
 
 // @public (undocumented)
-export class TrackingGroup {
+export class TrackingGroup implements ITrackingGroup {
     constructor();
     // (undocumented)
     has(trackable: Trackable): boolean;
@@ -1369,13 +1411,13 @@ export class TrackingGroupCollection {
     // (undocumented)
     get empty(): boolean;
     // (undocumented)
-    link(trackingGroup: TrackingGroup): void;
+    link(trackingGroup: ITrackingGroup): void;
     // (undocumented)
     matches(trackingCollection: TrackingGroupCollection): boolean;
     // (undocumented)
-    readonly trackingGroups: Set<TrackingGroup>;
+    get trackingGroups(): Set<TrackingGroup>;
     // (undocumented)
-    unlink(trackingGroup: TrackingGroup): boolean;
+    unlink(trackingGroup: ITrackingGroup): boolean;
 }
 
 // @public (undocumented)

@@ -336,7 +336,7 @@ export class OrderedClientElection
 	}
 
 	constructor(
-		logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLogger,
 		private readonly orderedClientCollection: IOrderedClientCollection,
 		/** Serialized state from summary or current sequence number at time of load if new. */
 		initialState: ISerializedElection | number,
@@ -416,6 +416,13 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizerClientElected",
+				electedClientId: this._electedClient?.clientId,
+				electedParentId: this._electedParent?.clientId,
+				electionSequenceNumber: sequenceNumber,
+				isSummarizerClient,
+			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
@@ -423,6 +430,12 @@ export class OrderedClientElection
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
 		if (this._electedParent !== client) {
 			this._electedParent = client;
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizerParentElected",
+				electedClientId: this._electedClient?.clientId,
+				electedParentId: this._electedParent?.clientId,
+				electionSequenceNumber: sequenceNumber,
+			});
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
 	}
@@ -457,7 +470,7 @@ export class OrderedClientElection
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
 			const electedClientIsSummarizer =
 				this._electedClient?.client.details.type === summarizerClientType;
-			// Note that we allow a summarizer client to supercede an interactive client as elected client.
+			// Note that we allow a summarizer client to supersede an interactive client as elected client.
 			if (
 				this._electedClient === undefined ||
 				(!electedClientIsSummarizer && newClientIsSummarizer)

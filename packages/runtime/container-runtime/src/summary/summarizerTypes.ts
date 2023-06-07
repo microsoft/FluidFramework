@@ -76,8 +76,16 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	disposeFn?(): void;
+	disposeFn(): void;
 	closeFn(): void;
+	on(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
+	off(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
 }
 
 /** Options affecting summarize behavior. */
@@ -294,8 +302,13 @@ export type SummarizerStopReason =
 	| "notElectedClient"
 	/** Summarizer client was disconnected */
 	| "summarizerClientDisconnected"
-	/* running summarizer threw an exception */
-	| "summarizerException";
+	/** running summarizer threw an exception */
+	| "summarizerException"
+	/**
+	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+	 */
+	| "latestSummaryStateStale";
 
 export interface ISummarizerEvents extends IEvent {
 	/**
@@ -398,6 +411,8 @@ export interface ISummarizeHeuristicData {
 
 	/** Mark that the last sent summary attempt has received an ack */
 	markLastAttemptAsSuccessful(): void;
+
+	opsSinceLastSummary: number;
 }
 
 /** Responsible for running heuristics determining when to summarize. */
@@ -474,6 +489,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "opsSizesSinceLastSummary"
 	/** Delta between the number of non-runtime ops since the last summary */
 	| "nonRuntimeOpsSinceLastSummary"
+	/** Delta between the number of runtime ops since the last summary */
+	| "runtimeOpsSinceLastSummary"
 	/** Wether or not this instance contains adjusted metrics due to missing op data */
 	| "hasMissingOpData"
 	/** Time it took to generate the summary tree and stats. */
@@ -491,7 +508,9 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	/** Actual sequence number of the summary op proposal. */
 	| "summarySequenceNumber"
 	/** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-	| "nackRetryAfter";
+	| "nackRetryAfter"
+	/** The stage at which the submit summary method failed at. This can help determine what type of failure we have */
+	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryProperties,

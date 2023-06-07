@@ -22,12 +22,13 @@ historian:
     track: true
     endpoint: "error_tracking_endpoint"
   throttling:
-    maxRequestsPerMs: 1000000
-    maxRequestBurst: 1000000
-    minCooldownIntervalInMs: 1000000
-    minThrottleIntervalInMs: 1000000
-    maxInMemoryCacheSize: 1000
-    maxInMemoryCacheAgeInMs: 60000
+    restCallsPerTenant:
+      generalRestCall: disabled
+      getSummary: disabled
+      createSummary: disabled
+    restCallsPerCluster:
+      getSummary: disabled
+      createSummary: disabled
   restGitService:
     disableGitCache: false
 
@@ -45,6 +46,7 @@ gitrest:
     persistLatestFullSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
+    apiMetricsSamplingPeriod: 100
     enableLowIoWrite: false
     enableOptimizedInitialSummary: false
     enableSlimGitInit: false
