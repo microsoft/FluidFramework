@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { SameContainerMigrator } from "./sameContainerMigrator";
-export { Migrator } from "./migrator";
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	rules: {},
+};

@@ -5019,6 +5019,9 @@ importers:
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
+      '@fluidframework/protocol-definitions':
+        specifier: ^1.1.0
+        version: 1.2.0
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../../packages/dds/register-collection
@@ -5195,6 +5198,205 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      ts-jest:
+        specifier: ^26.4.4
+        version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
+      ts-loader:
+        specifier: ^9.3.0
+        version: 9.4.2(typescript@4.5.5)(webpack@5.83.0)
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
+      webpack:
+        specifier: ^5.82.0
+        version: 5.83.0(webpack-cli@4.10.0)
+      webpack-cli:
+        specifier: ^4.9.2
+        version: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.83.0)
+      webpack-dev-server:
+        specifier: ~4.6.0
+        version: 4.6.0(webpack-cli@4.10.0)(webpack@5.83.0)
+      webpack-merge:
+        specifier: ^5.8.0
+        version: 5.8.0
+
+  examples/version-migration/same-container:
+    dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
+      '@fluid-experimental/react-inputs':
+        specifier: workspace:~
+        version: link:../../../experimental/framework/react-inputs
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/cell':
+        specifier: workspace:~
+        version: link:../../../packages/dds/cell
+      '@fluidframework/common-definitions':
+        specifier: ^0.20.1
+        version: 0.20.1
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../packages/dds/map
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../../packages/dds/register-collection
+      '@fluidframework/request-handler':
+        specifier: workspace:~
+        version: link:../../../packages/framework/request-handler
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../../packages/dds/sequence
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../../packages/dds/task-manager
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+      events:
+        specifier: ^3.1.0
+        version: 3.3.0
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      uuid:
+        specifier: ^8.3.1
+        version: 8.3.2
+    devDependencies:
+      '@fluid-tools/build-cli':
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@14.18.47)(webpack-cli@4.10.0)
+      '@fluidframework/build-common':
+        specifier: ^1.2.0
+        version: 1.2.0
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
+      '@fluidframework/test-tools':
+        specifier: ^0.2.158186
+        version: 0.2.158186
+      '@types/expect-puppeteer':
+        specifier: 2.2.1
+        version: 2.2.1
+      '@types/jest':
+        specifier: 22.2.3
+        version: 22.2.3
+      '@types/jest-environment-puppeteer':
+        specifier: 2.2.0
+        version: 2.2.0
+      '@types/node':
+        specifier: ^14.18.38
+        version: 14.18.47
+      '@types/puppeteer':
+        specifier: 1.3.0
+        version: 1.3.0
+      '@types/react':
+        specifier: 17.0.52
+        version: 17.0.52
+      '@types/react-dom':
+        specifier: 17.0.18
+        version: 17.0.18
+      '@types/uuid':
+        specifier: ^8.3.0
+        version: 8.3.4
+      clean-webpack-plugin:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.83.0)
+      concurrently:
+        specifier: ^7.6.0
+        version: 7.6.0
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      css-loader:
+        specifier: ^1.0.0
+        version: 1.0.1(webpack@5.83.0)
+      eslint:
+        specifier: ~8.6.0
+        version: 8.6.0
+      eslint-plugin-eslint-comments:
+        specifier: ~3.2.0
+        version: 3.2.0(eslint@8.6.0)
+      eslint-plugin-import:
+        specifier: ~2.25.4
+        version: 2.25.4(eslint@8.6.0)
+      eslint-plugin-jsdoc:
+        specifier: ~39.3.0
+        version: 39.3.25(eslint@8.6.0)
+      eslint-plugin-prefer-arrow:
+        specifier: ~1.2.2
+        version: 1.2.3(eslint@8.6.0)
+      eslint-plugin-react:
+        specifier: ~7.28.0
+        version: 7.28.0(eslint@8.6.0)
+      eslint-plugin-unicorn:
+        specifier: ~40.0.0
+        version: 40.0.0(eslint@8.6.0)
+      eslint-plugin-unused-imports:
+        specifier: ~2.0.0
+        version: 2.0.0(eslint@8.6.0)
+      html-webpack-plugin:
+        specifier: ^5.5.0
+        version: 5.5.1(webpack@5.83.0)
+      jest:
+        specifier: ^26.6.3
+        version: 26.6.3
+      jest-junit:
+        specifier: ^10.0.0
+        version: 10.0.0
+      jest-puppeteer:
+        specifier: ^4.3.0
+        version: 4.4.0(puppeteer@1.20.0)
+      prettier:
+        specifier: ~2.6.2
+        version: 2.6.2
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^1.20.0
+        version: 1.20.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      style-loader:
+        specifier: ^1.0.0
+        version: 1.3.0(webpack@5.83.0)
       ts-jest:
         specifier: ^26.4.4
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
