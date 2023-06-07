@@ -13,9 +13,8 @@ export { assert } from "./assert";
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared";
 export { delay } from "./delay";
-export { doIfNotDisposed } from "./disposal";
 export { EventForwarder } from "./eventForwarder";
-export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
+export { Heap, IComparer, IHeapNode } from "./heap";
 /**
  * NOTE: This export is remapped to export from "./indexBrowser" in browser environments via package.json.
  * Because the two files don't have fully isomorphic exports, using named exports for the full API surface
@@ -26,12 +25,10 @@ export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
  */
 // eslint-disable-next-line no-restricted-syntax
 export * from "./indexNode";
-export { Lazy } from "./lazy";
 export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
 export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";
-export { IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";
 export { safelyParseJSON } from "./safeParser";
 export {
@@ -42,6 +39,5 @@ export {
 	setLongTimeout,
 	Timer,
 } from "./timer";
-export { Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";

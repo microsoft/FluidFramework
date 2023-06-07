@@ -256,50 +256,26 @@ use_old_InterfaceDeclaration_IPromiseTimerResult(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRange": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IRange": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IRange():
-    TypeOnly<old.IRange>;
-declare function use_current_InterfaceDeclaration_IRange(
-    use: TypeOnly<current.IRange>);
-use_current_InterfaceDeclaration_IRange(
-    get_old_InterfaceDeclaration_IRange());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRange": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IRange": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IRange():
-    TypeOnly<current.IRange>;
-declare function use_old_InterfaceDeclaration_IRange(
-    use: TypeOnly<old.IRange>);
-use_old_InterfaceDeclaration_IRange(
-    get_current_InterfaceDeclaration_IRange());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRangeTrackerSnapshot": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IRangeTrackerSnapshot": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IRangeTrackerSnapshot():
-    TypeOnly<old.IRangeTrackerSnapshot>;
-declare function use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
-    use: TypeOnly<current.IRangeTrackerSnapshot>);
-use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
-    get_old_InterfaceDeclaration_IRangeTrackerSnapshot());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRangeTrackerSnapshot": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IRangeTrackerSnapshot": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IRangeTrackerSnapshot():
-    TypeOnly<current.IRangeTrackerSnapshot>;
-declare function use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
-    use: TypeOnly<old.IRangeTrackerSnapshot>);
-use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
-    get_current_InterfaceDeclaration_IRangeTrackerSnapshot());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -328,26 +304,14 @@ use_old_InterfaceDeclaration_ITimer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<old.ITraceEvent>;
-declare function use_current_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<current.ITraceEvent>);
-use_current_InterfaceDeclaration_ITraceEvent(
-    get_old_InterfaceDeclaration_ITraceEvent());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITraceEvent": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITraceEvent": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<current.ITraceEvent>;
-declare function use_old_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<old.ITraceEvent>);
-use_old_InterfaceDeclaration_ITraceEvent(
-    get_current_InterfaceDeclaration_ITraceEvent());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -424,26 +388,14 @@ use_old_TypeAliasDeclaration_IsomorphicPerformance(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Lazy": {"forwardCompat": false}
+* "RemovedClassDeclaration_Lazy": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_Lazy():
-    TypeOnly<old.Lazy<any>>;
-declare function use_current_ClassDeclaration_Lazy(
-    use: TypeOnly<current.Lazy<any>>);
-use_current_ClassDeclaration_Lazy(
-    get_old_ClassDeclaration_Lazy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Lazy": {"backCompat": false}
+* "RemovedClassDeclaration_Lazy": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Lazy():
-    TypeOnly<current.Lazy<any>>;
-declare function use_old_ClassDeclaration_Lazy(
-    use: TypeOnly<old.Lazy<any>>);
-use_old_ClassDeclaration_Lazy(
-    get_current_ClassDeclaration_Lazy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -472,26 +424,14 @@ use_old_ClassDeclaration_LazyPromise(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_NumberComparer": {"forwardCompat": false}
+* "RemovedVariableDeclaration_NumberComparer": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_NumberComparer():
-    TypeOnly<typeof old.NumberComparer>;
-declare function use_current_VariableDeclaration_NumberComparer(
-    use: TypeOnly<typeof current.NumberComparer>);
-use_current_VariableDeclaration_NumberComparer(
-    get_old_VariableDeclaration_NumberComparer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_NumberComparer": {"backCompat": false}
+* "RemovedVariableDeclaration_NumberComparer": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_NumberComparer():
-    TypeOnly<typeof current.NumberComparer>;
-declare function use_old_VariableDeclaration_NumberComparer(
-    use: TypeOnly<typeof old.NumberComparer>);
-use_old_VariableDeclaration_NumberComparer(
-    get_current_VariableDeclaration_NumberComparer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -592,26 +532,14 @@ use_old_ClassDeclaration_PromiseTimer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RangeTracker": {"forwardCompat": false}
+* "RemovedClassDeclaration_RangeTracker": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RangeTracker():
-    TypeOnly<old.RangeTracker>;
-declare function use_current_ClassDeclaration_RangeTracker(
-    use: TypeOnly<current.RangeTracker>);
-use_current_ClassDeclaration_RangeTracker(
-    get_old_ClassDeclaration_RangeTracker());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RangeTracker": {"backCompat": false}
+* "RemovedClassDeclaration_RangeTracker": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RangeTracker():
-    TypeOnly<current.RangeTracker>;
-declare function use_old_ClassDeclaration_RangeTracker(
-    use: TypeOnly<old.RangeTracker>);
-use_old_ClassDeclaration_RangeTracker(
-    get_current_ClassDeclaration_RangeTracker());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -688,26 +616,14 @@ use_old_ClassDeclaration_Timer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Trace": {"forwardCompat": false}
+* "RemovedClassDeclaration_Trace": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_Trace():
-    TypeOnly<old.Trace>;
-declare function use_current_ClassDeclaration_Trace(
-    use: TypeOnly<current.Trace>);
-use_current_ClassDeclaration_Trace(
-    get_old_ClassDeclaration_Trace());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Trace": {"backCompat": false}
+* "RemovedClassDeclaration_Trace": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Trace():
-    TypeOnly<current.Trace>;
-declare function use_old_ClassDeclaration_Trace(
-    use: TypeOnly<old.Trace>);
-use_old_ClassDeclaration_Trace(
-    get_current_ClassDeclaration_Trace());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -880,26 +796,14 @@ use_old_VariableDeclaration_delay(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_doIfNotDisposed": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_doIfNotDisposed": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_doIfNotDisposed():
-    TypeOnly<typeof old.doIfNotDisposed>;
-declare function use_current_FunctionDeclaration_doIfNotDisposed(
-    use: TypeOnly<typeof current.doIfNotDisposed>);
-use_current_FunctionDeclaration_doIfNotDisposed(
-    get_old_FunctionDeclaration_doIfNotDisposed());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_doIfNotDisposed": {"backCompat": false}
+* "RemovedFunctionDeclaration_doIfNotDisposed": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_doIfNotDisposed():
-    TypeOnly<typeof current.doIfNotDisposed>;
-declare function use_old_FunctionDeclaration_doIfNotDisposed(
-    use: TypeOnly<typeof old.doIfNotDisposed>);
-use_old_FunctionDeclaration_doIfNotDisposed(
-    get_current_FunctionDeclaration_doIfNotDisposed());
 
 /*
 * Validate forward compat by using old type in place of current type

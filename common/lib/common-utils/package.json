@@ -152,6 +152,15 @@
 		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IRange": {"forwardCompat": false, "backCompat": false},
+			"RemovedInterfaceDeclaration_IRangeTrackerSnapshot": {"forwardCompat": false, "backCompat": false},
+			"RemovedInterfaceDeclaration_ITraceEvent": {"forwardCompat": false, "backCompat": false},
+			"RemovedClassDeclaration_Lazy": {"forwardCompat": false, "backCompat": false},
+			"RemovedVariableDeclaration_NumberComparer": {"forwardCompat": false, "backCompat": false},
+			"RemovedClassDeclaration_RangeTracker": {"forwardCompat": false, "backCompat": false},
+			"RemovedClassDeclaration_Trace": {"forwardCompat": false, "backCompat": false},
+			"RemovedFunctionDeclaration_doIfNotDisposed": {"forwardCompat": false, "backCompat": false}
+		}
 	}
 }

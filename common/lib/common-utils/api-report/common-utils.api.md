@@ -51,9 +51,6 @@ export class Deferred<T> {
 export const delay: (timeMs: number) => Promise<void>;
 
 // @public
-export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
-
-// @public
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
@@ -123,26 +120,6 @@ export interface IPromiseTimerResult {
     timerResult: "timeout" | "cancel";
 }
 
-// @public
-export interface IRange {
-    // (undocumented)
-    length: number;
-    // (undocumented)
-    primary: number;
-    // (undocumented)
-    secondary: number | undefined;
-}
-
-// @public
-export interface IRangeTrackerSnapshot {
-    // (undocumented)
-    lastPrimary: number;
-    // (undocumented)
-    lastSecondary: number | undefined;
-    // (undocumented)
-    ranges: IRange[];
-}
-
 // @public (undocumented)
 export const IsoBuffer: typeof Buffer;
 
@@ -160,20 +137,6 @@ export interface ITimer {
 }
 
 // @public
-export interface ITraceEvent {
-    readonly duration: number;
-    readonly tick: number;
-    readonly totalTimeElapsed: number;
-}
-
-// @public
-export class Lazy<T> {
-    constructor(valueGenerator: () => T);
-    get evaluated(): boolean;
-    get value(): T;
-}
-
-// @public
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -185,9 +148,6 @@ export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
 }
-
-// @public
-export const NumberComparer: IComparer<number>;
 
 // @public (undocumented)
 const performance_2: IsomorphicPerformance;
@@ -231,20 +191,6 @@ export class PromiseTimer implements IPromiseTimer {
 }
 
 // @public
-export class RangeTracker {
-    constructor(primary: IRangeTrackerSnapshot);
-    constructor(primary: number, secondary: number);
-    add(primary: number, secondary: number): void;
-    // (undocumented)
-    get base(): number;
-    get(primary: number): number;
-    get primaryHead(): number;
-    get secondaryHead(): number | undefined;
-    serialize(): IRangeTrackerSnapshot;
-    updateBase(primary: number): void;
-}
-
-// @public
 export class RateLimiter {
     constructor(windowMSec: number);
     filter(clientId: string, messages: string[]): string[];
@@ -282,19 +228,6 @@ export class Timer implements ITimer {
 
 // @public
 export const toUtf8: (input: string, encoding: string) => string;
-
-// @public
-export class Trace {
-    protected constructor(startTick: number);
-    // (undocumented)
-    protected lastTick: number;
-    // (undocumented)
-    static start(): Trace;
-    // (undocumented)
-    readonly startTick: number;
-    // (undocumented)
-    trace(): ITraceEvent;
-}
 
 // @public
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
