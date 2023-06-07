@@ -118,8 +118,10 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 // @public
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
+// Warning: (ae-forgotten-export) The symbol "IProvideFluidInternalReferenceInfo" needs to be exported by the entry point index.d.ts
+//
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideFluidInternalReferenceInfo {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     dispose(): void;
@@ -134,6 +136,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     get id(): string;
     // (undocumented)
     get IFluidHandle(): IFluidHandle<this>;
+    // Warning: (ae-forgotten-export) The symbol "IFluidInternalReferenceInfo" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined;
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)

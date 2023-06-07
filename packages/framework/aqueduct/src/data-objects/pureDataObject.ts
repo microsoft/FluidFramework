@@ -28,7 +28,7 @@ export interface IProvideFluidInternalReferenceInfo {
  * objects within this container.
  */
 export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
-//* This probably doesn't hold water. Maybe just for logging. TBD.
+	//* This probably doesn't hold water. Maybe just for logging. TBD.
 	unreferencedTime?: number;
 
 	/** Describes varying states regarding whether the object is referenced or not, if known */
@@ -44,7 +44,11 @@ export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidIntern
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends EventForwarder<I["Events"] & IEvent>
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideFluidInternalReferenceInfo
+	implements
+		IFluidLoadable,
+		IFluidRouter,
+		IProvideFluidHandle,
+		IProvideFluidInternalReferenceInfo
 {
 	private _disposed = false;
 
@@ -90,7 +94,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined {
 		//* TODO: Will be this.context.internalReferenceInfo
-		return undefined
+		return undefined;
 	}
 
 	/**
@@ -215,6 +219,4 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	public dispose(): void {
 		super.dispose();
 	}
-
-	private get referencedState
 }
