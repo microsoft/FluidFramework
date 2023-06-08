@@ -157,6 +157,9 @@
 			},
 			"TypeAliasDeclaration_Trackable": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ITrackingGroup": {
+				"backCompat": false
 			}
 		}
 	}
