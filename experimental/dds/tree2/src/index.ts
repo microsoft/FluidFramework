@@ -248,7 +248,6 @@ export {
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
 	NodeExistenceStateChange,
-	defaultGetFieldGenerator,
 	FieldGenerator,
 	TreeDataContext,
 } from "./feature-libraries";

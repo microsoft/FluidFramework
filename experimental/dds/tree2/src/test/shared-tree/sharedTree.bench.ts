@@ -22,8 +22,6 @@ import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
-	FieldKey,
-	FieldStoredSchema,
 	LocalFieldKey,
 	moveToDetachedField,
 	rootFieldKeySymbol,
@@ -376,12 +374,7 @@ describe("SharedTree benchmarks", () => {
 							cursorForTypedTreeData(
 								{
 									schema: tree.storedSchema,
-									getFieldGenerator: (
-										key: FieldKey,
-										schema: FieldStoredSchema,
-									): undefined => {
-										return;
-									},
+									fieldSource: () => undefined,
 								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),

@@ -320,9 +320,6 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 // @alpha
-export const defaultGetFieldGenerator: (key: FieldKey, schema: FieldStoredSchema) => undefined;
-
-// @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @alpha
@@ -417,6 +414,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 // @alpha
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
@@ -1767,7 +1765,7 @@ export interface TreeAdapter {
 
 // @alpha
 export interface TreeDataContext {
-    getFieldGenerator(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     readonly schema: SchemaDataAndPolicy;
 }
 

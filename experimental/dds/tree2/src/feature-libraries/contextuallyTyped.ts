@@ -236,7 +236,7 @@ export type ContextuallyTypedNodeData =
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 /**
- * Information needed to interpret a subtree described {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
+ * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
  * @alpha
  */
 export interface TreeDataContext {
@@ -255,22 +255,17 @@ export interface TreeDataContext {
 	 * order of invocation should be made consistent and documented.
 	 * This will be important for identifier elision optimizations in tree encoding for session based identifier generation.
 	 */
-	getFieldGenerator(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
+
+type GetFieldGenerator = (key: FieldKey, schema: FieldStoredSchema) => undefined | FieldGenerator;
+export const defaultFieldSource: GetFieldGenerator = () => undefined;
 
 /**
  * Generates field content for a MapTree on demand.
  * @alpha
  */
 export type FieldGenerator = () => MapTree[];
-
-/**
- * @alpha
- * Default getFieldGenerator function that returns undefined.
- */
-export const defaultGetFieldGenerator = (key: FieldKey, schema: FieldStoredSchema): undefined => {
-	return;
-};
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
@@ -416,7 +411,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData, getFieldGenerator: defaultGetFieldGenerator },
+		{ schema: schemaData, fieldSource: defaultFieldSource },
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -447,7 +442,7 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
 	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData, getFieldGenerator: defaultGetFieldGenerator },
+		{ schema: schemaData, fieldSource: defaultFieldSource },
 		schema.types,
 		data as ContextuallyTypedNodeData,
 	);
@@ -519,20 +514,15 @@ export function applyTypesFromContext(
 		}
 
 		// Generate and set data for global keys that have value fields.
-		if (context.schema.globalFieldSchema !== undefined) {
-			for (const [key] of context.schema.globalFieldSchema) {
-				const currentKey = symbolFromKey(key);
-				const requiredFieldSchema = getFieldSchema(currentKey, context.schema);
-				const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-				if (multiplicity === Multiplicity.Value) {
-					const fieldGenerator = context.getFieldGenerator(
-						currentKey,
-						requiredFieldSchema,
-					);
-					if (fieldGenerator !== undefined) {
-						const children = fieldGenerator();
-						fields.set(currentKey, children);
-					}
+		for (const [key] of context.schema.globalFieldSchema) {
+			const currentKey = symbolFromKey(key);
+			const requiredFieldSchema = getFieldSchema(currentKey, context.schema);
+			const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
+			if (multiplicity === Multiplicity.Value && context.fieldSource) {
+				const fieldGenerator = context.fieldSource(currentKey, requiredFieldSchema);
+				if (fieldGenerator !== undefined) {
+					const children = fieldGenerator();
+					fields.set(currentKey, children);
 				}
 			}
 		}

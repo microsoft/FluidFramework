@@ -53,7 +53,6 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	defaultGetFieldGenerator,
 	FieldGenerator,
 	TreeDataContext,
 } from "./contextuallyTyped";

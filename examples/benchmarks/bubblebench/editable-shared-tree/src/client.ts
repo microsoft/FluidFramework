@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData, defaultGetFieldGenerator } from "@fluid-experimental/tree2";
+import { cursorFromContextualData } from "@fluid-experimental/tree2";
 import { BubbleWrapper } from "./bubble";
 import { Client, FlexBubble } from "./schema";
 
@@ -38,7 +38,7 @@ export class ClientWrapper implements IClient {
 		bubbles.insertNodes(
 			bubbles.length,
 			cursorFromContextualData(
-				{ schema: bubbles.context.schema, getFieldGenerator: defaultGetFieldGenerator },
+				{ schema: bubbles.context.schema, fieldSource: () => undefined },
 				bubbles.fieldSchema.types,
 				bubble,
 			),

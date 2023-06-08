@@ -4,15 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
-import {
-	EmptyKey,
-	FieldKey,
-	FieldStoredSchema,
-	GlobalFieldKey,
-	MapTree,
-	ValueSchema,
-} from "../../core";
+import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
 	allowsValue,
@@ -20,13 +12,10 @@ import {
 	applyTypesFromContext,
 	ContextuallyTypedNodeDataObject,
 	cursorFromContextualData,
-	defaultGetFieldGenerator,
-	FieldGenerator,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
 import { FieldKinds, SchemaBuilder, jsonableTreeFromCursor } from "../../feature-libraries";
-import { brand } from "../../util";
 
 describe("ContextuallyTyped", () => {
 	it("isPrimitiveValue", () => {
@@ -81,7 +70,7 @@ describe("ContextuallyTyped", () => {
 		const numbersObject = builder.object("numbers", { local: { numbers: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext(
-			{ schema, getFieldGenerator: defaultGetFieldGenerator },
+			{ schema, fieldSource: () => undefined },
 			new Set([numbersObject.name]),
 			{
 				numbers: [],
@@ -98,7 +87,7 @@ describe("ContextuallyTyped", () => {
 		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext(
-			{ schema, getFieldGenerator: defaultGetFieldGenerator },
+			{ schema, fieldSource: () => undefined },
 			new Set([primaryObject.name]),
 			[],
 		);
@@ -114,48 +103,36 @@ describe("ContextuallyTyped", () => {
 				"identifier",
 				SchemaBuilder.fieldValue(identifierSchema),
 			);
-			const nodeSchema = builder.objectRecursive("node", {
-				local: {
-					child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
-				},
+			const nodeSchema = builder.object("node", {
 				global: [identifierFieldSchema] as const,
 			});
 
 			const nodeSchemaData = builder.intoDocumentSchema(
 				SchemaBuilder.fieldOptional(nodeSchema),
 			);
-			const globalFieldKey: GlobalFieldKey = brand("identifier");
 			const contextualData: ContextuallyTypedNodeDataObject = {};
 
-			const getFieldGenerator = (
-				key: FieldKey,
-				schema: FieldStoredSchema,
-			): FieldGenerator => {
-				const fieldGenerator = (): MapTree[] => {
-					return [
-						{
-							value: uuid(),
-							type: identifierSchema.name,
-							fields: new Map(),
-						},
-					];
-				};
-				return fieldGenerator;
-			};
-
+			const identifierField = [
+				{
+					value: "x",
+					type: identifierSchema.name,
+					fields: new Map(),
+				},
+			];
 			const treeFromContextualData = jsonableTreeFromCursor(
 				cursorFromContextualData(
 					{
 						schema: nodeSchemaData,
-						getFieldGenerator,
+						fieldSource: () => (): MapTree[] => identifierField,
 					},
 					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);
 
-			assert(treeFromContextualData.globalFields?.identifier !== undefined);
+			assert.equal(treeFromContextualData.globalFields?.identifier[0].value, "x");
 		});
+
 		it("for nested contextual data with no global fields provided", () => {
 			const builder = new SchemaBuilder("Identifier Domain");
 			const identifierSchema = builder.primitive("identifier", ValueSchema.String);
@@ -175,35 +152,30 @@ describe("ContextuallyTyped", () => {
 			);
 			const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
 
-			const getFieldGenerator = (
-				key: FieldKey,
-				schema: FieldStoredSchema,
-			): FieldGenerator => {
-				const fieldGenerator = (): MapTree[] => {
-					return [
-						{
-							value: uuid(),
-							type: identifierSchema.name,
-							fields: new Map(),
-						},
-					];
-				};
-				return fieldGenerator;
-			};
+			const identifierField = [
+				{
+					value: "x",
+					type: identifierSchema.name,
+					fields: new Map(),
+				},
+			];
 
 			const treeFromContextualData = jsonableTreeFromCursor(
 				cursorFromContextualData(
 					{
 						schema: nodeSchemaData,
-						getFieldGenerator,
+						fieldSource: () => (): MapTree[] => identifierField,
 					},
 					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);
 
-			assert(treeFromContextualData.globalFields?.identifier !== undefined);
-			assert(treeFromContextualData.fields?.child[0].globalFields?.identifier !== undefined);
+			assert.equal(treeFromContextualData.globalFields?.identifier[0].value, "x");
+			assert.equal(
+				treeFromContextualData.fields?.child[0].globalFields?.identifier[0].value,
+				"x",
+			);
 		});
 	});
 

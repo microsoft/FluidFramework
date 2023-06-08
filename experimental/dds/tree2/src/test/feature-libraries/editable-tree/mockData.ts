@@ -35,8 +35,6 @@ import {
 	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
-	FieldStoredSchema,
-	FieldKey,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
@@ -225,9 +223,7 @@ export function personJsonableTree(): JsonableTree {
 		cursorFromContextualData(
 			{
 				schema: fullSchemaData,
-				getFieldGenerator: (key: FieldKey, schema: FieldStoredSchema): undefined => {
-					return;
-				},
+				fieldSource: () => undefined,
 			},
 			rootPersonSchema.types,
 			personData,
@@ -296,9 +292,7 @@ export function setupForest<T extends GlobalFieldSchema>(
 	const root = cursorsFromContextualData(
 		{
 			schema: schemaRepo,
-			getFieldGenerator: (key: FieldKey, fieldSchema: FieldStoredSchema): undefined => {
-				return;
-			},
+			fieldSource: () => undefined,
 		},
 		schema.root.schema,
 		data,

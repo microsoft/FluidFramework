@@ -30,7 +30,6 @@ import {
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
 	cursorsFromContextualData,
-	defaultGetFieldGenerator,
 } from "../contextuallyTyped";
 import { FieldKinds } from "../defaultFieldKinds";
 import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
@@ -143,11 +142,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			}
 		}
 
-		return cursorsFromContextualData(
-			{ schema: this.context.schema, getFieldGenerator: defaultGetFieldGenerator },
-			this.fieldSchema,
-			content,
-		);
+		return cursorsFromContextualData(this.context, this.fieldSchema, content);
 	}
 
 	public get [proxyTargetSymbol](): FieldProxyTarget {
@@ -503,7 +498,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				);
 
 				const cursor = cursorFromContextualData(
-					{ schema: target.context.schema, getFieldGenerator: defaultGetFieldGenerator },
+					target.context,
 					target.fieldSchema.types,
 					value as ContextuallyTypedNodeData,
 				);

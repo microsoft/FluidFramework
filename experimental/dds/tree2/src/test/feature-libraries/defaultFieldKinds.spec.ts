@@ -30,8 +30,6 @@ import {
 	mintRevisionTag,
 	ValueSchema,
 	tagChange,
-	FieldStoredSchema,
-	FieldKey,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
 import {
@@ -63,9 +61,7 @@ const tree1 = jsonableTreeFromCursor(
 	cursorFromContextualData(
 		{
 			schema: schemaData,
-			getFieldGenerator: (key: FieldKey, schema: FieldStoredSchema): undefined => {
-				return;
-			},
+			fieldSource: () => undefined,
 		},
 		new Set([nodeSchema.name]),
 		tree1ContextuallyTyped,
