@@ -51,7 +51,7 @@
 		"style-loader": "^1.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-165129",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.158186",
