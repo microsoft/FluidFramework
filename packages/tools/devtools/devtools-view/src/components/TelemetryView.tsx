@@ -34,7 +34,6 @@ import {
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
-import { getFluentUIThemeToUse } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
 
 /**
@@ -283,7 +282,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	React.useEffect(() => {
 		eventNameOptionsRef.current = eventNameOptions;
 	}, [eventNameOptions]);
-	
+
 	React.useEffect(() => {
 		/**
 		 * Filters all telemetry events based on category and event name
@@ -366,11 +365,11 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	};
 
 	/**
-	 * Sets the colour of the event category text.
-	 * @param eventCategory 
-	 * @returns 
+	 * Sets the color of the event category text.
+	 * @param eventCategory - a string representing
+	 * @returns string representing the appropriate color
 	 */
-	const mapEventCategoryToBackgroundColor = (eventCategory: string):string => {
+	const mapEventCategoryToBackgroundColor = (eventCategory: string): string => {
 		switch (eventCategory) {
 			case "generic":
 				return tokens.colorPaletteGreenForeground1;
@@ -381,7 +380,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			default:
 				return tokens.colorNeutralBackground1;
 		}
-	}
+	};
 
 	/**
 	 * Handler for when user selects an option in event name filter.
