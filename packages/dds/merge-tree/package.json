@@ -160,6 +160,9 @@
 			},
 			"InterfaceDeclaration_ITrackingGroup": {
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"backCompat": false
 			}
 		}
 	}
