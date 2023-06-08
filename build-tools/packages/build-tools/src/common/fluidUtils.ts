@@ -64,7 +64,7 @@ async function inferRoot(log: Logger = defaultLogger) {
 		const gitRoot = childProcess
 			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
 			.trim();
-		fluidConfig = path.join(gitRoot, "/package.json");
+		fluidConfig = path.join(gitRoot, "package.json");
 		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
 			return undefined;
 		}
