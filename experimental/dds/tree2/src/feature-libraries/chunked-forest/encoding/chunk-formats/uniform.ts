@@ -6,7 +6,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { TreeChunk } from "../../chunk";
 import { ChunkShape, UniformChunk } from "../../uniformChunk";
-import { BufferFormat, NamedChunkEncoder, Shape } from "../chunkEncodingGeneric";
+import {
+	BufferFormat,
+	EncoderCache,
+	NamedChunkEncoder,
+	Shape,
+	encoderCacheSlot,
+} from "../chunkEncodingGeneric";
 import {
 	Counter,
 	DeduplicationTable,
@@ -15,9 +21,15 @@ import {
 	readStream,
 } from "../chunkEncodingUtilities";
 import { EncodedChunkShape } from "../format";
-import { fail, getOrCreate } from "../../../../util";
-import type { ShapeManager } from "../chunkEncoding";
+import { fail, getOrCreate, getOrCreateSlot } from "../../../../util";
 import type { UniformTreeShapeInfo } from "../chunkDecoding";
+
+const uniformSlot = encoderCacheSlot<Map<ChunkShape, Shape<EncodedChunkShape>>>();
+
+function cachedChunkShape(cache: EncoderCache, chunk: ChunkShape): Shape<EncodedChunkShape> {
+	const slot = getOrCreateSlot(cache, uniformSlot, () => new Map());
+	return getOrCreate(slot, chunk, (shape): Shape<EncodedChunkShape> => new UniformShape(shape));
+}
 
 export class UniformChunkDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: UniformTreeShapeInfo) {}
@@ -55,14 +67,14 @@ export class UniformShape extends Shape<EncodedChunkShape> {
 	}
 }
 
-export const uniformEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, UniformChunk> = {
+export const uniformEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, UniformChunk> = {
 	type: UniformChunk,
 	encode(
 		chunk: UniformChunk,
-		shapes: ShapeManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		outputBuffer.push(shapes.chunkShape(chunk.shape));
+		outputBuffer.push(cachedChunkShape(shapes, chunk.shape));
 		outputBuffer.push(chunk.values);
 	},
 };

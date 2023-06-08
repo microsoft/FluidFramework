@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { fail, getOrCreate } from "../../../util";
+import { fail, getOrCreate, getOrCreateSlot } from "../../../util";
 import {
 	FieldKey,
 	GlobalFieldKey,
@@ -18,7 +18,6 @@ import {
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
-import { ChunkShape } from "../uniformChunk";
 import { Multiplicity, TreeSchema } from "../../modular-schema";
 import { EncodedChunk, EncodedChunkShape, EncodedFieldShape, version } from "./format";
 import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
@@ -29,11 +28,13 @@ import {
 	encode as encodeGeneric,
 	Shape as ShapeGeneric,
 	IdentifierToken,
+	EncoderCache,
+	encoderCacheSlot,
 } from "./chunkEncodingGeneric";
-import { UniformShape, uniformEncoder } from "./chunk-formats/uniform";
+import { uniformEncoder } from "./chunk-formats/uniform";
 
 export function encode(chunk: TreeChunk): EncodedChunk {
-	return encodeGeneric(version, encoderLibrary, new ShapeManager(), chunk);
+	return encodeGeneric(version, encoderLibrary, new Map(), chunk);
 }
 
 type Shape = ShapeGeneric<EncodedChunkShape>;
@@ -41,17 +42,17 @@ type Shape = ShapeGeneric<EncodedChunkShape>;
 interface EncoderShape extends Shape {
 	encodeData(
 		chunk: TreeChunk,
-		shapes: ShapeManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 		prefixWithShape: boolean,
 	): void;
 }
 
-const sequenceEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, SequenceChunk> = {
+const sequenceEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, SequenceChunk> = {
 	type: SequenceChunk,
 	encode(
 		chunk: SequenceChunk,
-		shapes: ShapeManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
 		encodeChunkArray(chunk.subChunks, shapes, outputBuffer);
@@ -65,7 +66,7 @@ const sequenceEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, Sequen
  */
 function encodeChunkArray(
 	chunks: readonly TreeChunk[],
-	shapes: ShapeManager,
+	shapes: EncoderCache,
 	outputBuffer: BufferFormat<EncodedChunkShape>,
 ): void {
 	if (chunks.length === 1) {
@@ -79,40 +80,27 @@ function encodeChunkArray(
 	}
 }
 
-const basicEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, BasicChunk> = {
+const basicEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, BasicChunk> = {
 	type: BasicChunk,
 	encode(
 		chunk: BasicChunk,
-		shapes: ShapeManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		const shape = shapes.basicChunkShape(chunk.type);
+		const shape = basicChunkShape(shapes, chunk.type);
 		shape.encodeData(chunk, shapes, outputBuffer, true);
 	},
 };
 
-/**
- * Builds shapes with deduplication.
- */
-export class ShapeManager {
-	private readonly map: Map<TreeSchemaIdentifier, TreeShapeManager> = new Map();
-	private readonly chunkShapes: Map<ChunkShape, Shape> = new Map();
+const basicSlot = encoderCacheSlot<Map<TreeSchemaIdentifier, TreeShapeManager>>();
 
-	public chunkShape(chunk: ChunkShape): Shape {
-		return getOrCreate(
-			this.chunkShapes,
-			chunk,
-			(chunkShape): Shape => new UniformShape(chunkShape),
-		);
-	}
-
-	public basicChunkShape(typeName: TreeSchemaIdentifier): BasicShape {
-		return getOrCreate(
-			this.map,
-			typeName,
-			(type): TreeShapeManager => new TreeShapeManager(type, this),
-		).shape;
-	}
+function basicChunkShape(cache: EncoderCache, typeName: TreeSchemaIdentifier): BasicShape {
+	const slot = getOrCreateSlot(cache, basicSlot, () => new Map());
+	return getOrCreate(
+		slot,
+		typeName,
+		(type): TreeShapeManager => new TreeShapeManager(type, cache),
+	).shape;
 }
 
 class TreeShapeManager {
@@ -125,7 +113,7 @@ class TreeShapeManager {
 	public readonly shape: BasicShape;
 	public constructor(
 		public readonly type: TreeSchemaIdentifier,
-		private readonly cache: ShapeManager,
+		private readonly cache: EncoderCache,
 	) {
 		// TODO: provide schema here, and made BasicShape actually use it.
 		this.shape = new BasicShape(type, undefined, cache);
@@ -151,7 +139,7 @@ class BasicShape extends ShapeGeneric<EncodedChunkShape> implements EncoderShape
 	public constructor(
 		private readonly type: TreeSchemaIdentifier,
 		private readonly schema: TreeSchema | undefined,
-		private readonly cache: ShapeManager,
+		private readonly cache: EncoderCache,
 	) {
 		super();
 		if (schema !== undefined) {
@@ -263,7 +251,7 @@ class BasicShape extends ShapeGeneric<EncodedChunkShape> implements EncoderShape
 
 	public encodeData(
 		chunk: TreeChunk,
-		shapes: ShapeManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 		prefixWithShape: boolean,
 	): void {
@@ -364,7 +352,7 @@ class ArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	}
 }
 
-const encoderLibrary = new ChunkEncoderLibrary<ShapeManager, EncodedChunkShape>(
+const encoderLibrary = new ChunkEncoderLibrary<EncoderCache, EncodedChunkShape>(
 	sequenceEncoder,
 	basicEncoder,
 	uniformEncoder,
