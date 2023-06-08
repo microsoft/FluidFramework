@@ -156,7 +156,7 @@ export async function bumpRepo(
 		monoRepo: MonoRepo,
 	) => {
 		return exec(
-			`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`,
+			`npx lerna@5.6.2 version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`,
 			monoRepo.repoPath,
 			"bump mono repo",
 		);
