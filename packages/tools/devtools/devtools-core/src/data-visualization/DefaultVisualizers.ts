@@ -8,12 +8,20 @@
  * implementations for our DDSs.
  */
 
+// import { fail } from "assert";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedTreeFactoryObject, ISharedTree } from "@fluid-experimental/tree2";
+import {
+	SharedTreeFactoryObject,
+	ISharedTree,
+	getField,
+	brand,
+	UntypedTree,
+	UntypedField,
+} from "@fluid-experimental/tree2";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
@@ -199,13 +207,27 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 
-	// TODO: Find Shared Tree API for JSON data format.
+	const contextRoot = sharedTree.context.root;
 	const children: Record<string, VisualChildNode> = {};
-	if (sharedTree.root !== undefined) {
-		for (const [key, value] of Object.entries(sharedTree.root)) {
-			const renderedChild = await visualizeChildData(value);
-			children[key] = renderedChild;
+
+	const iterateNodes = async (field: UntypedField): Promise<void> => {
+		for (let i = 0; i < field.length; i++) {
+			const node = field.getNode(i);
+			await iterateFields(node);
 		}
+	};
+
+	const iterateFields = async (node: UntypedTree): Promise<void> => {
+		for (const fieldName of Object.getOwnPropertyNames(node)) {
+			const field = node[getField](brand(fieldName));
+			const renderedChild = await visualizeChildData(field);
+			children[field.fieldKey as string] = renderedChild;
+			await iterateNodes(field);
+		}
+	};
+
+	if (sharedTree.root !== undefined) {
+		await iterateNodes(contextRoot);
 	}
 
 	return {
