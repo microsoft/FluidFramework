@@ -15,14 +15,13 @@ import {
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
-import { ChunkShape, FieldShape, TreeShape, UniformChunk } from "../uniformChunk";
+import { ChunkShape, FieldShape, TreeShape } from "../uniformChunk";
 import {
 	EncodedArrayShape,
 	EncodedBasicShape,
 	EncodedChunk,
 	EncodedChunkShape,
-	EncodedUniformShape,
-	EncodedUniformTreeShape,
+	EncodedUniformChunkShape,
 } from "./format";
 import {
 	ChunkDecoder,
@@ -35,6 +34,7 @@ import {
 	readStreamNumber,
 } from "./chunkEncodingUtilities";
 import { decode as genericDecode } from "./chunkEncodingGeneric";
+import { UniformChunkDecoder } from "./chunk-formats/uniform";
 
 export function decode(chunk: EncodedChunk): TreeChunk {
 	const cache = new DecoderSharedCache(chunk.identifiers, chunk.shapes);
@@ -46,7 +46,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	[cache: DecoderSharedCache],
 	ChunkDecoder
 >({
-	a(shape: EncodedUniformShape, cache): ChunkDecoder {
+	a(shape: EncodedUniformChunkShape, cache): ChunkDecoder {
 		return cache.decodeUniformChunkShape(shape);
 	},
 	b(shape: EncodedBasicShape, cache): ChunkDecoder {
@@ -56,6 +56,11 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		return arrayDecoder;
 	},
 });
+
+export interface UniformTreShapeInfo {
+	readonly tree: TreeShape;
+	readonly chunk: Map<number, ChunkShape>;
+}
 
 /**
  * Caches shared data for use in constructing decoders.
@@ -72,8 +77,8 @@ class DecoderSharedCache {
 		public readonly shapes: readonly EncodedChunkShape[],
 	) {}
 
-	private readonly treeShapes: Map<EncodedUniformTreeShape, TreeShape> = new Map();
-	private readonly decoders: Map<EncodedUniformShape, ChunkDecoder> = new Map();
+	private readonly treeShapes: Map<EncodedUniformChunkShape, UniformTreShapeInfo> = new Map();
+	private readonly decoders: Map<EncodedUniformChunkShape, ChunkDecoder> = new Map();
 
 	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
 		if (typeof encoded === "string") {
@@ -90,9 +95,9 @@ class DecoderSharedCache {
 	 *
 	 * Note that other kinds of shapes can be recursive.
 	 * */
-	private readonly decodingShapeSet: Set<EncodedUniformTreeShape> = new Set();
+	private readonly decodingShapeSet: Set<EncodedUniformChunkShape> = new Set();
 
-	private decodeTreeShape(treeShape: EncodedUniformTreeShape): TreeShape {
+	private decodeTreeShape(treeShape: EncodedUniformChunkShape): UniformTreShapeInfo {
 		const getInnerShape = (shapeIndex: number) => {
 			const innerShape = getChecked(this.shapes, shapeIndex);
 			const innerUniformShape = innerShape.a;
@@ -113,39 +118,31 @@ class DecoderSharedCache {
 				const innerShape = getInnerShape(field.shape);
 				return [
 					this.identifier<LocalFieldKey>(field.key),
-					this.decodeTreeShape(innerShape.treeShape),
-					innerShape.topLevelLength,
+					this.decodeTreeShape(innerShape).tree,
+					field.count,
 				];
 			});
 			for (const field of shape.global) {
 				const innerShape = getInnerShape(field.shape);
 				fields.push([
 					symbolFromKey(this.identifier<GlobalFieldKey>(field.key)),
-					this.decodeTreeShape(innerShape.treeShape),
-					innerShape.topLevelLength,
+					this.decodeTreeShape(innerShape).tree,
+					field.count,
 				]);
 			}
 			this.decodingShapeSet.delete(treeShape);
-			return new TreeShape(this.identifier(shape.type), shape.hasValue, fields);
+			return {
+				tree: new TreeShape(this.identifier(shape.type), shape.hasValue, fields),
+				chunk: new Map(),
+			};
 		});
 	}
 
-	public decodeUniformChunkShape(chunkShape: EncodedUniformShape): ChunkDecoder {
+	public decodeUniformChunkShape(chunkShape: EncodedUniformChunkShape): ChunkDecoder {
 		return getOrCreate(this.decoders, chunkShape, (shape) => {
-			const treeShape: TreeShape = this.decodeTreeShape(shape.treeShape);
-			return new UniformChunkDecoder(new ChunkShape(treeShape, shape.topLevelLength));
+			const treeShape: UniformTreShapeInfo = this.decodeTreeShape(shape);
+			return new UniformChunkDecoder(treeShape);
 		});
-	}
-}
-
-class UniformChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: ChunkShape) {}
-	public decode(decoders: ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const content = readStream(stream);
-		// This assert could be using an encoding schema and schema validation for consistency, but its likely not worth it.
-		assert(Array.isArray(content), "expected array for uniform chunk content");
-		// The content of `content` could by checked against a tree schema here, but for not its just trusted.
-		return new UniformChunk(this.shape, content);
 	}
 }
 

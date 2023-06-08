@@ -5,11 +5,11 @@
 
 import { Static, Type } from "@sinclair/typebox";
 import {
-	Count,
 	EncodedChunkGeneric,
 	IdentifierOrIndex,
 	ShapeIndex,
 	unionOptions,
+	Count,
 } from "./formatGeneric";
 
 export const version = "unstable-development";
@@ -17,13 +17,17 @@ export const version = "unstable-development";
 export const EncodedUniformFieldShape = Type.Object(
 	{
 		key: IdentifierOrIndex,
+		count: Count,
 		// Currently this shape must correspond to a EncodedUniformTreeShape.
 		shape: ShapeIndex,
 	},
 	{ additionalProperties: false },
 );
 
-export const EncodedUniformTreeShape = Type.Object(
+/**
+ * Top level length is implied from length of data array.
+ */
+export const EncodedUniformChunkShape = Type.Object(
 	{
 		type: IdentifierOrIndex,
 		hasValue: Type.Boolean(),
@@ -32,15 +36,6 @@ export const EncodedUniformTreeShape = Type.Object(
 	},
 	{ additionalProperties: false },
 );
-
-export const EncodedUniformChunkShape = Type.Object(
-	{
-		topLevelLength: Count,
-		treeShape: EncodedUniformTreeShape,
-	},
-	{ additionalProperties: false },
-);
-export type EncodedUniformShape = Static<typeof EncodedUniformChunkShape>;
 
 // Content of the field is:
 // [shape if not provided in fieldShape], [data for one chunk of specified shape]
@@ -92,8 +87,6 @@ export type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 export type EncodedUniformChunkShape = Static<typeof EncodedUniformChunkShape>;
 export type EncodedBasicShape = Static<typeof EncodedBasicShape>;
 export type EncodedArrayShape = Static<typeof EncodedArrayShape>;
-
-export type EncodedUniformTreeShape = Static<typeof EncodedUniformTreeShape>;
 
 export const EncodedChunk = EncodedChunkGeneric(version, EncodedChunkShape);
 export type EncodedChunk = Static<typeof EncodedChunk>;

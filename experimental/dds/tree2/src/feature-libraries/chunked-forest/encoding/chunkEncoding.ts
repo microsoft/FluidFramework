@@ -18,7 +18,7 @@ import {
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
-import { ChunkShape, UniformChunk } from "../uniformChunk";
+import { ChunkShape } from "../uniformChunk";
 import { Multiplicity, TreeSchema } from "../../modular-schema";
 import { EncodedChunk, EncodedChunkShape, EncodedFieldShape, version } from "./format";
 import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
@@ -30,6 +30,7 @@ import {
 	Shape as ShapeGeneric,
 	IdentifierToken,
 } from "./chunkEncodingGeneric";
+import { UniformShape, uniformEncoder } from "./chunk-formats/uniform";
 
 export function encode(chunk: TreeChunk): EncodedChunk {
 	return encodeGeneric(version, encoderLibrary, new ShapeManager(), chunk);
@@ -93,7 +94,7 @@ const basicEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, BasicChun
 /**
  * Builds shapes with deduplication.
  */
-class ShapeManager {
+export class ShapeManager {
 	private readonly map: Map<TreeSchemaIdentifier, TreeShapeManager> = new Map();
 	private readonly chunkShapes: Map<ChunkShape, Shape> = new Map();
 
@@ -130,35 +131,6 @@ class TreeShapeManager {
 		this.shape = new BasicShape(type, undefined, cache);
 	}
 }
-
-class UniformShape extends ShapeGeneric<EncodedChunkShape> {
-	public constructor(private readonly chunkShape: ChunkShape) {
-		super();
-	}
-
-	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
-		// TODO
-	}
-
-	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
-		fail("todo");
-	}
-}
-
-const uniformEncoder: NamedChunkEncoder<ShapeManager, EncodedChunkShape, UniformChunk> = {
-	type: UniformChunk,
-	encode(
-		chunk: UniformChunk,
-		shapes: ShapeManager,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
-	): void {
-		outputBuffer.push(shapes.chunkShape(chunk.shape));
-		outputBuffer.push(chunk.values);
-	},
-};
 
 class BasicShape extends ShapeGeneric<EncodedChunkShape> implements EncoderShape {
 	private readonly localShapes: { key: LocalFieldKey; shape?: EncoderShape }[] = [];
