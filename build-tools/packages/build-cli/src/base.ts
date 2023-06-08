@@ -110,7 +110,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
-			const resolvedRoot = await getResolvedFluidRoot();
+			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot(this));
 			const gitRepo = new GitRepo(resolvedRoot, this.logger);
 			const branch = await gitRepo.getCurrentBranchName();
 

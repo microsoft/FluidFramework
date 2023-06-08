@@ -128,7 +128,7 @@ if (program.stdin) {
 	});
 } else {
 	pathToGitRoot = child_process
-		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
+		.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
 		.trim();
 	const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard", "--full-name"]);
 	lineReader = readline.createInterface({
