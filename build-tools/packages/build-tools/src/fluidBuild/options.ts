@@ -338,7 +338,13 @@ export function parseOptions(argv: string[]) {
 		process.exit(-1);
 	}
 
-	if (options.buildTaskNames.length === 0) {
-		options.buildTaskNames = ["build"];
+	// If we are building, and don't have a task name, default to "build"
+	if (options.build !== false && options.buildTaskNames.length === 0) {
+		options.buildTaskNames.push("build");
+	}
+
+	// Add the "clean" task if --clean is specified
+	if (options.clean) {
+		options.buildTaskNames.push("clean");
 	}
 }
