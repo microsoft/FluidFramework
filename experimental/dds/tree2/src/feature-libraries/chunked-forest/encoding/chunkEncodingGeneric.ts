@@ -49,27 +49,21 @@ export type BufferFormat<TEncodedShape> = (TreeValue | Shape<TEncodedShape> | Id
  * This produces the data for the top level "data" field, and determines what shapes and identifiers are used, but does not actually do the final shape or identifier encoding.
  */
 export interface GeneralChunkEncoder<
-	TManager,
 	TEncodedShape,
 	TChunk extends TreeChunk = ContravariantUnknown,
 > {
-	encode(chunk: TChunk, shapes: TManager, outputBuffer: BufferFormat<TEncodedShape>): void;
+	encode(chunk: TChunk, shapes: EncoderCache, outputBuffer: BufferFormat<TEncodedShape>): void;
 }
 
-export interface NamedChunkEncoder<
-	TManager,
-	TEncodedShape,
-	TChunk extends TreeChunk = ContravariantUnknown,
-> extends GeneralChunkEncoder<TManager, TEncodedShape, TChunk> {
+export interface NamedChunkEncoder<TEncodedShape, TChunk extends TreeChunk = ContravariantUnknown>
+	extends GeneralChunkEncoder<TEncodedShape, TChunk> {
 	readonly type: new (...args: ContravariantUnknown) => TChunk;
 }
 
-export class ChunkEncoderLibrary<TManager, TEncodedShape>
-	implements GeneralChunkEncoder<TManager, TreeChunk>
-{
+export class ChunkEncoderLibrary<TEncodedShape> implements GeneralChunkEncoder<TreeChunk> {
 	// Map from prototype to encoder
-	private readonly map: Map<unknown, GeneralChunkEncoder<TManager, TEncodedShape>> = new Map();
-	public constructor(...encoders: readonly NamedChunkEncoder<TManager, TEncodedShape, any>[]) {
+	private readonly map: Map<unknown, GeneralChunkEncoder<TEncodedShape>> = new Map();
+	public constructor(...encoders: readonly NamedChunkEncoder<TEncodedShape, any>[]) {
 		for (const encoder of encoders) {
 			this.map.set(encoder.type.prototype, encoder);
 		}
@@ -77,7 +71,7 @@ export class ChunkEncoderLibrary<TManager, TEncodedShape>
 
 	public encode(
 		chunk: TreeChunk,
-		shapes: TManager,
+		shapes: EncoderCache,
 		outputBuffer: BufferFormat<TEncodedShape>,
 	): void {
 		assert(chunk !== emptyChunk, "empty chunks not allowed aside from root");
@@ -90,10 +84,10 @@ export class ChunkEncoderLibrary<TManager, TEncodedShape>
 /**
  * Encode
  */
-export function encode<TManager, TEncodedShape>(
+export function encode<TEncodedShape>(
 	version: string,
-	encoderLibrary: GeneralChunkEncoder<TManager, TEncodedShape, TreeChunk>,
-	shapeManager: TManager,
+	encoderLibrary: GeneralChunkEncoder<TEncodedShape, TreeChunk>,
+	shapeManager: EncoderCache,
 	chunk: TreeChunk,
 ): EncodedChunkGeneric<TEncodedShape> {
 	if (chunk === emptyChunk) {

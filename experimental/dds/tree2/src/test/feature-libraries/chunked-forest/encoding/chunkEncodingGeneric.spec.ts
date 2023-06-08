@@ -140,7 +140,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 	protected dispose(): void {}
 }
 
-const encoder1: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk1> = {
+const encoder1: NamedChunkEncoder<EncodedChunkShape, TestChunk1> = {
 	type: TestChunk1,
 	encode(
 		chunk: TestChunk1,
@@ -152,7 +152,7 @@ const encoder1: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk1> = 
 		outputBuffer.push(shape);
 	},
 };
-const encoder2: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk2> = {
+const encoder2: NamedChunkEncoder<EncodedChunkShape, TestChunk2> = {
 	type: TestChunk2,
 	encode(
 		chunk: TestChunk2,
@@ -164,7 +164,7 @@ const encoder2: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk2> = 
 	},
 };
 
-const encodeLibrary = new ChunkEncoderLibrary<TestManager, EncodedChunkShape>(encoder1, encoder2);
+const encodeLibrary = new ChunkEncoderLibrary<EncodedChunkShape>(encoder1, encoder2);
 
 type DecoderSharedCache = 0;
 

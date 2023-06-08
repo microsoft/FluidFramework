@@ -48,7 +48,7 @@ interface EncoderShape extends Shape {
 	): void;
 }
 
-const sequenceEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, SequenceChunk> = {
+const sequenceEncoder: NamedChunkEncoder<EncodedChunkShape, SequenceChunk> = {
 	type: SequenceChunk,
 	encode(
 		chunk: SequenceChunk,
@@ -80,7 +80,7 @@ function encodeChunkArray(
 	}
 }
 
-const basicEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, BasicChunk> = {
+const basicEncoder: NamedChunkEncoder<EncodedChunkShape, BasicChunk> = {
 	type: BasicChunk,
 	encode(
 		chunk: BasicChunk,
@@ -352,7 +352,7 @@ class ArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	}
 }
 
-const encoderLibrary = new ChunkEncoderLibrary<EncoderCache, EncodedChunkShape>(
+const encoderLibrary = new ChunkEncoderLibrary<EncodedChunkShape>(
 	sequenceEncoder,
 	basicEncoder,
 	uniformEncoder,

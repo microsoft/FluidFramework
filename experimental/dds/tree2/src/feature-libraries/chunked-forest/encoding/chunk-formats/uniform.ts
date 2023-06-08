@@ -67,7 +67,7 @@ export class UniformShape extends Shape<EncodedChunkShape> {
 	}
 }
 
-export const uniformEncoder: NamedChunkEncoder<EncoderCache, EncodedChunkShape, UniformChunk> = {
+export const uniformEncoder: NamedChunkEncoder<EncodedChunkShape, UniformChunk> = {
 	type: UniformChunk,
 	encode(
 		chunk: UniformChunk,
