@@ -345,6 +345,14 @@ then we would run the risk of peers receiving an undo for which they have alread
 
 In the scenario pictured above, the undo edit must carry with it a refresher for the relevant repair data.
 
+Note that the undo could also end up being sequenced before the point at which peers will garbage-collect the repair data:
+
+![](./UndoAfterCollabAndFast.png)
+
+When that's the case, both the peer and the undo edit carry some repair data.
+The repair data on both should be the same, so the peer can just ignore the refresher,
+as described in the [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) section.
+
 If this switch from not including the refresher along with the undo to including it came any earlier,
 meaning, if included the refresher on created before the point where the undone edit falls out of the collaboration window,
 then we would run the risk of peers receiving an undo with incorrect repair data:
@@ -398,7 +406,43 @@ Summarizing from that client would simply include that data in the summary, and 
 
 ### Future Work
 
+#### Supporting Undo of Peer Edits
+
+Users typically seek to undo their own edits only.
+In fact, being forced to undo peers' edits before local edits (when those are older)
+would likely result in user frustration because the local user may not want to undo the peer edits,
+but also because the local user may not be aware of what those edits are,
+or may not be aware of their very existence.
+
+Despite all that, it can at time be desirable to undo of _a specific peer edit_.
+For example, a peer may delete content that the local user would not want deleted.
+The local user could verbally ask the peer to undo that change,
+but that may be impractical, or it may simply be impossible if the peer has terminated their session.
+
+In order to support the undo of peer edits, it would be necessary for all clients,
+(or at least all clients wanting such undo powers)
+to retain the repair data associated with the peer edit to be undone.
+While this applies more memory pressure on the clients,
+it seems like a natural evolution of the system described in this document.
+
+This new capability would however make possible a new family of scenarios:
+two clients, may concurrently attempt to undo the same edit.
+
+If the latter of the two such undos carries with it a refresher,
+then the receiving peers (as well as the issuing client) will end up
+creating the repair data as the refresher instructs, despite the same tree content having already been revived.
+This could be addressed by rendering refreshers ineffective when they are rebased over a revival of the associated subtree.
+
 #### Supporting Edits To Deleted Content
+
+Instead of prohibiting edits to content that has been deleted (and whose deletion is known as opposed to concurrent),
+we could allow such edits.
+This would give application more options for dealing with situations where a client has locally performed some amount work
+that involves editing the deleted region of the document.
+Indeed, under the current system, that work cannot be reconciled with the rest of the document, and must be abandoned.
+This is likely to occur if client applications use local branches to stage their work.
+
+#### Accommodating Tree Explosion
 
 #### Garbage-Collecting Repair Data of Expired Sessions
 
