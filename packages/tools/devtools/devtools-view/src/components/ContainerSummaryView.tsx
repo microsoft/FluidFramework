@@ -51,12 +51,14 @@ import {
 	containerIdTooltipText,
 	containerResolvedUrlTooltipText,
 	containerStatusTooltipText,
-	deltaStorageUrlTooltipText,
-	ordererUrlTooltipText,
-	storageUrlTooltipText,
 	userIdTooltipText,
-	waitingForContainerToAttachText,
 } from "./TooltipTexts";
+
+/**
+ * Temporary text for labels that are undefined until a container is attached.
+ */
+export const waitingForContainerToAttachText =
+	"Container is not attached, or this endpoint doesn't apply to the service being used.";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -326,31 +328,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						label="Resolved URL"
 						infoTooltipContent={containerResolvedUrlTooltipText}
 						value={resolvedUrl?.url ?? waitingForContainerToAttachText}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="Orderer URL"
-						infoTooltipContent={ordererUrlTooltipText}
-						value={
-							resolvedUrl?.endpoints?.ordererUrl ?? waitingForContainerToAttachText
-						}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="Storage URL"
-						infoTooltipContent={storageUrlTooltipText}
-						value={
-							resolvedUrl?.endpoints?.storageUrl ?? waitingForContainerToAttachText
-						}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="Delta Storage URL"
-						infoTooltipContent={deltaStorageUrlTooltipText}
-						value={
-							resolvedUrl?.endpoints?.deltaStorageUrl ??
-							waitingForContainerToAttachText
-						}
 						columnProps={columnSizing_unstable}
 					/>
 				</Table>

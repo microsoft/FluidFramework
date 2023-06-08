@@ -52,30 +52,6 @@ export const containerIdTooltipText =
 export const containerResolvedUrlTooltipText = "Fluid-internal URL that identifies the container.";
 
 /**
- * Description of the Container "Delta Storage URL" property in the summary view.
- */
-export const deltaStorageUrlTooltipText =
-	"Endpoint where the Fluid service provides recent ops that it has in storage";
-
-/**
- * Description of the Container "Orderer URL" property in the summary view.
- */
-export const ordererUrlTooltipText =
-	"Endpoint where the Fluid service receives unsequenced ops/messages and broadcasts sequenced ops/messages.";
-
-/**
- * Description of the Container "Storage URL" property in the summary view.
- */
-export const storageUrlTooltipText =
-	"Endpoint where the Fluid service provides the latest snapshot of the Fluid Container's contents.";
-
-/**
- * Temporary text for labels that are undefined until a container is attached.
- */
-export const waitingForContainerToAttachText =
-	"Container is not attached, or this endpoint doesn't apply to the service being used.";
-
-/**
  * Description of the Client's "Mode" property in the audience view.
  */
 export const clientModeTooltipText = (
