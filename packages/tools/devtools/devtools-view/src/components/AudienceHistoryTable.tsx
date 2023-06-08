@@ -86,7 +86,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							backgroundColor:
 								item.changeKind === "joined"
 									? tokens.colorPaletteRoyalBlueBackground2
-									: tokens.colorPaletteRedBorder1,
+									: tokens.colorPaletteRedBackground2,
 						}}
 					>
 						<TableCell>

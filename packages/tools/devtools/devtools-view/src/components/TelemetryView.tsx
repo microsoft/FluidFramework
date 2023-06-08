@@ -34,20 +34,8 @@ import {
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
+import { getFluentUIThemeToUse } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
-
-function mapEventCategoryToBackgroundColor(eventCategory: string): string {
-	switch (eventCategory) {
-		case "generic":
-			return tokens.colorPaletteGreenForeground1;
-		case "performance":
-			return tokens.colorPaletteBlueForeground2;
-		case "error":
-			return tokens.colorPaletteRedBackground3;
-		default:
-			return tokens.colorNeutralBackground1;
-	}
-}
 
 /**
  * Set the default displayed size to 100.
@@ -70,7 +58,7 @@ export function TelemetryView(): React.ReactElement {
 	 */
 	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
-	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
+	const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
 
 	React.useEffect(() => {
 		/**
@@ -125,9 +113,7 @@ export function TelemetryView(): React.ReactElement {
 			);
 			setTelemetryEvents([...newEvents, ...telemetryEvents]);
 			setSelectedIndex((prevIndex) => {
-				if (prevIndex !== undefined) {
-					return prevIndex + newEvents.length;
-				}
+				return prevIndex + newEvents.length;
 			});
 			setBufferedEvents(remainingBuffer);
 		}
@@ -147,9 +133,7 @@ export function TelemetryView(): React.ReactElement {
 		}
 		setTelemetryEvents(refreshedList);
 		setSelectedIndex((prevIndex) => {
-			if (prevIndex !== undefined) {
-				return prevIndex + newEvents.length;
-			}
+			return prevIndex + newEvents.length;
 		});
 		// Update bufferedEvents to remove the events just moved to telemetryEvents
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
@@ -265,11 +249,11 @@ interface FilteredTelemetryViewProps {
 	/**
 	 * A setter use to update the selected row when filtering or refreshing event data.
 	 */
-	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+	setIndex: React.Dispatch<React.SetStateAction<number>>;
 	/**
-	 * The selected index/row in the table. Undefined means no row is selected.
+	 * The selected index/row in the table.
 	 */
-	index: number | undefined;
+	index: number;
 }
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
@@ -299,7 +283,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	React.useEffect(() => {
 		eventNameOptionsRef.current = eventNameOptions;
 	}, [eventNameOptions]);
-
+	
 	React.useEffect(() => {
 		/**
 		 * Filters all telemetry events based on category and event name
@@ -337,7 +321,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		setMatchingOptions(eventNameOptionsRef.current);
 		const filtered = getFilteredEvents();
 		setFilteredTelemetryEvents(filtered);
-		if (filtered !== undefined && index !== undefined) {
+		if (filtered !== undefined) {
 			setIndex(index + (telemetryEvents.length - filtered?.length));
 		}
 	}, [telemetryEvents, selectedCategory, customSearch, index, setIndex]);
@@ -380,6 +364,24 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			setCustomSearch("");
 		}
 	};
+
+	/**
+	 * Sets the colour of the event category text.
+	 * @param eventCategory 
+	 * @returns 
+	 */
+	const mapEventCategoryToBackgroundColor = (eventCategory: string):string => {
+		switch (eventCategory) {
+			case "generic":
+				return tokens.colorPaletteGreenForeground1;
+			case "performance":
+				return tokens.colorPaletteBlueForeground2;
+			case "error":
+				return tokens.colorPaletteRedBackground3;
+			default:
+				return tokens.colorNeutralBackground1;
+		}
+	}
 
 	/**
 	 * Handler for when user selects an option in event name filter.
@@ -524,11 +526,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					resizableColumns
 					selectionMode="single"
 					subtleSelection
-					onSelectionChange={(e, data): void => {
-						// Set the index to the appropriate row index in the table.
-						setIndex(Number([...data.selectedItems][0]));
-					}}
-					selectedItems={[index !== undefined && index > 0 ? index : 0]}
+					selectedItems={[index > 0 ? index : 0]}
 					columnSizingOptions={{
 						category: {
 							minWidth: 110,
@@ -553,6 +551,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 								key={rowId}
 								style={{ cursor: "pointer" }}
 								onClick={(): void => {
+									setIndex(Number(rowId));
 									setSelectedEvent(item);
 								}}
 							>

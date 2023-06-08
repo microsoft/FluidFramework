@@ -141,7 +141,7 @@ const menuStyles: IStackItemStyles = {
 		"flexDirection": "column",
 		"borderRight": `2px solid`,
 		"minWidth": "150px",
-		"maxHeight": "350px",
+		"height": "350px",
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",

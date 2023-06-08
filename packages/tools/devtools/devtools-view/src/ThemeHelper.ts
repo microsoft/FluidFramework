@@ -9,6 +9,20 @@ import {
 	Theme,
 } from "@fluentui/react-components";
 
+teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
+teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
+
+teamsHighContrastTheme.colorCompoundBrandStroke = "#000";
+teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
+teamsHighContrastTheme.colorNeutralStrokeAccessible = "#000";
+
+
+// const customTheme: Theme = {
+// 	...teamsHighContrastTheme,
+// 	tea
+// 	colorSubtleBackgroundHover: "#5b5fc7 !important"
+// };
+
 /**
  * Utility function to get the current Fluent UI theme to use.
  * @returns Theme object of FluentUI to be used for dev tool
