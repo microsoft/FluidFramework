@@ -29,7 +29,7 @@ Using concrete undos even when the change to be undone has not been sequenced is
 because we cannot know in advance the exact impact of the change to undo.
 Despite that, we anticipate no data loss and no decoherence from it.
 
-### Creating Concrete Redo Edits
+## Creating Concrete Redo Edits
 
 Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.
 This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
@@ -39,7 +39,9 @@ This is preferable to rebasing the original edit over all the edits that were ap
     Applying the inverse of the undo will restore that content while re-applying the original insert will not.
 -   It is more efficient as it doesn't require rebasing over as many edits.
 
-## The Undo Commit Tree
+## Managing Commits
+
+### The Undo Commit Tree
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
 To that end, we need to maintain a tree of undoable commits where each node may look like this:
@@ -67,12 +69,12 @@ The tree is sparse because it does **_not_** contain the following kinds of edit
 Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
 Each branch need only maintain a "head" pointer to the child-most commit on the branch.
 
-## The Redo Commit Tree
+### The Redo Commit Tree
 
 The tree of redoable commits is maintained across branches in a similar fashion to the undoable commits tree.
 Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
 
-## Reacting to Local Edits
+### Reacting to Local Edits
 
 The redo and undo commit lists for a branch are updated as follows in the face of new local edits:
 
@@ -92,12 +94,12 @@ The redo and undo commit lists for a branch are updated as follows in the face o
     -   The concrete redo commit is pushed onto the undoable commit list.
         The parent field of the new commit node should point to the previous head undoable commit.
 
-## Forking
+### Forking
 
 When a branch is forked, the new branch can simply obtain the head undoable and redoable commit pointers from the parent branch.
 This helps keep forking cheap.
 
-## Rebasing
+### Rebasing
 
 When a branch is rebased onto another branch, it must re-create whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
 This can be done by finding the lowest common ancestor in between the two branches,
@@ -114,7 +116,7 @@ One simple way to characterize what needs to happen
 is to replay (the rebased version of) the local branch edits onto a new fork of the parent branch.
 This would however require knowing which of those local edits were undo, redos, or normal edits.
 
-## Dropping Old Commits
+### Dropping Old Commits
 
 As sequenced edits fall out of the collab window,
 we have the option to either drop or retain the corresponding commit nodes in the undo tree.
@@ -141,8 +143,8 @@ This can happen when a client edits a region of the document tree while that reg
 
 ### The Stygian Forest
 
-(Stygian)[https://www.merriam-webster.com/dictionary/stygian],
-is used here to mean (Styx)[https://en.wikipedia.org/wiki/Styx]-like in its ability to span the realms of undeleted (living) content and deleted (dead) content,
+[Stygian](https://www.merriam-webster.com/dictionary/stygian),
+is used here to mean [Styx](https://en.wikipedia.org/wiki/Styx)-like in its ability to span the realms of undeleted (living) content and deleted (dead) content,
 and ferry data across it.
 
 The responsibility of a `StygianForest` is to maintain,
@@ -180,20 +182,28 @@ and how the inner forest refers to this same content.
 
 ### Creating Repair Data On Change Application
 
-There are two cases that can lead to the destruction of document data:
+Repair data is typically created when document data would otherwise be erased.
+There are two cases that can lead to the erasure of document data:
 
 -   When a subtree is deleted
 -   When the value on an node is overwritten
 
 When a `Delta` is applied to the `StygianForest`,
-for every change conveyed by the `Delta` that would destroy document data,
+for every change conveyed by the `Delta` that would erase document data,
 the `StygianForest` must do the following:
 
--   Translate that change into an equivalent change that preserves the otherwise destroyed data
+-   Translate that change into an equivalent change that preserves the otherwise erased data
     (i.e., the deleted subtree or overwritten value)
     by moving or copying it in a part of the inner forest that lies outside the scope of the document.
 -   Apply that change to the inner forest.
 -   Keep a record of where that particular piece of repair data is stored in the inner forest.
+
+Another scenario where repair data is added to the `StygianForest`
+arises when a peer sends a commit whose changes explicitly instructs the `StygianForest` to do so,
+and provides the repair data as part of that commit.
+(The need for this is covered in [Repair Data In Undo Commits](#repair-data-in-undo-commits).)
+
+When that happens the
 
 ### Consuming Repair Data On Change Application
 
@@ -320,11 +330,22 @@ is that a client will not have the required repair data to apply an undo edits g
 if the edit that is being undone falls outside of the collaboration window.
 This challenge is addressed in the next section.
 
-### Querying Repair Data For Undo
+### Repair Data In Undo Commits
 
-This is only needed because we need to remind peers of what the data is.
-The data is not removed from the `StygianForest` when queried.
-Undos of unsequenced edits have the opportunity not to carry repair data but it's OK if they do so long the receiver knows not to use it.
+As discussed in the previous section,
+peers will not have the required repair data to apply the undo edit that a session might generate
+if the edit that is being undone lies outside of the collaboration window when the peer receives the undo.
+We address this problem by including in the undo commit being sent a copy of the relevant repair data.
+While this repair data may be sizable,
+and therefore costly to send over the wire,
+this cost is only incurred when undo is actually used.
+
+While this repair data is part of the undo commit,
+it is not really a change in itself and therefore does not take part in rebasing operations.
+
+Note that contrary to cases where the repair data is consumed,
+generating such an undo should not remove the repair data the `StygianForest`.
+That data will however be consumed, and therefore removed, through the usual channels if and when the undo edit is applied.
 
 ### Repair Data In Summaries
 
