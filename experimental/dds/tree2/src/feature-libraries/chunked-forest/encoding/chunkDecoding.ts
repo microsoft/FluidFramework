@@ -53,7 +53,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		return new BasicShapeDecoder(shape, cache);
 	},
 	c(shape: EncodedArrayShape, cache): ChunkDecoder {
-		return basicArrayDecoder;
+		return arrayDecoder;
 	},
 });
 
@@ -245,7 +245,7 @@ class BasicShapeDecoder implements ChunkDecoder {
 	}
 }
 
-const basicArrayDecoder: ChunkDecoder = {
+const arrayDecoder: ChunkDecoder = {
 	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const items: TreeChunk[] = [];
 		const count = readStreamNumber(stream);

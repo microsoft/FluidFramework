@@ -126,6 +126,7 @@ class TreeShapeManager {
 		public readonly type: TreeSchemaIdentifier,
 		private readonly cache: ShapeManager,
 	) {
+		// TODO: provide schema here, and made BasicShape actually use it.
 		this.shape = new BasicShape(type, undefined, cache);
 	}
 }
