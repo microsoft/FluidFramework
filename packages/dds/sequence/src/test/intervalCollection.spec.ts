@@ -5,13 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import {
-	ReferenceType,
-	SlidingPreference,
-	reservedRangeLabelsKey,
-	PropertySet,
-	Client,
-} from "@fluidframework/merge-tree";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -29,10 +23,6 @@ import {
 	SequenceInterval,
 	IntervalIndex,
 	ISerializableInterval,
-	IIntervalHelpers,
-	Interval,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
 } from "../intervalCollection";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -110,25 +100,6 @@ function assertIntervalEquals(
 		endpoints.end,
 		"mismatched end",
 	);
-}
-
-function assertPlainNumberInterval(
-	interval: Interval,
-	endpoints: { start: number; end: number },
-): void {
-	assert(interval);
-	assert.equal(interval.start, endpoints.start, "mismatched start");
-	assert.equal(interval.end, endpoints.end, "mismatched end");
-}
-
-function createInterval(label: string, start: number, end: number): Interval {
-	const rangeProp: PropertySet = {};
-
-	if (label && label.length > 0) {
-		rangeProp[reservedRangeLabelsKey] = [label];
-	}
-
-	return new Interval(start, end, rangeProp);
 }
 
 describe("SharedString interval collections", () => {
@@ -1758,173 +1729,6 @@ describe("SharedString interval collections", () => {
 			it("can not detach the index does not exist", () => {
 				assert.equal(collection.detachIndex(mockIntervalIndex), true);
 				assert.equal(collection.detachIndex(mockIntervalIndex), false);
-			});
-		});
-
-		describe("support querying intervals with endpoint in a range", () => {
-			let helpers: IIntervalHelpers<Interval>;
-			let endpointInRangeIndex;
-			let compareFn;
-			let results;
-
-			beforeEach(() => {
-				helpers = {
-					compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-					create: createInterval,
-				};
-				endpointInRangeIndex = createEndpointInRangeIndex(
-					helpers,
-					undefined as any as Client,
-				);
-				// sort the query result by the interval endpoint value
-				compareFn = (a: Interval, b: Interval) => {
-					if (a.end === b.end) {
-						return a.start - b.start;
-					}
-					return a.end - b.end;
-				};
-			});
-
-			it("can not return result if the input does not meet specified requirement", () => {
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
-				assert.equal(
-					results.length,
-					0,
-					"Should not return anything once the index is empty",
-				);
-
-				endpointInRangeIndex.add(new Interval(1, 1));
-				endpointInRangeIndex.add(new Interval(1, 3));
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(2, 1);
-				assert.equal(
-					results.length,
-					0,
-					"The start value should not be lower than the end value",
-				);
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(0, 1);
-				assert.equal(results.length, 0, "The start value should be larger than 0");
-			});
-
-			it("can find correct results after adding multiple intervals", () => {
-				endpointInRangeIndex.add(new Interval(1, 1));
-				endpointInRangeIndex.add(new Interval(1, 3));
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
-				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
-				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
-				assertPlainNumberInterval(results[1], { start: 1, end: 3 });
-
-				endpointInRangeIndex.add(new Interval(2, 4));
-				endpointInRangeIndex.add(new Interval(3, 5));
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 5);
-				results.sort(compareFn);
-				assertPlainNumberInterval(results[0], { start: 1, end: 3 });
-				assertPlainNumberInterval(results[1], { start: 2, end: 4 });
-				assertPlainNumberInterval(results[2], { start: 3, end: 5 });
-			});
-
-			it("can find correct results after removing intervals", () => {
-				const interval1 = new Interval(1, 1);
-				const interval2 = new Interval(1, 3);
-				endpointInRangeIndex.add(interval1);
-				endpointInRangeIndex.add(interval2);
-				endpointInRangeIndex.remove(interval1);
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 2);
-				assert.equal(results.length, 0);
-
-				const interval3 = new Interval(2, 4);
-				endpointInRangeIndex.add(interval3);
-				endpointInRangeIndex.remove(interval2);
-
-				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 5);
-				assertPlainNumberInterval(results[0], { start: 2, end: 4 });
-			});
-		});
-
-		describe("support querying intervals with starpoint in a range", () => {
-			let helpers: IIntervalHelpers<Interval>;
-			let startpointInRangeIndex;
-			let compareFn;
-			let results;
-
-			beforeEach(() => {
-				helpers = {
-					compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-					compareStarts: (a: Interval, b: Interval) => a.start - b.start,
-					create: createInterval,
-				};
-				startpointInRangeIndex = createStartpointInRangeIndex(
-					helpers,
-					undefined as any as Client,
-				);
-				// sort the query result by the interval startpoint value
-				compareFn = (a: Interval, b: Interval) => {
-					if (a.start === b.start) {
-						return a.end - b.end;
-					}
-					return a.start - b.start;
-				};
-			});
-
-			it("can not return result if the input does not meet specified requirement", () => {
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
-				assert.equal(
-					results.length,
-					0,
-					"Should not return anything once the index is empty",
-				);
-				startpointInRangeIndex.add(new Interval(1, 1));
-				startpointInRangeIndex.add(new Interval(3, 4));
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(2, 1);
-				assert.equal(
-					results.length,
-					0,
-					"The start value should not be lower than the end value",
-				);
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(0, 1);
-				assert.equal(results.length, 0, "The start value should be larger than 0");
-			});
-
-			it("can find correct results after adding multiple intervals", () => {
-				startpointInRangeIndex.add(new Interval(1, 1));
-				startpointInRangeIndex.add(new Interval(3, 4));
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
-				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 3);
-				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
-				assertPlainNumberInterval(results[1], { start: 3, end: 4 });
-
-				startpointInRangeIndex.add(new Interval(2, 4));
-				startpointInRangeIndex.add(new Interval(4, 5));
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 4);
-				results.sort(compareFn);
-				assertPlainNumberInterval(results[0], { start: 1, end: 1 });
-				assertPlainNumberInterval(results[1], { start: 2, end: 4 });
-				assertPlainNumberInterval(results[2], { start: 3, end: 4 });
-				assertPlainNumberInterval(results[3], { start: 4, end: 5 });
-			});
-
-			it("can find correct results after removing intervals", () => {
-				const interval1 = new Interval(1, 1);
-				const interval2 = new Interval(3, 4);
-				startpointInRangeIndex.add(interval1);
-				startpointInRangeIndex.add(interval2);
-				startpointInRangeIndex.remove(interval1);
-
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
-				assert.equal(results.length, 0);
-
-				const interval3 = new Interval(4, 5);
-				startpointInRangeIndex.add(interval3);
-				startpointInRangeIndex.remove(interval2);
-
-				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(3, 5);
-				assertPlainNumberInterval(results[0], { start: 4, end: 5 });
 			});
 		});
 	});
