@@ -21,7 +21,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.18.1
+@fluid-tools/build-cli/0.18.2
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
