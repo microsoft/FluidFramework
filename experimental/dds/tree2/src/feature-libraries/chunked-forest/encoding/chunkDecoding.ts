@@ -57,7 +57,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 });
 
-export interface UniformTreShapeInfo {
+export interface UniformTreeShapeInfo {
 	readonly tree: TreeShape;
 	readonly chunk: Map<number, ChunkShape>;
 }
@@ -77,7 +77,7 @@ class DecoderSharedCache {
 		public readonly shapes: readonly EncodedChunkShape[],
 	) {}
 
-	private readonly treeShapes: Map<EncodedUniformChunkShape, UniformTreShapeInfo> = new Map();
+	private readonly treeShapes: Map<EncodedUniformChunkShape, UniformTreeShapeInfo> = new Map();
 	private readonly decoders: Map<EncodedUniformChunkShape, ChunkDecoder> = new Map();
 
 	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
@@ -97,7 +97,7 @@ class DecoderSharedCache {
 	 * */
 	private readonly decodingShapeSet: Set<EncodedUniformChunkShape> = new Set();
 
-	private decodeTreeShape(treeShape: EncodedUniformChunkShape): UniformTreShapeInfo {
+	private decodeTreeShape(treeShape: EncodedUniformChunkShape): UniformTreeShapeInfo {
 		const getInnerShape = (shapeIndex: number) => {
 			const innerShape = getChecked(this.shapes, shapeIndex);
 			const innerUniformShape = innerShape.a;
@@ -140,7 +140,7 @@ class DecoderSharedCache {
 
 	public decodeUniformChunkShape(chunkShape: EncodedUniformChunkShape): ChunkDecoder {
 		return getOrCreate(this.decoders, chunkShape, (shape) => {
-			const treeShape: UniformTreShapeInfo = this.decodeTreeShape(shape);
+			const treeShape: UniformTreeShapeInfo = this.decodeTreeShape(shape);
 			return new UniformChunkDecoder(treeShape);
 		});
 	}

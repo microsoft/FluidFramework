@@ -17,10 +17,10 @@ import {
 import { EncodedChunkShape } from "../format";
 import { fail, getOrCreate } from "../../../../util";
 import type { ShapeManager } from "../chunkEncoding";
-import type { UniformTreShapeInfo } from "../chunkDecoding";
+import type { UniformTreeShapeInfo } from "../chunkDecoding";
 
 export class UniformChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: UniformTreShapeInfo) {}
+	public constructor(private readonly shape: UniformTreeShapeInfo) {}
 	public decode(decoders: ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const content = readStream(stream);
 		// This assert could be using an encoding schema and schema validation for consistency, but its likely not worth it.
