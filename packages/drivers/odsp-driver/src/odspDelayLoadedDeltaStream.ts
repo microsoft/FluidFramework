@@ -284,6 +284,7 @@ export class OdspDelayLoadedDeltaStream {
 			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
 				for (const code of e.facetCodes) {
 					switch (code) {
+						case "sessionForbidden":
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
