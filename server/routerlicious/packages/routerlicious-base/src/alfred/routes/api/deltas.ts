@@ -83,8 +83,8 @@ export function create(
 	router.get(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -109,8 +109,8 @@ export function create(
 	router.get(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
