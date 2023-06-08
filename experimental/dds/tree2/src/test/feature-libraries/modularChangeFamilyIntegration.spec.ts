@@ -154,8 +154,7 @@ describe("ModularChangeFamily integration", () => {
 			assert.deepEqual(composed, setValueRebased);
 		});
 
-		// See bug 4071
-		it.skip("two cross-field moves of same node", () => {
+		it("two cross-field moves of same node", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 			editor.move(
