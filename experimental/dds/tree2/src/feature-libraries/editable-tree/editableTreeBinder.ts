@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	PathVisitor,
@@ -14,7 +14,7 @@ import {
 	topDownPath,
 } from "../../core";
 import { Events, ISubscribable } from "../../events";
-import { brand, getOrCreate } from "../../util";
+import { brand } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
@@ -128,13 +128,15 @@ export interface PathStep {
 	readonly field: FieldKey;
 	readonly index?: number;
 }
+
+export type BindTreeDefault = BindTree;
 /**
  * A node in a bind path
  *
  * @alpha
  */
-export interface BindTree extends PathStep {
-	readonly children: Map<FieldKey, BindTree>;
+export interface BindTree<T = BindTreeDefault> extends PathStep {
+	readonly children: Map<FieldKey, T>;
 }
 
 /**
@@ -243,120 +245,150 @@ export interface BatchBindingContext extends AbstractBindingContext {
 	readonly events: BindingContext[];
 }
 
+type CallTree = BindTree<CallTree> & { listeners: Set<(...args: unknown[]) => any> };
+
 abstract class AbstractPathVisitor implements PathVisitor {
-	protected readonly registeredPaths: Map<
-		BindingContextType,
-		Map<BindPath, Set<(...args: unknown[]) => any>>
-	> = new Map();
+	protected readonly registeredListeners: Map<BindingContextType, CallTree[]> = new Map();
 	public constructor(protected readonly options: BinderOptions) {}
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public abstract onSetValue(path: UpPath, value: TreeValue): void;
-
-	protected matchesPath(visitPath: BindPath | undefined, downPath: BindPath): boolean {
-		if (visitPath !== undefined) {
-			const matchPolicy = this.options.matchPolicy;
-			switch (matchPolicy) {
-				case "subtree":
-					if (this.pathsMatchSubtree(visitPath, downPath)) {
-						return true;
-					}
-					break;
-				case "path":
-					if (this.pathsMatchPath(visitPath, downPath)) {
-						return true;
-					}
-					break;
-				default:
-					unreachableCase(matchPolicy);
-			}
-		}
-		return false;
-	}
-	// TODO optimize loop to hash check
-	protected pathsMatchPath(current: BindPath, other: BindPath) {
-		if (current.length !== other.length) {
-			return false;
-		}
-		return this.pathsMatchSubtree(current, other);
-	}
-	protected pathsMatchSubtree(current: BindPath, other: BindPath) {
-		for (const [i, step] of current.entries()) {
-			if (
-				step.field !== other[i].field ||
-				(step.index !== undefined && step.index !== other[i].index)
-			) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public registerPaths(
+	public registerListener(
 		contextType: BindingContextType,
-		paths: BindPath[],
+		trees: BindTree[],
 		listener: (...args: unknown[]) => any,
 	): () => void {
-		const contextPaths = getOrCreate(
-			this.registeredPaths,
-			contextType,
-			() => new Map<BindPath, Set<(...args: unknown[]) => any>>(),
-		);
-		for (const path of paths) {
-			const pathListeners = getOrCreate(contextPaths, path, () => new Set());
-			pathListeners.add(listener);
-			contextPaths.set(path, pathListeners);
+		const contextRoots = this.registeredListeners.get(contextType) ?? [];
+		if (contextRoots.length === 0) {
+			this.registeredListeners.set(contextType, contextRoots);
 		}
-		this.registeredPaths.set(contextType, contextPaths);
+		trees.forEach((tree) => {
+			const currentRoot = this.findRoot(contextType, tree.field);
+			if (currentRoot === undefined) {
+				const newRoot: CallTree = {
+					field: tree.field,
+					index: tree.index,
+					listeners: new Set(),
+					children: new Map(),
+				};
+				contextRoots.push(newRoot);
+				this.bindTree(contextType, tree, listener, newRoot);
+			} else {
+				this.bindTree(contextType, tree, listener, currentRoot);
+			}
+		});
 		return () => {
-			this.unregisterPaths(contextType, paths, listener);
+			trees.forEach((tree) => this.unregisterListener(contextType, tree, listener));
 		};
 	}
 
-	public unregisterPaths(
+	private bindTree(
 		contextType: BindingContextType,
-		paths: BindPath[],
+		tree: BindTree,
 		listener: (...args: unknown[]) => any,
-	): void {
-		const contextPaths = this.registeredPaths.get(contextType);
-		if (contextPaths === undefined) {
-			return;
+		callTree: CallTree,
+	) {
+		if (tree.children.size === 0) {
+			callTree.listeners.add(listener);
+		} else {
+			tree.children.forEach((childTree, fieldKey) => {
+				let childCallTree: CallTree | undefined = callTree.children.get(fieldKey);
+				if (childCallTree === undefined) {
+					childCallTree = {
+						field: fieldKey,
+						index: childTree.index,
+						listeners: new Set(),
+						children: new Map(),
+					};
+					callTree.children.set(fieldKey, childCallTree);
+				}
+				this.bindTree(contextType, childTree, listener, childCallTree);
+			});
 		}
-		for (const path of paths) {
-			const pathListeners = contextPaths.get(path);
-			if (pathListeners === undefined) {
-				continue;
-			}
-			pathListeners.delete(listener);
-			if (pathListeners.size === 0) {
-				contextPaths.delete(path);
+	}
+
+	private findRoot(contextType: BindingContextType, field: FieldKey): CallTree | undefined {
+		const contextRoots = this.registeredListeners.get(contextType);
+		if (!contextRoots) {
+			return undefined;
+		}
+		return contextRoots.find((root) => root.field === field);
+	}
+
+	private unregisterListener(
+		contextType: BindingContextType,
+		tree: BindTree,
+		listener: (...args: unknown[]) => any,
+		callTree?: CallTree,
+	) {
+		let foundTree = callTree;
+		if (foundTree === undefined) {
+			foundTree = this.findRoot(contextType, tree.field);
+		}
+		if (foundTree !== undefined) {
+			if (tree.children.size === 0) {
+				foundTree.listeners.delete(listener);
+			} else {
+				tree.children.forEach((childTree, fieldKey) => {
+					assert(foundTree !== undefined, "foundTree is not undefined");
+					const childCallTree = foundTree.children.get(fieldKey);
+					if (childCallTree) {
+						this.unregisterListener(contextType, childTree, listener, childCallTree);
+					}
+				});
 			}
 		}
-		if (contextPaths.size === 0) {
-			this.registeredPaths.delete(contextType);
+	}
+
+	protected matchPath(
+		contextType: BindingContextType,
+		downPath: DownPath,
+	): Set<(...args: unknown[]) => any> | undefined {
+		const foundRoot = this.findRoot(contextType, downPath[0].field);
+		if (foundRoot === undefined) {
+			return undefined;
+		} else {
+			const isMatching = (
+				treeNode: CallTree,
+				index: number,
+				onMatch: (index: number, treeNode: CallTree) => CallTree | undefined,
+			): CallTree | undefined => {
+				const step = downPath[index];
+				if (
+					treeNode.field !== step.field ||
+					(treeNode.index !== undefined && step.index !== treeNode.index)
+				) {
+					return undefined;
+				}
+				for (const child of treeNode.children.values()) {
+					const foundNode = isMatching(child, index + 1, onMatch);
+					if (foundNode !== undefined) {
+						return foundNode;
+					}
+				}
+				return onMatch(index, treeNode);
+			};
+			const onMatchPath = (index: number, treeNode: CallTree): CallTree | undefined => {
+				return index === downPath.length - 1 ? treeNode : undefined;
+			};
+			const onMatchSubtree = (index: number, treeNode: CallTree): CallTree | undefined => {
+				return treeNode;
+			};
+			const matchedNode =
+				this.options.matchPolicy === "subtree"
+					? isMatching(foundRoot, 0, onMatchSubtree)
+					: isMatching(foundRoot, 0, onMatchPath);
+
+			return matchedNode?.listeners;
 		}
 	}
 
 	public hasRegisteredContextType(contextType: BindingContextType): boolean {
-		return this.registeredPaths.has(contextType);
-	}
-
-	public getRegisteredPaths(
-		contextType: BindingContextType,
-	): Map<BindPath, Set<(...args: unknown[]) => any>> | undefined {
-		const contextPaths = this.registeredPaths.get(contextType);
-		if (contextPaths === undefined) {
-			return undefined;
-		}
-		const registeredPaths: Map<BindPath, Set<(...args: unknown[]) => any>> = new Map();
-		for (const [path, callbacks] of contextPaths.entries()) {
-			registeredPaths.set(path, callbacks);
-		}
-		return registeredPaths;
+		return this.registeredListeners.has(contextType);
 	}
 
 	public dispose(): void {
-		this.registeredPaths.clear();
+		this.registeredListeners.clear();
 	}
 }
 
@@ -384,13 +416,9 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		otherArgs: object,
 	): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(type);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.processCallbacks(path, callbacks, otherArgs);
-				}
-			}
+		const callbacks = this.matchPath(type, current);
+		if (callbacks !== undefined) {
+			this.processCallbacks(path, callbacks, otherArgs);
 		}
 	}
 
@@ -428,14 +456,10 @@ class InvalidatingPathVisitor
 
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Invalidation);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					for (const callback of callbacks) {
-						this.callbacks.add(callback);
-					}
-				}
+		const callbacks = this.matchPath(BindingType.Invalidation, current);
+		if (callbacks !== undefined) {
+			for (const callback of callbacks) {
+				this.callbacks.add(callback);
 			}
 		}
 	}
@@ -475,52 +499,40 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Delete);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.eventQueue.push({
-						path,
-						count,
-						type: BindingType.Delete,
-						callbacks,
-					});
-				}
-			}
+		const callbacks = this.matchPath(BindingType.Delete, current);
+		if (callbacks !== undefined) {
+			this.eventQueue.push({
+				path,
+				count,
+				type: BindingType.Delete,
+				callbacks,
+			});
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.Insert);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.eventQueue.push({
-						path,
-						content,
-						type: BindingType.Insert,
-						callbacks,
-					});
-				}
-			}
+		const callbacks = this.matchPath(BindingType.Insert, current);
+		if (callbacks !== undefined) {
+			this.eventQueue.push({
+				path,
+				content,
+				type: BindingType.Insert,
+				callbacks,
+			});
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.getRegisteredPaths(BindingType.SetValue);
-		if (visitPaths !== undefined) {
-			for (const [visitPath, callbacks] of visitPaths.entries()) {
-				if (this.matchesPath(visitPath, current)) {
-					this.eventQueue.push({
-						path,
-						value,
-						type: BindingType.SetValue,
-						callbacks,
-					});
-				}
-			}
+		const callbacks = this.matchPath(BindingType.Delete, current);
+		if (callbacks !== undefined) {
+			this.eventQueue.push({
+				path,
+				value,
+				type: BindingType.SetValue,
+				callbacks,
+			});
 		}
 	}
 
@@ -529,27 +541,23 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			this.eventQueue,
 			this.options.sortFn ?? compareBinderEventsDeleteFirst,
 		);
-		const batchEventMap = new Map<number, CallableBindingContext>();
+		const batchEventIndices = new Set<number>();
+		const batchEvents: CallableBindingContext[] = [];
 		const collected = new Set<(...args: unknown[]) => any>();
-
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
-			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
-			assert(batchPaths !== undefined, "batch paths confirmed registered");
-
 			for (let i = 0; i < sortedQueue.length; i++) {
 				const event = sortedQueue[i];
 				const current = toDownPath<BindPath>(event.path);
-				for (const [visitPath, callbacks] of batchPaths.entries()) {
-					if (this.matchesPath(visitPath, current)) {
-						callbacks.forEach((callback) => collected.add(callback));
-						batchEventMap.set(i, event);
-						break;
+				const callbacks = this.matchPath(BindingType.Batch, current);
+				if (callbacks !== undefined && callbacks.size > 0) {
+					for (const callback of callbacks) {
+						collected.add(callback);
 					}
+					batchEvents.push(event);
+					batchEventIndices.add(i);
 				}
 			}
 		}
-
-		const batchEvents = Array.from(batchEventMap.values());
 		if (batchEvents.length > 0) {
 			for (const callback of collected) {
 				callback({
@@ -558,28 +566,13 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				});
 			}
 		}
-
-		// Remove batch events from the sortedQueue
-		const filteredQueue = sortedQueue.filter((_event, index) => !batchEventMap.has(index));
-		for (const { callbacks, ...context } of filteredQueue) {
-			switch (context.type) {
-				case BindingType.Delete:
-					for (const callback of callbacks) {
-						callback({ ...context, type: BindingType.Delete });
-					}
-					break;
-				case BindingType.Insert:
-					for (const callback of callbacks) {
-						callback({ ...context, type: BindingType.Insert });
-					}
-					break;
-				case BindingType.SetValue:
-					for (const callback of callbacks) {
-						callback({ ...context, type: BindingType.SetValue });
-					}
-					break;
-				default:
-					unreachableCase(context);
+		for (let i = 0; i < sortedQueue.length; i++) {
+			if (batchEventIndices.has(i)) {
+				continue;
+			}
+			const { callbacks, ...context } = sortedQueue[i];
+			for (const callback of callbacks) {
+				callback({ ...context });
 			}
 		}
 		this.eventQueue.length = 0;
@@ -628,16 +621,13 @@ class AbstractDataBinder<
 			);
 		}
 		const contextType: BindingContextType = eventType as BindingContextType;
-		for (const eventTree of eventTrees) {
-			const bindPaths = this.extractBindPaths(eventTree);
-			this.unregisterHandles.add(
-				visitor.registerPaths(
-					contextType,
-					bindPaths,
-					listener as unknown as (...args: unknown[]) => any,
-				),
-			);
-		}
+		this.unregisterHandles.add(
+			visitor.registerListener(
+				contextType,
+				eventTrees,
+				listener as unknown as (...args: unknown[]) => any,
+			),
+		);
 	}
 	public unregister(): void {
 		for (const unregisterHandle of this.unregisterHandles) {

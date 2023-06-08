@@ -60,7 +60,7 @@ describe("editable-tree: data binder", () => {
 			});
 			const deleteTree = compileSyntaxTree({
 				address: {
-					index: 0,
+					[indexSymbol]: 0,
 					zip: { [indexSymbol]: 0 },
 				},
 			});
@@ -116,7 +116,7 @@ describe("editable-tree: data binder", () => {
 			const insertTree = compileSyntaxTree({
 				address: {
 					[indexSymbol]: 0,
-					zip: { index: 1 },
+					zip: { [indexSymbol]: 1 },
 				},
 			});
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
