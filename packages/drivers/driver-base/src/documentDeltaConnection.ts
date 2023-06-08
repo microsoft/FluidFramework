@@ -230,7 +230,6 @@ export class DocumentDeltaConnection
 		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
-
 	/**
 	 * Get messages sent during the connection
 	 *
