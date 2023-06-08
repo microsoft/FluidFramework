@@ -43,6 +43,7 @@ export const containerStatusTooltipText = (
  */
 export const containerIdTooltipText =
 	"Id that uniquely identifies the Fluid Container within the service where it lives. " +
+	"Sometimes also called 'documentId'. " +
 	"NOTE: it is not the same thing as the 'containerId' field found in some telemetry events, " +
 	"which is an ephemeral id generated locally as part of creating/loading a Fluid Container.";
 
