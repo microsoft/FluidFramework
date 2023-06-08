@@ -436,13 +436,40 @@ This could be addressed by rendering refreshers ineffective when they are rebase
 #### Supporting Edits To Deleted Content
 
 Instead of prohibiting edits to content that has been deleted (and whose deletion is known as opposed to concurrent),
-we could allow such edits.
+we may want to allow such edits.
 This would give application more options for dealing with situations where a client has locally performed some amount work
 that involves editing the deleted region of the document.
 Indeed, under the current system, that work cannot be reconciled with the rest of the document, and must be abandoned.
 This is likely to occur if client applications use local branches to stage their work.
 
-#### Accommodating Tree Explosion
+This could be supported by requiring clients with such a need to do the following:
+
+1.  Maintain repair data for the subtree in question.
+2.  Send a repair data refresher alongside any edit that affects the subtree in question,
+    similarly to the refresher sent in undo scenarios.
+
+#1 is harder than it sounds because it requires determining which of possibly many deleted subtrees may be of interest to the local client.
+In principle, any local branch that was forked from the trunk before the deletion of a subtree may include edits for that subtree,
+or may in the future start include such edits.
+This implies that none of the repair data for such edits could be collected.
+
+In addition to branches, one must also consider any anchors (on any and all branches) that point to nodes within the deleted subtrees.
+The local client may indeed dereference such an anchor and expect to be able to edit the content under it,
+even after the branch on which that anchor resides has been made aware of the subtree's deletion.
+
+It may be tempting to think that #2 is not necessary:
+couldn't clients that have garbage-collected the repair data for the subtree of interest just ignore the edits made to the subtree?
+The subtree's state may become relevant again due to its deletion being undone,
+but the issuer of the undo will issue a refresher for it if needed.
+Unfortunately, #2 is needed because any edit made to the deleted subtree may entail moving content out of that subtree and into the document tree.
+If clients that have garbage-collected the repair data for the subtree of interest have not been provided with a refresher before that,
+then they will be unable show an updated document tree.
+
+This approach leads to the same "concurrent refresh" problem that [supporting undo of peer edits does](#supporting-undo-of-peer-edits),
+presumably with as similar solution:
+refreshers must be rendered ineffective when they are rebased over a concurrent revival or refresh of the associated subtree.
+
+#### Accommodating The Destructuring of Nodes
 
 #### Garbage-Collecting Repair Data of Expired Sessions
 
