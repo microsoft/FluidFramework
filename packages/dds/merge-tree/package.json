@@ -153,6 +153,12 @@
 			},
 			"InterfaceDeclaration_IHierBlock": {
 				"backCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_Trackable": {
+				"backCompat": false
 			}
 		}
 	}
