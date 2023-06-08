@@ -169,7 +169,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		CheckPolicy.pathToGitRoot = childProcess
-			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
 			.trim();
 
 		const p = childProcess.spawn("git", [
