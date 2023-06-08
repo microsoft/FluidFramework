@@ -83,15 +83,10 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		try {
-			assert(
-				this._disposed || this.socket.connected,
-				0x244 /* "Socket is closed, but connection is not!" */,
-			);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		}
+		assert(
+			this._disposed || this.socket.connected,
+			0x244 /* "Socket is closed, but connection is not!" */,
+		);
 		return this._disposed;
 	}
 
@@ -232,12 +227,7 @@ export class DocumentDeltaConnection
 	}
 
 	private checkNotDisposed() {
-		try {
-			assert(!this.disposed, 0x20c /* "connection disposed" */);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		}
+		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
 	/**
