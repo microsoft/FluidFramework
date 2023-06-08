@@ -1643,14 +1643,6 @@ export class SharedTreeFactory implements IChannelFactory {
     type: string;
 }
 
-// @public
-export class SharedTreeFactoryObject {
-    // Warning: (ae-incompatible-release-tags) The symbol "getFactory" is marked as @public, but its signature references "SharedTreeFactory" which is marked as @alpha
-    //
-    // (undocumented)
-    static getFactory(): SharedTreeFactory;
-}
-
 // @alpha
 export class SharedTreeView implements ISharedTreeView {
     // (undocumented)

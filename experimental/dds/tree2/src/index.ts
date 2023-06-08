@@ -254,7 +254,6 @@ export {
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
-	SharedTreeFactoryObject,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,

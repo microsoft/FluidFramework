@@ -23,12 +23,12 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import {
-	SharedTreeFactoryObject,
 	AllowedUpdateType,
 	FieldKinds,
 	ISharedTree,
 	SchemaBuilder,
 	ValueSchema,
+	SharedTreeFactory,
 } from "@fluid-experimental/tree2";
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
@@ -56,6 +56,21 @@ const sharedTreeKey = "shared-tree";
  */
 const emojiMatrixKey = "emoji-matrix";
 
+
+/**
+ * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+class SharedTree {
+	public static getFactory(): SharedTreeFactory {
+		return new SharedTreeFactory();  
+	}  
+}
+
+function castSharedTreeType(): SharedObjectClass<ISharedTree> {
+	return SharedTree as unknown as SharedObjectClass<ISharedTree>
+}
+
 /**
  * Schema used by the app.
  */
@@ -69,7 +84,7 @@ const containerSchema: ContainerSchema = {
 		SharedMap,
 		SharedMatrix,
 		SharedString,
-		SharedTreeFactoryObject,
+		SharedTree,
 	],
 };
 
@@ -113,29 +128,39 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
 
 	// Set up SharedTree for visualization
-	const sharedTreeFactory = SharedTreeFactoryObject as unknown as SharedObjectClass<ISharedTree>;
-	const sharedTree = await container.create(sharedTreeFactory);
+	const sharedTree = await container.create(castSharedTreeType());
 
 	// Populate SharedTree using Schema
-	const builder = new SchemaBuilder("SchemaAware");
-	const stringSchema = builder.primitive("stringProp", ValueSchema.String);
-	const rootNodeSchema = builder.object("Test", {
+	const builder = new SchemaBuilder("Devtools_Example_SharedTree");
+	const stringSchema = builder.primitive("string-property", ValueSchema.String);
+	const childrenSchema = builder.object("child-item", {
 		local: {
-			children: SchemaBuilder.fieldSequence(stringSchema),
+			text: SchemaBuilder.fieldValue(stringSchema),
 		},
 	});
+	
+	const rootNodeSchema = builder.object("test", {
+		local: {
+			childrenOne: SchemaBuilder.fieldSequence(childrenSchema), 
+			childrenTwo: SchemaBuilder.fieldSequence(stringSchema),
+		},
+	});
+	
 	const schema = builder.intoDocumentSchema(
 		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
 	);
-
+	
 	sharedTree.schematize({
 		schema,
 		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: { children: ["hello", "world"] },
+		initialTree: { 
+			childrenOne: [{ text: "Hello world!"}, {text: "Bye World" }],
+			childrenTwo: ["Hello world again!"] 
+		},
 	});
-
+	
 	rootMap.set(sharedTreeKey, sharedTree.handle);
-
+		
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);
 	rootMap.set("string-value", "Hello world!");

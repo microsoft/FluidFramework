@@ -14,7 +14,7 @@ import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import {
-	SharedTreeFactoryObject,
+	SharedTreeFactory,
 	ISharedTree,
 	getField,
 	brand,
@@ -260,6 +260,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
-	[SharedTreeFactoryObject.getFactory().type]: visualizeSharedTree,
+	[new SharedTreeFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };
