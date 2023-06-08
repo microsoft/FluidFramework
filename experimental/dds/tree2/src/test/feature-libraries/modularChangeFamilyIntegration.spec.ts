@@ -76,8 +76,7 @@ describe("rebase", () => {
 		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
 
-	// See bug 4071
-	it.skip("cross-field move composition", () => {
+	it("cross-field move composition", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
 		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 		editor.move(

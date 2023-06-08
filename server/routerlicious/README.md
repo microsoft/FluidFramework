@@ -138,28 +138,28 @@ If you want to build API documentation locally, see
 
 Routerlicious as a whole is a collection of microservices. These microservices are designed to handle a single task and
 have clear input and output characteristics. Many can be run as serverless lambdas and in fact we have our own
-[lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
+[lambda framework](./README.lambdas.md). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
-#### [Alfred](./packages/routerlicious/src/alfred)
+#### [Alfred](./packages/lambdas/src/alfred)
 
 Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
 allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
 make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
 
-#### [Deli](./packages/routerlicious/src/deli)
+#### [Deli](./packages/lambdas/src/deli)
 
 Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
 are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
 The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
 message into redis so that alfred can listen and broadcast back to the clients.
 
-#### [Scriptorium](./packages/routerlicious/src/scriptorium)
+#### [Scriptorium](./packages/lambdas/src/scriptorium)
 
 Scriptorium retrieves sequenced messages from Kafka. It then writes the message
 to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
-#### [Scribe](./packages/routerlicious/src/scribe)
+#### [Scribe](./packages/lambdas/src/scribe)
 
 Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the Historian
 
@@ -177,16 +177,10 @@ More details on content-addressable file systems and Git can be found at
 
 ### Other Microservices
 
-#### [Copier](./packages/routerlicious/src/copier)
+#### [Copier](./packages/lambdas/src/copier)
 
 Copier directly reads the raw (unticketed) operations and store it in the database. The data can later be retrieved
 via alfred for testing and verification.
-
-#### [Foreman](./packages/routerlicious/src/foreman)
-
-Foreman is in charge of managing a pool of remote agent instances. It listens to the same stream of Kafka messages as
-Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
-across the pool of remote agent instances (spell check, entity extraction, etc...).
 
 ## Distributed data structures
 

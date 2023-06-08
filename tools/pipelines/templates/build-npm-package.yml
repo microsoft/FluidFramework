@@ -15,6 +15,10 @@ parameters:
   type: boolean
   default: true
 
+- name: publishDocs
+  type: boolean
+  default: false
+
 - name: taskLint
   type: boolean
   default: true
@@ -178,6 +182,7 @@ stages:
                 LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
+                PublishDocs=${{ parameters.publishDocs }}
                 TestCoverage=$(testCoverage)
 
               Variables:
@@ -550,6 +555,7 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
 
+        - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:

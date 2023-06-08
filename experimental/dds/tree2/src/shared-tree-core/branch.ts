@@ -119,6 +119,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param head - the head of the branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param repairDataStoreProvider - an optional provider of {@link RepairDataStore}s to use when generating
+	 * repair data. This must be provided in order to use features that require repair data such as undo/redo or constraints.
 	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
 	 * branch. This must be provided in order to use the `undo` and `redo` methods of this branch.
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
@@ -126,7 +128,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		public repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
@@ -168,7 +170,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, capture the repair data
 		let repairData: RepairDataStore<TChange> | undefined;
-		if (!this.isTransacting()) {
+		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
 			repairData = this.repairDataStoreProvider.createRepairData();
 			repairData.capture(change, revision);
 		}
@@ -204,7 +206,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public startTransaction(repairStore?: RepairDataStore<TChange>): void {
 		this.assertNotDisposed();
-		if (!this.isTransacting()) {
+		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
 			// If this is the start of a transaction stack, freeze the
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
@@ -240,7 +242,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const revision = mintRevisionTag();
 
 		let repairData: RepairDataStore<TChange> | undefined;
-		if (!this.isTransacting()) {
+		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
 			repairData = this.repairDataStoreProvider.createRepairData();
 			repairData?.capture(squashedChange, revision);
 		}
@@ -388,7 +390,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.changeFamily,
-			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
+			repairDataStoreProvider ?? this.repairDataStoreProvider?.clone(),
 			this.undoRedoManager?.clone(),
 			anchors,
 		);
