@@ -17,6 +17,7 @@ import {
 	decode,
 	EncoderCache,
 	encoderCacheSlot,
+	DecoderCache,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingGeneric";
 
@@ -166,11 +167,9 @@ const encoder2: NamedChunkEncoder<EncodedChunkShape, TestChunk2> = {
 
 const encodeLibrary = new ChunkEncoderLibrary<EncodedChunkShape>(encoder1, encoder2);
 
-type DecoderSharedCache = 0;
-
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderSharedCache],
+	[cache: DecoderCache<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: Constant, cache): ChunkDecoder {
@@ -343,7 +342,7 @@ describe("chunkEncodingGeneric", () => {
 	});
 
 	it("decode: constant shape", () => {
-		const chunk = decode(decoderLibrary, 0, {
+		const chunk = decode(decoderLibrary, {
 			version,
 			identifiers: [],
 			shapes: [{ a: 0 }],
@@ -354,7 +353,7 @@ describe("chunkEncodingGeneric", () => {
 	});
 
 	it("decode: flexible shape", () => {
-		const chunk = decode(decoderLibrary, 0, {
+		const chunk = decode(decoderLibrary, {
 			version,
 			identifiers: [],
 			shapes: [{ b: "content" }],

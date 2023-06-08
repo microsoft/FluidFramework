@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { BrandedType, assertValidIndex, getOrCreate } from "../../../util";
+import { BrandedType, assertValidIndex } from "../../../util";
 import {
 	FieldKey,
 	GlobalFieldKey,
@@ -15,14 +15,7 @@ import {
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
-import { ChunkShape, FieldShape, TreeShape } from "../uniformChunk";
-import {
-	EncodedArrayShape,
-	EncodedBasicShape,
-	EncodedChunk,
-	EncodedChunkShape,
-	EncodedUniformChunkShape,
-} from "./format";
+import { EncodedArrayShape, EncodedBasicShape, EncodedChunk, EncodedChunkShape } from "./format";
 import {
 	ChunkDecoder,
 	DiscriminatedUnionDispatcher,
@@ -33,22 +26,19 @@ import {
 	readStreamBoolean,
 	readStreamNumber,
 } from "./chunkEncodingUtilities";
-import { decode as genericDecode } from "./chunkEncodingGeneric";
-import { UniformChunkDecoder } from "./chunk-formats/uniform";
+import { DecoderCache, decode as genericDecode } from "./chunkEncodingGeneric";
+import { decodeUniformChunkShape } from "./chunk-formats";
 
 export function decode(chunk: EncodedChunk): TreeChunk {
-	const cache = new DecoderSharedCache(chunk.identifiers, chunk.shapes);
-	return genericDecode(decoderLibrary, cache, chunk);
+	return genericDecode(decoderLibrary, chunk);
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderSharedCache],
+	[cache: DecoderCache<EncodedChunkShape>],
 	ChunkDecoder
 >({
-	a(shape: EncodedUniformChunkShape, cache): ChunkDecoder {
-		return cache.decodeUniformChunkShape(shape);
-	},
+	a: decodeUniformChunkShape,
 	b(shape: EncodedBasicShape, cache): ChunkDecoder {
 		return new BasicShapeDecoder(shape, cache);
 	},
@@ -57,102 +47,13 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 });
 
-export interface UniformTreeShapeInfo {
-	readonly tree: TreeShape;
-	readonly chunk: Map<number, ChunkShape>;
-}
-
-/**
- * Caches shared data for use in constructing decoders.
- */
-class DecoderSharedCache {
-	/**
-	 *
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 *
-	 * Unlike the other data stored in this object, identifiers and shapes are not really a cache since the decoders don't any any other way to access this information.
-	 */
-	public constructor(
-		public readonly identifiers: readonly string[],
-		public readonly shapes: readonly EncodedChunkShape[],
-	) {}
-
-	private readonly treeShapes: Map<EncodedUniformChunkShape, UniformTreeShapeInfo> = new Map();
-	private readonly decoders: Map<EncodedUniformChunkShape, ChunkDecoder> = new Map();
-
-	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
-		if (typeof encoded === "string") {
-			return encoded as T;
-		}
-		return getChecked(this.identifiers, encoded) as T;
-	}
-
-	/**
-	 * If decodeTreeShape recurses on the same shape due to a recursive structure, it would stack overflow.
-	 * This should never happen because UniformShapes can't be recursive (or their node count would be infinite).
-	 * Malformed could cause such a recursive case.
-	 * To detect such cases with a better error, decodingSet is used to track what calls to decodeTreeShape are running.
-	 *
-	 * Note that other kinds of shapes can be recursive.
-	 * */
-	private readonly decodingShapeSet: Set<EncodedUniformChunkShape> = new Set();
-
-	private decodeTreeShape(treeShape: EncodedUniformChunkShape): UniformTreeShapeInfo {
-		const getInnerShape = (shapeIndex: number) => {
-			const innerShape = getChecked(this.shapes, shapeIndex);
-			const innerUniformShape = innerShape.a;
-			assert(
-				innerUniformShape !== undefined,
-				"Uniform field shape must reference a uniform chunk shape",
-			);
-			return innerUniformShape;
-		};
-
-		return getOrCreate(this.treeShapes, treeShape, (shape) => {
-			assert(
-				!this.decodingShapeSet.has(treeShape),
-				"Malformed encoded tree contains recursive uniform chunk shape",
-			);
-			this.decodingShapeSet.add(treeShape);
-			const fields = shape.local.map((field): FieldShape => {
-				const innerShape = getInnerShape(field.shape);
-				return [
-					this.identifier<LocalFieldKey>(field.key),
-					this.decodeTreeShape(innerShape).tree,
-					field.count,
-				];
-			});
-			for (const field of shape.global) {
-				const innerShape = getInnerShape(field.shape);
-				fields.push([
-					symbolFromKey(this.identifier<GlobalFieldKey>(field.key)),
-					this.decodeTreeShape(innerShape).tree,
-					field.count,
-				]);
-			}
-			this.decodingShapeSet.delete(treeShape);
-			return {
-				tree: new TreeShape(this.identifier(shape.type), shape.hasValue, fields),
-				chunk: new Map(),
-			};
-		});
-	}
-
-	public decodeUniformChunkShape(chunkShape: EncodedUniformChunkShape): ChunkDecoder {
-		return getOrCreate(this.decoders, chunkShape, (shape) => {
-			const treeShape: UniformTreeShapeInfo = this.decodeTreeShape(shape);
-			return new UniformChunkDecoder(treeShape);
-		});
-	}
-}
-
 type BasicFieldDecoder = (
 	decoders: readonly ChunkDecoder[],
 	stream: StreamCursor,
 ) => [FieldKey, TreeChunk];
 
 function fieldDecoder(
-	cache: DecoderSharedCache,
+	cache: DecoderCache<EncodedChunkShape>,
 	key: FieldKey,
 	shape: number | undefined,
 ): BasicFieldDecoder {
@@ -168,7 +69,7 @@ function fieldDecoder(
 
 export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
 	stream: StreamCursor,
-	cache: DecoderSharedCache,
+	cache: DecoderCache<EncodedChunkShape>,
 ): T {
 	const content = readStream(stream);
 	assert(
@@ -183,7 +84,7 @@ class BasicShapeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedBasicShape,
-		private readonly cache: DecoderSharedCache,
+		private readonly cache: DecoderCache<EncodedChunkShape>,
 	) {
 		this.type = cache.identifier(shape.type);
 		const fieldDecoders: BasicFieldDecoder[] = [];

@@ -31,7 +31,7 @@ import {
 	EncoderCache,
 	encoderCacheSlot,
 } from "./chunkEncodingGeneric";
-import { uniformEncoder } from "./chunk-formats/uniform";
+import { uniformEncoder } from "./chunk-formats";
 
 export function encode(chunk: TreeChunk): EncodedChunk {
 	return encodeGeneric(version, encoderLibrary, new Map(), chunk);

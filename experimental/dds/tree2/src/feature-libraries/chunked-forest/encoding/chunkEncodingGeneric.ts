@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Brand, BrandedKey, BrandedMapSubset, Opaque, brand, fail } from "../../../util";
+import { Brand, BrandedKey, BrandedMapSubset, BrandedType, brandedSlot, fail } from "../../../util";
 import { TreeValue } from "../../../core";
 import { TreeChunk } from "../chunk";
 import { emptyChunk } from "../emptyChunk";
@@ -15,6 +15,7 @@ import {
 	DeduplicationTable,
 	DiscriminatedUnionDispatcher,
 	generalDecoder,
+	getChecked,
 	jsonMinimizingFilter,
 } from "./chunkEncodingUtilities";
 
@@ -101,13 +102,12 @@ export function encode<TEncodedShape>(
 	return handleShapesAndIdentifiers(version, buffer);
 }
 
-export function decode<TDecoderCache, TEncodedShape extends object>(
+export function decode<TEncodedShape extends object>(
 	decoderLibrary: DiscriminatedUnionDispatcher<
 		TEncodedShape,
-		[cache: TDecoderCache],
+		[cache: DecoderCache<TEncodedShape>],
 		ChunkDecoder
 	>,
-	cache: TDecoderCache,
 	chunk: EncodedChunkGeneric<TEncodedShape>,
 ): TreeChunk {
 	if (chunk.data.length === 0) {
@@ -116,6 +116,7 @@ export function decode<TDecoderCache, TEncodedShape extends object>(
 		return emptyChunk;
 	}
 
+	const cache: DecoderCache<TEncodedShape> = new DecoderCache(chunk.identifiers, chunk.shapes);
 	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
 	const stream = { data: chunk.data, offset: 0 };
 	const result = generalDecoder(decoders, stream);
@@ -203,45 +204,42 @@ export abstract class Shape<TEncodedShape> {
 	): TEncodedShape;
 }
 
-// TODO: remove references to anchor from these
-
-/**
- * @alpha
- */
 export type EncoderCacheKeyBrand = Brand<number, "EncoderCacheSlot">;
 
-/**
- * Stores arbitrary, user-defined data on an {@link Anchor}.
- * This data is preserved over the course of that anchor's lifetime.
- * @see {@link anchorSlot} for creation and an example use case.
- * @alpha
- */
-export type EncoderCacheSlot<TContent> = BrandedKey<Opaque<EncoderCacheKeyBrand>, TContent>;
+export type EncoderCache = BrandedMapSubset<BrandedKey<EncoderCacheKeyBrand, any>>;
 
-export type EncoderCache = BrandedMapSubset<EncoderCacheSlot<any>>;
+export function encoderCacheSlot<TContent>(): BrandedKey<EncoderCacheKeyBrand, TContent> {
+	return brandedSlot<EncoderCacheKeyBrand, TContent>();
+}
 
-/**
- * Define a strongly typed slot on anchors in which data can be stored.
- *
- * @remarks
- * This is mainly useful for caching data associated with a location in the tree.
- *
- * Example usage:
- * ```typescript
- * const counterSlot = anchorSlot<number>();
- *
- * function useSlot(anchor: AnchorNode): void {
- * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
- * }
- * ```
- * @alpha
- */
-export function encoderCacheSlot<TContent>(): EncoderCacheSlot<TContent> {
-	return brand(slotCounter++);
+export type DecoderCacheKeyBrand = Brand<number, "DecoderCacheSlot">;
+
+export type DecoderCacheSlots = BrandedMapSubset<BrandedKey<DecoderCacheKeyBrand, any>>;
+
+export function decoderCacheSlot<TContent>(): BrandedKey<DecoderCacheKeyBrand, TContent> {
+	return brandedSlot<DecoderCacheKeyBrand, TContent>();
 }
 
 /**
- * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
- * This allows the keys to be small integers, which are efficient to use as keys in maps.
+ * Caches shared data for use in constructing decoders.
  */
-let slotCounter = 0;
+export class DecoderCache<TEncodedShape> {
+	public readonly slots: DecoderCacheSlots = new Map();
+
+	/**
+	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
+	 *
+	 * Unlike the other data stored in this object, identifiers and shapes are not really a cache since the decoders don't any any other way to access this information.
+	 */
+	public constructor(
+		public readonly identifiers: readonly string[],
+		public readonly shapes: readonly TEncodedShape[],
+	) {}
+
+	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
+		if (typeof encoded === "string") {
+			return encoded as T;
+		}
+		return getChecked(this.identifiers, encoded) as T;
+	}
+}

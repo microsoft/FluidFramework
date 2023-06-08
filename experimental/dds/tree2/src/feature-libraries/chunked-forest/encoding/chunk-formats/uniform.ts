@@ -5,12 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { TreeChunk } from "../../chunk";
-import { ChunkShape, UniformChunk } from "../../uniformChunk";
+import { ChunkShape, FieldShape, TreeShape, UniformChunk } from "../../uniformChunk";
 import {
 	BufferFormat,
+	DecoderCache,
 	EncoderCache,
 	NamedChunkEncoder,
 	Shape,
+	decoderCacheSlot,
 	encoderCacheSlot,
 } from "../chunkEncodingGeneric";
 import {
@@ -19,10 +21,11 @@ import {
 	ChunkDecoder,
 	StreamCursor,
 	readStream,
+	getChecked,
 } from "../chunkEncodingUtilities";
-import { EncodedChunkShape } from "../format";
+import { EncodedChunkShape, EncodedUniformChunkShape } from "../format";
 import { fail, getOrCreate, getOrCreateSlot } from "../../../../util";
-import type { UniformTreeShapeInfo } from "../chunkDecoding";
+import { GlobalFieldKey, LocalFieldKey, symbolFromKey } from "../../../../core";
 
 const uniformSlot = encoderCacheSlot<Map<ChunkShape, Shape<EncodedChunkShape>>>();
 
@@ -78,3 +81,81 @@ export const uniformEncoder: NamedChunkEncoder<EncodedChunkShape, UniformChunk> 
 		outputBuffer.push(chunk.values);
 	},
 };
+
+export interface UniformTreeShapeInfo {
+	readonly tree: TreeShape;
+	readonly chunk: Map<number, ChunkShape>;
+}
+
+/**
+ * If decodeTreeShape recurses on the same shape due to a recursive structure, it would stack overflow.
+ * This should never happen because UniformShapes can't be recursive (or their node count would be infinite).
+ * Malformed could cause such a recursive case.
+ * To detect such cases with a better error, decodingSet is used to track what calls to decodeTreeShape are running.
+ *
+ * Note that other kinds of shapes can be recursive.
+ * */
+const decodingShapeSet: Set<EncodedUniformChunkShape> = new Set();
+
+// private readonly treeShapes: Map<EncodedUniformChunkShape, UniformTreeShapeInfo> = new Map();
+// private readonly decoders: Map<EncodedUniformChunkShape, ChunkDecoder> = new Map();
+
+const treeShapesSlot = decoderCacheSlot<Map<EncodedUniformChunkShape, UniformTreeShapeInfo>>();
+const decodersSlot = decoderCacheSlot<Map<EncodedUniformChunkShape, ChunkDecoder>>();
+
+function decodeTreeShape(
+	cache: DecoderCache<EncodedChunkShape>,
+	treeShape: EncodedUniformChunkShape,
+): UniformTreeShapeInfo {
+	const getInnerShape = (shapeIndex: number) => {
+		const innerShape = getChecked(cache.shapes, shapeIndex);
+		const innerUniformShape = innerShape.a;
+		assert(
+			innerUniformShape !== undefined,
+			"Uniform field shape must reference a uniform chunk shape",
+		);
+		return innerUniformShape;
+	};
+
+	const treeShapes = getOrCreateSlot(cache.slots, treeShapesSlot, () => new Map());
+
+	return getOrCreate(treeShapes, treeShape, (shape) => {
+		assert(
+			!decodingShapeSet.has(treeShape),
+			"Malformed encoded tree contains recursive uniform chunk shape",
+		);
+		decodingShapeSet.add(treeShape);
+		const fields = shape.local.map((field): FieldShape => {
+			const innerShape = getInnerShape(field.shape);
+			return [
+				cache.identifier<LocalFieldKey>(field.key),
+				decodeTreeShape(cache, innerShape).tree,
+				field.count,
+			];
+		});
+		for (const field of shape.global) {
+			const innerShape = getInnerShape(field.shape);
+			fields.push([
+				symbolFromKey(cache.identifier<GlobalFieldKey>(field.key)),
+				decodeTreeShape(cache, innerShape).tree,
+				field.count,
+			]);
+		}
+		decodingShapeSet.delete(treeShape);
+		return {
+			tree: new TreeShape(cache.identifier(shape.type), shape.hasValue, fields),
+			chunk: new Map(),
+		};
+	});
+}
+
+export function decodeUniformChunkShape(
+	chunkShape: EncodedUniformChunkShape,
+	cache: DecoderCache<EncodedChunkShape>,
+): ChunkDecoder {
+	const decoders = getOrCreateSlot(cache.slots, decodersSlot, () => new Map());
+	return getOrCreate(decoders, chunkShape, (shape) => {
+		const treeShape: UniformTreeShapeInfo = decodeTreeShape(cache, shape);
+		return new UniformChunkDecoder(treeShape);
+	});
+}

@@ -88,4 +88,5 @@ export {
 	BrandedKeyContent,
 	BrandedMapSubset,
 	getOrCreateSlot,
+	brandedSlot,
 } from "./brandedMapSubset";
