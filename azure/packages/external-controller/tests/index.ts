@@ -52,7 +52,9 @@ export async function getSessionStorageContainer(
 ): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
 	let localServer = localServerMap.get(documentId);
 	if (localServer === undefined) {
-		localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+		localServer = LocalDeltaConnectionServer.create(
+			new LocalSessionStorageDbFactory(documentId),
+		);
 		localServerMap.set(documentId, localServer);
 	}
 
