@@ -14,3 +14,5 @@ export {
 } from "./sharedTreeView";
 
 export { SchematizeConfiguration } from "./schematizedTree";
+
+export { SharedTreeViewUndoRedoHandler } from "./undoRedoHandler";

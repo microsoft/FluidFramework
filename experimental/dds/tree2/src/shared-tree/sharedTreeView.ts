@@ -16,6 +16,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { ISubscribable, createEmitter } from "../events";
 import {
@@ -56,6 +57,14 @@ export interface ViewEvents {
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
 	 */
 	afterBatch(): void;
+
+	/**
+	 * An undoable change has been made to the tree. This is used to track undo/redo on the {@link SharedTreeViewUndoRedoHandler}
+	 */
+	undoable(
+		undoRedoManagerCommitType: UndoRedoManagerCommitType,
+		target: ISharedTreeView,
+	): void;
 }
 
 /**

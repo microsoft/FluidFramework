@@ -8018,6 +8018,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
+      '@fluidframework/undo-redo':
+        specifier: workspace:~
+        version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: ^7.34.4
         version: 7.34.9(@types/node@14.18.47)
