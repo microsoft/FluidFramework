@@ -9,8 +9,8 @@ import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } 
 import { GitRepo } from "@fluidframework/build-tools";
 
 interface CommitStatus {
-	index: number;
 	isConflict: boolean;
+	index: number;
 }
 
 /**
@@ -25,16 +25,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		auth: Flags.string({
 			description: "GitHub authentication token",
 			char: "a",
-			required: true,
-		}),
-		owner: Flags.string({
-			description: "Owner name",
-			char: "o",
-			required: true,
-		}),
-		repo: Flags.string({
-			description: "Repository name",
-			char: "r",
 			required: true,
 		}),
 		source: Flags.string({
@@ -52,19 +42,18 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "b",
 			required: true,
 		}),
-		description: Flags.string({
-			description: "PR description",
-			char: "d",
-			required: true,
-		}),
 		...BaseCommand.flags,
 	};
 
 	/**
-	 * `findConflictIndex` return an object `CommitStatus` which return the index and isConflict property which is set
-	 * to true if there is a conflict else false.
+	 *
+	 * Function always returns an index in the array. The Boolean indicates whether the commit at that index conflicts or not.
+	 * If the Boolean is false, then you know that all commits in the list are mergable.
+	 * If the Boolean is true, then it indicates that the indexed commit conflicts.
+	 * The primary role of the function is to check a list of commits for conflicts, and if there is one, to return the index of the conflict.
+	 * hasConflicts(commits): [boolean, index]
 	 */
-	async findConflictIndex(commitIds: string[], gitRepo: GitRepo): Promise<CommitStatus> {
+	async hasConflicts(commitIds: string[], gitRepo: GitRepo): Promise<CommitStatus> {
 		const length = commitIds.length;
 
 		// Check the first commit separately
@@ -72,7 +61,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const firstResponse = await gitRepo.canMergeWithoutConflicts(firstCommit);
 		this.log(`Response from merge check for ${commitIds[0]}: ${firstResponse}`);
 		if (firstResponse === false) {
-			return { index: 0, isConflict: true };
+			return { isConflict: true, index: 0 };
 		}
 
 		// Check the rest of the commitIds
@@ -82,19 +71,21 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			const response = await gitRepo.canMergeWithoutConflicts(commit);
 			this.log(`Response from merge check for ${commitIds[i]}: ${response}`);
 			if (response === false) {
-				return { index: i - 1, isConflict: false };
+				return { isConflict: false, index: i - 1 };
 			}
 		}
 
-		return { index: length - 1, isConflict: false }; // No conflicts found, return the last index
+		return { isConflict: false, index: length - 1 }; // No conflicts found, return the last index
 	}
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
+		const title: string = `Automation: ${flags.source} ${flags.target} integrate`;
+
 		const context = await this.getContext();
 		const gitRepo = context.gitRepo;
-		const prExists: boolean = await pullRequestExists(flags.auth, this.logger);
+		const prExists: boolean = await pullRequestExists(flags.auth, title, this.logger);
 
 		if (prExists) {
 			this.exit(-1);
@@ -128,47 +119,91 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		}
 
 		const commitSize = Math.min(flags.batchSize, unmergedCommitList.length);
+		// `branchToCheckConflicts` is used to check the conflicts of each commit with next.
+		const branchToCheckConflicts = `${flags.target}-automation`;
 
 		await gitRepo.switchBranch(flags.target);
-		await gitRepo.createBranch(`${flags.target}-automation`);
-		await gitRepo.setUpstream(`${flags.target}-automation`);
+		await gitRepo.createBranch(branchToCheckConflicts);
+		await gitRepo.setUpstream(branchToCheckConflicts);
 
-		const commitInfo = await this.findConflictIndex(
+		const commitInfo = await this.hasConflicts(
 			unmergedCommitList.slice(0, commitSize),
 			gitRepo,
 		);
 
-		const commitId = unmergedCommitList[commitInfo.index];
+		const commitId: string = unmergedCommitList[commitInfo.index];
 
-		const branchName = `${flags.source}-${flags.target}-${commitId}`;
+		const branchName = `${flags.source}-${flags.target}-${commitId.slice(0, 7)}`;
 
-		await gitRepo.deleteBranch(`${flags.target}-automation`);
+		await gitRepo.deleteBranch(branchToCheckConflicts);
 		await gitRepo.switchBranch(flags.source);
 		await gitRepo.createBranch(branchName);
 		await gitRepo.setUpstream(branchName);
 		await gitRepo.resetBranch(commitId);
 
+		/**
+		 * The below description is intended for PRs which has merge conflicts with next.
+		 */
+		let description: string = `## ${flags.source}-${flags.target} integrate PR
+		The aim of this pull request is to sync ${flags.source} and ${flags.target} branch. This commit has **MERGE CONFLICTS** with ${flags.target}. The expectation from the assignee is as follows:
+					
+		> - Acknowledge the pull request by adding a comment -- "Actively working on it".
+					
+		> - Merge ${flags.target} into this ${branchName}.
+					
+		> - Resolve any merge conflicts between ${branchName} and ${flags.target} and push the resolution to this branch: ${branchName}. **Do NOT rebase or squash this branch: its history must be preserved**.
+					
+		> - Ensure CI is passing for this PR, fixing any issues.
+					
+		> - Recommended git commands: 
+		git checkout ${branchName}
+		git merge ${flags.target}
+		**RESOLVE MERGE CONFLICTS**
+		git add .
+		git commit -m ${title}
+		git push`;
+
 		if (commitInfo.isConflict === false) {
-			await gitRepo.mergeBranch(
-				flags.target,
-				`Automation: ${flags.source} ${flags.target} integrate`,
-			);
+			await gitRepo.mergeBranch(flags.target, title);
+
+			/**
+			 * The below description is intended for PRs which may have CI failures with next.
+			 */
+			description = `## ${flags.source}-${flags.target} integrate PR
+			The aim of this pull request is to sync ${flags.source} and ${flags.target} branch. The expectation from the assignee is as follows:
+						
+			> - Acknowledge the pull request by adding a comment -- "Actively working on it".
+						
+			> - Resolve any CI failures between ${branchName} and ${flags.target} thereby pushing the resolution to this branch: ${branchName}. **Do NOT rebase or squash this branch: its history must be preserved**.
+						
+			> - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
+			
+			> - Recommended git commands: 
+			git checkout ${branchName}
+			**FIX THE CI FAILURES**
+			git commit --amend -m ${title}
+			git push --force-with-lease`;
 		}
 
-		// fetch name of owner associated to the pull request
+		/**
+		 * fetch name of owner associated to the pull request
+		 */
 		const pr = await pullRequestInfo(flags.auth, commitId, this.logger);
 		const author = pr.data[0].assignee.login;
 		this.info(`Fetch pull request info for commit id ${commitInfo} and assignee ${author}`);
 		const user = await getUserAccess(flags.auth, this.logger);
 		this.info(`List users with push access to main branch ${user}`);
 
-		const prNumber = await createPullRequest(
-			flags.auth,
-			branchName,
-			flags.target,
-			author,
-			this.logger,
-		);
+		const prObject = {
+			token: flags.auth,
+			source: branchName,
+			target: flags.target,
+			assignee: author,
+			title,
+			description,
+		};
+
+		const prNumber = await createPullRequest(prObject, this.logger);
 		this.log(
 			`Opened pull request ${prNumber} for commit id ${commitId}. Please resolve the merge conflicts.`,
 		);
