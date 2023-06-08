@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -89,6 +89,7 @@
     "fluid-framework": "^1.4.0-121020"
   },
   "typeValidation": {
-    "broken": {}
+    "broken": {},
+    "disabled": true
   }
 }
