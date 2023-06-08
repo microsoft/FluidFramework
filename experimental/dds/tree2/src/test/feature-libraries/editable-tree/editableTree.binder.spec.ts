@@ -105,7 +105,7 @@ describe("editable-tree: data binder", () => {
 			// unsubscribe all bindings
 			insertLog.length = 0;
 			deleteLog.length = 0;
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			address.zip = "85521";
 			assert.deepEqual(insertLog, []);
 			assert.deepEqual(deleteLog, []);
@@ -142,7 +142,7 @@ describe("editable-tree: data binder", () => {
 				],
 			]);
 			insertLog.length = 0;
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			address.zip = "85521";
 			assert.deepEqual(insertLog, []);
 		});
@@ -177,7 +177,7 @@ describe("editable-tree: data binder", () => {
 					{ field: fieldZip, index: 1 },
 				],
 			]);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.zip = "92629";
 			assert.deepEqual(log, []);
@@ -227,7 +227,7 @@ describe("editable-tree: data binder", () => {
 					{ field: "street", index: 1 },
 				],
 			]);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.zip = "92629";
 			assert.deepEqual(log, []);
@@ -292,7 +292,7 @@ describe("editable-tree: data binder", () => {
 					{ field: "street", index: 0 },
 				],
 			]);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log1.length = 0;
 			log2.length = 0;
 			address.zip = "92629";
@@ -359,7 +359,7 @@ describe("editable-tree: data binder", () => {
 					{ field: "street", index: 1 },
 				],
 			]);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log1.length = 0;
 			log2.length = 0;
 			address.zip = "92629";
@@ -433,7 +433,7 @@ describe("editable-tree: data binder", () => {
 				],
 			];
 			assert.deepEqual(log, expectedLog);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(log, []);
@@ -568,7 +568,7 @@ describe("editable-tree: data binder", () => {
 				},
 			];
 			assert.deepEqual(log, expectedLog);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(log, []);
@@ -739,7 +739,7 @@ describe("editable-tree: data binder", () => {
 				},
 			];
 			assert.deepEqual(log, expectedLog);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(log, []);
@@ -892,7 +892,7 @@ describe("editable-tree: data binder", () => {
 				],
 			];
 			assert.deepEqual(log, expectedLog);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(log, []);
@@ -1060,7 +1060,7 @@ describe("editable-tree: data binder", () => {
 				},
 			];
 			assert.deepEqual(incrLog, expectedIncrLog);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			incrLog.length = 0;
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(incrLog, []);
@@ -1089,7 +1089,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.phones = [111, 112];
 			assert.equal(invalidationCount, 1);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			invalidationCount = 0;
 			address.phones = [113, 114];
 			assert.equal(invalidationCount, 0);
@@ -1136,7 +1136,7 @@ describe("editable-tree: data binder", () => {
 			address.street = "11111";
 			assert.equal(invalidationCount1, 1);
 			assert.equal(invalidationCount2, 1);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			invalidationCount1 = 0;
 			invalidationCount2 = 0;
 			address.zip = "11111";
@@ -1175,7 +1175,7 @@ describe("editable-tree: data binder", () => {
 					{ field: fieldPhones, index: 1 },
 				],
 			]);
-			dataBinder.unregister();
+			dataBinder.unregisterAll();
 			log.length = 0;
 			address.zip = "92629";
 			assert.deepEqual(log, []);

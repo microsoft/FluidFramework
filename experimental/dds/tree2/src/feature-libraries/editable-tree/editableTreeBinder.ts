@@ -98,7 +98,7 @@ export interface DataBinder<B extends BinderEvents> {
 	/**
 	 * Unregister all listeners.
 	 */
-	unregister(): void;
+	unregisterAll(): void;
 }
 
 /**
@@ -629,7 +629,7 @@ class AbstractDataBinder<
 			),
 		);
 	}
-	public unregister(): void {
+	public unregisterAll(): void {
 		for (const unregisterHandle of this.unregisterHandles) {
 			unregisterHandle();
 		}
