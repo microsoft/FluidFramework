@@ -400,13 +400,13 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
-                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+                  npx lerna@5.6.2 exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
+                  npx lerna@5.6.2 exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
+                  npx lerna@5.6.2 exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
 
                   # This saves a list of the packages in the working directory in topological order to a temporary file.
                   # Each package name is modified to match the packed tar files.
-                  npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
+                  npx lerna@5.6.2 ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
                   ${{ parameters.packageManager }} pack && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
