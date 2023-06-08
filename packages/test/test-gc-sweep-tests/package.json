@@ -13,8 +13,8 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:test",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",

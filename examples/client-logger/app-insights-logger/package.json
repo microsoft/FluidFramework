@@ -15,8 +15,8 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",

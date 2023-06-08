@@ -12,9 +12,9 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
-		"build:compile": "concurrently npm:tsc npm:build:webpack",
+		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"clean": "rimraf \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
 		"eslint": "eslint src",

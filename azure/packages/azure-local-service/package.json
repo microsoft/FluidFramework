@@ -14,8 +14,8 @@
 	"typings": "dist/index.d.ts",
 	"bin": "dist/index.js",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run tsc",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
