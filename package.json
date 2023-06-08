@@ -139,8 +139,7 @@
       },
       "tools": [
         "tools/benchmark",
-        "server/tinylicious",
-        "server/azure-local-service"
+        "server/tinylicious"
       ],
       "services": {
         "directory": "server",
