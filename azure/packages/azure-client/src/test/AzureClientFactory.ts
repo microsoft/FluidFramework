@@ -9,9 +9,12 @@ import { AzureClient, ScopeType } from "..";
 import { AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "../interfaces";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
-// This function will determine if local or remote mode is required (based on FLUID_CLIENT),
-// and return a new AzureClient instance based on the mode by setting the Connection config
-// accordingly.
+/**
+ * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
+ * AzureClient instance based on the mode by setting the Connection config accordingly.
+ *
+ * @param scopes - scopes to be used for token generation.
+ */
 export function createAzureClient(scopes?: ScopeType[]): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure

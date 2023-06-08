@@ -5,6 +5,9 @@
 
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 
+/**
+ * DataObject used for testing.
+ */
 export class TestDataObject extends DataObject {
 	public static get Name(): string {
 		return "@fluid-example/test-data-object";
@@ -17,7 +20,12 @@ export class TestDataObject extends DataObject {
 		{},
 	);
 
-	constructor(props: IDataObjectProps) {
+	/**
+	 * Creates a new TestDataObject.
+	 *
+	 * @param props - props for the object
+	 */
+	public constructor(props: IDataObjectProps) {
 		super(props);
 	}
 }
