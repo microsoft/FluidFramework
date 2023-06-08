@@ -312,7 +312,7 @@ class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
 }
 
 class ConnectionTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
-	private static readonly errorName = "BulkWriteError";
+	private static readonly errorName = "MongoBulkWriteError";
 	protected defaultRetryDecision: boolean = true;
 
 	constructor(retryRuleOverride: Map<string, boolean>) {
