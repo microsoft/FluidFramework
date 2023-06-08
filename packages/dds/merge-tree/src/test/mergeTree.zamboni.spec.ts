@@ -35,7 +35,7 @@ describe("Zamboni Logic", () => {
 				client.getCurrentSeq(),
 			),
 		);
-		assert.equal(client.mergeTree.root.cachedLength, 0);
+		assert.equal(client.mergeTree.root.cachedLength ?? 0, 0);
 
 		packParent(client.mergeTree.root, client.mergeTree);
 
