@@ -471,6 +471,23 @@ refreshers must be rendered ineffective when they are rebased over a concurrent 
 
 #### Accommodating The Destructuring of Nodes
 
+There may be times when a client needs to replace a node with another, but keep some of the child nodes of the original.
+More generally, a client may want to create a node and populate its fields with children from some other node.
+This is easy to accomplish using the move editing API when the source and destination fields of children being transplanted allow for the absence of said children.
+When either or both of those fields require the presence of a child
+(as is the case for a value field)
+the it's either impossible to move the child out of the source field,
+or impossible to create the destination field's parent without the field being populated,
+or both.
+
+Node destructuring is a feature would allow a client to decompose a node by making it unreachable and uneditable,
+while at the same time transforming all of the immediate children of that node into individual roots.
+The children can then be consumed to create a new node, or moved.
+
+This destructuring feature interacts with repair data because deleted nodes can be destructured.
+When that happens, the `StygianForest` would need to update its records to remove the entry for the destructured node if there is one,
+and add entries for the new root if any.
+
 #### Garbage-Collecting Repair Data of Expired Sessions
 
 In our current system, only the session that produced a given edit is able to undo that edit.
