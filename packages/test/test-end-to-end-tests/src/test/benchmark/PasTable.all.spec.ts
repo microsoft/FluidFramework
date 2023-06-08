@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
 	return new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);

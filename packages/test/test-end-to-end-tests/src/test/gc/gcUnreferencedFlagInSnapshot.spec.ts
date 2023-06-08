@@ -22,7 +22,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present

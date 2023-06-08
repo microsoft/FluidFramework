@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { Lazy, assert } from "@fluidframework/common-utils";
-import { ensurePackageInstalled } from "./testApi";
-import { pkgVersion } from "./packageVersion";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	CompatKind,
 	compatKind,
@@ -14,7 +14,7 @@ import {
 	tenantIndex,
 	baseVersion,
 	reinstall,
-} from "./compatOptions";
+} from "./compatOptions.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -229,8 +229,41 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	return _configList;
 });
 
-/*
+/**
  * Mocha start up to ensure legacy versions are installed
+ * @privateRemarks
+ * This isn't currently used in a global setup hook due to https://github.com/mochajs/mocha/issues/4508.
+ * Instead, we ensure that all requested compatibility versions are loaded at `describeCompat` module import time by
+ * leveraging top-level await.
+ *
+ * This makes compatibility layer APIs (e.g. DDSes, data object, etc.) available at mocha suite creation time rather than
+ * hook/test execution time, which is convenient for test authors: this sort of code can be used
+ * ```ts
+ * describeCompat("my suite", (getTestObjectProvider, apis) => {
+ *     class MyDataObject extends apis.dataRuntime.DataObject {
+ *         // ...
+ *     }
+ * });
+ * ```
+ *
+ * instead of code like this:
+ *
+ * ```ts
+ * describeCompat("my suite", (getTestObjectProvider, getApis) => {
+ *
+ *     const makeDataObjectClass = (apis: CompatApis) => class MyDataObject extends apis.dataRuntime.DataObject {
+ *         // ...
+ *     }
+ *
+ *     before(() => {
+ *         // `getApis` can only be invoked from inside a hook or test
+ *         const MyDataObject = makeDataObjectClass(getApis())
+ *     });
+ * });
+ * ```
+ *
+ * If the linked github issue is ever fixed, the module load logic in `./testApi.js` can be simplified considerably
+ * and this can be once again used as a global setup fixture.
  */
 export async function mochaGlobalSetup() {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));
@@ -246,7 +279,8 @@ export async function mochaGlobalSetup() {
 	let error: unknown | undefined;
 	for (const p of installP) {
 		try {
-			await p;
+			const pkg = await p;
+			console.log(pkg?.modulePath, pkg?.version);
 		} catch (e) {
 			error = e;
 		}

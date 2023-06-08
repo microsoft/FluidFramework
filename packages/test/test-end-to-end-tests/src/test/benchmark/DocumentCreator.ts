@@ -20,8 +20,8 @@ import {
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
+import { DocumentMap } from "./DocumentMap.js";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
 
 export interface IDocumentCreatorProps {
 	testName: string;

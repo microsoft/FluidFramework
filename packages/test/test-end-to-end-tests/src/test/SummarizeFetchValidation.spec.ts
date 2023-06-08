@@ -27,7 +27,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "../packageVersion";
+import { pkgVersion } from "../packageVersion.js";
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {

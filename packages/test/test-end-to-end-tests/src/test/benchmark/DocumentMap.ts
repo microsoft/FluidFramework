@@ -24,7 +24,11 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";

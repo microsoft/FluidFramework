@@ -4,8 +4,7 @@
  */
 
 "use strict";
-
-const options = require("./dist/compatOptions");
+const options = import("./dist/compatOptions.js");
 const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common.js");
 
 function getFluidTestVariant() {
@@ -32,11 +31,7 @@ function getFluidTestMochaConfigWithCompat(packageDir, additionalRequiredModules
 		testReportPrefix += `_${options.compatKind.join("_")}`;
 	}
 
-	return getFluidTestMochaConfig(
-		packageDir,
-		["@fluid-internal/test-version-utils", ...additionalRequiredModules],
-		testReportPrefix,
-	);
+	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix);
 }
 
 module.exports = getFluidTestMochaConfigWithCompat;

@@ -15,7 +15,7 @@ import {
 	concatGarbageCollectionStates,
 	IGarbageCollectionState,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc";
+} from "@fluidframework/container-runtime/dist/gc/index.js";
 import { IContainer } from "@fluidframework/container-definitions";
 
 /**

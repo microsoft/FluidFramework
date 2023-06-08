@@ -37,7 +37,7 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { pkgVersion } from "../packageVersion";
+import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds
 class TestBlobDDSFactory implements IChannelFactory {
