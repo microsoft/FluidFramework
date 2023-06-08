@@ -61,10 +61,11 @@ async function inferRoot(log: Logger = defaultLogger) {
 		log?.verbose(`No fluidBuild.config.cjs found. Falling back to git root.`);
 		// Use the git root as a fallback for older branches where the fluidBuild config is still in
 		// package.json
-		fluidConfig =
-			childProcess.execSync("git rev-parse --show-toplevel", { encoding: "utf8" }).trim() +
-			"/package.json";
-		if (fluidConfig === undefined) {
+		const gitRoot = childProcess
+			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.trim();
+		fluidConfig = path.join(gitRoot, "/package.json");
+		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
 			return undefined;
 		}
 	}

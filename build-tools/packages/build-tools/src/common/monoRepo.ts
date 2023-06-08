@@ -117,7 +117,11 @@ export class MonoRepo {
 			? "yarn"
 			: "npm";
 
-		if (this.packageManager !== packageManager.type && packageManager.type !== "lerna") {
+		if (
+			this.packageManager !== packageManager.type &&
+			// if the packageManager detected is lerna, then this check is meaningless, so skip it
+			packageManager.type !== "lerna"
+		) {
 			throw new Error(
 				`Package manager mismatch between ${packageManager.type} and ${this.packageManager}`,
 			);
