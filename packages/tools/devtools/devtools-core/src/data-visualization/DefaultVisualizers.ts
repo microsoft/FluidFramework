@@ -8,7 +8,6 @@
  * implementations for our DDSs.
  */
 
-// import { fail } from "assert";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
