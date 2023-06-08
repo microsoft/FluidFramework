@@ -15,6 +15,8 @@ import {
 	BufferFormat,
 	NamedChunkEncoder,
 	decode,
+	EncoderCache,
+	encoderCacheSlot,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingGeneric";
 
@@ -31,7 +33,7 @@ import {
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingUtilities";
-import { ReferenceCountedBase, getOrCreate } from "../../../../util";
+import { ReferenceCountedBase, getOrCreate, getOrCreateSlot } from "../../../../util";
 import { TreeChunk } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk";
@@ -98,7 +100,9 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 
 const testConstantShape = new TestConstantShape();
 
-type TestManager = Map<string, TestShape>;
+type TestManager = EncoderCache;
+
+const shapeSlot = encoderCacheSlot<Map<string, TestShape>>();
 
 class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 	public readonly topLevelLength: number = 1;
@@ -140,10 +144,11 @@ const encoder1: NamedChunkEncoder<TestManager, EncodedChunkShape, TestChunk1> = 
 	type: TestChunk1,
 	encode(
 		chunk: TestChunk1,
-		shapes: TestManager,
+		cache: TestManager,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		const shape = getOrCreate(shapes, chunk.value, (value) => new TestShape(value));
+		const shapeCache = getOrCreateSlot(cache, shapeSlot, () => new Map());
+		const shape = getOrCreate(shapeCache, chunk.value, (value) => new TestShape(value));
 		outputBuffer.push(shape);
 	},
 };
@@ -294,8 +299,9 @@ describe("chunkEncodingGeneric", () => {
 		const manager: TestManager = new Map();
 		const chunk = new TestChunk1("x");
 		encodeLibrary.encode(chunk, manager, buffer);
-		assert.equal(manager.size, 1);
-		const shape = manager.get("x");
+		const shapeCache = manager.get(shapeSlot) ?? fail();
+		assert.equal(shapeCache.size, 1);
+		const shape = shapeCache.get("x");
 		assert(shape instanceof TestShape);
 		assert.equal(shape.data, "x");
 		assert.deepEqual(buffer, [shape]);

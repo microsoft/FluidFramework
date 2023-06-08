@@ -82,3 +82,10 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 } from "./typeUtils";
+
+export {
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	getOrCreateSlot,
+} from "./brandedMapSubset";

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { fail } from "../../../util";
+import { Brand, BrandedKey, BrandedMapSubset, Opaque, brand, fail } from "../../../util";
 import { TreeValue } from "../../../core";
 import { TreeChunk } from "../chunk";
 import { emptyChunk } from "../emptyChunk";
@@ -208,3 +208,46 @@ export abstract class Shape<TEncodedShape> {
 		shapes: DeduplicationTable<Shape<TEncodedShape>>,
 	): TEncodedShape;
 }
+
+// TODO: remove references to anchor from these
+
+/**
+ * @alpha
+ */
+export type EncoderCacheKeyBrand = Brand<number, "EncoderCacheSlot">;
+
+/**
+ * Stores arbitrary, user-defined data on an {@link Anchor}.
+ * This data is preserved over the course of that anchor's lifetime.
+ * @see {@link anchorSlot} for creation and an example use case.
+ * @alpha
+ */
+export type EncoderCacheSlot<TContent> = BrandedKey<Opaque<EncoderCacheKeyBrand>, TContent>;
+
+export type EncoderCache = BrandedMapSubset<EncoderCacheSlot<any>>;
+
+/**
+ * Define a strongly typed slot on anchors in which data can be stored.
+ *
+ * @remarks
+ * This is mainly useful for caching data associated with a location in the tree.
+ *
+ * Example usage:
+ * ```typescript
+ * const counterSlot = anchorSlot<number>();
+ *
+ * function useSlot(anchor: AnchorNode): void {
+ * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
+ * }
+ * ```
+ * @alpha
+ */
+export function encoderCacheSlot<TContent>(): EncoderCacheSlot<TContent> {
+	return brand(slotCounter++);
+}
+
+/**
+ * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
+ * This allows the keys to be small integers, which are efficient to use as keys in maps.
+ */
+let slotCounter = 0;
