@@ -11,8 +11,8 @@ import {
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervalCollection";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalRevertible, revertSharedStringRevertibles } from "../revertibles";
 
 export interface RangeSpec {
 	start: number;
@@ -59,10 +59,8 @@ export interface ChangeProperties extends IntervalCollectionSpec {
 	properties: PropertySet;
 }
 
-export interface RevertSharedStringRevertibles extends IntervalCollectionSpec {
+export interface RevertSharedStringRevertibles {
 	type: "revertSharedStringRevertibles";
-	id: string;
-	// might need other props but not sure
 }
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
@@ -151,7 +149,7 @@ export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, Clien
 	return withLogging(reducer);
 }
 
-const revertibles: IntervalRevertible[] = [];
+const revertibles: SharedStringRevertible[] = [];
 
 export function makeRevertibleReducer(
 	loggingInfo?: LoggingInfo,
@@ -190,9 +188,13 @@ export function makeRevertibleReducer(
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		revertSharedStringRevertibles: async ({ channel }, { id, collectionName }) => {
-			// not sure if i should use string or channel
-			revertSharedStringRevertibles(channel, revertibles);
+		// why can i not make channel into a revertiblesharedstring
+		revertSharedStringRevertibles: async ({ channel }) => {
+			// grab a random number of edits to revert
+			// unsure if revertibles is actually populated here
+			const rand = Math.floor(Math.random() * revertibles.length + 1);
+			const few = revertibles.slice(0, rand);
+			revertSharedStringRevertibles(channel, few);
 		},
 	});
 

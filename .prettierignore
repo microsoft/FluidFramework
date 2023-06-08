@@ -42,6 +42,7 @@ experimental/dds/tree/src/test/documents/
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json
+packages/dds/sequence/src/test/results/**/*.json
 packages/drivers/odsp-driver/src/test/**/*.json
 packages/framework/attributor/src/test/attribution/documents/**/*.json
 packages/test/snapshots/content/

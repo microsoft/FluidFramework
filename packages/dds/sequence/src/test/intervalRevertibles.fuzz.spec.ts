@@ -19,13 +19,13 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IntervalCollection, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import {
 	appendAddIntervalToRevertibles,
-	// appendChangeIntervalToRevertibles,
-	// appendDeleteIntervalToRevertibles,
+	appendChangeIntervalToRevertibles,
+	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 	SharedStringRevertible,
@@ -77,38 +77,59 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 };
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-const revertibles: SharedStringRevertible[] = [];
+
+type RevertibleSharedString = SharedString & { revertibles: SharedStringRevertible[] };
+function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
+	return (s as RevertibleSharedString).revertibles !== undefined;
+}
 
 emitter.on("clientCreate", (client) => {
-	const string = client.channel as SharedString;
-	const labels = string.getIntervalCollectionLabels();
-	Array.from(labels).forEach((label) => {
-		const collection = string.getIntervalCollection(label);
-		collection.on("addInterval", (interval, local, op) => {
-			appendAddIntervalToRevertibles(interval, revertibles);
-		});
-		// Note: delete and change interval edits are disabled for now, and will be reenabled
-		// once bugs AB#4544 and AB#4543 (respectively) are resolved.
+	const channel = client.channel as RevertibleSharedString;
+	channel.revertibles = [];
 
-		// collection.on("deleteInterval", (interval, local, op) => {
-		// 	if (local) {
-		// 		appendDeleteIntervalToRevertibles(string, interval, revertibles);
-		// 	}
-		// });
-		// collection.on("changeInterval", (interval, previousInterval, local, op) => {
-		// 	if (local) {
-		// 		appendChangeIntervalToRevertibles(string, interval, previousInterval, revertibles);
-		// 	}
-		// });
-		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
-			if (local) {
-				appendIntervalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
-			}
-		});
-		string.on("sequenceDelta", (op) => {
-			if (op.isLocal) {
-				appendSharedStringDeltaToRevertibles(string, op, revertibles);
-			}
+	channel.on("createIntervalCollection", () => {
+		const labels = channel.getIntervalCollectionLabels();
+		Array.from(labels).forEach((label) => {
+			const collection = channel.getIntervalCollection(label);
+
+			assert(isRevertibleSharedString(channel));
+			collection.on("addInterval", (interval, local, op) => {
+				if (local) {
+					appendAddIntervalToRevertibles(interval, channel.revertibles);
+				}
+			});
+			// Note: delete and change interval edits are disabled for now, and will be reenabled
+			// once bugs AB#4544 and AB#4543 (respectively) are resolved.
+
+			collection.on("deleteInterval", (interval, local, op) => {
+				if (local) {
+					appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
+				}
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				if (local) {
+					appendChangeIntervalToRevertibles(
+						channel,
+						interval,
+						previousInterval,
+						channel.revertibles,
+					);
+				}
+			});
+			collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+				if (local) {
+					appendIntervalPropertyChangedToRevertibles(
+						interval,
+						propertyDeltas,
+						channel.revertibles,
+					);
+				}
+			});
+			channel.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(channel, op, channel.revertibles);
+				}
+			});
 		});
 	});
 });
@@ -120,6 +141,8 @@ const intervalTestOptions = {
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.1,
+		// not sure if this is the right place for this
+		// mergeTreeUseNewLengthCalculations: true,
 	},
 	defaultTestCount: 100,
 	// Uncomment this line to replay a specific seed from its failure file:
@@ -150,7 +173,7 @@ function makeOperationGenerator(
 ): Generator<RevertOperation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
 
-	function isNonEmpty(collection: IntervalCollection<SequenceInterval>): boolean {
+	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
 		for (const _ of collection) {
 			return true;
 		}
@@ -264,7 +287,6 @@ function makeOperationGenerator(
 	): Promise<RevertSharedStringRevertibles> {
 		return {
 			type: "revertSharedStringRevertibles",
-			...interval(state),
 		};
 	}
 
@@ -294,6 +316,15 @@ function makeOperationGenerator(
 		return true;
 	};
 
+	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
+		// not convinced that this doesn't always return false
+		const s = channel as RevertibleSharedString;
+		if (!isRevertibleSharedString(s)) {
+			return false;
+		}
+		return s.revertibles.length > 0;
+	};
+
 	const all =
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
@@ -307,8 +338,7 @@ function makeOperationGenerator(
 		// [deleteInterval, 2, hasAnInterval],
 		// [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
 		[changeProperties, 2, hasAnInterval],
-		// don't know what acceptance condition i should be using
-		[revertSharedStringRevertibles, 2, hasAnInterval],
+		[revertSharedStringRevertibles, 2, hasRevertibles],
 	]);
 }
 
