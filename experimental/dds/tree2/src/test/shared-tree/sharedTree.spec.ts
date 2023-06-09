@@ -2565,6 +2565,7 @@ function testTreeView(): ISharedTreeView {
 		schema,
 	});
 }
+
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.

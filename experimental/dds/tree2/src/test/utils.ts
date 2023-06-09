@@ -550,6 +550,14 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
+ * Inserts a single node under the root of the tree with the given value.
+ * Use {@link getTestValue} to read the value.
+ */
+export function setTestValue(branch: ISharedTreeView, value: string): void {
+	insert(branch, 0, value);
+}
+
+/**
  * Helper function to insert node at a given index.
  *
  * @param tree - The tree on which to perform the insert.
@@ -565,6 +573,43 @@ export function insert(tree: ISharedTreeView, index: number, ...values: string[]
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.delete(index, count);
+}
+
+/**
+ * Reads the last value added by {@link setTestValue} if it exists.
+ */
+export function getTestValue({ forest }: ISharedTreeView): string | undefined {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	if (!readCursor.firstNode()) {
+		readCursor.free();
+		return undefined;
+	}
+	const { value } = readCursor;
+	readCursor.free();
+	return value;
+}
+
+/**
+ * Reads all values in a tree set by {@link setTestValue} in the order they were added.
+ */
+export function getTestValues({ forest }: ISharedTreeView): string[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	const values: string[] = [];
+	if (readCursor.firstNode()) {
+		if (readCursor.value !== undefined) {
+			values.unshift(readCursor.value as string);
+		}
+
+		while (readCursor.nextNode()) {
+			if (readCursor.value !== undefined) {
+				values.unshift(readCursor.value as string);
+			}
+		}
+	}
+	readCursor.free();
+	return values;
 }
 
 export function expectJsonTree(

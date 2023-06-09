@@ -10,6 +10,8 @@ import { ISharedTreeView } from ".";
 /**
  * A shared tree view undo redo handler that will add all local undoable tree changes to the provided
  * undo redo stack manager.
+ *
+ * @alpha
  */
 export class SharedTreeViewUndoRedoHandler {
 	private detach?: () => void;
@@ -23,11 +25,8 @@ export class SharedTreeViewUndoRedoHandler {
 		this.detach?.();
 	}
 
-	private readonly treeDeltaHandler = (
-		undoRedoManagerCommitType: UndoRedoManagerCommitType,
-		target: ISharedTreeView,
-	) => {
-		this.stackManager.pushToCurrentOperation(new SharedTreeRevertible(undoRedoManagerCommitType, target));
+	private readonly treeDeltaHandler = (target: ISharedTreeView) => {
+		this.stackManager.pushToCurrentOperation(new SharedTreeRevertible(target));
 	};
 }
 
@@ -36,7 +35,10 @@ export class SharedTreeViewUndoRedoHandler {
  * revertible stores no information about the commit being reverted other than whether it needs to be an undo or redo.
  */
 export class SharedTreeRevertible implements IRevertible {
-	public constructor(private undoRedoManagerCommitType: UndoRedoManagerCommitType, private readonly tree: ISharedTreeView) {}
+	private undoRedoManagerCommitType: UndoRedoManagerCommitType =
+		UndoRedoManagerCommitType.Undoable;
+
+	public constructor(private readonly tree: ISharedTreeView) {}
 
 	public revert() {
 		if (this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undoable) {

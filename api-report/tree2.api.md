@@ -13,6 +13,7 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import { TAnySchema } from '@sinclair/typebox';
+import { UndoRedoStackManager } from '@fluidframework/undo-redo';
 
 // @alpha
 export interface Adapters {
@@ -1685,6 +1686,15 @@ export class SharedTreeView implements ISharedTreeView {
 }
 
 // @alpha
+export class SharedTreeViewUndoRedoHandler {
+    constructor(stackManager: UndoRedoStackManager);
+    // (undocumented)
+    attachTree(tree: ISharedTreeView): void;
+    // (undocumented)
+    detachTree(tree: ISharedTreeView): void;
+}
+
+// @alpha
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
@@ -2066,6 +2076,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+    undoable(target: ISharedTreeView): void;
 }
 
 // @alpha

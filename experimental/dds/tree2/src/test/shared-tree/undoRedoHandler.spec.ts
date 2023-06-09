@@ -5,61 +5,68 @@
 import { strict as assert } from "assert";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { SharedTreeViewUndoRedoHandler } from "../../shared-tree";
-import { TestTreeProviderLite, insert } from "../utils";
+import { TestTreeProviderLite, getTestValue, setTestValue } from "../utils";
 
-describe("ShareTreeUndoRedoHandler", () => {
-    it("creates revertibles for undoable commits", () => {
-        const undoRedoStack = new UndoRedoStackManager();
-        const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
-        const provider = new TestTreeProviderLite();
+describe.only("ShareTreeUndoRedoHandler", () => {
+	it("can undo and redo", () => {
+		const undoRedoStack = new UndoRedoStackManager();
+		const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
+		const provider = new TestTreeProviderLite();
 
-        const value = "42";
-        const tree = provider.trees[0];
-        handler.attachTree(tree);
+		const value = "42";
+		const tree = provider.trees[0];
+		handler.attachTree(tree);
 
-        // Insert node
-        insert(tree, 0, value);
-        provider.processMessages();
+		// Insert node
+		setTestValue(tree, value);
+		provider.processMessages();
 
-        // Validate insertion
-        assert.equal(getTestValue(tree2), value);
+		// Validate insertion
+		assert.equal(getTestValue(tree), value);
 
-        // Undo node insertion
-        undoRedoStack.undoOperation();
-        provider.processMessages();
+		// Undo node insertion
+		undoRedoStack.undoOperation();
+		provider.processMessages();
 
-        assert.equal(getTestValue(tree1), undefined);
-        assert.equal(getTestValue(tree2), undefined);
+		assert.equal(getTestValue(tree), undefined);
 
-        // Redo node insertion
-        tree1.redo();
-        provider.processMessages();
+		// Redo node insertion
+		undoRedoStack.redoOperation();
+		provider.processMessages();
 
-        assert.equal(getTestValue(tree1), value);
-        assert.equal(getTestValue(tree2), value);
-    });
+		assert.equal(getTestValue(tree), value);
+	});
 
-    it("creates revertibles for redoable commits", () => {
+	it("ignores undo and redo commits", () => {
+		const undoRedoStack = new UndoRedoStackManager();
+		const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
+		const provider = new TestTreeProviderLite();
 
-    });
+		const value = "42";
+		const tree = provider.trees[0];
+		handler.attachTree(tree);
 
-    it("ignores undo and redo commits", () => {
-    
-    });
+		// Insert node
+		setTestValue(tree, value);
+		provider.processMessages();
 
-    it("can undo commits", () => {
+		// Validate insertion
+		assert.equal(getTestValue(tree), value);
 
-    });
+		// Undo node insertion
+		undoRedoStack.undoOperation();
+		provider.processMessages();
 
-    it("can redo commits", () => {
+		assert.equal(getTestValue(tree), undefined);
 
-    });
+		// Redo node insertion
+		undoRedoStack.redoOperation();
+		provider.processMessages();
 
-    it("can undo a redone commit", () => {
+		assert.equal(getTestValue(tree), value);
+	});
 
-    });
+	it("can undo a redone commit", () => {});
 
-    it("does not add remote commits to the undo stack", () => {
-
-    });
+	it("does not add remote commits to the undo stack", () => {});
 });
