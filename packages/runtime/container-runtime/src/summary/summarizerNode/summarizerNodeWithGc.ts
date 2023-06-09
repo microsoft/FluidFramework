@@ -274,7 +274,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
 			 * case, the used routes of the parent should be passed on the child nodes and it should be fine.
 			 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
-			 * during summarize is incomplete. We should not continue, log and throw an error. This will help us
+			 * during summarize is complete . We should not continue, log and throw an error. This will help us
 			 * identify these cases and take appropriate action.
 			 */
 			if (wipSerializedUsedRoutes === undefined) {
