@@ -36,7 +36,10 @@ import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from ".
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
-import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
+// TODO:AB#4500: The commit import here is used to write `parseCommit`, which should probably share
+// similar validation to decoding a commit as part of the summary.
+import { Commit, SeqNumber } from "./editManagerFormat";
 
 /**
  * The events emitted by a {@link SharedTreeCore}

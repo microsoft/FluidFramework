@@ -92,3 +92,5 @@ extends:
     tagName: historian
     lint: true
     pack: true
+    checks:
+    - prettier

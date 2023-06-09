@@ -9,6 +9,7 @@ importers:
     specifiers:
       '@fluid-tools/api-markdown-documenter': ^0.6.0
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
+      '@fluidframework/build-common': ^1.1.0
       '@microsoft/api-extractor-model': ^7.26.4
       '@rushstack/node-core-library': ^3.55.2
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
@@ -31,12 +32,15 @@ importers:
       markdownlint-rule-github-internal-links: ^0.1.0
       markdownlint-rule-helpers: ^0.18.0
       node-fetch: ^2.6.9
+      prettier: ~2.8.8
+      prettier-plugin-go-template: ^0.0.13
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       start-server-and-test: ^2.0.0
     dependencies:
       '@fluid-tools/api-markdown-documenter': 0.6.0
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
+      '@fluidframework/build-common': 1.1.0
       '@microsoft/api-extractor-model': 7.26.4
       '@rushstack/node-core-library': 3.55.2
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
@@ -59,6 +63,8 @@ importers:
       markdownlint-rule-github-internal-links: 0.1.0
       markdownlint-rule-helpers: 0.18.0
       node-fetch: 2.6.9
+      prettier: 2.8.8
+      prettier-plugin-go-template: 0.0.13_prettier@2.8.8
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       start-server-and-test: 2.0.0
@@ -4625,6 +4631,22 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
+  /prettier-plugin-go-template/0.0.13_prettier@2.8.8:
+    resolution: {integrity: sha512-gG/xT5kd+kCzoMaTchXvdfBdsunyRCV6G8cgdPGPd2V5JGGKXUG7SjzBKU7jaGh2RTeblcAdBb/E+S/duOAMsA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      prettier: ^2.0.0
+    dependencies:
+      prettier: 2.8.8
+      ulid: 2.3.0
+    dev: false
+
+  /prettier/2.8.8:
+    resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: false
+
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
     dev: false
@@ -5554,6 +5576,11 @@ packages:
 
   /uc.micro/1.0.6:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
+    dev: false
+
+  /ulid/2.3.0:
+    resolution: {integrity: sha512-keqHubrlpvT6G2wH0OEfSW4mquYRcbe/J8NMmveoQOjUqmo+hXtO+ORCpWhdbZ7k72UtY61BL7haGxW6enBnjw==}
+    hasBin: true
     dev: false
 
   /unbox-primitive/1.0.2:

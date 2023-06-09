@@ -1318,6 +1318,86 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("sequence field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "b");
+			provider.processMessages();
+
+			const bPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			remove(tree1, 1, 1);
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint(bPath);
+				const sequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "c" }));
+			});
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "a",
+				},
+			];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("revived sequence field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "b");
+			provider.processMessages();
+
+			const bPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			// Remove and revive "b"
+			remove(tree1, 1, 1);
+			tree1.undo();
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint(bPath);
+				const sequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "c" }));
+			});
+
+			provider.processMessages();
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "c",
+				},
+				{
+					type: brand("TestValue"),
+					value: "a",
+				},
+				{
+					type: brand("TestValue"),
+					value: "b",
+				},
+			];
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		it("optional field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;

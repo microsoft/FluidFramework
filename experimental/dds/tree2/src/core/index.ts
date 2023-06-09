@@ -164,6 +164,7 @@ export {
 	verifyChangeRebaser,
 	tagRollbackInverse,
 	SessionId,
+	SessionIdSchema,
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
