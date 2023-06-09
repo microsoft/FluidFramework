@@ -5,8 +5,8 @@ importers:
   .:
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0-151899
+        version: 2.0.0-151899
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -87,8 +87,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common@1.2.0:
-    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
+  /@fluidframework/build-common@2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 

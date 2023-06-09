@@ -51,8 +51,8 @@ importers:
         version: 2.0.0(@typescript-eslint/eslint-plugin@5.55.0)(eslint@8.6.0)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0-151899
+        version: 2.0.0-151899
       concurrently:
         specifier: ^6.2.0
         version: 6.5.1
@@ -135,8 +135,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/build-common@1.2.0:
-    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
+  /@fluidframework/build-common@2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 

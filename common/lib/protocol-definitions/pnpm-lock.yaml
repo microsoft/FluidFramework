@@ -12,8 +12,8 @@ importers:
         specifier: ^0.19.0-165129
         version: 0.19.0-165129(typescript@4.5.5)
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0-151899
+        version: 2.0.0-151899
       '@fluidframework/build-tools':
         specifier: ^0.19.0-165129
         version: 0.19.0-165129(typescript@4.5.5)
@@ -246,8 +246,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common@1.2.0:
-    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
+  /@fluidframework/build-common@2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 
