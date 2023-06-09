@@ -79,7 +79,7 @@
 		"prettier": "~2.6.2",
 		"process": "^0.11.10",
 		"puppeteer": "^1.20.0",
-		"rimraf": "^4.4.0",
+		"rimraf": "^2.6.2",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "0.6.0",
 		"ts-jest": "^26.4.4",
