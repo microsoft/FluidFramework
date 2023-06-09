@@ -57,12 +57,12 @@
 		"axios": "^0.26.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-165129",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.5.0.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0-165129",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-client-utils": "workspace:~",

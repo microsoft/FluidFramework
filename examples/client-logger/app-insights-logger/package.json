@@ -54,7 +54,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0-165129",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@testing-library/dom": "^8.2.0",

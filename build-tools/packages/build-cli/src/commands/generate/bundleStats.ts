@@ -14,7 +14,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 	static flags = {
 		packageMetadataPath: Flags.file({
 			description:
-				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna list --all --json` is used.",
+				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna@5.6.2 list --all --json` is used.",
 			required: false,
 			hidden: true,
 		}),
@@ -30,7 +30,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 		const flags = this.flags;
 		const lernaOutput =
 			flags.packageMetadataPath ??
-			JSON.parse(execSync("npx lerna list --all --json").toString());
+			JSON.parse(execSync("npx lerna@5.6.2 list --all --json").toString());
 
 		if (!Array.isArray(lernaOutput)) {
 			this.error("failed to get package information");
