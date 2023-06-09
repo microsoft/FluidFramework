@@ -23,7 +23,6 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 		// eslint-disable-next-line unicorn/prefer-module
 		const dangerfile = this.flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
 
-		// ADO:3710 This needs to change in order to remove the 'danger' dependency in the root package.json
 		execSync(`npx danger ci -d ${dangerfile}`, { stdio: "inherit" });
 	}
 }
