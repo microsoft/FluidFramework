@@ -55,33 +55,24 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	 */
 	async hasConflicts(commitIds: string[], gitRepo: GitRepo): Promise<CommitStatus> {
 		const length = commitIds.length;
-
-		// Check the first commit separately
-		const firstCommit = commitIds[0];
-		const firstResponse = await gitRepo.canMergeWithoutConflicts(firstCommit);
-		this.log(`Response from merge check for ${commitIds[0]}: ${firstResponse}`);
-		if (firstResponse === false) {
-			return { isConflict: true, index: 0 };
-		}
-
-		// Check the rest of the commitIds
-		for (let i = 1; i < length; i++) {
+		for (let i = 0; i < length; i++) {
 			const commit = commitIds[i];
 			// eslint-disable-next-line no-await-in-loop
-			const response = await gitRepo.canMergeWithoutConflicts(commit);
-			this.log(`Response from merge check for ${commitIds[i]}: ${response}`);
-			if (response === false) {
-				return { isConflict: false, index: i - 1 };
+			const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
+			this.log(`Response from merge check for ${commitIds[i]}: ${mergesClean}`);
+			if (mergesClean === false) {
+				return { isConflict: true, index: i };
 			}
 		}
 
-		return { isConflict: false, index: length - 1 }; // No conflicts found, return the last index
+		// No conflicts found, return the last index
+		return { isConflict: false, index: length - 1 };
 	}
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
-		const title: string = `Automation: ${flags.source} ${flags.target} integrate`;
+		const title: string = `Automation: ${flags.source}-${flags.target} integrate`;
 
 		const context = await this.getContext();
 		const gitRepo = context.gitRepo;
@@ -131,7 +122,20 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			gitRepo,
 		);
 
-		const commitId: string = unmergedCommitList[commitInfo.index];
+		let commitId: string;
+
+		/**
+		 * `commitInfo.isConflict === true && commitInfo.index === 0` implies the first index has conflicts with next and open a single PR
+		 * `commitInfo.isConflict === true && commitInfo.index !== 0` imples open PR till the last non-conflicting commit `--commitInfo.index` and set `isConflict` to false so that next can be merged later on
+		 */
+		if (commitInfo.isConflict === true && commitInfo.index === 0) {
+			commitId = unmergedCommitList[0];
+		} else if (commitInfo.isConflict === true && commitInfo.index !== 0) {
+			commitId = unmergedCommitList[--commitInfo.index];
+			commitInfo.isConflict = false;
+		} else {
+			commitId = unmergedCommitList[commitInfo.index];
+		}
 
 		const branchName = `${flags.source}-${flags.target}-${commitId.slice(0, 7)}`;
 
