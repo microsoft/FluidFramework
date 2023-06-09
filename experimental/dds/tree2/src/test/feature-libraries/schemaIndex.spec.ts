@@ -9,18 +9,17 @@ import { strict as assert } from "assert";
 /* eslint-disable-next-line import/no-internal-modules */
 import { getSchemaString, parseSchemaString } from "../../feature-libraries/schemaIndexFormat";
 
-import { SchemaData, rootFieldKey } from "../../core";
-import { jsonSchemaData, jsonRoot } from "../../domains";
-import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
+import { SchemaData } from "../../core";
+import { jsonSchema, jsonRoot } from "../../domains";
+import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
 
 describe("SchemaIndex", () => {
 	it("roundtrip", () => {
 		// Just test with the Json domain schema for now.
 		// TODO: add more targeted tests, and tests for more cases.
-		const data: SchemaData = {
-			globalFieldSchema: new Map([[rootFieldKey, jsonRoot]]),
-			treeSchema: jsonSchemaData.treeSchema,
-		};
+		const data: SchemaData = new SchemaBuilder("roundtrip", jsonSchema).intoDocumentSchema(
+			SchemaBuilder.fieldOptional(...jsonRoot),
+		);
 		const s = getSchemaString(data);
 		const parsed = parseSchemaString(s);
 		const s2 = getSchemaString(parsed);

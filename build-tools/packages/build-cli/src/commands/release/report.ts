@@ -16,6 +16,7 @@ import { Context, VersionDetails } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
+	VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
@@ -109,9 +110,10 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 	 * Collect release data from the repo. Subclasses should call this in their init or run methods.
 	 *
 	 * @param context - The {@link Context}.
+	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
 	 * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
 	 * group and its direct Fluid dependencies.
-	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
+	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
 	protected async collectReleaseData(
 		context: Context,
@@ -635,9 +637,10 @@ interface PackageReleaseData {
 	[packageName: string]: RawReleaseData;
 }
 
-interface RawReleaseData {
+export interface RawReleaseData {
 	repoVersion: VersionDetails;
 	latestReleasedVersion: VersionDetails;
+	latestReleaseType?: VersionBumpType;
 	previousReleasedVersion?: VersionDetails;
 	versions: readonly VersionDetails[];
 }

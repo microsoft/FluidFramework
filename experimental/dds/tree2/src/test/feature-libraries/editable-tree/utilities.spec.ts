@@ -12,13 +12,12 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	TypedSchema,
+	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	LocalFieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	InMemoryStoredSchemaRepository,
-	SchemaData,
 	EmptyKey,
 	rootFieldKey,
 	symbolFromKey,
@@ -50,15 +49,15 @@ describe("editable-tree utilities", () => {
 	it("field utils", () => {
 		const schema =
 			arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: LocalFieldKey; schema: FieldSchema } = {
+		const expectedPrimary: { key: LocalFieldKey; schema: FieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};
 
-		const rootSchema = TypedSchema.field(FieldKinds.value, arraySchema);
-		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
+		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const fullSchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
-		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);
+		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
 		assert.throws(
 			() => getFieldSchema(brand(rootFieldKey), fullSchema),
 			(e) =>

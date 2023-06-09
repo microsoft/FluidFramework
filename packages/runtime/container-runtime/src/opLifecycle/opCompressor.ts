@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { estimateSocketSize } from "./batchManager";
@@ -20,7 +19,7 @@ import { IBatch, BatchMessage } from "./definitions";
 export class OpCompressor {
 	private readonly logger;
 
-	constructor(logger: ITelemetryLogger) {
+	constructor(logger: ITelemetryLoggerExt) {
 		this.logger = ChildLogger.create(logger, "OpCompressor");
 	}
 

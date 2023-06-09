@@ -9,7 +9,13 @@ import {
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
-import { IGitCache, IGitManager, ISession } from "@fluidframework/server-services-client";
+import {
+	IGitCache,
+	IGitManager,
+	ISession,
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+} from "@fluidframework/server-services-client";
 import {
 	IDatabaseManager,
 	IDeliState,
@@ -27,13 +33,7 @@ import {
 	ISnapshotTreeEx,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import {
-	IQuorumSnapshot,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-	getGitMode,
-	getGitType,
-} from "@fluidframework/protocol-base";
+import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.

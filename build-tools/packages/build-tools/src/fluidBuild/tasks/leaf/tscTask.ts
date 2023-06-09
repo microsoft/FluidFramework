@@ -8,8 +8,8 @@ import path from "path";
 import * as ts from "typescript";
 
 import { defaultLogger } from "../../../common/logging";
-import { existsSync, isSameFileOrDir, readFileAsync } from "../../../common/utils";
-import * as TscUtils from "../../tscUtils";
+import { existsSync, readFileAsync } from "../../../common/utils";
+import * as TscUtils from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 const isEqual = require("lodash.isequal");
@@ -25,10 +25,6 @@ interface ITsBuildInfo {
 	};
 }
 
-interface TscTaskMatchOptions {
-	tsConfig?: string;
-}
-
 export class TscTask extends LeafTask {
 	private _tsBuildInfoFullPath: string | undefined;
 	private _tsBuildInfo: ITsBuildInfo | undefined;
@@ -36,73 +32,6 @@ export class TscTask extends LeafTask {
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
 	private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
-
-	public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
-		if (!options?.tsConfig) {
-			return super.matchTask(command);
-		}
-		if (command !== "tsc") {
-			return undefined;
-		}
-		const configFile = this.configFileFullPath;
-		if (!configFile) {
-			return undefined;
-		}
-		return isSameFileOrDir(configFile, options.tsConfig) ? this : undefined;
-	}
-
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		if (this.addChildTask(dependentTasks, this.node, "npm run build:gen")) {
-			this.logVerboseDependency(this.node, "build:gen");
-		}
-
-		if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
-			this.logVerboseDependency(this.node, "build:genver");
-		}
-
-		const testConfig = path.join("src", "test", "tsconfig.json");
-		const isTestTsc =
-			this.configFileFullPath &&
-			isSameFileOrDir(this.configFileFullPath, this.getPackageFileFullPath(testConfig));
-		for (const child of this.node.dependentPackages) {
-			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-			}
-
-			if (isTestTsc) {
-				// TODO: Not all test package depends on test from dependents.
-				// Can check if the dependent's tsconfig has declaration generated or not
-				if (this.addChildTask(dependentTasks, child, "npm run build:test")) {
-					this.logVerboseDependency(child, "build:test");
-				}
-			}
-		}
-
-		const config = this.readTsConfig();
-		if (config?.projectReferences) {
-			// TODO: make less assumptions
-			if (config.projectReferences.length !== 1) {
-				throw new Error(
-					`${this.node.pkg.nameColored}: Only one project references is supported`,
-				);
-			}
-			if (!isSameFileOrDir(config.projectReferences[0].path, this.node.pkg.directory)) {
-				throw new Error(
-					`${this.node.pkg.nameColored}: Only package root project is supported for project references`,
-				);
-			}
-			this._projectReference = this.addChildTask(dependentTasks, this.node, "tsc") as
-				| TscTask
-				| undefined;
-			if (!this._projectReference) {
-				throw new Error(
-					`${this.node.pkg.nameColored}: tsc not found for project reference`,
-				);
-			}
-			this.logVerboseDependency(this.node, "tsc");
-		}
-	}
 
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
@@ -115,14 +44,14 @@ export class TscTask extends LeafTask {
 		// Using tsc incremental information
 		const tsBuildInfo = await this.readTsBuildInfo();
 		if (tsBuildInfo === undefined) {
-			this.logVerboseTrigger("tsBuildInfo not found");
+			this.traceTrigger("tsBuildInfo not found");
 			return false;
 		}
 
 		// Check previous build errors
 		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
 		if (diag?.some((item) => Array.isArray(item))) {
-			this.logVerboseTrigger("previous build error");
+			this.traceTrigger("previous build error");
 			return false;
 		}
 		// Check dependencies file hashes
@@ -132,7 +61,7 @@ export class TscTask extends LeafTask {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
 			if (fileName === undefined) {
-				this.logVerboseTrigger(`missing file name for file info id ${i}`);
+				this.traceTrigger(`missing file name for file info id ${i}`);
 				return false;
 			}
 			try {
@@ -146,11 +75,11 @@ export class TscTask extends LeafTask {
 				const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
-					this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
+					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
 					return false;
 				}
 			} catch (e: any) {
-				this.logVerboseTrigger(`exception generating hash for ${fileName}`);
+				this.traceTrigger(`exception generating hash for ${fileName}`);
 				verbose(e.stack);
 				return false;
 			}
@@ -402,7 +331,6 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
-	protected tscTasks: TscTask[] = [];
 	protected get recheckLeafIsUpToDate() {
 		return true;
 	}
@@ -410,8 +338,19 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent() {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
-			for (const tscTask of this.tscTasks) {
-				const tsBuildInfo = await tscTask.readTsBuildInfo();
+			const tscTasks = [...this.getDependentLeafTasks()].filter(
+				(task) => task.executable === "tsc",
+			);
+			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
+
+			// Take only the tsc task in the same package if possible.
+			// Sort by task name to provide some stability
+			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort((a, b) =>
+				a.name.localeCompare(b.name),
+			);
+
+			for (const dep of tasks) {
+				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;
@@ -428,33 +367,9 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify({ tsBuildInfoFiles, config });
 		} catch (e) {
-			this.logVerboseTask(`error generating done file content ${e}`);
+			this.traceExec(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}
-
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		if (this.tscTasks.length === 0) {
-			// derived class didn't populate it.
-			this.addTscTask(dependentTasks);
-		}
-	}
-	protected addTscTask(dependentTasks: LeafTask[], options?: any) {
-		const tscTask = this.addChildTask(dependentTasks, this.node, "tsc", options);
-		if (!tscTask) {
-			if (options) {
-				throw new Error(
-					`${this.node.pkg.nameColored}: Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`,
-				);
-			} else {
-				throw new Error(
-					`${this.node.pkg.nameColored}: Unable to find tsc task for dependent task ${this.command}`,
-				);
-			}
-		}
-		this.tscTasks.push(tscTask as TscTask);
-		this.logVerboseDependency(this.node, tscTask.command);
-	}
-
 	protected abstract get configFileFullPath(): string;
 }

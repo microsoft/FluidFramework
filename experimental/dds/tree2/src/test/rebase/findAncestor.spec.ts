@@ -19,35 +19,24 @@ function node(parent?: Node): Node {
 	};
 }
 
-function assertAncestor(
-	descendant: Node,
-	expectedAncestor: Node | undefined,
-	expectedPath?: Node[],
-): void {
-	const path: Node[] = [];
-	const foundAncestor = findAncestor([descendant, path], (n) => n === expectedAncestor);
-	assert.equal(foundAncestor, expectedAncestor);
-	if (expectedPath !== undefined) {
+describe("findAncestor", () => {
+	function assertAncestor(
+		descendant: Node | undefined,
+		expectedAncestor: Node | undefined,
+		expectedPath: Node[],
+	): void {
+		let foundAncestor = findAncestor(descendant, (n) => n === expectedAncestor);
+		assert.equal(foundAncestor, expectedAncestor);
+		const path: Node[] = [];
+		foundAncestor = findAncestor([descendant, path], (n) => n === expectedAncestor);
+		assert.equal(foundAncestor, expectedAncestor);
 		assert.deepEqual(path, expectedPath);
 	}
-}
 
-function assertCommonAncestor(
-	a: Node,
-	b: Node,
-	expectedAncestor: Node | undefined,
-	expectedPathA: Node[],
-	expectedPathB: Node[],
-): void {
-	const foundPathA: Node[] = [];
-	const foundPathB: Node[] = [];
-	const foundAncestor = findCommonAncestor([a, foundPathA], [b, foundPathB]);
-	assert.equal(foundAncestor, expectedAncestor, "Found unexpected ancestor node");
-	assert.deepEqual(foundPathA, expectedPathA);
-	assert.deepEqual(foundPathB, expectedPathB);
-}
+	it("returns undefined for undefined descendant", () => {
+		assertAncestor(undefined, undefined, []);
+	});
 
-describe("findAncestor", () => {
 	it("finds nothing", () => {
 		const a = node();
 		assertAncestor(a, undefined, []);
@@ -71,6 +60,14 @@ describe("findAncestor", () => {
 		assertAncestor(c, a, [b, c]);
 	});
 
+	it("finds farthest ancestor", () => {
+		const a = node();
+		const b = node(a);
+		const c = node(b);
+		assert.equal(findAncestor(a), a);
+		assert.equal(findAncestor(c), a);
+	});
+
 	it("has a working example doc comment", () => {
 		interface Parented {
 			id: string;
@@ -87,6 +84,21 @@ describe("findAncestor", () => {
 });
 
 describe("findCommonAncestor", () => {
+	function assertCommonAncestor(
+		a: Node,
+		b: Node,
+		expectedAncestor: Node | undefined,
+		expectedPathA: Node[],
+		expectedPathB: Node[],
+	): void {
+		const foundPathA: Node[] = [];
+		const foundPathB: Node[] = [];
+		const foundAncestor = findCommonAncestor([a, foundPathA], [b, foundPathB]);
+		assert.equal(foundAncestor, expectedAncestor, "Found unexpected ancestor node");
+		assert.deepEqual(foundPathA, expectedPathA);
+		assert.deepEqual(foundPathB, expectedPathB);
+	}
+
 	it("finds nothing", () => {
 		const a = node();
 		const b = node();

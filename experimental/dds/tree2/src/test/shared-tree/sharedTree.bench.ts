@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
-	ContextuallyTypedNodeData,
-	cursorFromContextualData,
 	FieldKinds,
 	isEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	jsonableTreeFromCursor,
 	SchemaAware,
-	TypedSchema,
+	SchemaBuilder,
 	UnwrappedEditableField,
+	cursorForTypedData,
+	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber } from "../../domains";
-import { brand } from "../../util";
-import { toJsonableTree } from "../utils";
+import { jsonNumber, jsonSchema } from "../../domains";
+import { brand, requireAssignableTo } from "../../util";
+import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
 	LocalFieldKey,
 	moveToDetachedField,
-	rootFieldKey,
 	rootFieldKeySymbol,
 	UpPath,
 } from "../../core";
@@ -44,29 +43,29 @@ const nodesCountDeep = [
 	[100, BenchmarkType.Measurement],
 ];
 
+const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
+
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = TypedSchema.tree("linkedList", {
+const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
 	local: {
-		foo: TypedSchema.field(FieldKinds.value, "linkedList", jsonNumber),
+		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 	},
 });
 
-const wideRootSchema = TypedSchema.tree("WideRoot", {
+const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
+
+const wideRootSchema = wideBuilder.object("WideRoot", {
 	local: {
-		foo: TypedSchema.field(FieldKinds.sequence, jsonNumber),
+		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 	},
 });
 
-const wideSchema = SchemaAware.typedSchemaData(
-	[[rootFieldKey, TypedSchema.field(FieldKinds.value, wideRootSchema)]],
-	wideRootSchema,
-	jsonNumber,
+const wideSchema = wideBuilder.intoDocumentSchema(
+	SchemaBuilder.field(FieldKinds.value, wideRootSchema),
 );
 
-const deepSchema = SchemaAware.typedSchemaData(
-	[[rootFieldKey, TypedSchema.field(FieldKinds.value, linkedListSchema)]],
-	linkedListSchema,
-	jsonNumber,
+const deepSchema = deepBuilder.intoDocumentSchema(
+	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
 const factory = new SharedTreeFactory();
@@ -78,6 +77,13 @@ const factory = new SharedTreeFactory();
 interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
+
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
+
+{
+	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
+}
+
 /**
  * JS object like a wide tree.
  * Comparible with ContextuallyTypedNodeData
@@ -86,10 +92,7 @@ interface JSWideTree {
 	foo: number[];
 }
 
-function makeJsDeepTree(
-	depth: number,
-	leafValue: number,
-): (JSDeepTree | number) & ContextuallyTypedNodeData {
+function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
 	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
@@ -99,10 +102,7 @@ function makeJsDeepTree(
  * @param endLeafValue - the value of the end leaf of the tree
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
-function makeJsWideTreeWithEndValue(
-	numberOfNodes: number,
-	endLeafValue: number,
-): JSWideTree & ContextuallyTypedNodeData {
+function makeJsWideTreeWithEndValue(numberOfNodes: number, endLeafValue: number): JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
@@ -291,71 +291,133 @@ describe("SharedTree benchmarks", () => {
 		}
 	});
 	describe("Edit with editor", () => {
+		const setCount = 100;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView;
-			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
-				title: `Update value at leaf of ${numberOfNodes} deep tree`,
-				before: () => {
-					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					tree = untypedTree.schematize({
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: makeJsDeepTree(numberOfNodes, 1),
-						schema: deepSchema,
-					});
-					path = deepPath(numberOfNodes + 1);
+				title: `Update value at leaf of ${numberOfNodes} deep tree ${setCount} times`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+						const tree = untypedTree.schematize({
+							allowedSchemaModifications: AllowedUpdateType.None,
+							initialTree: makeJsDeepTree(numberOfNodes, 1),
+							schema: deepSchema,
+						});
+						const path = deepPath(numberOfNodes + 1);
+
+						// Measure
+						const before = state.timer.now();
+						for (let value = 1; value <= setCount; value++) {
+							tree.editor.setValue(path, value);
+						}
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						// Cleanup + validation
+						const expected = jsonableTreeFromCursor(
+							cursorForTypedData(
+								tree.storedSchema,
+								deepSchema.root.schema.allowedTypes,
+								makeJsDeepTree(numberOfNodes, setCount),
+							),
+						);
+						const actual = toJsonableTree(tree);
+						assert.deepEqual(actual, [expected]);
+
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
-				benchmarkFn: () => {
-					tree.editor.setValue(path, -1);
-				},
-				after: () => {
-					const expected = jsonableTreeFromCursor(
-						cursorFromContextualData(
-							tree.storedSchema,
-							TypedSchema.nameSet(linkedListSchema),
-							makeJsDeepTree(numberOfNodes, -1),
-						),
-					);
-					const actual = toJsonableTree(tree);
-					assert.deepEqual(actual, [expected]);
-				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView;
-			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
-				title: `Update value at leaf of ${numberOfNodes} wide tree`,
-				before: () => {
-					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					const numbers = [];
-					for (let index = 0; index < numberOfNodes; index++) {
-						numbers.push(index);
-					}
-					tree = untypedTree.schematize({
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: { foo: numbers },
-						schema: wideSchema,
-					});
+				title: `Update value at leaf of ${numberOfNodes} wide tree ${setCount} times`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
 
-					path = wideLeafPath(numberOfNodes - 1);
+						// Setup
+						const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+						const numbers = [];
+						for (let index = 0; index < numberOfNodes; index++) {
+							numbers.push(index);
+						}
+						const tree = untypedTree.schematize({
+							allowedSchemaModifications: AllowedUpdateType.None,
+							initialTree: { foo: numbers },
+							schema: wideSchema,
+						});
+
+						const path = wideLeafPath(numberOfNodes - 1);
+
+						// Measure
+						const before = state.timer.now();
+						for (let value = 1; value <= setCount; value++) {
+							tree.editor.setValue(path, setCount);
+						}
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						// Cleanup + validation
+						const expected = jsonableTreeFromCursor(
+							cursorForTypedTreeData(
+								tree.storedSchema,
+								wideRootSchema,
+								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
+							),
+						);
+						const actual = toJsonableTree(tree);
+						assert.deepEqual(actual, [expected]);
+
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
-				benchmarkFn: () => {
-					tree.editor.setValue(path, -1);
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	describe("acking local commits", () => {
+		const localCommitSize = [1, 25, 100, 500, 1000];
+		for (const size of localCommitSize) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite();
+						const [tree] = provider.trees;
+						for (let i = 0; i < size; i++) {
+							insert(tree, i, "test");
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
-				after: () => {
-					const expected = jsonableTreeFromCursor(
-						cursorFromContextualData(
-							tree.storedSchema,
-							TypedSchema.nameSet(wideRootSchema),
-							makeJsWideTreeWithEndValue(numberOfNodes, -1),
-						),
-					);
-					const actual = toJsonableTree(tree);
-					assert.deepEqual(actual, [expected]);
-				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 	});
@@ -398,6 +460,7 @@ function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: n
 		sum += readCursor.value as number;
 		nodesCount += 1;
 	}
+	readCursor.free();
 	return { nodesCount, sum };
 }
 
@@ -413,6 +476,7 @@ function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: numb
 		value = readCursor.value as number;
 	}
 	value = readCursor.value as number;
+	readCursor.free();
 	return { depth, value };
 }
 
@@ -458,7 +522,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.root;
-	assert(isUnwrappedNode(root));
+	assert(isEditableTree(root));
 	const field = root.foo as UnwrappedEditableField;
 	assert(isEditableField(field));
 	assert(field.length !== 0);
@@ -472,7 +536,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
-	while (isUnwrappedNode(currentNode)) {
+	while (isEditableTree(currentNode)) {
 		currentNode = currentNode.foo as UnwrappedEditableField;
 		depth++;
 	}

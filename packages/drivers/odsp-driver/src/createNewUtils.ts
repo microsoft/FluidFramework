@@ -16,9 +16,8 @@ import {
 } from "@fluidframework/driver-utils";
 import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
@@ -189,7 +188,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 export async function createNewFluidContainerCore<T>(args: {
 	containerSnapshot: IOdspSummaryPayload;
 	getStorageToken: InstrumentedStorageTokenFetcher;
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
 	initialUrl: string;
 	forceAccessTokenViaAuthorizationHeader: boolean;
 	epochTracker: EpochTracker;

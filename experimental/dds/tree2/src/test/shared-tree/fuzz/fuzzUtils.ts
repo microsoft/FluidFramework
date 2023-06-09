@@ -84,7 +84,7 @@ export function makeTree(initialState: JsonableTree): ISharedTree {
 	const runtime = new MockFluidDataStoreRuntime();
 	const tree = factory.create(runtime, "TestSharedTree");
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, singleTextCursor(initialState));
 	return tree;
 }

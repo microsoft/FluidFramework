@@ -667,7 +667,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
 	});
 
-	it("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
+	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
+	// Tracking alternative fix in AB#4129.
+	it.skip("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
 		const documentId = uuid();
 		const client: IClient = {
 			details: {

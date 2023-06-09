@@ -70,7 +70,7 @@ function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTest
 	tree.storedSchema.update(fullSchemaData);
 	// inserts a node with the initial AppState as the root of the tree
 	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, writeCursor);
 }
 
@@ -157,7 +157,7 @@ const insertNodesWithIndividualTransactions = (
 			parentIndex: 0,
 		};
 		const writeCursor = singleTextCursor(jsonNode);
-		const field = tree.editor.sequenceField(path, childrenFieldKey);
+		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 		field.insert(0, writeCursor);
 		tree.transaction.commit();
 	}
@@ -176,7 +176,7 @@ const insertNodesWithSingleTransaction = (
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
-	const field = tree.editor.sequenceField(path, childrenFieldKey);
+	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 	for (let i = 0; i < count; i++) {
 		field.insert(0, singleTextCursor(jsonNode));
 	}
@@ -197,7 +197,7 @@ const deleteNodesWithIndividualTransactions = (
 			parentField: rootFieldKeySymbol,
 			parentIndex: 0,
 		};
-		const field = tree.editor.sequenceField(path, childrenFieldKey);
+		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 		field.delete(getChildrenlength(tree) - 1, deletesPerTransaction);
 		tree.transaction.commit();
 		provider.processMessages();
@@ -215,7 +215,7 @@ const deleteNodesWithSingleTransaction = (
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
-	const field = tree.editor.sequenceField(path, childrenFieldKey);
+	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 	field.delete(0, numDeletes);
 	tree.transaction.commit();
 	provider.processMessages();

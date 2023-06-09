@@ -28,8 +28,8 @@ export interface TransactionBoundary {
 export type FuzzFieldChange = FuzzInsert | FuzzDelete;
 
 export interface FieldEdit {
-	editType: "fieldEdit";
-	change: SequenceFieldEdit; // in the future, add `| OptionalFieldEdit | ValueFieldEdit`
+	type: "fieldEdit";
+	change: FieldEditTypes;
 }
 
 export interface FuzzInsert {
@@ -41,8 +41,20 @@ export interface FuzzInsert {
 	treeIndex: number;
 }
 
+export type FieldEditTypes = SequenceFieldEdit | ValueFieldEdit | OptionalFieldEdit;
+
 export interface SequenceFieldEdit {
 	type: "sequence";
+	edit: FuzzInsert | FuzzDelete;
+}
+
+export interface ValueFieldEdit {
+	type: "value";
+	edit: FuzzDelete;
+}
+
+export interface OptionalFieldEdit {
+	type: "optional";
 	edit: FuzzInsert | FuzzDelete;
 }
 
@@ -51,10 +63,10 @@ export interface FuzzDelete extends NodeRangePath {
 	treeIndex: number;
 }
 
-export type FuzzNodeEditChange = FuzzSetPayload;
+export type FuzzNodeEditChange = SequenceNodeEdit | ValueNodeEdit | OptionalNodeEdit;
 
 export interface NodeEdit {
-	editType: "nodeEdit";
+	type: "nodeEdit";
 	edit: FuzzNodeEditChange;
 }
 
@@ -63,6 +75,21 @@ export interface FuzzSetPayload {
 	path: UpPath;
 	value: number;
 	treeIndex: number;
+}
+
+export interface SequenceNodeEdit {
+	type: "sequence";
+	edit: FuzzSetPayload;
+}
+
+export interface ValueNodeEdit {
+	type: "value";
+	edit: FuzzSetPayload;
+}
+
+export interface OptionalNodeEdit {
+	type: "optional";
+	edit: FuzzSetPayload;
 }
 
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;

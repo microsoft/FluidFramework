@@ -4,7 +4,7 @@
  */
 
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,
@@ -35,7 +35,7 @@ import { ClpCompliantAppHeader } from "./contractsPublic";
 export async function createNewContainerOnExistingFile(
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,

@@ -9,8 +9,6 @@ import {
 	EditableField,
 	typeNameSymbol,
 	valueSymbol,
-	TypedSchema,
-	SchemaAware,
 	ContextuallyTypedNodeDataObject,
 	jsonableTreeFromCursor,
 	cursorFromContextualData,
@@ -21,60 +19,60 @@ import {
 	cursorsFromContextualData,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
-	FieldViewSchema,
+	FieldSchema,
+	SchemaBuilder,
+	Any,
+	GlobalFieldSchema,
+	TypedSchemaCollection,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
-	GlobalFieldKey,
 	LocalFieldKey,
 	EmptyKey,
-	rootFieldKey,
 	JsonableTree,
-	symbolFromKey,
 	GlobalFieldKeySymbol,
-	SchemaData,
 	IEditableForest,
 	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
-	lookupGlobalFieldSchema,
 	initializeForest,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-export const stringSchema = TypedSchema.tree("String", {
+const builder = new SchemaBuilder("mock data");
+
+export const stringSchema = builder.object("String", {
 	value: ValueSchema.String,
 });
 
-export const int32Schema = TypedSchema.tree("Int32", {
+export const int32Schema = builder.object("Int32", {
 	value: ValueSchema.Number,
 });
 
-export const float64Schema = TypedSchema.tree("Float64", {
+export const float64Schema = builder.object("Float64", {
 	value: ValueSchema.Number,
 });
 
-export const boolSchema = TypedSchema.tree("Bool", {
+export const boolSchema = builder.object("Bool", {
 	value: ValueSchema.Boolean,
 });
 
-export const simplePhonesSchema = TypedSchema.tree("Test:SimplePhones-1.0.0", {
+export const simplePhonesSchema = builder.object("Test:SimplePhones-1.0.0", {
 	local: {
-		[EmptyKey]: TypedSchema.field(FieldKinds.sequence, stringSchema),
+		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
 	},
 });
 
-export const complexPhoneSchema = TypedSchema.tree("Test:Phone-1.0.0", {
+export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
 	local: {
-		number: TypedSchema.field(FieldKinds.value, stringSchema),
-		prefix: TypedSchema.field(FieldKinds.value, stringSchema),
-		extraPhones: TypedSchema.field(FieldKinds.optional, simplePhonesSchema),
+		number: SchemaBuilder.field(FieldKinds.value, stringSchema),
+		prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
+		extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
 	},
 });
 
-export const phonesSchema = TypedSchema.tree("Test:Phones-1.0.0", {
+export const phonesSchema = builder.object("Test:Phones-1.0.0", {
 	local: {
-		[EmptyKey]: TypedSchema.field(
-			FieldKinds.sequence,
+		[EmptyKey]: SchemaBuilder.fieldSequence(
 			stringSchema,
 			int32Schema,
 			complexPhoneSchema,
@@ -84,77 +82,60 @@ export const phonesSchema = TypedSchema.tree("Test:Phones-1.0.0", {
 	},
 });
 
-export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
-export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(
-	globalFieldKeySequencePhones,
+export const globalFieldSchemaSequencePhones = builder.globalField(
+	"sequencePhones",
+	SchemaBuilder.fieldSequence(stringSchema),
 );
-export const globalFieldSchemaSequencePhones = TypedSchema.field(FieldKinds.sequence, stringSchema);
 
-export const addressSchema = TypedSchema.tree("Test:Address-1.0.0", {
+export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol =
+	globalFieldSchemaSequencePhones.symbol;
+
+export const addressSchema = builder.object("Test:Address-1.0.0", {
 	local: {
-		zip: TypedSchema.field(FieldKinds.value, stringSchema, int32Schema),
-		street: TypedSchema.field(FieldKinds.optional, stringSchema),
-		city: TypedSchema.field(FieldKinds.optional, stringSchema),
-		country: TypedSchema.field(FieldKinds.optional, stringSchema),
-		phones: TypedSchema.field(FieldKinds.optional, phonesSchema),
-		sequencePhones: TypedSchema.field(FieldKinds.sequence, stringSchema),
+		zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
+		street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+		city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+		country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+		phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
+		sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
 	},
-	globalFields: [globalFieldKeySequencePhones],
+	globalFields: [globalFieldSchemaSequencePhones],
 });
 
-export const mapStringSchema = TypedSchema.tree("Map<String>", {
-	extraLocalFields: TypedSchema.field(FieldKinds.optional, stringSchema),
+export const mapStringSchema = builder.object("Map<String>", {
+	extraLocalFields: SchemaBuilder.field(FieldKinds.optional, stringSchema),
 	value: ValueSchema.Serializable,
 });
 
-export const personSchema = TypedSchema.tree("Test:Person-1.0.0", {
+export const personSchema = builder.object("Test:Person-1.0.0", {
 	local: {
-		name: TypedSchema.field(FieldKinds.value, stringSchema),
-		age: TypedSchema.field(FieldKinds.optional, int32Schema),
-		adult: TypedSchema.field(FieldKinds.optional, boolSchema),
-		salary: TypedSchema.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
-		friends: TypedSchema.field(FieldKinds.optional, mapStringSchema),
-		address: TypedSchema.field(FieldKinds.optional, addressSchema),
+		name: SchemaBuilder.field(FieldKinds.value, stringSchema),
+		age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
+		adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
+		salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
+		friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
+		address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
 	},
 });
 
-export const optionalChildSchema = TypedSchema.tree("Test:OptionalChild-1.0.0", {
+export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 	local: {
-		child: TypedSchema.fieldUnrestricted(FieldKinds.optional),
+		child: SchemaBuilder.fieldOptional(Any),
 	},
 	value: ValueSchema.Serializable,
 });
 
-export const arraySchema = TypedSchema.tree("Test:Array-1.0.0", {
+export const arraySchema = builder.object("Test:Array-1.0.0", {
 	local: {
-		[EmptyKey]: TypedSchema.field(FieldKinds.sequence, stringSchema, int32Schema),
+		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
 	},
 });
 
-export const rootPersonSchema = TypedSchema.field(FieldKinds.optional, personSchema);
+export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const treeSchema = [
-	arraySchema,
-	optionalChildSchema,
-	stringSchema,
-	float64Schema,
-	int32Schema,
-	boolSchema,
-	complexPhoneSchema,
-	phonesSchema,
-	simplePhonesSchema,
-	addressSchema,
-	mapStringSchema,
-	personSchema,
-] as const;
+export const personSchemaLibrary = builder.intoLibrary();
 
-export const fullSchemaData = SchemaAware.typedSchemaData(
-	[
-		[rootFieldKey, rootPersonSchema],
-		[globalFieldKeySequencePhones, globalFieldSchemaSequencePhones],
-	],
-	...treeSchema,
-);
+export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
 // TODO: derive types like these from those schema, which subset EditableTree
 
@@ -233,13 +214,13 @@ export const personData: ContextuallyTypedNodeDataObject = {
 			},
 		],
 		sequencePhones: ["113", "114"],
-		[globalFieldKeySequencePhones]: ["115", "116"],
+		[globalFieldSymbolSequencePhones]: ["115", "116"],
 	},
 };
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
-		cursorFromContextualData(fullSchemaData, TypedSchema.nameSet(personSchema), personData),
+		cursorFromContextualData(fullSchemaData, rootPersonSchema.types, personData),
 	);
 }
 
@@ -285,16 +266,8 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldViewSchema = rootPersonSchema): SchemaData {
-	return SchemaAware.typedSchemaData(
-		[
-			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
-				[GlobalFieldKey, FieldViewSchema]
-			>),
-			[rootFieldKey, rootField],
-		],
-		...treeSchema,
-	);
+export function buildTestSchema<T extends FieldSchema>(rootField: T) {
+	return new SchemaBuilder("buildTestSchema", personSchemaLibrary).intoDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
@@ -303,26 +276,22 @@ export function getReadonlyEditableTreeContext(forest: IEditableForest): Editabl
 	return getEditableTreeContext(forest, dummyEditor);
 }
 
-export function setupForest(
-	schema: SchemaData,
+export function setupForest<T extends GlobalFieldSchema>(
+	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
-	const root = cursorsFromContextualData(
-		schemaRepo,
-		lookupGlobalFieldSchema(schemaRepo, rootFieldKey),
-		data,
-	);
+	const root = cursorsFromContextualData(schemaRepo, schema.root.schema, data);
 	initializeForest(forest, root);
 	return forest;
 }
 
 export function buildTestTree(
 	data: ContextuallyTypedNodeData | undefined,
-	rootField: FieldViewSchema = rootPersonSchema,
+	rootField: FieldSchema = rootPersonSchema,
 ): EditableTreeContext {
-	const schema: SchemaData = buildTestSchema(rootField);
+	const schema = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);
 	const context = getReadonlyEditableTreeContext(forest);
 	return context;

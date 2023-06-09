@@ -117,7 +117,7 @@ graph TD;
         shared-tree-core-->Indexes-->ForestIndex
         shared-tree-->checkout["default checkout"]
         transaction-."updates".->checkout
-        transaction-->ProgressiveEditBuilder
+        transaction-->EditBuilder
         checkout-."reads".->ForestIndex
         checkout-->transaction
     end
@@ -202,9 +202,9 @@ This shows editing during a transaction:
 ```mermaid
 flowchart RL
     subgraph "@fluid-experimental/tree2"
-        transaction--"collects edits in"-->ProgressiveEditBuilder
-        ProgressiveEditBuilder--"updates anchors"-->AnchorSet
-        ProgressiveEditBuilder--"deltas for edits"-->transaction
+        transaction--"collects edits in"-->EditBuilder
+        EditBuilder--"updates anchors"-->AnchorSet
+        EditBuilder--"deltas for edits"-->transaction
         transaction--"applies deltas to"-->forest["checkout's forest"]
     end
     command["App's command callback"]
@@ -219,10 +219,10 @@ Internally the transaction implements these edits by creating changes.
 Each change is processed in two ways:
 
 -   the change is converted to a delta which is applied to the forest and any existing anchors allowing the application to read the updated tree afterwards.
--   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
+-   the changes applied to the `EditBuilder` are accumulated and used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a `changeset` is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
+Then if the command did not error, a `changeset` is created from the changes applied to the `EditBuilder`, which is encoded into a Fluid Op.
 The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
 Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
@@ -239,8 +239,8 @@ Also not shown is the (also usually unneeded) step of rebasing the changeset bef
 flowchart LR
     command["App's command callback"]--"commit"-->transaction
     subgraph "@fluid-experimental/tree2"
-        transaction--"build"-->ProgressiveEditBuilder
-        ProgressiveEditBuilder--"changeset"-->transaction
+        transaction--"build"-->EditBuilder
+        EditBuilder--"changeset"-->transaction
         transaction--"changeset (from builder)"-->core["shared-tree-core"]
         core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
     end

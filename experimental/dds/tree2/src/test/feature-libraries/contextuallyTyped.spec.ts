@@ -5,11 +5,16 @@
 
 import { strict as assert } from "assert";
 
-import { ValueSchema } from "../../core";
-import { isPrimitiveValue } from "../../feature-libraries";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { allowsValue } from "../../feature-libraries/contextuallyTyped";
+import { EmptyKey, MapTree, ValueSchema } from "../../core";
+
+import {
+	allowsValue,
+	isPrimitiveValue,
+	applyTypesFromContext,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
+} from "../../feature-libraries/contextuallyTyped";
+import { SchemaBuilder } from "../../feature-libraries";
 
 describe("ContextuallyTyped", () => {
 	it("isPrimitiveValue", () => {
@@ -55,6 +60,30 @@ describe("ContextuallyTyped", () => {
 		assert(!allowsValue(ValueSchema.Nothing, {}));
 		assert(!allowsValue(ValueSchema.String, {}));
 		assert(!allowsValue(ValueSchema.Number, {}));
+	});
+
+	it("applyTypesFromContext omits empty fields", () => {
+		const builder = new SchemaBuilder("applyTypesFromContext");
+		const numberSchema = builder.primitive("number", ValueSchema.Number);
+		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
+		const numbersObject = builder.object("numbers", { local: { numbers: numberSequence } });
+		const schema = builder.intoDocumentSchema(numberSequence);
+		const mapTree = applyTypesFromContext(schema, new Set([numbersObject.name]), {
+			numbers: [],
+		});
+		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
+		assert.deepEqual(mapTree, expected);
+	});
+
+	it("applyTypesFromContext omits empty primary fields", () => {
+		const builder = new SchemaBuilder("applyTypesFromContext");
+		const numberSchema = builder.primitive("number", ValueSchema.Number);
+		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
+		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
+		const schema = builder.intoDocumentSchema(numberSequence);
+		const mapTree = applyTypesFromContext(schema, new Set([primaryObject.name]), []);
+		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
+		assert.deepEqual(mapTree, expected);
 	});
 
 	// TODO: more tests

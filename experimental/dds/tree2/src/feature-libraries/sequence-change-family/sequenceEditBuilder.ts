@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ProgressiveEditBuilderBase,
-	ITreeCursor,
-	AnchorSet,
-	UpPath,
-	Value,
-	getDepth,
-} from "../../core";
+import { EditBuilder, ITreeCursor, AnchorSet, UpPath, Value, getDepth } from "../../core";
 import { fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Transposed as T } from "./changeset";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
+export class SequenceEditBuilder extends EditBuilder<SequenceChangeset> {
 	private opId: number = 0;
 
 	public constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {

@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	generateStack,
+	LoggingError,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	raiseConnectedEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -25,15 +34,6 @@ import {
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import {
-	ChildLogger,
-	generateStack,
-	LoggingError,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	raiseConnectedEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -55,6 +55,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -163,6 +164,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.IFluidHandleContext;
 	}
 
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.dataStoreContext.idCompressor;
+	}
+
 	public get IFluidHandleContext() {
 		return this;
 	}
@@ -183,7 +188,6 @@ export class FluidDataStoreRuntime
 	}
 
 	private readonly contexts = new Map<string, IChannelContext>();
-	private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 
 	private readonly deferredAttached = new Deferred<void>();
@@ -201,7 +205,7 @@ export class FluidDataStoreRuntime
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -273,7 +277,7 @@ export class FluidDataStoreRuntime
 					return;
 				}
 
-				let channelContext: IChannelContext;
+				let channelContext: RemoteChannelContext | RehydratedLocalChannelContext;
 				// If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
@@ -297,12 +301,9 @@ export class FluidDataStoreRuntime
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
 					// that it can be make it visible later with the data store.
 					if (dataStoreContext.attachState !== AttachState.Detached) {
-						(channelContext as LocalChannelContextBase).makeVisible();
+						channelContext.makeVisible();
 					} else {
-						this.localChannelContextQueue.set(
-							path,
-							channelContext as LocalChannelContextBase,
-						);
+						this.localChannelContextQueue.set(path, channelContext);
 					}
 				} else {
 					channelContext = new RemoteChannelContext(
@@ -323,11 +324,8 @@ export class FluidDataStoreRuntime
 						}),
 					);
 				}
-				const deferred = new Deferred<IChannelContext>();
-				deferred.resolve(channelContext);
 
 				this.contexts.set(path, channelContext);
-				this.contextsDeferred.set(path, deferred);
 			});
 		}
 
@@ -396,11 +394,10 @@ export class FluidDataStoreRuntime
 			}
 
 			// Check for a data type reference first
-			if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+			const context = this.contexts.get(id);
+			if (context !== undefined && parser.isLeaf(1)) {
 				try {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const value = await this.contextsDeferred.get(id)!.promise;
-					const channel = await value.getChannel();
+					const channel = await context.getChannel();
 
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
@@ -423,18 +420,12 @@ export class FluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
-		// TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-		// we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-		// it doesn't exist
-		if (!this.contextsDeferred.has(id)) {
-			this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+		const context = this.contexts.get(id);
+		if (context === undefined) {
+			throw new LoggingError("Channel does not exist");
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const context = await this.contextsDeferred.get(id)!.promise;
-		const channel = await context.getChannel();
-
-		return channel;
+		return context.getChannel();
 	}
 
 	public createChannel(id: string = uuid(), type: string): IChannel {
@@ -461,19 +452,9 @@ export class FluidDataStoreRuntime
 		);
 		this.contexts.set(id, context);
 
-		if (this.contextsDeferred.has(id)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.contextsDeferred.get(id)!.resolve(context);
-		} else {
-			const deferred = new Deferred<IChannelContext>();
-			deferred.resolve(context);
-			this.contextsDeferred.set(id, deferred);
-		}
-
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 
-		assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
 		return context.channel;
 	}
 
@@ -485,7 +466,7 @@ export class FluidDataStoreRuntime
 	public bindChannel(channel: IChannel): void {
 		assert(
 			this.notBoundedChannelContextSet.has(channel.id),
-			0x17b /* "Channel to be binded should be in not bounded set" */,
+			0x17b /* "Channel to be bound should be in not bounded set" */,
 		);
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
@@ -637,14 +618,6 @@ export class FluidDataStoreRuntime
 						);
 
 						this.contexts.set(id, remoteChannelContext);
-						if (this.contextsDeferred.has(id)) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
-						} else {
-							const deferred = new Deferred<IChannelContext>();
-							deferred.resolve(remoteChannelContext);
-							this.contextsDeferred.set(id, deferred);
-						}
 					}
 					break;
 				}

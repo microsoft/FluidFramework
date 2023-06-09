@@ -37,10 +37,12 @@ export function generateRandomChange(
 		case Operation.Insert:
 			return builder.insert(
 				random.integer(0, maxIndex),
-				singleTextCursor({
-					type: jsonNumber.name,
-					value: random.integer(0, Number.MAX_SAFE_INTEGER),
-				}),
+				[
+					singleTextCursor({
+						type: jsonNumber.name,
+						value: random.integer(0, Number.MAX_SAFE_INTEGER),
+					}),
+				],
 				brand(0),
 			);
 		case Operation.Delete:

@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	isFluidError,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -56,7 +57,7 @@ const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
  */
 export class RunningSummarizer implements IDisposable {
 	public static async start(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
@@ -149,7 +150,7 @@ export class RunningSummarizer implements IDisposable {
 	private readonly runtimeListener;
 
 	private constructor(
-		baseLogger: ITelemetryLogger,
+		baseLogger: ITelemetryLoggerExt,
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (

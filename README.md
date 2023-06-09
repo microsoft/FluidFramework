@@ -42,22 +42,19 @@ package for more information including tools to convert between version schemes.
 
 The core code for both the Fluid client packages _and_ the reference ordering service is contained within this repo.
 
-The repo structure is somewhat unique because it contains five monorepos as well as several standalone packages. The
-monorepos are managed using [Lerna](https://lerna.js.org/) and are versioned separately from one another, but internally
-all packages in a monorepo are versioned together. Outside the monorepos there are plenty of packages which are
-versioned independently.
+The repo structure is somewhat unique because it contains several [pnpm workspaces](https://pnpm.io/workspaces):
+some for individual packages and some for larger collections which we call "release groups".
+The workspaces are versioned separately from one another, but internally all packages in a workspaces are versioned together.
 
-These monorepos (which also serve as "release groups") do not necessary align with package namespaces,
-and also don't necessary correspond to a single directory of this repo.
+These workspaces do not align with package namespaces, and also don't always correspond to a single directory of this repo.
 
-Here's the list of Lerna managed release groups:
+Here's the list of release group workspaces:
 
--   core (previously known as "Fluid Framework Client" or "Client") (Rooted in [./](./). Configured by [./lerna.json](./lerna.json))
+-   client (previously known as "Fluid Framework Client" or "core") (Rooted in [./](./). Configured by [./pnpm-workspace.yaml](./pnpm-workspace.yaml))
     -   [./packages](./packages) (Published in the `@fluidframework/` namespace, but some in `@fluid-tools` and unpublished packages in `@fluid-internal/`)
     -   [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
--   azure (Rooted in [./azure](./azure). Configured by [azure/lerna.json](azure/lerna.json))
-    -   [Packages](./azure/packages) (Published in the `@fluidframework/` namespace)
+    -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
 -   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
 -   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
@@ -82,16 +79,44 @@ Dependencies between packages in various layers of the system are enforced via a
 [layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
 [PACKAGES.md](./PACKAGES.md).
 
-## Building
+## Setup and Building
 
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and the version of
-[Node.js](https://nodejs.org/) noted in the [.nvmrc file](https://raw.githubusercontent.com/microsoft/FluidFramework/main/.nvmrc).
+Install the required tools:
 
-Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
-[MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js, in case you find yourself needing to install different
-versions of Node.js side-by-side.
+-   [Git](https://git-scm.com/downloads).
+-   [Node.js](https://nodejs.org/): install the version noted in in the [.nvmrc file](./.nvmrc).
+    See [NodeJs Installation](#NodeJs-Installation) for details.
 
-Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
+Clone a copy of the repo and change to the repo root directory:
+
+```shell
+git clone https://github.com/microsoft/FluidFramework.git
+cd FluidFramework
+```
+
+Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.md):
+
+```shell
+corepack enable
+```
+
+Run the following to build the client packages:
+
+```shell
+pnpm install
+npm run build:fast
+```
+
+See also: [Contributing](#Contributing)
+
+## NodeJs Installation
+
+We recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
+[MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js.
+This ensures you stay at the correct version while allowing other uses of NodeJS to use the (possibly different) versions they need side-by-side.
+
+Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`.
+Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
 
 ### On Windows
 
@@ -110,23 +135,6 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
     - You can install these by running `xcode-select --install` from a command line.
-
-Clone a copy of the repo and change to the repo root directory:
-
-```shell
-git clone https://github.com/microsoft/FluidFramework.git
-cd FluidFramework
-```
-
-Run the following to build the client packages:
-
-```shell
-corepack enable
-pnpm install
-npm run build:fast
-```
-
-See also: [Contributing](#Contributing)
 
 ### Other Build Requirements
 
@@ -170,7 +178,7 @@ npm run test:coverage
 ### Mimic the official CI build
 
 Our CI pipelines run on Linux machines, and the npm scripts all have the `ci` prefix.
-To replicate the test steps from the CI pipeline locally, run the following commands for the packages or Lerna monorepos:
+To replicate the test steps from the CI pipeline locally, run the following commands for the packages or pnpm workspaces:
 
 | Run      | Non-Windows                | Windows                                             |
 | -------- | -------------------------- | --------------------------------------------------- |
@@ -223,7 +231,7 @@ Right now, this is implemented on a per-package basis, with a [shared base confi
     `npm run format:changed` from the root of the repo to format only files changed since the main branch.
     If your change is for the next branch instead, you can run `npm run format:changed:next`.
 -   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
-    script argument: `fluid-build -s format` or `npm run build:fast -- -s format`
+    script argument: `fluid-build -t format` or `npm run build:fast -- -t format`
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 

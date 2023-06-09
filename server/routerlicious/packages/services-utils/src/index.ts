@@ -16,7 +16,8 @@ export {
 	respondWithNetworkError,
 	validateTokenClaims,
 	verifyStorageToken,
-	validateTokenRevocationClaims,
+	validateTokenScopeClaims,
+	verifyToken,
 } from "./auth";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
@@ -40,3 +41,4 @@ export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./thr
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";
+export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";

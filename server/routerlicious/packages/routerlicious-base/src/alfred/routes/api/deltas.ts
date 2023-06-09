@@ -4,6 +4,7 @@
  */
 
 import {
+	ICache,
 	IDeltaService,
 	ITenantManager,
 	IThrottler,
@@ -14,6 +15,7 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
+	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -29,6 +31,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
+	jwtTokenCache?: ICache,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -51,6 +54,20 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
+
+	const defaultTokenValidationOptions = {
+		requireDocumentId: true,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: enableJwtTokenCache,
+		tokenCache: jwtTokenCache,
+	};
+
 	function stringToSequenceNumber(value: any): number {
 		if (typeof value !== "string") {
 			return undefined;
@@ -66,7 +83,7 @@ export function create(
 	router.get(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
@@ -92,7 +109,7 @@ export function create(
 	router.get(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
@@ -124,7 +141,7 @@ export function create(
 			winston,
 			getDeltasTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);

@@ -58,7 +58,7 @@ export interface IContext {
 	/**
 	 * Updates the checkpoint
 	 */
-	checkpoint(queuedMessage: IQueuedMessage): void;
+	checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean): void;
 
 	/**
 	 * Closes the context with an error.

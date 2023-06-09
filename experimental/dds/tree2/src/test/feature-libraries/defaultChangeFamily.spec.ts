@@ -17,7 +17,6 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 	ReadonlyRepairDataStore,
-	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
@@ -33,6 +32,7 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
+	defaultIntoDelta,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
@@ -84,21 +84,15 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
-		assert(
-			revision === currentRevision,
-			"The repair data store should only ask for the current forest state",
-		);
-		return forest;
-	});
+	const repairStore = new ForestRepairDataStore(forest, defaultIntoDelta);
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
+			repairStore.capture(change, currentRevision);
 			const delta = defaultChangeFamily.intoDelta(change);
-			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();
@@ -227,7 +221,7 @@ describe("DefaultEditBuilder", () => {
 	describe("Value Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
-			builder.valueField(undefined, rootKey).set(singleTextCursor(nodeX));
+			builder.valueField({ parent: undefined, field: rootKey }).set(singleTextCursor(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -247,7 +241,7 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.valueField(root_foo2, fooKey).set(singleTextCursor(nodeX));
+			builder.valueField({ parent: root_foo2, field: fooKey }).set(singleTextCursor(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -270,7 +264,9 @@ describe("DefaultEditBuilder", () => {
 	describe("Optional Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
-			builder.optionalField(undefined, rootKey).set(singleTextCursor(nodeX), false);
+			builder
+				.optionalField({ parent: undefined, field: rootKey })
+				.set(singleTextCursor(nodeX), false);
 			expectForest(forest, nodeX);
 		});
 
@@ -290,7 +286,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.optionalField(root_foo2, fooKey).set(singleTextCursor(nodeX), false);
+			builder
+				.optionalField({ parent: root_foo2, field: fooKey })
+				.set(singleTextCursor(nodeX), false);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -311,7 +309,9 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can set an empty root field", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.optionalField(undefined, rootKey).set(singleTextCursor(nodeX), true);
+			builder
+				.optionalField({ parent: undefined, field: rootKey })
+				.set(singleTextCursor(nodeX), true);
 			expectForest(forest, nodeX);
 		});
 
@@ -326,7 +326,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.optionalField(root_foo2, fooKey).set(singleTextCursor(nodeX), true);
+			builder
+				.optionalField({ parent: root_foo2, field: fooKey })
+				.set(singleTextCursor(nodeX), true);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -344,7 +346,9 @@ describe("DefaultEditBuilder", () => {
 	describe("Sequence Field Edits", () => {
 		it("Can insert a root node", () => {
 			const { builder, forest } = initializeEditableForest();
-			builder.sequenceField(undefined, rootKey).insert(0, singleTextCursor(nodeX));
+			builder
+				.sequenceField({ parent: undefined, field: rootKey })
+				.insert(0, singleTextCursor(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -370,7 +374,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.sequenceField(root_foo2, fooKey).insert(5, singleTextCursor(nodeX));
+			builder
+				.sequenceField({ parent: root_foo2, field: fooKey })
+				.insert(5, singleTextCursor(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -398,7 +404,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can delete a root node", () => {
 			const { builder, forest } = initializeEditableForest(nodeX);
-			builder.sequenceField(undefined, rootKey).delete(0, 1);
+			builder.sequenceField({ parent: undefined, field: rootKey }).delete(0, 1);
 			expectForest(forest, []);
 		});
 
@@ -426,7 +432,7 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.sequenceField(root_foo2, fooKey).delete(5, 2);
+			builder.sequenceField({ parent: root_foo2, field: fooKey }).delete(5, 2);
 			const expected = {
 				type: jsonObject.name,
 				fields: {

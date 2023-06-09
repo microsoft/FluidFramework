@@ -8,16 +8,18 @@ import * as api from "@fluidframework/driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	TokenFetcher,
+} from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
@@ -25,6 +27,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -56,7 +59,7 @@ export class DocumentService implements api.IDocumentService {
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
 		private storageUrl: string,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		protected tokenProvider: ITokenProvider,
 		protected tenantId: string,
 		protected documentId: string,
@@ -67,6 +70,9 @@ export class DocumentService implements api.IDocumentService {
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
+		private storageRestWrapper: RouterliciousStorageRestWrapper,
+		private readonly storageTokenFetcher: TokenFetcher,
+		private readonly ordererTokenFetcher: TokenFetcher,
 	) {}
 
 	private documentStorageService: DocumentStorageService | undefined;
@@ -97,21 +103,22 @@ export class DocumentService implements api.IDocumentService {
 				!this.noCacheStorageManager ||
 				shouldUpdateDiscoveredSessionInfo
 			) {
-				const rateLimiter = new RateLimiter(
-					this.driverPolicies.maxConcurrentStorageRequests,
-				);
-				const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
-					this.tenantId,
-					this.documentId,
-					this.tokenProvider,
-					this.logger,
-					rateLimiter,
-					this.driverPolicies.enableRestLess,
-					this.storageUrl,
-				);
-				const historian = new Historian(true, false, storageRestWrapper);
+				if (shouldUpdateDiscoveredSessionInfo) {
+					const rateLimiter = new RateLimiter(
+						this.driverPolicies.maxConcurrentStorageRequests,
+					);
+					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+						this.tenantId,
+						this.storageTokenFetcher,
+						this.logger,
+						rateLimiter,
+						this.driverPolicies.enableRestLess,
+						this.storageUrl,
+					);
+				}
+				const historian = new Historian(true, false, this.storageRestWrapper);
 				this.storageManager = new GitManager(historian);
-				const noCacheHistorian = new Historian(true, true, storageRestWrapper);
+				const noCacheHistorian = new Historian(true, true, this.storageRestWrapper);
 				this.noCacheStorageManager = new GitManager(noCacheHistorian);
 			}
 
@@ -153,9 +160,7 @@ export class DocumentService implements api.IDocumentService {
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
 				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-					this.tenantId,
-					this.documentId,
-					this.tokenProvider,
+					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,
 					this.driverPolicies.enableRestLess,

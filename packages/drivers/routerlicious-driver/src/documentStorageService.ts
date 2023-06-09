@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -14,13 +14,13 @@ import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 import { GitManager } from "./gitManager";
 import { ISnapshotTreeVersion } from "./definitions";
+import { INormalizedWholeSummary } from "./contracts";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;
@@ -32,7 +32,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private static loadInternalDocumentStorageService(
 		id: string,
 		manager: GitManager,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
@@ -76,7 +76,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	constructor(
 		public readonly id: string,
 		public manager: GitManager,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

@@ -25,6 +25,7 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
@@ -118,11 +119,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"can generate events when unreferenced data store is accessed after it's inactive",
-			[
-				{ eventName: changedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: loadedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: revivedEvent, timeout: inactiveTimeoutMs },
-			],
+			[{ eventName: changedEvent }, { eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
 					...testContainerConfig,
@@ -159,17 +156,18 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: changedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 						},
 						{
 							eventName: loadedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 						},
 					],
 					"changed and loaded events not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 
 				// Make a change again and validate that we don't get another changedEvent as we only log it
@@ -186,22 +184,23 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: revivedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
-							fromId: defaultDataStore._root.handle.absolutePath,
+							fromId: {
+								value: defaultDataStore._root.handle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);
 
 		itExpects(
 			"can generate events when unreferenced attachment blob is accessed after it's inactive",
-			[
-				{ eventName: loadedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: revivedEvent, timeout: inactiveTimeoutMs },
-			],
+			[{ eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
 					...testContainerConfig,
@@ -250,10 +249,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: loadedEvent,
 							timeout: inactiveTimeoutMs,
-							id: summarizerBlobHandle.absolutePath,
+							id: {
+								value: summarizerBlobHandle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"updated event not generated as expected for attachment blobs",
+					true /* inlineDetailsProp */,
 				);
 
 				// Add the handle back, summarize and validate that we get the revivedEvent.
@@ -265,10 +268,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: revivedEvent,
 							timeout: inactiveTimeoutMs,
-							id: summarizerBlobHandle.absolutePath,
+							id: {
+								value: summarizerBlobHandle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"revived event not generated as expected for attachment blobs",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);
@@ -313,16 +320,21 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				// Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
 				await waitForInactiveTimeout();
 
-				// Load a non-summarizer container from the above summary that uses the mock logger.
+				// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
+				// be in "write" mode for GC to initialize unreferenced nodes from summary.
 				const container2 = await provider.loadTestContainer(
 					{
-						// AB#3982 track work to removing this exception using simulateReadConnectionUsingDelay
-						simulateReadConnectionUsingDelay: false,
 						...testContainerConfig,
 						loaderProps: { logger: mockLogger },
 					},
 					{ [LoaderHeader.version]: summaryVersion1 },
 				);
+				const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
+					container2,
+					"/",
+				);
+				defaultDataStoreContainer2._root.set("mode", "write");
+				await waitForContainerWriteModeConnectionWrite(container2);
 
 				// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
 				await container2.request({ url });
@@ -332,10 +344,11 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 						},
 					],
 					"loaded event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);
@@ -353,7 +366,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Revived",
-					timeout: inactiveTimeoutMs,
 				},
 			],
 			async () => {

@@ -15,6 +15,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.6.0.0
+
+## 2.0.0-internal.6.0.0 Upcoming changes
+
+## 2.0.0-internal.6.0.0 Breaking changes
+
+-   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
+
+### FluidDataStoreRuntime.getChannel throws for channels that do not exist
+
+Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
+
 # 2.0.0-internal.5.0.0
 
 ## 2.0.0-internal.5.0.0 Upcoming changes
@@ -37,6 +49,10 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [ContainerRuntime.closeFn no longer disposes](#containerruntimeclosefn-no-longer-disposes)
 -   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
 -   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
+-   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
+-   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
+-   [IntervalCollection removed](#IntervalCollection-removed)
+-   [Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt](#internal-itelemetrylogger-interface-upgraded-to-itelemetryloggerext)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -120,6 +136,53 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 -   localReferencePositionToPosition
 -   getPosition
 -   getContainingSegment
+
+### PureDataObject.getFluidObjectFromDirectory removed
+
+`PureDataObject.getFluidObjectFromDirectory` was deprecated in a previous release and has been removed.
+
+### IProvideContainerRuntime and IContainerRuntime member removed
+
+`IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+
+### IntervalCollection removed
+
+The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt
+
+`ITelemetryLoggerExt` is a replacement for `ITelemetryLogger`, which adds additional types that can be logged as property values.
+This interface is not expected to be used outside the codebase, and all Logger implementations already use the new interface.
+In this release, the new type is used throughout the codebase to allow richer instrumentation.
+
+# 2.0.0-internal.4.4.0
+
+## 2.0.0-internal.4.4.0 Upcoming changes
+
+-   [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated)
+
+### IntervalCollection public export deprecated
+
+`IntervalCollection` has been deprecated in favor of an interface (`IIntervalCollection`) containing its public API.
+Several types transitively referenced by `IntervalCollection` implementation details have also been deprecated: `CompressedSerializedInterval`, `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`.
+
+# 2.0.0-internal.4.3.0
+
+## 2.0.0-internal.4.3.0 Breaking changes
+
+-   [bigBlobs request handling removed from DataObject](#bigBlobs-request-handling-removed-from-DataObject)
+
+### bigBlobs request handling removed from DataObject
+
+Previously, `DataObject` would perform undocumented special handling for requests to it starting with `bigBlobs/` to pull objects out of its `root` directory. This special handling has been removed.
+
+## 2.0.0-internal.4.3.0 Upcoming changes
+
+-   [PureDataObject.getFluidObjectFromDirectory deprecated](#PureDataObject.getFluidObjectFromDirectory-deprecated)
+
+### PureDataObject.getFluidObjectFromDirectory deprecated
+
+`PureDataObject.getFluidObjectFromDirectory` has been deprecated and will be removed in an upcoming release. Instead prefer to interface directly with the directory and handles.
 
 # 2.0.0-internal.4.1.0
 

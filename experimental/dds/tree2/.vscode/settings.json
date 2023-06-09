@@ -8,8 +8,8 @@
 	// "mochaExplorer.pruneFiles": true,
 	"mochaExplorer.require": [
 		"node_modules/@fluidframework/mocha-test-setup",
-		"source-map-support/register"
+		"source-map-support/register",
 	],
 	"mochaExplorer.configFile": ".mocharc.js",
-	"mochaExplorer.timeout": 999999
+	"mochaExplorer.timeout": 999999,
 }

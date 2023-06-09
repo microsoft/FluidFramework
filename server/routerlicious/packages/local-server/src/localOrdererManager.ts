@@ -6,6 +6,8 @@
 import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
+	CheckpointService,
+	ICheckpointRepository,
 	IDatabaseManager,
 	IDocumentRepository,
 	IDocumentStorage,
@@ -13,6 +15,7 @@ import {
 	IOrderer,
 	IOrdererManager,
 	IServiceConfiguration,
+	MongoCheckpointRepository,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
 
@@ -30,6 +33,7 @@ export class LocalOrdererManager implements IOrdererManager {
 		private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
 		private readonly pubsub?: IPubSub,
 		private readonly documentRepository?: IDocumentRepository,
+		private readonly checkpointRepository?: ICheckpointRepository,
 	) {}
 
 	/**
@@ -75,6 +79,30 @@ export class LocalOrdererManager implements IOrdererManager {
 		const documentRepository =
 			this.documentRepository ??
 			new MongoDocumentRepository(await this.databaseManager.getDocumentCollection());
+		const deliCheckpointRepository =
+			this.checkpointRepository ??
+			new MongoCheckpointRepository(
+				await this.databaseManager.getCheckpointCollection(),
+				"deli",
+			);
+
+		const scribeCheckpointRepository =
+			this.checkpointRepository ??
+			new MongoCheckpointRepository(
+				await this.databaseManager.getCheckpointCollection(),
+				"scribe",
+			);
+
+		const deliCheckpointService = new CheckpointService(
+			deliCheckpointRepository,
+			documentRepository,
+			false,
+		);
+		const scribeCheckpointService = new CheckpointService(
+			scribeCheckpointRepository,
+			documentRepository,
+			false,
+		);
 
 		const orderer = await LocalOrderer.load(
 			this.storage,
@@ -83,6 +111,10 @@ export class LocalOrdererManager implements IOrdererManager {
 			documentId,
 			this.logger,
 			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			gitManager,
 			undefined /* ILocalOrdererSetup */,
 			this.pubsub,

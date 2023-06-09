@@ -353,7 +353,10 @@ export async function setUpLocalServerTestSharedTree(
 
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
-			configProvider: configProvider({ 'Fluid.Container.enableOfflineLoad': true }),
+			configProvider: configProvider({
+				'Fluid.Container.enableOfflineLoad': true,
+				'Fluid.ContainerRuntime.DisablePartialFlush': true,
+			}),
 		});
 	}
 

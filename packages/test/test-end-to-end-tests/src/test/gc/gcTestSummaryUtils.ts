@@ -16,6 +16,7 @@ import {
 	IGarbageCollectionState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/dist/gc";
+import { IContainer } from "@fluidframework/container-definitions";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.
@@ -92,3 +93,17 @@ export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[
 	assert(sweepBlob.type === SummaryType.Blob, "Sweep state is not a blob");
 	return JSON.parse(sweepBlob.content as string) as string[];
 }
+
+export const waitForContainerWriteModeConnectionWrite = async (container: IContainer) => {
+	const resolveIfActive = (res: () => void) => {
+		if (container.deltaManager.active) {
+			res();
+		}
+	};
+	if (!container.deltaManager.active) {
+		await new Promise<void>((resolve, reject) => {
+			container.on("connected", () => resolveIfActive(resolve));
+			container.once("closed", (error) => reject(error));
+		});
+	}
+};

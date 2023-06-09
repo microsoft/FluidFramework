@@ -17,7 +17,7 @@ import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IUsageError } from '@fluidframework/container-definitions';
@@ -122,7 +122,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
+    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
 }
 
 // @public

@@ -1,5 +1,0 @@
-{
-	"tags": ["id-compressor"],
-	"exports": ["index"],
-	"imports": ["util"]
-}

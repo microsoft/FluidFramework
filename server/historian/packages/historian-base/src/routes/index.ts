@@ -4,7 +4,11 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";
@@ -39,6 +43,7 @@ export interface IRoutes {
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
@@ -50,6 +55,7 @@ export function create(
 			blobs: blobs.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -58,6 +64,7 @@ export function create(
 			commits: commits.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -66,6 +73,7 @@ export function create(
 			refs: refs.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -74,6 +82,7 @@ export function create(
 			tags: tags.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -82,6 +91,7 @@ export function create(
 			trees: trees.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -92,6 +102,7 @@ export function create(
 			commits: repositoryCommits.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -100,6 +111,7 @@ export function create(
 			contents: contents.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -108,6 +120,7 @@ export function create(
 			headers: headers.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
@@ -117,6 +130,7 @@ export function create(
 		summaries: summaries.create(
 			config,
 			tenantService,
+			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
 			cache,

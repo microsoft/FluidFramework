@@ -28,7 +28,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -67,6 +67,7 @@ const testContainerConfig: ITestContainerConfig = {
 				},
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	},
 	loaderProps: {
 		configProvider: configProvider({
@@ -259,6 +260,83 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
 		assert.strictEqual(directory2.get(testKey), testValue);
+	});
+
+	it("resends compressed Ids and correctly assumes session", async function () {
+		let mapCompressedId;
+		let cellCompressedId;
+		let directoryCompressedId;
+
+		let mapDecompressedId;
+		let cellDecompressedId;
+		let directoryDecompressedId;
+
+		let sessionId;
+
+		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+			const map = await d.getSharedObject<SharedMap>(mapId);
+			assert((map as any).runtime.idCompressor !== undefined);
+			mapCompressedId = (map as any).runtime.idCompressor.generateCompressedId();
+			mapDecompressedId = (map as any).runtime.idCompressor.decompress(mapCompressedId);
+			map.set(mapDecompressedId, testValue);
+			const cell = await d.getSharedObject<SharedCell>(cellId);
+			assert((cell as any).runtime.idCompressor !== undefined);
+			cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
+			cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
+			cell.set(cellDecompressedId);
+			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+			assert((directory as any).runtime.idCompressor !== undefined);
+			directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
+			directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
+				directoryCompressedId,
+			);
+			directory.set(directoryDecompressedId, testValue);
+
+			// All will have the same sessionId, it doesn't matter which DDS I use
+			sessionId = (map as any).runtime.idCompressor.localSessionId;
+		});
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+		assert((map2 as any).runtime.idCompressor !== undefined);
+		assert((cell2 as any).runtime.idCompressor !== undefined);
+		assert((directory2 as any).runtime.idCompressor !== undefined);
+		await waitForContainerConnection(container2, true);
+		await provider.ensureSynchronized();
+
+		// Loaded container should reassume the state of the stashed compressor - so same sessionId as before
+		const runtimeIdCompressor = (map2 as any).runtime.dataStoreContext.idCompressor;
+		const dataStoreIdCompressor = (map2 as any).runtime.idCompressor;
+		assert.strictEqual(
+			runtimeIdCompressor.localSessionId,
+			dataStoreIdCompressor.localSessionId,
+		);
+		assert.strictEqual(sessionId, (map2 as any).runtime.idCompressor.localSessionId);
+		assert.strictEqual(sessionId, (cell2 as any).runtime.idCompressor.localSessionId);
+		assert.strictEqual(sessionId, (directory2 as any).runtime.idCompressor.localSessionId);
+		assert.strictEqual(
+			(map2 as any).runtime.idCompressor.recompress(mapDecompressedId),
+			mapCompressedId,
+		);
+		assert.strictEqual(
+			(cell2 as any).runtime.idCompressor.recompress(cellDecompressedId),
+			cellCompressedId,
+		);
+		assert.strictEqual(
+			(directory2 as any).runtime.idCompressor.recompress(directoryDecompressedId),
+			directoryCompressedId,
+		);
+
+		assert.strictEqual(map1.get(mapDecompressedId), testValue);
+		assert.strictEqual(map2.get(mapDecompressedId), testValue);
+		assert.strictEqual(cell1.get(), cellDecompressedId);
+		assert.strictEqual(cell2.get(), cellDecompressedId);
+		assert.strictEqual(directory1.get(directoryDecompressedId), testValue);
+		assert.strictEqual(directory2.get(directoryDecompressedId), testValue);
 	});
 
 	it("connects in write mode and resends op when loaded with no delta connection", async function () {
@@ -1044,6 +1122,30 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
+	it("load offline with blob redirect table", async function () {
+		// upload blob offline so an entry is added to redirect table
+		const container = await loadOffline(provider, { url });
+		const dataStore = await requestFluidObject<ITestFluidObject>(
+			container.container,
+			"default",
+		);
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		map.set("blob handle", handle);
+
+		container.connect();
+
+		// wait for summary with redirect table
+		await provider.ensureSynchronized();
+		await waitForSummary();
+
+		// should be able to load entirely offline
+		const stashBlob = await getPendingOps(provider, true);
+		await loadOffline(provider, { url }, stashBlob);
+	});
+
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
@@ -1271,6 +1373,87 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
+	});
+
+	it("get pending state without close resends ops", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		// pause outgoing ops so we can detect dropped stashed changes
+		await container.deltaManager.outbound.pause();
+
+		let pendingState;
+		// always delete stash blob on "connected" event
+		container.on("connected", (clientId: string) => {
+			pendingState = container.getPendingLocalState();
+			// the pending data in the stash blob may not have changed, but the clientId should match our new
+			// clientId, which will now be used to attempt to resubmit pending changes
+			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		});
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		for (let i = 5; i--; ) {
+			map.set(`${i}`, `${i}`);
+			container.disconnect();
+			container.connect();
+			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+		}
+		container.close();
+		// no pending changes went through
+		for (let i = 5; i--; ) {
+			assert.strictEqual(map1.get(`${i}`), undefined);
+		}
+
+		// because the event listener was always refreshing pendingState on "connected", the stash blob
+		// should be safe to use
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await provider.ensureSynchronized();
+		for (let i = 5; i--; ) {
+			// local value is what we expect
+			assert.strictEqual(map2.get(`${i}`), `${i}`);
+			// remote value is what we expect
+			assert.strictEqual(map1.get(`${i}`), `${i}`);
+		}
+	});
+
+	it("get pending state without close doesn't duplicate ops", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		let pendingState;
+		// always delete stash blob on "connected" event
+		container.on("connected", (clientId: string) => {
+			pendingState = container.getPendingLocalState();
+			// the pending data in the stash blob may not have changed, but the clientId should match our new
+			// clientId, which will now be used to attempt to resubmit pending changes
+			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		});
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
+		for (let i = 5; i--; ) {
+			counter.increment(1);
+			container.disconnect();
+			container.connect();
+			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+		}
+		container.close();
+
+		// because the event listener was always refreshing pendingState on "connected", the stash blob
+		// should be safe to use
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		await provider.ensureSynchronized();
+		// local value is what we expect
+		assert.strictEqual(counter2.value, 5);
+		// remote value is what we expect
+		assert.strictEqual(counter1.value, 5);
 	});
 });
 

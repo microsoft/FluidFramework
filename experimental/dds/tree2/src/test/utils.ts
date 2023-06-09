@@ -31,8 +31,17 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	createSharedTreeView,
+} from "../shared-tree";
+import {
+	defaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
+	defaultSchemaPolicy,
 	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -63,9 +72,14 @@ import {
 	ITreeCursorSynchronous,
 	FieldKey,
 	IRepairDataStoreProvider,
+	UndoRedoManager,
+	ChangeFamilyEditor,
+	ChangeFamily,
+	InMemoryStoredSchemaRepository,
 } from "../core";
-import { brand, makeArray } from "../util";
+import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
+import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities
 
@@ -252,10 +266,7 @@ export class TestTreeProvider {
 		const container =
 			this.trees.length === 0
 				? await this.provider.makeTestContainer(testContainerConfig)
-				: await this.provider.loadTestContainer({
-						// TODO: remove this once SharedTree has full reconnect logic implemented (AB#4023)
-						simulateReadConnectionUsingDelay: false,
-				  });
+				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
@@ -493,12 +504,78 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
+	return makeTreeFromCursor(cursors, jsonSchema);
+}
+
+/**
+ * @remarks Remove this once schematize can do the work.
+ */
+export function makeTreeFromCursor(
+	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
+	schemaData: SchemaData,
+): ISharedTreeView {
+	const schemaPolicy = defaultSchemaPolicy;
+	const tree: ISharedTreeView = createSharedTreeView();
+	// TODO: use ISharedTreeView.schematize once it supports cursors
+	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
+	const field = tree.editor.sequenceField({
+		parent: undefined,
+		field: rootFieldKeySymbol,
+	});
+	if (!Array.isArray(cursor) || cursor.length > 0) {
+		field.insert(0, cursor);
+	}
+	return tree;
+}
+
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	return jsonable;
+}
+
+/**
+ * Assumes `tree` is in the json domain and returns its content as a json compatible object.
+ */
+export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
+	const readCursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, readCursor);
+	const copy = mapCursorField(readCursor, cursorToJsonObject);
+	readCursor.free();
+	return copy;
+}
+
+/**
+ * Helper function to insert node at a given index.
+ *
+ * @param tree - The tree on which to perform the insert.
+ * @param index - The index in the root field at which to insert.
+ * @param value - The value of the inserted node.
+ */
+export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	field.insert(index, nodes);
+}
+
+export function remove(tree: ISharedTreeView, index: number, count: number): void {
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	field.delete(index, count);
+}
+
+export function expectJsonTree(
+	actual: ISharedTreeView | ISharedTreeView[],
+	expected: JsonCompatible[],
+): void {
+	const trees = Array.isArray(actual) ? actual : [actual];
+	for (const tree of trees) {
+		const roots = toJsonTree(tree);
+		assert.deepEqual(roots, expected);
+	}
 }
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -525,14 +602,17 @@ const testSchema: SchemaData = {
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state: JsonableTree,
+	state?: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-	// Apply an edit to the tree which inserts a node with a value
-	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-	field.insert(0, writeCursor);
+
+	if (state) {
+		// Apply an edit to the tree which inserts a node with a value
+		const writeCursor = singleTextCursor(state);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		field.insert(0, writeCursor);
+	}
 }
 
 export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
@@ -544,10 +624,10 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 	}
 }
 
-export class MockRepairDataStore implements RepairDataStore {
+export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
 
-	public capture(change: Delta.Root, revision: RevisionTag): void {
+	public capture(change: TChange, revision: RevisionTag): void {
 		const existing = this.capturedData.get(revision);
 
 		if (existing === undefined) {
@@ -564,26 +644,36 @@ export class MockRepairDataStore implements RepairDataStore {
 		index: number,
 		count: number,
 	): ITreeCursorSynchronous[] {
-		throw new Error("Method not implemented.");
+		return makeArray(count, () => singleTextCursor({ type: brand("MockRevivedNode") }));
 	}
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
-		throw new Error("Method not implemented.");
+		return brand("MockRevivedValue");
 	}
 }
 
-export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+export const mockIntoDelta = (delta: Delta.Root) => delta;
+
+export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
 	public freeze(): void {
 		// Noop
 	}
 
-	public createRepairData(): MockRepairDataStore {
+	public applyChange(change: TChange): void {
+		// Noop
+	}
+
+	public createRepairData(): MockRepairDataStore<TChange> {
 		return new MockRepairDataStore();
 	}
 
-	public clone(): IRepairDataStoreProvider {
+	public clone(): IRepairDataStoreProvider<TChange> {
 		return new MockRepairDataStoreProvider();
 	}
+}
+
+export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+	return UndoRedoManager.create(defaultChangeFamily);
 }
 
 /**
@@ -620,4 +710,22 @@ export function makeEncodingTestSuite<TDecoded>(
 			}
 		});
 	}
+}
+
+/**
+ * Creates a change receiver function for passing to an `EditBuilder` which records the changes
+ * applied via that editor and allows them to be queried via a function.
+ * @param _changeFamily - this optional change family allows for type inference of `TChange` for
+ * convenience, but is otherwise unused.
+ * @returns a change receiver function and a function that will return all changes received
+ */
+export function testChangeReceiver<TChange>(
+	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
+): [
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[0],
+	getChanges: () => readonly TChange[],
+] {
+	const changes: TChange[] = [];
+	const changeReceiver = (change: TChange) => changes.push(change);
+	return [changeReceiver, () => [...changes]];
 }

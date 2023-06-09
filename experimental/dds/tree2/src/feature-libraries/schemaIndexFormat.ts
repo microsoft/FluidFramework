@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TUnsafe, Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 // TODO:
 // It is unclear if we would want to use the TypeBox compiler
 // (which generates code at runtime for maximum validation perf).
@@ -15,66 +15,55 @@ import { Static, TUnsafe, Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
-	FieldKindIdentifier,
-	FieldSchema,
+	FieldKindIdentifierSchema,
+	FieldStoredSchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	Named,
 	SchemaData,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
 import { brand, fail } from "../util";
 
 const version = "1.0.0" as const;
 
-/**
- * Create a TypeBox string schema for a branded string type.
- * This only validates that the value is a string,
- * and not that it came from the correct branded type (that information is lost when serialized).
- */
-function brandedString<T extends string>(): TUnsafe<T> {
-	// This could use:
-	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
-	// Since there isn't any useful custom validation to do and
-	// TUnsafe is documented as unsupported in `typebox/compiler`,
-	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
-	return Type.String() as unknown as TUnsafe<T>;
-}
+const FieldSchemaFormatBase = Type.Object({
+	kind: FieldKindIdentifierSchema,
+	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
+});
 
-const FieldKindIdentifier = brandedString<FieldKindIdentifier>();
-const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
-const LocalFieldKey = brandedString<LocalFieldKey>();
-const GlobalFieldKey = brandedString<GlobalFieldKey>();
+const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
 
-const FieldSchemaFormat = Type.Object(
-	{
-		kind: FieldKindIdentifier,
-		types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
-	},
+const NamedLocalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: LocalFieldKeySchema,
+		}),
+	],
 	{ additionalProperties: false },
 );
 
-const NamedLocalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: LocalFieldKey,
-	}),
-]);
-
-const NamedGlobalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: GlobalFieldKey,
-	}),
-]);
+const NamedGlobalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: GlobalFieldKeySchema,
+		}),
+	],
+	{ additionalProperties: false },
+);
 
 const TreeSchemaFormat = Type.Object(
 	{
-		name: TreeSchemaIdentifier,
+		name: TreeSchemaIdentifierSchema,
 		localFields: Type.Array(NamedLocalFieldSchemaFormat),
-		globalFields: Type.Array(GlobalFieldKey),
+		globalFields: Type.Array(GlobalFieldKeySchema),
 		extraLocalFields: FieldSchemaFormat,
 		extraGlobalFields: Type.Boolean(),
 		// TODO: don't use external type here.
@@ -143,7 +132,7 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 	return 0;
 }
 
-function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaFormat {
+function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
 		extraGlobalFields: schema.extraGlobalFields,
@@ -157,7 +146,7 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaF
 	return out;
 }
 
-function encodeField(schema: FieldSchema): FieldSchemaFormat {
+function encodeField(schema: FieldStoredSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
 		kind: schema.kind.identifier,
 	};
@@ -167,7 +156,7 @@ function encodeField(schema: FieldSchema): FieldSchemaFormat {
 	return out;
 }
 
-function encodeNamedField<T>(name: T, schema: FieldSchema): FieldSchemaFormat & Named<T> {
+function encodeNamedField<T>(name: T, schema: FieldStoredSchema): FieldSchemaFormat & Named<T> {
 	return {
 		...encodeField(schema),
 		name,
@@ -175,8 +164,8 @@ function encodeNamedField<T>(name: T, schema: FieldSchema): FieldSchemaFormat & 
 }
 
 function decode(f: Format): SchemaData {
-	const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
-	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
+	const globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema> = new Map();
+	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
 	for (const field of f.globalFieldSchema) {
 		globalFieldSchema.set(field.name, decodeField(field));
 	}
@@ -189,8 +178,8 @@ function decode(f: Format): SchemaData {
 	};
 }
 
-function decodeField(schema: FieldSchemaFormat): FieldSchema {
-	const out: FieldSchema = {
+function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
+	const out: FieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: { identifier: schema.kind },
 		types: schema.types === undefined ? undefined : new Set(schema.types),
@@ -198,13 +187,13 @@ function decodeField(schema: FieldSchemaFormat): FieldSchema {
 	return out;
 }
 
-function decodeTree(schema: TreeSchemaFormat): TreeSchema {
-	const out: TreeSchema = {
+function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
+	const out: TreeStoredSchema = {
 		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: decodeField(schema.extraLocalFields),
 		globalFields: new Set(schema.globalFields),
 		localFields: new Map(
-			schema.localFields.map((field): [LocalFieldKey, FieldSchema] => [
+			schema.localFields.map((field): [LocalFieldKey, FieldStoredSchema] => [
 				brand(field.name),
 				decodeField(field),
 			]),

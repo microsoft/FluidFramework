@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { brand, Brand, NestedSet } from "../../util";
+import { brand, brandedNumberType, Brand, NestedSet } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
@@ -58,6 +58,7 @@ export interface CrossFieldManager<T = unknown> {
  * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
 export interface IdAllocationState {
 	maxId: ChangesetLocalId;

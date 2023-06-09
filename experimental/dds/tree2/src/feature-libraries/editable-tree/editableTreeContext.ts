@@ -11,18 +11,12 @@ import {
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	Value,
-	ITreeCursor,
-	UpPath,
-	FieldKey,
 	SchemaDataAndPolicy,
 	ForestEvents,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
-import { singleMapTreeCursor } from "../mapTreeCursor";
-import { applyFieldTypesFromContext, ContextuallyTypedFieldData } from "../contextuallyTyped";
-import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
+import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 
@@ -63,7 +57,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get root(): EditableField;
 
-	set root(data: ContextuallyTypedFieldData);
+	set root(data: NewFieldContent);
 
 	/**
 	 * Gets or sets the root field of the tree.
@@ -76,7 +70,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get unwrappedRoot(): UnwrappedEditableField;
 
-	set unwrappedRoot(data: ContextuallyTypedFieldData);
+	set unwrappedRoot(data: NewFieldContent);
 
 	/**
 	 * Schema used within this context.
@@ -126,7 +120,7 @@ export class ProxyContext implements EditableTreeContext {
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
-		private readonly editor: DefaultEditBuilder,
+		public readonly editor: DefaultEditBuilder,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -165,9 +159,8 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(true);
 	}
 
-	public set unwrappedRoot(value: ContextuallyTypedFieldData) {
-		// Note that an implementation of `set root` might change in the future,
-		// see a comment in there regarding the `replaceNodes` and `replaceField` semantics.
+	public set unwrappedRoot(value: NewFieldContent) {
+		// Note that an implementation of `set root` might change in the future.
 		// This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
 		// and use `replaceField` only if the root is a sequence field i.e.
 		// it's unwrapped to the field itself.
@@ -179,16 +172,9 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(false);
 	}
 
-	public set root(value: ContextuallyTypedFieldData) {
+	public set root(value: NewFieldContent) {
 		const rootField = this.getRoot(false);
-		const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
-		const cursors = mapTrees.map(singleMapTreeCursor);
-		// `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
-		// `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
-		// We currently use `replaceNodes` here because the low-level editing API
-		// for the desired `replaceField` semantics is not yet avaialble.
-		// TODO: update implementation once the low-level editing API is available.
-		rootField.replaceNodes(0, cursors);
+		rootField.content = value;
 	}
 
 	private getRoot(unwrap: false): EditableField;
@@ -206,64 +192,6 @@ export class ProxyContext implements EditableTreeContext {
 
 	public get schema(): SchemaDataAndPolicy {
 		return this.forest.schema;
-	}
-
-	public setNodeValue(path: UpPath, value: Value): void {
-		this.editor.setValue(path, value);
-	}
-
-	public setValueField(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		newContent: ITreeCursor,
-	): void {
-		const field = this.editor.valueField(path, fieldKey);
-		field.set(newContent);
-	}
-
-	public setOptionalField(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		newContent: ITreeCursor | undefined,
-		wasEmpty: boolean,
-	): void {
-		const field = this.editor.optionalField(path, fieldKey);
-		field.set(newContent, wasEmpty);
-	}
-
-	public insertNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		index: number,
-		newContent: ITreeCursor | ITreeCursor[],
-	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.insert(index, newContent);
-	}
-
-	public deleteNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		index: number,
-		count: number,
-	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.delete(index, count);
-	}
-
-	public replaceNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		index: number,
-		count: number,
-		newContent: ITreeCursor | ITreeCursor[],
-	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.delete(index, count);
-
-		if (!Array.isArray(newContent) || newContent.length > 0) {
-			field.insert(index, newContent);
-		}
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {

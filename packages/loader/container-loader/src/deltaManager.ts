@@ -6,7 +6,6 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLogger,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
@@ -21,11 +20,17 @@ import {
 	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+	normalizeError,
+	logIfFalse,
+	safeRaiseEvent,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -339,7 +344,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
@@ -357,7 +362,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
+			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
+				this.disconnectHandler(reason, error),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
@@ -539,7 +545,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchMissingDeltas(args.reason);
 		}
 
-		this.connectionManager.connect(args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(
@@ -699,9 +705,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string) {
+	private disconnectHandler(reason: string, error?: IAnyDriverError) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason, error);
 	}
 
 	/**
@@ -730,7 +736,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// for example, it's not clear if serverMetadata or timestamp property is a property of message or server state.
 	// We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
 	// reuse.
-	// Also payload goes to telemetry, so no PII, including content!!
+	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage) {
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;

@@ -3,44 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, SchemaDataAndPolicy, TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { MarkedArrayLike, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { assert } from "@fluidframework/common-utils";
+import { TreeSchemaIdentifier, ValueSchema } from "../../core";
 import {
-	FullSchemaPolicy,
+	ContextuallyTypedNodeData,
+	MarkedArrayLike,
+	PrimitiveValue,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
+import {
 	Multiplicity,
-	TypedSchema,
-	FieldViewSchema,
-	ViewSchemaCollection,
+	InternalTypedSchemaTypes,
+	FieldSchema,
+	TreeSchema,
+	AllowedTypes,
 } from "../modular-schema";
-import { defaultSchemaPolicy } from "../defaultSchema";
-import { UntypedField, UntypedTreeCore } from "../untypedTree";
-import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
-import { UntypedSequenceField } from "./partlyTyped";
+import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
+import { contextSymbol, typeSymbol } from "../editable-tree";
+import { AllowOptional, Assume, FlattenKeys, _InlineTrick } from "../../util";
+import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
+import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
 /**
- * Schema aware API for a specific Schema.
- *
- * `Mode` specifies what API to provide.
- * `TMap` provides access to all the schema and is used to look up child schema.
- * `TSchema` specifies which type of node to generate the API for.
+ * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
  * @alpha
  */
-export type TypedTree<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema,
-> = CollectOptions<
-	Mode,
-	TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>,
-	TSchema["typeInfo"]["value"],
-	TSchema["typeInfo"]["name"]
->;
+// Using {} instead of EmptyObject for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
+// Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
+// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
+export type EmptyObject = {};
 
 /**
  * @alpha
  */
-export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
-	undefined extends TypedValue<TSchema>
+export type ValuePropertyFromSchema<TSchema extends ValueSchema> =
+	TSchema extends ValueSchema.Nothing
+		? EmptyObject
+		: undefined extends TypedValue<TSchema>
 		? {
 				[valueSymbol]?: TypedValue<TSchema>;
 		  }
@@ -63,8 +63,7 @@ export const enum ApiMode {
 	/**
 	 * Similar to what EditableTree uses.
 	 * No flexibility in representation.
-	 * Nodes are with primitives unwrapped to just the primitive.
-	 * Requires types on all node objects.
+	 * Fields are unwrapped (see `EditableUnwrapped`).
 	 *
 	 * TODO: fix ways this differs from editable tree:
 	 * - Does not do primary field inlining.
@@ -72,9 +71,15 @@ export const enum ApiMode {
 	 */
 	Editable,
 	/**
+	 * Editable, but primitive nodes are unwrapped to the primitive values.
+	 */
+	EditableUnwrapped,
+	/**
 	 * Always use full node objects for everything.
 	 *
 	 * Fields are still shaped based on their multiplicity.
+	 *
+	 * TODO: test and fix
 	 */
 	Wrapped,
 	/**
@@ -95,28 +100,28 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema,
 	TName,
 > = {
-	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
+	[ApiMode.Flexible]: EmptyObject extends TTypedFields
 		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
-		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
-	[ApiMode.Editable]: [Record<string, never>, TValueSchema] extends [
+		: FlexibleObject<TValueSchema, TName> & TTypedFields;
+	[ApiMode.Editable]: {
+		[typeNameSymbol]: TName & TreeSchemaIdentifier;
+	} & ValuePropertyFromSchema<TValueSchema> &
+		TTypedFields &
+		UntypedTreeCore;
+	[ApiMode.EditableUnwrapped]: [EmptyObject, TValueSchema] extends [
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
 		? TypedValue<TValueSchema>
-		: TypedSchema.AllowOptionalNotFlattened<
-				{
-					[typeNameSymbol]: TName & TreeSchemaIdentifier;
-				} & ValueFieldTreeFromSchema<TValueSchema> &
-					TTypedFields
-		  > &
-				UntypedTreeCore;
+		: // TODO: primary field unwrapping
+		  CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
 	} & TTypedFields;
-	[ApiMode.Simple]: Record<string, never> extends TTypedFields
+	[ApiMode.Simple]: EmptyObject extends TTypedFields
 		? TypedValue<TValueSchema>
-		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
+		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
 /**
@@ -124,45 +129,55 @@ export type CollectOptions<
  * @alpha
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
-	TypedSchema.FlattenKeys<
-		{ [typeNameSymbol]?: TName } & TypedSchema.AllowOptional<
-			ValueFieldTreeFromSchema<TValueSchema>
+	FlattenKeys<
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & AllowOptional<
+			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
-][TypedSchema._dummy];
+][_InlineTrick];
+
+/**
+ * Remove type brand from name.
+ * @alpha
+ */
+export type UnbrandedName<TName> = [
+	TName extends infer S & TreeSchemaIdentifier ? S : string,
+][_InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
+ *
+ * In Editable mode, unwraps the fields.
  *
  * TODO:
  * Extend this to support global fields.
  * @alpha
  */
 export type TypedFields<
-	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
+	TFields extends undefined | { [key: string]: FieldSchema },
 > = [
-	{
-		[key in keyof TFields]: TypedField<TMap, Mode, TFields[key]>;
-	},
-][TypedSchema._dummy];
+	TFields extends { [key: string]: FieldSchema }
+		? {
+				[key in keyof TFields]: TypedField<
+					TFields[key],
+					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
+				>;
+		  }
+		: EmptyObject,
+][_InlineTrick];
 
 /**
- * `FieldSchemaTypeInfo` to `TypedTree`
+ * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
  * @alpha
  */
-export type TypedField<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TField extends TypedSchema.FieldSchemaTypeInfo,
-> = [
+export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
-		TypeSetToTypedTrees<TMap, Mode, TField["types"]>,
+		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode
 	>,
-][TypedSchema._dummy];
+][_InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -174,11 +189,15 @@ export type ApplyMultiplicity<
 	Mode extends ApiMode,
 > = {
 	[Multiplicity.Forbidden]: undefined;
-	[Multiplicity.Optional]: undefined | TypedChild;
-	[Multiplicity.Sequence]: Mode extends ApiMode.Editable
+	[Multiplicity.Optional]: Mode extends ApiMode.Editable
+		? EditableOptionalField<TypedChild>
+		: undefined | TypedChild;
+	[Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped
 		? EditableSequenceField<TypedChild>
 		: TypedChild[];
-	[Multiplicity.Value]: TypedChild;
+	[Multiplicity.Value]: Mode extends ApiMode.Editable
+		? EditableValueField<TypedChild>
+		: TypedChild;
 }[TMultiplicity];
 
 // TODO: add strong typed `getNode`.
@@ -188,106 +207,120 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 /**
  * @alpha
  */
-export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
+export type EditableSequenceField<TypedChild> = [
+	UntypedSequenceField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
 
 /**
- * Takes in `types?: unknown | TypedSchema.NameSet` and returns a TypedTree union.
  * @alpha
  */
-export type TypeSetToTypedTrees<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	T extends unknown | TypedSchema.NameSet,
-> = [
-	TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>,
-][TypedSchema._dummy];
+export type EditableValueField<TypedChild> = [
+	UntypedValueField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
 
 /**
- * Interface which strongly typed schema collections extend.
  * @alpha
  */
-export interface TypedSchemaData extends ViewSchemaCollection {
-	readonly policy: FullSchemaPolicy;
-	// TODO: can we use a more specific type here?
-	readonly treeSchemaObject: Record<string, any>; // LabeledTreeSchema
-	readonly allTypes: readonly string[];
-}
+export type EditableOptionalField<TypedChild> = [
+	UntypedOptionalField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
 
 /**
- * Collects schema into a `TypedSchemaData` without losing type information.
- *
- * TODO:
- * 1. Extend this to support global fields.
- * 2. Extend this to better support use in libraries
- * which only have partial knowledge of what schema exist.
- * Currently unbounded polymorphism is not correct in that case.
- *
- *
+ * Takes in `AllowedTypes` and returns a TypedTree union.
  * @alpha
  */
-export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
-	globalFieldSchema: [GlobalFieldKey, FieldViewSchema][],
-	...t: T
-): SchemaDataAndPolicy<FullSchemaPolicy> &
-	ViewSchemaCollection & {
-		treeSchemaObject: {
-			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
-		};
-
-		allTypes: NamesFromSchema<T>;
-	} {
-	const treeSchemaObject = {};
-	const allTypes = [];
-	for (const schema of t) {
-		Object.defineProperty(treeSchemaObject, schema.name, {
-			enumerable: true,
-			configurable: true,
-			writable: false,
-			value: schema,
-		});
-		allTypes.push(schema.name);
-	}
-	const schemaData = {
-		policy: defaultSchemaPolicy,
-		globalFieldSchema: new Map(globalFieldSchema),
-		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema>(
-			t.map((schema) => [schema.name, schema]),
-		),
-		treeSchemaObject: treeSchemaObject as {
-			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
-		},
-		allTypes: allTypes as NamesFromSchema<T>,
-	} as const;
-	return schemaData;
-}
+export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
+	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+		? InternalTypedSchemaTypes.ArrayToUnion<
+				TypeArrayToTypedTreeArray<
+					Mode,
+					Assume<
+						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
+						readonly TreeSchema[]
+					>
+				>
+		  >
+		: UntypedApi<Mode>,
+][_InlineTrick];
 
 /**
- * Generate a schema aware API for a list of types.
- *
- * @remarks
- * The arguments here are in an order that makes the truncated strings printed for the types more useful.
- * This is important since this generic type is not inlined when recursing.
- * That mens it will show up in IntelliSense and errors.
+ * Takes in `TreeSchema[]` and returns a TypedTree union.
  * @alpha
  */
-export type TypedNode<
-	TNames extends readonly string[],
-	Mode extends ApiMode,
-	TMap extends TypedSchemaData,
-> = ValuesOf<{
-	[Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
-		[key in Property]: any;
-	}
-		? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]>
-		: never;
-}>;
+export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
+	T extends readonly [infer Head, ...infer Tail]
+		? [
+				TypedNode<Assume<Head, TreeSchema>, Mode>,
+				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
+		  ]
+		: [],
+][_InlineTrick];
+
+// TODO: make these more accurate
+/**
+ * API if type is unknown or Any.
+ * @alpha
+ */
+export type UntypedApi<Mode extends ApiMode> = {
+	[ApiMode.Editable]: UntypedTree;
+	[ApiMode.EditableUnwrapped]: UntypedTree | PrimitiveValue;
+	[ApiMode.Flexible]: ContextuallyTypedNodeData;
+	[ApiMode.Simple]: ContextuallyTypedNodeData;
+	[ApiMode.Wrapped]: UntypedTree;
+}[Mode];
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-export type NodeDataFor<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema,
-> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
+export type TypedNode<
+	TSchema extends TreeSchema,
+	Mode extends ApiMode = ApiMode.Editable,
+> = FlattenKeys<
+	CollectOptions<
+		Mode,
+		TypedFields<
+			Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
+			TSchema["localFieldsObject"]
+		>,
+		TSchema["value"],
+		TSchema["name"]
+	>
+>;
+
+/**
+ * Generate a schema aware API for a single tree schema.
+ * @alpha
+ * @deprecated Use `TypedNode` instead (and reverse the type parameter order).
+ */
+export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
+	TSchema,
+	Mode
+>;
+
+/**
+ * Check if an `UntypedTreeCore` has a specific schema, and if it does, cast it to use `ApiMode.Editable` with that schema.
+ * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
+ * @alpha
+ */
+// TODO: tests
+export function downCast<TSchema extends TreeSchema>(
+	schema: TSchema,
+	tree: UntypedTreeCore,
+): tree is TypedNode<TSchema> {
+	if (typeof tree !== "object") {
+		return false;
+	}
+	const contextSchema = tree[contextSymbol].schema;
+	const lookedUp = contextSchema.treeSchema.get(schema.name);
+	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
+	assert(lookedUp === schema, 0x68c /* cannot downcast to a schema the tree is not using */);
+
+	// TODO: make this actually work
+	const matches = tree[typeSymbol] === schema;
+	assert(
+		matches === (tree[typeSymbol].name === schema.name),
+		0x68d /* schema object identity comparison should match identifier comparison */,
+	);
+	return matches;
+}

@@ -111,17 +111,22 @@ extends:
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: true
-    taskLintName: ci:lint
+    taskLint: false
+    taskBuildDocs: false
     taskTest:
     - webpack
     - ci:test:mocha
     - ci:test:jest
-    - ci:test:realsvc:local
-    - ci:test:realsvc:tinylicious
+    - ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      - ci:test:realsvc:local
+      - ci:test:realsvc:tinylicious
+    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+      - ci:test:realsvc:local:full
+      - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
     - test:copyresults
     checks:
     - syncpack:deps
     - syncpack:versions
     - prettier
+    - check:versions

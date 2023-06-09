@@ -13,6 +13,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
 import { jsonNumber } from "../../domains";
+import { testChangeReceiver } from "../utils";
 
 /**
  * @param parentKeys - Keys allowed in the generated path.
@@ -63,7 +64,8 @@ export function generateRandomChange(
 	pathGenerator: (seed: number) => UpPath,
 ): T.LocalChangeset {
 	const random = makeRandom(seed);
-	const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
+	const [changeReceiver, getChanges] = testChangeReceiver<T.LocalChangeset>();
+	const builder = new SequenceEditBuilder(changeReceiver, new AnchorSet());
 	const operation = random.integer(Operation.SetValue, Operation.Insert) as Operation;
 	switch (operation) {
 		case Operation.SetValue:
@@ -91,5 +93,5 @@ export function generateRandomChange(
 			unreachableCase(operation);
 	}
 
-	return builder.getChanges()[0];
+	return getChanges()[0];
 }

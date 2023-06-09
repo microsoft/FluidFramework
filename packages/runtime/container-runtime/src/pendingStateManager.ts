@@ -111,6 +111,11 @@ export class PendingStateManager implements IDisposable {
 				pendingStates: this.pendingMessages.toArray().map((message) => {
 					// ! TODO: Remove conversion to IPendingMessageOld in "2.0.0-internal.6.0.0" AB#3826
 					const content = JSON.parse(message.content);
+					// IdAllocations need their localOpMetadata stashed in the contents
+					// of the op to correctly resume the session when processing stashed ops
+					if (content.type === ContainerMessageType.IdAllocation) {
+						content.contents.stashedState = message.localOpMetadata;
+					}
 					return {
 						...message,
 						messageType: content.type,

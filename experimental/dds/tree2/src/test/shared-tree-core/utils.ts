@@ -5,21 +5,8 @@
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import {
-	AnchorSet,
-	GraphCommit,
-	ITreeCursorSynchronous,
-	RepairDataStore,
-	RevisionTag,
-	UndoRedoManagerCommitType,
-} from "../../core";
-import {
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	ModularChangeset,
-} from "../../feature-libraries";
-import { TransactionResult } from "../../util";
+import { AnchorSet } from "../../core";
+import { defaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
 
 /** A `SharedTreeCore` with protected methods exposed but no additional behavior */
@@ -48,49 +35,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		);
 	}
 
-	public override applyChange(
-		change: DefaultChangeset,
-		revision?: RevisionTag,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking?: boolean,
-	): GraphCommit<DefaultChangeset> {
-		return super.applyChange(
-			change,
-			revision,
-			undoRedoManagerCommitType,
-			skipUndoRedoManagerTracking,
-		);
-	}
-
-	public override startTransaction(
-		repairStore?: RepairDataStore<ITreeCursorSynchronous> | undefined,
-	): void {
-		return super.startTransaction(repairStore);
-	}
-
-	public override commitTransaction(): TransactionResult.Commit {
-		return super.commitTransaction();
-	}
-
-	public override abortTransaction(): TransactionResult.Abort {
-		return super.abortTransaction();
-	}
-
-	public override isTransacting(): boolean {
-		return super.isTransacting();
-	}
-
-	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch(new MockRepairDataStoreProvider());
-	}
-
-	public override mergeBranch(
-		branch: SharedTreeBranch<DefaultEditBuilder, ModularChangeset>,
-	): void {
-		return super.mergeBranch(branch);
-	}
-
-	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
-		return super.getLocalBranchHead();
+	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+		return super.getLocalBranch();
 	}
 }

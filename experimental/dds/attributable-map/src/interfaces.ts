@@ -147,24 +147,3 @@ export interface ISerializedValue {
 	 */
 	attribution?: string;
 }
-
-/**
- * Options related to attribution
- *
- * @public
- */
-export interface IMapOptions {
-	attribution?: IMapAttributionOptions;
-}
-
-/**
- * This enables the map to store the attribution information which can be accessed with the runtime
- * (i.e. who creeated the content and when it was created)
- *
- * default: false
- *
- * @public
- */
-export interface IMapAttributionOptions {
-	track?: boolean;
-}

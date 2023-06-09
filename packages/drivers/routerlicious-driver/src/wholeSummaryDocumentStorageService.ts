@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	performance,
@@ -23,12 +23,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import {
-	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	INormalizedWholeSummary,
-	IWholeFlatSummary,
-} from "@fluidframework/server-services-client";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { ICache, InMemoryCache } from "./cache";
 import { IRouterliciousDriverPolicies } from "./policies";
 import {
@@ -40,6 +35,8 @@ import { GitManager } from "./gitManager";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
 import { ISummaryUploadManager } from "./storageContracts";
 import { IR11sResponse } from "./restWrapper";
+import { INormalizedWholeSummary } from "./contracts";
+import { convertWholeFlatSummaryToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
 
 const latestSnapshotId: string = "latest";
 
@@ -58,7 +55,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies?: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
@@ -100,8 +97,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 					);
 
 					const networkSnapshotP = !this.driverPolicies?.enableDiscovery
-						? this.fetchSnapshotTree(latestSnapshotId, false)
-						: this.fetchSnapshotTree(latestSnapshotId, true);
+						? this.fetchSnapshotTree(latestSnapshotId, false, "getVersions")
+						: this.fetchSnapshotTree(latestSnapshotId, true, "getVersions");
 
 					const promiseRaceWinner = await promiseRaceWithWinner([
 						cachedSnapshotP.catch(() => undefined),
@@ -130,10 +127,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				},
 			);
 
-			const _id = await this.initializeFromSnapshot(
-				normalizedSnapshotContents,
-				latestSnapshotId,
-			);
+			const _id = await this.initializeFromSnapshot(normalizedSnapshotContents);
 			this.firstVersionsCall = false;
 			return [
 				{
@@ -175,13 +169,24 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			requestVersion = versions[0];
 		}
 
-		const normalizedWholeSnapshot = await this.snapshotTreeCache.get(
+		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
 			this.getCacheKey(requestVersion.id),
 		);
 		if (normalizedWholeSnapshot !== undefined) {
 			return normalizedWholeSnapshot.snapshotTree;
 		}
-		return (await this.fetchSnapshotTree(requestVersion.id)).snapshotTree;
+
+		normalizedWholeSnapshot = await this.fetchSnapshotTree(
+			requestVersion.id,
+			undefined,
+			"getSnapshotTree",
+		);
+
+		// Currently retrieving blobs from network is not supported by AFR for WholeSummaryDocumentStorageService
+		// Blobs are expected to be put in the cache
+		await this.updateBlobsCache(normalizedWholeSnapshot.blobs);
+
+		return normalizedWholeSnapshot.snapshotTree;
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -190,6 +195,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			return cachedBlob;
 		}
 
+		// Note: AFR does not support readBlobs, but potentially other r11s like servers do
 		const blob = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
@@ -284,12 +290,14 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	private async fetchSnapshotTree(
 		versionId: string,
 		disableCache?: boolean,
+		scenarioName?: string,
 	): Promise<INormalizedWholeSummary> {
 		const normalizedWholeSummary = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
 				eventName: "getWholeFlatSummary",
 				treeId: versionId,
+				scenarioName,
 			},
 			async (event) => {
 				const manager = await this.getStorageManager(disableCache);
@@ -316,38 +324,29 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 		);
 
+		// Also add the result into the cache.
+		await this.snapshotTreeCache
+			.put(this.getCacheKey(versionId), normalizedWholeSummary)
+			.catch(() => undefined);
 		return normalizedWholeSummary;
 	}
 
 	private async initializeFromSnapshot(
 		normalizedWholeSummary: INormalizedWholeSummary,
-		versionId: string | null,
 	): Promise<string> {
-		const wholeFlatSummaryId = normalizedWholeSummary.snapshotTree.id;
-		assert(wholeFlatSummaryId !== undefined, 0x275 /* "Root tree should contain the id" */);
+		const snapshotId = normalizedWholeSummary.id;
+		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
 		const cachePs: Promise<any>[] = [
-			this.snapshotTreeCache.put(
-				this.getCacheKey(wholeFlatSummaryId),
-				normalizedWholeSummary,
-			),
-			this.initBlobCache(normalizedWholeSummary.blobs),
+			this.snapshotTreeCache.put(this.getCacheKey(snapshotId), normalizedWholeSummary),
+			this.updateBlobsCache(normalizedWholeSummary.blobs),
 		];
-		if (wholeFlatSummaryId !== versionId && versionId !== null) {
-			// versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
-			// TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
-			// However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
-			// cache with versionId?
-			cachePs.push(
-				this.snapshotTreeCache.put(this.getCacheKey(versionId), normalizedWholeSummary),
-			);
-		}
 
 		await Promise.all(cachePs);
 
-		return wholeFlatSummaryId;
+		return snapshotId;
 	}
 
-	private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
+	private async updateBlobsCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
 		const blobCachePutPs: Promise<void>[] = [];
 		blobs.forEach((value, id) => {
 			const cacheKey = this.getCacheKey(id);

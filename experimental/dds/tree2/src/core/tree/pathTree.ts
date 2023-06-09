@@ -104,9 +104,10 @@ export function topDownPath(path: UpPath | undefined): UpPath[] {
 	const out: UpPath[] = [];
 	let curr = path;
 	while (curr !== undefined) {
-		out.unshift(curr);
+		out.push(curr);
 		curr = curr.parent;
 	}
+	out.reverse();
 	return out;
 }
 

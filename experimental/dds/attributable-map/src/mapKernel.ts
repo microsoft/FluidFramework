@@ -8,7 +8,7 @@ import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base"
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { IMapOptions, ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
+import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -171,7 +171,10 @@ export class AttributableMapKernel {
 	 */
 	private readonly localValueMaker: LocalValueMaker;
 
-	private attribution: Map<string, AttributionKey> | undefined;
+	/**
+	 * In experimental DDS the attribution is always tracked
+	 */
+	private attribution: Map<string, AttributionKey>;
 
 	/**
 	 * Create a new attributable-map kernel.
@@ -188,13 +191,10 @@ export class AttributableMapKernel {
 		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
-		private readonly options?: IMapOptions,
 	) {
 		this.localValueMaker = new LocalValueMaker(serializer);
 		this.messageHandlers = this.getMessageHandlers();
-		if (options?.attribution?.track) {
-			this.attribution = new Map();
-		}
+		this.attribution = new Map();
 	}
 
 	/**
@@ -373,7 +373,7 @@ export class AttributableMapKernel {
 	 * @returns The Attribution Key if the attribution tracking is enabled and key exists, otherwise undefined
 	 */
 	public getAttribution(key: string): AttributionKey | undefined {
-		return this.attribution?.get(key);
+		return this.attribution.get(key);
 	}
 
 	/**
@@ -386,29 +386,23 @@ export class AttributableMapKernel {
 	}
 
 	private setAttribution(key: string, message?: ISequencedDocumentMessage): void {
-		if (this.options?.attribution?.track) {
-			if (message) {
-				this.attribution?.set(key, { type: "op", seq: message.sequenceNumber });
+		if (message) {
+			this.attribution.set(key, { type: "op", seq: message.sequenceNumber });
+		} else {
+			if (this.isAttached()) {
+				this.attribution.set(key, { type: "local" });
 			} else {
-				if (this.isAttached()) {
-					this.attribution?.set(key, { type: "local" });
-				} else {
-					this.attribution?.set(key, { type: "detached", id: 0 });
-				}
+				this.attribution.set(key, { type: "detached", id: 0 });
 			}
 		}
 	}
 
 	private deleteAttribution(key: string): void {
-		if (this.options?.attribution?.track) {
-			this.attribution?.delete(key);
-		}
+		this.attribution.delete(key);
 	}
 
 	private clearAllAttribution(): void {
-		if (this.options?.attribution?.track) {
-			this.attribution?.clear();
-		}
+		this.attribution.clear();
 	}
 
 	/**
@@ -419,9 +413,7 @@ export class AttributableMapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			const attribution = this.options?.attribution?.track
-				? this.attribution?.get(key)
-				: undefined;
+			const attribution = this.attribution.get(key);
 
 			assert(
 				!attribution || attribution.type !== "local",

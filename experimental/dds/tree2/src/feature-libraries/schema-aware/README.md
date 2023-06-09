@@ -9,8 +9,6 @@ TODO:
         - Normalized should align with `EditableTree`. This will likely require an extra setter on editable fields and on `EditableTree` for extra fields to work around [lacking support for variant accessors for index signatures in TypeScript](https://github.com/microsoft/TypeScript/issues/43826).
     - Allow use in libraries which don't have full schema information:
         - Make unrestricted field types include an extra type in the union that covers the other cases generically.
-        - Add API for composing `TypedSchemaData`.
-    - Consider removing redundant information that was added to `TypedSchemaData` to make type generation work easier (or make it optional and remove the runtime copy of it).
     - Support global fields.
     - Support extra local fields.
     - Support extra global fields (including in a way that is compatible with use in a library that does not have global schema knowledge).

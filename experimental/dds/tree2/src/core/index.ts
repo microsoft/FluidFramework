@@ -35,6 +35,11 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
+	EncodedFieldMapObject,
+	EncodedNodeData,
+	EncodedGenericFieldsNode,
+	EncodedGenericTreeNode,
+	EncodedJsonableTree,
 	Delta,
 	rootFieldKey,
 	rootField,
@@ -89,6 +94,8 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	ProtoNodes,
+	CursorMarker,
+	isCursor,
 } from "./tree";
 
 export {
@@ -108,15 +115,19 @@ export {
 
 export {
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
-	TreeSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
@@ -134,12 +145,7 @@ export {
 	SchemaEvents,
 } from "./schema-stored";
 
-export {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
-} from "./change-family";
+export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
 	assertIsRevisionTag,
@@ -149,6 +155,7 @@ export {
 	GraphCommit,
 	isRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -157,6 +164,7 @@ export {
 	verifyChangeRebaser,
 	tagRollbackInverse,
 	SessionId,
+	SessionIdSchema,
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
@@ -173,11 +181,6 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
+export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export {
-	IRepairDataStoreProvider,
-	UndoRedoManager,
-	UndoRedoManagerCommitType,
-	markCommits,
-} from "./undo";
+export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";

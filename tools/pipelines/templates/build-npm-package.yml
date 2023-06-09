@@ -103,16 +103,12 @@ parameters:
   type: string
   default: "^"
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
-
-# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
-# a pipeline stage separate from the build stage.
+# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+# in a pipeline stage separate from the build stage.
 - name: checks
   type: object
   default: []
+
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -129,6 +125,7 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - group: ado-feeds
 
 stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -270,7 +267,6 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -307,15 +303,26 @@ stages:
                   workingDir: ${{ parameters.buildDirectory }}
                   customCommand: 'run ${{ taskTestStep }}:coverage'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-            # Test - No coverage
-            - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
-                - task: Npm@1
-                  displayName: npm run ${{ taskTestStep }}
-                  inputs:
-                    command: 'custom'
-                    workingDir: ${{ parameters.buildDirectory }}
-                    customCommand: 'run ${{ taskTestStep }}'
-                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
+
+              # Test - No coverage
+            - ${{ else }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
@@ -358,14 +365,15 @@ stages:
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
           # Publish tinylicious log for troubleshooting
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - Tinylicious Log
-            inputs:
-              targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
-              artifactName: 'tinyliciousLog'
-              publishLocation: 'pipeline'
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-            continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+          - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+            - task: PublishPipelineArtifact@1
+              displayName: Publish Artifact - Tinylicious Log
+              inputs:
+                targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+                artifactName: 'tinyliciousLog'
+                publishLocation: 'pipeline'
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+              continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
           # Log Test Failures
           - template: include-log-test-failures.yml
@@ -468,6 +476,7 @@ stages:
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}
+                # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
                 script: |
                   echo Initialize package
                   npm init --yes
@@ -479,8 +488,8 @@ stages:
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-                  echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-                  echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+                  echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+                  echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
@@ -519,7 +528,6 @@ stages:
 
             - task: Bash@3
               displayName: Write bundle sizes measurements to Aria/Kusto
-              condition: succeededOrFailed()
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}

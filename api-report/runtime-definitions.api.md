@@ -49,6 +49,9 @@ export const blobCountPropertyName = "BlobCount";
 // @public (undocumented)
 export const channelsTreeName = ".channels";
 
+// @alpha
+export type CompressedId = FinalCompressedId | LocalCompressedId;
+
 // @public (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -80,6 +83,12 @@ export interface DetachedAttributionKey {
     // (undocumented)
     type: "detached";
 }
+
+// @alpha
+export type FinalCompressedId = number & {
+    readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
 
 // @public
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
@@ -153,6 +162,40 @@ export interface IDataStore extends IFluidRouter {
 }
 
 // @public
+export interface IdCreationRange {
+    // (undocumented)
+    readonly ids?: IdCreationRange.Ids;
+    // (undocumented)
+    readonly sessionId: SessionId;
+}
+
+// @public (undocumented)
+export namespace IdCreationRange {
+    // (undocumented)
+    export interface HasOverrides {
+        // (undocumented)
+        readonly overrides: Overrides;
+    }
+    // (undocumented)
+    export type Ids = {
+        readonly first: UnackedLocalId;
+        readonly last: UnackedLocalId;
+    } | ({
+        readonly first?: UnackedLocalId;
+        readonly last?: UnackedLocalId;
+    } & HasOverrides);
+    // (undocumented)
+    export type Override = readonly [id: UnackedLocalId, override: string];
+    // (undocumented)
+    export type Overrides = readonly [Override, ...Override[]];
+}
+
+// @public (undocumented)
+export type IdCreationRangeWithStashedState = IdCreationRange & {
+    stashedState: SerializedIdCompressorWithOngoingSession;
+};
+
+// @public
 export interface IEnvelope {
     address: string;
     contents: any;
@@ -221,6 +264,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -278,6 +323,41 @@ export interface IGarbageCollectionData {
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     usedRoutes?: string[];
+}
+
+// @public
+export interface IIdCompressor {
+    // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    decompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string;
+    // Warning: (ae-incompatible-release-tags) The symbol "generateCompressedId" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    generateCompressedId(override?: string): SessionSpaceCompressedId;
+    // (undocumented)
+    localSessionId: SessionId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToOpSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "recompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    recompress(uncompressed: string): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
+    // Warning: (ae-incompatible-release-tags) The symbol "tryRecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
+}
+
+// @public (undocumented)
+export interface IIdCompressorCore {
+    // (undocumented)
+    clusterCapacity: number;
+    finalizeCreationRange(range: IdCreationRange): void;
+    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+    serialize(withSession: false): SerializedIdCompressorWithNoSession;
+    takeNextCreationRange(): IdCreationRange;
 }
 
 // @public
@@ -408,6 +488,11 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
+// @alpha
+export type LocalCompressedId = number & {
+    readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
+} & SessionUnique;
+
 // @public
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
@@ -420,11 +505,133 @@ export interface OpAttributionKey {
     type: "op";
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "OpSpaceCompressedId" is marked as @public, but its signature references "CompressedId" which is marked as @alpha
+//
+// @public
+export type OpSpaceCompressedId = CompressedId & {
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
+
+// @public
+export type SerializedCluster = readonly [
+sessionIndex: number,
+capacity: number,
+countOrOverrides?: number | SerializedClusterOverrides,
+overrides?: SerializedClusterOverrides
+];
+
+// Warning: (ae-incompatible-release-tags) The symbol "SerializedClusterOverrides" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+//
+// @public (undocumented)
+export type SerializedClusterOverrides = readonly [
+overriddenFinalIndex: number,
+override: string,
+overriddenId?: FinalCompressedId
+][];
+
+// @public
+export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
+    readonly clusterCapacity: number;
+    readonly clusters: readonly SerializedCluster[];
+    readonly sessions: readonly SerializedSessionData[];
+}
+
+// @public
+export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
+    // (undocumented)
+    readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
+}
+
+// @public
+export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
+    // (undocumented)
+    readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
+    readonly localSessionIndex: number;
+    readonly localState?: SerializedLocalState;
+}
+
+// Warning: (ae-incompatible-release-tags) The symbol "SerializedLocalOverrides" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+//
+// @public (undocumented)
+export type SerializedLocalOverrides = readonly (readonly [LocalCompressedId, string])[];
+
+// @public (undocumented)
+export interface SerializedLocalState {
+    // Warning: (ae-incompatible-release-tags) The symbol "lastTakenLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+    readonly lastTakenLocalId: LocalCompressedId | undefined;
+    readonly localIdCount: number;
+    readonly overrides?: SerializedLocalOverrides;
+    readonly sessionNormalizer: SerializedSessionIdNormalizer;
+}
+
+// @public
+export type SerializedSessionData = readonly [
+sessionId: SessionId
+];
+
+// @public
+export interface SerializedSessionIdNormalizer {
+    // Warning: (ae-incompatible-release-tags) The symbol "localRanges" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "localRanges" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    //
+    // (undocumented)
+    readonly localRanges: readonly (readonly [
+    firstLocal: LocalCompressedId,
+    lastLocal: LocalCompressedId,
+    finalRanges?: readonly (readonly [
+    alignedLocal: LocalCompressedId,
+    firstFinal: FinalCompressedId,
+    lastFinal: FinalCompressedId
+    ])[]
+    ])[];
+    // Warning: (ae-incompatible-release-tags) The symbol "nextLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+    //
+    // (undocumented)
+    readonly nextLocalId: LocalCompressedId;
+}
+
+// @public
+export type SessionId = StableId & {
+    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
+
+// @alpha
+export type SessionSpaceCompressedId = CompressedId & SessionUnique;
+
+// @public
+export interface SessionUnique {
+    // (undocumented)
+    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+}
+
+// @public
+export type StableId = UuidString & {
+    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+};
+
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";
+
+// Warning: (ae-incompatible-release-tags) The symbol "UnackedLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+//
+// @public (undocumented)
+export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
+
+// @public
+export type UuidString = string & {
+    readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
+};
+
+// @public
+export interface VersionedSerializedIdCompressor {
+    // (undocumented)
+    readonly version: string;
+    // (undocumented)
+    readonly _versionedSerializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
+}
 
 // @public
 const VisibilityState_2: {

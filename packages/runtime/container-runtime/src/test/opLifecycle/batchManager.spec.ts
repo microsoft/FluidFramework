@@ -174,7 +174,7 @@ describe("BatchManager", () => {
 		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
 		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
 
-		assert.equal(batchManager.referenceSequenceNumber, 2);
+		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
 	});
 
 	it("Batch size estimates", () => {

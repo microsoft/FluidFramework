@@ -22,16 +22,22 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { INormalizedWholeSummary, ISession } from "@fluidframework/server-services-client";
+import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+	toInstrumentedR11sStorageTokenFetcher,
+} from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
+import { INormalizedWholeSummary } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -113,11 +119,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
 		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
+			tenantId,
+			undefined /* documentId */,
+			this.tokenProvider,
+			logger2,
+		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-			tenantId,
-			undefined,
-			this.tokenProvider,
+			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
@@ -240,14 +250,29 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			all: { driverVersion },
 		});
 
-		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			documentId,
 			this.tokenProvider,
 			logger2,
+		);
+		const storageTokenFetcher = toInstrumentedR11sStorageTokenFetcher(
+			tenantId,
+			documentId,
+			this.tokenProvider,
+			logger2,
+		);
+		const ordererTokenP = ordererTokenFetcher();
+		const storageTokenP = storageTokenFetcher();
+
+		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+			ordererTokenFetcher,
+			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
+			undefined /* baseUrl */,
+			ordererTokenP,
 		);
 
 		const discoverFluidResolvedUrl = async (): Promise<IResolvedUrl> => {
@@ -290,6 +315,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 
+		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+			tenantId,
+			storageTokenFetcher,
+			logger2,
+			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
+			this.driverPolicies.enableRestLess,
+			storageUrl,
+			storageTokenP,
+		);
+
 		const documentStorageServicePolicies: IDocumentStorageServicePolicies = {
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
@@ -315,6 +350,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
+			storageRestWrapper,
+			storageTokenFetcher,
+			ordererTokenFetcher,
 		);
 	}
 }

@@ -13,7 +13,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
@@ -23,7 +23,7 @@ import {
 export type GCVersion = number;
 
 /** The stable version of garbage collection in production. */
-export const stableGCVersion: GCVersion = 1;
+export const stableGCVersion: GCVersion = 2;
 /** The current version of garbage collection. */
 export const currentGCVersion: GCVersion = 3;
 
@@ -204,12 +204,14 @@ export interface IGarbageCollector {
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
 	readonly summaryStateNeedsReset: boolean;
+	/** The count of data stores whose GC state updated since the last summary. */
+	readonly updatedDSCountSinceLastSummary: number;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
 	collectGarbage(
 		options: {
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			runSweep?: boolean;
 			fullGC?: boolean;
 		},
@@ -251,7 +253,7 @@ export interface IGarbageCollector {
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
 	readonly gcOptions: IGCRuntimeOptions;
-	readonly baseLogger: ITelemetryLogger;
+	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
 	readonly metadata: IContainerRuntimeMetadata | undefined;
 	readonly createContainerMetadata: ICreateContainerMetadata;

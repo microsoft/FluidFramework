@@ -27,6 +27,7 @@ import {
 import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
+import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 
 export function create(
@@ -40,6 +41,7 @@ export function create(
 	deltaService: IDeltaService,
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
@@ -97,6 +99,7 @@ export function create(
 		producer,
 		appTenants,
 		documentRepository,
+		documentDeleteService,
 		tokenManager,
 	);
 

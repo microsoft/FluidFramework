@@ -16,7 +16,7 @@ import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -97,6 +97,14 @@ async function main() {
 		driverEndpointName: endpoint,
 		profile: profileName,
 	});
+
+	// this will enabling capturing the full stack for errors
+	// since this is test capturing the full stack is worth it
+	// in non-test environment we need to be more cautious
+	// as this will incur a perf impact when errors are
+	// thrown and will take more storage in any logging sink
+	// https://v8.dev/docs/stack-trace-api
+	Error.stackTraceLimit = Infinity;
 
 	process.on("uncaughtExceptionMonitor", (error, origin) => {
 		try {
@@ -195,6 +203,7 @@ async function runnerProcess(
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
+	let stashedOpP: Promise<string | undefined> | undefined;
 	while (!done) {
 		let container: IContainer | undefined;
 		try {
@@ -205,6 +214,7 @@ async function runnerProcess(
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
+			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
@@ -212,7 +222,7 @@ async function runnerProcess(
 					containerOptions[runConfig.runId % containerOptions.length],
 				),
 				logger: runConfig.logger,
-				options: loaderOptions[runConfig.runId % containerOptions.length],
+				options: runConfig.loaderConfig,
 				configProvider: {
 					getRawConfig(name) {
 						return configurations[runConfig.runId % configurations.length][name];
@@ -220,7 +230,23 @@ async function runnerProcess(
 				},
 			});
 
-			container = await loader.resolve({ url, headers });
+			let stashedOps = stashedOpP ? await stashedOpP : undefined;
+			stashedOpP = undefined; // delete to avoid reuse
+
+			// temp fix for #15538: remove clientId from empty stash blobs
+			if (stashedOps !== undefined) {
+				const parsed = JSON.parse(stashedOps);
+				if (
+					parsed.pendingRuntimeState.pending === undefined &&
+					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
+				) {
+					parsed.clientId = undefined;
+					stashedOps = JSON.stringify(parsed);
+				}
+			}
+
+			container = await loader.resolve({ url, headers }, stashedOps);
+
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
@@ -257,7 +283,7 @@ async function runnerProcess(
 			}
 			const offline = runConfig.testConfig.offline;
 			if (offline) {
-				scheduleOffline(
+				stashedOpP = scheduleOffline(
 					documentServiceFactory,
 					container,
 					runConfig,
@@ -265,6 +291,7 @@ async function runnerProcess(
 					offline.delayMs.max,
 					offline.durationMs.min,
 					offline.durationMs.max,
+					offline.stashPercent,
 				);
 			}
 
@@ -312,7 +339,7 @@ function scheduleFaultInjection(
 				const deltaConn = ds.documentServices.get(
 					container.resolvedUrl,
 				)?.documentDeltaConnection;
-				if (deltaConn !== undefined) {
+				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
 					switch (random.integer(0, 5)) {
@@ -354,11 +381,10 @@ function scheduleContainerClose(
 ) {
 	new Promise<void>((resolve) => {
 		// wait for the container to connect write
-		container.once("closed", () => resolve);
+		container.once("closed", () => resolve());
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => {
 				resolve();
-				container.off("closed", () => resolve);
 			});
 		}
 	})
@@ -410,7 +436,7 @@ function scheduleContainerClose(
 		);
 }
 
-function scheduleOffline(
+async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
 	container: IContainer,
 	runConfig: IRunConfig,
@@ -418,8 +444,9 @@ function scheduleOffline(
 	offlineDelayMaxMs: number,
 	offlineDurationMinMs: number,
 	offlineDurationMaxMs: number,
-) {
-	new Promise<void>((resolve) => {
+	stashPercent = 0.5,
+): Promise<string | undefined> {
+	return new Promise<void>((resolve) => {
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => resolve());
 			container.once("closed", () => resolve());
@@ -429,14 +456,17 @@ function scheduleOffline(
 		}
 	})
 		.then(async () => {
-			const schedule = async (): Promise<void> => {
+			const schedule = async (): Promise<undefined | string> => {
 				if (container.closed) {
-					return;
+					return undefined;
 				}
 				const { random } = runConfig;
 				const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs);
 				await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
 
+				if (container.closed) {
+					return undefined;
+				}
 				assert(container.resolvedUrl !== undefined, "no url");
 				const ds = dsf.documentServices.get(container.resolvedUrl);
 				assert(!!ds, "no documentServices");
@@ -445,28 +475,37 @@ function scheduleOffline(
 				ds.goOffline();
 
 				await new Promise<void>((resolve) => setTimeout(resolve, offlineTime));
-				if (!container.closed) {
-					ds.goOnline();
-					printStatus(runConfig, "going online!");
-					return schedule();
+				if (container.closed) {
+					return undefined;
 				}
+				if (
+					runConfig.loaderConfig?.enableOfflineLoad === true &&
+					random.real() < stashPercent
+				) {
+					printStatus(runConfig, "closing offline container!");
+					return container.closeAndGetPendingLocalState();
+				}
+				printStatus(runConfig, "going online!");
+				ds.goOnline();
+				return schedule();
 			};
 			return schedule();
 		})
-		.catch(async (e) =>
+		.catch(async (e) => {
 			runConfig.logger.sendErrorEvent(
 				{
 					eventName: "ScheduleOfflineFailed",
 					runId: runConfig.runId,
 				},
 				e,
-			),
-		);
+			);
+			return undefined;
+		});
 }
 
 async function setupOpsMetrics(
 	container: IContainer,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
 ) {

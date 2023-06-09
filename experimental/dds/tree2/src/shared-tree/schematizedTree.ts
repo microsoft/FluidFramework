@@ -9,22 +9,22 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
-	rootFieldKeySymbol,
 	lookupGlobalFieldSchema,
 	rootFieldKey,
 	SchemaData,
+	ITreeCursor,
 } from "../core";
 import {
 	ViewSchema,
 	defaultSchemaPolicy,
-	ContextuallyTypedFieldData,
-	cursorsFromContextualData,
 	FieldKinds,
 	allowsRepoSuperset,
-	ViewSchemaCollection,
+	TypedSchemaCollection,
+	GlobalFieldSchema,
+	SchemaAware,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ISharedTreeView } from "./sharedTree";
+import { ISharedTreeView } from "./sharedTreeView";
 
 /**
  * See {@link ISharedTreeView.schematize} for more details.
@@ -45,7 +45,8 @@ export function schematizeView(
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
 			tree.transaction.start();
 
-			const rootKind = lookupGlobalFieldSchema(config.schema, rootFieldKey).kind.identifier;
+			const rootSchema = lookupGlobalFieldSchema(config.schema, rootFieldKey);
+			const rootKind = rootSchema.kind.identifier;
 
 			// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
 			let incrementalSchemaUpdate: SchemaData;
@@ -57,9 +58,15 @@ export function schematizeView(
 				incrementalSchemaUpdate = config.schema;
 			} else {
 				assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
+				// Replace value kind with optional kind in root field schema:
+				const globalFieldSchema = new Map(config.schema.globalFieldSchema);
+				globalFieldSchema.set(rootFieldKey, {
+					kind: FieldKinds.optional,
+					types: rootSchema.types,
+				});
 				incrementalSchemaUpdate = {
 					...config.schema,
-					globalFieldSchema: new Map(config.schema.globalFieldSchema),
+					globalFieldSchema,
 				};
 			}
 
@@ -69,18 +76,13 @@ export function schematizeView(
 			// 	"Incremental Schema update should support the existing empty tree",
 			// );
 			assert(
-				allowsRepoSuperset(defaultSchemaPolicy, incrementalSchemaUpdate, config.schema),
+				allowsRepoSuperset(defaultSchemaPolicy, config.schema, incrementalSchemaUpdate),
 				0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
 			);
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);
 			// Insert initial tree
-			const newContent = cursorsFromContextualData(
-				config.schema,
-				lookupGlobalFieldSchema(config.schema, rootFieldKey),
-				config.initialTree,
-			);
-			tree.editor.sequenceField(undefined, rootFieldKeySymbol).insert(0, newContent);
+			tree.root = config.initialTree;
 
 			// If intermediate schema is not final desired schema, update to the final schema:
 			if (incrementalSchemaUpdate !== config.schema) {
@@ -160,11 +162,11 @@ export function schematizeView(
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = ViewSchemaCollection> {
+export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TMap;
+	readonly schema: TypedSchemaCollection<TRoot>;
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
 	 */
@@ -173,5 +175,7 @@ export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = Vie
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: ContextuallyTypedFieldData;
+	readonly initialTree:
+		| SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>
+		| readonly ITreeCursor[];
 }

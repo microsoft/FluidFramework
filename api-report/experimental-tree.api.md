@@ -17,7 +17,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import type { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -781,7 +781,7 @@ export class RevisionView extends TreeView {
 // @public
 export interface SequencedEditAppliedEventArguments {
     readonly edit: Edit<ChangeInternal>;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     readonly outcome: EditApplicationOutcome;
     readonly reconciliationPath: ReconciliationPath;
     readonly tree: SharedTree;
@@ -864,7 +864,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     loadSerializedSummary(blobData: string): ITelemetryProperties;
     // @internal
     loadSummary(summary: SharedTreeSummaryBase): void;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)

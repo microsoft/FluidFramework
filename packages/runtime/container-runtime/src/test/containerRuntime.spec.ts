@@ -23,9 +23,9 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
@@ -44,7 +44,7 @@ describe("Runtime", () => {
 
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger: ITelemetryLogger = new MockLogger(),
+		logger: ITelemetryLoggerExt = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
@@ -761,7 +761,7 @@ describe("Runtime", () => {
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
-					"processing remote op, should generate telemetry event and throw an error that closes the container",
+					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -779,6 +779,22 @@ describe("Runtime", () => {
 								},
 							} as any as ISequencedDocumentMessage,
 							false /* local */,
+						);
+						containerRuntime.process(
+							{
+								type: "op",
+								clientId: "clientId",
+								sequenceNumber: 0,
+								contents: {
+									address: "address",
+									contents: {
+										chunkId: i + 1,
+										totalChunks: maxReconnects + 1,
+									},
+									type: "chunkedOp",
+								},
+							} as any as ISequencedDocumentMessage,
+							true /* local */,
 						);
 					}
 
@@ -1084,6 +1100,7 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
+				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 			};
@@ -1102,7 +1119,7 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({}),
+						featureGates: JSON.stringify({ idCompressorEnabled: false }),
 					},
 				]);
 			});
@@ -1112,6 +1129,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
+					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1129,6 +1147,7 @@ describe("Runtime", () => {
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
+							idCompressorEnabled: true,
 						}),
 					},
 				]);

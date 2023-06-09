@@ -80,10 +80,11 @@ parameters:
   type: string
   default: "^"
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
+# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+# in a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default: []
 
 trigger: none
 
@@ -133,6 +134,12 @@ variables:
     value: ${{ parameters.tagName }}
 
 stages:
+- ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+  - template: include-policy-check.yml
+    parameters:
+      buildDirectory: ${{ parameters.buildDirectory }}
+      checks: ${{ parameters.checks }}
+
 - stage: build
   displayName: Build Stage
   jobs:
@@ -254,7 +261,6 @@ stages:
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           interdependencyRange: ${{ parameters.interdependencyRange }}
           tagName: ${{ parameters.tagName }}
-          usesPrettier: ${{ parameters.usesPrettier }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
         name: SetVersion
