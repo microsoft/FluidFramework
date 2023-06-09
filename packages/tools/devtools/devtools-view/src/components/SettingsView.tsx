@@ -25,7 +25,7 @@ interface SettingsProps {
 	/**
 	 * Sets the theme of the DevTools app (light, dark, high contrast)
 	 */
-	setTheme(newTheme: Theme): void;
+	setTheme(newTheme: {name: string, theme: Theme}): void;
 }
 /**
  * Settings page for the debugger
@@ -42,16 +42,28 @@ export function SettingsView(props: SettingsProps): React.ReactElement {
 	): void {
 		switch (option.optionValue) {
 			case ThemeOption.Light:
-				setTheme(webLightTheme);
+				setTheme({
+					name: "light",
+					theme: webLightTheme
+				});
 				break;
 			case ThemeOption.Dark:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme
+				});
 				break;
 			case ThemeOption.HighContrast:
-				setTheme(teamsHighContrastTheme);
+				setTheme({
+					name: "highContrast",
+					theme: teamsHighContrastTheme
+				});
 				break;
 			default:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme
+				});
 				break;
 		}
 	}

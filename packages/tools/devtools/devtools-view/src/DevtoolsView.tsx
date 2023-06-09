@@ -219,7 +219,7 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
+		<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
 				queryTimedOut ? (
 					<>
@@ -232,7 +232,7 @@ export function DevtoolsView(): React.ReactElement {
 					<Waiting />
 				)
 			) : (
-				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
+				<_DevtoolsView theme={selectedTheme} setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
 			)}
 		</FluentProvider>
 	);
@@ -240,9 +240,14 @@ export function DevtoolsView(): React.ReactElement {
 
 interface _DevtoolsViewProps {
 	/**
+	 * Object representing the current page theme.
+	 */
+	theme:{name: string, theme: Theme}
+
+	/**
 	 * Sets the theme of the DevTools app (light, dark, high contrast)
 	 */
-	setTheme(newTheme: Theme): void;
+	setTheme(newTheme: {name: string, theme: Theme}): void;
 
 	/**
 	 * Set of features supported by the Devtools.
@@ -254,7 +259,7 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures, setTheme } = props;
+	const { supportedFeatures, theme, setTheme } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
@@ -299,7 +304,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
+			<View menuSelection={menuSelection} containers={containers} theme={theme} setTheme={setTheme} />
 		</Stack>
 	);
 }
@@ -308,6 +313,11 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
  * {@link View} input props.
  */
 interface ViewProps {
+	/**
+	 * Object representing the current page theme.
+	 */
+		theme:{name: string, theme: Theme}
+
 	/**
 	 * The current menu selection.
 	 *
@@ -323,19 +333,19 @@ interface ViewProps {
 	/**
 	 * Sets the theme of the DevTools app (light, dark, high contrast)
 	 */
-	setTheme(newTheme: Theme): void;
+	setTheme(newTheme: {name: string, theme: Theme}): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers, setTheme } = props;
+	const { menuSelection, containers, theme, setTheme } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
-			view = <TelemetryView />;
+			view = <TelemetryView theme={theme}/>;
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations

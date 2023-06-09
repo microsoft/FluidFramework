@@ -19,18 +19,27 @@ teamsHighContrastTheme.colorNeutralStrokeAccessible = "#000";
  * Utility function to get the current Fluent UI theme to use.
  * @returns Theme object of FluentUI to be used for dev tool
  */
-export function getFluentUIThemeToUse(): Theme {
-	let defaultTheme = webLightTheme;
+export function getFluentUIThemeToUse():{name: string, theme: Theme} {
+	let defaultTheme = {
+		name: "light",
+		theme: webLightTheme
+	}
 
 	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
 	if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-		defaultTheme = webDarkTheme;
+		defaultTheme = {
+			name: "dark",
+			theme: webDarkTheme
+		}
 	}
 
 	// Add a condition to check for high contrast mode
 	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/forced-colors
 	if (window.matchMedia?.("(forced-colors: active)").matches) {
-		defaultTheme = teamsHighContrastTheme;
+		defaultTheme ={
+			name: "highcontrast",
+			theme: teamsHighContrastTheme
+		}
 	}
 
 	return defaultTheme;

@@ -79,6 +79,7 @@ function getMenuSectionItemStyles(isActive: boolean): IStackStyles {
 				: tokens.colorNeutralBackground1,
 			"&:hover": {
 				background: tokens.colorNeutralBackground1Hover,
+				color: tokens.colorNeutralForeground1Hover
 			},
 		},
 	};
