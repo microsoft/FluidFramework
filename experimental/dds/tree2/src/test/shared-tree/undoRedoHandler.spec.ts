@@ -12,7 +12,7 @@ import { TestTreeProviderLite, getTestValue, setTestValue } from "../utils";
  * that is compatible with the UndoRedoStackManager. The tests ensure that undo and redo operations are
  * properly delegated to the UndoRedoStackManager but do not test more complex undo/redo scenarios.
  */
-describe.only("ShareTreeUndoRedoHandler", () => {
+describe("ShareTreeUndoRedoHandler", () => {
 	it("can undo and redo", () => {
 		const undoRedoStack = new UndoRedoStackManager();
 		const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
