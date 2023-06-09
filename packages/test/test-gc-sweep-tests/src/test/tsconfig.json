@@ -6,6 +6,7 @@
 		"rootDir": "../",
 		"outDir": "../../dist",
 		"types": ["mocha", "@fluidframework/test-driver-definitions"],
+		"module": "esnext",
 	},
 	"include": ["./**/*", "../*"],
 }

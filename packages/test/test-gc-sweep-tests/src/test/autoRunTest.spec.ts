@@ -16,11 +16,11 @@ import {
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { delay } from "@fluidframework/common-utils";
-import { mockConfigProvider } from "../mockConfigProvider";
-import { IgnoreErrorLogger } from "../ignoreErrorLogger";
-import { ContainerManager } from "../containerManager";
-import { rootDataObjectWithChildDataObjectFactory } from "../dataObjectWithChildDataObject";
-import { dataObjectWithCounterFactory } from "../dataObjectWithCounter";
+import { mockConfigProvider } from "../mockConfigProvider.js";
+import { IgnoreErrorLogger } from "../ignoreErrorLogger.js";
+import { ContainerManager } from "../containerManager.js";
+import { rootDataObjectWithChildDataObjectFactory } from "../dataObjectWithChildDataObject.js";
+import { dataObjectWithCounterFactory } from "../dataObjectWithCounter.js";
 
 describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
