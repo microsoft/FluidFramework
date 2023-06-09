@@ -245,7 +245,9 @@ export interface BatchBindingContext extends AbstractBindingContext {
 	readonly events: BindingContext[];
 }
 
-type CallTree = BindTree<CallTree> & { listeners: Set<(...args: unknown[]) => any> };
+type Listener = (...args: unknown[]) => void;
+
+type CallTree = BindTree<CallTree> & { listeners: Set<Listener> };
 
 abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, CallTree[]> = new Map();
@@ -256,7 +258,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	public registerListener(
 		contextType: BindingContextType,
 		trees: BindTree[],
-		listener: (...args: unknown[]) => any,
+		listener: Listener,
 	): () => void {
 		const contextRoots = this.registeredListeners.get(contextType) ?? [];
 		if (contextRoots.length === 0) {
@@ -285,7 +287,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	private bindTree(
 		contextType: BindingContextType,
 		tree: BindTree,
-		listener: (...args: unknown[]) => any,
+		listener: Listener,
 		callTree: CallTree,
 	) {
 		if (tree.children.size === 0) {
@@ -318,7 +320,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	private unregisterListener(
 		contextType: BindingContextType,
 		tree: BindTree,
-		listener: (...args: unknown[]) => any,
+		listener: Listener,
 		callTree?: CallTree,
 	) {
 		let foundTree = callTree;
@@ -343,7 +345,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	protected matchPath(
 		contextType: BindingContextType,
 		downPath: DownPath,
-	): Set<(...args: unknown[]) => any> | undefined {
+	): Set<Listener> | undefined {
 		const foundRoot = this.findRoot(contextType, downPath[0].field);
 		if (foundRoot === undefined) {
 			return undefined;
@@ -397,13 +399,9 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		super(options);
 	}
 
-	private processCallbacks(
-		path: UpPath,
-		callbacks: Set<(...args: unknown[]) => any>,
-		otherArgs: object,
-	): void {
-		for (const callback of callbacks) {
-			callback({
+	private processListeners(path: UpPath, listeners: Set<Listener>, otherArgs: object): void {
+		for (const listener of listeners) {
+			listener({
 				path,
 				...otherArgs,
 			});
@@ -416,9 +414,9 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		otherArgs: object,
 	): void {
 		const current = toDownPath<BindPath>(path);
-		const callbacks = this.matchPath(type, current);
-		if (callbacks !== undefined) {
-			this.processCallbacks(path, callbacks, otherArgs);
+		const listeners = this.matchPath(type, current);
+		if (listeners !== undefined) {
+			this.processListeners(path, listeners, otherArgs);
 		}
 	}
 
@@ -448,7 +446,7 @@ class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
-	private readonly callbacks: Set<(...args: unknown[]) => any> = new Set();
+	private readonly listeners: Set<Listener> = new Set();
 
 	public constructor(options: BinderOptions) {
 		super(options);
@@ -456,10 +454,10 @@ class InvalidatingPathVisitor
 
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath<BindPath>(path);
-		const callbacks = this.matchPath(BindingType.Invalidation, current);
-		if (callbacks !== undefined) {
-			for (const callback of callbacks) {
-				this.callbacks.add(callback);
+		const listeners = this.matchPath(BindingType.Invalidation, current);
+		if (listeners !== undefined) {
+			for (const listener of listeners) {
+				this.listeners.add(listener);
 			}
 		}
 	}
@@ -477,18 +475,18 @@ class InvalidatingPathVisitor
 	}
 
 	public flush(): InvalidatingPathVisitor {
-		for (const callback of this.callbacks) {
-			callback({
+		for (const listener of this.listeners) {
+			listener({
 				type: BindingType.Invalidation,
 			});
 		}
-		this.callbacks.clear();
+		this.listeners.clear();
 		return this;
 	}
 }
 
 type CallableBindingContext = BindingContext & {
-	callbacks: Set<(...args: unknown[]) => any>;
+	listeners: Set<Listener>;
 };
 
 class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
@@ -499,39 +497,39 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const callbacks = this.matchPath(BindingType.Delete, current);
-		if (callbacks !== undefined) {
+		const listeners = this.matchPath(BindingType.Delete, current);
+		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
 				count,
 				type: BindingType.Delete,
-				callbacks,
+				listeners,
 			});
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const callbacks = this.matchPath(BindingType.Insert, current);
-		if (callbacks !== undefined) {
+		const listeners = this.matchPath(BindingType.Insert, current);
+		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
 				content,
 				type: BindingType.Insert,
-				callbacks,
+				listeners,
 			});
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const callbacks = this.matchPath(BindingType.Delete, current);
-		if (callbacks !== undefined) {
+		const listeners = this.matchPath(BindingType.Delete, current);
+		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
 				value,
 				type: BindingType.SetValue,
-				callbacks,
+				listeners,
 			});
 		}
 	}
@@ -543,15 +541,15 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		);
 		const batchEventIndices = new Set<number>();
 		const batchEvents: CallableBindingContext[] = [];
-		const collected = new Set<(...args: unknown[]) => any>();
+		const collected = new Set<Listener>();
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			for (let i = 0; i < sortedQueue.length; i++) {
 				const event = sortedQueue[i];
 				const current = toDownPath<BindPath>(event.path);
-				const callbacks = this.matchPath(BindingType.Batch, current);
-				if (callbacks !== undefined && callbacks.size > 0) {
-					for (const callback of callbacks) {
-						collected.add(callback);
+				const listeners = this.matchPath(BindingType.Batch, current);
+				if (listeners !== undefined && listeners.size > 0) {
+					for (const listener of listeners) {
+						collected.add(listener);
 					}
 					batchEvents.push(event);
 					batchEventIndices.add(i);
@@ -559,8 +557,8 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			}
 		}
 		if (batchEvents.length > 0) {
-			for (const callback of collected) {
-				callback({
+			for (const listener of collected) {
+				listener({
 					type: BindingType.Batch,
 					events: batchEvents,
 				});
@@ -570,9 +568,9 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			if (batchEventIndices.has(i)) {
 				continue;
 			}
-			const { callbacks, ...context } = sortedQueue[i];
-			for (const callback of callbacks) {
-				callback({ ...context });
+			const { listeners, ...context } = sortedQueue[i];
+			for (const listener of listeners) {
+				listener({ ...context });
 			}
 		}
 		this.eventQueue.length = 0;
@@ -622,11 +620,7 @@ class AbstractDataBinder<
 		}
 		const contextType: BindingContextType = eventType as BindingContextType;
 		this.unregisterHandles.add(
-			visitor.registerListener(
-				contextType,
-				eventTrees,
-				listener as unknown as (...args: unknown[]) => any,
-			),
+			visitor.registerListener(contextType, eventTrees, listener as unknown as Listener),
 		);
 	}
 	public unregisterAll(): void {
