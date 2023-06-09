@@ -4,8 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { brand } from "../../util";
+import { extractFromOpaque } from "../../util";
 import { GlobalFieldKey, SchemaData } from "../../core";
 import { nodeKey } from "../defaultFieldKinds";
 import {
@@ -104,7 +103,7 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 	private *findKeys(node: EditableTree): Iterable<[key: LocalNodeKey, node: EditableTree]> {
 		const key = node[localNodeKeySymbol] as LocalNodeKey | undefined;
 		if (key !== undefined) {
-			yield [brand(key as SessionSpaceCompressedId), node];
+			yield [extractFromOpaque(key), node];
 			assert(
 				node[typeSymbol].extraGlobalFields ||
 					node[typeSymbol].globalFields.has(this.fieldKey),

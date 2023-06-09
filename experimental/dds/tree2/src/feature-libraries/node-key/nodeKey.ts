@@ -4,7 +4,7 @@
  */
 
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
-import { Brand, brand } from "../../util";
+import { Brand, Opaque, brand } from "../../util";
 import { TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { GlobalFieldSchema, SchemaBuilder, SchemaLibrary } from "../modular-schema";
 import { FieldKinds, NodeKeyFieldKind } from "../defaultFieldKinds";
@@ -16,7 +16,7 @@ import { FieldKinds, NodeKeyFieldKind } from "../defaultFieldKinds";
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
  * @alpha
  */
-export type LocalNodeKey = Brand<SessionSpaceCompressedId, "Local Node Key">; // TODO: can we make it opaque?
+export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
 
 /**
  * A UUID which identifies a node in the tree.
