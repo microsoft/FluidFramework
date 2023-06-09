@@ -2,6 +2,8 @@
 
 The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
+See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+
 ## Using azure-client
 
 The azure-client package has a `AzureClient` class that allows you to interact with Fluid.
@@ -33,11 +35,11 @@ import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
-    connection: {
-        type: "local",
-        tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
-        endpoint: "http://localhost:7070",
-    },
+	connection: {
+		type: "local",
+		tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
+		endpoint: "http://localhost:7070",
+	},
 };
 const azureClient = new AzureClient(clientProps);
 ```
@@ -50,15 +52,15 @@ When running against a live Azure Fluid Relay instance, we can use the same inte
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
 const clientProps = {
-    connection: {
-        type: "remote",
-        tenantId: "YOUR-TENANT-ID-HERE",
-        tokenProvider: new AzureFunctionTokenProvider(
-            "AZURE-FUNCTION-URL"+"/api/GetAzureToken",
-            { userId: "test-user",userName: "Test User" }
-        ),
-        endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
-    },
+	connection: {
+		type: "remote",
+		tenantId: "YOUR-TENANT-ID-HERE",
+		tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL" + "/api/GetAzureToken", {
+			userId: "test-user",
+			userName: "Test User",
+		}),
+		endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
+	},
 };
 const azureClient = new AzureClient(clientProps);
 ```
@@ -77,11 +79,13 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```typescript
 const schema = {
-    initialObjects: {
-        /* ... */
-    },
-    dynamicObjectTypes: [ /*...*/ ],
-}
+	initialObjects: {
+		/* ... */
+	},
+	dynamicObjectTypes: [
+		/*...*/
+	],
+};
 const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.createContainer(schema);
 
@@ -113,11 +117,11 @@ The most common way to use Fluid is through initial collaborative objects that a
 // Define the keys and types of the initial list of collaborative objects.
 // Here, we are using a SharedMap DDS on key "map1" and a SharedString on key "text1".
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-        text1: SharedString,
-    }
-}
+	initialObjects: {
+		map1: SharedMap,
+		text1: SharedString,
+	},
+};
 
 // Fetch back the container that had been created earlier with the same ID and schema
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
@@ -139,11 +143,11 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```typescript
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-    },
-    dynamicObjectTypes: [ SharedString ],
-}
+	initialObjects: {
+		map1: SharedMap,
+	},
+	dynamicObjectTypes: [SharedString],
+};
 
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
 const map1 = container.initialObjects.map1;
@@ -161,4 +165,61 @@ const text1 = await map1.get(); // Resolve the handle to get the object
 const text1 = await map1.get("text1-unique-id").get();
 ```
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Help
+
+Not finding what you're looking for in this README?
+Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Thank you!
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

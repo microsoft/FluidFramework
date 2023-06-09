@@ -2,355 +2,237 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
+
 import { AzureClient } from "../AzureClient";
-import { createAzureClient } from "./AzureClientFactory";
-import { TestDataObject } from "./TestDataObject";
+import { AzureLocalConnectionConfig } from "../interfaces";
 
-const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
-    const maybeValue = map.get<T>(key);
-    if (maybeValue !== undefined) {
-        return maybeValue;
-    }
+function createAzureClient(scopes?: ScopeType[]): AzureClient {
+	const connectionProps: AzureLocalConnectionConfig = {
+		tokenProvider: new InsecureTokenProvider("fooBar", generateTestUser(), scopes),
+		endpoint: "http://localhost:7070",
+		type: "local",
+	};
+	return new AzureClient({ connection: connectionProps });
+}
 
-    return new Promise((resolve) => {
-        const handler = (changed: IValueChanged): void => {
-            if (changed.key === key) {
-                map.off("valueChanged", handler);
-                const value = map.get<T>(changed.key);
-                if (value === undefined) {
-                    throw new Error("Unexpected valueChanged result");
-                }
-                resolve(value);
-            }
-        };
-        map.on("valueChanged", handler);
-    });
-};
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    (container as any).container.connectionMode as ConnectionMode;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+	(container as any).container.connectionMode as ConnectionMode;
 
 describe("AzureClient", () => {
-    let client: AzureClient;
-    let schema: ContainerSchema;
+	const connectTimeoutMs = 1000;
+	let client: AzureClient;
+	let schema: ContainerSchema;
 
-    beforeEach(() => {
-        client = createAzureClient();
-        schema = {
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-    });
+	beforeEach(() => {
+		client = createAzureClient();
+		schema = {
+			initialObjects: {
+				map1: SharedMap,
+			},
+		};
+	});
 
-    /**
-     * Scenario: test when Azure Client is instantiated correctly, it can create
-     * a container successfully.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("can create new Azure Fluid Relay container successfully", async () => {
-        const resourcesP = client.createContainer(schema);
+	/**
+	 * Scenario: test when Azure Client is instantiated correctly, it can create
+	 * a container successfully.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("can create new Azure Fluid Relay container successfully", async () => {
+		const resourcesP = client.createContainer(schema);
 
-        await assert.doesNotReject(
-            resourcesP,
-            () => true,
-            "container cannot be created in Azure Fluid Relay",
-        );
-    });
+		await assert.doesNotReject(
+			resourcesP,
+			() => true,
+			"container cannot be created in Azure Fluid Relay",
+		);
+	});
 
-    /**
-     * Scenario: test when an Azure Client container is created,
-     * it is initially detached.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("Created container is detached", async () => {
-        const { container } = await client.createContainer(schema);
-        assert.strictEqual(
-            container.attachState,
-            AttachState.Detached,
-            "Container should be detached",
-        );
-    });
+	/**
+	 * Scenario: test when an Azure Client container is created,
+	 * it is initially detached.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("Created container is detached", async () => {
+		const { container } = await client.createContainer(schema);
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Detached,
+			"Container should be detached",
+		);
+	});
 
-    /**
-     * Scenario: Test attaching a container.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("can attach a container", async () => {
-        const { container } = await client.createContainer(schema);
-        const containerId = await container.attach();
-        await new Promise<void>((resolve) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
+	/**
+	 * Scenario: Test attaching a container.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("can attach a container", async () => {
+		const { container } = await client.createContainer(schema);
+		const containerId = await container.attach();
 
-        assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
-        assert.strictEqual(
-            container.attachState,
-            AttachState.Attached,
-            "Container is not attached after attach is called",
-        );
-    });
+		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+			durationMs: connectTimeoutMs,
+			errorMsg: "container connect() timeout",
+		});
 
-    /**
-     * Scenario: Test if attaching a container twice fails.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("cannot attach a container twice", async () => {
-        const { container } = await client.createContainer(schema);
-        const containerId = await container.attach();
-        await new Promise<void>((resolve) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
+		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is not attached after attach is called",
+		);
+	});
 
-        assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
-        assert.strictEqual(
-            container.attachState,
-            AttachState.Attached,
-            "Container is attached after attach is called",
-        );
-        await assert.rejects(container.attach(), () => true, "Container should not attach twice");
-    });
+	/**
+	 * Scenario: Test if attaching a container twice fails.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("cannot attach a container twice", async () => {
+		const { container } = await client.createContainer(schema);
+		const containerId = await container.attach();
 
-    /**
-     * Scenario: test if Azure Client can get an existing container.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-        const { container: newContainer } = await client.createContainer(schema);
-        const containerId = await newContainer.attach();
-        await new Promise<void>((resolve) => {
-            newContainer.on("connected", () => {
-                resolve();
-            });
-        });
+		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+			durationMs: connectTimeoutMs,
+			errorMsg: "container connect() timeout",
+		});
 
-        const resources = client.getContainer(containerId, schema);
-        await assert.doesNotReject(
-            resources,
-            () => true,
-            "container cannot be retrieved from Azure Fluid Relay",
-        );
-    });
+		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is attached after attach is called",
+		);
+		await assert.rejects(container.attach(), () => true, "Container should not attach twice");
+	});
 
-    /**
-     * Scenario: test if Azure Client can get a non-exiting container.
-     *
-     * Expected behavior: an error should be thrown when trying to get a non-existent container.
-     */
-    it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-        const consoleErrorFn = console.error;
-        console.error = (): void => {};
-        const containerAndServicesP = client.getContainer("containerConfig", schema);
+	/**
+	 * Scenario: test if Azure Client can get an existing container.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("can retrieve existing Azure Fluid Relay container successfully", async () => {
+		const { container: newContainer } = await client.createContainer(schema);
+		const containerId = await newContainer.attach();
 
-        const errorFn = (error: Error): boolean => {
-            assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
-            return true;
-        };
+		await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+			durationMs: connectTimeoutMs,
+			errorMsg: "container connect() timeout",
+		});
 
-        await assert.rejects(
-            containerAndServicesP,
-            errorFn,
-            "Azure Client can load a non-existent container",
-        );
-        // eslint-disable-next-line require-atomic-updates
-        console.error = consoleErrorFn;
-    });
+		const resources = client.getContainer(containerId, schema);
+		await assert.doesNotReject(
+			resources,
+			() => true,
+			"container cannot be retrieved from Azure Fluid Relay",
+		);
+	});
 
-    /**
-     * Scenario: test when an Azure Client container is created,
-     * it can set the initial objects.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("can set initial objects for a container", async () => {
-        const { container: newContainer } = await client.createContainer(schema);
-        const containerId = await newContainer.attach();
-        await new Promise<void>((resolve) => {
-            newContainer.on("connected", () => {
-                resolve();
-            });
-        });
+	/**
+	 * Scenario: test if Azure Client can get a non-exiting container.
+	 *
+	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
+	 */
+	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
+		const consoleErrorFn = console.error;
+		console.error = (): void => {};
+		const containerAndServicesP = client.getContainer("containerConfig", schema);
 
-        const resources = client.getContainer(containerId, schema);
-        await assert.doesNotReject(
-            resources,
-            () => true,
-            "container cannot be retrieved from Azure Fluid Relay",
-        );
+		const errorFn = (error: Error): boolean => {
+			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+			return true;
+		};
 
-        const { container } = await resources;
-        assert.deepStrictEqual(
-            Object.keys(container.initialObjects),
-            Object.keys(schema.initialObjects),
-        );
-    });
+		await assert.rejects(
+			containerAndServicesP,
+			errorFn,
+			"Azure Client can load a non-existent container",
+		);
+		// eslint-disable-next-line require-atomic-updates
+		console.error = consoleErrorFn;
+	});
 
-    /**
-     * Scenario: test if initialObjects passed into the container functions correctly.
-     *
-     * Expected behavior: initialObjects value loaded in two different containers should mirror
-     * each other after value is changed.
-     */
-    it("can change initialObjects value", async () => {
-        const { container } = await client.createContainer(schema);
-        const containerId = await container.attach();
-        await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-                resolve();
-            });
-        });
+	/**
+	 * Scenario: Test if AzureClient with only read permission starts the container in read mode.
+	 * AzureClient will attempt to start the connection in write mode, and since access permissions
+	 * does not offer write capabilities, the established connection mode will be `read`.
+	 *
+	 * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
+	 */
+	it("can create a container with only read permission in read mode", async () => {
+		const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
 
-        const initialObjectsCreate = container.initialObjects;
-        const map1Create = initialObjectsCreate.map1 as SharedMap;
-        map1Create.set("new-key", "new-value");
-        const valueCreate: string | undefined = await map1Create.get("new-key");
+		const { container } = await readOnlyAzureClient.createContainer(schema);
+		const containerId = await container.attach();
+		await timeoutPromise((resolve) => container.once("connected", resolve), {
+			durationMs: 1000,
+			errorMsg: "container connect() timeout",
+		});
+		const { container: containerGet } = await readOnlyAzureClient.getContainer(
+			containerId,
+			schema,
+		);
 
-        const { container: containerGet } = await client.getContainer(containerId, schema);
-        const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        const valueGet: string | undefined = await mapWait(map1Get, "new-key");
-        assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
-    });
+		assert.strictEqual(
+			connectionModeOf(container),
+			"read",
+			"Creating a container with only read permission is not in read mode",
+		);
 
-    /**
-     * Scenario: test if the optional schema parameter, dynamicObjectTypes (custom data objects),
-     * can be added during runtime and be returned by the container.
-     *
-     * Expected behavior: added loadable object can be retrieved from the container. Loadable
-     * object's id and container config ID should be identical since it's now attached to
-     * the container.
-     */
-    it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-        const dynamicSchema: ContainerSchema = {
-            initialObjects: {
-                map1: SharedMap,
-            },
-            dynamicObjectTypes: [TestDataObject],
-        };
+		assert.strictEqual(
+			connectionModeOf(containerGet),
+			"read",
+			"Getting a container with only read permission is not in read mode",
+		);
+	});
 
-        const { container } = await client.createContainer(dynamicSchema);
+	/**
+	 * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
+	 * AzureClient will attempt to start the connection in write mode, and since access permissions offer
+	 * write capability, the established connection mode will be `write`.
+	 *
+	 * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
+	 */
+	it("can create a container with read and write permissions in write mode", async () => {
+		const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
 
-        const newPair = await container.create(TestDataObject);
-        assert.ok(newPair?.handle);
+		const { container } = await readWriteAzureClient.createContainer(schema);
+		const containerId = await container.attach();
+		await timeoutPromise((resolve) => container.once("connected", resolve), {
+			durationMs: 1000,
+			errorMsg: "container connect() timeout",
+		});
+		const { container: containerGet } = await readWriteAzureClient.getContainer(
+			containerId,
+			schema,
+		);
 
-        const map1 = container.initialObjects.map1 as SharedMap;
-        map1.set("new-pair-id", newPair.handle);
-        const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
-        const obj: unknown = await handle?.get();
-        assert.ok(obj, "container added dynamic objects incorrectly");
-    });
+		assert.strictEqual(
+			connectionModeOf(container),
+			"write",
+			"Creating a container with only write permission is not in write mode",
+		);
 
-    /**
-     * Scenario: test if Azure Client can get recreate container.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    /* PR #9650 Needs to be merged for full flow to work
-    it("can copy old document successfully", async () => {
-        const newContainer = (await client.createContainer(schema)).container;
-        // const containerId = await newContainer.attach();
-        await new Promise<void>((resolve) => {
-            newContainer.on("connected", () => {
-                resolve();
-            });
-        });
-
-        const resources = client.copyContainer(containerId, schema);
-        await assert.doesNotReject(
-            resources,
-            () => true,
-            "container cannot be retrieved from Azure Fluid Relay",
-        );
-    });
-    */
-
-    /**
-     * Scenario: Test if AzureClient with only read permission starts the container in read mode.
-     * AzureClient will attempt to start the connection in write mode, and since access permissions
-     * does not offer write capabilities, the established connection mode will be `read`.
-     *
-     * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
-     */
-    it("can create a container with only read permission in read mode", async () => {
-        const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
-
-        const { container } = await readOnlyAzureClient.createContainer(schema);
-        const containerId = await container.attach();
-        await timeoutPromise((resolve) => container.once("connected", resolve), {
-            durationMs: 1000,
-            errorMsg: "container connect() timeout",
-        });
-        const { container: containerGet } = await readOnlyAzureClient.getContainer(
-            containerId,
-            schema,
-        );
-
-        assert.strictEqual(
-            connectionModeOf(container),
-            "read",
-            "Creating a container with only read permission is not in read mode",
-        );
-
-        assert.strictEqual(
-            connectionModeOf(containerGet),
-            "read",
-            "Getting a container with only read permission is not in read mode",
-        );
-    });
-
-    /**
-     * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
-     * AzureClient will attempt to start the connection in write mode, and since access permissions offer
-     * write capability, the established connection mode will be `write`.
-     *
-     * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
-     */
-    it("can create a container with read and write permissions in write mode", async () => {
-        const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
-
-        const { container } = await readWriteAzureClient.createContainer(schema);
-        const containerId = await container.attach();
-        await timeoutPromise((resolve) => container.once("connected", resolve), {
-            durationMs: 1000,
-            errorMsg: "container connect() timeout",
-        });
-        const { container: containerGet } = await readWriteAzureClient.getContainer(
-            containerId,
-            schema,
-        );
-
-        assert.strictEqual(
-            connectionModeOf(container),
-            "write",
-            "Creating a container with only write permission is not in write mode",
-        );
-
-        assert.strictEqual(
-            connectionModeOf(containerGet),
-            "write",
-            "Getting a container with only write permission is not in write mode",
-        );
-    });
+		assert.strictEqual(
+			connectionModeOf(containerGet),
+			"write",
+			"Getting a container with only write permission is not in write mode",
+		);
+	});
 });

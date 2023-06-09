@@ -217,7 +217,8 @@
             "Tests": {
                 "dev": true,
                 "dirs": [
-                    "packages/test/"
+                    "packages/test/",
+                    "azure/packages/test/"
                 ]
             },
             "Test-Utils": {
@@ -261,6 +262,14 @@
                     "Test-Utils"
                 ]
             },
+            "Azure-Service": {
+                "packages": [
+                    "@fluidframework/azure-local-service"
+                ],
+                "deps": [
+                    "Server-Tools"
+                ]
+            },
             "Azure-Examples": {
                 "packages": [
                     "@fluid-example/presence-tracker",
@@ -295,7 +304,6 @@
             },
             "Server-Tools": {
                 "packages": [
-                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [
