@@ -175,7 +175,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 					childData: { leafField: "Hello world again!" },
 				},
 				{
-					childField: true, 
+					childField: true,
 					childData: { leafField: false },
 				},
 			],
