@@ -487,6 +487,8 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
               script: |
 
+                echo "FLUID_LOGGER_PROPS = $FLUID_LOGGER_PROPS"
+
                 # Run execution time tests
                 echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
                 if [[ '${{ endpointObject.endpointName }}' == 'local' ]]; then
@@ -521,6 +523,7 @@ stages:
               FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
               FLUID_BUILD_ID: $(Build.BuildId)
               FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
+              FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark" }'
               login__microsoft__clientId: $(login-microsoft-clientId)
               login__microsoft__secret: $(login-microsoft-secret)
               ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
@@ -619,6 +622,7 @@ stages:
       - perf_unit_tests_memory
       - perf_e2e_tests_local
       - perf_e2e_tests_odsp
+      - perf_e2e_tests_frs
 
     jobs:
       - template: templates/include-test-perf-benchmarks.yml

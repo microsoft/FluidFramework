@@ -5,7 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
+import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	AnchorSet,
 	assertIsRevisionTag,
@@ -25,21 +25,7 @@ import {
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, SharedTreeBranch } from "./branch";
-
-export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-/**
- * Contains a single change to the `SharedTree` and associated metadata
- */
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {
-	/** An identifier representing the session/user/client that made this commit */
-	readonly sessionId: SessionId;
-}
-/**
- * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
- */
-export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
-	sequenceNumber: SeqNumber;
-}
+import { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
@@ -131,7 +117,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -139,15 +125,18 @@ export class EditManager<
 			revision: nullRevisionTag,
 			change: changeFamily.rebaser.compose([]),
 		};
-		this.localBranchUndoRedoManager = UndoRedoManager.create(
-			repairDataStoreProvider,
-			changeFamily,
-		);
+		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
+		this.trunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			repairDataStoreProvider.clone(),
+			this.trunkUndoRedoManager,
+		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
+			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
 			anchors,
 		);
@@ -264,6 +253,9 @@ export class EditManager<
 				for (const [sessionId, branch] of this.peerLocalBranches) {
 					const [rebasedBranch] = rebaseBranch(
 						this.changeFamily.rebaser,
+						// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
+						// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
+						undefined,
 						branch,
 						newTrunkTail,
 						this.trunk.getHead(),
@@ -417,11 +409,15 @@ export class EditManager<
 
 	/**
 	 * Needs to be called after a summary is loaded.
-	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
+	 * local's after a summary load.
 	 */
 	public afterSummaryLoad(): void {
-		this.trunkUndoRedoManager.repairDataStoreProvider =
-			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
+		assert(
+			this.localBranch.repairDataStoreProvider !== undefined,
+			"Local branch must maintain repair data",
+		);
+		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
@@ -436,7 +432,7 @@ export class EditManager<
 			);
 			assert(
 				firstLocalCommit !== undefined,
-				"Received a sequenced change from the local session despite having no local changes",
+				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 			);
 
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
@@ -457,6 +453,9 @@ export class EditManager<
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = rebaseBranch(
 			this.changeFamily.rebaser,
+			// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
+			undefined,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
 			this.trunk.getHead(),
@@ -472,7 +471,6 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
-				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -483,7 +481,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
+		this.localBranch.rebaseOnto(this.trunk);
 	}
 
 	public findLocalCommit(
@@ -512,21 +510,11 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-			this.changeFamily.intoDelta(commit.change),
-		);
+		this.trunk.repairDataStoreProvider?.applyChange(commit.change);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);
 	}
-}
-
-/**
- * A branch off of the trunk for use in summaries
- */
-export interface SummarySessionBranch<TChangeset> {
-	readonly base: RevisionTag;
-	readonly commits: Commit<TChangeset>[];
 }
 
 /**

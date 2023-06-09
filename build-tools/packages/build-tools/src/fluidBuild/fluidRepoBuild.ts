@@ -16,7 +16,7 @@ import { FluidPackageCheck } from "./fluidPackageCheck";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 
-const { info, verbose } = defaultLogger;
+const { log, verbose } = defaultLogger;
 
 export interface IPackageMatchedOptions {
 	match: string[];
@@ -82,7 +82,7 @@ export class FluidRepoBuild extends FluidRepo {
 				let matchedMonoRepo = false;
 				for (const monoRepo of this.releaseGroups.values()) {
 					if (isSameFileOrDir(monoRepo.repoPath, pkgDir)) {
-						info(`Release group matched: ${arg} => ${monoRepo.kind}`);
+						log(`Release group matched: ${arg} => ${monoRepo.kind}`);
 						if (
 							!this.matchWithFilter((pkg) => MonoRepo.isSame(pkg.monoRepo, monoRepo))
 						) {

@@ -23,10 +23,10 @@ import {
 import registerDebug from "debug";
 
 const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
-const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
-const { info } = defaultLogger;
+const { log } = defaultLogger;
 
 export enum BuildResult {
 	Success,
@@ -53,6 +53,7 @@ class TaskStats {
 	public leafUpToDateCount = 0;
 	public leafBuiltCount = 0;
 	public leafExecTimeTotal = 0;
+	public leafQueueWaitTimeTotal = 0;
 }
 
 class BuildContext {
@@ -214,6 +215,12 @@ export class BuildPackage {
 		});
 	}
 
+	public initializeWeight() {
+		this.tasks.forEach((task) => {
+			task.initializeWeight();
+		});
+	}
+
 	public async isUpToDate(): Promise<boolean> {
 		if (this.tasks.size == 0) {
 			return true;
@@ -289,7 +296,7 @@ export class BuildGraph {
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
-		info(
+		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${
 				this.matchedPackages
 			} matched packages (${this.buildContext.taskStats.leafTotalCount} total tasks in ${
@@ -300,7 +307,7 @@ export class BuildGraph {
 			return BuildResult.UpToDate;
 		}
 		if (this.numSkippedTasks) {
-			info(`Skipping ${this.numSkippedTasks} up to date tasks.`);
+			log(`Skipping ${this.numSkippedTasks} up to date tasks.`);
 		}
 		this.buildContext.fileHashCache.clear();
 		const q = Task.createTaskQueue();
@@ -333,6 +340,10 @@ export class BuildGraph {
 
 	public get totalElapsedTime(): number {
 		return this.buildContext.taskStats.leafExecTimeTotal;
+	}
+
+	public get totalQueueWaitTime(): number {
+		return this.buildContext.taskStats.leafQueueWaitTimeTotal;
 	}
 
 	public get taskFailureSummary(): string {
@@ -481,5 +492,12 @@ export class BuildGraph {
 		});
 
 		traceGraph("dependent task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.initializeWeight();
+		});
+
+		traceGraph("task weight initialized");
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,10 +15,8 @@
 		"fluid-fetch": "bin/fluid-fetch"
 	},
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -48,9 +46,9 @@
 		"@fluidframework/tool-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-internal.4.1.0",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-internal.5.0.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",

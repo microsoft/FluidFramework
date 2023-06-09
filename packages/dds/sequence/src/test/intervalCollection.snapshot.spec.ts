@@ -13,41 +13,13 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
-	IntervalCollection,
+	IIntervalCollection,
 	intervalLocatorFromEndpoint,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
 } from "../intervalCollection";
-
-const assertIntervals = (
-	sharedString: SharedString,
-	intervalCollection: IntervalCollection<SequenceInterval>,
-	expected: readonly { start: number; end: number }[],
-	validateOverlapping: boolean = true,
-) => {
-	const actual = Array.from(intervalCollection);
-	if (validateOverlapping && sharedString.getLength() > 0) {
-		const overlapping = intervalCollection.findOverlappingIntervals(
-			0,
-			sharedString.getLength() - 1,
-		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-	}
-	assert.strictEqual(
-		actual.length,
-		expected.length,
-		`findOverlappingIntervals() must return the expected number of intervals`,
-	);
-
-	const actualPos = actual.map((interval) => {
-		assert(interval);
-		const start = sharedString.localReferencePositionToPosition(interval.start);
-		const end = sharedString.localReferencePositionToPosition(interval.end);
-		return { start, end };
-	});
-	assert.deepEqual(actualPos, expected, "intervals are not as expected");
-};
+import { assertIntervals } from "./intervalUtils";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
@@ -172,8 +144,8 @@ describe("IntervalCollection snapshotting", () => {
 	describe("enables operations on reload", () => {
 		let sharedString: SharedString;
 		let sharedString2: SharedString;
-		let collection: IntervalCollection<SequenceInterval>;
-		let collection2: IntervalCollection<SequenceInterval>;
+		let collection: IIntervalCollection<SequenceInterval>;
+		let collection2: IIntervalCollection<SequenceInterval>;
 		let id: string;
 		beforeEach(async () => {
 			sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);

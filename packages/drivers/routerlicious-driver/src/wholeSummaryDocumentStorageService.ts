@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	performance,
@@ -24,7 +24,6 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IWholeFlatSummary } from "@fluidframework/server-services-client";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { IRouterliciousDriverPolicies } from "./policies";
 import {
@@ -56,7 +55,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies?: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),

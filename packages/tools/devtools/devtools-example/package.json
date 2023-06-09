@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/devtools-example",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",
@@ -13,10 +13,8 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -69,8 +67,8 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@testing-library/dom": "^8.2.0",

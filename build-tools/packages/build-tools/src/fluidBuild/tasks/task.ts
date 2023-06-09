@@ -10,19 +10,29 @@ import { LeafTask } from "./leaf/leafTask";
 import * as assert from "assert";
 import registerDebug from "debug";
 
-const traceTaskCreate = registerDebug("fluid-build:task:create");
+const traceTaskInit = registerDebug("fluid-build:task:init");
+const traceTaskExec = registerDebug("fluid-build:task:exec");
+const traceTaskExecWait = registerDebug("fluid-build:task:exec:wait");
 
 export interface TaskExec {
 	task: LeafTask;
 	resolve: (value: BuildResult) => void;
+	queueTime: number;
 }
 
 export abstract class Task {
 	private dependentTasks?: Task[];
-	private collectedDependentLeafTaskSet?: Set<LeafTask>;
+	private _transitiveDependentLeafTasks?: LeafTask[];
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
-			taskExec.resolve(await taskExec.task.exec());
+			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
+			const task = taskExec.task;
+			task.node.buildContext.taskStats.leafQueueWaitTimeTotal += waitTime;
+			traceTaskExecWait(`${task.nameColored}: waited in queue ${waitTime}s`);
+			taskExec.resolve(await task.exec());
+			// wait one more turn so that we can queue up dependents we just freed up
+			// before giving up the time slice, so that they can be considered for next tasks
+			await new Promise(setImmediate);
 		}, options.concurrency);
 	}
 
@@ -40,7 +50,7 @@ export abstract class Task {
 		public readonly command: string,
 		public readonly taskName: string | undefined,
 	) {
-		traceTaskCreate(`${this.nameColored}`);
+		traceTaskInit(`${this.nameColored}`);
 	}
 
 	public get package() {
@@ -57,20 +67,22 @@ export abstract class Task {
 		this.dependentTasks = this.node.getDependentTasks(this, this.taskName!, pendingInitDep);
 	}
 
-	public collectDependentLeafTasks(dependentLeafTasks: Set<LeafTask>) {
-		const dependentTasks = this.dependentTasks;
-		if (dependentTasks) {
-			if (this.collectedDependentLeafTaskSet === undefined) {
-				this.collectedDependentLeafTaskSet = new Set();
+	protected get transitiveDependentLeafTask() {
+		if (this._transitiveDependentLeafTasks === undefined) {
+			const dependentTasks = this.dependentTasks;
+			if (dependentTasks) {
+				const s = new Set<LeafTask>();
 				for (const dependentTask of dependentTasks) {
-					dependentTask.collectDependentLeafTasks(this.collectedDependentLeafTaskSet);
-					dependentTask.collectLeafTasks(this.collectedDependentLeafTaskSet);
+					dependentTask.transitiveDependentLeafTask.forEach((t) => s.add(t));
+					dependentTask.collectLeafTasks(s);
 				}
+				this._transitiveDependentLeafTasks = [...s.values()];
+			} else {
+				this._transitiveDependentLeafTasks = [];
+				assert.strictEqual(this.taskName, undefined);
 			}
-			this.collectedDependentLeafTaskSet.forEach((value) => dependentLeafTasks.add(value));
-		} else {
-			assert.strictEqual(this.taskName, undefined);
 		}
+		return this._transitiveDependentLeafTasks;
 	}
 
 	public async run(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
@@ -100,11 +112,17 @@ export abstract class Task {
 
 	public abstract initializeDependentLeafTasks(): void;
 	public abstract collectLeafTasks(leafTasks: Set<LeafTask>);
-	public abstract addDependentLeafTasks(dependentTasks: Set<LeafTask>): void;
+	public abstract addDependentLeafTasks(dependentTasks: Iterable<LeafTask>): void;
+	public abstract initializeWeight(): void;
+
 	protected abstract checkIsUpToDate(): Promise<boolean>;
 	protected abstract runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
 
 	public get forced() {
 		return options.force && (options.matchedOnly !== true || this.package.matched);
+	}
+
+	protected traceExec(msg: string) {
+		traceTaskExec(`${this.nameColored}: ${msg}`);
 	}
 }

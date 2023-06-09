@@ -46,6 +46,18 @@ import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from 
 
 const reservedIntervalIdKey = "intervalId";
 
+/**
+ * Values are used in persisted formats (ops) and revertibles.
+ * @alpha
+ */
+export const IntervalOpType = {
+	ADD: "add",
+	DELETE: "delete",
+	CHANGE: "change",
+	PROPERTY_CHANGED: "propertyChanged",
+	POSITION_REMOVE: "positionRemove",
+} as const;
+
 export enum IntervalType {
 	Simple = 0x0,
 	Nest = 0x1,
@@ -53,7 +65,7 @@ export enum IntervalType {
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
 	 * they reference is removed and acked.
-	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md` for details
+	 * See `packages\dds\merge-tree\docs\REFERENCEPOSITIONS.md` for details
 	 * SlideOnRemove is the default interval behavior and does not need to be specified.
 	 */
 	SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
@@ -110,9 +122,6 @@ export type CompressedSerializedInterval =
 	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
 	| [number, number, number, IntervalType, PropertySet];
 
-/**
- * @internal
- */
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
 	version: 2;
@@ -205,7 +214,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param label - label of the interval collection this interval is being added to. This parameter is
 	 * irrelevant for transient intervals.
 	 * @param start - numerical start position of the interval
-	 * @param end - numberical end position of the interval
+	 * @param end - numerical end position of the interval
 	 * @param client - client creating the interval
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
@@ -307,7 +316,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IntervalCollection<Interval>`
+	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */
@@ -461,7 +470,7 @@ export class Interval implements ISerializableInterval {
 }
 
 /**
- * Interval impelmentation whose ends are associated with positions in a mutatable sequence.
+ * Interval implementation whose ends are associated with positions in a mutatable sequence.
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
@@ -1496,7 +1505,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 
 	return new Map<string, IValueOperation<IntervalCollection<T>>>([
 		[
-			"add",
+			IntervalOpType.ADD,
 			{
 				process: (collection, params, local, op, localOpMetadata) => {
 					// if params is undefined, the interval was deleted during
@@ -1511,7 +1520,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 			},
 		],
 		[
-			"delete",
+			IntervalOpType.DELETE,
 			{
 				process: (collection, params, local, op) => {
 					assert(op !== undefined, 0x3fc /* op should exist here */);
@@ -1524,7 +1533,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 			},
 		],
 		[
-			"change",
+			IntervalOpType.CHANGE,
 			{
 				process: (collection, params, local, op, localOpMetadata) => {
 					// if params is undefined, the interval was deleted during
@@ -1543,7 +1552,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
+class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	implements Iterator<TInterval>
 {
 	private readonly results: TInterval[];
@@ -1636,14 +1645,137 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
- * This class is not a DDS in its own right, but emits events on mutating operations such that it's possible to
- * integrate into a DDS.
- * This aligns with its usage in `SharedSegmentSequence`, which allows associating intervals to positions in the
- * sequence DDS which are broadcast to all other clients in an eventually consistent fashion.
+ * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
  */
-export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<
-	IIntervalCollectionEvent<TInterval>
-> {
+export interface IIntervalCollection<TInterval extends ISerializableInterval>
+	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+	readonly attached: boolean;
+	/**
+	 * Attaches an index to this collection.
+	 * All intervals which are part of this collection will be added to the index, and the index will automatically
+	 * be updated when this collection updates due to local or remote changes.
+	 *
+	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * index somewhere in their in-memory data model for future reference and querying.
+	 */
+	attachIndex(index: IntervalIndex<TInterval>): void;
+	/**
+	 * Detaches an index from this collection.
+	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
+	 * due to local or remote changes will no longer incur updates to the index.
+	 *
+	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 */
+	detachIndex(index: IntervalIndex<TInterval>): boolean;
+	/**
+	 * @returns the interval in this collection that has the provided `id`.
+	 * If no interval in the collection has this `id`, returns `undefined`.
+	 */
+	getIntervalById(id: string): TInterval | undefined;
+	/**
+	 * Creates a new interval and add it to the collection.
+	 * @param start - interval start position (inclusive)
+	 * @param end - interval end position (exclusive)
+	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
+	 * @param props - properties of the interval
+	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
+	 * @returns - the created interval
+	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
+	 * with how the current half-open behavior is represented.
+	 */
+	add(
+		start: number,
+		end: number,
+		intervalType: IntervalType,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
+	/**
+	 * Removes an interval from the collection.
+	 * @param id - Id of the interval to remove
+	 * @returns the removed interval
+	 */
+	removeIntervalById(id: string): TInterval | undefined;
+	/**
+	 * Changes the properties on an existing interval.
+	 * @param id - Id of the interval whose properties should be changed
+	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
+	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
+	 */
+	changeProperties(id: string, props: PropertySet);
+	/**
+	 * Changes the endpoints of an existing interval.
+	 * @param id - Id of the interval to change
+	 * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
+	 * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
+	 * @returns the interval that was changed, if it existed in the collection.
+	 */
+	change(id: string, start?: number, end?: number): TInterval | undefined;
+
+	attachDeserializer(onDeserialize: DeserializeCallback): void;
+	/**
+	 * @returns an iterator over all intervals in this collection.
+	 */
+	[Symbol.iterator](): Iterator<TInterval>;
+
+	/**
+	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 */
+	CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+
+	/**
+	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 */
+	CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+
+	/**
+	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 */
+	CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+
+	/**
+	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 */
+	CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+
+	/**
+	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
+	 * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
+	 * intervals matching the query upon edit.
+	 * @param iteratesForward - whether or not iteration should be in the forward direction
+	 * @param start - If provided, only match intervals whose start point is equal to `start`.
+	 * @param end - If provided, only match intervals whose end point is equal to `end`.
+	 */
+	gatherIterationResults(
+		results: TInterval[],
+		iteratesForward: boolean,
+		start?: number,
+		end?: number,
+	): void;
+
+	/**
+	 * @returns an array of all intervals in this collection that overlap with the interval
+	 * `[startPosition, endPosition]`.
+	 */
+	findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
+
+	/**
+	 * Applies a function to each interval in this collection.
+	 */
+	map(fn: (interval: TInterval) => void): void;
+
+	previousInterval(pos: number): TInterval | undefined;
+
+	nextInterval(pos: number): TInterval | undefined;
+}
+
+/**
+ * {@inheritdoc IIntervalCollection}
+ */
+export class IntervalCollection<TInterval extends ISerializableInterval>
+	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>>
+	implements IIntervalCollection<TInterval>
+{
 	private savedSerializedIntervals?: ISerializedInterval[];
 	private localCollection: LocalIntervalCollection<TInterval> | undefined;
 	private onDeserialize: DeserializeCallback | undefined;
@@ -1687,12 +1819,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Attaches an index to this collection.
-	 * All intervals which are part of this collection will be added to the index, and the index will automatically
-	 * be updated when this collection updates due to local or remote changes.
-	 *
-	 * @remarks - After attaching an index to an interval collection, applications should typically store this
-	 * index somewhere in their in-memory data model for future reference and querying.
+	 * {@inheritdoc IIntervalCollection.attachIndex}
 	 */
 	public attachIndex(index: IntervalIndex<TInterval>): void {
 		if (!this.attached) {
@@ -1706,11 +1833,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Detaches an index from this collection.
-	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
-	 * due to local or remote changes will no longer incur updates to the index.
-	 *
-	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 * {@inheritdoc IIntervalCollection.detachIndex}
 	 */
 	public detachIndex(index: IntervalIndex<TInterval>): boolean {
 		if (!this.attached) {
@@ -1875,8 +1998,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns the interval in this collection that has the provided `id`.
-	 * If no interval in the collection has this `id`, returns `undefined`.
+	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
 	public getIntervalById(id: string) {
 		if (!this.localCollection) {
@@ -1886,14 +2008,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
-	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
-	 * with how the current half-open behavior is represented.
+	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add(
 		start: number,
@@ -1971,9 +2086,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Removes an interval from the collection.
-	 * @param id - Id of the interval to remove
-	 * @returns the removed interval
+	 * {@inheritdoc IIntervalCollection.removeIntervalById}
 	 */
 	public removeIntervalById(id: string) {
 		if (!this.localCollection) {
@@ -1987,10 +2100,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Changes the properties on an existing interval.
-	 * @param id - Id of the interval whose properties should be changed
-	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
-	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
+	 * {@inheritdoc IIntervalCollection.changeProperties}
 	 */
 	public changeProperties(id: string, props: PropertySet) {
 		if (!this.attached) {
@@ -2024,11 +2134,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Changes the endpoints of an existing interval.
-	 * @param id - Id of the interval to change
-	 * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
-	 * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
-	 * @returns the interval that was changed, if it existed in the collection.
+	 * {@inheritdoc IIntervalCollection.change}
 	 */
 	public change(id: string, start?: number, end?: number): TInterval | undefined {
 		if (!this.localCollection) {
@@ -2216,6 +2322,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		}
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.attachDeserializer}
+	 */
 	public attachDeserializer(onDeserialize: DeserializeCallback): void {
 		// If no deserializer is specified can skip all processing work
 		if (!onDeserialize) {
@@ -2508,7 +2617,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
 	 */
 	public CreateForwardIteratorWithStartPosition(
 		startPosition: number,
@@ -2518,7 +2627,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
 	 */
 	public CreateBackwardIteratorWithStartPosition(
 		startPosition: number,
@@ -2528,7 +2637,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
 	 */
 	public CreateForwardIteratorWithEndPosition(
 		endPosition: number,
@@ -2543,7 +2652,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
 	 */
 	public CreateBackwardIteratorWithEndPosition(
 		endPosition: number,
@@ -2558,12 +2667,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
-	 * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
-	 * intervals matching the query upon edit.
-	 * @param iteratesForward - whether or not iteration should be in the forward direction
-	 * @param start - If provided, only match intervals whose start point is equal to `start`.
-	 * @param end - If provided, only match intervals whose end point is equal to `end`.
+	 * {@inheritdoc IIntervalCollection.gatherIterationResults}
 	 */
 	public gatherIterationResults(
 		results: TInterval[],
@@ -2584,8 +2688,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * @returns an array of all intervals in this collection that overlap with the interval
-	 * `[startPosition, endPosition]`.
+	 * {@inheritdoc IIntervalCollection.findOverlappingIntervals}
 	 */
 	public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
 		if (!this.localCollection) {
@@ -2599,7 +2702,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	}
 
 	/**
-	 * Applies a function to each interval in this collection.
+	 * {@inheritdoc IIntervalCollection.map}
 	 */
 	public map(fn: (interval: TInterval) => void) {
 		if (!this.localCollection) {
@@ -2611,6 +2714,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		}
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.previousInterval}
+	 */
 	public previousInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");
@@ -2619,6 +2725,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		return this.localCollection.endIntervalIndex.previousInterval(pos);
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.nextInterval}
+	 */
 	public nextInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");

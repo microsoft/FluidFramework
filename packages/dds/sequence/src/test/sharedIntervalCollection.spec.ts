@@ -15,10 +15,10 @@ import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection";
-import { Interval, IntervalCollection, IntervalType } from "../intervalCollection";
+import { Interval, IIntervalCollection, IntervalType } from "../intervalCollection";
 
 const assertIntervals = (
-	intervalCollection: IntervalCollection<Interval>,
+	intervalCollection: IIntervalCollection<Interval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -82,8 +82,8 @@ describe("SharedIntervalCollection", () => {
 		let runtimeFactory: MockContainerRuntimeFactory;
 		let intervals1: SharedIntervalCollection;
 		let intervals2: SharedIntervalCollection;
-		let collection1: IntervalCollection<Interval>;
-		let collection2: IntervalCollection<Interval>;
+		let collection1: IIntervalCollection<Interval>;
+		let collection2: IIntervalCollection<Interval>;
 
 		beforeEach(() => {
 			runtimeFactory = new MockContainerRuntimeFactory();
@@ -173,8 +173,8 @@ describe("SharedIntervalCollection", () => {
 		let intervals1: SharedIntervalCollection;
 		let intervals2: SharedIntervalCollection;
 		let runtime1: MockContainerRuntimeForReconnection;
-		let collection1: IntervalCollection<Interval>;
-		let collection2: IntervalCollection<Interval>;
+		let collection1: IIntervalCollection<Interval>;
+		let collection2: IIntervalCollection<Interval>;
 
 		beforeEach(() => {
 			runtimeFactory = new MockContainerRuntimeFactoryForReconnection();

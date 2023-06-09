@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -12,10 +12,8 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "concurrently npm:tsc npm:build:webpack",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -82,7 +80,7 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "22.2.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
@@ -118,6 +116,10 @@
 				"script": false
 			},
 			"tsc": [
+				"...",
+				"@fluid-experimental/property-inspector-table#build:copy-resources"
+			],
+			"webpack": [
 				"...",
 				"@fluid-experimental/property-inspector-table#build:copy-resources"
 			]

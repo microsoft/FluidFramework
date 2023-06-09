@@ -14,6 +14,9 @@ interface DoneFileContent {
 	dependencies: { [pkgName: string]: { [command: string]: any } };
 }
 export class WebpackTask extends LeafWithDoneFileTask {
+	protected get taskWeight() {
+		return 5; // generally expensive relative to other tasks
+	}
 	protected async getDoneFileContent() {
 		try {
 			const content: DoneFileContent = {

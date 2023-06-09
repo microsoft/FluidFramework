@@ -5,11 +5,7 @@
 
 import { TreeSchemaIdentifier } from "../../../../core";
 import {
-	AllowOptional,
-	AllowOptionalNotFlattened,
 	ArrayToUnion,
-	OptionalFields,
-	RequiredFields,
 	Unbrand,
 	WithDefault,
 	// Allow importing from this specific file which is being tested:
@@ -39,34 +35,6 @@ import {
 	type check1_ = requireTrue<areSafelyAssignable<ArrayToUnion<[1]>, 1>>;
 	type Case2 = ArrayToUnion<[1, 2]>;
 	type check2_ = requireTrue<areSafelyAssignable<Case2, 1 | 2>>;
-}
-
-// Test RemoveOptionalFields
-{
-	type a = OptionalFields<{ a: 5; b: undefined | 5; c: undefined }>;
-	type check1_ = requireAssignableTo<a, { b?: 5 }>;
-	type check2_ = requireAssignableTo<{ b?: 5 }, a>;
-}
-
-// Test PartialWithoutUndefined
-{
-	type a = RequiredFields<{ a: 5; b: undefined | 5; c: undefined }>;
-	type check1_ = requireAssignableTo<a, { a: 5 }>;
-	type check2_ = requireAssignableTo<{ a: 5 }, a>;
-}
-
-// Test AllowOptional
-{
-	type a = AllowOptional<{ a: 5; b: undefined | 5; c: undefined }>;
-	type check1_ = requireAssignableTo<a, { a: 5; b?: 5 }>;
-	type check2_ = requireAssignableTo<{ a: 5; b?: 5 }, a>;
-}
-
-// Test AllowOptionalNotFlattened
-{
-	type a = AllowOptionalNotFlattened<{ a: 5; b: undefined | 5; c: undefined }>;
-	type check1_ = requireAssignableTo<a, { a: 5; b?: 5 }>;
-	type check2_ = requireAssignableTo<{ a: 5; b?: 5 }, a>;
 }
 
 // Test Unbrand

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/readme-command",
-	"version": "0.18.0",
+	"version": "0.19.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -48,7 +48,7 @@
 		"semver": "^7.3.7"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/chai": "^4",
 		"@types/chai-arrays": "^2.0.0",

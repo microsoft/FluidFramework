@@ -67,6 +67,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 }
 
 export const defaultChangeFamily = new DefaultChangeFamily();
+export const defaultIntoDelta = (change: DefaultChangeset) => defaultChangeFamily.intoDelta(change);
 
 /**
  * Default editor for transactions.

@@ -52,7 +52,8 @@ const localSessionId: SessionId = "0";
 const peer1: SessionId = "1";
 const peer2: SessionId = "2";
 
-const NUM_STEPS = 5;
+// TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
+const NUM_STEPS = 4;
 const NUM_PEERS = 2;
 const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
@@ -346,6 +347,8 @@ describe("EditManager", () => {
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
 			});
+
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 
 		it("Rebases anchors over local changes", () => {

@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.18.0",
+	"version": "0.19.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,7 +52,7 @@
 		"test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
 		"test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
 		"tsc": "lerna run tsc --stream",
-		"tsc:fast": "fluid-build --root .. -s tsc --buildTools",
+		"tsc:fast": "fluid-build --root .. -t tsc --buildTools",
 		"typetests:prepare": "flub generate typetests --prepare --releaseGroup build-tools --verbose",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
@@ -78,7 +78,7 @@
 		"@commitlint/cli": "^17.1.2",
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",

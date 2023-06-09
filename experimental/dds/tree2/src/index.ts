@@ -99,15 +99,8 @@ export {
 
 export {
 	Brand,
-	BrandedType,
 	Opaque,
 	extractFromOpaque,
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	ExtractFromOpaque,
-	isAny,
 	brand,
 	brandOpaque,
 	ValueFromBranded,
@@ -118,7 +111,6 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
-	Assume,
 } from "./util";
 
 export {
@@ -275,3 +267,7 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 } from "./codec";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+import * as InternalTypes from "./internal";
+export { InternalTypes };

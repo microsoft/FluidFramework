@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/stochastic-test-utils",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,11 +16,9 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --parentProcess --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run build:test",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -64,7 +62,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/benchmark": "^0.47.0",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",

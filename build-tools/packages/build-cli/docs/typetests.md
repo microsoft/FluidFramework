@@ -57,9 +57,6 @@ FLAGS
       Remove the test "-previous" version dependency. This is also done implicitly (without this flag) if type tests are
       disabled.
 
-  -v, --verbose
-      Verbose logging.
-
   --disable
       Set the "typeValidation.disabled" setting to "true" in the package.json
 
@@ -83,6 +80,9 @@ FLAGS
 
   --scope=<value>...
       Package scopes to filter to.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,

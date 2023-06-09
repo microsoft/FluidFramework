@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -14,7 +14,7 @@ import { validateMessages } from "../odspUtils";
  */
 export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private snapshotOps: ISequencedDocumentMessage[],
 	) {}
 

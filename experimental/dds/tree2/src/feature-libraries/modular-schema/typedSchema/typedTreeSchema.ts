@@ -18,7 +18,7 @@ import {
 import { MakeNominal, Assume } from "../../../util";
 import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
-import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
+import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
 // TODO: tests for this file
@@ -83,7 +83,7 @@ export class TreeSchema<
 		this.localFieldsObject = normalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>(
 			this.info.local,
 		);
-		this.localFields = objectToMap(this.localFieldsObject);
+		this.localFields = objectToMapTyped(this.localFieldsObject);
 		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
 		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
 		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<

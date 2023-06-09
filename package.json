@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,22 +11,19 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-		"build:ci": "npm run build:genver && pnpm run -r --stream build:compile",
-		"build:compile": "pnpm run -r --stream build:compile",
-		"build:docs": "pnpm run -r --no-sort --stream build:docs",
-		"build:fast": "fluid-build --root .",
-		"build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
-		"build:full:compile": "pnpm run -r --stream build:full:compile",
+		"build": "npm run policy-check && npm run layer-check && fluid-build --task build",
+		"build:compile": "fluid-build --task compile",
+		"build:docs": "fluid-build --task build:docs",
+		"build:fast": "fluid-build --task build --worker",
+		"build:full": "fluid-build --task full",
+		"build:full:compile": "fluid-build --task compile --task webpack",
 		"build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
-		"build:genver": "pnpm run -r --no-sort --stream build:genver",
 		"bump-version": "fluid-bump-version --root .",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
+		"changeset": "flub changeset add",
 		"check:versions": "flub check buildVersion -g client --path .",
-		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
-		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
-		"ci:eslint": "pnpm run -r --no-sort --stream eslint",
+		"ci:build": "fluid-build --task ci:build",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha:report",
@@ -49,6 +46,7 @@
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "pretty-quick --branch main",
 		"format:changed:next": "pretty-quick --branch next",
+		"format:repo": "npm run prettier:repo:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
@@ -60,6 +58,8 @@
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",
 		"prettier:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream prettier:fix",
+		"prettier:repo": "prettier --check . --ignore-path ./.prettierignore",
+		"prettier:repo:fix": "prettier --write . --ignore-path ./.prettierignore",
 		"prettier:root": "prettier --check ./*.* --ignore-path .prettierignore",
 		"prettier:root:fix": "prettier --write ./*.* --ignore-path .prettierignore",
 		"restart": "cd server/routerlicious && npm run restart",
@@ -87,16 +87,16 @@
 		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
 		"test:stress": "pnpm run -r --no-sort --stream --no-bail test:stress",
-		"tsc": "pnpm run -r --stream tsc",
-		"tsc:fast": "fluid-build --root . -s tsc",
+		"tsc": "fluid-build --root . --task tsc",
+		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub typetests -g client --reset --previous --normalize",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "pnpm run -r --parallel build:esnext --watch",
 		"watch:tsc": "pnpm run -r --parallel tsc --watch",
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
-		"webpack": "pnpm run -r --parallel webpack",
-		"webpack:profile": "pnpm run -r --parallel webpack:profile"
+		"webpack": "fluid-build --task webpack",
+		"webpack:profile": "fluid-build --task webpack:profile"
 	},
 	"c8": {
 		"all": true,
@@ -132,9 +132,9 @@
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.26.0",
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -183,7 +183,7 @@
 			"allowedVersions": {
 				"react": "17.0.2",
 				"react-dom": "17.0.2",
-				"webpack": "5.83.0"
+				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
 				"fluid-framework"

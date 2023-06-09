@@ -272,7 +272,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
+		[GetContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetContainerDevtoolsFeatures.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.postSupportedFeatures();
@@ -280,7 +280,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[GetContainerState.MessageType]: (untypedMessage) => {
+		[GetContainerState.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetContainerState.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.postContainerStateChange();
@@ -288,7 +288,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[ConnectContainer.MessageType]: (untypedMessage) => {
+		[ConnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as ConnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.container.connect();
@@ -296,7 +296,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[DisconnectContainer.MessageType]: (untypedMessage) => {
+		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
@@ -304,7 +304,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[CloseContainer.MessageType]: (untypedMessage) => {
+		[CloseContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
@@ -312,7 +312,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[GetAudienceSummary.MessageType]: (untypedMessage) => {
+		[GetAudienceSummary.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetAudienceSummary.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.postAudienceStateChange();
@@ -320,22 +320,20 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-		[GetRootDataVisualizations.MessageType]: (untypedMessage) => {
+		[GetRootDataVisualizations.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetRootDataVisualizations.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.getRootDataVisualizations().then((visualizations) => {
-					this.postRootDataVisualizations(visualizations);
-				}, console.error);
+				const visualizations = await this.getRootDataVisualizations();
+				this.postRootDataVisualizations(visualizations);
 				return true;
 			}
 			return false;
 		},
-		[GetDataVisualization.MessageType]: (untypedMessage) => {
+		[GetDataVisualization.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as GetDataVisualization.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
-					this.postDataVisualization(message.data.fluidObjectId, visualization);
-				}, console.error);
+				const visualization = await this.getDataVisualization(message.data.fluidObjectId);
+				this.postDataVisualization(message.data.fluidObjectId, visualization);
 				return true;
 			}
 			return false;

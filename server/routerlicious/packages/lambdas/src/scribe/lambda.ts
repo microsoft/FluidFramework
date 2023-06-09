@@ -104,6 +104,7 @@ export class ScribeLambda implements IPartitionLambda {
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
+		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
@@ -337,11 +338,13 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-					const isTransientTenant = this.transientTenants.has(this.tenantId);
+					const enableServiceSummaryForTenant =
+						this.disableTransientTenantFiltering ||
+						!this.transientTenants.has(this.tenantId);
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
-						!isTransientTenant
+						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,11 +15,9 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -78,12 +76,12 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.4.1.0",
+		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",
@@ -103,10 +101,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_MockFluidDataStoreContext": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

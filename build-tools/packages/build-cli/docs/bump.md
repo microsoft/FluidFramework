@@ -28,7 +28,6 @@ FLAGS
   -t, --bumpType=<option>              Bump the release group or package to the next version according to this bump
                                        type.
                                        <options: major|minor|patch>
-  -v, --verbose                        Verbose logging.
   -x, --skipChecks                     Skip all checks.
   --[no-]commit                        Commit changes to a new branch.
   --exact=<value>                      An exact string to use as the version. The string must be a valid semver version
@@ -40,6 +39,9 @@ FLAGS
   --[no-]install                       Update lockfiles by running 'npm install' automatically.
   --scheme=<option>                    Override the version scheme used by the release group or package.
                                        <options: semver|internal|virtualPatch>
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version,
@@ -96,12 +98,14 @@ FLAGS
                                example, both @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
-  -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]commit                Commit changes to a new branch.
   --[no-]install               Update lockfiles by running 'npm install' automatically.
   --onlyBumpPrerelease         Only bump dependencies that are on pre-release versions.
   --prerelease                 Treat prerelease versions as valid versions to update to.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

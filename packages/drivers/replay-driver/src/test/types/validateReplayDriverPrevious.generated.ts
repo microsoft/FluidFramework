@@ -208,30 +208,6 @@ use_old_ClassDeclaration_SnapshotStorage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_StaticStorageDocumentService": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_StaticStorageDocumentService():
-    TypeOnly<old.StaticStorageDocumentService>;
-declare function use_current_ClassDeclaration_StaticStorageDocumentService(
-    use: TypeOnly<current.StaticStorageDocumentService>);
-use_current_ClassDeclaration_StaticStorageDocumentService(
-    get_old_ClassDeclaration_StaticStorageDocumentService());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_StaticStorageDocumentService": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_StaticStorageDocumentService():
-    TypeOnly<current.StaticStorageDocumentService>;
-declare function use_old_ClassDeclaration_StaticStorageDocumentService(
-    use: TypeOnly<old.StaticStorageDocumentService>);
-use_old_ClassDeclaration_StaticStorageDocumentService(
-    get_current_ClassDeclaration_StaticStorageDocumentService());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_StaticStorageDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_StaticStorageDocumentServiceFactory():

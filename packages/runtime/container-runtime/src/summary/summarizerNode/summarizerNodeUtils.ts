@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
@@ -43,7 +43,7 @@ export interface IFetchSnapshotResult {
 }
 
 export interface ISummarizerNodeRootContract {
-	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
+	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt): void;
 	completeSummary(proposalHandle: string): void;
 	clearSummary(): void;
 	refreshLatestSummary(
@@ -51,7 +51,7 @@ export interface ISummarizerNodeRootContract {
 		summaryRefSeq: number,
 		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 	): Promise<RefreshSummaryResult>;
 }
 

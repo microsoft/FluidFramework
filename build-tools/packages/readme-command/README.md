@@ -20,7 +20,7 @@ $ npm install -g @fluid-internal/readme-command
 $ fluid-readme COMMAND
 running command...
 $ fluid-readme (--version|-V)
-@fluid-internal/readme-command/0.18.0
+@fluid-internal/readme-command/0.19.0
 $ fluid-readme --help [COMMAND]
 USAGE
   $ fluid-readme COMMAND
