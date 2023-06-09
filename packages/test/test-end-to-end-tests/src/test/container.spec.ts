@@ -47,7 +47,7 @@ import {
 	itExpects,
 } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
 
@@ -60,6 +60,7 @@ const timeoutMs = 500;
 describeNoCompat("Container", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
+	const mockLogger = new MockLogger();
 	before(function () {
 		provider = getTestObjectProvider();
 
@@ -82,6 +83,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 	afterEach(() => {
 		loaderContainerTracker.reset();
+		mockLogger.clear();
 	});
 	async function loadContainer(props?: Partial<ILoaderProps>) {
 		const loader = new Loader({
@@ -112,7 +114,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer();
+		const container = await localTestObjectProvider.makeTestContainer({
+			loaderProps: { logger: mockLogger },
+		});
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -594,7 +598,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
-	it("Disposing container should send dispose events", async () => {
+	it.only("Disposing container should send dispose events", async () => {
 		const container = await createConnectedContainer();
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -638,9 +642,15 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			1,
 			"ContainerRuntime should send dispose event on container dispose",
 		);
+
+		// Also check logged events
+		mockLogger.assertMatch([
+			{ eventName: "fluid:telemetry:Container:ContainerClose" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose" },
+		]);
 	});
 
-	it("Closing then disposing container should send close and dispose events", async () => {
+	it.only("Closing then disposing container should send close and dispose events", async () => {
 		const container = await createConnectedContainer();
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -658,8 +668,12 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			() => runtimeDispose++,
 		);
 
+		// Close then dispose, checking logged events along the way
 		container.close();
+		mockLogger.assertMatch([{ eventName: "fluid:telemetry:Container:ContainerClose" }]);
 		container.dispose();
+		mockLogger.assertMatch([{ eventName: "fluid:telemetry:Container:ContainerDispose" }]);
+
 		assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 		assert.strictEqual(containerClosed, 1, "Container should send closed event");
 		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");

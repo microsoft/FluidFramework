@@ -933,6 +933,42 @@ export class Container
 		);
 	}
 
+	/**
+	 * Log close and/or dispose telemetry events.
+	 * Close and Dispose are semantically very similar and we want to ensure the logging is clear
+	 * regardless of the exact scenario (close only v. close-then-dispose v. dispose)
+	 */
+	private logCloseOrDispose(path: "close" | "dispose", error?: ICriticalContainerError) {
+		const disposing = path === "dispose";
+
+		// Log ContainerClosed event for either path if we're not yet closed - we always want this event
+		if (!this.closed) {
+			// Log generic events instead of error events if container is in loading state, as most errors are not really FF errors
+			// which can pollute telemetry for real bugs
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "ContainerClose",
+					category:
+						this._lifecycleState !== "loading" && error !== undefined
+							? "error"
+							: "generic",
+					details: JSON.stringify({ disposing }),
+				},
+				error,
+			);
+		}
+
+		if (disposing) {
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "ContainerDispose",
+					category: "generic",
+				},
+				error,
+			);
+		}
+	}
+
 	private closeCore(error?: ICriticalContainerError) {
 		assert(!this.closed, 0x315 /* re-entrancy */);
 
@@ -941,19 +977,7 @@ export class Container
 			try {
 				// Raise event first, to ensure we capture _lifecycleState before transition.
 				// This gives us a chance to know what errors happened on open vs. on fully loaded container.
-				// Log generic events instead of error events if container is in loading state, as most errors are not really FF errors
-				// which can pollute telemetry for real bugs
-				this.mc.logger.sendTelemetryEvent(
-					{
-						eventName: "ContainerClose",
-						category:
-							this._lifecycleState !== "loading" && error !== undefined
-								? "error"
-								: "generic",
-					},
-					error,
-				);
-
+				this.logCloseOrDispose("close", error);
 				this._lifecycleState = "closing";
 
 				this._protocolHandler?.close();
@@ -983,14 +1007,7 @@ export class Container
 			try {
 				// Raise event first, to ensure we capture _lifecycleState before transition.
 				// This gives us a chance to know what errors happened on open vs. on fully loaded container.
-				this.mc.logger.sendTelemetryEvent(
-					{
-						eventName: "ContainerDispose",
-						category: "generic",
-					},
-					error,
-				);
-
+				this.logCloseOrDispose("dispose", error);
 				// ! Progressing from "closed" to "disposing" is not allowed
 				if (this._lifecycleState !== "closed") {
 					this._lifecycleState = "disposing";
