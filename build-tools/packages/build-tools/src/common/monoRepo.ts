@@ -53,8 +53,13 @@ export class MonoRepo {
 				// the dir that manypkg found. They should be the same.
 				throw new Error(`rootDir ${rootDir} does not match repoPath ${directory}`);
 			}
-			if (tool.type !== "npm" && tool.type !== "pnpm" && tool.type !== "yarn") {
+			if (tool.type === "lerna") {
+				// Treat lerna as "npm"
+				packageManager = "npm";
+			} else if (tool.type !== "npm" && tool.type !== "pnpm" && tool.type !== "yarn") {
 				throw new Error(`Unknown package manager ${tool.type}`);
+			} else {
+				packageManager = tool.type;
 			}
 			if (packages.length === 1 && packages[0].dir === directory) {
 				// this is a independent package
@@ -120,11 +125,7 @@ export class MonoRepo {
 			? "yarn"
 			: "npm";
 
-		// Treat lerna as "npm"
-		const detectedPackageManager =
-			packageManager.type === "lerna" ? "npm" : packageManager.type;
-
-		if (this.packageManager !== detectedPackageManager) {
+		if (this.packageManager !== validatePackageManager) {
 			throw new Error(
 				`Package manager mismatch between ${packageManager} and ${validatePackageManager}`,
 			);
