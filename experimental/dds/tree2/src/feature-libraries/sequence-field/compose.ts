@@ -140,7 +140,7 @@ function composeMarkLists<TNodeChange>(
 		}
 	}
 
-	return amendComposeI(factory.list, composeChild, moveEffects);
+	return factory.list;
 }
 
 /**
