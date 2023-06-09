@@ -639,7 +639,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * Closes the connection and clears inbound & outbound queues.
 	 *
 	 * Differences from dispose:
-	 * - close will switch connection to readonly
+	 * - close will trigger readonly notification
 	 * - close emits "closed"
 	 * - close cannot be called after dispose
 	 */
@@ -673,8 +673,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes
-		// Container to dispose context and break ability of data stores / runtime to "hear"
-		// from delta manager, including notification (above) about readonly state.
+		// Container to dispose context and break ability of data stores / runtime to "hear" from delta manager.
 		this.emit("disposed", error);
 		this.removeAllListeners();
 	}
