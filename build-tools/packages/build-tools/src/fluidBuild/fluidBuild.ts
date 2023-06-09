@@ -34,7 +34,7 @@ async function main() {
 	}
 
 	// Load the package
-	const repo = new FluidRepoBuild(resolvedRoot, options.services);
+	const repo = new FluidRepoBuild(resolvedRoot);
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter

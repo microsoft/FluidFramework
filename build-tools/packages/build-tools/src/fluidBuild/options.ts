@@ -31,7 +31,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	uninstall: boolean;
 	concurrency: number;
 	fix: boolean;
-	services: boolean;
 	worker: boolean;
 	workerThreads: boolean;
 	workerMemoryLimit: number;
@@ -45,6 +44,7 @@ export const options: FastBuildOptions = {
 	clean: false,
 	match: [],
 	dirs: [],
+	groups: [],
 	matchedOnly: true,
 	buildTaskNames: [],
 	vscode: false,
@@ -58,10 +58,6 @@ export const options: FastBuildOptions = {
 	concurrency: os.cpus().length,
 	fix: false,
 	all: false,
-	server: false,
-	azure: false,
-	buildTools: false,
-	services: false,
 	worker: false,
 	workerThreads: false,
 	workerMemoryLimit: -1,
@@ -203,29 +199,20 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--services") {
-			options.services = true;
-			continue;
-		}
-
 		if (arg === "--all") {
 			options.all = true;
 			continue;
 		}
 
-		if (arg === "--azure") {
-			options.azure = true;
-			continue;
-		}
-
-		if (arg === "--buildTools") {
-			options.buildTools = true;
-			continue;
-		}
-
-		if (arg === "--server") {
-			options.server = true;
-			continue;
+		if (arg === "-g" || arg === "--group") {
+			if (i !== process.argv.length - 1) {
+				options.groups.push(process.argv[++i]);
+				setBuild(true);
+				continue;
+			}
+			errorLog("Missing argument for --group");
+			error = true;
+			break;
 		}
 
 		if (arg === "-t" || arg === "--task") {
@@ -315,6 +302,22 @@ export function parseOptions(argv: string[]) {
 			}
 			error = true;
 			break;
+		}
+
+		// Back compat switches
+		if (arg === "--azure") {
+			options.groups.push("azure");
+			continue;
+		}
+
+		if (arg === "--buildTools") {
+			options.groups.push("build-tools");
+			continue;
+		}
+
+		if (arg === "--server") {
+			options.groups.push("server");
+			continue;
 		}
 
 		// Package regexp or paths

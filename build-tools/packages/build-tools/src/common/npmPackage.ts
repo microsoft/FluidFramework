@@ -17,7 +17,7 @@ import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest"
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
+import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
 	copyFileAsync,
@@ -351,7 +351,7 @@ export class Packages {
 	 */
 	public static loadGlob(
 		globPath: string,
-		group: MonoRepoKind,
+		group: string,
 		ignoredGlobs: string[] | undefined,
 		monoRepo?: MonoRepo,
 	): Package[] {
@@ -389,7 +389,7 @@ export class Packages {
 		);
 	}
 
-	public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
+	public async filterPackages(releaseGroup: string | undefined) {
 		if (releaseGroup === undefined) {
 			return this.packages;
 		}
