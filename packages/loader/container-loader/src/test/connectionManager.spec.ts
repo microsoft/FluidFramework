@@ -215,6 +215,7 @@ describe("connectionManager", () => {
 			});
 		});
 
+		
 		it("readonly permissions", () => {
 			const connectionManager = createConnectionManager();
 
