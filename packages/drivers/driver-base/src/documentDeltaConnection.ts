@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
-	
 	ConnectionMode,
 	IClientConfiguration,
 	IConnect,
