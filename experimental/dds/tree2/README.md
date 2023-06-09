@@ -344,14 +344,14 @@ flowchart
             schema-aware-->defaultSchema
             schema-aware-->contextuallyTyped
             editable-tree-->contextuallyTyped
-            editable-tree-->node-identifier
+            editable-tree-->node-key
             defaultRebaser
             contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            node-identifier-->modular-schema
-            node-identifier-->defaultFieldKinds
+            node-key-->modular-schema
+            node-key-->defaultFieldKinds
             object-forest-->mapTreeCursor-->treeCursorUtils
             chunked-forest-->treeCursorUtils
             schemaIndex
