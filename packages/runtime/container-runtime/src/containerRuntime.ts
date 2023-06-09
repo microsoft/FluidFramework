@@ -3263,7 +3263,7 @@ export class ContainerRuntime
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
+			this.closeFn(error);
 			throw error;
 		}
 
