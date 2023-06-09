@@ -271,7 +271,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-
+		const connectionId = uuid();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
@@ -280,7 +280,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
 			driverVersion: pkgVersion,
-			nonce: uuid(),
+			nonce: connectionId,
 			epoch: epochTracker.fluidEpoch,
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
@@ -297,6 +297,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			socketReference,
 			telemetryLogger,
 			enableMultiplexing,
+			connectionId,
 		);
 
 		try {
@@ -392,8 +393,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socketReference: SocketReference,
 		logger: ITelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
+		connectionId?: string,
 	) {
-		super(socket, documentId, logger, false, uuid());
+		super(socket, documentId, logger, false, connectionId);
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -596,7 +598,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout);
+		await super.initialize(connectMessage, timeout).finally(() => {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptInfo",
+				...this.getConnectionDetailsProps(),
+			});
+		});
 	}
 
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {

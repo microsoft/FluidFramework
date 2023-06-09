@@ -1122,6 +1122,30 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
+	it("load offline with blob redirect table", async function () {
+		// upload blob offline so an entry is added to redirect table
+		const container = await loadOffline(provider, { url });
+		const dataStore = await requestFluidObject<ITestFluidObject>(
+			container.container,
+			"default",
+		);
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		map.set("blob handle", handle);
+
+		container.connect();
+
+		// wait for summary with redirect table
+		await provider.ensureSynchronized();
+		await waitForSummary();
+
+		// should be able to load entirely offline
+		const stashBlob = await getPendingOps(provider, true);
+		await loadOffline(provider, { url }, stashBlob);
+	});
+
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(

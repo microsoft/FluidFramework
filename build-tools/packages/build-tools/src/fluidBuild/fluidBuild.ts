@@ -97,6 +97,7 @@ async function main() {
 	}
 
 	let failureSummary = "";
+	let exitCode = 0;
 	if (options.clean || options.build !== false) {
 		log(
 			`Symlink in ${
@@ -153,6 +154,8 @@ async function main() {
 				log(`Build ${buildStatus}`);
 			}
 			failureSummary = buildGraph.taskFailureSummary;
+
+			exitCode = buildResult === BuildResult.Failed ? -1 : 0;
 		}
 	}
 
@@ -172,6 +175,7 @@ async function main() {
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
 	}
+	process.exit(exitCode);
 }
 
 function buildResultString(buildResult: BuildResult) {

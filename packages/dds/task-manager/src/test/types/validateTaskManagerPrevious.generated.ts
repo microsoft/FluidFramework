@@ -64,6 +64,30 @@ use_old_InterfaceDeclaration_ITaskManagerEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TaskEventListener": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_TaskEventListener():
+    TypeOnly<old.TaskEventListener>;
+declare function use_current_TypeAliasDeclaration_TaskEventListener(
+    use: TypeOnly<current.TaskEventListener>);
+use_current_TypeAliasDeclaration_TaskEventListener(
+    get_old_TypeAliasDeclaration_TaskEventListener());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TaskEventListener": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_TaskEventListener():
+    TypeOnly<current.TaskEventListener>;
+declare function use_old_TypeAliasDeclaration_TaskEventListener(
+    use: TypeOnly<old.TaskEventListener>);
+use_old_TypeAliasDeclaration_TaskEventListener(
+    get_current_TypeAliasDeclaration_TaskEventListener());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TaskManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TaskManager():
