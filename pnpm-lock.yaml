@@ -8168,6 +8168,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../../packages/dds/shared-object-base
+      '@fluidframework/undo-redo':
+        specifier: workspace:~
+        version: link:../../../packages/framework/undo-redo
       '@sinclair/typebox':
         specifier: ^0.28.8
         version: 0.28.11
@@ -8220,9 +8223,6 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
-      '@fluidframework/undo-redo':
-        specifier: workspace:~
-        version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: ^7.34.4
         version: 7.34.9(@types/node@14.18.47)

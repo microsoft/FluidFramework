@@ -96,7 +96,7 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	/**
 	 * Fired when an undoable change is made to this branch.
 	 */
-	undoable(): void;
+	undoable(type: UndoRedoManagerCommitType): void;
 
 	/**
 	 * Fired when this branch forks
@@ -191,9 +191,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
 			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
-			if (undoRedoType === UndoRedoManagerCommitType.Undoable) {
-				this.emit("undoable");
-			}
+			this.emit("undoable", undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
@@ -265,7 +263,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
 				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
-				this.emit("undoable");
+				this.emit("undoable", UndoRedoManagerCommitType.Undoable);
 			}
 		}
 

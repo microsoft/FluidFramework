@@ -95,6 +95,7 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
+	UndoRedoManagerCommitType,
 } from "./core";
 
 export {

@@ -16,6 +16,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -59,7 +60,7 @@ export interface ViewEvents {
 	/**
 	 * An undoable change has been made to the tree. This is used to track undo/redo on the {@link SharedTreeViewUndoRedoHandler}
 	 */
-	undoable(target: ISharedTreeView): void;
+	undoable(type: UndoRedoManagerCommitType, target: ISharedTreeView): void;
 }
 
 /**
@@ -302,8 +303,8 @@ export class SharedTreeView implements ISharedTreeView {
 				this._events.emit("afterBatch");
 			}
 		});
-		branch.on("undoable", () => {
-			this.events.emit("undoable", this);
+		branch.on("undoable", (type) => {
+			this._events.emit("undoable", type, this);
 		});
 	}
 

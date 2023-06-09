@@ -260,10 +260,16 @@ export interface ReversibleCommit<TChange> {
 
 /**
  * The type of a commit in the context of undo/redo manager.
+ *
+ * @alpha
  */
 export enum UndoRedoManagerCommitType {
+	/** A commit that can be undone. */
 	Undoable,
+	/** A commit that can be redone. */
 	Redoable,
+	/** A commit that is the result of an undo. */
 	Undo,
+	/** A commit that is the result of a redo. */
 	Redo,
 }

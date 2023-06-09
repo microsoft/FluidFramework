@@ -25,8 +25,11 @@ export class SharedTreeViewUndoRedoHandler {
 		this.detach?.();
 	}
 
-	private readonly treeDeltaHandler = (target: ISharedTreeView) => {
-		this.stackManager.pushToCurrentOperation(new SharedTreeRevertible(target));
+	private readonly treeDeltaHandler = (
+		type: UndoRedoManagerCommitType,
+		target: ISharedTreeView,
+	) => {
+		this.stackManager.pushToCurrentOperation(new SharedTreeRevertible(type, target));
 	};
 }
 
@@ -35,18 +38,22 @@ export class SharedTreeViewUndoRedoHandler {
  * revertible stores no information about the commit being reverted other than whether it needs to be an undo or redo.
  */
 export class SharedTreeRevertible implements IRevertible {
-	private undoRedoManagerCommitType: UndoRedoManagerCommitType =
-		UndoRedoManagerCommitType.Undoable;
-
-	public constructor(private readonly tree: ISharedTreeView) {}
+	public constructor(
+		private readonly undoRedoManagerCommitType: UndoRedoManagerCommitType,
+		private readonly tree: ISharedTreeView,
+	) {}
 
 	public revert() {
-		if (this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undoable) {
+		if (
+			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undoable ||
+			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo
+		) {
 			this.tree.undo();
-			this.undoRedoManagerCommitType = UndoRedoManagerCommitType.Redoable;
-		} else if (this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Redoable) {
+		} else if (
+			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Redoable ||
+			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo
+		) {
 			this.tree.redo();
-			this.undoRedoManagerCommitType = UndoRedoManagerCommitType.Undoable;
 		}
 	}
 

@@ -1914,6 +1914,14 @@ TName extends infer S & TreeSchemaIdentifier ? S : string
 type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
 
 // @alpha
+export enum UndoRedoManagerCommitType {
+    Redo = 3,
+    Redoable = 1,
+    Undo = 2,
+    Undoable = 0
+}
+
+// @alpha
 type UntypedApi<Mode extends ApiMode> = {
     [ApiMode.Editable]: UntypedTree;
     [ApiMode.EditableUnwrapped]: UntypedTree | PrimitiveValue;
@@ -2076,7 +2084,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    undoable(target: ISharedTreeView): void;
+    undoable(type: UndoRedoManagerCommitType, target: ISharedTreeView): void;
 }
 
 // @alpha
