@@ -675,7 +675,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 		if (error !== undefined && !isFluidError(error)) {
-			throw new UsageError("Error must be a fluid error");
+			throw new UsageError("Error must be a Fluid error");
 		}
 
 		this._disposed = true;
