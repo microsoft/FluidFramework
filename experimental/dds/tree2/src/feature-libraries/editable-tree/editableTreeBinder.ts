@@ -349,38 +349,42 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		if (foundRoot === undefined) {
 			return undefined;
 		} else {
-			const isMatching = (
+			const accumulateMatching = (
 				treeNode: CallTree,
 				index: number,
-				onMatch: (index: number, treeNode: CallTree) => CallTree | undefined,
-			): CallTree | undefined => {
+				onMatch: (index: number, treeNode: CallTree) => void,
+			): void => {
 				const step = downPath[index];
 				if (
+					step === undefined ||
 					treeNode.field !== step.field ||
 					(treeNode.index !== undefined && step.index !== treeNode.index)
 				) {
-					return undefined;
+					return;
 				}
 				for (const child of treeNode.children.values()) {
-					const foundNode = isMatching(child, index + 1, onMatch);
-					if (foundNode !== undefined) {
-						return foundNode;
-					}
+					accumulateMatching(child, index + 1, onMatch);
 				}
-				return onMatch(index, treeNode);
-			};
-			const onMatchPath = (index: number, treeNode: CallTree): CallTree | undefined => {
-				return index === downPath.length - 1 ? treeNode : undefined;
-			};
-			const onMatchSubtree = (index: number, treeNode: CallTree): CallTree | undefined => {
-				return treeNode;
-			};
-			const matchedNode =
-				this.options.matchPolicy === "subtree"
-					? isMatching(foundRoot, 0, onMatchSubtree)
-					: isMatching(foundRoot, 0, onMatchPath);
 
-			return matchedNode?.listeners;
+				onMatch(index, treeNode);
+			};
+			const matchedNodes: Set<Listener> = new Set();
+			const onMatchPath = (index: number, treeNode: CallTree): void => {
+				if (index === downPath.length - 1) {
+					treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
+				}
+			};
+			const onMatchSubtree = (index: number, treeNode: CallTree): void => {
+				treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
+			};
+
+			if (this.options.matchPolicy === "subtree") {
+				accumulateMatching(foundRoot, 0, onMatchSubtree);
+			} else {
+				accumulateMatching(foundRoot, 0, onMatchPath);
+			}
+
+			return matchedNodes.size > 0 ? matchedNodes : undefined;
 		}
 	}
 

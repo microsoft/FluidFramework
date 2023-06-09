@@ -1180,6 +1180,126 @@ describe("editable-tree: data binder", () => {
 			address.zip = "92629";
 			assert.deepEqual(log, []);
 		});
+		it("registers to root, enables autoFlush, matches paths with subtree policy and any index. Triggers step === undefined in getListeners.accumulateMatching", () => {
+			const { tree, root, address } = retrieveNodes();
+			const options: BinderOptions = createBinderOptions({
+				matchPolicy: "subtree",
+			});
+			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
+				tree.events,
+				options,
+			);
+			const addrLog: BindPath[] = [];
+			const phonesLog: BindPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[compileSyntaxTree({ address: true })],
+				(insertContext: InsertBindingContext) => {
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					addrLog.push(downPath);
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[compileSyntaxTree({ address: { phones: true } })],
+				(insertContext: InsertBindingContext) => {
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					phonesLog.push(downPath);
+				},
+			);
+			root[getField](fieldAddress).content = { zip: "33428", phones: ["12345"] };
+			address.phones = [111, 112];
+			address.zip = "66566";
+			assert.deepEqual(addrLog, [
+				[{ field: fieldAddress, index: 1 }],
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldPhones, index: 1 },
+				],
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldZip, index: 1 },
+				],
+			]);
+			assert.deepEqual(phonesLog, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldPhones, index: 1 },
+				],
+			]);
+			dataBinder.unregisterAll();
+			addrLog.length = 0;
+			phonesLog.length = 0;
+			address.zip = "92629";
+			assert.deepEqual(addrLog, []);
+			assert.deepEqual(phonesLog, []);
+		});
+		it("registers to root, enables autoFlush, matches paths with exact path policy and any index. Parents are not notified when children modified", () => {
+			const { tree, root, address } = retrieveNodes();
+			const options: BinderOptions = createBinderOptions({
+				matchPolicy: "path",
+			});
+			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
+				tree.events,
+				options,
+			);
+			const addrLog: BindPath[] = [];
+			const phonesLog: BindPath[] = [];
+			const zipLog: BindPath[] = [];
+
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[compileSyntaxTree({ address: true })],
+				(insertContext: InsertBindingContext) => {
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					addrLog.push(downPath);
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[compileSyntaxTree({ address: { phones: true } })],
+				(insertContext: InsertBindingContext) => {
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					phonesLog.push(downPath);
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[compileSyntaxTree({ address: { zip: true } })],
+				(insertContext: InsertBindingContext) => {
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					zipLog.push(downPath);
+				},
+			);
+			address.phones = [111, 112];
+			address.zip = "66566";
+			assert.deepEqual(addrLog, []);
+			assert.deepEqual(phonesLog, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldPhones, index: 1 },
+				],
+			]);
+			assert.deepEqual(zipLog, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldZip, index: 1 },
+				],
+			]);
+			dataBinder.unregisterAll();
+			addrLog.length = 0;
+			phonesLog.length = 0;
+			zipLog.length = 0;
+			address.zip = "92629";
+			assert.deepEqual(addrLog, []);
+			assert.deepEqual(phonesLog, []);
+			assert.deepEqual(zipLog, []);
+		});
 	});
 });
 
