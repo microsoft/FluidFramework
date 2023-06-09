@@ -11,6 +11,7 @@ export async function load(url, context, nextLoad) {
 	if (extensionsRegex.test(url)) {
 		return {
 			format: "json",
+			shortCircuit: true,
 			source: "{}",
 		};
 	}
