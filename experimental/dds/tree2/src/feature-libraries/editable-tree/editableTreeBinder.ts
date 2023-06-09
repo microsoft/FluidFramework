@@ -153,7 +153,7 @@ export const indexSymbol = Symbol("editable-tree-binder:index");
  */
 export interface BindSyntaxTree {
 	readonly [indexSymbol]?: number;
-	readonly [key: string]: boolean | BindSyntaxTree | number | undefined;
+	readonly [key: string]: true | BindSyntaxTree;
 }
 
 /**
@@ -868,7 +868,8 @@ export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree {
 	} else throw new Error("Invalid BindSyntaxTree structure");
 }
 
-function compileSyntaxTreeNode(node: BindSyntaxTree, parentField: FieldKey): BindTree {
+function compileSyntaxTreeNode(node: BindSyntaxTree | true, parentField: FieldKey): BindTree {
+	if (node === true) return { field: parentField, children: new Map() };
 	const pathStep: PathStep = {
 		field: parentField,
 		index: node[indexSymbol],
@@ -876,14 +877,7 @@ function compileSyntaxTreeNode(node: BindSyntaxTree, parentField: FieldKey): Bin
 	const children = new Map<FieldKey, BindTree>();
 	for (const [key, value] of Object.entries(node)) {
 		const fieldKey: FieldKey = brand(key);
-		if (typeof value === "object") {
-			const childTree = compileSyntaxTreeNode(value, fieldKey);
-			if (childTree !== undefined) {
-				children.set(fieldKey, childTree);
-			}
-		} else if (value === true) {
-			children.set(fieldKey, { field: fieldKey, children: new Map() });
-		}
+		children.set(fieldKey, compileSyntaxTreeNode(value, fieldKey));
 	}
 	return {
 		...pathStep,
