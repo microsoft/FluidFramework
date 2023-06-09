@@ -7,7 +7,7 @@ import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
 import { SharedCounter } from "@fluidframework/counter";
-import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjectWithCounter";
+import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjectWithCounter.js";
 
 /**
  * A root dataObject that repeatedly sends a series of ops, and then references a new child or
