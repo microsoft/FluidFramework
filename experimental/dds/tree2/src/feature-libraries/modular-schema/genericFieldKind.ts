@@ -144,7 +144,6 @@ function rebaseGenericChange(
 		}
 	}
 
-	rebased.push(...change.slice(iChange));
 	return rebased;
 }
 

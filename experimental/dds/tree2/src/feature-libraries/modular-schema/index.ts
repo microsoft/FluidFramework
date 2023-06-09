@@ -52,7 +52,6 @@ export {
 	ModularEditBuilder,
 	EditDescription,
 	revisionMetadataSourceFromInfo,
-	ConstraintState,
 } from "./modularChangeFamily";
 export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
 

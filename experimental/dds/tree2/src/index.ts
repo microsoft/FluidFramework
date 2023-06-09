@@ -247,7 +247,6 @@ export {
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
 	NodeExistenceState,
-	ConstraintState,
 } from "./feature-libraries";
 
 export {

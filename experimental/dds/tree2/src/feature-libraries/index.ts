@@ -129,7 +129,6 @@ export {
 	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	ConstraintState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

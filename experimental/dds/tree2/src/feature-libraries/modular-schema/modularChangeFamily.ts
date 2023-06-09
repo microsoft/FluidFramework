@@ -559,7 +559,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		amend: boolean = false,
-		existenceStateChange: NodeExistenceState = NodeExistenceState.Alive,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -666,7 +666,7 @@ export class ModularChangeFamily
 							fieldFilter,
 							revisionMetadata,
 							constraintState,
-							existenceStateChange,
+							existenceState,
 						);
 					},
 					genId,
@@ -915,7 +915,7 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 /**
  * @alpha
  */
-export interface ConstraintState {
+interface ConstraintState {
 	violationCount: number;
 }
 

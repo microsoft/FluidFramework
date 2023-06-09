@@ -240,12 +240,6 @@ infer Head,
 ...infer Tail
 ] ? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>] : [];
 
-// @alpha (undocumented)
-export interface ConstraintState {
-    // (undocumented)
-    violationCount: number;
-}
-
 // @alpha
 export const contextSymbol: unique symbol;
 
@@ -1310,7 +1304,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-stateChange?: NodeExistenceState) => NodeChangeset | undefined;
+state?: NodeExistenceState) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
