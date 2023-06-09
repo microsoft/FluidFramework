@@ -18,7 +18,7 @@ export {
 	contextSymbol,
 	NewFieldContent,
 	areCursors,
-	compressedNodeIdentifierSymbol,
+	localNodeKeySymbol,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";
@@ -26,4 +26,4 @@ export { isEditableTree } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive, getNodeIdentifier } from "./utilities";
+export { isPrimitive, getStableNodeKey } from "./utilities";

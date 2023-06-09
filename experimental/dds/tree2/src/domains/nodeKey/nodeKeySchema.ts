@@ -7,33 +7,33 @@ import { GlobalFieldKey, TreeSchemaIdentifier } from "../../core";
 import {
 	SchemaLibrary,
 	GlobalFieldSchema,
-	NodeIdentifierFieldKind,
-	buildNodeIdentifierSchema,
+	NodeKeyFieldKind,
+	buildNodeKeySchema,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 
 /**
- * The key for the special node identifier field,
- * which allows nodes to be given identifiers that can be used to find the nodes via the node identifier index.
+ * The key for the special field for node keys,
+ * which allows nodes to be given keys that can be used to find the nodes via the node key index.
  * @alpha
  * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for global fields defined by the system.
  * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
  */
-export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");
+export const nodeKeyFieldKey: GlobalFieldKey = brand("__n_id__");
 
-const schema = buildNodeIdentifierSchema(nodeIdentifierKey);
+const schema = buildNodeKeySchema(nodeKeyFieldKey);
 
 /**
- * Get the schema for working with {@link NodeIdentifier}s in a shared tree.
- * Node identifiers are added to nodes via a global field.
- * @returns the identifier/type of identifier nodes in the schema,
- * the schema for the global field under which identifiers reside,
+ * Get the schema for working with {@link LocalNodeKey}s in a shared tree.
+ * Node keys are added to nodes via a global field.
+ * @returns the type of node key nodes in the schema,
+ * the schema for the global field under which node keys reside,
  * and a schema library containing the above.
  * @alpha
  */
-export function nodeIdentifierSchema(): {
+export function nodeKeySchema(): {
 	schema: SchemaLibrary;
-	field: GlobalFieldSchema<NodeIdentifierFieldKind>;
+	field: GlobalFieldSchema<NodeKeyFieldKind>;
 	type: TreeSchemaIdentifier;
 } {
 	return schema;

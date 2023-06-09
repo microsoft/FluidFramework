@@ -36,14 +36,14 @@ import {
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
 	SchemaEditor,
-	NodeIdentifierIndex,
-	createNodeIdentifierManager,
+	NodeKeyIndex,
+	createNodeKeyManager,
 	defaultIntoDelta,
 } from "../feature-libraries";
-import { IEmitter, ISubscribable, createEmitter } from "../events";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly } from "../util";
-import { nodeIdentifierKey } from "../domains";
-import { SchematizeConfiguration } from "./schematizedTree";
+import { nodeKeyFieldKey } from "../domains";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
@@ -62,7 +62,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
- * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
@@ -70,10 +69,12 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
+	public readonly events: ISubscribable<ViewEvents> &
+		IEmitter<ViewEvents> &
+		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>;
 
 	public constructor(
 		id: string,
@@ -97,17 +98,18 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-		this.identifierIndex = new NodeIdentifierIndex(nodeIdentifierKey);
+		this.nodeKeyIndex = new NodeKeyIndex(nodeKeyFieldKey);
+		this.events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
 			schema,
 			forest,
 			repairProvider,
-			nodeIdentifierManager: createNodeIdentifierManager(this.runtime.idCompressor),
-			identifierIndex: this.identifierIndex,
+			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyIndex: this.nodeKeyIndex,
+			events: this.events,
 		});
-		this.events = createEmitter<ViewEvents>();
-		this.getLocalBranch().on("change", () => this.finishBatch());
+		// this.getLocalBranch().on("change", () => this.finishBatch());
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -141,15 +143,15 @@ export class SharedTree
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return this.view.schematize(config);
+		return schematizeView(this, config);
 	}
 
 	public get transaction(): SharedTreeView["transaction"] {
 		return this.view.transaction;
 	}
 
-	public get nodeIdentifier(): SharedTreeView["nodeIdentifier"] {
-		return this.view.nodeIdentifier;
+	public get nodeKey(): SharedTreeView["nodeKey"] {
+		return this.view.nodeKey;
 	}
 
 	public fork(): SharedTreeView {
@@ -203,7 +205,7 @@ export class SharedTree
 
 	/** Finish a batch (see {@link ViewEvents}) */
 	private finishBatch(): void {
-		this.identifierIndex.scanIdentifiers(this.context);
+		this.nodeKeyIndex.scanKeys(this.context);
 		this.events.emit("afterBatch");
 	}
 }

@@ -16,4 +16,4 @@ export {
 	singleJsonCursor,
 } from "./json";
 
-export { nodeIdentifierKey, nodeIdentifierSchema } from "./nodeIdentifier";
+export { nodeKeyFieldKey, nodeKeySchema } from "./nodeKey";

@@ -31,8 +31,8 @@ import {
 	valueSymbol,
 	allowsValue,
 } from "../contextuallyTyped";
-import { CompressedNodeIdentifier } from "../node-identifier";
-import { AdaptingProxyHandler, adaptWithProxy, getNodeIdentifier } from "./utilities";
+import { LocalNodeKey } from "../node-key";
+import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -46,7 +46,7 @@ import {
 	typeSymbol,
 	contextSymbol,
 	NewFieldContent,
-	compressedNodeIdentifierSymbol,
+	localNodeKeySymbol,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -274,8 +274,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.context;
 			case on:
 				return target.on.bind(target);
-			case compressedNodeIdentifierSymbol:
-				return getCompressedNodeIdentifier(target);
+			case localNodeKeySymbol:
+				return getLocalNodeKey(target);
 			default:
 				return undefined;
 		}
@@ -288,7 +288,15 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	): boolean => {
 		if (typeof key === "string" || symbolIsFieldKey(key)) {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).content = value;
+			if (fieldKey === localNodeKeySymbol) {
+				// TODO: this is not very type safe. Can we do better?
+				assert(typeof key === "number", "Invalid local node key");
+				const localNodeKey = key as unknown as LocalNodeKey;
+				const stableNodeKey = target.context.nodeKeys.stabilizeNodeKey(localNodeKey);
+				target.getField(fieldKey).content = stableNodeKey;
+			} else {
+				target.getField(fieldKey).content = value;
+			}
 
 			return true;
 		} else if (key === valueSymbol) {
@@ -320,7 +328,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
-			case compressedNodeIdentifierSymbol:
+			case localNodeKeySymbol:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -411,11 +419,11 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
-			case compressedNodeIdentifierSymbol:
+			case localNodeKeySymbol:
 				return {
 					configurable: true,
 					enumerable: false,
-					value: getCompressedNodeIdentifier(target),
+					value: getLocalNodeKey(target),
 					writable: false,
 				};
 			default:
@@ -436,21 +444,19 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 }
 
 /**
- * Retrieves the compressed node identifier for the given node.
- * @remarks TODO: Optimize this to be a fast path that gets a compressed identifier directly from the
- * forest rather than getting the uncompressed identifier and the compressing it.
+ * Retrieves the {@link LocalNodeKey} for the given node.
+ * @remarks TODO: Optimize this to be a fast path that gets a {@link LocalNodeKey} directly from the
+ * forest rather than getting the {@link StableNodeKey} and the compressing it.
  */
-function getCompressedNodeIdentifier(
-	target: NodeProxyTarget,
-): CompressedNodeIdentifier | undefined {
-	if (target.context.nodeIdentifierKey === undefined) {
+function getLocalNodeKey(target: NodeProxyTarget): LocalNodeKey | undefined {
+	if (target.context.nodeKeyFieldKey === undefined) {
 		return undefined;
 	}
 
-	const nodeIdentifier = getNodeIdentifier(target.context.nodeIdentifierKey, target.proxy);
-	if (nodeIdentifier === undefined) {
+	const stableNodeKey = getStableNodeKey(target.context.nodeKeyFieldKey, target.proxy);
+	if (stableNodeKey === undefined) {
 		return undefined;
 	}
 
-	return target.context.nodeIdentifiers.compressNodeIdentifier(nodeIdentifier);
+	return target.context.nodeKeys.localizeNodeKey(stableNodeKey);
 }

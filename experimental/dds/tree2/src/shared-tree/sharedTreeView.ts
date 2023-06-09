@@ -15,17 +15,17 @@ import {
 	assertIsRevisionTag,
 	UndoRedoManager,
 } from "../core";
-import { ISubscribable, createEmitter } from "../events";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
 	UnwrappedEditableField,
 	ContextuallyTypedNodeData,
 	EditableTreeContext,
 	IDefaultEditBuilder,
-	NodeIdentifier,
+	StableNodeKey,
 	EditableTree,
 	GlobalFieldSchema,
 	DefaultChangeset,
-	NodeIdentifierIndex,
+	NodeKeyIndex,
 	buildForest,
 	defaultChangeFamily,
 	defaultSchemaPolicy,
@@ -33,15 +33,15 @@ import {
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
-	NodeIdentifierManager,
-	createNodeIdentifierManager,
-	CompressedNodeIdentifier,
+	NodeKeyManager,
+	createNodeKeyManager,
+	LocalNodeKey,
 	ForestRepairDataStore,
 	defaultIntoDelta,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult } from "../util";
-import { nodeIdentifierKey } from "../domains";
+import { nodeKeyFieldKey } from "../domains";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
@@ -193,18 +193,30 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	/**
-	 * A collection of utilities for managing {@link NodeIdentifier}s.
-	 * Node identifiers allow nodes in a tree to be "tagged" at creation time with a persistent and stable identifier.
-	 * This identifier can then be used as a lookup key to quickly find that node in the tree (via `nodeIdentifier.map`).
-	 * @remarks Identifiers are put on nodes via a special field (see {@link nodeIdentifierKey} and {@link nodeIdentifierSchema}).
-	 * A node with an identifier in its schema must always have an identifier, and that identifier is immutable.
+	 * A collection of utilities for managing {@link StableNodeKey}s.
+	 * A node key can be assigned to a node and allows that node to be easily retrieved from the tree at a later time. (see `nodeKey.map`).
+	 * @remarks {@link LocalNodeKey}s are put on nodes via a special field (see {@link localNodeKeySymbol}.
+	 * A node with a node key in its schema must always have a node key.
 	 */
-	readonly nodeIdentifier: {
-		generate(): NodeIdentifier;
-		generateCompressed(): CompressedNodeIdentifier;
-		compress(identifier: NodeIdentifier): CompressedNodeIdentifier;
-		decompress(identifier: CompressedNodeIdentifier): NodeIdentifier;
-		map: ReadonlyMap<NodeIdentifier, EditableTree>;
+	readonly nodeKey: {
+		/**
+		 * Create a new {@link LocalNodeKey} which can be used as the key for a node in the tree.
+		 */
+		generate(): LocalNodeKey;
+		/**
+		 * Convert the given {@link LocalNodeKey} into a UUID that can be serialized.
+		 * @param key - the key to convert
+		 */
+		stabilize(key: LocalNodeKey): StableNodeKey;
+		/**
+		 * Convert a {@link StableNodeKey} back into its original {@link LocalNodeKey} form.
+		 * @param key - the key to convert
+		 */
+		localize(key: StableNodeKey): LocalNodeKey;
+		/**
+		 * A map of all {@link LocalNodeKey}s in the document to their corresponding nodes.
+		 */
+		map: ReadonlyMap<LocalNodeKey, EditableTree>;
 	};
 
 	/**
@@ -255,8 +267,9 @@ export function createSharedTreeView(args?: {
 	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
-	nodeIdentifierManager?: NodeIdentifierManager;
-	identifierIndex?: NodeIdentifierIndex<typeof nodeIdentifierKey>;
+	nodeKeyManager?: NodeKeyManager;
+	nodeKeyIndex?: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
@@ -275,21 +288,17 @@ export function createSharedTreeView(args?: {
 			undoRedoManager,
 			forest.anchors,
 		);
-	const nodeIdentifierManager = args?.nodeIdentifierManager ?? createNodeIdentifierManager();
-	const context = getEditableTreeContext(
-		forest,
-		branch.editor,
-		nodeIdentifierManager,
-		nodeIdentifierKey,
-	);
-	const identifierIndex = args?.identifierIndex ?? new NodeIdentifierIndex(nodeIdentifierKey);
+	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
+	const context = getEditableTreeContext(forest, branch.editor, nodeKeyManager, nodeKeyFieldKey);
+	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(nodeKeyFieldKey);
 	return SharedTreeView[create](
 		branch,
 		schema,
 		forest,
 		context,
-		nodeIdentifierManager,
-		identifierIndex,
+		nodeKeyManager,
+		nodeKeyIndex,
+		args?.events ?? createEmitter(),
 	);
 }
 
@@ -298,21 +307,22 @@ export function createSharedTreeView(args?: {
  * @alpha
  */
 export class SharedTreeView implements ISharedTreeView {
-	public readonly events = createEmitter<ViewEvents>();
-
 	private constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly _storedSchema: InMemoryStoredSchemaRepository,
 		private readonly _forest: IEditableForest,
 		public readonly context: EditableTreeContext,
-		private readonly _nodeIdentifiers: NodeIdentifierManager,
-		private readonly _identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>,
+		private readonly _nodeKeyManager: NodeKeyManager,
+		private readonly _nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		public readonly events: ISubscribable<ViewEvents> &
+			IEmitter<ViewEvents> &
+			HasListeners<ViewEvents>,
 	) {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = defaultChangeFamily.intoDelta(change);
 				this._forest.applyDelta(delta);
-				this._identifierIndex.scanIdentifiers(this.context);
+				this._nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
 			}
 		});
@@ -324,16 +334,18 @@ export class SharedTreeView implements ISharedTreeView {
 		storedSchema: InMemoryStoredSchemaRepository,
 		forest: IEditableForest,
 		context: EditableTreeContext,
-		_nodeIdentifiers: NodeIdentifierManager,
-		identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>,
+		_nodeKeyManager: NodeKeyManager,
+		nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>,
 	): SharedTreeView {
 		return new SharedTreeView(
 			branch,
 			storedSchema,
 			forest,
 			context,
-			_nodeIdentifiers,
-			identifierIndex,
+			_nodeKeyManager,
+			nodeKeyIndex,
+			events,
 		);
 	}
 
@@ -371,13 +383,11 @@ export class SharedTreeView implements ISharedTreeView {
 		inProgress: () => this.branch.isTransacting(),
 	};
 
-	public readonly nodeIdentifier: ISharedTreeView["nodeIdentifier"] = {
-		generate: () => this._nodeIdentifiers.generateNodeIdentifier(),
-		generateCompressed: () => this._nodeIdentifiers.generateCompressedNodeIdentifier(),
-		compress: (id: NodeIdentifier) => this._nodeIdentifiers.compressNodeIdentifier(id),
-		decompress: (id: CompressedNodeIdentifier) =>
-			this._nodeIdentifiers.decompressNodeIdentifier(id),
-		map: this._identifierIndex,
+	public readonly nodeKey: ISharedTreeView["nodeKey"] = {
+		generate: () => this._nodeKeyManager.generateLocalNodeKey(),
+		stabilize: (key) => this._nodeKeyManager.stabilizeNodeKey(key),
+		localize: (key) => this._nodeKeyManager.localizeNodeKey(key),
+		map: this._nodeKeyIndex,
 	};
 
 	public undo() {
@@ -411,16 +421,17 @@ export class SharedTreeView implements ISharedTreeView {
 		const context = getEditableTreeContext(
 			forest,
 			branch.editor,
-			this._nodeIdentifiers,
-			this._identifierIndex.identifierFieldKey,
+			this._nodeKeyManager,
+			this._nodeKeyIndex.fieldKey,
 		);
 		return new SharedTreeView(
 			branch,
 			storedSchema,
 			forest,
 			context,
-			this._nodeIdentifiers,
-			this._identifierIndex.clone(context),
+			this._nodeKeyManager,
+			this._nodeKeyIndex.clone(context),
+			this.events,
 		);
 	}
 

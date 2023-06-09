@@ -13,7 +13,9 @@ import {
 	PathVisitor,
 	NamedTreeSchema,
 	isCursor,
+	GlobalFieldKeySymbol,
 } from "../../core";
+import { brand } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
@@ -22,7 +24,6 @@ import {
 	valueSymbol,
 	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
-import { CompressedNodeIdentifier } from "../node-identifier";
 import { EditableTreeContext } from "./editableTreeContext";
 
 /**
@@ -60,12 +61,10 @@ export const parentField: unique symbol = Symbol("editable-tree:parentField()");
 export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 
 /**
- * A symbol to get the {@link CompressedNodeIdentifier} that identifies this {@link EditableTree} node.
+ * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
  * @alpha
  */
-export const compressedNodeIdentifierSymbol: unique symbol = Symbol(
-	"editable-tree:compressedNodeIdentifier",
-);
+export const localNodeKeySymbol: GlobalFieldKeySymbol = brand(Symbol("editable-tree:localNodeKey"));
 
 /**
  * A symbol for subscribing to events.
@@ -200,11 +199,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void;
-
-	/**
-	 * Retrieve the compressed form of this node's identifier, if it has one.
-	 */
-	readonly [compressedNodeIdentifierSymbol]: CompressedNodeIdentifier | undefined;
 }
 
 /**

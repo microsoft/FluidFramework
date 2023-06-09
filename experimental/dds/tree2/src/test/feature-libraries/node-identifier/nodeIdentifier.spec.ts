@@ -7,12 +7,12 @@ import { strict as assert, fail } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import {
-	CompressedNodeIdentifier,
-	NodeIdentifier,
-	NodeIdentifierManager,
-	compareCompressedNodeIdentifiers,
-	createMockNodeIdentifierManager,
-	createNodeIdentifierManager,
+	LocalNodeKey,
+	StableNodeKey,
+	NodeKeyManager,
+	compareLocalNodeKeys,
+	createMockNodeKeyManager,
+	createNodeKeyManager,
 } from "../../../feature-libraries";
 import { TestTreeProvider } from "../../utils";
 
@@ -31,67 +31,64 @@ async function getIIDCompressor(tree?: ISharedTree): Promise<IIdCompressor> {
 	return runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
 }
 
-describe("Node Identifiers", () => {
-	function itNodeIdentifierManager(
-		title: string,
-		fn: (manager: NodeIdentifierManager) => void,
-	): void {
+describe("Node Keys", () => {
+	function itNodeKeyManager(title: string, fn: (manager: NodeKeyManager) => void): void {
 		it(`${title} (mock)`, () => {
-			fn(createMockNodeIdentifierManager());
+			fn(createMockNodeKeyManager());
 		});
 		it(`${title} (using IdCompressor)`, async () => {
-			fn(createNodeIdentifierManager(await getIIDCompressor()));
+			fn(createNodeKeyManager(await getIIDCompressor()));
 		});
 	}
 
-	itNodeIdentifierManager("are unique", (manager) => {
-		const ids = new Set<NodeIdentifier>();
+	itNodeKeyManager("are unique", (manager) => {
+		const localKeys = new Set<LocalNodeKey>();
 		for (let i = 0; i < 50000; i++) {
-			const id = manager.generateNodeIdentifier();
-			assert(!ids.has(id));
-			ids.add(id);
+			const id = manager.generateLocalNodeKey();
+			assert(!localKeys.has(id));
+			localKeys.add(id);
 		}
 
-		const compressedIds = new Set<CompressedNodeIdentifier>();
+		const stableKeys = new Set<StableNodeKey>();
 		for (let i = 0; i < 50000; i++) {
-			const id = manager.generateCompressedNodeIdentifier();
-			assert(!compressedIds.has(id));
-			compressedIds.add(id);
+			const id = manager.stabilizeNodeKey(manager.generateLocalNodeKey());
+			assert(!stableKeys.has(id));
+			stableKeys.add(id);
 		}
 	});
 
-	itNodeIdentifierManager("can be compressed and decompressed", (manager) => {
-		const id = manager.generateNodeIdentifier();
-		const compressedId = manager.compressNodeIdentifier(id);
-		const decompressedId = manager.decompressNodeIdentifier(compressedId);
+	itNodeKeyManager("can be compressed and decompressed", (manager) => {
+		const id = manager.stabilizeNodeKey(manager.generateLocalNodeKey());
+		const compressedId = manager.localizeNodeKey(id);
+		const decompressedId = manager.stabilizeNodeKey(compressedId);
 		assert.equal(id, decompressedId);
 	});
 
-	itNodeIdentifierManager("can be decompressed and compressed", (manager) => {
-		const compressedId = manager.generateCompressedNodeIdentifier();
-		const decompressedId = manager.decompressNodeIdentifier(compressedId);
-		const recompressedId = manager.compressNodeIdentifier(decompressedId);
-		assert.equal(compareCompressedNodeIdentifiers(compressedId, recompressedId), 0);
+	itNodeKeyManager("can be decompressed and compressed", (manager) => {
+		const compressedId = manager.generateLocalNodeKey();
+		const decompressedId = manager.stabilizeNodeKey(compressedId);
+		const recompressedId = manager.localizeNodeKey(decompressedId);
+		assert.equal(compareLocalNodeKeys(compressedId, recompressedId), 0);
 	});
 
-	itNodeIdentifierManager("are equatable when compressed", (manager) => {
-		const idA = manager.generateCompressedNodeIdentifier();
-		const idB = manager.generateCompressedNodeIdentifier();
-		assert.equal(compareCompressedNodeIdentifiers(idA, idA), 0);
-		assert.notEqual(compareCompressedNodeIdentifiers(idA, idB), 0);
+	itNodeKeyManager("are equatable when compressed", (manager) => {
+		const idA = manager.generateLocalNodeKey();
+		const idB = manager.generateLocalNodeKey();
+		assert.equal(compareLocalNodeKeys(idA, idA), 0);
+		assert.notEqual(compareLocalNodeKeys(idA, idB), 0);
 	});
 
-	itNodeIdentifierManager("are comparable when compressed", (manager) => {
-		const idA = manager.generateCompressedNodeIdentifier();
-		const idB = manager.generateCompressedNodeIdentifier();
-		const idC = manager.generateCompressedNodeIdentifier();
+	itNodeKeyManager("are comparable when compressed", (manager) => {
+		const idA = manager.generateLocalNodeKey();
+		const idB = manager.generateLocalNodeKey();
+		const idC = manager.generateLocalNodeKey();
 		const sorts = [
-			[idA, idB, idC].sort(compareCompressedNodeIdentifiers),
-			[idA, idC, idB].sort(compareCompressedNodeIdentifiers),
-			[idB, idA, idC].sort(compareCompressedNodeIdentifiers),
-			[idB, idC, idA].sort(compareCompressedNodeIdentifiers),
-			[idC, idA, idB].sort(compareCompressedNodeIdentifiers),
-			[idC, idB, idA].sort(compareCompressedNodeIdentifiers),
+			[idA, idB, idC].sort(compareLocalNodeKeys),
+			[idA, idC, idB].sort(compareLocalNodeKeys),
+			[idB, idA, idC].sort(compareLocalNodeKeys),
+			[idB, idC, idA].sort(compareLocalNodeKeys),
+			[idC, idA, idB].sort(compareLocalNodeKeys),
+			[idC, idB, idA].sort(compareLocalNodeKeys),
 		];
 		for (let i = 1; i < sorts.length; i++) {
 			assert.deepEqual(sorts[i - 1], sorts[i]);

@@ -17,7 +17,7 @@ import {
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
-import { NodeIdentifierManager } from "../node-identifier";
+import { NodeKeyManager } from "../node-key";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -119,15 +119,15 @@ export class ProxyContext implements EditableTreeContext {
 	/**
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
-	 * @param nodeIdentifierManager - an object which handles node identifier generation and conversion
-	 * @param nodeIdentifierKey - an optional field key under which node identifiers are stored in this tree.
-	 * If present, clients may query the {@link CompressedNodeIdentifier} of a node directly via the {@link compressedNodeIdentifierSymbol}.
+	 * @param nodeKeys - an object which handles node key generation and conversion
+	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
-		public readonly nodeIdentifiers: NodeIdentifierManager,
-		public readonly nodeIdentifierKey?: GlobalFieldKey,
+		public readonly nodeKeys: NodeKeyManager,
+		public readonly nodeKeyFieldKey?: GlobalFieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -211,17 +211,17 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
- * @param nodeIdentifierManager - an object which handles node identifier generation and conversion
- * @param nodeIdentifierKey - an optional field key under which node identifiers are stored in this tree.
- * If present, clients may query the {@link CompressedNodeIdentifier} of a node directly via the {@link compressedNodeIdentifierSymbol}.
+ * @param nodeKeyManager - an object which handles node key generation and conversion
+ * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+ * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
-	nodeIdentifierManager: NodeIdentifierManager,
-	nodeIdentifierKey?: GlobalFieldKey,
+	nodeKeyManager: NodeKeyManager,
+	nodeKeyFieldKey?: GlobalFieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor, nodeIdentifierManager, nodeIdentifierKey);
+	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

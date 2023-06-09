@@ -236,14 +236,7 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
-export function compareCompressedNodeIdentifiers(a: CompressedNodeIdentifier, b: CompressedNodeIdentifier): -1 | 0 | 1;
-
-// @alpha
-export interface CompressedNodeIdentifier extends Opaque<Brand<SessionSpaceCompressedId, "Compressed Node Identifier">> {
-}
-
-// @alpha
-export const compressedNodeIdentifierSymbol: unique symbol;
+export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
 
 // @alpha
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
@@ -407,7 +400,6 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
-    readonly [compressedNodeIdentifierSymbol]: CompressedNodeIdentifier | undefined;
     readonly [contextSymbol]: EditableTreeContext;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
@@ -588,7 +580,7 @@ export const FieldKinds: {
     readonly value: ValueFieldKind;
     readonly optional: Optional;
     readonly sequence: Sequence;
-    readonly nodeIdentifier: NodeIdentifierFieldKind;
+    readonly nodeKey: NodeKeyFieldKind;
     readonly forbidden: Forbidden;
 };
 
@@ -976,12 +968,11 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
-    readonly nodeIdentifier: {
-        generate(): NodeIdentifier;
-        generateCompressed(): CompressedNodeIdentifier;
-        compress(identifier: NodeIdentifier): CompressedNodeIdentifier;
-        decompress(identifier: CompressedNodeIdentifier): NodeIdentifier;
-        map: ReadonlyMap<NodeIdentifier, EditableTree>;
+    readonly nodeKey: {
+        generate(): LocalNodeKey;
+        stabilize(key: LocalNodeKey): StableNodeKey;
+        localize(key: StableNodeKey): LocalNodeKey;
+        map: ReadonlyMap<LocalNodeKey, EditableTree>;
     };
     rebase(view: SharedTreeView): void;
     redo(): void;
@@ -1164,6 +1155,12 @@ interface LocalFields {
     // (undocumented)
     readonly [key: string]: FieldSchema;
 }
+
+// @alpha
+export type LocalNodeKey = Brand<SessionSpaceCompressedId, "Local Node Key">;
+
+// @alpha
+export const localNodeKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
 interface MakeNominal {
@@ -1359,19 +1356,16 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-export type NodeIdentifier = Brand<StableId, "Node Identifier">;
+export const nodeKeyFieldKey: GlobalFieldKey;
 
 // @alpha (undocumented)
-export interface NodeIdentifierFieldKind extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {
+export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {
 }
 
 // @alpha
-export const nodeIdentifierKey: GlobalFieldKey;
-
-// @alpha
-export function nodeIdentifierSchema(): {
+export function nodeKeySchema(): {
     schema: SchemaLibrary;
-    field: GlobalFieldSchema<NodeIdentifierFieldKind>;
+    field: GlobalFieldSchema<NodeKeyFieldKind>;
     type: TreeSchemaIdentifier;
 };
 
@@ -1678,7 +1672,7 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     merge(fork: SharedTreeView): void;
     // (undocumented)
-    readonly nodeIdentifier: ISharedTreeView["nodeIdentifier"];
+    readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
     rebase(fork: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
@@ -1730,6 +1724,9 @@ export interface Sourced {
     // (undocumented)
     readonly builder: Named<string>;
 }
+
+// @alpha
+export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {

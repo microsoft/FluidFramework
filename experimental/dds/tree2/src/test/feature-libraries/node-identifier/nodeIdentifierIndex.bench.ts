@@ -7,75 +7,115 @@ import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { ISharedTree } from "../../../shared-tree";
-import { TestTreeProviderLite } from "../../utils";
+import { ISharedTree, ISharedTreeView } from "../../../shared-tree";
+import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
-	NodeIdentifier,
 	SequenceFieldEditBuilder,
 	singleTextCursor,
+	LocalNodeKey,
+	localNodeKeySymbol,
+	SchemaBuilder,
+	FieldKinds,
 } from "../../../feature-libraries";
 import {
 	rootFieldKeySymbol,
 	ITreeCursor,
 	moveToDetachedField,
 	JsonableTree,
+	AllowedUpdateType,
 	symbolFromKey,
 } from "../../../core";
-import { nodeIdentifierSchema } from "../../../domains";
-import { nodeSchema, nodeSchemaData } from "./nodeIdentifierIndex.spec";
+import { nodeKeySchema } from "../../../domains";
 
-const { field: nodeIdentifierField, type: nodeIdentifierType } = nodeIdentifierSchema();
+const { schema: nodeKeyLibrary, field: nodeKeyField, type: nodeKeyType } = nodeKeySchema();
 
-describe("Node Identifier Index Benchmarks", () => {
-	// TODO: Increase these numbers when the identifier index is more efficient
+const builder = new SchemaBuilder("node key index benchmarks", nodeKeyLibrary);
+const nodeSchema = builder.objectRecursive("node", {
+	local: {
+		child: SchemaBuilder.fieldRecursive(
+			FieldKinds.optional,
+			() => nodeSchema,
+			() => nodeWithKeySchema,
+		),
+	},
+});
+const nodeWithKeySchema = builder.objectRecursive("nodeWithKey", {
+	local: {
+		child: SchemaBuilder.fieldRecursive(
+			FieldKinds.optional,
+			() => nodeWithKeySchema,
+			() => nodeSchema,
+		),
+	},
+	global: [nodeKeyField],
+});
+const schemaData = builder.intoDocumentSchema(
+	SchemaBuilder.fieldOptional(nodeSchema, nodeWithKeySchema),
+);
+
+describe("Node Key Index Benchmarks", () => {
+	// TODO: Increase these numbers when the node key index is more efficient
 	for (const nodeCount of [50, 100]) {
 		describe(`In a tree with ${nodeCount} nodes`, () => {
-			function makeTree(): [ISharedTree, SequenceFieldEditBuilder, TestTreeProviderLite] {
-				const provider = new TestTreeProviderLite(1);
+			async function makeTree(): Promise<
+				[ISharedTree, SequenceFieldEditBuilder, ITestTreeProvider]
+			> {
+				const provider = await TestTreeProvider.create(1);
 				const [tree] = provider.trees;
-				tree.storedSchema.update(nodeSchemaData);
+				tree.schematize({
+					initialTree: undefined,
+					schema: schemaData,
+					allowedSchemaModifications: AllowedUpdateType.None,
+				});
 				const field = tree.editor.sequenceField({
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				});
+
 				return [tree, field, provider];
 			}
 
-			function createNode(nodeIdentifier?: NodeIdentifier): ITreeCursor {
-				const jsonTree: JsonableTree = {
-					type: nodeSchema.name,
-				};
-				if (nodeIdentifier !== undefined) {
-					jsonTree.globalFields = {
-						[nodeIdentifierField.key]: [
-							{ type: nodeIdentifierType, value: nodeIdentifier },
-						],
-					};
-				}
+			function createNode(view: ISharedTreeView, nodeKey?: LocalNodeKey): ITreeCursor {
+				const jsonTree: JsonableTree =
+					nodeKey !== undefined
+						? {
+								type: nodeWithKeySchema.name,
+								globalFields: {
+									[nodeKeyField.key]: [
+										{
+											type: nodeKeyType,
+											value: view.nodeKey.stabilize(nodeKey),
+										},
+									],
+								},
+						  }
+						: {
+								type: nodeSchema.name,
+						  };
 				return singleTextCursor(jsonTree);
 			}
 
-			for (const identifierDensityPercentage of [5, 50, 100]) {
+			for (const keyDensityPercentage of [5, 50, 100]) {
 				benchmark({
 					type: BenchmarkType.Measurement,
-					title: `Insert ${nodeCount} nodes, ${identifierDensityPercentage}% of which have identifiers`,
+					title: `Insert ${nodeCount} nodes, ${keyDensityPercentage}% of which have keys`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						const period = Math.round(100 / identifierDensityPercentage);
+						const period = Math.round(100 / keyDensityPercentage);
 						let duration: number;
 						do {
 							assert.equal(state.iterationsPerBatch, 1);
-							const [tree, field] = makeTree();
+							const [tree, field] = await makeTree();
 							const cursors: ITreeCursor[] = [];
-							const ids: (NodeIdentifier | undefined)[] = [];
+							const ids: (LocalNodeKey | undefined)[] = [];
 							for (let i = 0; i < nodeCount; i++) {
-								const nodeIdentifier =
-									i % period === 0 ? tree.nodeIdentifier.generate() : undefined;
+								const nodeKey =
+									i % period === 0 ? tree.nodeKey.generate() : undefined;
 
-								ids.push(nodeIdentifier);
-								cursors.push(createNode(nodeIdentifier));
+								ids.push(nodeKey);
+								cursors.push(createNode(tree, nodeKey));
 							}
 
-							// Measure how long it takes to insert a node with an identifier
+							// Measure how long it takes to insert a node with a key
 							const before = state.timer.now();
 							for (let i = 0; i < nodeCount; i++) {
 								field.insert(i, cursors[i]);
@@ -88,19 +128,20 @@ describe("Node Identifier Index Benchmarks", () => {
 							cursor.firstNode();
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									cursor.enterField(symbolFromKey(nodeIdentifierField.key));
+									cursor.enterField(symbolFromKey(nodeKeyField.key));
 									cursor.enterNode(0);
-									assert.equal(cursor.value, ids[i]);
+									const id = ids[i];
+									const stableId =
+										id !== undefined ? tree.nodeKey.stabilize(id) : undefined;
+
+									assert.equal(cursor.value, stableId);
 									cursor.exitNode();
 									cursor.exitField();
-									const node = tree.nodeIdentifier.map.get(
-										ids[i] ?? fail("Expected node identifier to be in list"),
+									const node = tree.nodeKey.map.get(
+										ids[i] ?? fail("Expected node key to be in list"),
 									);
 									assert(node !== undefined);
-									assert.equal(
-										node[symbolFromKey(nodeIdentifierField.key)],
-										ids[i],
-									);
+									assert.equal(node[localNodeKeySymbol], ids[i]);
 								}
 								cursor.nextNode();
 							}
@@ -111,64 +152,63 @@ describe("Node Identifier Index Benchmarks", () => {
 				});
 			}
 
-			for (const identifierDensityPercentage of [5, 50, 100]) {
+			for (const keyDensityPercentage of [5, 50, 100]) {
 				benchmark({
 					type: BenchmarkType.Measurement,
-					title: `Lookup a node by identifier in a tree of size ${nodeCount} where ${identifierDensityPercentage}% of the tree has identifiers`,
+					title: `Lookup a node by key in a tree of size ${nodeCount} where ${keyDensityPercentage}% of the tree has keys`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						const period = Math.round(100 / identifierDensityPercentage);
+						const period = Math.round(100 / keyDensityPercentage);
 						const random = makeRandom(0);
 						let duration: number;
 						do {
 							assert.equal(state.iterationsPerBatch, 1);
-							const [tree, field] = makeTree();
-							const ids: NodeIdentifier[] = [];
+							const [tree, field] = await makeTree();
+							const ids: LocalNodeKey[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									const nodeIdentifier = tree.nodeIdentifier.generate();
-									field.insert(i, createNode(nodeIdentifier));
-									ids.push(nodeIdentifier);
+									const nodeKey = tree.nodeKey.generate();
+									field.insert(i, createNode(tree, nodeKey));
+									ids.push(nodeKey);
 								} else {
-									field.insert(i, createNode());
+									field.insert(i, createNode(tree));
 								}
 							}
 
 							const id = random.pick(ids);
 
-							// Measure how long it takes to lookup a randomly selected ID that is known to be in the document
+							// Measure how long it takes to lookup a randomly selected key that is known to be in the document
 							const before = state.timer.now();
-							const node = tree.nodeIdentifier.map.get(id);
+							const node = tree.nodeKey.map.get(id);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node !== undefined);
-							assert.equal(node[symbolFromKey(nodeIdentifierField.key)], id);
+							assert.equal(node[localNodeKeySymbol], id);
 						} while (state.recordBatch(duration));
 					},
 					minBatchDurationSeconds: 0, // Force batch size of 1
 				});
 			}
 
-			for (const identifierDensityPercentage of [5, 50, 100]) {
+			for (const keyDensityPercentage of [5, 50, 100]) {
 				benchmark({
 					type: BenchmarkType.Measurement,
-					title: `Lookup a non-existent identifier in a tree of size ${nodeCount} where ${identifierDensityPercentage}% of the tree has identifiers`,
+					title: `Lookup a non-existent key in a tree of size ${nodeCount} where ${keyDensityPercentage}% of the tree has keys`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						const period = Math.round(100 / identifierDensityPercentage);
+						const period = Math.round(100 / keyDensityPercentage);
 						let duration: number;
 						do {
 							assert.equal(state.iterationsPerBatch, 1);
-							const [tree, field] = makeTree();
+							const [tree, field] = await makeTree();
 							for (let i = 0; i < nodeCount; i++) {
-								const identifier =
-									i % period === 0 ? tree.nodeIdentifier.generate() : undefined;
+								const key = i % period === 0 ? tree.nodeKey.generate() : undefined;
 
-								field.insert(i, createNode(identifier));
+								field.insert(i, createNode(tree, key));
 							}
 
-							// Measure how long it takes to lookup an ID that is not in the document
-							const nodeIdentifier = tree.nodeIdentifier.generate();
+							// Measure how long it takes to lookup a key that is not in the document
+							const nodeKey = tree.nodeKey.generate();
 							const before = state.timer.now();
-							const node = tree.nodeIdentifier.map.get(nodeIdentifier);
+							const node = tree.nodeKey.map.get(nodeKey);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node === undefined);
@@ -178,24 +218,23 @@ describe("Node Identifier Index Benchmarks", () => {
 				});
 			}
 
-			for (const identifierDensityPercentage of [5, 50, 100]) {
-				const period = Math.round(100 / identifierDensityPercentage);
-				it(`increase the summary size (when ${identifierDensityPercentage}% of nodes have identifiers)`, () => {
-					// Create a baseline tree with no identifiers
-					const [treeBaseline, fieldBaseline, providerBaseline] = makeTree();
+			for (const keyDensityPercentage of [5, 50, 100]) {
+				const period = Math.round(100 / keyDensityPercentage);
+				it(`increase the summary size (when ${keyDensityPercentage}% of nodes have keys)`, async () => {
+					// Create a baseline tree with no keys
+					const [treeBaseline, fieldBaseline, providerBaseline] = await makeTree();
 					for (let i = 0; i < nodeCount; i++) {
-						fieldBaseline.insert(i, createNode());
+						fieldBaseline.insert(i, createNode(treeBaseline));
 					}
-					providerBaseline.processMessages();
-					// Create a tree of the same size as the baseline, but with some identifiers
-					const [treeWithIds, fieldWithIds, providerWithIds] = makeTree();
+					await providerBaseline.ensureSynchronized();
+					// Create a tree of the same size as the baseline, but with some keys
+					const [treeWithIds, fieldWithIds, providerWithIds] = await makeTree();
 					for (let i = 0; i < nodeCount; i++) {
-						const identifier =
-							i % period === 0 ? treeBaseline.nodeIdentifier.generate() : undefined;
+						const key = i % period === 0 ? treeWithIds.nodeKey.generate() : undefined;
 
-						fieldWithIds.insert(i, createNode(identifier));
+						fieldWithIds.insert(i, createNode(treeWithIds, key));
 					}
-					providerWithIds.processMessages();
+					await providerWithIds.ensureSynchronized();
 
 					// Summarize both trees and measure their summary sizes
 					const { summary: summaryBaseline } = treeBaseline.getAttachSummary(true);
@@ -205,9 +244,9 @@ describe("Node Identifier Index Benchmarks", () => {
 					// TODO: report these sizes as benchmark output which can be tracked over time.
 					const sizeDelta = sizeWithIds - sizeBaseline;
 					const relativeDelta = sizeDelta / sizeBaseline;
-					// Arbitrary limit. Re-adjust when identifier index is more performant.
+					// Arbitrary limit. Re-adjust when the node key index is more performant.
 					assert(
-						relativeDelta < identifierDensityPercentage / 100,
+						relativeDelta < keyDensityPercentage / 100,
 						`Increased summary size by ${sizeDelta} bytes (${(
 							relativeDelta * 100
 						).toFixed(2)}% increase)`,

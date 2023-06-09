@@ -335,7 +335,7 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === value.identifier ||
 				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeIdentifier.identifier) &&
+				other.kind.identifier === nodeKey.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -682,19 +682,19 @@ export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, Seque
 /**
  * Exactly one identifier.
  */
-export const nodeIdentifier: BrandedFieldKind<
-	"NodeIdentifier",
+export const nodeKey: BrandedFieldKind<
+	"NodeKey",
 	Multiplicity.Value,
 	FieldEditor<0>
 > = brandedFieldKind(
-	"NodeIdentifier",
+	"NodeKey",
 	Multiplicity.Value,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
 			other.kind.identifier === value.identifier ||
 			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeIdentifier.identifier) &&
+			other.kind.identifier === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -740,7 +740,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, nodeIdentifier, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeKey, forbidden, counter].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -766,8 +766,8 @@ export interface Sequence
 /**
  * @alpha
  */
-export interface NodeIdentifierFieldKind
-	extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {}
+export interface NodeKeyFieldKind
+	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
 /**
  * @alpha
  */
@@ -783,9 +783,9 @@ export const FieldKinds: {
 	readonly value: ValueFieldKind;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeIdentifier: NodeIdentifierFieldKind;
+	readonly nodeKey: NodeKeyFieldKind;
 	readonly forbidden: Forbidden;
-} = { value, optional, sequence, nodeIdentifier, forbidden };
+} = { value, optional, sequence, nodeKey, forbidden };
 
 /**
  * @alpha
