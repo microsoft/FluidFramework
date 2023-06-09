@@ -229,12 +229,6 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 }
 
-// runtime will write a tree to the summary containing only "attachment" type entries
-// which reference attachment blobs by ID. However, some drivers do not support this type
-// and will convert them to "blob" type entries. We want to avoid saving these to reduce
-// the size of stashed change blobs.
-const blobsTreeName = ".blobs";
-
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
  */
@@ -251,13 +245,10 @@ async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: IDocumentStorageService,
-	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
-	for (const [key, subTree] of Object.entries(tree.trees)) {
-		if (!root || key !== blobsTreeName) {
-			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
-		}
+	for (const subTree of Object.values(tree.trees)) {
+		treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage));
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = await storage.readBlob(id);
@@ -281,12 +272,9 @@ export function getBlobContentsFromTreeWithBlobContents(
 function getBlobContentsFromTreeWithBlobContentsCore(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
-	root = true,
 ) {
-	for (const [key, subTree] of Object.entries(tree.trees)) {
-		if (!root || key !== blobsTreeName) {
-			getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
-		}
+	for (const subTree of Object.values(tree.trees)) {
+		getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs);
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = tree.blobsContents[id];

@@ -54,6 +54,8 @@ export async function scribeCreate(
 	const verifyLastOpPersistence =
 		(config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
 	const transientTenants = config.get("shared:transientTenants") as string[];
+	const disableTransientTenantFiltering =
+		(config.get("scribe:disableTransientTenantFiltering") as boolean) ?? true;
 	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled") as boolean;
 	const restartOnCheckpointFailure =
 		(config.get("scribe:restartOnCheckpointFailure") as boolean) ?? true;
@@ -159,6 +161,7 @@ export async function scribeCreate(
 		getDeltasViaAlfred,
 		verifyLastOpPersistence,
 		transientTenants,
+		disableTransientTenantFiltering,
 		checkpointService,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
