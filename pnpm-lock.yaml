@@ -4591,9 +4591,6 @@ importers:
       html-loader:
         specifier: ^3.1.0
         version: 3.1.2(webpack@5.83.0)
-      ignore-styles:
-        specifier: ^5.0.1
-        version: 5.0.1
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -36086,10 +36083,6 @@ packages:
 
   /iferr@0.1.5:
     resolution: {integrity: sha512-DUNFN5j7Tln0D+TxzloUjKB+CtVu6myn0JEFak6dG18mNt9YkQ6lzGCdafwofISZ1lLF3xRHJ98VKy9ynkcFaA==}
-    dev: true
-
-  /ignore-styles@5.0.1:
-    resolution: {integrity: sha512-gQQmIznCETPLEzfg1UH4Cs2oRq+HBPl8quroEUNXT8oybEG7/0lqI3dGgDSRry6B9HcCXw3PVkFFS0FF3CMddg==}
     dev: true
 
   /ignore-walk@4.0.1:

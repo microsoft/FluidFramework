@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-unassigned-import
 import "jsdom-global/register.js";
 window.performance.mark ??= () => undefined as PerformanceMark;
 window.performance.measure ??= () => undefined as PerformanceMeasure;

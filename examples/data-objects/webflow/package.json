@@ -18,8 +18,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
