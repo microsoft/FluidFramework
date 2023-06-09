@@ -221,7 +221,6 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 			const field = node[getField](brand(fieldName));
 			const renderedChild = await visualizeChildData(field);
 			children[field.fieldKey as string] = renderedChild;
-			await iterateNodes(field);
 		}
 	};
 

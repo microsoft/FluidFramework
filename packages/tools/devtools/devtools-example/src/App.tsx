@@ -56,20 +56,25 @@ const sharedTreeKey = "shared-tree";
  */
 const emojiMatrixKey = "emoji-matrix";
 
-
 /**
- * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
+ * TODO
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-class SharedTree {
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();  
-	}  
+function castSharedTreeType(): SharedObjectClass<ISharedTree> {
+	/**
+	 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
+	 */
+
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class SharedTree {
+		public static getFactory(): SharedTreeFactory {
+			return new SharedTreeFactory();
+		}
+	}
+
+	return SharedTree as unknown as SharedObjectClass<ISharedTree>;
 }
 
-function castSharedTreeType(): SharedObjectClass<ISharedTree> {
-	return SharedTree as unknown as SharedObjectClass<ISharedTree>
-}
+const sharedTreeObject = castSharedTreeType();
 
 /**
  * Schema used by the app.
@@ -84,7 +89,7 @@ const containerSchema: ContainerSchema = {
 		SharedMap,
 		SharedMatrix,
 		SharedString,
-		SharedTree,
+		sharedTreeObject,
 	],
 };
 
@@ -128,39 +133,58 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
 
 	// Set up SharedTree for visualization
-	const sharedTree = await container.create(castSharedTreeType());
+	const sharedTree = await container.create(sharedTreeObject);
 
-	// Populate SharedTree using Schema
 	const builder = new SchemaBuilder("Devtools_Example_SharedTree");
+
 	const stringSchema = builder.primitive("string-property", ValueSchema.String);
-	const childrenSchema = builder.object("child-item", {
+	const numberSchema = builder.primitive("number-property", ValueSchema.Number);
+	const booleanSchema = builder.primitive("boolean-property", ValueSchema.Boolean);
+
+	const leafSchema = builder.object("nested-item", {
 		local: {
-			text: SchemaBuilder.fieldValue(stringSchema),
+			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
 		},
 	});
-	
-	const rootNodeSchema = builder.object("test", {
+
+	const childSchema = builder.object("child-item", {
 		local: {
-			childrenOne: SchemaBuilder.fieldSequence(childrenSchema), 
-			childrenTwo: SchemaBuilder.fieldSequence(stringSchema),
+			childField: SchemaBuilder.fieldValue(stringSchema),
+			childData: SchemaBuilder.fieldOptional(leafSchema),
 		},
 	});
-	
+
+	const rootNodeSchema = builder.object("root-item", {
+		local: {
+			childrenOne: SchemaBuilder.fieldSequence(childSchema),
+			childrenTwo: SchemaBuilder.fieldSequence(numberSchema),
+		},
+	});
+
 	const schema = builder.intoDocumentSchema(
 		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
 	);
-	
+
 	sharedTree.schematize({
 		schema,
 		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: { 
-			childrenOne: [{ text: "Hello world!"}, {text: "Bye World" }],
-			childrenTwo: ["Hello world again!"] 
+		initialTree: {
+			childrenOne: [
+				{
+					childField: "Hello world!",
+					childData: { leafField: "Hello world again!" },
+				},
+				{
+					childField: "Boolean value.",
+					childData: { leafField: true },
+				},
+			],
+			childrenTwo: [32],
 		},
 	});
-	
+
 	rootMap.set(sharedTreeKey, sharedTree.handle);
-		
+
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);
 	rootMap.set("string-value", "Hello world!");
