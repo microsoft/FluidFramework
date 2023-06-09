@@ -4,17 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import { reservedRangeLabelsKey, PropertySet, Client } from "@fluidframework/merge-tree";
-import { IIntervalHelpers, Interval, createEndpointInRangeIndex } from "../intervalCollection";
+import { v4 as uuid } from "uuid";
+import { PropertySet, Client } from "@fluidframework/merge-tree";
+import {
+	IIntervalHelpers,
+	Interval,
+	createEndpointInRangeIndex,
+	createInterval,
+} from "../intervalCollection";
 
-function createInterval(label: string, start: number, end: number): Interval {
-	const rangeProp: PropertySet = {};
+const reservedIntervalIdKey = "intervalId";
 
-	if (label && label.length > 0) {
-		rangeProp[reservedRangeLabelsKey] = [label];
+class TestEndpointInRangeIndex {
+	private readonly intervals: Interval[];
+
+	constructor() {
+		this.intervals = [];
 	}
 
-	return new Interval(start, end, rangeProp);
+	add(interval: Interval) {
+		this.intervals.push(interval);
+	}
+
+	findIntervalsWithEndpointInRange(start: number, end: number): Interval[] {
+		return this.intervals.filter((interval) => interval.end >= start && interval.end <= end);
+	}
+}
+
+function createTestInterval(start: number, end: number): Interval {
+	const props: PropertySet = {};
+	props[reservedIntervalIdKey] = [uuid()];
+
+	return new Interval(start, end, props);
 }
 
 function assertPlainNumberIntervals(
@@ -27,6 +48,33 @@ function assertPlainNumberIntervals(
 		assert.equal(results[i].start, expectedEndpoints[i].start, "mismatched start");
 		assert.equal(results[i].end, expectedEndpoints[i].end, "mismatched end");
 	}
+}
+
+function generateRandomIntervals(count: number, rangeStart: number, rangeEnd: number) {
+	const intervals: Interval[] = [];
+
+	while (intervals.length < count) {
+		const start = getRandomNumber(rangeStart, rangeEnd);
+		const end = getRandomNumber(start, rangeEnd);
+		const interval = createTestInterval(start, end);
+		/**
+		 * Currently avoid using duplicate intervals due to the bug:
+		 * https://dev.azure.com/fluidframework/internal/_workitems/edit/4477
+		 */
+		if (
+			!intervals.some(
+				(existing) => existing.start === interval.start && existing.end === interval.end,
+			)
+		) {
+			intervals.push(interval);
+		}
+	}
+
+	return intervals;
+}
+
+function getRandomNumber(min: number, max: number): number {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 describe("Support querying intervals with endpoints in a specified range", () => {
@@ -56,8 +104,8 @@ describe("Support querying intervals with endpoints in a specified range", () =>
 	});
 
 	it("limit on the start/end value", () => {
-		endpointInRangeIndex.add(new Interval(1, 1));
-		endpointInRangeIndex.add(new Interval(1, 3));
+		endpointInRangeIndex.add(createTestInterval(1, 1));
+		endpointInRangeIndex.add(createTestInterval(1, 3));
 
 		results = endpointInRangeIndex.findIntervalsWithEndpointInRange(2, 1);
 		assert.equal(results.length, 0, "The start value should not be lower than the end value");
@@ -70,8 +118,8 @@ describe("Support querying intervals with endpoints in a specified range", () =>
 	});
 
 	it("can find correct results after adding multiple intervals", () => {
-		endpointInRangeIndex.add(new Interval(1, 1));
-		endpointInRangeIndex.add(new Interval(1, 3));
+		endpointInRangeIndex.add(createTestInterval(1, 1));
+		endpointInRangeIndex.add(createTestInterval(1, 3));
 
 		results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
 		assertPlainNumberIntervals(results, [{ start: 1, end: 1 }]);
@@ -82,20 +130,22 @@ describe("Support querying intervals with endpoints in a specified range", () =>
 			{ start: 1, end: 3 },
 		]);
 
-		endpointInRangeIndex.add(new Interval(2, 4));
-		endpointInRangeIndex.add(new Interval(3, 5));
+		endpointInRangeIndex.add(createTestInterval(2, 4));
+		endpointInRangeIndex.add(createTestInterval(3, 5));
+		endpointInRangeIndex.add(createTestInterval(3, 4));
 		results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 5);
 		results.sort(compareFn);
 		assertPlainNumberIntervals(results, [
 			{ start: 1, end: 3 },
 			{ start: 2, end: 4 },
+			{ start: 3, end: 4 },
 			{ start: 3, end: 5 },
 		]);
 	});
 
-	it("can find correct results after removing intervals", () => {
-		const interval1 = new Interval(1, 1);
-		const interval2 = new Interval(1, 3);
+	it("can find correct results after removing multiple intervals", () => {
+		const interval1 = createTestInterval(1, 1);
+		const interval2 = createTestInterval(1, 3);
 		endpointInRangeIndex.add(interval1);
 		endpointInRangeIndex.add(interval2);
 		endpointInRangeIndex.remove(interval1);
@@ -103,11 +153,34 @@ describe("Support querying intervals with endpoints in a specified range", () =>
 		results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 2);
 		assert.equal(results.length, 0);
 
-		const interval3 = new Interval(2, 4);
+		const interval3 = createTestInterval(2, 4);
 		endpointInRangeIndex.add(interval3);
 		endpointInRangeIndex.remove(interval2);
 
 		results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 5);
 		assertPlainNumberIntervals(results, [{ start: 2, end: 4 }]);
+	});
+
+	it("compare with simple query method using random inputs", () => {
+		const testIndex = new TestEndpointInRangeIndex();
+
+		// Generate intervals randomly and add them to both index
+		const intervals = generateRandomIntervals(10, 1, 20);
+		for (const interval of intervals) {
+			testIndex.add(interval);
+			endpointInRangeIndex.add(interval);
+		}
+
+		for (let i = 0; i < 10; ++i) {
+			const start = getRandomNumber(1, 20);
+			const end = getRandomNumber(start, 20);
+			// Query intervals using both index
+			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(start, end);
+			const expected = testIndex.findIntervalsWithEndpointInRange(start, end);
+			results.sort(compareFn);
+			expected.sort(compareFn);
+
+			assertPlainNumberIntervals(results, expected);
+		}
 	});
 });
