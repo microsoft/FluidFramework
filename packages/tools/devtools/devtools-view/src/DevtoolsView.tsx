@@ -232,7 +232,11 @@ export function DevtoolsView(): React.ReactElement {
 					<Waiting />
 				)
 			) : (
-				<_DevtoolsView theme={selectedTheme} setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
+				<_DevtoolsView
+					theme={selectedTheme}
+					setTheme={setSelectedTheme}
+					supportedFeatures={supportedFeatures}
+				/>
 			)}
 		</FluentProvider>
 	);
@@ -242,12 +246,12 @@ interface _DevtoolsViewProps {
 	/**
 	 * Object representing the current page theme.
 	 */
-	theme:{name: string, theme: Theme}
+	theme: { name: string; theme: Theme };
 
 	/**
 	 * Sets the theme of the DevTools app (light, dark, high contrast)
 	 */
-	setTheme(newTheme: {name: string, theme: Theme}): void;
+	setTheme(newTheme: { name: string; theme: Theme }): void;
 
 	/**
 	 * Set of features supported by the Devtools.
@@ -304,7 +308,12 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} theme={theme} setTheme={setTheme} />
+			<View
+				menuSelection={menuSelection}
+				containers={containers}
+				theme={theme}
+				setTheme={setTheme}
+			/>
 		</Stack>
 	);
 }
@@ -316,7 +325,7 @@ interface ViewProps {
 	/**
 	 * Object representing the current page theme.
 	 */
-		theme:{name: string, theme: Theme}
+	theme: { name: string; theme: Theme };
 
 	/**
 	 * The current menu selection.
@@ -333,7 +342,7 @@ interface ViewProps {
 	/**
 	 * Sets the theme of the DevTools app (light, dark, high contrast)
 	 */
-	setTheme(newTheme: {name: string, theme: Theme}): void;
+	setTheme(newTheme: { name: string; theme: Theme }): void;
 }
 
 /**
@@ -345,7 +354,7 @@ function View(props: ViewProps): React.ReactElement {
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
-			view = <TelemetryView theme={theme}/>;
+			view = <TelemetryView theme={theme} />;
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations

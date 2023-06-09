@@ -20,7 +20,7 @@ import {
 	Option,
 	TableColumnDefinition,
 	createTableColumn,
-	Theme
+	Theme,
 } from "@fluentui/react-components";
 import React, { useState, useRef } from "react";
 import SplitPane from "react-split-pane";
@@ -46,7 +46,7 @@ interface TelemetryViewProps {
 	/**
 	 * Object representing the current page theme.
 	 */
-		theme:{name: string, theme: Theme}
+	theme: { name: string; theme: Theme };
 }
 
 /**
@@ -67,7 +67,6 @@ export function TelemetryView(props: TelemetryViewProps): React.ReactElement {
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
-	console.log(props.theme.name)
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
@@ -255,9 +254,9 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
  */
 interface FilteredTelemetryViewProps {
 	/**
-	 * 
+	 *
 	 */
-	theme: string
+	theme: string;
 	/**
 	 * A list of all telemetry events received.
 	 */
@@ -387,7 +386,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 * @returns string representing the appropriate color
 	 */
 	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
-		if(theme !== "highContrast"){
+		if (theme !== "highContrast") {
 			switch (eventCategory) {
 				case "generic":
 					return tokens.colorPaletteGreenForeground1;
