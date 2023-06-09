@@ -8,6 +8,8 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"types": ["node", "react", "react-dom"],
+		"module": "esnext",
+		"resolveJsonModule": true,
 	},
 	"include": ["src/**/*"],
 }
