@@ -124,23 +124,17 @@ describe("ModularChangeFamily integration", () => {
 		it("cross-field move and inverse with nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const value = 42;
 			editor.move(
-				{ parent: undefined, field: fieldA },
-				0,
-				1,
 				{ parent: undefined, field: fieldB },
 				0,
+				1,
+				{ parent: undefined, field: fieldA },
+				0,
 			);
-			editor.setValue(
-				{ parent: undefined, parentField: fieldA, parentIndex: 0 },
-				"new value",
-			);
-			editor.setValue(
-				{ parent: undefined, parentField: fieldB, parentIndex: 0 },
-				"new value",
-			);
+			editor.setValue({ parent: undefined, parentField: fieldB, parentIndex: 0 }, value);
 
-			const [move, setValue, setValueRebased] = getChanges();
+			const [move, setValue] = getChanges();
 			const moveTagged = tagChange(move, tag1);
 			const returnTagged = tagRollbackInverse(
 				family.invert(moveTagged, true),
@@ -148,10 +142,14 @@ describe("ModularChangeFamily integration", () => {
 				moveTagged.revision,
 			);
 
-			const foo = family.compose([moveTagged, tagChange(setValueRebased, tag2)]);
 			const moveAndSetValue = family.compose([tagChange(setValue, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
-			assert.deepEqual(composed, setValueRebased);
+			const actual = family.intoDelta(composed);
+			const expected: Delta.Root = new Map([
+				[fieldA, [{ type: Delta.MarkType.Modify, setValue: value }]],
+				[fieldB, []],
+			]);
+			assert.deepEqual(actual, expected);
 		});
 
 		it("two cross-field moves of same node", () => {

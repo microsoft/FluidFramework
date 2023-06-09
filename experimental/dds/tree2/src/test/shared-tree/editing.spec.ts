@@ -317,7 +317,7 @@ describe("Editing", () => {
 			expectJsonTree(tree2, expectedState);
 		});
 
-		it("can rebase cross-field move over unrelated change", () => {
+		it("can rebase cross-field move over value change of moved node", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 				bar: ["B"],
