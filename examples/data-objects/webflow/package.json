@@ -133,9 +133,6 @@
 		"webpack-dev-server": "~4.6.0",
 		"webpack-merge": "^5.8.0"
 	},
-	"engines": {
-		"node": ">=16.12.0"
-	},
 	"fluid": {
 		"browser": {
 			"umd": {
