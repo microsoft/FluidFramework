@@ -662,19 +662,19 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose will remove all listeners
 	 * - dispose can be called after closure
 	 */
-	public dispose(error?: ICriticalContainerError): void {
+	public dispose(_error?: Error, containerError?: ICriticalContainerError): void {
 		if (this._disposed) {
 			return;
 		}
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
 
-		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.connectionManager.dispose(containerError, false /* switchToReadonly */);
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes
 		// Container to dispose context and break ability of data stores / runtime to "hear" from delta manager.
-		this.emit("disposed", error);
+		this.emit("disposed", containerError);
 		this.removeAllListeners();
 	}
 
