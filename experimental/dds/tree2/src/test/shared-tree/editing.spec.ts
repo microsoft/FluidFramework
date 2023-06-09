@@ -345,16 +345,17 @@ describe("Editing", () => {
 				1,
 			);
 
-			const expectedState: JsonCompatible = {
-				foo: [],
-				bar: ["B", "C"],
-			};
+			const expectedState: JsonCompatible = [
+				{
+					foo: [],
+					bar: ["B", "C"],
+				},
+			];
 
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
-			expectJsonTree(tree1, [expectedState]);
-			expectJsonTree(tree2, [expectedState]);
+			expectJsonTree([tree1, tree2], expectedState);
 		});
 
 		it("move under move-out", () => {

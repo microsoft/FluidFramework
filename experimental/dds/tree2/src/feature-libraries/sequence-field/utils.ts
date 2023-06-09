@@ -224,7 +224,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case NoopMarkType:
 		case "Insert":
-		case "Placeholder":
 			return false;
 		case "MoveIn":
 			return mark.isSrcConflicted ?? false;
@@ -232,6 +231,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case "MoveOut":
 			return true;
 		case "Modify":
+		case "Placeholder":
 			return mark.detachEvent !== undefined;
 		case "ReturnFrom":
 			return mark.detachEvent !== undefined || !mark.isDstConflicted;

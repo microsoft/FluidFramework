@@ -404,12 +404,16 @@ export type Detach<TNodeChange = NodeChangeType> =
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
+/**
+ * Mark used to during compose to temporarily remember the position of nodes which were being moved
+ * but had their move cancelled an inverse.
+ * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
+ */
 export interface MovePlaceholder<TNodeChange>
 	extends CellTargetingMark,
 		HasRevisionTag,
 		HasMoveId,
-		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		HasChanges<TNodeChange> {
 	type: "Placeholder";
 	count: NodeCount;
 }
