@@ -21,7 +21,12 @@ import {
 	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+	normalizeError,
+	logIfFalse,
+	safeRaiseEvent,
+	isFluidError,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -40,6 +45,7 @@ import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 	DataProcessingError,
+	UsageError,
 } from "@fluidframework/container-utils";
 import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
@@ -662,19 +668,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose will remove all listeners
 	 * - dispose can be called after closure
 	 */
-	public dispose(_error?: Error, containerError?: ICriticalContainerError): void {
+	public dispose(error?: Error | ICriticalContainerError): void {
 		if (this._disposed) {
 			return;
 		}
+		if (error !== undefined && !isFluidError(error)) {
+			throw new UsageError("Error must be a fluid error");
+		}
+
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
 
-		this.connectionManager.dispose(containerError, false /* switchToReadonly */);
+		this.connectionManager.dispose(error, false /* switchToReadonly */);
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes
 		// Container to dispose context and break ability of data stores / runtime to "hear" from delta manager.
-		this.emit("disposed", containerError);
+		this.emit("disposed", error);
 		this.removeAllListeners();
 	}
 
