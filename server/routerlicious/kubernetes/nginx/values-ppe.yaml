@@ -1,29 +1,29 @@
 controller:
-  terminationGracePeriodSeconds: 60
-  ingressClassResource:
-    # 'name' needs to be unique cluster-wide; IngressClass is a cluser-scoped resource.
-    # It must match what the deployment pipelines ends up passing to the spec.ingressClassName
-    # field of Ingress resources that get deployed.
-    name: nginx-ppe
-    # 'controllerValue' needs to be unique cluster-wide to avoid IngressClass resources getting confused about which controller to use
-    controllerValue: fluidframework.com/ppe-ingress-controller
-  extraArgs:
-    default-ssl-certificate: default/wu2-ppe-tls-certificate
-  admissionWebhooks:
-    enabled: False # Disable admission webhooks endpoint to keep moving parts to a minimum as long as we don't use it
-  service:
-    annotations:
-      # This annotation is necessary for external traffic to reach the pods correctly in AKS (Azure Kubernetes Service,
-      # https://learn.microsoft.com/en-us/azure/aks/).
-      # Without it, health probes on the automatically-created load balancer will have an incorrect path, fail because
-      # of that, and make it look like the targets of the load balancing rules are unhealthy, which results in external
-      # requests hanging instead of getting routed to the appropriate pods.
-      # More details at https://cloud-provider-azure.sigs.k8s.io/topics/loadbalancer/#custom-load-balancer-health-probe
-      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
-    # The "Local" external traffic policy ensures that the source IP of external requests to the AKS cluster isn't
-    # completely lost as they go through network translation inside the AKS cluster in order to get to a pod.
-    # See https://learn.microsoft.com/en-us/azure/aks/concepts-network#client-source-ip-preservation for details.
-    externalTrafficPolicy: Local
+    terminationGracePeriodSeconds: 60
+    ingressClassResource:
+        # 'name' needs to be unique cluster-wide; IngressClass is a cluser-scoped resource.
+        # It must match what the deployment pipelines ends up passing to the spec.ingressClassName
+        # field of Ingress resources that get deployed.
+        name: nginx-ppe
+        # 'controllerValue' needs to be unique cluster-wide to avoid IngressClass resources getting confused about which controller to use
+        controllerValue: fluidframework.com/ppe-ingress-controller
+    extraArgs:
+        default-ssl-certificate: default/wu2-ppe-tls-certificate
+    admissionWebhooks:
+        enabled: False # Disable admission webhooks endpoint to keep moving parts to a minimum as long as we don't use it
+    service:
+        annotations:
+            # This annotation is necessary for external traffic to reach the pods correctly in AKS (Azure Kubernetes Service,
+            # https://learn.microsoft.com/en-us/azure/aks/).
+            # Without it, health probes on the automatically-created load balancer will have an incorrect path, fail because
+            # of that, and make it look like the targets of the load balancing rules are unhealthy, which results in external
+            # requests hanging instead of getting routed to the appropriate pods.
+            # More details at https://cloud-provider-azure.sigs.k8s.io/topics/loadbalancer/#custom-load-balancer-health-probe
+            service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+        # The "Local" external traffic policy ensures that the source IP of external requests to the AKS cluster isn't
+        # completely lost as they go through network translation inside the AKS cluster in order to get to a pod.
+        # See https://learn.microsoft.com/en-us/azure/aks/concepts-network#client-source-ip-preservation for details.
+        externalTrafficPolicy: Local
 
 # Strong DH params generated with 'openssl dhparam -out dhparam.pem 4096'
 dhParam: "LS0tLS1CRUdJTiBESCBQQVJBTUVURVJTLS0tLS0KTUlJQ0NBS0NBZ0VBbk03d1NsNWNIR25HOFdiRk85NW54T21YUkIzU3l1MFFpbzJXZlFBS2tRRkRiaS9wYk9McgpXZDBjS1U1cHZrQzVKVFg1eDNwOENBT21hL1gvaWxMNC9CclFRMHFhdEhHMzdhQ0FGN3dvSUppUDZHS1lOR0l0Cms0d3krc2NOZzN0RVRxRmovQnZEM0orYU5rSUY4dFRPcHJLLzZ2SFp6Vmw3bzAxSEV1NThxRS9hS3M3SDJpRm4KUW1wNklneW5sY1RwTUtEZ0xwbk5nL2FhQmQxdkRkL245djNyeFRrU2pmT1Q1T2NoMXYwdjRVWENxejJDbGIrWgp5czk5VjJZRHRoYnVjaVpQb2FvT3NTQmhFejdEWS85dnJEa2RnRGtKbU5oT3ZjZEdhMm1KbjAydkx5NWxCaExiCmZpSXA5NHJRMUZaQzNPT2R1VkRDaldsR0FEVnJGdWZMakgrSHNwOWk1M0k4Umg2T0YzT0FkODAxU3dXWTh0aTQKOVNibFJuTU5LUlNHT04zNmxGTXEvOFhaaEx6MHNPN3pMcjlrOE9td2xDTVJmNldNdHBId2tteDFrMHRkU1l5bwpjc1R5RjVVR3hUVGYzTmFOWHJjYVc1V2RDVG5kWU45OWpKRmxRYVFUOE5VZEJMaDBSZ0d0MGJzMVlTMzJoeGgrCnRJekVBcDVPYk5BWGlpakxlR200eDhRYXE3NFZXNDBUYk1qdzlKZUtoRmdCYnlvZ290QXVjZkczWWJlVEN2c04KRXp0cXVMNCtJV3FWN1krZVFnTDFGUVIvanZVVkI2Vk00NUlhY1VKU0lJRWFodUhPVDZNbXJUN3NSOEw3YnMvcAp6Mk1TeW1BTVZaNjVtT2R2Q0d2SUtZUSswblBCT1ZURFF0N204MDl6MUppUTlMdUpUYnhSaUhNQ0FRST0KLS0tLS1FTkQgREggUEFSQU1FVEVSUy0tLS0tCg=="
