@@ -1166,7 +1166,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
  */
-interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
+export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (include both ends)
@@ -1179,7 +1179,7 @@ interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
  */
-interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
+export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (include both ends)
@@ -1344,14 +1344,14 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
 	helpers: IIntervalHelpers<TInterval>,
 	client: Client,
-) {
+): IEndpointInRangeIndex<TInterval> {
 	return new EndpointInRangeIndex<TInterval>(helpers, client);
 }
 
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
 	helpers: IIntervalHelpers<TInterval>,
 	client: Client,
-) {
+): IStartpointInRangeIndex<TInterval> {
 	return new StartpointInRangeIndex<TInterval>(helpers, client);
 }
 
