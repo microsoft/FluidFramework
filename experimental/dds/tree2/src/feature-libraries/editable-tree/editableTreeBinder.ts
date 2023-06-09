@@ -523,7 +523,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.getListeners(BindingType.Delete, current);
+		const listeners = this.getListeners(BindingType.SetValue, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
