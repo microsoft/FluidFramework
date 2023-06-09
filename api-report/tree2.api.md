@@ -8,6 +8,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IRevertible } from '@fluidframework/undo-redo';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -1683,6 +1684,15 @@ export class SharedTreeView implements ISharedTreeView {
     readonly transaction: ISharedTreeView["transaction"];
     // (undocumented)
     undo(): void;
+}
+
+// @alpha
+export class SharedTreeViewRevertible implements IRevertible {
+    constructor(undoRedoManagerCommitType: UndoRedoManagerCommitType, tree: ISharedTreeView);
+    // (undocumented)
+    discard(): void;
+    // (undocumented)
+    revert(): void;
 }
 
 // @alpha

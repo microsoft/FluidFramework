@@ -259,6 +259,7 @@ export {
 	ViewEvents,
 	SchematizeConfiguration,
 	SharedTreeViewUndoRedoHandler,
+	SharedTreeViewRevertible,
 } from "./shared-tree";
 
 export type {

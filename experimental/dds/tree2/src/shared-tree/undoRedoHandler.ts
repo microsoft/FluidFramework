@@ -29,15 +29,17 @@ export class SharedTreeViewUndoRedoHandler {
 		type: UndoRedoManagerCommitType,
 		target: ISharedTreeView,
 	) => {
-		this.stackManager.pushToCurrentOperation(new SharedTreeRevertible(type, target));
+		this.stackManager.pushToCurrentOperation(new SharedTreeViewRevertible(type, target));
 	};
 }
 
 /**
  * Provides an interface for reverting a change to a SharedTree. SharedTree manages its own undo stack so this
  * revertible stores no information about the commit being reverted other than whether it needs to be an undo or redo.
+ *
+ * @alpha
  */
-export class SharedTreeRevertible implements IRevertible {
+export class SharedTreeViewRevertible implements IRevertible {
 	public constructor(
 		private readonly undoRedoManagerCommitType: UndoRedoManagerCommitType,
 		private readonly tree: ISharedTreeView,
