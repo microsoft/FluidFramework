@@ -98,7 +98,7 @@ async function main() {
 
 	let failureSummary = "";
 	let exitCode = 0;
-	if (options.clean || options.build !== false) {
+	if (options.buildTaskNames.length !== 0) {
 		log(
 			`Symlink in ${
 				options.fullSymlink
@@ -126,37 +126,27 @@ async function main() {
 		}
 		timer.time("Check install completed");
 
-		if (options.clean) {
-			if (!(await buildGraph.clean())) {
-				error(`Clean failed`);
-				process.exit(-9);
-			}
-			timer.time("Clean completed");
+		// Run the build
+		const buildResult = await buildGraph.build(timer);
+		const buildStatus = buildResultString(buildResult);
+		const elapsedTime = timer.time();
+		if (commonOptions.timer) {
+			const totalElapsedTime = buildGraph.totalElapsedTime;
+			const concurrency = buildGraph.totalElapsedTime / elapsedTime;
+			log(
+				`Execution time: ${totalElapsedTime.toFixed(
+					3,
+				)}s, Concurrency: ${concurrency.toFixed(
+					3,
+				)}, Queue Wait time: ${buildGraph.totalQueueWaitTime.toFixed(3)}s`,
+			);
+			log(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
+		} else {
+			log(`Build ${buildStatus}`);
 		}
+		failureSummary = buildGraph.taskFailureSummary;
 
-		if (options.build !== false) {
-			// Run the build
-			const buildResult = await buildGraph.build(timer);
-			const buildStatus = buildResultString(buildResult);
-			const elapsedTime = timer.time();
-			if (commonOptions.timer) {
-				const totalElapsedTime = buildGraph.totalElapsedTime;
-				const concurrency = buildGraph.totalElapsedTime / elapsedTime;
-				log(
-					`Execution time: ${totalElapsedTime.toFixed(
-						3,
-					)}s, Concurrency: ${concurrency.toFixed(
-						3,
-					)}, Queue Wait time: ${buildGraph.totalQueueWaitTime.toFixed(3)}s`,
-				);
-				log(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
-			} else {
-				log(`Build ${buildStatus}`);
-			}
-			failureSummary = buildGraph.taskFailureSummary;
-
-			exitCode = buildResult === BuildResult.Failed ? -1 : 0;
-		}
+		exitCode = buildResult === BuildResult.Failed ? -1 : 0;
 	}
 
 	if (options.build === false) {

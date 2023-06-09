@@ -48,7 +48,7 @@ export class MonoRepo {
 
 		try {
 			const { tool, rootDir, packages } = getPackagesSync(directory);
-			if (rootDir !== directory) {
+			if (path.resolve(rootDir) !== directory) {
 				// This is a sanity check. this.repoPath is the path passed in when creating the MonoRepo object, while rootDir is
 				// the dir that manypkg found. They should be the same.
 				throw new Error(`rootDir ${rootDir} does not match repoPath ${directory}`);
@@ -120,7 +120,11 @@ export class MonoRepo {
 			? "yarn"
 			: "npm";
 
-		if (packageManager !== validatePackageManager) {
+		// Treat lerna as "npm"
+		const detectedPackageManager =
+			packageManager.type === "lerna" ? "npm" : packageManager.type;
+
+		if (this.packageManager !== detectedPackageManager) {
 			throw new Error(
 				`Package manager mismatch between ${packageManager} and ${validatePackageManager}`,
 			);

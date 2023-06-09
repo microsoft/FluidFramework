@@ -51,7 +51,9 @@ module.exports = {
 		"prettier": [],
 		"webpack": ["^tsc", "^build:esnext"],
 		"webpack:profile": ["^tsc", "^build:esnext"],
-		"clean": [],
+		"clean": {
+			before: ["*"],
+		},
 
 		// alias for back compat
 		"build:full": {
