@@ -342,7 +342,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		}
 	}
 
-	protected matchPath(
+	protected getListeners(
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
@@ -414,7 +414,7 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		otherArgs: object,
 	): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.matchPath(type, current);
+		const listeners = this.getListeners(type, current);
 		if (listeners !== undefined) {
 			this.processListeners(path, listeners, otherArgs);
 		}
@@ -454,7 +454,7 @@ class InvalidatingPathVisitor
 
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.matchPath(BindingType.Invalidation, current);
+		const listeners = this.getListeners(BindingType.Invalidation, current);
 		if (listeners !== undefined) {
 			for (const listener of listeners) {
 				this.listeners.add(listener);
@@ -497,7 +497,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.matchPath(BindingType.Delete, current);
+		const listeners = this.getListeners(BindingType.Delete, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
@@ -510,7 +510,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.matchPath(BindingType.Insert, current);
+		const listeners = this.getListeners(BindingType.Insert, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
@@ -523,7 +523,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const listeners = this.matchPath(BindingType.Delete, current);
+		const listeners = this.getListeners(BindingType.Delete, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
@@ -546,7 +546,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			for (let i = 0; i < sortedQueue.length; i++) {
 				const event = sortedQueue[i];
 				const current = toDownPath<BindPath>(event.path);
-				const listeners = this.matchPath(BindingType.Batch, current);
+				const listeners = this.getListeners(BindingType.Batch, current);
 				if (listeners !== undefined && listeners.size > 0) {
 					for (const listener of listeners) {
 						collected.add(listener);
