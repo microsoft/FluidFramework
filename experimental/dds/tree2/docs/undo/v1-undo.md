@@ -6,7 +6,7 @@ This implementation is meant to satisfy our needs for parity with experimental (
 Note that the system described here allows for changes to subtrees that were concurrently deleted to have an impact on that subtree,
 even when the deletion is sequenced before the subtree-impacting change.
 This system does not, however support editing of subtrees that were deleted prior,
-though the system may be extended to do so.
+though we discuss what this would require.
 
 Related:
 
@@ -127,49 +127,52 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 ## Repair Data
 
-Repair data is needed in the following cases:
+[Repair data](../repair-data/README.md) may be needed in the following cases:
 
--   Creating an undo (or redo) edit for a local branch.
--   Applying an undo (or redo) edit from the local branch.
--   Applying an undo (or redo) edit from a peer.
--   Applying the effect of a move (peer or local) that pulls a subtree out from deleted content and moves into the document tree.
--   Applying the effect of rebasing local destructive changes (i.e., overwrites and deletions) that were predicated on a constraint that was violated as part of the rebase.
+-   Creating an undo (or redo) edit
+-   Applying a (peer or local) undo (or redo) edit on a `SharedTreeView`
+-   Applying the effect of an move (peer or local) that pulls content out from a previously deleted subtree and into the document tree
+-   Applying the effect of rebasing local destructive changes
+    (i.e., overwrites and deletions)
+    that were predicated on a constraint that was violated as part of the rebase
 
-Note that,
-while these are the only cases where we need to know what the repair data is,
-they require that the repair data be kept up to date,
-which then forces to consider cases where the repair data is not needed but is edited.
+Note that, while these are the only cases where a client needs to access the repair data for the subtree of interest,
+it is necessary to keep the repair data be kept up to date until such a case arises.
+This then forces us to consider cases where the repair data is not needed but is edited.
 This can happen when a client edits a region of the document tree while that region is concurrently deleted by another client.
 
 ### The Stygian Forest
 
 [Stygian](https://www.merriam-webster.com/dictionary/stygian),
-is used here to mean [Styx](https://en.wikipedia.org/wiki/Styx)-like in its ability to span the realms of undeleted (living) content and deleted (dead) content,
+is used here to mean [Styx](https://en.wikipedia.org/wiki/Styx)-like in its ability to span the realms of in-document (living) content and deleted (dead) content,
 and ferry data across it.
 
 The responsibility of a `StygianForest` is to maintain,
-in addition to the undeleted document data,
-the repair data that may be needed handle the cases listed above.
+in addition to the typical in-document data,
+the repair data that may be needed to handle the cases listed above.
 
 This coupling of repair data with the in-document data is motivated by the following points:
 
--   Aside from some a pair of performance-motivated exceptions (covered below) the repair data is solely relevant to applying changes.
+-   Aside from a pair of performance-motivated exceptions (covered below) the repair data is solely relevant to applying changes.
 -   The needs of repair data storage, reading, and editing, are identical to that of in-document data.
 -   Storing both in the same forest makes it easy, when it is appealing to do so,
     to efficiently remove/restore deleted content because it saves us from having to export/import it from and to the forest.
 
 The alternative, coupling repair data with the changesets that birthed them, is undesirable for the following reasons:
 
--   While, once rebased, a changeset is fixed, the repair data that this changeset produces may change.
+-   While, once rebased, a changeset is fixed, the repair data that this changeset initially produced may change over time.
 -   Several components/layers of the `SharedTree` system deal with changesets, not all of them need to care about repair data.
 -   Decoupling repair data from changesets frees the rebasing system from having to plumb through a repair data querying interface,
-    making it more self-contained and therefor easier to implement and test.
+    making it more self-contained and therefore easier to implement and test.
     This is made possible by the fact that repair data is **not** required for the purpose of rebasing changesets.
 
-#### Implementation
+#### Implementation Strategy
 
-Each `StygianForest` wraps a "normal" forest (henceforth referred to as the "inner forest").
-This enables the `StygianForest` to leverage the capabilities of the forest (i.e., storage, reading, and editing) for the purpose of managing repair data.
+Each `StygianForest` wraps a "normal" forest, meaning, a forest that is unaware of the distinction between in-document and deleted nodes.
+From hereon, we refer to this wrapped forest as "the inner forest".
+
+This implementation strategy enables the `StygianForest` to leverage the capabilities of the inner forest implementation
+(i.e., storage, reading, and editing) for the purpose of managing repair data.
 In effect, the `StygianForest` meets the more advanced requirements of our repair data system
 (understanding the difference between normal document data vs. repair data, and supporting the more complex lifecycle of the latter)
 by appropriately driving the forest it wraps.
@@ -179,6 +182,14 @@ from the the concerns of repair data on the other.
 This approach to dealing with repair data requires that the `StygianForest` be able to maintain a correspondence between
 how changesets refer to deleted/overwritten content
 and how the inner forest refers to this same content.
+Here is one approach that can be used:
+
+-   Store the repair data under a detached field with a unique ID such as `styx-${counter}` where...
+    -   `counter` is monotonically increased integer that is scope to the `StygianForest`.
+-   Keep a `Map<RevisionId, { changeId: ChangesetLocalId, repairData: number }>` where..
+    -   The map key is the revision associated with the changeset that lead to the creation of the repair data.
+    -   The `changeId` field is the `ChangesetLocalId` associate with the change that lead to the creation of a specific piece of repair data.
+    -   The `repairData` field is the value of the `counter` when deriving `styx-${counter}` .
 
 ### Creating Repair Data On Change Application
 
@@ -212,7 +223,7 @@ If it doesn't, then it should add it to the inner forest and keep a record of wh
 There are three cases that can lead the consumption of repair data:
 
 -   When a subtree's deletion is inverted
--   When the overwrite of node's value is inverted
+-   When the overwrite of a node's value is inverted
 -   When a deleted node is resurrected by a move that was concurrent to, but sequenced after, the deletion,
     and that move's destination lies within the document tree.
     (This last scenario is not yet supported and is subject to debate.)
@@ -222,7 +233,7 @@ for every change conveyed by the `Delta` that consumes repair data,
 the `StygianForest` must do the following:
 
 -   Lookup in its records where the relevant piece of repair data is stored in the inner forest.
--   Translate the change into an equivalent change that either
+-   Translate the change into an equivalent change that either...
     -   moves the repair data to the document tree.
     -   copies the repair data to the document tree and deletes the original.
 -   Apply that change to the inner forest.
@@ -249,31 +260,33 @@ the `StygianForest` must do the following:
 
 `SharedTreeView` supports transactions by following a two-stage process:
 
-1. After a transaction is started, and for the duration of the transaction, all edits that make up the transaction are treated as individual commits.
-2. When the transaction is terminated, the view's `SharedTreeBranch` and its other components (e.g., the forest) are updated to match the outcome of the transaction:
+1. After a transaction is started, and for the duration of the transaction,
+   all edits that make up the transaction are treated as individual commits.
+2. When the transaction is terminated, the view's `SharedTreeBranch` and its other components (e.g., the forest)
+   are updated to match the outcome of the transaction:
     - If the transaction was aborted, then the commits from the transaction are removed from the branch and the changes are reverted from the forest.
     - If the transaction was committed, then the commits from the transaction are composed into a single commit, and the forest is left untouched.
 
 In the abort case, the `StygianForest` will be correctly updated through the application of the inverses of the transaction's commits.
 In the commit case however,
-the `StygianForest` needs to be patched to account for the fact that any repair data generated by the transaction's individual commits will should now be attributed to the one composed commit that makes up the whole transaction.
+the `StygianForest` needs to be patched to account for the following fact:
+any repair data generated by the transaction's individual commits should now be attributed to the one composed commit that makes up the whole transaction.
 
-We currently plan to address this need using the following implementation strategy:
+We can address this by using the following implementation strategy:
 
 -   As changes are being made during the transaction,
     assign each transaction change
-    (among the kind of changes that is liable to produce repair data)
     a changeset-local ID that is unique across the whole transaction.
     (At the time of writing, we already avoid recycling changeset-local ID among the changesets that make up a transaction.)
 -   When the `StygianForest` is informed of such a change, it stores the repair data for it as normal.
 -   When the transaction is completed,
     for each piece of repair data associated with changesets that make up the transaction,
-    keep the repair data in the `StygianForest` but update its entry so that it is now associated with the composed changeset.
+    leave the repair data in the `StygianForest` untouched but update its entry so that it is now associated with the composed changeset.
 
 The above approach relies on the fact that composition can elide but not reassign changeset-local IDs.
 This avoids the problem of having to reverse-engineer how the repair data produced by the individual changesets maps to the repair data produced by composed changeset.
 
-Note that this require reassigning new changeset-local IDs to changeset that are merged into the branch whose transaction is open.
+Note that this requires reassigning new changeset-local IDs to changesets that are merged into the branch whose transaction is open.
 
 ### Patching Repair Data After Rebasing
 
@@ -301,13 +314,13 @@ The drawback of that approach is that this not only may cause invalidation in pa
 but it also forces all consumers of these components to update/rebuild any references that might have had (such as anchors) to those components.
 
 The upshot is that `StygianForest` must tolerate the kind of changesets that results from such rebase operations.
-This includes paying attention to the `RevisionInfo.rollbackOf` field on changesets.
+This includes paying attention to the `RevisionInfo.rollbackOf` field on changesets in order to correctly distinguish edits that should lead to the production of repair data from edits that should not.
 
 ### Garbage-Collecting Repair Data
 
 The rules for the creation and consumption of repair data (see above) mean that,
 while new content can be created,
-no content is truly deleted.
+no content is ever truly deleted.
 This speaks to undo's role of preventing data loss, but leads to a problem of unbounded memory growth.
 
 While we want to preserve the ability of a session to undo its past edits,
@@ -320,13 +333,14 @@ The repair data associated with a given edit E must _not_ be garbage-collected i
 -   E was produced by the local session and E is within the undo window supported by the session.
 -   E was still in the collaboration window
     (meaning its sequence number was >= to the min ref sequence number)
-    at the time when the edit whose sequence number is the same as the current min ref sequence number.
+    when the edit whose sequence number is the same as the current min ref sequence number.
+    (see diagrams below.)
 
 In all other cases, the repair data associated with E must be garbage-collected.
 
 This approach ensures that a client,
 no matter how long its history of undoable/redoable edits,
-does not burden its peers by requiring them to store unbounded amounts of repair data
+does not burden its peers by requiring them to store unbounded amounts of repair data,
 and does not force summaries to include that repair data.
 
 The one drawback,
@@ -337,33 +351,33 @@ if the edit being undone lies outside of the current collaboration window.
 This acts as a "refresher" for any peers that may have garbage collected that repair data.
 (See [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) for details on how that refresher is handled by the peers.)
 
-If this switch from not including the refresher along with the undo to including it came any later,
-meaning, if did not include the refresher on created beyond the point where the undone edit falls out of the collaboration window,
+If this switch from not including the refresher with the undo to including it came any later,
+meaning, if we did not include the refresher on undos created beyond the point where the undone edit falls out of the collaboration window,
 then we would run the risk of peers receiving an undo for which they have already discarded the repair data:
 
-![](./UndoAfterCollab.png)
+![An undo edit is received by a peer that no longer has the repair data for it](./UndoAfterCollab.png)
 
 In the scenario pictured above, the undo edit must carry with it a refresher for the relevant repair data.
 
 Note that the undo could also end up being sequenced before the point at which peers will garbage-collect the repair data:
 
-![](./UndoAfterCollabAndFast.png)
+![An undo edit is received by a peer that still has the repair data for it](./UndoAfterCollabAndFast.png)
 
-When that's the case, both the peer and the undo edit carry some repair data.
+When that's the case, both the peer and the undo edit have some repair data.
 The repair data on both should be the same, so the peer can just ignore the refresher,
 as described in the [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) section.
 
 If this switch from not including the refresher along with the undo to including it came any earlier,
-meaning, if included the refresher on created before the point where the undone edit falls out of the collaboration window,
+meaning, if we included the refresher on undos created before the point where the undone edit falls out of the collaboration window,
 then we would run the risk of peers receiving an undo with incorrect repair data:
 
-![](./UndoDuringCollab.png)
+![An undo is sent with out of date repair data](./UndoDuringCollab.png)
 
 In the scenario pictured above, the client sending the undo must not include a refresher.
 If it did, and the green edit affected the portion of the document removed by the deletion,
 then the repair data refresher would not reflect the impact of that edit.
 
-It is fine for the undo sent in the scenario pictured above not to include the refresher.
+It is safe for the undo sent in the scenario pictured above not to include the refresher.
 This is due to the following invariant of the collaboration window:
 If an edit is sent before a given collaboration window span S,
 then it will be sequenced either before or within S, but no later.
@@ -371,7 +385,7 @@ Graphically speaking, this means that if an edit is sent for sequencing within t
 then it will be sequenced at the latest within the span of rectangle that follows.
 Here we can apply that rule to see that the undo edit,
 so long as it is conceived within or before the light blue collaboration window span,
-will be sequenced within the dark blue collaboration window span,
+will be sequenced within or before the dark blue collaboration window span,
 during which peers will still be holding on to their copy of the repair data.
 
 While the repair data being send may be large,
@@ -402,7 +416,8 @@ might include repair data that is only needed for the purpose of supporting undo
 as opposed to repair data that is needed by all peers.
 
 Note that our system for dealing with repair data would make it easy to support preserving the undo/redo queue of a given session.
-Summarizing from that client would simply include that data in the summary, and the new session would pick it up naturally.
+Summarizing from that client would simply include the adequate repair data in the summary,
+and the new session would pick it up naturally.
 
 ### Future Work
 
