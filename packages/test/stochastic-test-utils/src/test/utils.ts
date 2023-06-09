@@ -37,7 +37,7 @@ export function computeChiSquared<T>(weights: [T, number][], sampleCounts: Count
 	const values = Array.from(sampleCounts.values());
 
 	assert.deepEqual(
-		new Set(weights.map(([value]) => value)),
+		new Set(weights.filter(([_, weight]) => weight > 0).map(([value]) => value)),
 		new Set(values),
 		"'weights' must include all choices and all choices must have at least occurrence in 'sampleCounts'.",
 	);
@@ -61,6 +61,10 @@ export function computeChiSquared<T>(weights: [T, number][], sampleCounts: Count
 
 	let chiSquared = 0;
 	for (const [value, weight] of weights) {
+		if (weight === 0) {
+			assert.equal(sampleCounts.get(value), 0, "weight 0 value generated");
+			continue;
+		}
 		const expectedFrequency = (numberOfSamples * weight) / totalWeight;
 		const actualFrequency = sampleCounts.get(value);
 
