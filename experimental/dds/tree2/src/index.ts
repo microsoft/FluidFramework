@@ -246,7 +246,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 	ConstraintState,
 } from "./feature-libraries";
 

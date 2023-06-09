@@ -134,7 +134,6 @@ const childRebaser = (
 		idAllocator,
 		crossFieldManager,
 		revisionMetadata,
-		{ violationCount: 0 },
 	);
 	return nodeChangeFromValueChange(rebased);
 };
@@ -297,7 +296,6 @@ describe("Generic FieldKind", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -340,7 +338,6 @@ describe("Generic FieldKind", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			);
 			assert.deepEqual(actual, expected);
 		});

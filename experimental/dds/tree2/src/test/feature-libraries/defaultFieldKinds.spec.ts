@@ -229,7 +229,6 @@ describe("Value field changesets", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			),
 			change2.change,
 		);
@@ -256,7 +255,6 @@ describe("Value field changesets", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			),
 			childChange3,
 		);
@@ -413,7 +411,6 @@ describe("Optional field changesets", () => {
 					idAllocator,
 					crossFieldManager,
 					revisionMetadata,
-					{ violationCount: 0 },
 				),
 				change2.change,
 			);
@@ -442,7 +439,6 @@ describe("Optional field changesets", () => {
 					idAllocator,
 					crossFieldManager,
 					revisionMetadata,
-					{ violationCount: 0 },
 				),
 				expected,
 			);
@@ -480,7 +476,6 @@ describe("Optional field changesets", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			);
 
 			const changeToRebase3 = fieldHandler.rebaser.rebase(
@@ -490,7 +485,6 @@ describe("Optional field changesets", () => {
 				idAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				{ violationCount: 0 },
 			);
 
 			assert.deepEqual(changeToRebase3, changeToRebase);

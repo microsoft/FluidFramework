@@ -541,11 +541,11 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, constraintState: ConstraintState, existenceStateChange?: NodeExistenceStateChange): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, constraintState: ConstraintState, existenceStateChange?: NodeExistenceStateChange): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -1310,7 +1310,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-stateChange?: NodeExistenceStateChange) => NodeChangeset | undefined;
+stateChange?: NodeExistenceState) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1332,13 +1332,11 @@ export interface NodeData {
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
-export enum NodeExistenceStateChange {
+export enum NodeExistenceState {
     // (undocumented)
-    Deleted = 1,
+    Alive = 0,
     // (undocumented)
-    Revived = 2,
-    // (undocumented)
-    Unchanged = 0
+    Dead = 1
 }
 
 // @alpha (undocumented)

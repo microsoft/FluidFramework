@@ -128,7 +128,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 	ConstraintState,
 } from "./modular-schema";
 
