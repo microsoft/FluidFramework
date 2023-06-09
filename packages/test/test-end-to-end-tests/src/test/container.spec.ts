@@ -598,7 +598,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
-	it.only("Disposing container should send dispose events", async () => {
+	it("Disposing container should send dispose events", async () => {
 		const container = await createConnectedContainer();
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -650,7 +650,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		]);
 	});
 
-	it.only("Closing then disposing container should send close and dispose events", async () => {
+	it("Closing then disposing container should send close and dispose events", async () => {
 		const container = await createConnectedContainer();
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
