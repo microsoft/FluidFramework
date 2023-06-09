@@ -32,13 +32,13 @@ import {
 	UnwrappedEditableField,
 	DefaultChangeset,
 	buildForest,
-	ContextuallyTypedNodeData,
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	defaultIntoDelta,
+	NewFieldContent,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly } from "../util";
@@ -69,7 +69,7 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	public readonly events: ISubscribable<ViewEvents> &
+	private readonly _events: ISubscribable<ViewEvents> &
 		IEmitter<ViewEvents> &
 		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
@@ -99,7 +99,7 @@ export class SharedTree
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 		this.nodeKeyIndex = new NodeKeyIndex(nodeKeyFieldKey);
-		this.events = createEmitter<ViewEvents>();
+		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
 			schema,
@@ -107,9 +107,12 @@ export class SharedTree
 			repairProvider,
 			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyIndex: this.nodeKeyIndex,
-			events: this.events,
+			events: this._events,
 		});
-		// this.getLocalBranch().on("change", () => this.finishBatch());
+	}
+
+	public get events(): ISubscribable<ViewEvents> {
+		return this._events;
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -128,7 +131,7 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: ContextuallyTypedNodeData | undefined) {
+	public set root(data: NewFieldContent) {
 		this.view.root = data;
 	}
 
@@ -200,13 +203,10 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.finishBatch();
-	}
-
-	/** Finish a batch (see {@link ViewEvents}) */
-	private finishBatch(): void {
+		// The identifier index must be populated after both the schema and forest have loaded.
+		// TODO: Create an ISummarizer for the identifier index and ensure it loads after the other indexes.
 		this.nodeKeyIndex.scanKeys(this.context);
-		this.events.emit("afterBatch");
+		this._events.emit("afterBatch");
 	}
 }
 

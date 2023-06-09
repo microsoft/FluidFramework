@@ -18,7 +18,6 @@ import {
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
 	UnwrappedEditableField,
-	ContextuallyTypedNodeData,
 	EditableTreeContext,
 	IDefaultEditBuilder,
 	StableNodeKey,
@@ -291,6 +290,7 @@ export function createSharedTreeView(args?: {
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(forest, branch.editor, nodeKeyManager, nodeKeyFieldKey);
 	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(nodeKeyFieldKey);
+	const events = args?.events ?? createEmitter();
 	return SharedTreeView[create](
 		branch,
 		schema,
@@ -298,7 +298,7 @@ export function createSharedTreeView(args?: {
 		context,
 		nodeKeyManager,
 		nodeKeyIndex,
-		args?.events ?? createEmitter(),
+		events,
 	);
 }
 
@@ -314,7 +314,7 @@ export class SharedTreeView implements ISharedTreeView {
 		public readonly context: EditableTreeContext,
 		private readonly _nodeKeyManager: NodeKeyManager,
 		private readonly _nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
-		public readonly events: ISubscribable<ViewEvents> &
+		private readonly _events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
 	) {
@@ -323,7 +323,7 @@ export class SharedTreeView implements ISharedTreeView {
 				const delta = defaultChangeFamily.intoDelta(change);
 				this._forest.applyDelta(delta);
 				this._nodeKeyIndex.scanKeys(this.context);
-				this.events.emit("afterBatch");
+				this._events.emit("afterBatch");
 			}
 		});
 	}
@@ -347,6 +347,10 @@ export class SharedTreeView implements ISharedTreeView {
 			nodeKeyIndex,
 			events,
 		);
+	}
+
+	public get events(): ISubscribable<ViewEvents> {
+		return this._events;
 	}
 
 	public get storedSchema(): StoredSchemaRepository {
@@ -431,7 +435,7 @@ export class SharedTreeView implements ISharedTreeView {
 			context,
 			this._nodeKeyManager,
 			this._nodeKeyIndex.clone(context),
-			this.events,
+			createEmitter(),
 		);
 	}
 
@@ -455,7 +459,7 @@ export class SharedTreeView implements ISharedTreeView {
 		return this.context.unwrappedRoot;
 	}
 
-	public set root(data: ContextuallyTypedNodeData | undefined) {
+	public set root(data: NewFieldContent) {
 		this.context.unwrappedRoot = data;
 	}
 
