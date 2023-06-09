@@ -19,7 +19,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	showExec: boolean;
 	clean: boolean;
 	matchedOnly: boolean;
-	buildScriptNames: string[];
+	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
 	symlink: boolean;
@@ -30,7 +30,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	nohoist: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	samples: boolean;
 	fix: boolean;
 	services: boolean;
 	worker: boolean;
@@ -47,7 +46,7 @@ export const options: FastBuildOptions = {
 	match: [],
 	dirs: [],
 	matchedOnly: true,
-	buildScriptNames: [],
+	buildTaskNames: [],
 	vscode: false,
 	symlink: false,
 	fullSymlink: undefined,
@@ -56,8 +55,7 @@ export const options: FastBuildOptions = {
 	install: false,
 	nohoist: false,
 	uninstall: false,
-	concurrency: os.cpus().length, // TODO: argument?
-	samples: true,
+	concurrency: os.cpus().length,
 	fix: false,
 	all: false,
 	server: false,
@@ -87,7 +85,7 @@ Options:
     -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
        --reinstall      Same as --uninstall --install.
        --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-    -s --script <name>  npm script to execute (default:build)
+	-t --task <name>  target to execute (default:build)
        --azure          Operate on the azure monorepo (default: client monorepo). Overridden by "--all"
        --buildTools     Operate on the build-tools monorepo (default: client monorepo). Overridden by "--all"
        --server         Operate on the server monorepo (default: client monorepo). Overridden by "--all"
@@ -174,11 +172,6 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--nosamples") {
-			options.samples = false;
-			continue;
-		}
-
 		if (arg === "--fix") {
 			options.fix = true;
 			setBuild(false);
@@ -235,13 +228,13 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "-s" || arg === "--script") {
+		if (arg === "-t" || arg === "--task") {
 			if (i !== process.argv.length - 1) {
-				options.buildScriptNames.push(process.argv[++i]);
+				options.buildTaskNames.push(process.argv[++i]);
 				setBuild(true);
 				continue;
 			}
-			errorLog("Missing argument for --script");
+			errorLog("Missing argument for --task");
 			error = true;
 			break;
 		}
@@ -283,6 +276,21 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
+		if (arg === "--concurrency") {
+			if (i !== process.argv.length - 1) {
+				const concurrency = parseInt(process.argv[++i]);
+				if (!isNaN(concurrency) && concurrency > 0) {
+					options.concurrency = concurrency;
+					continue;
+				}
+				errorLog("Argument for --concurrency is not a number > 0");
+			} else {
+				errorLog("Missing argument for --concurrency");
+			}
+			error = true;
+			break;
+		}
+
 		if (arg === "--worker") {
 			options.worker = true;
 			continue;
@@ -303,7 +311,7 @@ export function parseOptions(argv: string[]) {
 				}
 				errorLog("Argument for --workerMemoryLimitMB is not a number");
 			} else {
-				errorLog("Missing argument for --workerMemoryLimit");
+				errorLog("Missing argument for --workerMemoryLimitMB");
 			}
 			error = true;
 			break;
@@ -330,7 +338,7 @@ export function parseOptions(argv: string[]) {
 		process.exit(-1);
 	}
 
-	if (options.buildScriptNames.length === 0) {
-		options.buildScriptNames = ["build"];
+	if (options.buildTaskNames.length === 0) {
+		options.buildTaskNames = ["build"];
 	}
 }

@@ -18,16 +18,24 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	validateTokenRevocationClaims,
+	validateTokenScopeClaims,
+	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-services-client";
+import {
+	IAlfredTenant,
+	ISession,
+	NetworkError,
+	DocDeleteScopeType,
+	TokenRevokeScopeType,
+} from "@fluidframework/server-services-client";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
+import { IDocumentDeleteService } from "../../services";
 
 export function create(
 	storage: IDocumentStorage,
@@ -38,6 +46,7 @@ export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -78,11 +87,25 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
+
+	const defaultTokenValidationOptions = {
+		requireDocumentId: true,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: enableJwtTokenCache,
+		tokenCache: singleUseTokenCache,
+	};
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -108,11 +131,6 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: false,
-			ensureSingleUseToken: true,
-			singleUseTokenCache,
-		}),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -123,6 +141,13 @@ export function create(
 			winston,
 			createDocTenantThrottleOptions,
 		),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: false,
+			ensureSingleUseToken: true,
+			singleUseTokenCache,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -202,7 +227,6 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -213,6 +237,7 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -230,14 +255,33 @@ export function create(
 	);
 
 	/**
+	 * Delete a document
+	 */
+	router.delete(
+		"/:tenantId/document/:id",
+		validateRequestParams("tenantId", "id"),
+		validateTokenScopeClaims(DocDeleteScopeType),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		async (request, response, next) => {
+			const documentId = getParam(request.params, "id");
+			const tenantId = getParam(request.params, "tenantId");
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
+
+			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
+			handleResponse(deleteP, response, undefined, undefined, 204);
+		},
+	);
+
+	/**
 	 * Revoke an access token
 	 */
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
-		validateTokenRevocationClaims(),
-		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		validateTokenScopeClaims(TokenRevokeScopeType),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");

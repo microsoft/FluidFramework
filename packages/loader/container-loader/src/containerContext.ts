@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
@@ -39,7 +39,6 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
@@ -100,7 +99,7 @@ export class ContainerContext implements IContainerContext {
 		return context;
 	}
 
-	public readonly taggedLogger: ITelemetryLogger;
+	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {

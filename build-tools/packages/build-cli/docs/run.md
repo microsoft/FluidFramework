@@ -14,8 +14,10 @@ USAGE
   $ flub run bundleStats [-v] [--dangerfile <value>]
 
 FLAGS
-  -v, --verbose         Verbose logging.
   --dangerfile=<value>  Path to dangerfile
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Generate a report from input bundle stats collected through the collect bundleStats command.

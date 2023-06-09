@@ -40,7 +40,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 
 ### Signal Request
 
-When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container. To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
+When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container. To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
 private static readonly focusRequestType = "focusRequest";
@@ -60,7 +60,7 @@ this.signaler.onSignal(FocusTracker.focusRequestType, () => {
 });
 ```
 
-When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
+When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
 
 ### Grouping Signal Types
 

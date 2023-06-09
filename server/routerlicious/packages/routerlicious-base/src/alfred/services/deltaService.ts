@@ -87,7 +87,10 @@ export class DeltaService implements IDeltaService {
 		if (!existingRef) {
 			return this.getDeltasFromStorage(collectionName, tenantId, documentId, from, to);
 		} else {
-			const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
+			const opsContent = await gitManager.getContent(
+				existingRef.object.sha,
+				".logTail/logTail",
+			);
 			const opsFromSummary = JSON.parse(
 				toUtf8(opsContent.content, opsContent.encoding),
 			) as ISequencedDocumentMessage[];

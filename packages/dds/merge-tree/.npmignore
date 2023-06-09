@@ -4,3 +4,6 @@ nyc
 src/test
 dist/test
 **/_api-extractor-temp/**
+
+docs/
+.vscode/

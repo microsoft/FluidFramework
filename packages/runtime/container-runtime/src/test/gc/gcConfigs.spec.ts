@@ -44,7 +44,7 @@ import {
 } from "../../gc";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./garbageCollection.spec";
+import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -248,7 +248,7 @@ describe("Garbage Collection configurations", () => {
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
 				outputMetadata,
@@ -314,7 +314,7 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
 			assert.equal(
 				gc.summaryStateTracker.latestSummaryGCVersion,
-				currentGCVersion,
+				stableGCVersion,
 				"latestSummaryGCVersion incorrect",
 			);
 		});
@@ -407,7 +407,7 @@ describe("Garbage Collection configurations", () => {
 		it("Metadata Roundtrip", () => {
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2 },
@@ -444,7 +444,7 @@ describe("Garbage Collection configurations", () => {
 		it("Metadata Roundtrip with only sweepGeneration", () => {
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
@@ -625,7 +625,7 @@ describe("Garbage Collection configurations", () => {
 
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false,
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: expectedSweepTimeoutMs,
 				gcFeatureMatrix: undefined,
@@ -691,6 +691,30 @@ describe("Garbage Collection configurations", () => {
 						"shouldRunGC not set as expected",
 					);
 				});
+			});
+
+			it("shouldRunGC should be true when gcVersionInEffect is newer than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = stableGCVersion - 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, true, "shouldRunGC should be true");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
+			});
+
+			it("shouldRunGC should be false when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = currentGCVersion + 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, false, "shouldRunGC should be false");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
 			});
 		});
 		describe("shouldRunSweep", () => {

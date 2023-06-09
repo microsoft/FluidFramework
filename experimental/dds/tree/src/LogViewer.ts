@@ -5,8 +5,8 @@
 
 import Denque from 'denque';
 import { IEvent } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-import { assert, fail, noop } from './Common';
+import { assert, TypedEventEmitter } from '@fluidframework/common-utils';
+import { fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
 import { Revision, RevisionValueCache } from './RevisionValueCache';
@@ -301,10 +301,10 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		super();
 		this.log = log;
 		if (initialRevision !== undefined) {
-			assert(Number.isInteger(initialRevision[0]), 'revision must be an integer');
+			assert(Number.isInteger(initialRevision[0]), 0x628 /* revision must be an integer */);
 			assert(
 				this.log.isSequencedRevision(initialRevision[0]),
-				'revision must correspond to the result of a SequencedEdit'
+				0x629 /* revision must correspond to the result of a SequencedEdit */
 			);
 		}
 
@@ -373,7 +373,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns the {@link EditCacheEntry} for the requested revision
 	 */
 	public getEditResultInMemory(revision: Revision): EditCacheEntry {
-		assert(revision >= this.log.earliestAvailableEditIndex, 'revision not stored in memory');
+		assert(revision >= this.log.earliestAvailableEditIndex, 0x62a /* revision not stored in memory */);
 		const startingPoint = this.getStartingPoint(revision);
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
@@ -507,7 +507,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			// calls to this method for all local revisions prior, guaranteeing the correct push order.
 			assert(
 				revision === this.log.numberOfSequencedEdits + this.localRevisionCache.length + 1,
-				'Local revision view cached out of order.'
+				0x62b /* Local revision view cached out of order. */
 			);
 			this.localRevisionCache.push(computedCacheEntry);
 		}

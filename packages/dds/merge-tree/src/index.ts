@@ -40,6 +40,7 @@ export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	LocalReferencePosition,
+	SlidingPreference,
 } from "./localReference";
 export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
@@ -161,6 +162,7 @@ export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegme
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	isMergeTreeDeltaRevertible,
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,

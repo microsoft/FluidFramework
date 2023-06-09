@@ -4,7 +4,11 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -25,6 +29,7 @@ import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
@@ -76,6 +81,7 @@ export function create(
 	const apiRoutes = routes.create(
 		config,
 		tenantService,
+		storageNameRetriever,
 		restTenantThrottlers,
 		restClusterThrottlers,
 		cache,

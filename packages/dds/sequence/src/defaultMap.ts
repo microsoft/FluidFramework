@@ -22,6 +22,7 @@ import {
 	IValueTypeOperationValue,
 	ISharedDefaultMapEvents,
 	IMapMessageLocalMetadata,
+	SequenceOptions,
 } from "./defaultMapInterfaces";
 
 /**
@@ -133,6 +134,7 @@ export class DefaultMap<T> {
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => void,
 		private readonly type: IValueType<T>,
+		private readonly options?: Partial<SequenceOptions>,
 		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
 	) {
 		this.messageHandlers = this.getMessageHandlers();
@@ -338,7 +340,7 @@ export class DefaultMap<T> {
 	 */
 	private createCore(key: string, local: boolean): ValueTypeLocalValue<T> {
 		const localValue = new ValueTypeLocalValue(
-			this.type.factory.load(this.makeMapValueOpEmitter(key), undefined),
+			this.type.factory.load(this.makeMapValueOpEmitter(key), undefined, this.options),
 			this.type,
 		);
 		const previousValue = this.data.get(key);
@@ -369,6 +371,7 @@ export class DefaultMap<T> {
 		const localValue = this.type.factory.load(
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
+			this.options,
 		);
 		return new ValueTypeLocalValue(localValue, this.type);
 	}

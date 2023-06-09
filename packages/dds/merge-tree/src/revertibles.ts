@@ -39,6 +39,15 @@ export type MergeTreeDeltaRevertible =
 			propertyDeltas: PropertySet;
 	  };
 
+/**
+ * Tests whether x is a MergeTreeDeltaRevertible
+ *
+ * @alpha
+ */
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible {
+	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
+}
+
 type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> = MergeTreeDeltaRevertible & {
 	operation: T;
 };

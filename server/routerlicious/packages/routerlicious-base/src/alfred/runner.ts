@@ -28,6 +28,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
+import { IDocumentDeleteService } from "./services";
 
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
@@ -53,6 +54,7 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -76,6 +78,7 @@ export class AlfredRunner implements IRunner {
 			this.deltaService,
 			this.producer,
 			this.documentRepository,
+			this.documentDeleteService,
 			this.tokenManager,
 		);
 		alfred.set("port", this.port);

@@ -29,6 +29,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -44,9 +46,10 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
+import { StableId } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -54,6 +57,9 @@ export const agentSchedulerId = "_scheduler";
 
 // @public
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
+
+// @public
+export function assertIsStableId(stableId: string): StableId;
 
 // @public
 export enum CompressionAlgorithms {
@@ -73,6 +79,7 @@ export enum ContainerMessageType {
     ChunkedOp = "chunkedOp",
     // (undocumented)
     FluidDataStoreOp = "component",
+    IdAllocation = "idAllocation",
     // (undocumented)
     Rejoin = "rejoin"
 }
@@ -84,7 +91,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -97,7 +104,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get closeFn(): (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
-        logger?: ITelemetryLogger;
+        logger?: ITelemetryLoggerExt;
         runSweep?: boolean;
         fullGC?: boolean;
     }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
@@ -146,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
-    get IContainerRuntime(): this;
+    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
@@ -167,7 +174,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     }): Promise<ContainerRuntime>;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     notifyAttaching(): void;
     // (undocumented)
@@ -204,7 +211,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     summarize(options: {
         fullTree?: boolean;
         trackState?: boolean;
-        summaryLogger?: ITelemetryLogger;
+        summaryLogger?: ITelemetryLoggerExt;
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
@@ -250,6 +257,9 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
 }
+
+// @public
+export function generateStableId(): StableId;
 
 // @public
 export interface IAckedSummary {
@@ -345,6 +355,7 @@ export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
+    readonly enableRuntimeIdCompressor?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -421,7 +432,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
     readonly proposalHandle: string | undefined;
-    readonly summaryLogger: ITelemetryLogger;
+    readonly summaryLogger: ITelemetryLoggerExt;
     readonly summaryRefSeq: number;
 }
 
@@ -434,6 +445,9 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
+export function isStableId(str: string): str is StableId;
+
+// @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
     // (undocumented)
@@ -444,7 +458,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
-    readonly summaryLogger: ITelemetryLogger;
+    readonly summaryLogger: ITelemetryLoggerExt;
 }
 
 // @public
@@ -493,11 +507,11 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     disposeFn(): void;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
-    off?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
+    off(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     // (undocumented)
-    on?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
+    on(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     readonly summarizerClientId: string | undefined;
 }
 
@@ -655,6 +669,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
+    recordSummaryAttempt?(summaryRefSeqNum?: number): void;
+    // (undocumented)
     run(onBehalfOf: string): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
@@ -705,7 +721,7 @@ export type SummarizerStopReason =
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLoggerExt);
     // (undocumented)
     addOpListener(listener: () => void): void;
     createWatcher(clientId: string): IClientSummaryWatcher;

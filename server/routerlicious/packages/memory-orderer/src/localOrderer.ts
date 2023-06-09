@@ -11,7 +11,6 @@ import {
 	CheckpointManager,
 	createDeliCheckpointManagerFromCollection,
 	DeliLambda,
-	ForemanLambda,
 	MoiraLambda,
 	ScribeLambda,
 	ScriptoriumLambda,
@@ -32,13 +31,12 @@ import {
 	IPublisher,
 	IScribe,
 	IServiceConfiguration,
-	ITaskMessageSender,
-	ITenantManager,
 	ITopic,
 	IWebSocket,
 	ILogger,
-	TokenGenerator,
 	IDocumentRepository,
+	ICheckpointRepository,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -96,12 +94,12 @@ export class LocalOrderer implements IOrderer {
 		databaseManager: IDatabaseManager,
 		tenantId: string,
 		documentId: string,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 		documentRepository: IDocumentRepository,
+		deliCheckpointRepository: ICheckpointRepository,
+		scribeCheckpointRepository: ICheckpointRepository,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		gitManager?: IGitManager,
 		setup: ILocalOrdererSetup = new LocalOrdererSetup(
 			tenantId,
@@ -109,12 +107,15 @@ export class LocalOrderer implements IOrderer {
 			storage,
 			databaseManager,
 			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			gitManager,
 		),
 		pubSub: IPubSub = new PubSub(),
 		broadcasterContext: IContext = new LocalContext(logger),
 		scriptoriumContext: IContext = new LocalContext(logger),
-		foremanContext: IContext = new LocalContext(logger),
 		scribeContext: IContext = new LocalContext(logger),
 		deliContext: IContext = new LocalContext(logger),
 		moiraContext: IContext = new LocalContext(logger),
@@ -127,15 +128,10 @@ export class LocalOrderer implements IOrderer {
 			documentDetails,
 			tenantId,
 			documentId,
-			taskMessageSender,
-			tenantManager,
 			gitManager,
-			permission,
-			tokenGenerator,
 			pubSub,
 			broadcasterContext,
 			scriptoriumContext,
-			foremanContext,
 			scribeContext,
 			deliContext,
 			moiraContext,
@@ -147,7 +143,6 @@ export class LocalOrderer implements IOrderer {
 	public deltasKafka: LocalKafka;
 
 	public scriptoriumLambda: LocalLambdaController | undefined;
-	public foremanLambda: LocalLambdaController | undefined;
 	public moiraLambda: LocalLambdaController | undefined;
 	public scribeLambda: LocalLambdaController | undefined;
 	public deliLambda: LocalLambdaController | undefined;
@@ -162,15 +157,10 @@ export class LocalOrderer implements IOrderer {
 		private readonly details: IDocumentDetails,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
 		private readonly gitManager: IGitManager | undefined,
-		private readonly permission: any,
-		private readonly foremanTokenGenrator: TokenGenerator,
 		private readonly pubSub: IPubSub,
 		private readonly broadcasterContext: IContext,
 		private readonly scriptoriumContext: IContext,
-		private readonly foremanContext: IContext,
 		private readonly scribeContext: IContext,
 		private readonly deliContext: IContext,
 		private readonly moiraContext: IContext,
@@ -264,22 +254,6 @@ export class LocalOrderer implements IOrderer {
 				),
 		);
 
-		this.foremanLambda = new LocalLambdaController(
-			this.deltasKafka,
-			this.setup,
-			this.foremanContext,
-			async (_, context) =>
-				new ForemanLambda(
-					this.taskMessageSender,
-					this.tenantManager,
-					this.foremanTokenGenrator,
-					this.permission,
-					context,
-					this.tenantId,
-					this.documentId,
-				),
-		);
-
 		if (this.gitManager) {
 			this.scribeLambda = new LocalLambdaController(
 				this.deltasKafka,
@@ -295,12 +269,12 @@ export class LocalOrderer implements IOrderer {
 			this.setup,
 			this.deliContext,
 			async (lambdaSetup, context) => {
-				const documentRepository = await lambdaSetup.documentRepositoryP();
+				const checkpointService = await lambdaSetup.checkpointServiceP("deli");
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
-					documentRepository,
+					checkpointService,
 				);
 				return new DeliLambda(
 					context,
@@ -315,6 +289,9 @@ export class LocalOrderer implements IOrderer {
 					this.serviceConfiguration,
 					undefined,
 					undefined,
+					checkpointService,
+					true,
+					true,
 				);
 			},
 		);
@@ -337,13 +314,19 @@ export class LocalOrderer implements IOrderer {
 
 	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
 		// Scribe lambda
-		const [documentRepository, scribeMessagesCollection, protocolHead, scribeMessages] =
-			await Promise.all([
-				setup.documentRepositoryP(),
-				setup.scribeDeltaCollectionP(),
-				setup.protocolHeadP(),
-				setup.scribeMessagesP(),
-			]);
+		const [
+			documentRepository,
+			localCheckpointCollection,
+			scribeMessagesCollection,
+			protocolHead,
+			scribeMessages,
+		] = await Promise.all([
+			setup.documentRepositoryP(),
+			setup.scribeCheckpointRepositoryP(),
+			setup.scribeDeltaCollectionP(),
+			setup.protocolHeadP(),
+			setup.scribeMessagesP(),
+		]);
 
 		const scribe = this.getScribeState();
 		const lastState = scribe.protocolState
@@ -376,6 +359,13 @@ export class LocalOrderer implements IOrderer {
 			latestSummary.messages,
 			false /* getDeltasViaAlfred */,
 		);
+
+		const checkpointService = new CheckpointService(
+			localCheckpointCollection,
+			documentRepository,
+			false,
+		);
+
 		const checkpointManager = new CheckpointManager(
 			context,
 			this.tenantId,
@@ -384,7 +374,10 @@ export class LocalOrderer implements IOrderer {
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,
+			false /* verifyLastOpPersistence */,
+			checkpointService,
 		);
+
 		return new ScribeLambda(
 			context,
 			this.tenantId,
@@ -400,6 +393,9 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages.map((message) => message.operation),
 			undefined,
 			new Set<string>(),
+			true,
+			true,
+			true,
 		);
 	}
 
@@ -412,11 +408,6 @@ export class LocalOrderer implements IOrderer {
 		if (this.scriptoriumLambda) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.scriptoriumLambda.start();
-		}
-
-		if (this.foremanLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.foremanLambda.start();
 		}
 
 		if (this.scribeLambda) {
@@ -448,11 +439,6 @@ export class LocalOrderer implements IOrderer {
 		if (this.scriptoriumLambda) {
 			this.scriptoriumLambda.close();
 			this.scriptoriumLambda = undefined;
-		}
-
-		if (this.foremanLambda) {
-			this.foremanLambda.close();
-			this.foremanLambda = undefined;
 		}
 
 		if (this.scribeLambda) {

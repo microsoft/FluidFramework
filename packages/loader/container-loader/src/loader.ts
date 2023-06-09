@@ -4,7 +4,18 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	DebugLogger,
+	IConfigProviderBase,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+	MonitoringContext,
+	PerformanceEvent,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidRouter,
@@ -22,16 +33,6 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import {
-	ChildLogger,
-	DebugLogger,
-	IConfigProviderBase,
-	loggerToMonitoringContext,
-	mixinMonitoringContext,
-	MonitoringContext,
-	PerformanceEvent,
-	sessionStorageConfigProvider,
-} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
@@ -78,13 +79,18 @@ export class RelativeLoader implements ILoader {
 				return this.container;
 			} else {
 				ensureResolvedUrlDefined(this.container.resolvedUrl);
-				const container = await Container.load(this.loader as Loader, {
-					canReconnect: request.headers?.[LoaderHeader.reconnect],
-					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-					resolvedUrl: { ...this.container.resolvedUrl },
-					version: request.headers?.[LoaderHeader.version] ?? undefined,
-					loadMode: request.headers?.[LoaderHeader.loadMode],
-				});
+				const container = await Container.clone(
+					this.container,
+					{
+						resolvedUrl: { ...this.container.resolvedUrl },
+						version: request.headers?.[LoaderHeader.version] ?? undefined,
+						loadMode: request.headers?.[LoaderHeader.loadMode],
+					},
+					{
+						canReconnect: request.headers?.[LoaderHeader.reconnect],
+						clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+					},
+				);
 				return container;
 			}
 		}
@@ -242,12 +248,18 @@ export interface ILoaderServices {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLogger;
+	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Blobs storage for detached containers.
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
+
+	/**
+	 * Optional property for allowing the container to use a custom
+	 * protocol implementation for handling the quorum and/or the audience.
+	 */
+	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 /**
@@ -294,7 +306,6 @@ export class Loader implements IHostLoader {
 	private readonly containers = new Map<string, Promise<Container>>();
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
 
 	constructor(loaderProps: ILoaderProps) {
 		const scope: FluidObject<ILoader> = { ...loaderProps.scope };
@@ -315,16 +326,12 @@ export class Loader implements IHostLoader {
 		);
 
 		this.services = {
-			urlResolver: loaderProps.urlResolver,
-			documentServiceFactory: loaderProps.documentServiceFactory,
-			codeLoader: loaderProps.codeLoader,
-			options: loaderProps.options ?? {},
+			...loaderProps,
 			scope,
 			subLogger: subMc.logger,
-			detachedBlobStorage: loaderProps.detachedBlobStorage,
+			options: loaderProps.options ?? {},
 		};
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
-		this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
 	}
 
 	public get IFluidRouter(): IFluidRouter {
@@ -332,11 +339,7 @@ export class Loader implements IHostLoader {
 	}
 
 	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(
-			this,
-			codeDetails,
-			this.protocolHandlerBuilder,
-		);
+		const container = await Container.createDetached(this.services, codeDetails);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
@@ -352,7 +355,7 @@ export class Loader implements IHostLoader {
 	}
 
 	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this, snapshot, this.protocolHandlerBuilder);
+		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -494,20 +497,21 @@ export class Loader implements IHostLoader {
 
 	private async loadContainer(
 		request: IRequest,
-		resolved: IResolvedUrl,
+		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
 		return Container.load(
-			this,
+			{
+				resolvedUrl,
+				version: request.headers?.[LoaderHeader.version] ?? undefined,
+				loadMode: request.headers?.[LoaderHeader.loadMode],
+				pendingLocalState,
+			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
 				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-				resolvedUrl: resolved,
-				version: request.headers?.[LoaderHeader.version] ?? undefined,
-				loadMode: request.headers?.[LoaderHeader.loadMode],
+				...this.services,
 			},
-			pendingLocalState,
-			this.protocolHandlerBuilder,
 		);
 	}
 }

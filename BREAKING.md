@@ -34,7 +34,12 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
 -   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
 -   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
+-   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
 -   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
+-   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
+-   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
+-   [IntervalCollection removed](#IntervalCollection-removed)
+-   [Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt](#internal-itelemetrylogger-interface-upgraded-to-itelemetryloggerext)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -98,6 +103,10 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 
 Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
 
+### ISummarizerRuntime on/off op required
+
+The `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics.
+
 ### Driver param removed from appendToMergeTreeDeltaRevertibles
 
 The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles has been removed. Additionally, the interface MergeTreeRevertibleDriver has been simplified, and no longer requires:
@@ -107,11 +116,59 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 -   getPosition
 -   getContainingSegment
 
+### PureDataObject.getFluidObjectFromDirectory removed
+
+`PureDataObject.getFluidObjectFromDirectory` was deprecated in a previous release and has been removed.
+
+### IProvideContainerRuntime and IContainerRuntime member removed
+
+`IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+
+### IntervalCollection removed
+
+The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt
+
+`ITelemetryLoggerExt` is a replacement for `ITelemetryLogger`, which adds additional types that can be logged as property values.
+This interface is not expected to be used outside the codebase, and all Logger implementations already use the new interface.
+In this release, the new type is used throughout the codebase to allow richer instrumentation.
+
+# 2.0.0-internal.4.4.0
+
+## 2.0.0-internal.4.4.0 Upcoming changes
+
+-   [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated)
+
+### IntervalCollection public export deprecated
+
+`IntervalCollection` has been deprecated in favor of an interface (`IIntervalCollection`) containing its public API.
+Several types transitively referenced by `IntervalCollection` implementation details have also been deprecated: `CompressedSerializedInterval`, `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`.
+
+# 2.0.0-internal.4.3.0
+
+## 2.0.0-internal.4.3.0 Breaking changes
+
+-   [bigBlobs request handling removed from DataObject](#bigBlobs-request-handling-removed-from-DataObject)
+
+### bigBlobs request handling removed from DataObject
+
+Previously, `DataObject` would perform undocumented special handling for requests to it starting with `bigBlobs/` to pull objects out of its `root` directory. This special handling has been removed.
+
+## 2.0.0-internal.4.3.0 Upcoming changes
+
+-   [PureDataObject.getFluidObjectFromDirectory deprecated](#PureDataObject.getFluidObjectFromDirectory-deprecated)
+
+### PureDataObject.getFluidObjectFromDirectory deprecated
+
+`PureDataObject.getFluidObjectFromDirectory` has been deprecated and will be removed in an upcoming release. Instead prefer to interface directly with the directory and handles.
+
 # 2.0.0-internal.4.1.0
 
 ## 2.0.0-internal.4.1.0 Breaking changes
 
 -   [Ability to enable grouped batching](#Ability-to-enable-grouped-batching)
+-   [Testing support for LTS is moved from 0.45 to 1.3.4](#Testing-support-for-LTS-is-moved-from-0.45-to-1.3.4)
 
 ### Ability to enable grouped batching
 
@@ -128,6 +185,10 @@ and verifying that the following expectation changes won't have any effects:
 -   messages within the same batch will have the same sequence number
 -   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
+
+### Testing support for LTS is moved from 0.45.0 to 1.3.4
+
+Internal end-to-end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4. For customers using azure packages, the loader-runtime are bundled together.
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
 

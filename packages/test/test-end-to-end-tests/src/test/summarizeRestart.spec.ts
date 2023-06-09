@@ -32,7 +32,8 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});
 
 	itExpects(
@@ -53,7 +54,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				mockConfigProvider(settings),
 			);
 
-			await provider.ensureSynchronized();
 			const summarizeResults = summarizer.summarizeOnDemand({
 				reason: "end-to-end test",
 				refreshLatestAck: true,

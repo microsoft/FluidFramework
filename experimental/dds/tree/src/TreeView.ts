@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from './Common';
+import { assert } from '@fluidframework/common-utils';
+import { copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { Delta, Forest, isParentedForestNode } from './Forest';
 import { NodeData, Side } from './persisted-types';
@@ -311,7 +312,7 @@ export abstract class TreeView {
 	 * The views must share a root.
 	 */
 	public delta(view: TreeView): Delta<NodeId> {
-		assert(this.root === view.root, 'Delta can only be calculated between views that share a root');
+		assert(this.root === view.root, 0x63d /* Delta can only be calculated between views that share a root */);
 		return this.forest.delta(view.forest);
 	}
 }

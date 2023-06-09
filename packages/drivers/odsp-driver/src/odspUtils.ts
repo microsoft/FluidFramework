@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryProperties,
-	ITelemetryBaseLogger,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -19,6 +15,7 @@ import {
 import { assert, performance } from "@fluidframework/common-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	wrapError,
@@ -142,9 +139,16 @@ export async function fetchHelper(
 		},
 		(error) => {
 			const online = isOnline();
-			const errorText = `${error}`;
+
+			// The error message may not be suitable to log for privacy reasons, so tag it as such
+			const taggedErrorMessage = {
+				value: `${error}`, // This uses toString for objects, which often results in `${error.name}: ${error.message}`
+				tag: TelemetryDataTag.UserData,
+			};
+			// After redacting URLs we believe the error message is safe to log
 			const urlRegex = /((http|https):\/\/(\S*))/i;
-			const redactedErrorText = errorText.replace(urlRegex, "REDACTED_URL");
+			const redactedErrorText = taggedErrorMessage.value.replace(urlRegex, "REDACTED_URL");
+
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			if (error.name === "AbortError") {
 				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, {
@@ -152,15 +156,12 @@ export async function fetchHelper(
 				});
 			}
 			// TCP/IP timeout
-			if (errorText.includes("ETIMEDOUT")) {
+			if (redactedErrorText.includes("ETIMEDOUT")) {
 				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, {
 					driverVersion,
 				});
 			}
 
-			// WARNING: Do not log error object itself or any of its properties!
-			// It could contain PII, like URI in message itself, or token in properties.
-			// It is also non-serializable object due to circular references.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (online === OnlineStatus.Offline) {
 				throw new RetryableError(
@@ -169,7 +170,7 @@ export async function fetchHelper(
 					DriverErrorType.offlineError,
 					{
 						driverVersion,
-						rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+						rawErrorMessage: taggedErrorMessage,
 					},
 				);
 			} else {
@@ -181,7 +182,7 @@ export async function fetchHelper(
 					DriverErrorType.fetchFailure,
 					{
 						driverVersion,
-						rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+						rawErrorMessage: taggedErrorMessage,
 					},
 				);
 			}
@@ -318,7 +319,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 }
 
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
@@ -450,7 +451,7 @@ export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	if (messages.length !== 0) {
 		const start = messages[0].sequenceNumber;

@@ -21,10 +21,7 @@ export class CopierLambdaFactory extends EventEmitter implements IPartitionLambd
 		super();
 	}
 
-	public async create(
-		config: undefined,
-		context: IContext,
-	): Promise<IPartitionLambda> {
+	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
 		return new CopierLambda(this.rawOpCollection, context);
 	}
 

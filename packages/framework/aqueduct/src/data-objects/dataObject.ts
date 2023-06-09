@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { PureDataObject } from "./pureDataObject";
 import { DataObjectTypes } from "./types";
 
@@ -24,23 +22,6 @@ export abstract class DataObject<
 > extends PureDataObject<I> {
 	private internalRoot: ISharedDirectory | undefined;
 	private readonly rootDirectoryId = "root";
-
-	/**
-	 * {@inheritDoc PureDataObject.request}
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const requestParser = RequestParser.create(request);
-		const itemId = requestParser.pathParts[0];
-		if (itemId === "bigBlobs") {
-			const value = this.root.get<string>(requestParser.pathParts.join("/"));
-			if (value === undefined) {
-				return create404Response(requestParser);
-			}
-			return { mimeType: "fluid/object", status: 200, value };
-		} else {
-			return super.request(requestParser);
-		}
-	}
 
 	/**
 	 * The root directory will either be ready or will return an error. If an error is thrown

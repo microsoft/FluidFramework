@@ -24,6 +24,9 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: toolAbsolutePath
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
@@ -31,7 +34,7 @@ variables:
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - stage:
+  - stage: stress_tests_odsp
     displayName:  Stress tests - Odsp
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -53,7 +56,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests odsp dogfood
-  - stage:
+  - stage: stress_tests_odspdf
     displayName:  Stress tests - Odspdf
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -75,7 +78,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
-  - stage:
+  - stage: stress_tests_tinylicious
     displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:
@@ -90,7 +93,7 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: false
+          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
         additionalSteps:
 
@@ -105,7 +108,7 @@ stages:
             publishLocation: 'pipeline'
 
   # stress tests frs
-  - stage:
+  - stage: stress_tests_frs
     displayName: Stress tests - frs
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -123,3 +126,59 @@ stages:
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  # stress tests frs canary
+  - stage: stress_tests_frs_canary
+    displayName: Stress tests - frs canary
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-frs-canary
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 120
+        testCommand: start:frs:canary
+        env:
+          fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  - stage: runAfterAll
+    displayName: Retrieve and Upload pipeline run stats to Kusto
+    condition: always()
+    dependsOn:
+      - stress_tests_odsp
+      - stress_tests_odspdf
+      - stress_tests_tinylicious
+      - stress_tests_frs
+      - stress_tests_frs_canary
+
+    jobs:
+      - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+          testWorkspace: ${{ variables.testWorkspace }}
+          poolBuild: Small
+          customSteps:
+
+          - task: Bash@3
+            displayName: Retrieve buildId results
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                echo "creating output folder"
+                mkdir -p ${{ variables.testWorkspace }}/timingOutput
+                echo "Executing curl command ..."
+                echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+                pwd;
+                ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+                cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+            env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              PIPELINE: 'RealStressService'

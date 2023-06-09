@@ -5,7 +5,11 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -21,6 +25,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
@@ -41,14 +46,15 @@ export function create(
 		authorization: string,
 		params: ICreateCommitParams,
 	): Promise<ICommit> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createCommit(params);
 	}
 
@@ -58,14 +64,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<ICommit> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getCommit(sha, useCache);
 	}
 

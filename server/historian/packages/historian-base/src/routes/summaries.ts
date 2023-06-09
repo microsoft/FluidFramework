@@ -9,7 +9,11 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -25,6 +29,7 @@ import * as utils from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
@@ -73,7 +78,7 @@ export function create(
 		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
-	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+	const restClusterGetSummaryThrottler = restClusterThrottlers.get(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 
@@ -83,14 +88,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getSummary(sha, useCache);
 	}
 
@@ -99,15 +105,19 @@ export function create(
 		authorization: string,
 		params: IWholeSummaryPayload,
 		initial?: boolean,
+		storageName?: string,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+			initialUpload: initial,
+			storageName,
+		});
 		return service.createSummary(params, initial);
 	}
 
@@ -116,15 +126,16 @@ export function create(
 		authorization: string,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-			true,
-		);
+			allowDisabledTenant: true,
+		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			deletionPs.push(
@@ -181,6 +192,7 @@ export function create(
 				request.get("Authorization"),
 				request.body,
 				initial,
+				request.get("StorageName"),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -19,7 +23,6 @@ import {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import {
 	cloneGCData,
@@ -69,7 +72,7 @@ class SummaryNodeWithGC extends SummaryNode {
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
-class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
+export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
@@ -102,7 +105,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	 * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly summarizeFn: (
 			fullTree: boolean,
 			trackState: boolean,
@@ -114,7 +117,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
 		initialSummary?: IInitialSummary,
-		wipSummaryLogger?: ITelemetryLogger,
+		wipSummaryLogger?: ITelemetryLoggerExt,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		/** A unique id of this node to be logged when sending telemetry. */
@@ -241,7 +244,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	/**
 	 * Called during the start of a summary. Updates the work-in-progress used routes.
 	 */
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
+	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
 			assert(
@@ -352,7 +355,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		snapshotTree: ISnapshotTree,
 		basePath: EscapedPath | undefined,
 		localPath: EscapedPath,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
 		await this.refreshGCStateFromSnapshot(
@@ -536,8 +539,8 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 						JSON.stringify(newSerializedRoutes),
 						{
 							referenceSequenceNumber: value.referenceSequenceNumber,
-							basePath: value.basePath,
-							localPath: value.localPath,
+							basePath: child.latestSummary.basePath,
+							localPath: child.latestSummary.localPath,
 						},
 					);
 					child.addPendingSummary(key, newLatestSummaryNode);
@@ -620,7 +623,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
  * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
 export const createRootSummarizerNodeWithGC = (
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

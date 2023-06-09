@@ -25,7 +25,7 @@ export function createTestQueryTree(nodeFactory: (idContext: NodeIdContext) => C
 	// Follow the graphql convention that the root type of a schema must of type 'Query'
 	// Traits are copied off of the Query node and applied to the root node
 	// This is simply to save space/complexity in the tree, rather than adding the query root node _under_ the `initialTree` root node
-	assert(treeNode.definition === 'Query', 'root node must be a Query node');
+	assert(treeNode.definition === 'Query', 0x5fd /* root node must be a Query node */);
 	for (const [label, trait] of Object.entries(treeNode.traits)) {
 		tree.applyEdit(
 			...Change.insertTree(

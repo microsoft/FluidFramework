@@ -95,7 +95,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -864,7 +863,6 @@ declare function get_old_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_current_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<current.ISummarizerRuntime>);
 use_current_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1405,7 +1403,6 @@ declare function get_current_TypeAliasDeclaration_SummarizerStopReason():
 declare function use_old_TypeAliasDeclaration_SummarizerStopReason(
     use: TypeOnly<old.SummarizerStopReason>);
 use_old_TypeAliasDeclaration_SummarizerStopReason(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SummarizerStopReason());
 
 /*
@@ -1483,6 +1480,54 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertIsStableId": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_assertIsStableId():
+    TypeOnly<typeof old.assertIsStableId>;
+declare function use_current_FunctionDeclaration_assertIsStableId(
+    use: TypeOnly<typeof current.assertIsStableId>);
+use_current_FunctionDeclaration_assertIsStableId(
+    get_old_FunctionDeclaration_assertIsStableId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertIsStableId": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_assertIsStableId():
+    TypeOnly<typeof current.assertIsStableId>;
+declare function use_old_FunctionDeclaration_assertIsStableId(
+    use: TypeOnly<typeof old.assertIsStableId>);
+use_old_FunctionDeclaration_assertIsStableId(
+    get_current_FunctionDeclaration_assertIsStableId());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_generateStableId": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_generateStableId():
+    TypeOnly<typeof old.generateStableId>;
+declare function use_current_FunctionDeclaration_generateStableId(
+    use: TypeOnly<typeof current.generateStableId>);
+use_current_FunctionDeclaration_generateStableId(
+    get_old_FunctionDeclaration_generateStableId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_generateStableId": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_generateStableId():
+    TypeOnly<typeof current.generateStableId>;
+declare function use_old_FunctionDeclaration_generateStableId(
+    use: TypeOnly<typeof old.generateStableId>);
+use_old_FunctionDeclaration_generateStableId(
+    get_current_FunctionDeclaration_generateStableId());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isRuntimeMessage():
@@ -1503,6 +1548,30 @@ declare function use_old_FunctionDeclaration_isRuntimeMessage(
     use: TypeOnly<typeof old.isRuntimeMessage>);
 use_old_FunctionDeclaration_isRuntimeMessage(
     get_current_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isStableId": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isStableId():
+    TypeOnly<typeof old.isStableId>;
+declare function use_current_FunctionDeclaration_isStableId(
+    use: TypeOnly<typeof current.isStableId>);
+use_current_FunctionDeclaration_isStableId(
+    get_old_FunctionDeclaration_isStableId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isStableId": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isStableId():
+    TypeOnly<typeof current.isStableId>;
+declare function use_old_FunctionDeclaration_isStableId(
+    use: TypeOnly<typeof old.isStableId>);
+use_old_FunctionDeclaration_isStableId(
+    get_current_FunctionDeclaration_isStableId());
 
 /*
 * Validate forward compat by using old type in place of current type

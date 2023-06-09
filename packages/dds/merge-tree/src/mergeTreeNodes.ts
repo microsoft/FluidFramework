@@ -264,7 +264,9 @@ export interface IncrementalSegmentAction<TContext> {
 export interface IncrementalBlockAction<TContext> {
 	(state: IncrementalMapState<TContext>);
 }
-
+/**
+ * @deprecated - unused and will be removed
+ */
 export interface BlockUpdateActions {
 	child: (block: IMergeBlock, index: number) => void;
 }
@@ -362,6 +364,10 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 		}
 		this.children[index] = child;
 	}
+}
+
+export function seqLTE(seq: number, minOrRefSeq: number) {
+	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {

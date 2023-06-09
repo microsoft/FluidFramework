@@ -5,12 +5,14 @@
 import { AsyncLocalStorage } from "async_hooks";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import Redis from "ioredis";
 import winston from "winston";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
+import { IHistorianResourcesCustomizations } from "./customizations";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -19,6 +21,7 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
+		public readonly storageNameRetriever: core.IStorageNameRetriever,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
@@ -37,7 +40,10 @@ export class HistorianResources implements core.IResources {
 }
 
 export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
-	public async create(config: Provider): Promise<HistorianResources> {
+	public async create(
+		config: Provider,
+		customizations: IHistorianResourcesCustomizations,
+	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
 		const redisOptions: Redis.RedisOptions = {
 			host: redisConfig.host,
@@ -94,16 +100,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				redisParamsForThrottling,
 			);
 
-		interface IThrottleConfig {
-			maxPerMs: number;
-			maxBurst: number;
-			minCooldownIntervalInMs: number;
-			minThrottleIntervalInMs: number;
-			maxInMemoryCacheSize: number;
-			maxInMemoryCacheAgeInMs: number;
-			enableEnhancedTelemetry?: boolean;
-		}
-		const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
+		const configureThrottler = (
+			throttleConfig: Partial<utils.IThrottleConfig>,
+		): core.IThrottler => {
 			const throttlerHelper = new services.ThrottlerHelper(
 				redisThrottleAndUsageStorageManager,
 				throttleConfig.maxPerMs,
@@ -121,18 +120,21 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		};
 
 		// Rest API Throttler
-		const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:generalRestCall") ?? {};
+		const restApiTenantGeneralThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:generalRestCall"),
+		);
 		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
 
-		const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:getSummary") ?? {};
+		const restApiTenantGetSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:getSummary"),
+		);
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
 		);
 
-		const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:createSummary") ?? {};
+		const restApiTenantCreateSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:createSummary"),
+		);
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
 		);
@@ -151,14 +153,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restTenantGeneralThrottler,
 		);
 
-		const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerCluster:createSummary") ?? {};
+		const restApiClusterCreateSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerCluster:createSummary"),
+		);
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
 		);
 
-		const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerCluster:getSummary") ?? {};
+		const restApiClusterGetSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerCluster:getSummary"),
+		);
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
 		);
@@ -172,6 +176,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			Constants.getSummaryThrottleIdPrefix,
 			throttlerGetSummaryPerCluster,
 		);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		const storageNameRetriever = storagePerDocEnabled
+			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
+			: undefined;
 
 		const port = normalizePort(process.env.PORT || "3000");
 
@@ -179,6 +187,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			config,
 			port,
 			riddler,
+			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
 			gitCache,
@@ -194,6 +203,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.config,
 			resources.port,
 			resources.riddler,
+			resources.storageNameRetriever,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.cache,

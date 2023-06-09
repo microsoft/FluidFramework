@@ -183,37 +183,47 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		]);
 	});
 
-	it("attach sends ops with compression enabled", async function () {
-		const container = await provider.makeTestContainer({
-			...testContainerConfig,
-			runtimeOptions: {
-				...testContainerConfig.runtimeOptions,
-				compressionOptions: {
-					minimumBatchSizeInBytes: 1,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
+	[false, true].forEach((enableGroupedBatching) => {
+		it(`attach sends ops with compression enabled and ${
+			enableGroupedBatching ? "grouped" : "regular"
+		} batching`, async function () {
+			// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
+			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+				this.skip();
+			}
+
+			const container = await provider.makeTestContainer({
+				...testContainerConfig,
+				runtimeOptions: {
+					...testContainerConfig.runtimeOptions,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 1,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					enableGroupedBatching,
 				},
-			},
-		});
+			});
 
-		const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-		const blobOpP = new Promise<void>((resolve, reject) =>
-			dataStore._context.containerRuntime.on("op", (op) => {
-				if (op.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
-				}
-			}),
-		);
-
-		for (let i = 0; i < 5; i++) {
-			const blob = await dataStore._runtime.uploadBlob(
-				stringToBuffer("some random text", "utf-8"),
+			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+			const blobOpP = new Promise<void>((resolve, reject) =>
+				dataStore._context.containerRuntime.on("op", (op) => {
+					if (op.type === ContainerMessageType.BlobAttach) {
+						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+						op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+					}
+				}),
 			);
 
-			dataStore._root.set(`Blob #${i}`, blob);
-		}
+			for (let i = 0; i < 5; i++) {
+				const blob = await dataStore._runtime.uploadBlob(
+					stringToBuffer("some random text", "utf-8"),
+				);
 
-		await blobOpP;
+				dataStore._root.set(`Blob #${i}`, blob);
+			}
+
+			await blobOpP;
+		});
 	});
 });
 

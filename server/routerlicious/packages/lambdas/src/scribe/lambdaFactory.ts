@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
 	ControlMessageType,
+	ICheckpointService,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -24,6 +25,7 @@ import {
 	ITenantManager,
 	LambdaName,
 	MongoManager,
+	runWithRetry,
 } from "@fluidframework/server-services-core";
 import {
 	IDocumentSystemMessage,
@@ -61,7 +63,10 @@ const DefaultScribe: IScribe = {
 	validParentSummaries: undefined,
 };
 
-export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class ScribeLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
@@ -72,7 +77,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly verifyLastOpPersistence: boolean,
 		private readonly transientTenants: string[],
+		private readonly disableTransientTenantFiltering: boolean,
+		private readonly checkpointService: ICheckpointService,
+		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -101,15 +111,25 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			this.serviceConfiguration,
 		);
 
+		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+
 		try {
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			document = (await runWithRetry(
+				async () => this.documentRepository.readOne({ documentId, tenantId }),
+				"readIDocumentInScribeLambdaFactory",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* shouldIgnoreError */,
+				(error) => true /* shouldRetry */,
+			)) as IDocument;
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				// If the document doesn't exist or is marked for deletion then we trivially accept every message.
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
 				context.log?.error(errorMessage, { messageMetaData });
-				Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
+				Lumberjack.error(errorMessage, lumberProperties);
 				return new NoOpLambda(context);
 			}
 			if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
@@ -118,7 +138,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 					document.session,
 				)}`;
 				context.log?.error(errMsg, { messageMetaData });
-				Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
+				Lumberjack.error(errMsg, lumberProperties);
 				if (this.serviceConfiguration.enforceDiscoveryFlow) {
 					// This can/will prevent any users from creating a valid session in this location
 					// for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
@@ -138,7 +158,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		} catch (error) {
 			const errorMessage = "Scribe lambda creation failed.";
 			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
-			Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId), error);
+			Lumberjack.error(errorMessage, lumberProperties, error);
 			await this.sendLambdaStartResult(tenantId, documentId, {
 				lambdaName: LambdaName.Scribe,
 				success: false,
@@ -148,23 +168,20 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			throw error;
 		}
 
-		// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
-		// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
 		if (document.scribe === undefined || document.scribe === null) {
+			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
+			// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
 			const message = "New document. Setting empty scribe checkpoint";
 			context.log?.info(message, { messageMetaData });
-			Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+			Lumberjack.info(message, lumberProperties);
 			lastCheckpoint = DefaultScribe;
 		} else if (document.scribe === "") {
 			const message = "Existing document. Fetching checkpoint from summary";
 			context.log?.info(message, { messageMetaData });
-			Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+			Lumberjack.info(message, lumberProperties);
 			if (!latestSummary.fromSummary) {
 				context.log?.error(`Summary can't be fetched`, { messageMetaData });
-				Lumberjack.error(
-					`Summary can't be fetched`,
-					getLumberBaseProperties(documentId, tenantId),
-				);
+				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
 				lastCheckpoint = DefaultScribe;
 			} else {
 				lastCheckpoint = JSON.parse(latestSummary.scribe);
@@ -176,34 +193,16 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 				lastCheckpoint.logOffset = -1;
 				const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
 				context.log?.info(checkpointMessage, { messageMetaData });
-				Lumberjack.info(checkpointMessage, getLumberBaseProperties(documentId, tenantId));
+				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-			lastCheckpoint = JSON.parse(document.scribe);
-			const lumberjackProperties = {
-				...getLumberBaseProperties(documentId, tenantId),
-				lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
-				logOffset: lastCheckpoint.logOffset,
-				LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
-			};
-
-			Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
-
-			if (!this.getDeltasViaAlfred) {
-				// Fetch pending ops from scribeDeltas collection
-				const dbMessages = await this.messageCollection.find(
-					{ documentId, tenantId },
-					{ "operation.sequenceNumber": 1 },
-				);
-				opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
-			} else if (lastCheckpoint.logOffset !== -1) {
-				opMessages = await this.deltaManager.getDeltas(
-					"",
-					tenantId,
-					documentId,
-					lastCheckpoint.protocolState.sequenceNumber,
-				);
-			}
+			lastCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
+				documentId,
+				tenantId,
+				"scribe",
+				document,
+			)) as IScribe;
+			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 		}
 
 		// Filter and keep ops after protocol state
@@ -254,6 +253,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
+			this.verifyLastOpPersistence,
+			this.checkpointService,
 		);
 
 		const pendingMessageReader = new PendingMessageReader(
@@ -286,6 +287,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			opsSinceLastSummary,
 			scribeSessionMetric,
 			new Set(this.transientTenants),
+			this.disableTransientTenantFiltering,
+			this.restartOnCheckpointFailure,
+			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
@@ -293,6 +297,30 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			success: true,
 		});
 		return scribeLambda;
+	}
+
+	private async getOpMessages(
+		documentId: string,
+		tenantId: string,
+		lastCheckpoint: IScribe,
+	): Promise<ISequencedDocumentMessage[]> {
+		let opMessages: ISequencedDocumentMessage[] = [];
+		if (!this.getDeltasViaAlfred) {
+			// Fetch pending ops from scribeDeltas collection
+			const dbMessages = await this.messageCollection.find(
+				{ documentId, tenantId },
+				{ "operation.sequenceNumber": 1 },
+			);
+			opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
+		} else if (lastCheckpoint.logOffset !== -1) {
+			opMessages = await this.deltaManager.getDeltas(
+				"",
+				tenantId,
+				documentId,
+				lastCheckpoint.protocolState.sequenceNumber,
+			);
+		}
+		return opMessages;
 	}
 
 	public async dispose(): Promise<void> {

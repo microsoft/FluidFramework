@@ -20,7 +20,14 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	LoggingError,
+	PerformanceEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	convertToSummaryTree,
@@ -28,12 +35,6 @@ import {
 	mergeStats,
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
-import {
-	ChildLogger,
-	LoggingError,
-	PerformanceEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,
@@ -76,21 +77,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
 	private wipSkipRecursion = false;
 
-	protected readonly logger: ITelemetryLogger;
+	protected readonly logger: ITelemetryLoggerExt;
 
 	/**
 	 * Do not call constructor directly.
 	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		baseLogger: ITelemetryLogger,
+		baseLogger: ITelemetryLoggerExt,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
 		private _changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		private _latestSummary?: SummaryNode,
 		private readonly initialSummary?: IInitialSummary,
-		protected wipSummaryLogger?: ITelemetryLogger,
+		protected wipSummaryLogger?: ITelemetryLoggerExt,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
 	) {
@@ -106,7 +107,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
+	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -306,7 +307,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		summaryRefSeq: number,
 		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 	): Promise<RefreshSummaryResult> {
 		const eventProps: {
 			proposalHandle: string | undefined;
@@ -449,7 +450,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		snapshotTree: ISnapshotTree,
 		basePath: EscapedPath | undefined,
 		localPath: EscapedPath,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
 		// Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
@@ -746,7 +747,7 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param config - Configure behavior of summarizer node
  */
 export const createRootSummarizerNode = (
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

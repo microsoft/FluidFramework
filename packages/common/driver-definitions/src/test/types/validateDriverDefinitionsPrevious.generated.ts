@@ -23,7 +23,6 @@ declare function get_old_TypeAliasDeclaration_DriverError():
 declare function use_current_TypeAliasDeclaration_DriverError(
     use: TypeOnly<current.DriverError>);
 use_current_TypeAliasDeclaration_DriverError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_DriverError());
 
 /*
@@ -360,7 +359,6 @@ declare function get_old_InterfaceDeclaration_IDocumentService():
 declare function use_current_InterfaceDeclaration_IDocumentService(
     use: TypeOnly<current.IDocumentService>);
 use_current_InterfaceDeclaration_IDocumentService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentService());
 
 /*
@@ -601,7 +599,6 @@ declare function get_old_InterfaceDeclaration_ILocationRedirectionError():
 declare function use_current_InterfaceDeclaration_ILocationRedirectionError(
     use: TypeOnly<current.ILocationRedirectionError>);
 use_current_InterfaceDeclaration_ILocationRedirectionError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
@@ -626,7 +623,6 @@ declare function get_old_TypeAliasDeclaration_IResolvedUrl():
 declare function use_current_TypeAliasDeclaration_IResolvedUrl(
     use: TypeOnly<current.IResolvedUrl>);
 use_current_TypeAliasDeclaration_IResolvedUrl(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IResolvedUrl());
 
 /*
@@ -640,18 +636,6 @@ declare function use_old_TypeAliasDeclaration_IResolvedUrl(
     use: TypeOnly<old.IResolvedUrl>);
 use_old_TypeAliasDeclaration_IResolvedUrl(
     get_current_TypeAliasDeclaration_IResolvedUrl());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IResolvedUrlBase": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IResolvedUrlBase": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -772,18 +756,6 @@ declare function use_old_InterfaceDeclaration_IUrlResolver(
     use: TypeOnly<old.IUrlResolver>);
 use_old_InterfaceDeclaration_IUrlResolver(
     get_current_InterfaceDeclaration_IUrlResolver());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IWebResolvedUrl": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IWebResolvedUrl": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
