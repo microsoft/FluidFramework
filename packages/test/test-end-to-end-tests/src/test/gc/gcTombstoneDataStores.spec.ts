@@ -8,7 +8,6 @@ import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
 	ISummarizer,
-	RuntimeHeaders,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
