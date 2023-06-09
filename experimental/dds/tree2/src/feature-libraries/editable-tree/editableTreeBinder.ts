@@ -250,7 +250,8 @@ type Listener = (...args: unknown[]) => void;
 type CallTree = BindTree<CallTree> & { listeners: Set<Listener> };
 
 abstract class AbstractPathVisitor implements PathVisitor {
-	protected readonly registeredListeners: Map<BindingContextType, CallTree[]> = new Map();
+	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
+		new Map();
 	public constructor(protected readonly options: BinderOptions) {}
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
@@ -260,8 +261,9 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		trees: BindTree[],
 		listener: Listener,
 	): () => void {
-		const contextRoots = this.registeredListeners.get(contextType) ?? [];
-		if (contextRoots.length === 0) {
+		let contextRoots = this.registeredListeners.get(contextType);
+		if (contextRoots === undefined) {
+			contextRoots = new Map();
 			this.registeredListeners.set(contextType, contextRoots);
 		}
 		trees.forEach((tree) => {
@@ -273,7 +275,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					listeners: new Set(),
 					children: new Map(),
 				};
-				contextRoots.push(newRoot);
+				assert(contextRoots !== undefined, "contextRoots are defined");
+				contextRoots.set(tree.field, newRoot);
 				this.bindTree(contextType, tree, listener, newRoot);
 			} else {
 				this.bindTree(contextType, tree, listener, currentRoot);
@@ -310,11 +313,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	}
 
 	private findRoot(contextType: BindingContextType, field: FieldKey): CallTree | undefined {
-		const contextRoots = this.registeredListeners.get(contextType);
-		if (!contextRoots) {
-			return undefined;
-		}
-		return contextRoots.find((root) => root.field === field);
+		return this.registeredListeners.get(contextType)?.get(field) ?? undefined;
 	}
 
 	private unregisterListener(
