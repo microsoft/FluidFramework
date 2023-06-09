@@ -149,7 +149,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 
 	const childSchema = builder.object("child-item", {
 		local: {
-			childField: SchemaBuilder.fieldValue(stringSchema),
+			childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
 			childData: SchemaBuilder.fieldOptional(leafSchema),
 		},
 	});
@@ -175,8 +175,8 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 					childData: { leafField: "Hello world again!" },
 				},
 				{
-					childField: "Boolean value.",
-					childData: { leafField: true },
+					childField: true, 
+					childData: { leafField: false },
 				},
 			],
 			childrenTwo: [32],
