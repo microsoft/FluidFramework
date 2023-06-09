@@ -61,7 +61,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 };
 
 type ClientOpState = FuzzTestState;
-function makeOperationGenerator(
+export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };

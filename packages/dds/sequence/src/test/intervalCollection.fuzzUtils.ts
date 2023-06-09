@@ -11,8 +11,9 @@ import {
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervalCollection";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
+import { revertSharedStringRevertibles } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
+import { isRevertibleSharedString } from "./intervalRevertibles.fuzz.spec";
 
 export interface RangeSpec {
 	start: number;
@@ -109,51 +110,9 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 type ClientOpState = FuzzTestState;
 
-export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpState> {
-	const withLogging =
-		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
-		async (state, operation) => {
-			if (loggingInfo !== undefined) {
-				logCurrentState(state, loggingInfo);
-				console.log("-".repeat(20));
-				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-			}
-			await baseReducer(state, operation);
-		};
-
-	const reducer = combineReducers<Operation, ClientOpState>({
-		addText: async ({ channel }, { index, content }) => {
-			channel.insertText(index, content);
-		},
-		removeRange: async ({ channel }, { start, end }) => {
-			channel.removeRange(start, end);
-		},
-		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
-		},
-		deleteInterval: async ({ channel }, { id, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.removeIntervalById(id);
-		},
-		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.change(id, start, end);
-		},
-		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.changeProperties(id, { ...properties });
-		},
-	});
-
-	return withLogging(reducer);
-}
-
-const revertibles: SharedStringRevertible[] = [];
-
-export function makeRevertibleReducer(
+export function makeReducer(
 	loggingInfo?: LoggingInfo,
-): Reducer<RevertOperation, ClientOpState> {
+): Reducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
 		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
 		async (state, operation) => {
@@ -165,7 +124,7 @@ export function makeRevertibleReducer(
 			await baseReducer(state, operation);
 		};
 
-	const reducer = combineReducers<RevertOperation, ClientOpState>({
+	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
 		addText: async ({ channel }, { index, content }) => {
 			channel.insertText(index, content);
 		},
@@ -188,12 +147,11 @@ export function makeRevertibleReducer(
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		// why can i not make channel into a revertiblesharedstring
 		revertSharedStringRevertibles: async ({ channel }) => {
 			// grab a random number of edits to revert
-			// unsure if revertibles is actually populated here
-			const rand = Math.floor(Math.random() * revertibles.length + 1);
-			const few = revertibles.slice(0, rand);
+			assert(isRevertibleSharedString(channel));
+			const rand = Math.floor(Math.random() * channel.revertibles.length + 1);
+			const few = channel.revertibles.slice(0, rand);
 			revertSharedStringRevertibles(channel, few);
 		},
 	});
