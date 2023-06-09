@@ -145,6 +145,27 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
 			name: "Enabled by options, disabled by feature gate",
 		},
+		{
+			options: {
+				...testContainerConfig,
+				runtimeOptions: {
+					enableGroupedBatching: true,
+				},
+			},
+			featureGates: {},
+			name: "Default config and feature gates - grouped batches",
+		},
+		{
+			options: {
+				...testContainerConfig,
+				runtimeOptions: {
+					enableOpReentryCheck: true,
+					enableGroupedBatching: true,
+				},
+			},
+			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+			name: "Enabled by options, disabled by feature gate - ungrouped batches",
+		},
 	];
 
 	describe("Allow reentry", () =>
@@ -164,7 +185,12 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				});
 
 				sharedMap1.set("key1", "1");
+				sharedMap1.set("key3", "3");
+				sharedMap1.set("key4", "4");
+				sharedMap1.set("key5", "5");
 				sharedMap2.set("key2", "2");
+				sharedMap2.set("key2", "2");
+
 				await provider.ensureSynchronized();
 
 				// The offending container is not closed
