@@ -1267,15 +1267,37 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IStartpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
+	private static readonly alwaysCompareSmaller = Symbol();
+	private static readonly alwaysCompareLarger = Symbol();
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly client: Client,
 	) {
-		if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
-			// eslint-disable-next-line @typescript-eslint/unbound-method
-			this.intervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareStarts);
-		}
+		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
+			if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
+				const compareStartsResult = helpers.compareStarts(a, b);
+				if (compareStartsResult !== 0) {
+					return compareStartsResult;
+				}
+			}
+			/**
+			 * The Symbol is only applied on the transient interval, which is always intended to be the first input
+			 * in the comparison. Therefore, it is sufficient to only check the Symbol of 'a' in the comparison logic.
+			 */
+			if ((a as any)[StartpointInRangeIndex.alwaysCompareSmaller]) {
+				return -1;
+			}
+			if ((a as any)[StartpointInRangeIndex.alwaysCompareLarger]) {
+				return 1;
+			}
+			const aId = a.getIntervalId();
+			const bId = b.getIntervalId();
+			if (aId !== undefined && bId !== undefined) {
+				return aId.localeCompare(bId);
+			}
+			return 0;
+		});
 	}
 
 	public add(interval: TInterval): void {
@@ -1292,9 +1314,10 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		}
 		const results: TInterval[] = [];
 		const action: PropertyAction<TInterval, TInterval> = (node) => {
-			results.push(node.key);
+			results.push(node.data);
 			return true;
 		};
+
 		const transientStartInterval = this.helpers.create(
 			"transient",
 			start,
@@ -1302,6 +1325,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
+		(transientStartInterval as any)[StartpointInRangeIndex.alwaysCompareSmaller] = true;
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
@@ -1310,6 +1334,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
+		(transientEndInterval as any)[StartpointInRangeIndex.alwaysCompareLarger] = true;
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
