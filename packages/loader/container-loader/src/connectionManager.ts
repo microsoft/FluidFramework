@@ -28,6 +28,7 @@ import {
 	logNetworkFailure,
 	isRuntimeMessage,
 	DeltaStreamConnectionForbiddenError,
+	isDeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -569,14 +570,8 @@ export class ConnectionManager implements IConnectionManager {
 					connection = undefined;
 				}
 			} catch (origError: any) {
-				if (
-					typeof origError === "object" &&
-					origError !== null &&
-					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
-				) {
-					connection = new NoDeltaStream(
-						(origError as DeltaStreamConnectionForbiddenError).storageOnlyReason,
-					);
+				if (isDeltaStreamConnectionForbiddenError(origError)) {
+					connection = new NoDeltaStream(origError.storageOnlyReason);
 					requestedMode = "read";
 					break;
 				}
