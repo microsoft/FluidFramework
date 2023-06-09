@@ -16,10 +16,8 @@
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run build:test",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log node_modules/.legacy",
@@ -88,9 +86,9 @@
 		"semver": "^7.3.4"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.18.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.18.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
