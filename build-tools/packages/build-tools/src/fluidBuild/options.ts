@@ -11,7 +11,7 @@ import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
 
-const { log, errorLog } = defaultLogger;
+const { log, warning, errorLog } = defaultLogger;
 
 interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	nolint: boolean;
@@ -31,7 +31,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	uninstall: boolean;
 	concurrency: number;
 	fix: boolean;
-	services: boolean;
 	worker: boolean;
 	workerThreads: boolean;
 	workerMemoryLimit: number;
@@ -45,6 +44,7 @@ export const options: FastBuildOptions = {
 	clean: false,
 	match: [],
 	dirs: [],
+	releaseGroups: [],
 	matchedOnly: true,
 	buildTaskNames: [],
 	vscode: false,
@@ -58,10 +58,6 @@ export const options: FastBuildOptions = {
 	concurrency: os.cpus().length,
 	fix: false,
 	all: false,
-	server: false,
-	azure: false,
-	buildTools: false,
-	services: false,
 	worker: false,
 	workerThreads: false,
 	workerMemoryLimit: -1,
@@ -84,11 +80,9 @@ Options:
        --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
     -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
        --reinstall      Same as --uninstall --install.
+	-g --releaseGroup   Release group to operate on
        --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-	-t --task <name>  target to execute (default:build)
-       --azure          Operate on the azure monorepo (default: client monorepo). Overridden by "--all"
-       --buildTools     Operate on the build-tools monorepo (default: client monorepo). Overridden by "--all"
-       --server         Operate on the server monorepo (default: client monorepo). Overridden by "--all"
+	-t --task <name>    target to execute (default:build)
        --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
        --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
        --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
@@ -203,29 +197,20 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--services") {
-			options.services = true;
-			continue;
-		}
-
 		if (arg === "--all") {
 			options.all = true;
 			continue;
 		}
 
-		if (arg === "--azure") {
-			options.azure = true;
-			continue;
-		}
-
-		if (arg === "--buildTools") {
-			options.buildTools = true;
-			continue;
-		}
-
-		if (arg === "--server") {
-			options.server = true;
-			continue;
+		if (arg === "-g" || arg === "--releaseGroup") {
+			if (i !== process.argv.length - 1) {
+				options.releaseGroups.push(process.argv[++i]);
+				setBuild(true);
+				continue;
+			}
+			errorLog("Missing argument for --releaseGroup");
+			error = true;
+			break;
 		}
 
 		if (arg === "-t" || arg === "--task") {
@@ -315,6 +300,25 @@ export function parseOptions(argv: string[]) {
 			}
 			error = true;
 			break;
+		}
+
+		// Back compat switches
+		if (arg === "--azure") {
+			warning("'--azure' is deprecated.  Use '-g azure' instead");
+			options.releaseGroups.push("azure");
+			continue;
+		}
+
+		if (arg === "--buildTools") {
+			warning("'--buildTools' is deprecated.  Use '-g build-tools' instead");
+			options.releaseGroups.push("build-tools");
+			continue;
+		}
+
+		if (arg === "--server") {
+			warning("'--server' is deprecated.  Use '-g server' instead");
+			options.releaseGroups.push("server");
+			continue;
 		}
 
 		// Package regexp or paths

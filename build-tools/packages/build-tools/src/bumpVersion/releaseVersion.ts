@@ -4,13 +4,13 @@
  */
 import { VersionBumpType } from "@fluid-tools/version-tools";
 
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
 import { Context } from "./context";
 import { runPolicyCheckWithFix } from "./policyCheck";
-import { fatal } from "./utils";
+import { fatal, MonoRepoKind, isMonoRepoKind } from "./utils";
 
 export function getPackageShortName(pkgName: string) {
 	let name = pkgName.split("/").pop()!;
@@ -76,7 +76,7 @@ export async function releaseVersion(
 				}
 			} else {
 				if (isMonoRepoKind(name)) {
-					monoRepo = context.repo.monoRepos.get(name);
+					monoRepo = context.repo.releaseGroups.get(name);
 					break;
 				}
 				const pkg = context.fullPackageMap.get(name);

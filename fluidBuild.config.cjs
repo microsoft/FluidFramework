@@ -99,12 +99,6 @@ module.exports = {
 			"tools/test-tools",
 			"server/tinylicious",
 		],
-
-		// Services
-		"services": {
-			directory: "server",
-			ignoredDirs: ["routerlicious", "tinylicious", "gitrest", "historian"],
-		},
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
