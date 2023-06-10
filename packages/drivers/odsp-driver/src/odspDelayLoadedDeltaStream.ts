@@ -295,7 +295,7 @@ export class OdspDelayLoadedDeltaStream {
 							// and load without a delta stream connection.
 							this.policies = { ...this.policies, storageOnly: true };
 							throw new DeltaStreamConnectionForbiddenError(
-								code,
+								`Storage-only due to ${code}`,
 								{ driverVersion },
 								code,
 							);

@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-	DriverErrorType,
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
@@ -27,7 +26,6 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
-	DeltaStreamConnectionForbiddenError,
 	isDeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
@@ -137,6 +135,10 @@ class NoDeltaStream
 	public dispose() {
 		this._disposed = true;
 	}
+}
+
+function isNoDeltaStreamConnection(connection: any): connection is NoDeltaStream {
+	return connection instanceof NoDeltaStream;
 }
 
 const waitForOnline = async (): Promise<void> => {
@@ -314,17 +316,19 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
-		const storageOnly =
-			this.connection !== undefined && this.connection instanceof NoDeltaStream;
+		let storageOnly: boolean = false;
+		let storageOnlyReason: string | undefined;
+		if (isNoDeltaStreamConnection(this.connection)) {
+			storageOnly = true;
+			storageOnlyReason = this.connection.storageOnlyReason;
+		}
 		if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
 			return {
 				readonly: true,
 				forced: this._forceReadonly,
 				permissions: this._readonlyPermissions,
 				storageOnly,
-				storageOnlyReason: storageOnly
-					? (this.connection as NoDeltaStream).storageOnlyReason
-					: undefined,
+				storageOnlyReason,
 			};
 		}
 
