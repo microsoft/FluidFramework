@@ -88,7 +88,7 @@ export class SocketIoRedisSubscriptionConnection
 			return;
 		}
 
-		await this.client.unsubscribe(channelsArray);
+		await this.client.unsubscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.delete(channel);
