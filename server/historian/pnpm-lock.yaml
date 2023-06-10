@@ -133,8 +133,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: 5.2.3
+        version: 5.2.3
       lodash:
         specifier: ^4.17.19
         version: 4.17.21
@@ -163,9 +163,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/lodash':
         specifier: ^4.14.119
         version: 4.14.194
@@ -284,8 +281,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: 5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: 5.0.1
         version: 5.0.1
@@ -332,9 +329,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.34
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/mocha':
         specifier: ^10.0.0
         version: 10.0.1
@@ -1098,6 +1092,10 @@ packages:
     resolution: {integrity: sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==}
     engines: {node: '>=6.9.0'}
     dev: true
+
+  /@ioredis/commands@1.2.0:
+    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
+    dev: false
 
   /@isaacs/cliui@8.0.2:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -3277,12 +3275,6 @@ packages:
 
   /@types/http-cache-semantics@4.0.1:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
-    dev: true
-
-  /@types/ioredis@4.28.10:
-    resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
-    dependencies:
-      '@types/node': 16.18.27
     dev: true
 
   /@types/json-schema@7.0.11:
@@ -5744,6 +5736,11 @@ packages:
     engines: {node: '>=0.10'}
     dev: false
 
+  /denque@2.1.0:
+    resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
+    engines: {node: '>=0.10'}
+    dev: false
+
   /depd@2.0.0:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
     engines: {node: '>= 0.8'}
@@ -7963,6 +7960,23 @@ packages:
       lodash.isarguments: 3.1.0
       p-map: 2.1.0
       redis-commands: 1.7.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /ioredis@5.2.3:
+    resolution: {integrity: sha512-gQNcMF23/NpvjCaa1b5YycUyQJ9rBNH2xP94LWinNpodMWVUPP5Ai/xXANn/SM7gfIvI62B5CCvZxhg5pOgyMw==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
       redis-errors: 1.2.0
       redis-parser: 3.0.0
       standard-as-callback: 2.1.0
