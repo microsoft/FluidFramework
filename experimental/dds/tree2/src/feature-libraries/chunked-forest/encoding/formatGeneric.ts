@@ -12,6 +12,7 @@ export const IdentifierOrIndex = Type.Union([
 ]);
 
 export const ShapeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+export type ShapeIndex = Static<typeof ShapeIndex>;
 
 export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 

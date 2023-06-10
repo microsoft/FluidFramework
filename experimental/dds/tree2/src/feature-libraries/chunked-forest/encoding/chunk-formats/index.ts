@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { decodeUniformChunkShape, uniformEncoder } from "./uniform";
+// export { decodeUniformChunkShape, uniformEncoder } from "./uniform";

@@ -109,6 +109,12 @@ export function readStreamNumber(stream: StreamCursor): number {
 	return content;
 }
 
+export function readStreamStream(stream: StreamCursor): StreamCursor {
+	const content = readStream(stream);
+	assert(Array.isArray(content), "expected Array in stream");
+	return { data: content, offset: 0 };
+}
+
 export function readStreamBoolean(stream: StreamCursor): boolean {
 	const content = readStream(stream);
 	assert(typeof content === "boolean", "expected boolean in stream");
