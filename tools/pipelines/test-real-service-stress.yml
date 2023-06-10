@@ -132,7 +132,7 @@ stages:
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
     variables:
-    - group: stress-frs-canary
+    - group: stress-frs-canary-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
