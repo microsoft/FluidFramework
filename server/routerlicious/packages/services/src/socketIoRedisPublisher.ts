@@ -47,8 +47,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/promise-function-async
 		return util.promisify(((callback) => this.redisClient.quit(callback)) as any)();
 	}
 }
