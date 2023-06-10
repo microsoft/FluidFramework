@@ -273,7 +273,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
