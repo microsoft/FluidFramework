@@ -9,7 +9,7 @@ import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -91,8 +91,8 @@ export function create(
 		};
 	}
 
-	const pub = new Redis(clone(options));
-	const sub = new Redis(clone(options));
+	const pub = new Redis.default(clone(options));
+	const sub = new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);
