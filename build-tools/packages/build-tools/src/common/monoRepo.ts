@@ -49,23 +49,27 @@ export class MonoRepo {
 		try {
 			const { tool, rootDir, packages } = getPackagesSync(directory);
 			if (path.resolve(rootDir) !== directory) {
-				// This is a sanity check. this.repoPath is the path passed in when creating the MonoRepo object, while rootDir is
+				// This is a sanity check. directory is the path passed in when creating the MonoRepo object, while rootDir is
 				// the dir that manypkg found. They should be the same.
 				throw new Error(`rootDir ${rootDir} does not match repoPath ${directory}`);
 			}
-			if (tool.type === "lerna") {
-				// Treat lerna as "npm"
-				packageManager = "npm";
-			} else if (tool.type !== "npm" && tool.type !== "pnpm" && tool.type !== "yarn") {
-				throw new Error(`Unknown package manager ${tool.type}`);
-			} else {
-				packageManager = tool.type;
+			switch (tool.type) {
+				case "lerna":
+					// Treat lerna as "npm"
+					packageManager = "npm";
+					break;
+				case "npm":
+				case "pnpm":
+				case "yarn":
+					packageManager = tool.type;
+					break;
+				default:
+					throw new Error(`Unknown package manager ${tool.type}`);
 			}
 			if (packages.length === 1 && packages[0].dir === directory) {
 				// this is a independent package
 				return undefined;
 			}
-			packageManager = tool.type;
 			packageDirs = packages.filter((pkg) => pkg.relativeDir !== ".").map((pkg) => pkg.dir);
 
 			if (defaultInterdependencyRange === undefined) {

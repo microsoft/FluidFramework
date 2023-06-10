@@ -27,7 +27,7 @@ export interface IPackageMatchedOptions {
 	match: string[];
 	all: boolean;
 	dirs: string[];
-	groups: string[];
+	releaseGroups: string[];
 }
 
 /** Packages in this list will not have their scripts checked for conformance with repo standards. */
@@ -61,7 +61,8 @@ export class FluidRepoBuild extends FluidRepo {
 	}
 
 	public setMatched(options: IPackageMatchedOptions) {
-		const hasMatchArgs = options.match.length || options.dirs.length || options.groups.length;
+		const hasMatchArgs =
+			options.match.length || options.dirs.length || options.releaseGroups.length;
 
 		if (hasMatchArgs) {
 			let matched = false;
@@ -77,9 +78,11 @@ export class FluidRepoBuild extends FluidRepo {
 				matched = true;
 			});
 
-			options.groups.forEach((group) => {
-				if (!this.matchWithFilter((pkg) => pkg.group === group)) {
-					throw new Error(`Group specified '${group}' is not defined in the repo.`);
+			options.releaseGroups.forEach((releaseGroup) => {
+				if (!this.matchWithFilter((pkg) => pkg.monoRepo?.kind === releaseGroup)) {
+					throw new Error(
+						`Release group '${releaseGroup}' specified is not defined in the repo.`,
+					);
 				}
 				matched = true;
 			});
@@ -184,7 +187,7 @@ export class FluidRepoBuild extends FluidRepo {
 
 		for (const monoRepo of this.releaseGroups.values()) {
 			if (isSameFileOrDir(monoRepo.repoPath, pkgDir)) {
-				log(`Release group ${chalk.cyanBright(monoRepo.kind)} matched (${dir})`);
+				log(`Release group ${chalk.cyanBright(monoRepo.kind)} matched (directory: ${dir})`);
 				this.setMatchedMonoRepo(monoRepo);
 				return;
 			}
@@ -200,7 +203,11 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 
 		if (matchMonoRepo && foundPackage.monoRepo !== undefined) {
-			log(`\tRelease group ${chalk.cyanBright(foundPackage.monoRepo.kind)} matched (${dir})`);
+			log(
+				`\tRelease group ${chalk.cyanBright(
+					foundPackage.monoRepo.kind,
+				)} matched (directory: ${dir})`,
+			);
 			this.setMatchedMonoRepo(foundPackage.monoRepo);
 		} else {
 			log(`\t${foundPackage.nameColored} matched (${dir})`);

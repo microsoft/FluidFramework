@@ -51,6 +51,7 @@ export function prereleaseSatisfies(packageVersion: string, range: string) {
 /**
  * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
  * in the fluid-build section of the root package.json.
+ * @deprecated
  */
 export enum MonoRepoKind {
 	Client = "client",
@@ -63,6 +64,7 @@ export enum MonoRepoKind {
 
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
+ * @deprecated
  */
 export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 	if (str === undefined) {
@@ -76,6 +78,7 @@ export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
+ * @deprecated
  */
 export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 	for (const [, flag] of Object.entries(MonoRepoKind)) {
