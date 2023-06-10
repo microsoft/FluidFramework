@@ -75,7 +75,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 			.expire(hKey, expireAfterSeconds)
 			.lpush(lKey, lData)
 			.exec()
-			.then((results) => {
+			.then((results: any) => {
 				// results` is an array of responses corresponding to the sequence of queued commands.
 				// In other words, it is [Error | null, any][].
 				// Each response follows the format `[err, result]`. `err` refers to runtime errors.
