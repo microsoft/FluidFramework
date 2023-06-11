@@ -71,7 +71,7 @@
 		"cookie-parser": "^1.4.3",
 		"cors": "^2.8.4",
 		"express": "^4.17.3",
-		"ioredis": "5.2.3",
+		"ioredis": "^5.2.3",
 		"json-stringify-safe": "^5.0.1",
 		"jsonwebtoken": "^9.0.0",
 		"lodash": "^4.17.21",

@@ -682,7 +682,7 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: 5.2.3
+        specifier: ^5.2.3
         version: 5.2.3
       nconf:
         specifier: ^0.12.0
@@ -800,7 +800,7 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: 5.2.3
+        specifier: ^5.2.3
         version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1
@@ -975,7 +975,7 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: 5.2.3
+        specifier: ^5.2.3
         version: 5.2.3
       lru-cache:
         specifier: ^6.0.0
@@ -1512,7 +1512,7 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: 5.2.3
+        specifier: ^5.2.3
         version: 5.2.3
       lodash:
         specifier: ^4.17.21
@@ -1703,7 +1703,7 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: 5.2.3
+        specifier: ^5.2.3
         version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1

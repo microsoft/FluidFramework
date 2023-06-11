@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 
 export interface IRedisParameters {
 	prefix?: string;
@@ -11,7 +11,7 @@ export interface IRedisParameters {
 }
 
 export const executeRedisMultiWithHmsetExpire = async (
-	client: Redis,
+	client: Redis.default,
 	key: string,
 	data: { [key: string]: any },
 	expireAfterSeconds: number,
@@ -61,7 +61,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 	});
 
 export const executeRedisMultiWithHmsetExpireAndLpush = async (
-	client: Redis,
+	client: Redis.default,
 	hKey: string,
 	hData: { [key: string]: any },
 	lKey: string,
