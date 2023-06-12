@@ -37,6 +37,18 @@ export interface TaskConfig {
 	 * group of task for the command line.
 	 */
 	script: boolean;
+	/**
+	 * Tasks that this task needs to run before (example clean)
+	 * - "<name>": another task within the package
+	 * - "*": any other task within the package
+	 *
+	 * When task definition is augmented in the package.json itself the dependencies can be:
+	 * - "...": expand to the "before in the global fluidBuild config
+	 *
+	 * Note that this will affect ordering if the task is already scheduled. It won't
+	 * get the tasks to be scheduled if it isn't already
+	 */
+	before: TaskDependencies;
 }
 
 export interface TaskDefinitions {
@@ -56,11 +68,12 @@ export interface TaskDefinitionsOnDisk {
  */
 function getFullTaskConfig(config: TaskConfigOnDisk): TaskConfig {
 	if (Array.isArray(config)) {
-		return { dependsOn: config, script: true };
+		return { dependsOn: config, script: true, before: [] };
 	} else {
 		return {
 			dependsOn: config.dependsOn ?? [],
 			script: config.script ?? true,
+			before: config.before ?? [],
 		};
 	}
 }
@@ -87,12 +100,18 @@ export function getTaskDefinitions(
 				// Skip script global task definition if the package doesn't have the script
 				continue;
 			}
-			const invalid = full.dependsOn.filter(
+			const invalidDependsOn = full.dependsOn.filter(
 				(value) => value === "..." || value.includes("#"),
 			);
-			if (invalid.length !== 0) {
+			if (invalidDependsOn.length !== 0) {
 				throw new Error(
-					`Invalid global dependencies '${invalid.join()}' for task definition ${name}`,
+					`Invalid global dependencies '${invalidDependsOn.join()}' for task definition ${name}`,
+				);
+			}
+			const invalidBefore = full.before.filter((value) => value === "...");
+			if (invalidBefore.length !== 0) {
+				throw new Error(
+					`Invalid before dependencies '${invalidBefore.join()}' for task definition ${name}`,
 				);
 			}
 			taskConfig[name] = full;
@@ -103,6 +122,12 @@ export function getTaskDefinitions(
 			config.dependsOn = config.dependsOn.filter(
 				(value) =>
 					value.startsWith("^") ||
+					taskConfig[value] !== undefined ||
+					json.scripts?.[value] !== undefined,
+			);
+			config.before = config.before.filter(
+				(value) =>
+					value === "*" ||
 					taskConfig[value] !== undefined ||
 					json.scripts?.[value] !== undefined,
 			);
@@ -123,6 +148,13 @@ export function getTaskDefinitions(
 			} else {
 				full.dependsOn = dependsOn;
 			}
+			const before = full.before.filter((value) => value !== "...");
+			if (taskConfig[name] !== undefined && before.length !== full.before.length) {
+				full.before = before.concat(taskConfig[name].before);
+			} else {
+				full.before = before;
+			}
+
 			taskConfig[name] = full;
 		}
 	}
@@ -130,16 +162,30 @@ export function getTaskDefinitions(
 	// Check to make sure all the dependencies either is an target or script
 	for (const name in taskConfig) {
 		const config = taskConfig[name];
-		// Find any non-existent scripts in the dependencies
-		const invalid = config.dependsOn.filter(
+		// Find any non-existent tasks or scripts in the dependencies
+		const invalidDependsOn = config.dependsOn.filter(
 			(value) =>
 				!value.includes("#") &&
 				!value.startsWith("^") &&
 				taskConfig[value] === undefined &&
 				json.scripts?.[value] === undefined,
 		);
-		if (invalid.length !== 0) {
-			throw new Error(`Invalid dependencies '${invalid.join()}' for task definition ${name}`);
+		if (invalidDependsOn.length !== 0) {
+			throw new Error(
+				`Invalid dependencies '${invalidDependsOn.join()}' for task definition ${name}`,
+			);
+		}
+
+		const invalidBefore = config.before.filter(
+			(value) =>
+				value !== "*" &&
+				taskConfig[value] === undefined &&
+				json.scripts?.[value] === undefined,
+		);
+		if (invalidBefore.length !== 0) {
+			throw new Error(
+				`Invalid before dependencies '${invalidBefore.join()}' for task definition ${name}`,
+			);
 		}
 	}
 	return taskConfig;

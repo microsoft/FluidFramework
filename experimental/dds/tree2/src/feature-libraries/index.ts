@@ -82,7 +82,6 @@ export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
@@ -130,7 +129,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

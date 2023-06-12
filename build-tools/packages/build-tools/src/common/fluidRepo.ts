@@ -13,7 +13,7 @@ import {
 
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
+import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
@@ -202,10 +202,7 @@ export interface IFluidRepoPackage {
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	/**
-	 * @deprecated Use .releaseGroups instead.
-	 */
-	public readonly monoRepos = new Map<MonoRepoKind, MonoRepo>();
+	private readonly monoRepos = new Map<string, MonoRepo>();
 
 	public get releaseGroups() {
 		return this.monoRepos;
@@ -213,32 +210,7 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get clientMonoRepo(): MonoRepo {
-		return this.releaseGroups.get(MonoRepoKind.Client)!;
-	}
-
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get serverMonoRepo(): MonoRepo | undefined {
-		return this.releaseGroups.get(MonoRepoKind.Server);
-	}
-
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get azureMonoRepo(): MonoRepo | undefined {
-		return this.releaseGroups.get(MonoRepoKind.Azure);
-	}
-
-	constructor(
-		public readonly resolvedRoot: string,
-		services: boolean,
-		private readonly log: Logger = defaultLogger,
-	) {
+	constructor(public readonly resolvedRoot: string, log: Logger = defaultLogger) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
 		// Expand to full IFluidRepoPackage and full path
@@ -272,36 +244,19 @@ export class FluidRepo {
 		const loadedPackages: Package[] = [];
 		for (const group in packageManifest.repoPackages) {
 			const item = normalizeEntry(packageManifest.repoPackages[group]);
-			if (isMonoRepoKind(group)) {
-				const { directory, ignoredDirs, defaultInterdependencyRange } =
-					item as IFluidRepoPackage;
-				if (defaultInterdependencyRange === undefined) {
-					log?.warning(
-						`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
-					);
+			if (Array.isArray(item)) {
+				for (const i of item) {
+					loadedPackages.push(...loadOneEntry(i, group));
 				}
-				const monorepo = new MonoRepo(
-					group,
-					directory,
-					defaultInterdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE,
-					ignoredDirs,
-					log,
-				);
-				this.releaseGroups.set(group, monorepo);
-				loadedPackages.push(...monorepo.packages);
-			} else if (group !== "services" || services) {
-				if (Array.isArray(item)) {
-					for (const i of item) {
-						loadedPackages.push(...loadOneEntry(i, group));
-					}
-				} else {
-					loadedPackages.push(...loadOneEntry(item, group));
-				}
+				continue;
 			}
-		}
-
-		if (!this.releaseGroups.has(MonoRepoKind.Client)) {
-			throw new Error("client entry does not exist in package.json");
+			const monoRepo = MonoRepo.load(group, item, log);
+			if (monoRepo) {
+				this.releaseGroups.set(group, monoRepo);
+				loadedPackages.push(...monoRepo.packages);
+			} else {
+				loadedPackages.push(...loadOneEntry(item, group));
+			}
 		}
 		this.packages = new Packages(loadedPackages);
 	}

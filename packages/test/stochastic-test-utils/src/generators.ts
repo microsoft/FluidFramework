@@ -55,7 +55,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	return (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -292,7 +292,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	return async (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
