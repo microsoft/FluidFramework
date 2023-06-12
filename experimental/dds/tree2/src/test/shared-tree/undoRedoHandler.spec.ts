@@ -11,10 +11,10 @@ import {
 	initializeTestTree,
 	insert,
 	setTestValue,
-	stringToJsonableTree,
 	validateTree,
 } from "../utils";
 import { JsonableTree } from "../../core";
+import { brand } from "../../util";
 
 /**
  * These test the SharedTreeUndoRedoHandler class, which is a wrapper around the UndoRedoStackManager class
@@ -174,3 +174,12 @@ describe("ShareTreeUndoRedoHandler", () => {
 		assert.equal(getTestValue(tree), undefined);
 	});
 });
+
+function stringToJsonableTree(values: string[], type = "Json.String"): JsonableTree[] {
+	return values.map((value) => {
+		return {
+			type: brand(type),
+			value,
+		};
+	});
+}

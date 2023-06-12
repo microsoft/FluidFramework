@@ -58,9 +58,9 @@ export interface ViewEvents {
 	afterBatch(): void;
 
 	/**
-	 * An undoable change has been made to the tree. This is used to track undo/redo on the {@link SharedTreeViewUndoRedoHandler}
+	 * A revertible change has been made to this view.
 	 */
-	undoable(type: RevertType, target: ISharedTreeView): void;
+	revertible(type: RevertType, target: ISharedTreeView): void;
 }
 
 /**
@@ -303,8 +303,8 @@ export class SharedTreeView implements ISharedTreeView {
 				this._events.emit("afterBatch");
 			}
 		});
-		branch.on("undoable", (type) => {
-			this._events.emit("undoable", type, this);
+		branch.on("revertible", (type) => {
+			this._events.emit("revertible", type, this);
 		});
 	}
 

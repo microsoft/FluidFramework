@@ -2093,7 +2093,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    undoable(type: RevertType, target: ISharedTreeView): void;
+    revertible(type: RevertType, target: ISharedTreeView): void;
 }
 
 // @alpha

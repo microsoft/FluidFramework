@@ -23,7 +23,7 @@ export class SharedTreeViewUndoRedoHandler {
 		if (this.connectedTrees.has(tree)) {
 			fail("Cannot attach the same tree twice");
 		}
-		this.connectedTrees.set(tree, tree.events.on("undoable", this.treeDeltaHandler));
+		this.connectedTrees.set(tree, tree.events.on("revertible", this.treeDeltaHandler));
 	}
 	public detachTree(tree: ISharedTree) {
 		const detach = this.connectedTrees.get(tree);

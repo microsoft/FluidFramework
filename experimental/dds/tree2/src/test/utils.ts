@@ -530,15 +530,6 @@ export function makeTreeFromCursor(
 	return tree;
 }
 
-export function stringToJsonableTree(values: string[]): JsonableTree[] {
-	return values.map((value) => {
-		return {
-			type: brand("TestValue"),
-			value,
-		};
-	});
-}
-
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);

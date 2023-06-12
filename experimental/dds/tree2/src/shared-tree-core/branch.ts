@@ -94,9 +94,9 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	change(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
-	 * Fired when an undoable change is made to this branch.
+	 * Fired when a revertible change is made to this branch.
 	 */
-	undoable(type: RevertType): void;
+	revertible(type: RevertType): void;
 
 	/**
 	 * Fired when this branch forks
@@ -191,7 +191,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
 			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
-			this.emit("undoable", undoRedoType);
+			this.emit("revertible", undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
@@ -263,7 +263,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
 				this.undoRedoManager.trackCommit(this.head, RevertType.Undoable);
-				this.emit("undoable", RevertType.Undoable);
+				this.emit("revertible", RevertType.Undoable);
 			}
 		}
 
@@ -481,6 +481,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
 			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+
+			// KLUDGE: Merging does not cause commits to change their ordering. This allows the
+			// undo redo handler to work for the local branch but it's not guaranteed to work for
+			// any other branch.
+			for (const commit of sourceCommits) {
+				const type = this.undoRedoManager.getCommitType(commit.revision);
+				if (type !== undefined) {
+					this.emit("revertible", type);
+				}
+			}
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);

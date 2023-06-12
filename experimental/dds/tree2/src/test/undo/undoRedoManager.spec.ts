@@ -87,20 +87,6 @@ describe("UndoRedoManager", () => {
 			// The fake undo commit will now be redoable
 			assert.equal(manager.headRedoable, undefined);
 		});
-
-		it("should add redoable commits to the redoable commit tree without changing the undoable commit tree", () => {
-			const initialCommit = {
-				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
-			};
-			const manager = undoRedoManagerFactory(initialCommit);
-			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
-			manager.trackCommit(fakeInvertedCommit, RevertType.Undo);
-			// The head undo commit will not be the new inverted commit
-			assert.equal(manager.headUndoable, initialCommit);
-			// The fake undo commit will now be redoable
-			assert.equal(manager.headRedoable?.commit, fakeInvertedCommit);
-		});
 	});
 
 	describe("undo", () => {

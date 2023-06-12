@@ -27,7 +27,6 @@ import {
 	TestTreeProvider,
 	TestTreeProviderLite,
 	initializeTestTree,
-	stringToJsonableTree,
 } from "../utils";
 import {
 	ISharedTree,
@@ -805,6 +804,15 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
 		});
+
+		function stringToJsonableTree(values: string[]): JsonableTree[] {
+			return values.map((value) => {
+				return {
+					type: brand("TestValue"),
+					value,
+				};
+			});
+		}
 
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
