@@ -7338,7 +7338,7 @@ importers:
         version: 1.1.1
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
+        specifier: ^1.2.0
         version: 1.2.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
