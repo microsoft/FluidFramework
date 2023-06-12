@@ -211,6 +211,7 @@ export async function ensureInstalled(
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
 				exec(`npm init --yes`, options, (error, stdout, stderr) => {
+					console.log(error);
 					if (error) {
 						reject(new Error(`Failed to initialize install directory ${modulePath}`));
 					}
