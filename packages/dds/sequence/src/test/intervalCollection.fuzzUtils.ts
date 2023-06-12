@@ -11,9 +11,14 @@ import {
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervalCollection";
-import { revertSharedStringRevertibles } from "../revertibles";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
-import { isRevertibleSharedString } from "./intervalRevertibles.fuzz.spec";
+import { SharedString } from "../sharedString";
+
+export type RevertibleSharedString = SharedString & { revertibles: SharedStringRevertible[] };
+export function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
+	return (s as RevertibleSharedString).revertibles !== undefined;
+}
 
 export interface RangeSpec {
 	start: number;
