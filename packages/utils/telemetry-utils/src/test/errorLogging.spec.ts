@@ -563,6 +563,39 @@ describe("Error Logging", () => {
 			);
 		});
 	});
+	describe("normalizeError", () => {
+		describe("preserves properties", () => {
+			it("missing properties are not set", () => {
+				const unknownError = new Error();
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, undefined, "canRetry not undefined");
+				assert.strictEqual(
+					newError.retryAfterSeconds,
+					undefined,
+					"retryAfterSeconds not undefined",
+				);
+			});
+			it("existing retry properties are present in normalized error", () => {
+				const unknownError: { canRetry?: boolean; retryAfterSeconds?: number } & Error =
+					new Error();
+				unknownError.canRetry = true;
+				unknownError.retryAfterSeconds = 100;
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, true, "canRetry not true");
+				assert.strictEqual(newError.retryAfterSeconds, 100, "retryAfterSeconds not 100");
+			});
+		});
+	});
 });
 
 class TestFluidError implements IFluidErrorBase {
