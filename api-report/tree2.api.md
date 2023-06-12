@@ -173,36 +173,6 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 // @alpha (undocumented)
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
 
-// @alpha (undocumented)
-export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
-    // (undocumented)
-    buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
-    // (undocumented)
-    readonly codecs: ICodecFamily<TChange>;
-    // (undocumented)
-    intoDelta(change: TChange): Delta.Root;
-    // (undocumented)
-    readonly rebaser: ChangeRebaser<TChange>;
-}
-
-// @alpha (undocumented)
-export interface ChangeFamilyEditor {
-    enterTransaction(): void;
-    exitTransaction(): void;
-}
-
-// @alpha
-export interface ChangeRebaser<TChangeset> {
-    compose(changes: TaggedChange<TChangeset>[]): TChangeset;
-    // (undocumented)
-    invert(changes: TaggedChange<TChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
-    // (undocumented)
-    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
-    // (undocumented)
-    _typeCheck?: Invariant<TChangeset>;
-}
-
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
@@ -436,19 +406,6 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 type EditableValueField<TypedChild> = [
 UntypedValueField & MarkedArrayLike<TypedChild>
 ][_InlineTrick];
-
-// @alpha (undocumented)
-export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
-    constructor(changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
-    // @sealed
-    protected applyChange(change: TChange): void;
-    // (undocumented)
-    protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
-    // (undocumented)
-    enterTransaction(): void;
-    // (undocumented)
-    exitTransaction(): void;
-}
 
 // @alpha (undocumented)
 export interface EditDescription {
@@ -1181,29 +1138,6 @@ interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.Modify;
 }
 
-// @alpha @sealed
-export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset> {
-    constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
-    // (undocumented)
-    buildEditor(changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet): ModularEditBuilder;
-    // (undocumented)
-    readonly codecs: ICodecFamily<ModularChangeset>;
-    // (undocumented)
-    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
-    // (undocumented)
-    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-    // (undocumented)
-    intoDelta(change: ModularChangeset): Delta.Root;
-    // (undocumented)
-    invert(change: TaggedChange<ModularChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
-    // (undocumented)
-    rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset;
-    // (undocumented)
-    rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void;
-    // (undocumented)
-    get rebaser(): ChangeRebaser<ModularChangeset>;
-}
-
 // @alpha (undocumented)
 export interface ModularChangeset extends HasFieldChanges {
     // (undocumented)
@@ -1212,28 +1146,6 @@ export interface ModularChangeset extends HasFieldChanges {
     fieldChanges: FieldChangeMap;
     maxId?: ChangesetLocalId;
     readonly revisions?: readonly RevisionInfo[];
-}
-
-// @alpha @sealed (undocumented)
-export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
-    constructor(family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
-    // (undocumented)
-    addNodeExistsConstraint(path: UpPath): void;
-    // (undocumented)
-    addValueConstraint(path: UpPath, currentValue: Value): void;
-    // (undocumented)
-    apply(change: ModularChangeset): void;
-    // (undocumented)
-    enterTransaction(): void;
-    // (undocumented)
-    exitTransaction(): void;
-    // (undocumented)
-    generateId(count?: number): ChangesetLocalId;
-    // (undocumented)
-    setValue(path: UpPath, value: Value): void;
-    submitChange(field: FieldUpPath, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
-    // (undocumented)
-    submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
 
 // @alpha

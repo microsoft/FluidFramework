@@ -67,9 +67,6 @@ import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
- *
- * @sealed
- * @alpha
  */
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
@@ -1033,10 +1030,6 @@ function makeModularChangeset(
 	return changeset;
 }
 
-/**
- * @sealed
- * @alpha
- */
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
