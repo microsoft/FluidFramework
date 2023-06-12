@@ -34,10 +34,25 @@ export interface InvalidationBinderEvents extends BinderEvents {
 	invalidation(context: InvalidationBindingContext): void;
 }
 
+/**
+ * Compare function, generic.
+ *
+ * @alpha
+ */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
+/**
+ * Compare function for binder events.
+ *
+ * @alpha
+ */
 export type BinderEventsCompare = CompareFunction<BindingContext>;
 
+/**
+ * Compare function for anchors.
+ *
+ * @alpha
+ */
 export type AnchorsCompare = CompareFunction<UpPath>;
 
 /**
@@ -177,7 +192,7 @@ export type DownPath = PathStep[];
 export type BindPath = DownPath;
 
 /**
- * A generic binding context for fine grained binding events.
+ * A binding context specialized for {@link PathVisitor} triggered binding events.
  *
  * @alpha
  */
@@ -202,16 +217,18 @@ export const BindingType = {
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
 /**
+ * Common binding context for all binding categories
+ *
  * @alpha
  */
-export interface AbstractBindingContext {
+export interface CommonBindingContext {
 	readonly type: BindingContextType;
 }
 
 /**
  * @alpha
  */
-export interface DeleteBindingContext extends AbstractBindingContext {
+export interface DeleteBindingContext extends CommonBindingContext {
 	readonly type: typeof BindingType.Delete;
 	readonly path: UpPath;
 	readonly count: number;
@@ -220,7 +237,7 @@ export interface DeleteBindingContext extends AbstractBindingContext {
 /**
  * @alpha
  */
-export interface InsertBindingContext extends AbstractBindingContext {
+export interface InsertBindingContext extends CommonBindingContext {
 	readonly type: typeof BindingType.Insert;
 	readonly path: UpPath;
 	readonly content: ProtoNodes;
@@ -229,7 +246,7 @@ export interface InsertBindingContext extends AbstractBindingContext {
 /**
  * @alpha
  */
-export interface SetValueBindingContext extends AbstractBindingContext {
+export interface SetValueBindingContext extends CommonBindingContext {
 	readonly type: typeof BindingType.SetValue;
 	readonly path: UpPath;
 	readonly value: TreeValue;
@@ -238,14 +255,14 @@ export interface SetValueBindingContext extends AbstractBindingContext {
 /**
  * @alpha
  */
-export interface InvalidationBindingContext extends AbstractBindingContext {
+export interface InvalidationBindingContext extends CommonBindingContext {
 	readonly type: typeof BindingType.Invalidation;
 }
 
 /**
  * @alpha
  */
-export interface BatchBindingContext extends AbstractBindingContext {
+export interface BatchBindingContext extends CommonBindingContext {
 	readonly type: typeof BindingType.Batch;
 	readonly events: BindingContext[];
 }
@@ -846,6 +863,13 @@ export function compareAnchorsZero(a: UpPath, b: UpPath): number {
 	return 0;
 }
 
+/**
+ * Utility to create a compare function from a list of compare functions.
+ *
+ * @param fns - a list of compare functions
+ * @returns a compare function that can be used for sorting
+ * @alpha
+ */
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {
 	return (a: T, b: T): number => {
 		for (const fn of fns) {
@@ -858,10 +882,22 @@ export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunctio
 	};
 }
 
-export function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
+/**
+ * Native sorting algorithm.
+ *
+ * @param arr - the array to sort
+ * @param compareFn - the compare function
+ * @returns the sorted array
+ */
+function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
 	return [...arr].sort(compareFn);
 }
 
+/**
+ * Compiles a (user friendly) syntax tree into the internal binding structure.
+ *
+ * @alpha
+ */
 export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {

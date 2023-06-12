@@ -67,6 +67,9 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
     readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 }
 
+// @alpha
+export type AnchorsCompare = CompareFunction<UpPath>;
+
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
     applyDelta(delta: Delta.Root): void;
@@ -130,6 +133,64 @@ type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TVal
 
 // @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+// @alpha (undocumented)
+export interface BatchBindingContext extends CommonBindingContext {
+    // (undocumented)
+    readonly events: BindingContext[];
+    // (undocumented)
+    readonly type: typeof BindingType.Batch;
+}
+
+// @alpha
+export interface BinderEvents {
+}
+
+// @alpha
+export type BinderEventsCompare = CompareFunction<BindingContext>;
+
+// @alpha
+export interface BinderOptions {
+    // (undocumented)
+    matchPolicy: MatchPolicy;
+    // (undocumented)
+    sortFn?: BinderEventsCompare;
+}
+
+// @alpha
+export type BindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+
+// @alpha (undocumented)
+export type BindingContextType = typeof BindingType[keyof typeof BindingType];
+
+// @alpha
+export const BindingType: {
+    readonly Delete: "delete";
+    readonly Insert: "insert";
+    readonly SetValue: "setValue";
+    readonly Invalidation: "invalidation";
+    readonly Batch: "batch";
+};
+
+// @alpha
+export type BindPath = DownPath;
+
+// @alpha
+export interface BindSyntaxTree {
+    // (undocumented)
+    readonly [indexSymbol]?: number;
+    // (undocumented)
+    readonly [key: string]: true | BindSyntaxTree;
+}
+
+// @alpha
+export interface BindTree<T = BindTreeDefault> extends PathStep {
+    // (undocumented)
+    readonly children: Map<FieldKey, T>;
+}
+
+// @alpha
+export type BindTreeDefault = BindTree;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -235,6 +296,21 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
+export interface CommonBindingContext {
+    // (undocumented)
+    readonly type: BindingContextType;
+}
+
+// @alpha
+export type CompareFunction<T> = (a: T, b: T) => number;
+
+// @alpha
+export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T>;
+
+// @alpha
+export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree;
+
+// @alpha
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 infer Head,
 ...infer Tail
@@ -269,8 +345,32 @@ interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @alpha (undocumented)
+export function createBinderOptions({ matchPolicy, sortFn, }: {
+    matchPolicy?: MatchPolicy;
+    sortFn?: BinderEventsCompare;
+}): BinderOptions;
+
+// @alpha (undocumented)
+export function createDataBinderBuffering<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<OperationBinderEvents>;
+
+// @alpha (undocumented)
+export function createDataBinderDirect<E extends Events<E>>(view: ISubscribable<E>, options: BinderOptions): DataBinder<OperationBinderEvents>;
+
+// @alpha (undocumented)
+export function createDataBinderInvalidating<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<InvalidationBinderEvents>;
+
 // @alpha
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
+
+// @alpha (undocumented)
+export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy, sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
+    matchPolicy?: MatchPolicy;
+    sortFn?: BinderEventsCompare;
+    sortAnchorsFn?: AnchorsCompare;
+    autoFlush?: boolean;
+    autoFlushPolicy: keyof Events<E>;
+}): FlushableBinderOptions<E>;
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
@@ -320,6 +420,12 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 // @alpha
+export interface DataBinder<B extends BinderEvents> {
+    register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindTree[], listener?: B[K]): void;
+    unregisterAll(): void;
+}
+
+// @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @alpha
@@ -327,6 +433,16 @@ interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
     // (undocumented)
     readonly type: typeof MarkType.Delete;
+}
+
+// @alpha (undocumented)
+export interface DeleteBindingContext extends CommonBindingContext {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly path: UpPath;
+    // (undocumented)
+    readonly type: typeof BindingType.Delete;
 }
 
 declare namespace Delta {
@@ -365,6 +481,9 @@ export interface Dependent extends NamedComputation {
 // @alpha
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
+
+// @alpha
+export type DownPath = PathStep[];
 
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
@@ -667,6 +786,26 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @alpha
 type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true ? ConstantFlexListToNonLazyArray<List> : NormalizedFlexList<ExtractListItemType<List>>;
 
+// @alpha
+export interface Flushable<T> {
+    // (undocumented)
+    flush(): T;
+}
+
+// @alpha
+export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
+    // (undocumented)
+    autoFlush: boolean;
+    // (undocumented)
+    autoFlushPolicy: keyof Events<E>;
+    // (undocumented)
+    sortAnchorsFn?: AnchorsCompare;
+}
+
+// @alpha
+export interface FlushableDataBinder<B extends BinderEvents> extends DataBinder<B>, Flushable<FlushableDataBinder<B>> {
+}
+
 // @alpha (undocumented)
 export interface Forbidden extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {
 }
@@ -837,6 +976,9 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 }
 
 // @alpha
+export const indexSymbol: unique symbol;
+
+// @alpha
 type _InlineTrick = 0;
 
 // @alpha
@@ -845,6 +987,16 @@ interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly isTransient?: true;
     // (undocumented)
     readonly type: typeof MarkType.Insert;
+}
+
+// @alpha (undocumented)
+export interface InsertBindingContext extends CommonBindingContext {
+    // (undocumented)
+    readonly content: ProtoNodes;
+    // (undocumented)
+    readonly path: UpPath;
+    // (undocumented)
+    readonly type: typeof BindingType.Insert;
 }
 
 declare namespace InternalTypedSchemaTypes {
@@ -917,6 +1069,18 @@ declare namespace InternalTypes_2 {
         UntypedOptionalField,
         UntypedValueField
     }
+}
+
+// @alpha
+export interface InvalidationBinderEvents extends BinderEvents {
+    // (undocumented)
+    invalidation(context: InvalidationBindingContext): void;
+}
+
+// @alpha (undocumented)
+export interface InvalidationBindingContext extends CommonBindingContext {
+    // (undocumented)
+    readonly type: typeof BindingType.Invalidation;
 }
 
 // @alpha
@@ -1176,6 +1340,9 @@ const MarkType: {
 };
 
 // @alpha
+export type MatchPolicy = "subtree" | "path";
+
+// @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
     // (undocumented)
     readonly type: typeof MarkType.Modify;
@@ -1396,6 +1563,18 @@ export const on: unique symbol;
 // @alpha
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
+// @alpha
+export interface OperationBinderEvents extends BinderEvents {
+    // (undocumented)
+    batch(context: BatchBindingContext): void;
+    // (undocumented)
+    delete(context: DeleteBindingContext): void;
+    // (undocumented)
+    insert(context: InsertBindingContext): void;
+    // (undocumented)
+    setValue(context: SetValueBindingContext): void;
+}
+
 // @alpha (undocumented)
 export interface Optional extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {
 }
@@ -1420,6 +1599,14 @@ export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
     rootFieldOverride?: FieldKey;
+}
+
+// @alpha
+export interface PathStep {
+    // (undocumented)
+    readonly field: FieldKey;
+    // (undocumented)
+    readonly index?: number;
 }
 
 // @alpha
@@ -1631,6 +1818,16 @@ export interface SequenceFieldEditBuilder {
     revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
 }
 
+// @alpha (undocumented)
+export interface SetValueBindingContext extends CommonBindingContext {
+    // (undocumented)
+    readonly path: UpPath;
+    // (undocumented)
+    readonly type: typeof BindingType.SetValue;
+    // (undocumented)
+    readonly value: TreeValue;
+}
+
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
@@ -1738,6 +1935,9 @@ export interface TaggedChange<TChangeset> {
 
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+
+// @alpha (undocumented)
+export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T;
 
 // @alpha
 export enum TransactionResult {
