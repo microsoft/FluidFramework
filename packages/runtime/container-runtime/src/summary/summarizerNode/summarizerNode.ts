@@ -373,24 +373,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 					return { latestSummaryUpdated: false };
 				}
 
-				// TODO: clean up the code once we move completely to restarting instead of refreshing as we do not need the refresh logic.
-				let latestSnapshot: IFetchSnapshotResult;
-				try {
-					// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
-					// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-					latestSnapshot = await fetchLatestSnapshot();
-				} catch (error: any) {
-					if (error?.message === "Restarting summarizer instead of refreshing") {
-						eventProps.latestSummaryUpdated = false;
-						eventProps.message = error.message;
-						event.end(eventProps);
-						return { latestSummaryUpdated: false };
-					}
-
-					throw error;
-				}
-
-				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = latestSnapshot;
+				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
+				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
+					await fetchLatestSnapshot();
 
 				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
 				// snapshot is older than the latest tracked summary, ignore it.

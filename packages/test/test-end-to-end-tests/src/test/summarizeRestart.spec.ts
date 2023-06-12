@@ -78,11 +78,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
-			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-				message: "Restarting summarizer instead of refreshing",
-				category: "performance",
-			},
 		],
 		async () => {
 			const container = await createContainer();
@@ -123,11 +118,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
-			},
-			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-				message: "Restarting summarizer instead of refreshing",
-				category: "performance",
 			},
 		],
 		async () => {
@@ -182,7 +172,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:FailToSummarize",
-				error: "channelFactoryNotRegisteredForGivenType",
+				error: "disconnected",
 			},
 		],
 		async () => {

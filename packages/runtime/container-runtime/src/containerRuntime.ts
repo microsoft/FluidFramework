@@ -3476,7 +3476,6 @@ export class ContainerRuntime
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
-			throw error;
 		}
 
 		return snapshotResults;

@@ -656,10 +656,7 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptsPerPhase = 0;
 					}
 
-					// TODO: remove this code and move to trySummarizeOnce when closing the summarizer instead of refreshing
-					if (result.error?.message !== "Restarting summarizer instead of refreshing") {
-						lastResult = result;
-					}
+					lastResult = result;
 
 					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
