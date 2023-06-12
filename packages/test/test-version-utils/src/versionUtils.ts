@@ -203,7 +203,8 @@ export async function ensureInstalled(
 			const options: ExecOptions = {
 				cwd: modulePath,
 				env: {
-					// Reset any parent process options: path-specific options (ex: --require, --experimental-loader)
+					...process.env,
+					// Reset any parent process node options: path-specific options (ex: --require, --experimental-loader)
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
