@@ -339,7 +339,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	public proneBlobHandle(handle: IFluidHandle<ArrayBufferLike>) {
 		const index = this.pendingHandles.indexOf(handle);
-		if (index !== -1) {
+		if (index !== -1 && handle.isAttached) {
 			this.pendingHandles.splice(index, 1);
 		}
 	}
