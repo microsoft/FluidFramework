@@ -13,9 +13,9 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"scripts": {
-		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
