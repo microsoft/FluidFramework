@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 import {
+	BrandVariants,
+	createLightTheme,
+	FluentProvider,
+	makeStyles,
+	shorthands,
 	Spinner,
-	Stack,
-	StackItem,
-	ThemeProvider,
-	createTheme,
-	mergeStyles,
-} from "@fluentui/react";
+	Text,
+	Theme,
+} from "@fluentui/react-components";
 import React from "react";
 
 import { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
@@ -177,42 +179,64 @@ function useContainerInfo(
 	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
 }
 
-const appTheme = createTheme({
-	palette: {
-		themePrimary: "#0078d4",
-		themeLighterAlt: "#eff6fc",
-		themeLighter: "#deecf9",
-		themeLight: "#c7e0f4",
-		themeTertiary: "#71afe5",
-		themeSecondary: "#2b88d8",
-		themeDarkAlt: "#106ebe",
-		themeDark: "#005a9e",
-		themeDarker: "#004578",
-		neutralLighterAlt: "#faf9f8",
-		neutralLighter: "#f3f2f1",
-		neutralLight: "#edebe9",
-		neutralQuaternaryAlt: "#e1dfdd",
-		neutralQuaternary: "#d0d0d0",
-		neutralTertiaryAlt: "#c8c6c4",
-		neutralTertiary: "#a19f9d",
-		neutralSecondary: "#605e5c",
-		neutralSecondaryAlt: "#8a8886",
-		neutralPrimaryAlt: "#3b3a39",
-		neutralPrimary: "#323130",
-		neutralDark: "#201f1e",
-		black: "#000000",
-		white: "#ffffff",
+const appTheme: BrandVariants = {
+	10: "#020305",
+	20: "#111723",
+	30: "#16263D",
+	40: "#193253",
+	50: "#1B3F6A",
+	60: "#1B4C82",
+	70: "#18599B",
+	80: "#1267B4",
+	90: "#3174C2",
+	100: "#4F82C8",
+	110: "#6790CF",
+	120: "#7D9ED5",
+	130: "#92ACDC",
+	140: "#A6BAE2",
+	150: "#BAC9E9",
+	160: "#CDD8EF",
+};
+
+const lightTheme: Theme = {
+	...createLightTheme(appTheme),
+};
+
+/**
+ * Styles for the app components
+ */
+const useStyles = makeStyles({
+	/**
+	 * Root of the app (both internal app views + embedded devtools panel)
+	 */
+	root: {
+		display: "flex",
+		flexDirection: "row",
 	},
-});
 
-const rootStackStyles = mergeStyles({
-	height: "100vh",
-});
+	/**
+	 * Container for the two app views
+	 */
+	appViewsContainer: {
+		display: "flex",
+		flexDirection: "row",
+	},
 
-const appViewPaneStackStyles = mergeStyles({
-	padding: "5px",
-	height: "100%",
-	flex: 1,
+	/**
+	 * Styles for each inner app view
+	 */
+	appView: {
+		display: "flex",
+		flexDirection: "column",
+		...shorthands.padding("10px"),
+	},
+
+	loadingAppView: {
+		alignItems: "stretch", // Center the items horizontally
+		display: "flex",
+		flexDirection: "column",
+		...shorthands.padding("10px"),
+	},
 });
 
 /**
@@ -236,32 +260,43 @@ export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
 	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
 
+	const styles = useStyles();
+
 	const view = (
-		<Stack horizontal>
-			<StackItem>
-				{sharedContainer === undefined ? (
-					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-						<Spinner />
-						<div>Loading Shared container...</div>
-					</Stack>
-				) : (
-					<AppView {...sharedContainer} containerKey={sharedContainerKey} />
-				)}
-			</StackItem>
-			<StackItem>
-				{privateContainer === undefined ? (
-					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-						<Spinner />
-						<div>Loading Private container...</div>
-					</Stack>
-				) : (
-					<AppView {...privateContainer} containerKey={privateContainerKey} />
-				)}
-			</StackItem>
-		</Stack>
+		<div className={styles.appViewsContainer}>
+			{sharedContainer === undefined ? (
+				<LoadingView containerKey={sharedContainerKey} />
+			) : (
+				<AppView {...sharedContainer} containerKey={sharedContainerKey} />
+			)}
+			{privateContainer === undefined ? (
+				<LoadingView containerKey={privateContainerKey} />
+			) : (
+				<AppView {...privateContainer} containerKey={privateContainerKey} />
+			)}
+		</div>
 	);
 
-	return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
+	return (
+		<FluentProvider theme={lightTheme} className={styles.root}>
+			{view}
+		</FluentProvider>
+	);
+}
+
+type LoadingViewProps = HasContainerKey;
+
+function LoadingView(props: LoadingViewProps): React.ReactElement {
+	const { containerKey } = props;
+
+	const styles = useStyles();
+
+	return (
+		<div className={styles.loadingAppView}>
+			<Spinner />
+			<Text>{`Loading ${containerKey}...`}</Text>
+		</div>
+	);
 }
 
 /**
@@ -276,6 +311,8 @@ interface AppViewProps extends ContainerInfo, HasContainerKey {}
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { container, containerKey } = props;
+
+	const styles = useStyles();
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -300,22 +337,12 @@ function AppView(props: AppViewProps): React.ReactElement {
 	}
 
 	return (
-		<Stack horizontal className={rootStackStyles}>
-			<StackItem className={appViewPaneStackStyles}>
-				<h4>{containerKey}</h4>
-				<Stack>
-					<StackItem>
-						<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />
-					</StackItem>
-					<StackItem>
-						<CounterView sharedCounterHandle={sharedCounterHandle} />
-					</StackItem>
-					<StackItem>
-						<TextView sharedTextHandle={sharedTextHandle} />
-					</StackItem>
-				</Stack>
-			</StackItem>
-		</Stack>
+		<div className={styles.appView}>
+			<h4>{containerKey}</h4>
+			<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />
+			<CounterView sharedCounterHandle={sharedCounterHandle} />
+			<TextView sharedTextHandle={sharedTextHandle} />
+		</div>
 	);
 }
 
