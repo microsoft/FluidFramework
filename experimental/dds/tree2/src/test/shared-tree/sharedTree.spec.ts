@@ -26,7 +26,6 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
-	initializeTestTree,
 } from "../utils";
 import {
 	ISharedTree,
@@ -1319,6 +1318,120 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("handles ancestor revive", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+			// Undo delete of a
+			tree2.undo();
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				// Constraint should be not be violated after undo
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "a",
+					fields: {
+						foo: [
+							{
+								type: brand("TestValue"),
+								value: "bar",
+							},
+						],
+					},
+				},
+				{
+					type: brand("TestValue"),
+					value: "b",
+				},
+			];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("handles ancestor delete", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		it("sequence field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -2604,6 +2717,36 @@ const testSchema: SchemaData = {
 	]),
 };
 
+/**
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
+ */
+function initializeTestTree(
+	tree: ISharedTreeView,
+	state?: JsonableTree | JsonableTree[],
+	schema: SchemaData = testSchema,
+): void {
+	if (state === undefined) {
+		tree.storedSchema.update(schema);
+		return;
+	}
+
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.storedSchema.update(schema);
+
+		// Apply an edit to the tree which inserts a node with a value
+		runSynchronous(tree, () => {
+			const writeCursors = state.map(singleTextCursor);
+			const field = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+			field.insert(0, writeCursors);
+		});
+	}
+}
+
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory();
 	const builder = new SchemaBuilder("testTreeView");
@@ -2616,7 +2759,6 @@ function testTreeView(): ISharedTreeView {
 		schema,
 	});
 }
-
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
