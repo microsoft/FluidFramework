@@ -5,7 +5,7 @@
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 
-import { Context, MonoRepoKind } from "@fluidframework/build-tools";
+import { Context } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
@@ -99,7 +99,7 @@ export function generateBumpDepsBranchName(
 	bumpType: DependencyUpdateType | VersionBumpType,
 	releaseGroup?: ReleaseGroup,
 ): string {
-	const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";
+	const releaseGroupSegment = releaseGroup === undefined ? "" : `_${releaseGroup}`;
 	const branchName = `bump_deps_${bumpedDep.toLowerCase()}_${bumpType}${releaseGroupSegment}`;
 	return branchName;
 }

@@ -176,10 +176,9 @@ export type NodeChangeInverter = (
 /**
  * @alpha
  */
-export enum NodeExistenceStateChange {
-	Unchanged,
-	Deleted,
-	Revived,
+export enum NodeExistenceState {
+	Alive,
+	Dead,
 }
 
 /**
@@ -189,10 +188,10 @@ export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
 	/**
-	 * Deleted when the baseChange deletes the node, Revived when the baseChange revives the node.
-	 * Unchanged by default when undefined.
+	 * Whether or not the node is alive or dead in the input context of change.
+	 * Defaults to Alive if undefined.
 	 */
-	stateChange?: NodeExistenceStateChange,
+	state?: NodeExistenceState,
 ) => NodeChangeset | undefined;
 
 /**

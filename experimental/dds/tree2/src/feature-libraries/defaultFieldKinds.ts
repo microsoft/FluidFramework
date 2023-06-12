@@ -30,7 +30,7 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -481,7 +481,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
-							NodeExistenceStateChange.Deleted,
+							NodeExistenceState.Dead,
 						),
 						deletedBy: overTagged.revision,
 					};
@@ -497,7 +497,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						childChange: rebaseChild(
 							change.childChange,
 							over.fieldChange.newContent.changes,
-							NodeExistenceStateChange.Revived,
+							NodeExistenceState.Alive,
 						),
 					};
 				}

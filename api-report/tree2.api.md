@@ -1318,7 +1318,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-stateChange?: NodeExistenceStateChange) => NodeChangeset | undefined;
+state?: NodeExistenceState) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1340,13 +1340,11 @@ export interface NodeData {
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
-export enum NodeExistenceStateChange {
+export enum NodeExistenceState {
     // (undocumented)
-    Deleted = 1,
+    Alive = 0,
     // (undocumented)
-    Revived = 2,
-    // (undocumented)
-    Unchanged = 0
+    Dead = 1
 }
 
 // @alpha (undocumented)
