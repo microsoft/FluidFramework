@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
 overrides:
   '@types/node': ^14.18.38
   node-fetch: ^2.6.9
@@ -17,8 +21,11 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.26.0
+        specifier: ^2.26.1
         version: 2.26.1
+      '@fluid-internal/changelog-generator':
+        specifier: file:build-tools/packages/changelog-generator
+        version: file:build-tools/packages/changelog-generator
       '@fluid-tools/build-cli':
         specifier: ^0.19.0-166151
         version: 0.19.0-166151
@@ -48611,4 +48618,33 @@ packages:
 
   /zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
+    dev: true
+
+  file:build-tools/packages/changelog-generator:
+    resolution: {directory: build-tools/packages/changelog-generator, type: directory}
+    name: '@fluid-internal/changelog-generator'
+    version: 0.14.0
+    requiresBuild: true
+    dependencies:
+      '@changesets/cli': 2.26.1
+      '@changesets/types': 5.2.1
+      '@fluidframework/build-common': 1.2.0
+      '@fluidframework/eslint-config-fluid': 2.0.0(eslint@8.6.0)(typescript@4.5.5)
+      chalk: 2.4.2
+      changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.26.1)
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      eslint: 8.6.0
+      jest: 26.6.3
+      prettier: 2.6.2
+      rimraf: 4.4.1
+      typescript: 4.5.5
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+      - ts-node
+      - utf-8-validate
     dev: true

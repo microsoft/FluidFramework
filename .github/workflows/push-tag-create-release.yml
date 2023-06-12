@@ -93,7 +93,7 @@ jobs:
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
-          --template .changeset/templates/patch-changelog.hbs
+          --template .github/workflows/data/patch-changelog.hbs
       - name: Generate changelog
         # This changelog is a basically empty one used for everything except client patches and build-tools.
         if: ${{ !(fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'build-tools' }}
