@@ -62,6 +62,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
+	weights: any,
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
@@ -207,20 +208,31 @@ export function makeOperationGenerator(
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 
 	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, 2, isShorterThanMaxLength],
-		[removeRange, 1, hasNonzeroLength],
+		[addText, weights.addText, isShorterThanMaxLength],
+		[removeRange, weights.removeRange, hasNonzeroLength],
 		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[deleteInterval, 2, hasAnInterval],
-		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, 2, hasAnInterval],
+		[addInterval, weights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, weights.deleteInterval, hasAnInterval],
+		[changeInterval, weights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+		[changeProperties, weights.changeProperties, hasAnInterval],
 	]);
 }
 
 describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator()),
+		generatorFactory: () =>
+			take(
+				100,
+				makeOperationGenerator({
+					addText: 2,
+					removeRange: 1,
+					addInterval: 2,
+					deleteInterval: 2,
+					changeInterval: 2,
+					changeProperties: 2,
+				}),
+			),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }

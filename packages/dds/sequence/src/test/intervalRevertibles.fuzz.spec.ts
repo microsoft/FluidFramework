@@ -25,10 +25,10 @@ import {
 import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
-	appendChangeIntervalToRevertibles,
-	appendDeleteIntervalToRevertibles,
-	appendIntervalPropertyChangedToRevertibles,
-	appendSharedStringDeltaToRevertibles,
+	// appendChangeIntervalToRevertibles,
+	// appendDeleteIntervalToRevertibles,
+	// appendIntervalPropertyChangedToRevertibles,
+	// appendSharedStringDeltaToRevertibles,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
@@ -111,35 +111,35 @@ emitter.on("clientCreate", (client) => {
 		// Note: delete and change interval edits are disabled for now, and will be reenabled
 		// once bugs AB#4544 and AB#4543 (respectively) are resolved.
 
-		collection.on("deleteInterval", (interval, local, op) => {
-			if (local) {
-				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
-			}
-		});
-		collection.on("changeInterval", (interval, previousInterval, local, op) => {
-			if (local) {
-				appendChangeIntervalToRevertibles(
-					channel,
-					interval,
-					previousInterval,
-					channel.revertibles,
-				);
-			}
-		});
-		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
-			if (local) {
-				appendIntervalPropertyChangedToRevertibles(
-					interval,
-					propertyDeltas,
-					channel.revertibles,
-				);
-			}
-		});
-		channel.on("sequenceDelta", (op) => {
-			if (op.isLocal) {
-				appendSharedStringDeltaToRevertibles(channel, op, channel.revertibles);
-			}
-		});
+		// collection.on("deleteInterval", (interval, local, op) => {
+		// 	if (local) {
+		// 		appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
+		// 	}
+		// });
+		// collection.on("changeInterval", (interval, previousInterval, local, op) => {
+		// 	if (local) {
+		// 		appendChangeIntervalToRevertibles(
+		// 			channel,
+		// 			interval,
+		// 			previousInterval,
+		// 			channel.revertibles,
+		// 		);
+		// 	}
+		// });
+		// collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+		// 	if (local) {
+		// 		appendIntervalPropertyChangedToRevertibles(
+		// 			interval,
+		// 			propertyDeltas,
+		// 			channel.revertibles,
+		// 		);
+		// 	}
+		// });
+		// channel.on("sequenceDelta", (op) => {
+		// 	if (op.isLocal) {
+		// 		appendSharedStringDeltaToRevertibles(channel, op, channel.revertibles);
+		// 	}
+		// });
 	});
 });
 
@@ -177,6 +177,7 @@ const optionsWithEmitter = {
 
 type ClientOpState = FuzzTestState;
 function operationGenerator(
+	weights: any,
 	optionsParam?: OperationGenerationConfig,
 ): Generator<RevertOperation, ClientOpState> {
 	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
@@ -184,18 +185,30 @@ function operationGenerator(
 		return channel.revertibles.length > 0;
 	};
 
-	// make the weights configurable
-	const baseGenerator = makeOperationGenerator();
+	const baseGenerator = makeOperationGenerator(weights);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
-		[{ type: "revertSharedStringRevertibles" }, 1, hasRevertibles],
-		[baseGenerator, 2],
+		[{ type: "revertSharedStringRevertibles" }, weights.revertWeight, hasRevertibles],
+		// ??
+		[baseGenerator, 1],
 	]);
 }
 
 describe.only("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
-		generatorFactory: () => take(100, operationGenerator()),
+		generatorFactory: () =>
+			take(
+				100,
+				operationGenerator({
+					revertWeight: 2,
+					addText: 2,
+					removeRange: 1,
+					addInterval: 2,
+					deleteInterval: 2,
+					changeInterval: 2,
+					changeProperties: 2,
+				}),
+			),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
