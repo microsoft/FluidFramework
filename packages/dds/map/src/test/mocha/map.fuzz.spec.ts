@@ -97,17 +97,25 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe.only("Map fuzz tests", () => {
+describe("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () =>
+			takeAsync(
+				100,
+				makeGenerator({
+					// This suite currently fails when `.clear()` operations are enabled.
+					// AB#4612 tracks resolving that and making this nonzero.
+					clearWeight: 0,
+				}),
+			),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMapsAreEquivalent,
 	};
 
 	createDDSFuzzSuite(model, {
-		defaultTestCount: 10,
+		defaultTestCount: 100,
 		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
@@ -119,21 +127,21 @@ describe.only("Map fuzz tests", () => {
 		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },
 	});
 
-	// createDDSFuzzSuite(
-	// 	{ ...model, workloadName: "with reconnect" },
-	// 	{
-	// 		defaultTestCount: 100,
-	// 		numberOfClients: 3,
-	// 		clientJoinOptions: {
-	// 			maxNumberOfClients: 6,
-	// 			clientAddProbability: 0.1,
-	// 		},
-	// 		reconnectProbability: 0.1,
-	// 		// Uncomment to replay a particular seed.
-	// 		// replay: 0,
-	// 		saveFailures: {
-	// 			directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
-	// 		},
-	// 	},
-	// );
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "with reconnect" },
+		{
+			defaultTestCount: 100,
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 6,
+				clientAddProbability: 0.1,
+			},
+			reconnectProbability: 0.1,
+			// Uncomment to replay a particular seed.
+			// replay: 0,
+			saveFailures: {
+				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+			},
+		},
+	);
 });
