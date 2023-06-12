@@ -126,13 +126,13 @@ describe("ModularChangeFamily integration", () => {
 			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 			const value = 42;
 			editor.move(
-				{ parent: undefined, field: fieldB },
-				0,
-				1,
 				{ parent: undefined, field: fieldA },
 				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
 			);
-			editor.setValue({ parent: undefined, parentField: fieldB, parentIndex: 0 }, value);
+			editor.setValue({ parent: undefined, parentField: fieldA, parentIndex: 0 }, value);
 
 			const [move, setValue] = getChanges();
 			const moveTagged = tagChange(move, tag1);
@@ -146,8 +146,8 @@ describe("ModularChangeFamily integration", () => {
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
 			const actual = family.intoDelta(composed);
 			const expected: Delta.Root = new Map([
-				[fieldA, [{ type: Delta.MarkType.Modify, setValue: value }]],
-				[fieldB, []],
+				[fieldA, []],
+				[fieldB, [{ type: Delta.MarkType.Modify, setValue: value }]],
 			]);
 			assert.deepEqual(actual, expected);
 		});
