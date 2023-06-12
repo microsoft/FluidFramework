@@ -183,4 +183,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, RevertType } from "./undo";

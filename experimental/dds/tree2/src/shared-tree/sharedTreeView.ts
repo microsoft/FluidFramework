@@ -16,7 +16,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
-	UndoRedoManagerCommitType,
+	RevertType,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -60,7 +60,7 @@ export interface ViewEvents {
 	/**
 	 * An undoable change has been made to the tree. This is used to track undo/redo on the {@link SharedTreeViewUndoRedoHandler}
 	 */
-	undoable(type: UndoRedoManagerCommitType, target: ISharedTreeView): void;
+	undoable(type: RevertType, target: ISharedTreeView): void;
 }
 
 /**

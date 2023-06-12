@@ -1486,6 +1486,13 @@ type RequiredFields<T> = [
 ][_InlineTrick];
 
 // @alpha
+export enum RevertType {
+    Redo = 2,
+    Undo = 1,
+    Undoable = 0
+}
+
+// @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
@@ -1688,7 +1695,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 // @alpha
 export class SharedTreeViewRevertible implements IRevertible {
-    constructor(undoRedoManagerCommitType: UndoRedoManagerCommitType, tree: ISharedTreeView);
+    constructor(revertType: RevertType, tree: ISharedTree);
     // (undocumented)
     discard(): void;
     // (undocumented)
@@ -1699,9 +1706,9 @@ export class SharedTreeViewRevertible implements IRevertible {
 export class SharedTreeViewUndoRedoHandler {
     constructor(stackManager: UndoRedoStackManager);
     // (undocumented)
-    attachTree(tree: ISharedTreeView): void;
+    attachTree(tree: ISharedTree): void;
     // (undocumented)
-    detachTree(tree: ISharedTreeView): void;
+    detachTree(tree: ISharedTree): void;
 }
 
 // @alpha
@@ -1924,13 +1931,6 @@ TName extends infer S & TreeSchemaIdentifier ? S : string
 type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
 
 // @alpha
-export enum UndoRedoManagerCommitType {
-    Redo = 2,
-    Undo = 1,
-    Undoable = 0
-}
-
-// @alpha
 type UntypedApi<Mode extends ApiMode> = {
     [ApiMode.Editable]: UntypedTree;
     [ApiMode.EditableUnwrapped]: UntypedTree | PrimitiveValue;
@@ -2093,7 +2093,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    undoable(type: UndoRedoManagerCommitType, target: ISharedTreeView): void;
+    undoable(type: RevertType, target: ISharedTreeView): void;
 }
 
 // @alpha
