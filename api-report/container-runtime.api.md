@@ -187,6 +187,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
+    // (undocumented)
+    proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;

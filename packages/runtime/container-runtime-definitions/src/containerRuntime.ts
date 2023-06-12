@@ -5,7 +5,13 @@
 
 import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -91,4 +97,6 @@ export interface IContainerRuntime
 	 * @param request - request to resolve
 	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
+
+	proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
 }

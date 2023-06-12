@@ -939,6 +939,12 @@ export abstract class FluidDataStoreContext
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.containerRuntime.uploadBlob(blob);
 	}
+
+	public proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void {
+		if (this.containerRuntime.proneBlobHandle !== undefined) {
+			this.containerRuntime.proneBlobHandle(handle);
+		}
+	}
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {

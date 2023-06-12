@@ -167,6 +167,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
+	private readonly pendingHandles: IFluidHandle<ArrayBufferLike>[] = [];
+
 	/**
 	 * Track ops in flight for online flow. This is used for optimizations where if we receive an ack for a storage ID,
 	 * we can resolve all pending blobs with the same storage ID even though they may have different local IDs. That's
@@ -335,6 +337,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
+	public proneBlobHandle(handle: IFluidHandle<ArrayBufferLike>) {
+		const index = this.pendingHandles.indexOf(handle);
+		if (index !== -1) {
+			this.pendingHandles.splice(index, 1);
+		}
+	}
+
 	/**
 	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
 	 * detached or there are no (non-pending) attachment blobs in the document
@@ -492,7 +501,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 					// happened before and so, the server won't delete it.
 					this.setRedirection(localId, response.id);
-					entry.handleP.resolve(this.getBlobHandle(localId));
+					const blobHandle = this.getBlobHandle(localId);
+					this.pendingHandles.push(blobHandle);
+					entry.handleP.resolve(blobHandle);
 					this.deleteAndEmitsIfEmpty(localId);
 				} else {
 					// If there is already an op for this storage ID, append the local ID to the list. Once any op for
@@ -567,7 +578,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				? PendingBlobStatus.OfflinePendingUpload
 				: PendingBlobStatus.OfflinePendingOp;
 
-		entry.handleP.resolve(this.getBlobHandle(localId));
+		const blobHandle = this.getBlobHandle(localId);
+		this.pendingHandles.push(blobHandle);
+		entry.handleP.resolve(blobHandle);
 	}
 
 	/**
@@ -625,7 +638,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// It's possible we transitioned to offline flow while waiting for this op.
 					if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
 						this.setRedirection(pendingLocalId, blobId);
-						pendingBlobEntry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+						const blobHandle = this.getBlobHandle(localId);
+						this.pendingHandles.push(blobHandle);
+						pendingBlobEntry.handleP.resolve(blobHandle);
 						this.deleteAndEmitsIfEmpty(pendingLocalId);
 					}
 				});

@@ -589,6 +589,13 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob);
 	}
 
+	public proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>) {
+		if (this.dataStoreContext.proneBlobHandle !== undefined) {
+			this.dataStoreContext.proneBlobHandle(handle);
+		}
+		return;
+	}
+
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		this.verifyNotClosed();
 

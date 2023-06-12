@@ -15,6 +15,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, ISharedMapEvents } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
@@ -226,6 +227,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	public set(key: string, value: unknown): this {
 		this.kernel.set(key, value);
+		if (this.runtime.proneBlobHandle !== undefined) {
+			this.runtime.proneBlobHandle(value as IFluidHandle<ArrayBufferLike>);
+		}
 		return this;
 	}
 

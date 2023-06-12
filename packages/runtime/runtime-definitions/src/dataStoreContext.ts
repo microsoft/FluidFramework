@@ -474,6 +474,8 @@ export interface IFluidDataStoreContext
 
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
+	proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
+
 	/**
 	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
 	 *

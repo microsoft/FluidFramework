@@ -107,6 +107,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
+    proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;

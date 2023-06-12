@@ -2963,6 +2963,11 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob);
 	}
 
+	public proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>) {
+		this.verifyNotClosed();
+		this.blobManager.proneBlobHandle(handle);
+	}
+
 	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
 		if (type !== ContainerMessageType.IdAllocation) {
 			let idAllocationBatchMessage: BatchMessage | undefined;

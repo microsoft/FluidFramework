@@ -273,6 +273,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
+    // (undocumented)
+    proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)

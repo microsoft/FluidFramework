@@ -16,6 +16,7 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -42,6 +43,8 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // (undocumented)
+    proneBlobHandle?(handle: IFluidHandle<ArrayBufferLike>): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly scope: FluidObject;
