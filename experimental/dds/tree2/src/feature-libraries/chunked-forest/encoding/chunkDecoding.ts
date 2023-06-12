@@ -39,7 +39,12 @@ import {
 import { DecoderCache, decode as genericDecode } from "./chunkEncodingGeneric";
 
 export function decode(chunk: EncodedChunk): TreeChunk {
-	return genericDecode(decoderLibrary, chunk);
+	return genericDecode(
+		decoderLibrary,
+		new DecoderCache(chunk.identifiers, chunk.shapes),
+		chunk,
+		AnyDecoder.instance,
+	);
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
