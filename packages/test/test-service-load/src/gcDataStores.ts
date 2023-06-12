@@ -428,7 +428,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		this.dataObjectMap.on("valueChanged", (changed, local) => {
 			activityRunner(changed, local, this.dataObjectMap).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "ActivityRunFailedError",
+					eventName: "DSActivityRunFailedError",
 					id,
 					error,
 				});
@@ -439,7 +439,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		this.blobMap.on("valueChanged", (changed, local) => {
 			activityRunner(changed, local, this.blobMap).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "ActivityRunFailedError",
+					eventName: "BlobActivityRunFailedError",
 					id,
 					error,
 				});
@@ -794,30 +794,39 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		const partnerRunId2 = ((myRunId + halfClients + 1) % config.testConfig.numClients) + 1;
 		const partnerId1 = `client${partnerRunId1}`;
 		const partnerId2 = `client${partnerRunId2}`;
+
 		/**
-		 * Set up an event handler that listens for changes in the data object map meaning that a child data object
-		 * was referenced or unreferenced by a client.
+		 * Set up an event listener that will run / stop activity based on the activities of the partner.
+		 * If a partner referenced a data store or attachment blob, run activity on the corresponding local object.
+		 * If a partner unreferenced a data store or attachment blob, stop activity on the corresponding local object.
 		 */
-		const partnerActivityRunner = async (changed: IValueChanged, local: boolean) => {
+		const partnerActivityRunner = async (
+			changed: IValueChanged,
+			local: boolean,
+			activityObjectMap: SharedMap,
+			partnerIds: string[],
+		) => {
 			if (local) {
 				return;
 			}
 
-			// Only collaborate with two other partner clients. If we collaborate with all clients, there would be too
-			// many ops and we might get throttled.
-			if (!changed.key.startsWith(partnerId1) && !changed.key.startsWith(partnerId2)) {
+			// Collaborate with the partners clients specified in partnerIds.
+			if (!partnerIds.some((partnerId) => changed.key.startsWith(partnerId))) {
 				return;
 			}
 
-			// If a new data object was referenced, run our corresponding local data object.
-			// If a data object was unreferenced, stop running our corresponding local data object.
-			if (this.dataObjectMap.has(changed.key)) {
-				const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
+			// If a new object was referenced, run our corresponding local data object.
+			// If an object was unreferenced, stop running our corresponding local data object.
+			if (activityObjectMap.has(changed.key)) {
+				const activityObjectHandle = activityObjectMap.get<IFluidHandle<IGCActivityObject>>(
 					changed.key,
 				);
-				assert(dataObjectHandle !== undefined, `Could not find handle for ${changed.key}`);
-				const dataObject = await dataObjectHandle.get();
-				const result = await dataObject.run(
+				assert(
+					activityObjectHandle !== undefined,
+					`Could not find handle for ${changed.key}`,
+				);
+				const activityObject = await activityObjectHandle.get();
+				const result = await activityObject.run(
 					this.childRunConfig,
 					`${this.nodeId}/${changed.key}`,
 				);
@@ -825,16 +834,35 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 					this.activityFailed = true;
 				}
 			} else {
-				const dataObjectHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
-				const dataObject = await dataObjectHandle.get();
-				dataObject.stop();
+				const activityObjectHandle =
+					changed.previousValue as IFluidHandle<IGCActivityObject>;
+				const activityObject = await activityObjectHandle.get();
+				activityObject.stop();
 			}
 		};
 
+		// For data stores, collaborate with two partner clients. This will keep the number of ops to a reasonable
+		// number so as to not get throttled.
 		this.dataObjectMap.on("valueChanged", (changed, local) => {
-			partnerActivityRunner(changed, local).catch((error) => {
+			partnerActivityRunner(changed, local, this.dataObjectMap, [
+				partnerId1,
+				partnerId2,
+			]).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "PartnerActivityRunFailedError",
+					eventName: "PartnerDSActivityRunFailedError",
+					id,
+					error,
+				});
+				this.activityFailed = true;
+			});
+		});
+
+		// For attachment blobs, collaborate with one partner client. Blob requests are more sensitive to being
+		// throttled. Collaborating with one client will keep the number of requests less while giving coverage.
+		this.blobMap.on("valueChanged", (changed, local) => {
+			partnerActivityRunner(changed, local, this.blobMap, [partnerId1]).catch((error) => {
+				config.logger.sendErrorEvent({
+					eventName: "PartnerBlobActivityRunFailedError",
 					id,
 					error,
 				});
