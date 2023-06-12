@@ -580,7 +580,7 @@ describe("Error Logging", () => {
 					"retryAfterSeconds not undefined",
 				);
 			});
-			it("missing properties are not set", () => {
+			it("existing retry properties are present in normalized error", () => {
 				const unknownError: { canRetry?: boolean; retryAfterSeconds?: number } & Error =
 					new Error();
 				unknownError.canRetry = true;

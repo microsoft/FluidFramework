@@ -124,7 +124,7 @@ export function normalizeError(
 	// Anywhere they are set should be on a valid Fluid Error that would have been returned above,
 	// but we can't prove it with the types, so adding this defensive measure.
 	if (typeof error === "object" && error !== null) {
-		const maybeRetirable: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> = error;
+		const maybeRetriable: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> = error;
 		let retryProps: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> | undefined;
 		if ("canRetry" in error) {
 			retryProps ??= {};
