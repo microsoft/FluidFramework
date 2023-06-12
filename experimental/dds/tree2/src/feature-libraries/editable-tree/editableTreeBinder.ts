@@ -4,15 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-	FieldKey,
-	PathVisitor,
-	ProtoNodes,
-	TreeValue,
-	UpPath,
-	getDepth,
-	topDownPath,
-} from "../../core";
+import { FieldKey, PathVisitor, ProtoNodes, TreeValue, UpPath, topDownPath } from "../../core";
 import { Events, ISubscribable } from "../../events";
 import { brand } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
@@ -563,7 +555,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	public flush(): BufferingPathVisitor {
 		const sortedQueue: CallableBindingContext[] = nativeSort(
 			this.eventQueue,
-			this.options.sortFn ?? compareBinderEventsDeleteFirst,
+			this.options.sortFn ?? compareBinderEventsZero,
 		);
 		const batchEventIndices = new Set<number>();
 		const batchEvents: CallableBindingContext[] = [];
@@ -697,7 +689,7 @@ class BufferingDataBinder<E extends Events<E>>
 
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
 		const unsortedVisitors: BufferingPathVisitor[] = Array.from(this.visitorLocations.keys());
-		const sortFn = this.options.sortAnchorsFn ?? compareAnchorsDepthFirst;
+		const sortFn = this.options.sortAnchorsFn ?? compareAnchorsZero;
 		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
@@ -846,21 +838,12 @@ export function createFlushableBinderOptions<E extends Events<E>>({
 	};
 }
 
-export function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
-	if (a.type === BindingType.Delete && b.type === BindingType.Delete) {
-		return 0;
-	}
-	if (a.type === BindingType.Delete) {
-		return -1;
-	}
-	if (b.type === BindingType.Delete) {
-		return 1;
-	}
+export function compareBinderEventsZero(a: BindingContext, b: BindingContext): number {
 	return 0;
 }
 
-export function compareAnchorsDepthFirst(a: UpPath, b: UpPath): number {
-	return getDepth(a) - getDepth(b);
+export function compareAnchorsZero(a: UpPath, b: UpPath): number {
+	return 0;
 }
 
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, FieldKey } from "../../../core";
+import { AllowedUpdateType, FieldKey, UpPath, getDepth } from "../../../core";
 import {
 	ContextuallyTypedNodeData,
 	getField,
@@ -22,7 +22,6 @@ import {
 	createFlushableBinderOptions,
 	createDataBinderInvalidating,
 	createDataBinderDirect,
-	InvalidStateBindingContext,
 	DataBinder,
 	InvalidationBinderEvents,
 	OperationBinderEvents,
@@ -31,12 +30,12 @@ import {
 	BatchBindingContext,
 	comparePipeline,
 	CompareFunction,
-	compareBinderEventsDeleteFirst,
 	createBinderOptions,
 	BindSyntaxTree,
 	indexSymbol,
 	compileSyntaxTree,
 	BindTree,
+	InvalidationBindingContext,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
@@ -439,7 +438,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
-		it("registers to root, matches paths with subtree policy and any index, default sorting enabled (ie. deletes first). Explicit flush.", () => {
+		it("registers to root, matches paths with subtree policy and any index, deletes first custom sort. Explicit flush.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
@@ -449,6 +448,7 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
+				sortFn: compareBinderEventsDeleteFirst,
 			});
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
@@ -745,7 +745,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
-		it("registers to root, matches paths with subtree policy and any index. Batch notification.", () => {
+		it("registers to root, matches paths with subtree policy and any index. Deletes first sorting. Batch notification.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
@@ -755,6 +755,8 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
+				sortFn: compareBinderEventsDeleteFirst,
+				sortAnchorsFn: compareAnchorsDepthFirst,
 			});
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
@@ -898,7 +900,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
-		it("registers to root, matches paths with subtree policy and any index. Native (default) sorting. Combined batch and incremental notification", () => {
+		it("registers to root, matches paths with subtree policy and any index. Custom sorting. Combined batch and incremental notification", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
@@ -914,6 +916,8 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
+				sortFn: compareBinderEventsDeleteFirst,
+				sortAnchorsFn: compareAnchorsDepthFirst,
 			});
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
@@ -1083,7 +1087,7 @@ describe("editable-tree: data binder", () => {
 				root,
 				BindingType.Invalidation,
 				[bindTree],
-				(invalidStateContext: InvalidStateBindingContext) => {
+				(invalidStateContext: InvalidationBindingContext) => {
 					invalidationCount++;
 				},
 			);
@@ -1119,7 +1123,7 @@ describe("editable-tree: data binder", () => {
 				root,
 				BindingType.Invalidation,
 				[bindTree1],
-				(invalidStateContext: InvalidStateBindingContext) => {
+				(invalidStateContext: InvalidationBindingContext) => {
 					invalidationCount1++;
 				},
 			);
@@ -1128,7 +1132,7 @@ describe("editable-tree: data binder", () => {
 				root,
 				BindingType.Invalidation,
 				[bindTree2],
-				(invalidStateContext: InvalidStateBindingContext) => {
+				(invalidStateContext: InvalidationBindingContext) => {
 					invalidationCount2++;
 				},
 			);
@@ -1319,4 +1323,21 @@ function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
 		initialTree: initialData,
 		schema: fullSchemaData,
 	});
+}
+
+function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
+	if (a.type === BindingType.Delete && b.type === BindingType.Delete) {
+		return 0;
+	}
+	if (a.type === BindingType.Delete) {
+		return -1;
+	}
+	if (b.type === BindingType.Delete) {
+		return 1;
+	}
+	return 0;
+}
+
+function compareAnchorsDepthFirst(a: UpPath, b: UpPath): number {
+	return getDepth(a) - getDepth(b);
 }

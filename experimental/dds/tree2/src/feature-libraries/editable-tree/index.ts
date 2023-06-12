@@ -47,7 +47,7 @@ export {
 	InsertBindingContext,
 	SetValueBindingContext,
 	BatchBindingContext,
-	InvalidationBindingContext as InvalidStateBindingContext,
+	InvalidationBindingContext,
 	BinderEvents,
 	OperationBinderEvents,
 	InvalidationBinderEvents,
@@ -55,8 +55,6 @@ export {
 	BinderEventsCompare,
 	AnchorsCompare,
 	toDownPath,
-	compareBinderEventsDeleteFirst,
-	compareAnchorsDepthFirst,
 	comparePipeline,
 	compileSyntaxTree,
 } from "./editableTreeBinder";
