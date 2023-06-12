@@ -428,7 +428,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		this.dataObjectMap.on("valueChanged", (changed, local) => {
 			activityRunner(changed, local, this.dataObjectMap).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "ActivityRunFailedError",
+					eventName: "DSActivityRunFailedError",
 					id,
 					error,
 				});
@@ -439,7 +439,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		this.blobMap.on("valueChanged", (changed, local) => {
 			activityRunner(changed, local, this.blobMap).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "ActivityRunFailedError",
+					eventName: "BlobActivityRunFailedError",
 					id,
 					error,
 				});
@@ -811,14 +811,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 			}
 
 			// Collaborate with the partners clients specified in partnerIds.
-			let collaborate: boolean = false;
-			for (const partnerId of partnerIds) {
-				if (changed.key.startsWith(partnerId)) {
-					collaborate = true;
-					break;
-				}
-			}
-			if (!collaborate) {
+			if (!partnerIds.some((partnerId) => changed.key.startsWith(partnerId))) {
 				return;
 			}
 
@@ -856,7 +849,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 				partnerId2,
 			]).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "PartnerActivityRunFailedError",
+					eventName: "PartnerDSActivityRunFailedError",
 					id,
 					error,
 				});
@@ -869,7 +862,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		this.blobMap.on("valueChanged", (changed, local) => {
 			partnerActivityRunner(changed, local, this.blobMap, [partnerId1]).catch((error) => {
 				config.logger.sendErrorEvent({
-					eventName: "PartnerActivityRunFailedError",
+					eventName: "PartnerBlobActivityRunFailedError",
 					id,
 					error,
 				});
