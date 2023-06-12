@@ -63,7 +63,7 @@ function getFluidPackageMap(root: string) {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = new FluidRepo(rootDir, false);
+		const repo = new FluidRepo(rootDir);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
