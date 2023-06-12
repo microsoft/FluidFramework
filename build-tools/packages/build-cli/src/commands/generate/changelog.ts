@@ -25,7 +25,6 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 	static flags = {
 		version: Flags.string({
 			description: "The version for which to generate the changelog",
-			required: true,
 		}),
 		...PackageCommand.flags,
 	};
@@ -41,17 +40,15 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 	private repo?: Repository;
 
 	protected async processPackage(directory: string, kind: PackageKind): Promise<void> {
-		const pkg = new Package(`${directory}/package.json`, "none");
-		const version =
-			typeof this.flags.version === "string"
-				? this.flags.version
-				: pkg.version;
+		if (kind === "packageFromDirectory") {
+			return;
+		}
 
-		await replaceInFile(
-			"## 2.0.0\\n",
-			`## ${version}\\n`,
-			`${directory}/CHANGELOG.md`,
-		);
+		this.log(`directory: ${directory}`);
+		const pkg = new Package(`${directory}/package.json`, "none");
+		const version = this.flags.version ?? pkg.version;
+
+		await replaceInFile("## 2.0.0\\n", `## ${version}\\n`, `${directory}/CHANGELOG.md`);
 		await replaceInFile(
 			`## ${version}\\n\\n## `,
 			`## ${version}\\n\\nDependency updates only.\\n\\n## `,
@@ -81,10 +78,9 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		// Calls processPackage on all packages.
 		await super.run();
 
-		if(this.repo === undefined){
+		if (this.repo === undefined) {
 			this.error("repo is possibly 'undefined'");
 		}
-		// const remote = await repo.getRemote(context.originRemotePartialUrl);
 
 		const result = await command(
 			"pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md",
