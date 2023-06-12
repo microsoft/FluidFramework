@@ -26,6 +26,8 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	initializeTestTree,
+	stringToJsonableTree,
 } from "../utils";
 import {
 	ISharedTree,
@@ -803,15 +805,6 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
 		});
-
-		function stringToJsonableTree(values: string[]): JsonableTree[] {
-			return values.map((value) => {
-				return {
-					type: brand("TestValue"),
-					value,
-				};
-			});
-		}
 
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
@@ -2602,36 +2595,6 @@ const testSchema: SchemaData = {
 		[globalFieldKey, globalFieldSchema],
 	]),
 };
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-function initializeTestTree(
-	tree: ISharedTreeView,
-	state?: JsonableTree | JsonableTree[],
-	schema: SchemaData = testSchema,
-): void {
-	if (state === undefined) {
-		tree.storedSchema.update(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.storedSchema.update(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKeySymbol,
-			});
-			field.insert(0, writeCursors);
-		});
-	}
-}
 
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory();

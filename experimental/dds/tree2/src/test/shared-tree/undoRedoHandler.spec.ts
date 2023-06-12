@@ -5,7 +5,16 @@
 import { strict as assert } from "assert";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { SharedTreeViewUndoRedoHandler } from "../../shared-tree";
-import { TestTreeProviderLite, getTestValue, setTestValue } from "../utils";
+import {
+	TestTreeProviderLite,
+	getTestValue,
+	initializeTestTree,
+	insert,
+	setTestValue,
+	stringToJsonableTree,
+	validateTree,
+} from "../utils";
+import { JsonableTree } from "../../core";
 
 /**
  * These test the SharedTreeUndoRedoHandler class, which is a wrapper around the UndoRedoStackManager class
@@ -75,6 +84,55 @@ describe("ShareTreeUndoRedoHandler", () => {
 		provider.processMessages();
 
 		assert.equal(getTestValue(tree), undefined);
+	});
+
+	it("can undo and redo rebased edits", () => {
+		const undoRedoStack = new UndoRedoStackManager();
+		const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
+		const provider = new TestTreeProviderLite(2);
+		const [tree1, tree2] = provider.trees;
+		handler.attachTree(tree1);
+
+		const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
+		initializeTestTree(tree1, expectedState);
+		provider.processMessages();
+
+		// Validate insertion
+		validateTree(tree2, expectedState);
+
+		// Insert nodes on both trees
+		insert(tree1, 1, "x");
+		validateTree(tree1, stringToJsonableTree(["A", "x", "B", "C", "D"]));
+
+		insert(tree2, 3, "y");
+		validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D"]));
+
+		// Syncing will cause both trees to rebase their local changes
+		provider.processMessages();
+
+		const expectedStateAfterUndo: JsonableTree[] = stringToJsonableTree([
+			"A",
+			"B",
+			"C",
+			"y",
+			"D",
+		]);
+
+		undoRedoStack.undoOperation();
+		provider.processMessages();
+		validateTree(tree1, expectedStateAfterUndo);
+		validateTree(tree2, expectedStateAfterUndo);
+
+		// Insert additional node at the beginning to require rebasing
+		insert(tree1, 0, "0");
+		validateTree(tree1, stringToJsonableTree(["0", "A", "B", "C", "y", "D"]));
+
+		const expectedAfterRedo = stringToJsonableTree(["0", "A", "x", "B", "C", "y", "D"]);
+		// Redo node insertion on both trees
+		undoRedoStack.redoOperation();
+		provider.processMessages();
+		validateTree(tree1, expectedAfterRedo);
+		validateTree(tree2, expectedAfterRedo);
 	});
 
 	it("does not add remote commits to the undo or redo stack", () => {

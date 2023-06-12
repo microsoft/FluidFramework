@@ -530,6 +530,15 @@ export function makeTreeFromCursor(
 	return tree;
 }
 
+export function stringToJsonableTree(values: string[]): JsonableTree[] {
+	return values.map((value) => {
+		return {
+			type: brand("TestValue"),
+			value,
+		};
+	});
+}
+
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
@@ -645,18 +654,46 @@ const testSchema: SchemaData = {
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
+// export function initializeTestTree(
+// 	tree: ISharedTreeView,
+// 	state?: JsonableTree,
+// 	schema: SchemaData = testSchema,
+// ): void {
+// 	tree.storedSchema.update(schema);
+
+// 	if (state) {
+// 		// Apply an edit to the tree which inserts a node with a value
+// 		const writeCursor = singleTextCursor(state);
+// 		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+// 		field.insert(0, writeCursor);
+// 	}
+// }
+
+/**
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
+ */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state?: JsonableTree,
+	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
-	tree.storedSchema.update(schema);
+	if (state === undefined) {
+		tree.storedSchema.update(schema);
+		return;
+	}
 
-	if (state) {
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.storedSchema.update(schema);
+
 		// Apply an edit to the tree which inserts a node with a value
-		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-		field.insert(0, writeCursor);
+		const writeCursors = state.map(singleTextCursor);
+		const field = tree.editor.sequenceField({
+			parent: undefined,
+			field: rootFieldKeySymbol,
+		});
+		field.insert(0, writeCursors);
 	}
 }
 
