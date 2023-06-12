@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -59,6 +55,7 @@ import {
 import {
 	ChildLogger,
 	generateStack,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -162,7 +159,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.clientDetails;
 	}
 
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this._containerRuntime.logger;
 	}
 

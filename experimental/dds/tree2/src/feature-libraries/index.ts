@@ -6,6 +6,7 @@ export {
 	DefaultChangeset,
 	DefaultChangeFamily,
 	defaultChangeFamily,
+	defaultIntoDelta,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,

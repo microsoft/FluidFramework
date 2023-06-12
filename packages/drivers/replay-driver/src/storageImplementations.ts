@@ -20,7 +20,7 @@ import {
 	IVersion,
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -174,7 +174,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
 	public async createDocumentService(
 		fileURL: IResolvedUrl,
-		logger?: ITelemetryLogger,
+		logger?: ITelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		return new StaticStorageDocumentService(fileURL, this.storage);
@@ -184,7 +184,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 	public async createContainer(
 		createNewSummary: ISummaryTree,
 		resolvedUrl: IResolvedUrl,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		throw new Error("Not implemented");

@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -45,6 +41,7 @@ import {
 	MonitoringContext,
 	loggerToMonitoringContext,
 	wrapError,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -1051,7 +1048,7 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLogger,
+		public readonly logger: ITelemetryLoggerExt,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -2423,7 +2420,7 @@ export class ContainerRuntime
 		/** True to track the state for this summary in the SummarizerNodes; defaults to true */
 		trackState?: boolean;
 		/** Logger to use for correlated summary events */
-		summaryLogger?: ITelemetryLogger;
+		summaryLogger?: ITelemetryLoggerExt;
 		/** True to run garbage collection before summarizing; defaults to true */
 		runGC?: boolean;
 		/** True to generate full GC data */
@@ -2640,7 +2637,7 @@ export class ContainerRuntime
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -3251,7 +3248,7 @@ export class ContainerRuntime
 
 	private async waitForDeltaManagerToCatchup(
 		latestSnapshotRefSeq: number,
-		summaryLogger: ITelemetryLogger,
+		summaryLogger: ITelemetryLoggerExt,
 	): Promise<void> {
 		if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
 			// We need to catch up to the latest summary's reference sequence number before proceeding.
@@ -3363,7 +3360,7 @@ export class ContainerRuntime
 	 * @returns downloaded snapshot's reference sequence number
 	 */
 	private async refreshLatestSummaryAckFromServer(
-		summaryLogger: ITelemetryLogger,
+		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const { snapshotTree, versionId, latestSnapshotRefSeq } =
@@ -3397,7 +3394,7 @@ export class ContainerRuntime
 	}
 
 	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
@@ -3405,7 +3402,7 @@ export class ContainerRuntime
 	}
 
 	private async fetchSnapshotFromStorage(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,

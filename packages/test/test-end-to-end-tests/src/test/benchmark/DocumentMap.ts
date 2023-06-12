@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/test-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
@@ -57,7 +57,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	private dataObject1map: SharedMap | undefined;
 	private fileName: string = "";
 	private containerUrl: IResolvedUrl | undefined;
-	public get logger(): ITelemetryLogger | undefined {
+	public get logger(): ITelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 	public get mainContainer(): IContainer | undefined {

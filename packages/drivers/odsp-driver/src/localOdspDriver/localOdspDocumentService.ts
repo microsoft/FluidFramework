@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -25,7 +25,7 @@ export class LocalOdspDocumentService implements IDocumentService {
 
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly localSnapshot: Uint8Array | string,
 	) {}
 

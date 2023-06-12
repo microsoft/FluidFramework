@@ -7,11 +7,7 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	ITelemetryLogger,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
@@ -81,6 +77,7 @@ import {
 	MonitoringContext,
 	loggerToMonitoringContext,
 	wrapError,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -186,7 +183,7 @@ export interface IContainerCreateProps {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLogger;
+	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Blobs storage for detached containers.
@@ -299,7 +296,7 @@ const getCodeProposal =
  * @param action - functor to call and measure
  */
 export async function ReportIfTooLong(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	eventName: string,
 	action: () => Promise<ITelemetryProperties>,
 ) {

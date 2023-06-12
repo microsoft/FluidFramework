@@ -6,6 +6,11 @@
 import { assert } from "@fluidframework/common-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
+import {
+	generateStableId as runtimeGenerateStableId,
+	assertIsStableId,
+} from "@fluidframework/container-runtime";
+import { StableId } from "@fluidframework/runtime-definitions";
 
 /**
  * Subset of Map interface.
@@ -265,6 +270,50 @@ export function assertNonNegativeSafeInteger(index: number) {
  * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+/**
+ * The counter used to generate deterministic stable ids for testing purposes.
+ */
+let deterministicStableIdCount: number | undefined;
+
+/**
+ * This function is used to generate deterministic stable ids for testing purposes.
+ * @param f - A function that will be called and if a stable id is needed inside it a deterministic one will be used.
+ *
+ * @remarks
+ * Only use this function for testing purposes.
+ *
+ * @example
+ * ```ts
+ * function f() {
+ *    ....
+ * }
+ * const result = useDeterministicStableId(f());
+ * ```
+ */
+export function useDeterministicStableId<T>(f: () => T): T {
+	assert(deterministicStableIdCount === undefined, "useDeterministicStableId cannot be nested");
+	deterministicStableIdCount = 1;
+	const result = f();
+	deterministicStableIdCount = undefined;
+	return result;
+}
+
+export function generateStableId(): StableId {
+	if (deterministicStableIdCount !== undefined) {
+		assert(
+			deterministicStableIdCount < 281_474_976_710_656,
+			"The maximum valid value for deterministicStableIdCount is 16^12",
+		);
+		// Tried to generate a unique id prefixing it with the word 'beef'
+		return assertIsStableId(
+			`beefbeef-beef-4000-8000-${(deterministicStableIdCount++)
+				.toString(16)
+				.padStart(12, "0")}`,
+		);
+	}
+	return runtimeGenerateStableId();
+}
 
 /**
  * Convert an object into a Map.

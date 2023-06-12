@@ -39,6 +39,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
 -   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
 -   [IntervalCollection removed](#IntervalCollection-removed)
+-   [Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt](#internal-itelemetrylogger-interface-upgraded-to-itelemetryloggerext)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -126,6 +127,12 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 ### IntervalCollection removed
 
 The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt
+
+`ITelemetryLoggerExt` is a replacement for `ITelemetryLogger`, which adds additional types that can be logged as property values.
+This interface is not expected to be used outside the codebase, and all Logger implementations already use the new interface.
+In this release, the new type is used throughout the codebase to allow richer instrumentation.
 
 # 2.0.0-internal.4.4.0
 

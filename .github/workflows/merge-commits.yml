@@ -84,7 +84,7 @@ jobs:
       pull-requests: write
       statuses: write
     needs: [dequeue]
-    if: (needs.dequeue.output.VAL) != 'false'
+    if: (needs.dequeue.outputs.VAL) != 'false'
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'

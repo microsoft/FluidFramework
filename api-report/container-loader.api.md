@@ -24,7 +24,7 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -84,7 +84,7 @@ export interface ILoaderServices {
     readonly options: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope: FluidObject;
-    readonly subLogger: ITelemetryLogger;
+    readonly subLogger: ITelemetryLoggerExt;
     readonly urlResolver: IUrlResolver;
 }
 
