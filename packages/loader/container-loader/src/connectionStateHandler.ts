@@ -61,11 +61,11 @@ export interface IConnectionStateHandler {
 	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
 	establishingConnection(reason: string): void;
 	/**
-	 * Switches state to disconnected when we are still establishing connection during container load or
-	 * container connect() and the container gets closed or disposed or disconnect is called on container.
-	 * @param reason - reason for the state transition.
+	 * Switches state to disconnected when we are still establishing connection during container.load(),
+	 * container connect() or reconnect and the container gets closed or disposed or disconnect happens.
+	 * @param reason - reason for cancelling the connection.
 	 */
-	switchFromEstablishingConnectionToDisconnect(reason: string): void;
+	cancelEstablishingConnection(reason: string): void;
 }
 
 export function createConnectionStateHandler(
@@ -155,8 +155,8 @@ class ConnectionStateHandlerPassThrough
 		return this.pimpl.establishingConnection(reason);
 	}
 
-	public switchFromEstablishingConnectionToDisconnect(reason: string) {
-		return this.pimpl.switchFromEstablishingConnectionToDisconnect(reason);
+	public cancelEstablishingConnection(reason: string) {
+		return this.pimpl.cancelEstablishingConnection(reason);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -259,8 +259,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 			// Disconnected state.
 			case ConnectionState.CatchingUp:
 				assert(
-					this._connectionState === ConnectionState.EstablishingConnection ||
-						this._connectionState === ConnectionState.Disconnected,
+					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
@@ -499,11 +498,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this.setConnectionState(ConnectionState.Disconnected, reason, error);
 	}
 
-	public switchFromEstablishingConnectionToDisconnect(reason: string) {
-		if (this._connectionState === ConnectionState.EstablishingConnection) {
-			this.connection = undefined;
-			this.setConnectionState(ConnectionState.Disconnected, reason);
-		}
+	public cancelEstablishingConnection(reason: string) {
+		assert(
+			this._connectionState === ConnectionState.EstablishingConnection,
+			"Connection state should be EstablishingConnection",
+		);
+		assert(this.connection === undefined, "No connetion should be present");
+		this.setConnectionState(ConnectionState.Disconnected, reason);
 	}
 
 	public establishingConnection(reason: string) {

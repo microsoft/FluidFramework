@@ -909,23 +909,17 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError) {
-		this.switchFromEstablishingConnectionToDisconnect("ContainerDisposed");
 		this._deltaManager.close(error, true /* doDispose */);
 		this.verifyClosed();
 	}
 
 	public close(error?: ICriticalContainerError) {
-		this.switchFromEstablishingConnectionToDisconnect("ContainerClose");
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
 		this._deltaManager.close(error);
 		this.verifyClosed();
-	}
-
-	private switchFromEstablishingConnectionToDisconnect(reason: string) {
-		this.connectionStateHandler.switchFromEstablishingConnectionToDisconnect(reason);
 	}
 
 	private verifyClosed(): void {
@@ -1307,7 +1301,6 @@ export class Container
 	private disconnectInternal() {
 		assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
 
-		this.switchFromEstablishingConnectionToDisconnect("disconnect");
 		// Set Auto Reconnect Mode
 		const mode = ReconnectMode.Disabled;
 		this.setAutoReconnectInternal(mode);
@@ -1389,7 +1382,7 @@ export class Container
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
 			args.mode = "write";
 		}
-		this.connectionStateHandler.establishingConnection(args.reason);
+
 		this._deltaManager.connect(args);
 	}
 
@@ -1857,6 +1850,14 @@ export class Container
 		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
+		});
+
+		deltaManager.on("establisingConnection", (reason: string) => {
+			this.connectionStateHandler.establishingConnection(reason);
+		});
+
+		deltaManager.on("cancelEstablishingConnection", (reason: string) => {
+			this.connectionStateHandler.cancelEstablishingConnection(reason);
 		});
 
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {

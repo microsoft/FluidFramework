@@ -54,6 +54,8 @@ describe("connectionManager", () => {
 		readonlyChangeHandler: () => {},
 		reconnectionDelayHandler: () => {},
 		signalHandler: () => {},
+		establishConnectionHandler: () => {},
+		cancelConnectionHandler: () => {},
 	};
 
 	const mockLogger = new MockLogger();
