@@ -3,4 +3,4 @@
 "@fluidframework/sequence": minor
 ---
 
-Fix the bug observed in `mapRange` function of `rbtree`. Add the public API to create `EndpointInRangeIndex` and `StartpointInRangeIndex` to support querying intervals whose start/end-points fall in a specified range.
+Adds interval indexes to the public API which support querying intervals whose start/end-points fall in some specified range.
