@@ -425,7 +425,7 @@ export interface IMarkerModifiedAction {
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    cachedLength?: number;
+    cachedLength: number | undefined;
     childCount: number;
     children: IMergeNode[];
     // (undocumented)
