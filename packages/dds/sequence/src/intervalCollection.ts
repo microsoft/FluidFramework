@@ -1182,7 +1182,7 @@ export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
-	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (include both ends)
+	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (includes both ends)
 	 */
 	findIntervalsWithStartpointInRange(start: number, end: number);
 }
