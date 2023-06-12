@@ -1169,7 +1169,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
-	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (include both ends)
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
 	findIntervalsWithEndpointInRange(start: number, end: number);
 }
