@@ -15,6 +15,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzHarnessEvents,
+	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -143,8 +144,7 @@ emitter.on("clientCreate", (client) => {
 	});
 });
 
-// these are not used as of now
-const intervalTestOptions = {
+const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
 	reconnectProbability: 0.1,
 	numberOfClients: 3,
@@ -170,7 +170,7 @@ const intervalTestOptions = {
 	},
 };
 
-const optionsWithEmitter = {
+const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 	...intervalTestOptions,
 	emitter,
 };
@@ -188,12 +188,11 @@ function operationGenerator(
 	const baseGenerator = makeOperationGenerator(weights);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[{ type: "revertSharedStringRevertibles" }, weights.revertWeight, hasRevertibles],
-		// ??
 		[baseGenerator, 1],
 	]);
 }
 
-describe.only("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
@@ -217,36 +216,7 @@ describe.only("IntervalCollection fuzz testing", () => {
 		factory: new RevertibleFactory(),
 	};
 
-	createDDSFuzzSuite(
-		model,
-		// optionsWithEmitter,
-		{
-			validationStrategy: { type: "fixedInterval", interval: 10 },
-			reconnectProbability: 0.1,
-			numberOfClients: 3,
-			clientJoinOptions: {
-				maxNumberOfClients: 6,
-				clientAddProbability: 0.1,
-			},
-			defaultTestCount: 100,
-			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 0,
-			saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-			parseOperations: (serialized: string) => {
-				const operations: Operation[] = JSON.parse(serialized);
-				// Replace this value with some other interval ID and uncomment to filter replay of the test
-				// suite to only include interval operations with this ID.
-				// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-				// if (filterIntervalId) {
-				// 	return operations.filter((entry) =>
-				// 		[undefined, filterIntervalId].includes((entry as any).id),
-				// 	);
-				// }
-				return operations;
-			},
-			emitter,
-		},
-	);
+	createDDSFuzzSuite(model, optionsWithEmitter);
 });
 
 describe.skip("minimize specific seed", () => {
