@@ -99,7 +99,11 @@ interface HomeMenuSelection {
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection | HomeMenuSelection;
+type MenuSelection =
+	| TelemetryMenuSelection
+	| ContainerMenuSelection
+	| SettingsMenuSelection
+	| HomeMenuSelection;
 
 // #region Styles definitions
 
@@ -239,9 +243,10 @@ export function DevtoolsView(): React.ReactElement {
 							<Button onClick={retryQuery}>Search again</Button>
 						</Tooltip>
 					</>
-				) : (<>
-					<Waiting />
-					<LandingView/>
+				) : (
+					<>
+						<Waiting />
+						<LandingView />
 					</>
 				)
 			) : (
@@ -366,7 +371,7 @@ function View(props: ViewProps): React.ReactElement {
 			view = <SettingsView setTheme={setTheme} />;
 			break;
 		case "homeMenuSelection":
-			view = <LandingView/>;
+			view = <LandingView />;
 			break;
 		default:
 			view = <LandingView />;
@@ -464,15 +469,15 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 	return (
 		<Stack.Item styles={menuStyles}>
-			<div 
+			<div
 				style={{
 					minWidth: "250px",
 					display: "flex",
 					cursor: "pointer",
-					margin: "3px" 
+					margin: "3px",
 				}}
 				onClick={onHomeClicked}
-				>
+			>
 				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
 				<Home20Regular />
 			</div>
