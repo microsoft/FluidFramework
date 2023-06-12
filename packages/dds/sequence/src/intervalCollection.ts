@@ -946,6 +946,9 @@ export interface IntervalIndex<TInterval extends ISerializableInterval> {
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
+	/**
+	 * @returns an array of all intervals whose segment + offset are overlapped
+	 */
 	findOverlappingIntervalsBySegoff(
 		startSegment: ISegment,
 		startOffset: number,
@@ -954,14 +957,12 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	): Iterable<TInterval>;
 }
 
-export class OverlappingSequenceIntervalsIndex
-	implements IOverlappingIntervalsIndex<SequenceInterval>
-{
+class OverlappingSequenceIntervalsIndex implements IOverlappingIntervalsIndex<SequenceInterval> {
 	private readonly intervalTree = new IntervalTree<SequenceInterval>();
 
 	constructor(
-		private readonly client: Client,
 		private readonly helpers: IIntervalHelpers<SequenceInterval>,
+		private readonly client: Client,
 	) {}
 
 	public remove(interval: SequenceInterval) {
@@ -1003,6 +1004,13 @@ export class OverlappingSequenceIntervalsIndex
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
+}
+
+export function createOverlappingSequenceIntervalsIndex(
+	helpers: IIntervalHelpers<SequenceInterval>,
+	client: Client,
+): IOverlappingIntervalsIndex<SequenceInterval> {
+	return new OverlappingSequenceIntervalsIndex(helpers, client);
 }
 
 class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
