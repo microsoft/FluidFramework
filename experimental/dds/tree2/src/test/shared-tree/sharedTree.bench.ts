@@ -374,7 +374,6 @@ describe("SharedTree benchmarks", () => {
 							cursorForTypedTreeData(
 								{
 									schema: tree.storedSchema,
-									fieldSource: () => undefined,
 								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),

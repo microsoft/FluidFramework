@@ -61,7 +61,6 @@ const tree1 = jsonableTreeFromCursor(
 	cursorFromContextualData(
 		{
 			schema: schemaData,
-			fieldSource: () => undefined,
 		},
 		new Set([nodeSchema.name]),
 		tree1ContextuallyTyped,

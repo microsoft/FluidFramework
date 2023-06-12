@@ -223,7 +223,6 @@ export function personJsonableTree(): JsonableTree {
 		cursorFromContextualData(
 			{
 				schema: fullSchemaData,
-				fieldSource: () => undefined,
 			},
 			rootPersonSchema.types,
 			personData,
@@ -292,7 +291,6 @@ export function setupForest<T extends GlobalFieldSchema>(
 	const root = cursorsFromContextualData(
 		{
 			schema: schemaRepo,
-			fieldSource: () => undefined,
 		},
 		schema.root.schema,
 		data,

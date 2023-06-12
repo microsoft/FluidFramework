@@ -258,9 +258,6 @@ export interface TreeDataContext {
 	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
-type GetFieldGenerator = (key: FieldKey, schema: FieldStoredSchema) => undefined | FieldGenerator;
-export const defaultFieldSource: GetFieldGenerator = () => undefined;
-
 /**
  * Generates field content for a MapTree on demand.
  * @alpha
@@ -411,7 +408,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData, fieldSource: defaultFieldSource },
+		{ schema: schemaData },
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -442,7 +439,7 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
 	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData, fieldSource: defaultFieldSource },
+		{ schema: schemaData },
 		schema.types,
 		data as ContextuallyTypedNodeData,
 	);
@@ -518,7 +515,7 @@ export function applyTypesFromContext(
 			const currentKey = symbolFromKey(key);
 			const requiredFieldSchema = getFieldSchema(currentKey, context.schema);
 			const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-			if (multiplicity === Multiplicity.Value && context.fieldSource) {
+			if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
 				const fieldGenerator = context.fieldSource(currentKey, requiredFieldSchema);
 				if (fieldGenerator !== undefined) {
 					const children = fieldGenerator();

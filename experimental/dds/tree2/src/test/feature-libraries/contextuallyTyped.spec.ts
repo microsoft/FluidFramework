@@ -86,11 +86,7 @@ describe("ContextuallyTyped", () => {
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
 		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
-		const mapTree = applyTypesFromContext(
-			{ schema, fieldSource: () => undefined },
-			new Set([primaryObject.name]),
-			[],
-		);
+		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
 		assert.deepEqual(mapTree, expected);
 	});
