@@ -487,7 +487,7 @@ export class ConnectionManager implements IConnectionManager {
 		let pendingConnectionMode;
 		if (this.pendingConnection !== undefined) {
 			pendingConnectionMode = this.pendingConnection.connectionMode;
-			this.cancelConnection(); // Throw out in-progress connection attempt in favor of new attempt
+			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
 			assert(
 				this.pendingConnection === undefined,
 				0x344 /* this.pendingConnection should be undefined */,
@@ -682,7 +682,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (this.connection === undefined) {
 			if (this.pendingConnection !== undefined) {
-				this.cancelConnection();
+				this.cancelConnection(reason);
 				return true;
 			}
 			return false;
@@ -720,7 +720,7 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Cancel in-progress connection attempt.
 	 */
-	private cancelConnection() {
+	private cancelConnection(reason: string) {
 		assert(
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
@@ -728,7 +728,7 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
-		this.props.cancelConnectionHandler("CancelConnection");
+		this.props.cancelConnectionHandler(`Cancel Pending Connection due to ${reason}`);
 	}
 
 	/**
