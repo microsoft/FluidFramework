@@ -9,13 +9,12 @@ import { PackageCommand, PackageKind } from "../../BasePackageCommand";
 import { Repository } from "../../lib";
 import { readFile, writeFile } from "fs/promises";
 import { CleanOptions } from "simple-git";
-import path from "path";
 import { Package } from "@fluidframework/build-tools";
 
-async function replaceInFile(search: string, replace: string, filePath: string): Promise<void> {
-	const content = await readFile(filePath, "utf8");
+async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
+	const content = await readFile(path, "utf8");
 	const newContent = content.replace(new RegExp(search, "g"), replace);
-	await writeFile(filePath, newContent, "utf8");
+	await writeFile(path, newContent, "utf8");
 }
 
 export default class GenerateChangeLogCommand extends PackageCommand<
@@ -28,12 +27,6 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 			description: "The version for which to generate the changelog",
 			required: true,
 		}),
-		path: Flags.directory({
-			description:
-				"Path to a directory containing a package. The version will be loaded from the package.json in this directory.",
-			exists: true,
-			exclusive: ["version"],
-		}),
 		...PackageCommand.flags,
 	};
 
@@ -44,59 +37,63 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		},
 	];
 
-	private versionToCheck: string | undefined;
-	private path: string | undefined;
+	private options?: Options;
+	private repo?: Repository;
 
 	protected async processPackage(directory: string, kind: PackageKind): Promise<void> {
-		await replaceInFile("## 2.0.0\\n", `## ${this.versionToCheck}\\n`, `${this.path}/CHANGELOG.md`);
+		const pkg = new Package(`${directory}/package.json`, "none");
+		const version =
+			typeof this.flags.version === "string"
+				? this.flags.version
+				: pkg.version;
+
 		await replaceInFile(
-			`## ${this.versionToCheck}\\n\\n## `,
-			`## ${this.versionToCheck}\\n\\nDependency updates only.\\n\\n## `,
-			`${this.path}/CHANGELOG.md`,
+			"## 2.0.0\\n",
+			`## ${version}\\n`,
+			`${directory}/CHANGELOG.md`,
+		);
+		await replaceInFile(
+			`## ${version}\\n\\n## `,
+			`## ${version}\\n\\nDependency updates only.\\n\\n## `,
+			`${directory}/CHANGELOG.md`,
 		);
 	}
 
 	public async init(): Promise<void> {
 		await super.init();
+		const context = await this.getContext();
+		this.options = { cwd: context.gitRepo.resolvedRoot };
+		const changesetVersionResult = await command("pnpm exec changeset version", this.options);
+		this.log(changesetVersionResult.stdout);
 
-		if (typeof this.flags.version === "string") {
-			this.versionToCheck = this.flags.version;
-		} else {
-			const pkg = new Package(path.join(process.cwd(), "package.json"), "none");
-			this.versionToCheck = pkg.version;
-		}
+		// I remember you said during the meeting you can check if we need to pnpm i from context
 
-		this.path = this.flags.path === undefined ? this.flags.path : process.cwd();
-		
+		const installResult = await command(`pnpm i`, this.options);
+		this.log(installResult.stdout);
+
+		this.repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+
+		const rawchangesetAdd = await this.repo.gitClient.add(".changeset");
+		this.log(rawchangesetAdd);
 	}
 
 	public async run(): Promise<void> {
-		
-		const context = await this.getContext();
-
 		// Calls processPackage on all packages.
 		await super.run();
 
-		const opts: Options = { cwd: context.gitRepo.resolvedRoot };
-		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+		if(this.repo === undefined){
+			this.error("repo is possibly 'undefined'");
+		}
 		// const remote = await repo.getRemote(context.originRemotePartialUrl);
-
-		const installResult = await command(`pnpm i`, opts);
-		this.log(installResult.stdout);
-
-		const changesetVersionResult = await command("pnpm exec changeset version", opts);
-		this.log(changesetVersionResult.stdout);
-
-		const rawchangesetAdd = await repo.gitClient.add(".changeset");
 
 		const result = await command(
 			"pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md",
-			opts,
+			this.options,
 		); // repo.gitClient here?
 		this.log(result.stdout);
 
-		const rawRestore = await repo.gitClient.raw("restore", ".");
-		const cleanResponse = await repo.gitClient.clean(
+		const rawRestore = await this.repo.gitClient.raw("restore", ".");
+		const cleanResponse = await this.repo.gitClient.clean(
 			CleanOptions.RECURSIVE + CleanOptions.FORCE,
 		);
 
