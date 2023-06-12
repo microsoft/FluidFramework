@@ -6,7 +6,7 @@ from `PropertyDDS` to the new `SharedTree` DDS (see the
 
 ## Schema converter (runtime)
 
-A [`schema-converter`](./src/schemaConverter.ts) converts a `PropertyDDS` schema template into a [`TypedSchemaCollection`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/modular-schema/typedSchema/schemaBuilder.ts) in runtime, so that the resulting schema can be used by the `SharedTree`, for example:
+A [`schema-converter`](./src/schemaConverter.ts) converts a `PropertyDDS` schema template into a [`TypedSchemaCollection`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/modular-schema/typedSchema/schemaBuilder.ts) at runtime, so that the resulting schema can be used by the `SharedTree`, for example:
 
 ```ts
 PropertyFactory.register(propertyDDSSchemas);

@@ -28,11 +28,11 @@ describe("schema converter", () => {
 			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 			[
 				"Int8",
-				"Uint8",
 				"Int16",
-				"Uint16",
 				"Int32",
 				"Int64",
+				"Uint8",
+				"Uint16",
 				"Uint32",
 				"Uint64",
 				"Float32",

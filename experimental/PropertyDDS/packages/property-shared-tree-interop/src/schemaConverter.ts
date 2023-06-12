@@ -30,11 +30,11 @@ const stringType = "String";
 const enumType = "Enum";
 const numberTypes = new Set<string>([
 	"Int8",
-	"Uint8",
 	"Int16",
-	"Uint16",
 	"Int32",
 	"Int64",
+	"Uint8",
+	"Uint16",
 	"Uint32",
 	"Uint64",
 	"Float32",
