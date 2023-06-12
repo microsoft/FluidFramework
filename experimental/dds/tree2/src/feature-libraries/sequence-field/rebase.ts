@@ -10,7 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 	RevisionMetadataSource,
 } from "../modular-schema";
 import {
@@ -100,7 +100,7 @@ export function rebase<TNodeChange>(
 export type NodeChangeRebaser<TNodeChange> = (
 	change: TNodeChange | undefined,
 	baseChange: TNodeChange | undefined,
-	stateChange?: NodeExistenceStateChange,
+	stateChange?: NodeExistenceState,
 ) => TNodeChange | undefined;
 
 function rebaseMarkList<TNodeChange>(
@@ -454,12 +454,12 @@ function rebaseNodeChange<TNodeChange>(
 	if (markEmptiesCells(baseMark) && !isMoveMark(baseMark)) {
 		return withNodeChange(
 			currMark,
-			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Deleted),
+			nodeRebaser(currChange, baseChange, NodeExistenceState.Dead),
 		);
 	} else if (markFillsCells(baseMark) && !isMoveMark(baseMark)) {
 		return withNodeChange(
 			currMark,
-			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Revived),
+			nodeRebaser(currChange, baseChange, NodeExistenceState.Alive),
 		);
 	}
 

@@ -111,19 +111,21 @@ function rebaseGenericChange(
 	const rebased: GenericChangeset = [];
 	let iChange = 0;
 	let iOver = 0;
-	while (iChange < change.length && iOver < over.length) {
+	while (iChange < change.length || iOver < over.length) {
 		const a = change[iChange];
 		const b = over[iOver];
+		const aIndex = a?.index ?? Infinity;
+		const bIndex = b?.index ?? Infinity;
 		let nodeChangeA: NodeChangeset | undefined;
 		let nodeChangeB: NodeChangeset | undefined;
 		let index: number;
-		if (a.index === b.index) {
+		if (aIndex === bIndex) {
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			nodeChangeB = b.nodeChange;
 			iChange += 1;
 			iOver += 1;
-		} else if (a.index < b.index) {
+		} else if (aIndex < bIndex) {
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			iChange += 1;
@@ -141,7 +143,7 @@ function rebaseGenericChange(
 			});
 		}
 	}
-	rebased.push(...change.slice(iChange));
+
 	return rebased;
 }
 
