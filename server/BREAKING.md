@@ -147,7 +147,7 @@ The `encoding` property of `ICreateBlobParams` has changed type from `string` to
 #### `shared.SocketIORedisConnection and shared.SocketIoServer` using ioredis
 
 ```ts
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import socketIo from "socket.io";
 import { SocketIORedisConnection } from "@fluidframework/server-services";
 
@@ -155,8 +155,8 @@ const options: Redis.RedisOptions = {
 	host: "host",
 	port: "6379",
 };
-const pub = new Redis(options);
-const sub = new Redis(options);
+const pub = new Redis.default(options);
+const sub = new Redis.default(options);
 
 const pubConn = new SocketIORedisConnection(pub);
 const subConn = new SocketIORedisConnection(sub);

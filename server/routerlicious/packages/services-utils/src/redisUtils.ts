@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 
 export interface IRedisParameters {
 	prefix?: string;
@@ -11,7 +11,7 @@ export interface IRedisParameters {
 }
 
 export const executeRedisMultiWithHmsetExpire = async (
-	client: Redis,
+	client: Redis.default,
 	key: string,
 	data: { [key: string]: any },
 	expireAfterSeconds: number,
@@ -26,29 +26,33 @@ export const executeRedisMultiWithHmsetExpire = async (
 				// results` is an array of responses corresponding to the sequence of queued commands.
 				// In other words, it is [Error | null, any][].
 				// Each response follows the format `[err, result]`. `err` refers to runtime errors.
+				if (results) {
+					// Check if any queued command had an error
+					for (const result of results) {
+						if (result[0] && result[0] instanceof Error) {
+							reject(result[0]);
+							return;
+						}
+					}
 
-				// Check if any queued command had an error
-				for (const result of results) {
-					if (result[0] && result[0] instanceof Error) {
-						reject(result[0]);
+					// HMSET should return the string OK indicating success. Otherwise, we had an error.
+					if (results[0][1] !== "OK") {
+						reject(
+							new Error(`Redis HMSET returned unexpected response: ${results[0][1]}`),
+						);
+						return;
+					}
+
+					// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
+					if (results[1][1] !== 1) {
+						reject(
+							new Error(
+								`Redis EXPIRE returned unexpected response: ${results[0][1]}`,
+							),
+						);
 						return;
 					}
 				}
-
-				// HMSET should return the string OK indicating success. Otherwise, we had an error.
-				if (results[0][1] !== "OK") {
-					reject(new Error(`Redis HMSET returned unexpected response: ${results[0][1]}`));
-					return;
-				}
-
-				// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
-				if (results[1][1] !== 1) {
-					reject(
-						new Error(`Redis EXPIRE returned unexpected response: ${results[0][1]}`),
-					);
-					return;
-				}
-
 				resolve();
 			})
 			.catch((error) => {
@@ -57,7 +61,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 	});
 
 export const executeRedisMultiWithHmsetExpireAndLpush = async (
-	client: Redis,
+	client: Redis.default,
 	hKey: string,
 	hData: { [key: string]: any },
 	lKey: string,
@@ -71,39 +75,45 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 			.expire(hKey, expireAfterSeconds)
 			.lpush(lKey, lData)
 			.exec()
-			.then((results) => {
+			.then((results: any) => {
 				// results` is an array of responses corresponding to the sequence of queued commands.
 				// In other words, it is [Error | null, any][].
 				// Each response follows the format `[err, result]`. `err` refers to runtime errors.
+				if (results) {
+					// Check if any queued command had an error
+					for (const result of results) {
+						if (result[0] && result[0] instanceof Error) {
+							reject(result[0]);
+							return;
+						}
+					}
 
-				// Check if any queued command had an error
-				for (const result of results) {
-					if (result[0] && result[0] instanceof Error) {
-						reject(result[0]);
+					// HMSET should return the string OK indicating success. Otherwise, we had an error.
+					if (results[0][1] !== "OK") {
+						reject(
+							new Error(`Redis HMSET returned unexpected response: ${results[0][1]}`),
+						);
+						return;
+					}
+
+					// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
+					if (results[1][1] !== 1) {
+						reject(
+							new Error(
+								`Redis EXPIRE returned unexpected response: ${results[1][1]}`,
+							),
+						);
+						return;
+					}
+
+					// LPUSH should return the length of the list indicating success. Otherwise, we had an error.
+					if (results[2][1] <= 0) {
+						reject(
+							new Error(`Redis LPUSH returned unexpected response: ${results[2][1]}`),
+						);
 						return;
 					}
 				}
-
-				// HMSET should return the string OK indicating success. Otherwise, we had an error.
-				if (results[0][1] !== "OK") {
-					reject(new Error(`Redis HMSET returned unexpected response: ${results[0][1]}`));
-					return;
-				}
-
-				// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
-				if (results[1][1] !== 1) {
-					reject(
-						new Error(`Redis EXPIRE returned unexpected response: ${results[1][1]}`),
-					);
-					return;
-				}
-
-				// LPUSH should return the length of the list indicating success. Otherwise, we had an error.
-				if (results[2][1] <= 0) {
-					reject(new Error(`Redis LPUSH returned unexpected response: ${results[2][1]}`));
-					return;
-				}
-
 				resolve();
 			})
 			.catch((error) => {
