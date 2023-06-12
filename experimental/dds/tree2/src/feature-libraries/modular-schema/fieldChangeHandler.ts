@@ -188,7 +188,8 @@ export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
 	/**
-	 * Whether or not the node is alive or dead in the input context of change
+	 * Whether or not the node is alive or dead in the input context of change.
+	 * Defaults to Alive if undefined.
 	 */
 	state?: NodeExistenceState,
 ) => NodeChangeset | undefined;
