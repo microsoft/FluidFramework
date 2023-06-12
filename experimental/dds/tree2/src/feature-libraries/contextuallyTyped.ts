@@ -510,17 +510,16 @@ export function applyTypesFromContext(
 			}
 		}
 
-		// Generate and set data for global keys that have value fields.
-		for (const [key] of context.schema.globalFieldSchema) {
+		for (const key of schema.globalFields.keys()) {
 			const currentKey = symbolFromKey(key);
-			const requiredFieldSchema = getFieldSchema(currentKey, context.schema);
-			const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-			if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
-				const fieldGenerator = context.fieldSource(currentKey, requiredFieldSchema);
-				if (fieldGenerator !== undefined) {
-					const children = fieldGenerator();
-					fields.set(currentKey, children);
-				}
+			if (data[currentKey] === undefined) {
+				setFieldForKey(currentKey, context, schema, fields);
+			}
+		}
+
+		for (const key of schema.localFields.keys()) {
+			if (data[key] === undefined) {
+				setFieldForKey(key, context, schema, fields);
 			}
 		}
 
@@ -530,6 +529,23 @@ export function applyTypesFromContext(
 			0x4d7 /* provided value not permitted by the schema */,
 		);
 		return { value, type, fields };
+	}
+}
+
+function setFieldForKey(
+	key: FieldKey,
+	context: TreeDataContext,
+	schema: TreeStoredSchema,
+	fields: Map<FieldKey, MapTree[]>,
+): void {
+	const requiredFieldSchema = getFieldSchema(key, context.schema, schema);
+	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
+	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
+		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
+		if (fieldGenerator !== undefined) {
+			const children = fieldGenerator();
+			fields.set(key, children);
+		}
 	}
 }
 
