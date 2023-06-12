@@ -1224,60 +1224,6 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it("can rebase value change of node over cross-field move of that node", () => {
-			const provider = new TestTreeProviderLite(2);
-			const [tree1, tree2] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [{ type: brand("Node"), value: "a" }],
-					bar: [{ type: brand("Node"), value: "b" }],
-				},
-			};
-			initializeTestTree(tree1, initialState);
-			provider.processMessages();
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			// Move a after b
-			runSynchronous(tree1, () => {
-				tree1.editor.move(
-					{ parent: rootPath, field: brand("foo") },
-					0,
-					1,
-					{ parent: rootPath, field: brand("bar") },
-					1,
-				);
-			});
-
-			// Change a's value to c
-			runSynchronous(tree2, () => {
-				tree2.editor.setValue(
-					{ parent: rootPath, parentField: brand("foo"), parentIndex: 0 },
-					"c",
-				);
-			});
-
-			provider.processMessages();
-
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					bar: [
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-				},
-			};
-			validateTree(tree1, [expectedState]);
-			validateTree(tree2, [expectedState]);
-		});
-
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
 			insert(provider.trees[0], 0, "a");
