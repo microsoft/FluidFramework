@@ -125,6 +125,8 @@ export class CheckpointService implements ICheckpointService {
 		let checkpoint;
 		let lastCheckpoint: IDeliState | IScribe;
 		let isLocalCheckpoint = false;
+		let localLogOffset;
+		let globalLogOffset;
 		const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(
 			LumberEventName.RestoreFromCheckpoint,
 		);
@@ -161,6 +163,8 @@ export class CheckpointService implements ICheckpointService {
 						checkpointSource = "latestFoundInLocalCollection";
 						isLocalCheckpoint = true;
 					}
+					localLogOffset = localCheckpoint.logOffset;
+					globalLogOffset = globalCheckpoint.logOffset;
 				} else {
 					// If checkpoint does not exist, use document
 					Lumberjack.info(
@@ -177,6 +181,8 @@ export class CheckpointService implements ICheckpointService {
 				service,
 				checkpointSource,
 				retrievedFromLocalDatabase: isLocalCheckpoint,
+				globalLogOffset,
+				localLogOffset,
 			});
 		} catch (error) {
 			Lumberjack.error(
