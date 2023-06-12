@@ -83,12 +83,12 @@ class RevertibleFactory extends SharedStringFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		runtime.options = { ...runtime.options, mergeTreeUseNewLengthCalculations: true };
+		runtime.options.mergeTreeUseNewLengthCalculations = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options = { ...document.options, mergeTreeUseNewLengthCalculations: true };
+		document.options.mergeTreeUseNewLengthCalculations = true;
 		return super.create(document, id);
 	}
 }
