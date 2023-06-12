@@ -6,7 +6,7 @@ import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
-import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular, Home20Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -83,12 +83,23 @@ interface SettingsMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Home view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface HomeMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "homeMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection | HomeMenuSelection;
 
 // #region Styles definitions
 
@@ -228,8 +239,10 @@ export function DevtoolsView(): React.ReactElement {
 							<Button onClick={retryQuery}>Search again</Button>
 						</Tooltip>
 					</>
-				) : (
+				) : (<>
 					<Waiting />
+					<LandingView/>
+					</>
 				)
 			) : (
 				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
@@ -352,6 +365,9 @@ function View(props: ViewProps): React.ReactElement {
 		case "settingsMenuSelection":
 			view = <SettingsView setTheme={setTheme} />;
 			break;
+		case "homeMenuSelection":
+			view = <LandingView/>;
+			break;
 		default:
 			view = <LandingView />;
 			break;
@@ -415,6 +431,10 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "settingsMenuSelection" });
 	}
 
+	function onHomeClicked(): void {
+		setSelection({ type: "homeMenuSelection" });
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -444,6 +464,18 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 	return (
 		<Stack.Item styles={menuStyles}>
+			<div 
+				style={{
+					minWidth: "250px",
+					display: "flex",
+					cursor: "pointer",
+					margin: "3px" 
+				}}
+				onClick={onHomeClicked}
+				>
+				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
+				<Home20Regular />
+			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 			<div
 				style={{
@@ -453,7 +485,7 @@ function Menu(props: MenuProps): React.ReactElement {
 				}}
 				onClick={onSettingsClicked}
 			>
-				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
+				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
 				<Settings20Regular />
 			</div>
 		</Stack.Item>
