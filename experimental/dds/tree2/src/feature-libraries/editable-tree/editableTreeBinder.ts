@@ -86,7 +86,12 @@ export type MatchPolicy = "subtree" | "path";
  */
 export interface DataBinder<B extends BinderEvents> {
 	/**
-	 * Listen to specific binder events filtered by anchor, event type and path.
+	 * Register an event listener
+	 *
+	 * @param anchor - The anchor to register the listener on
+	 * @param eventType - The {@link BindingType} to listen for.
+	 * @param eventTrees - The {@link BindTree}s to filter on.
+	 * @param listener - The listener to register
 	 */
 	register<K extends keyof Events<B>>(
 		anchor: EditableTree,
@@ -129,9 +134,15 @@ export interface PathStep {
 	readonly index?: number;
 }
 
-export type BindTreeDefault = BindTree;
 /**
- * A node in a bind path
+ * The default type for a bind tree
+ *
+ * @alpha
+ */
+export type BindTreeDefault = BindTree;
+
+/**
+ * A bind tree is a compact representation of related {@link BindPath}s.
  *
  * @alpha
  */
@@ -157,30 +168,32 @@ export interface BindSyntaxTree {
 }
 
 /**
- * A down path
+ * A top down path in a bind or path tree
+ *
+ * see {@link BindTree}
+ * see {@link UpPath}
  *
  * @alpha
  */
 export type DownPath = PathStep[];
 
 /**
- * A bind path
+ * A bind path is a top down path in a bind tree
  *
  * @alpha
  */
 export type BindPath = DownPath;
 
 /**
+ * A generic binding context for fine grained binding events.
+ *
  * @alpha
  */
 export type BindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
 
 /**
- * @alpha
- */
-export type BindingContextQueue = BindingContext[];
-
-/**
+ * Enumeration of binding categories
+ *
  * @alpha
  */
 export const BindingType = {
@@ -245,8 +258,18 @@ export interface BatchBindingContext extends AbstractBindingContext {
 	readonly events: BindingContext[];
 }
 
+/**
+ * The listener interface. Internal.
+ *
+ * @alpha
+ */
 type Listener = (...args: unknown[]) => void;
 
+/**
+ * A call tree is a {@link BindTree} augmented with listeners. Internal.
+ *
+ * @alpha
+ */
 type CallTree = BindTree<CallTree> & { listeners: Set<Listener> };
 
 abstract class AbstractPathVisitor implements PathVisitor {
