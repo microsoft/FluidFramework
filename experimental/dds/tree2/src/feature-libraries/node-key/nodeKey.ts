@@ -12,7 +12,9 @@ import { FieldKinds, NodeKeyFieldKind } from "../defaultFieldKinds";
 /**
  * A key which uniquely identifies a node in the tree within this session.
  * @remarks {@link LocalNodeKey}s must not be serialized and stored as data without first being converted into a {@link StableNodeKey}.
- * However, they are otherwise preferential to use over {@link StableNodeKey}s as they are much smaller and faster to compare and equate.
+ * They are local to the current session and equivalent nodes in another session will not necessarily have the same {@link LocalNodeKey}.
+ * However, they are otherwise preferential to use over {@link StableNodeKey}s as they are much smaller.
+ * For example, they are more efficient than {@link StableNodeKey}s when used as keys in a map.
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
  * @alpha
  */

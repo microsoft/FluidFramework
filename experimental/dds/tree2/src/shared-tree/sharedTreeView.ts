@@ -208,7 +208,7 @@ export interface ISharedTreeView extends AnchorLocator {
 		 */
 		stabilize(key: LocalNodeKey): StableNodeKey;
 		/**
-		 * Convert a {@link StableNodeKey} back into its original {@link LocalNodeKey} form.
+		 * Convert a {@link StableNodeKey} back into its {@link LocalNodeKey} form.
 		 * @param key - the key to convert
 		 */
 		localize(key: StableNodeKey): LocalNodeKey;

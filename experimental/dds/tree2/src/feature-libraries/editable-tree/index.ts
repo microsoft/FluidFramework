@@ -26,4 +26,4 @@ export { isEditableTree } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive, getStableNodeKey } from "./utilities";
+export { isPrimitive } from "./utilities";
