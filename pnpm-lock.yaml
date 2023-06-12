@@ -7982,6 +7982,9 @@ importers:
       '@fluid-internal/stochastic-test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/stochastic-test-utils
+      '@fluid-internal/test-dds-utils':
+        specifier: workspace:~
+        version: link:../../../packages/dds/test-dds-utils
       '@fluid-internal/test-drivers':
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
