@@ -9,7 +9,7 @@
 			"request": "launch",
 			"name": "Launch Program",
 			"program": "${workspaceFolder}\\dist\\fluidBuild\\fluidBuild.js",
-			"outFiles": ["${workspaceFolder}/**/*.js"]
+			"outFiles": ["${workspaceFolder}/**/*.js"],
 		},
 		{
 			"type": "node",
@@ -18,7 +18,7 @@
 			"program": "${workspaceFolder}/dist/bumpVersion/bumpVersionCli.js",
 			"args": ["--writeReleaseVersions"],
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
-			"cwd": "${workspaceFolder}"
+			"cwd": "${workspaceFolder}",
 		},
 		{
 			"type": "node",
@@ -27,13 +27,13 @@
 			"program": "${workspaceFolder}\\dist\\repoPolicyCheck\\repoPolicyCheck.js",
 			"args": [""],
 			"outFiles": ["${workspaceFolder}/**/*.js"],
-			"cwd": "${workspaceFolder}"
+			"cwd": "${workspaceFolder}",
 		},
 		{
 			"type": "node",
 			"request": "attach",
 			"name": "Attach by Process ID",
-			"processId": "${command:PickProcess}"
-		}
-	]
+			"processId": "${command:PickProcess}",
+		},
+	],
 }

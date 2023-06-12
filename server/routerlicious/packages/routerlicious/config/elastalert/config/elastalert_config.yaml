@@ -5,12 +5,12 @@ rules_folder: /opt/rules
 # How often ElastAlert will query elasticsearch
 # The unit can be anything from weeks to seconds
 run_every:
-    minutes: 1
+  minutes: 1
 
 # ElastAlert will buffer results from the most recent
 # period of time, in case some log sources are not in real time
 buffer_time:
-    minutes: 2
+  minutes: 2
 
 # The elasticsearch hostname for metadata writeback
 # Note that every rule can have it's own elasticsearch host
@@ -37,7 +37,7 @@ writeback_index: elastalert_status
 # If an alert fails for some reason, ElastAlert will retry
 # sending the alert until this time period has elapsed
 alert_time_limit:
-    days: 1
+  days: 1
 
 # SMTP config
 smtp_host: smtp-mail.outlook.com

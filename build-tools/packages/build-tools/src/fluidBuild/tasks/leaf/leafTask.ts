@@ -39,7 +39,7 @@ export abstract class LeafTask extends Task {
 
 	// set of direct parent that this task will unblock
 	private directParentLeafTasks: LeafTask[] = [];
-	private _parentLeafTasks?: Set<LeafTask>;
+	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
@@ -91,15 +91,34 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
-	private get parentLeafTasks() {
-		if (this._parentLeafTasks === undefined) {
-			const parentLeafTasks = new Set<LeafTask>(this.directParentLeafTasks);
-			this._parentLeafTasks = parentLeafTasks;
-			this.directParentLeafTasks
-				.map((task) => task.parentLeafTasks)
-				.forEach((p) => p.forEach((t) => parentLeafTasks.add(t)));
+	private get parentLeafTasks(): Set<LeafTask> {
+		if (this._parentLeafTasks === null) {
+			// Circular dependency, start unrolling
+			throw [this];
 		}
-		return this._parentLeafTasks;
+		try {
+			if (this._parentLeafTasks === undefined) {
+				const parentLeafTasks = new Set<LeafTask>(this.directParentLeafTasks);
+				this._parentLeafTasks = null;
+				this.directParentLeafTasks
+					.map((task) => task.parentLeafTasks)
+					.forEach((p) => p.forEach((t) => parentLeafTasks.add(t)));
+				this._parentLeafTasks = parentLeafTasks;
+			}
+			return this._parentLeafTasks;
+		} catch (e) {
+			if (Array.isArray(e)) {
+				// Add to the dependency chain
+				e.push(this);
+				if (e[0] === this) {
+					// detected a cycle, convert into a message
+					throw new Error(
+						`Circular dependency: ${e.map((v) => v.nameColored).join("->")}`,
+					);
+				}
+			}
+			throw e;
+		}
 	}
 
 	protected get taskWeight() {

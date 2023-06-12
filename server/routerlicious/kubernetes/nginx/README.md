@@ -25,8 +25,8 @@ kubectl create secret tls <name> --key tls.key --cert tls.crt
 
 The deployed certificates for the CI environments are (`<namespace>/<name>`):
 
-- `default/wu2-ppe-tls-certificate`
-- `default/wu2-tls-certificate`
+-   `default/wu2-ppe-tls-certificate`
+-   `default/wu2-tls-certificate`
 
 ## Deploy Helm chart for the ingress controller
 

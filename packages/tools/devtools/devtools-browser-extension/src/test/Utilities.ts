@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { JSDOM } from "jsdom";
 import { SinonSandbox } from "sinon";
 
-import { Globals } from "../utilities";
+import { Globals } from "../Globals";
 
 /**
  * Wait for a listener to be registered for the specified event.
@@ -69,6 +70,11 @@ export function stubPort(name: string): chrome.runtime.Port {
 export function stubGlobals(): Globals {
 	const stubbedBrowser = {
 		browserAction: { onClicked: stubEvent() },
+		devtools: {
+			panels: {
+				create: (): void => {},
+			},
+		},
 		runtime: {
 			onConnect: stubEvent(),
 			onMessage: stubEvent(),
@@ -84,7 +90,13 @@ export function stubGlobals(): Globals {
 		webNavigation: { onCommitted: stubEvent() },
 	} as unknown as typeof chrome;
 
+	const dom = new JSDOM("<!doctype html>", {
+		runScripts: "dangerously",
+		url: "http://localhost/",
+	});
+
 	return {
 		browser: stubbedBrowser,
+		window: dom.window as unknown as Window & typeof globalThis,
 	};
 }

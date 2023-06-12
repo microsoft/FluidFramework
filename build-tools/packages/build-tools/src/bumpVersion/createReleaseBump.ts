@@ -6,13 +6,12 @@ import * as semver from "semver";
 
 import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
-import { MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
 import { Context } from "./context";
 import { runPolicyCheckWithFix } from "./policyCheck";
-import { fatal } from "./utils";
+import { fatal, MonoRepoKind, isMonoRepoKind } from "./utils";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
 
 /**

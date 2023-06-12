@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const { renderNodeAsMarkdown, renderNodesAsMarkdown } = require("@fluid-tools/api-markdown-documenter");
+const {
+	renderNodeAsMarkdown,
+	renderNodesAsMarkdown,
+} = require("@fluid-tools/api-markdown-documenter");
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
@@ -12,19 +15,19 @@ const { renderNodeAsMarkdown, renderNodesAsMarkdown } = require("@fluid-tools/ap
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderAlertNode(
-	alertNode,
-	writer,
-	context,
-) {
+function renderAlertNode(alertNode, writer, context) {
 	writer.ensureNewLine();
 
-	writer.writeLine(`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? 'note'} ${alertNode.title ?? ''} %}}`);
+	writer.writeLine(
+		`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? "note"} ${
+			alertNode.title ?? ""
+		} %}}`,
+	);
 
 	renderNodesAsMarkdown(alertNode.children, writer, context);
 	writer.ensureNewLine();
 
-	writer.writeLine('{{% /callout %}}');
+	writer.writeLine("{{% /callout %}}");
 	writer.writeLine();
 }
 
@@ -35,19 +38,15 @@ function renderAlertNode(
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderBlockQuoteNode(
-	blockQuoteNode,
-	writer,
-	context,
-) {
+function renderBlockQuoteNode(blockQuoteNode, writer, context) {
 	writer.ensureNewLine();
 
-	writer.writeLine('{{% callout note %}}');
+	writer.writeLine("{{% callout note %}}");
 
 	renderNodesAsMarkdown(blockQuoteNode.children, writer, context);
 	writer.ensureNewLine();
 
-	writer.writeLine('{{% /callout %}}');
+	writer.writeLine("{{% /callout %}}");
 	writer.writeLine();
 }
 
@@ -93,5 +92,5 @@ function renderTableNode(tableNode, writer, context) {
 module.exports = {
 	renderAlertNode,
 	renderBlockQuoteNode,
-	renderTableNode
+	renderTableNode,
 };

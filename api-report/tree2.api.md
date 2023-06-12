@@ -1677,7 +1677,7 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     get editor(): IDefaultEditBuilder;
     // (undocumented)
-    readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+    get events(): ISubscribable<ViewEvents>;
     // (undocumented)
     get forest(): IForestSubscription;
     // (undocumented)
@@ -1697,7 +1697,7 @@ export class SharedTreeView implements ISharedTreeView {
     redo(): void;
     // (undocumented)
     get root(): UnwrappedEditableField;
-    set root(data: ContextuallyTypedNodeData | undefined);
+    set root(data: NewFieldContent);
     // (undocumented)
     get rootEvents(): ISubscribable<AnchorSetRootEvents>;
     // (undocumented)
