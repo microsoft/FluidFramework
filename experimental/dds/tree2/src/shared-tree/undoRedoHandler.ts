@@ -5,7 +5,7 @@
 
 import { IRevertible, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { UndoRedoManagerCommitType } from "../core";
-import { ISharedTreeView } from ".";
+import { ISharedTreeView } from "./sharedTreeView";
 
 /**
  * A shared tree view undo redo handler that will add all local undoable tree changes to the provided
