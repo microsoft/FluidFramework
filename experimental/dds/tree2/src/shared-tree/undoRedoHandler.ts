@@ -46,16 +46,10 @@ export class SharedTreeViewRevertible implements IRevertible {
 	) {}
 
 	public revert() {
-		if (
-			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undoable ||
-			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo
-		) {
-			this.tree.undo();
-		} else if (
-			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Redoable ||
-			this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo
-		) {
+		if (this.undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo) {
 			this.tree.redo();
+		} else {
+			this.tree.undo();
 		}
 	}
 

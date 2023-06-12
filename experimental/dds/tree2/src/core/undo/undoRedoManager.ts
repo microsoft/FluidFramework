@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../rebase";
 
@@ -49,7 +49,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		this.commitTypes.set(commit.revision, type);
 
 		const parent =
-			type === UndoRedoManagerCommitType.Undo || type === UndoRedoManagerCommitType.Redoable
+			type === UndoRedoManagerCommitType.Undo
 				? this.headRedoableCommit
 				: this.headUndoableCommit;
 		const undoableOrRedoable = {
@@ -58,24 +58,17 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		};
 
 		switch (type) {
-			// Both undo commits and redoable commits result in a new head redoable commit
-			// being pushed to the redoable commit stack but only undo commits need to pop from the
+			// Undo commits push a new head redoable commit to the redoable commit stack and pop from the
 			// undoable commit stack.
 			case UndoRedoManagerCommitType.Undo:
 				this.headUndoableCommit = this.headUndoableCommit?.parent;
-			case UndoRedoManagerCommitType.Redoable:
 				this.headRedoableCommit = undoableOrRedoable;
 				break;
-			// Both redo commits and undoable commits result in a new head undoable commit
-			// being pushed to the undoable commit stack but only redo commits need to pop from the
-			// redoable commit stack.
+			// Redo commits pop from the redoable commit stack and all other commits push to the undoable commit stack.
 			case UndoRedoManagerCommitType.Redo:
 				this.headRedoableCommit = this.headRedoableCommit?.parent;
-			case UndoRedoManagerCommitType.Undoable:
-				this.headUndoableCommit = undoableOrRedoable;
-				break;
 			default:
-				unreachableCase(type);
+				this.headUndoableCommit = undoableOrRedoable;
 		}
 	}
 
@@ -223,21 +216,15 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		for (const commit of newCommits) {
 			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
 			if (type !== undefined) {
-				if (
-					type === UndoRedoManagerCommitType.Undoable ||
-					type === UndoRedoManagerCommitType.Redo
-				) {
-					newHeadUndoable = {
-						commit,
-						parent: newHeadUndoable,
-					};
-				} else if (
-					type === UndoRedoManagerCommitType.Redoable ||
-					type === UndoRedoManagerCommitType.Undo
-				) {
+				if (type === UndoRedoManagerCommitType.Undo) {
 					newHeadRedoable = {
 						commit,
 						parent: newHeadRedoable,
+					};
+				} else {
+					newHeadUndoable = {
+						commit,
+						parent: newHeadUndoable,
 					};
 				}
 			}
@@ -266,8 +253,6 @@ export interface ReversibleCommit<TChange> {
 export enum UndoRedoManagerCommitType {
 	/** A commit that can be undone. */
 	Undoable,
-	/** A commit that can be redone. */
-	Redoable,
 	/** A commit that is the result of an undo. */
 	Undo,
 	/** A commit that is the result of a redo. */

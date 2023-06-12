@@ -1925,9 +1925,8 @@ type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
 
 // @alpha
 export enum UndoRedoManagerCommitType {
-    Redo = 3,
-    Redoable = 1,
-    Undo = 2,
+    Redo = 2,
+    Undo = 1,
     Undoable = 0
 }
 
