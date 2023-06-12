@@ -7,6 +7,18 @@ import { Flags } from "@oclif/core";
 import { command, Options } from "execa";
 import { PackageCommand, PackageKind } from "../../BasePackageCommand";
 import { Repository } from "../../lib";
+import fs from 'fs/promises';
+
+async function replaceInFile(searchValue: string, replaceValue: string, filePath: string): Promise<void> {
+    // Read the file content
+    const content = await fs.readFile(filePath, 'utf8');
+
+    // Use global replace to change all occurrences of the searchValue
+	const newContent = content.replace(new RegExp(searchValue, 'g'), replaceValue);
+
+    // Write the new content back to the file
+    await fs.writeFile(filePath, newContent, 'utf8');
+}
 
 export default class GenerateChangeLogCommand extends PackageCommand<typeof GenerateChangeLogCommand> {
 
@@ -55,13 +67,16 @@ export default class GenerateChangeLogCommand extends PackageCommand<typeof Gene
 
 		const rawchangesetAdd = await repo.gitClient.raw("add", ".changeset");
 
-		const replace1Result = await command(`pnpm -r exec -- sd "## 2.0.0\\n" "## ${version}\\n" CHANGELOG.md`, opts);
+		await replaceInFile("## 2.0.0\\n", `## ${version}\\n`, "CHANGELOG.md");
+
+		const replace1Result = await command(`pnpm -r exec -- sd "## 2.0.0\\n" "## ${version}\\n" CHANGELOG.md`, opts); // TODO how to put replaceInFile instead of sd
 		this.log(replace1Result.stdout);
 
-		const replace2Result = await command(`pnpm -r exec -- sd "## ${version}\\n\\n## " "## ${version}\\n\\nDependency updates only.\\n\\n## " CHANGELOG.md`, opts);
+		await replaceInFile(`## ${version}\\n\\n## `, `## ${version}\\n\\nDependency updates only.\\n\\n## ` ,"CHANGELOG.md");
+		const replace2Result = await command(`pnpm -r exec -- sd "## ${version}\\n\\n## " "## ${version}\\n\\nDependency updates only.\\n\\n## " CHANGELOG.md`, opts); // TODO how to put replaceInFile instead of sd
 		this.log(replace2Result.stdout);
 
-		const result = await command("pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md", opts);
+		const result = await command("pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md", opts); // repo.gitClient here?
 		this.log(result.stdout);
 
 		const rawRestore = await repo.gitClient.raw("restore", ".");
