@@ -9,14 +9,14 @@ importers:
         version: 0.20.1
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(typescript@4.5.5)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(typescript@4.5.5)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(typescript@4.5.5)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -169,14 +169,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli@0.18.0(typescript@4.5.5):
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
+  /@fluid-tools/build-cli@0.19.0-165129(typescript@4.5.5):
+    resolution: {integrity: sha512-i1qzGDii8mC2t9i+ptXZ3CK1+6J61LCmqJXSI+zTDpuj3vAvE0JbvimzjMmxa69CDmYGtDs4DpEDPtGU5U5i1w==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0(typescript@4.5.5)
-      '@fluidframework/build-tools': 0.18.0(typescript@4.5.5)
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-165129(typescript@4.5.5)
+      '@fluidframework/build-tools': 0.19.0-165129(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@oclif/core': 2.8.5(typescript@4.5.5)
       '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
       '@oclif/plugin-commands': 2.2.15(typescript@4.5.5)
@@ -200,7 +200,7 @@ packages:
       npm-check-updates: 16.10.10
       oclif: 3.9.0(typescript@4.5.5)
       prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
+      prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.0
       semver-utils: 1.1.4
@@ -224,12 +224,12 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools@0.18.0(typescript@4.5.5):
-    resolution: {integrity: sha512-MbpR1kB+rpBu4Ztw7kXALz1543or8f1NQxch5R5bN/Zcq864RYvPD1NwBkOvdukA9HquHqu+hOYVqd6gek7q4A==}
+  /@fluid-tools/version-tools@0.19.0-165129(typescript@4.5.5):
+    resolution: {integrity: sha512-BMCfXNJtolGvQMJZMMefIjKYP2C72jDPEchbTE+9xjAwAqYlvT/VpPg0G4h4ATXeY2OA0MJh/8iBSOv2/JNDbQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
       '@oclif/plugin-commands': 2.2.15(typescript@4.5.5)
       '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
@@ -246,18 +246,18 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common@1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common@1.2.0:
+    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(typescript@4.5.5):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-165129(typescript@4.5.5):
+    resolution: {integrity: sha512-R/03OjHLJBTMXLmzcQOY/Dc5sOUJNvCP1mIecAJjygrKY4Q8KnXHXcYRWe030VJ0HSURduYDbm7yDWdOoTs/sA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0(typescript@4.5.5)
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-165129(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
       '@rushstack/node-core-library': 3.58.0
@@ -299,8 +299,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.18.0:
-    resolution: {integrity: sha512-e6pupP3KLUGpbQMznZpd7OcTBJOL331seFhB2GNVXQu9UqKAtCwpjgIQwg5vdGBp5p+MZGrsh8VqyHJw9a0Jpw==}
+  /@fluidframework/bundle-size-tools@0.19.0-165129:
+    resolution: {integrity: sha512-Pb4fvOEIAwOWT/mkieNku4k978isb4B795qLrJApEYMXWfEbL+yjR8A4a052ub0kPzL1ENcJ4Qk2/N1zVQPJNA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -779,6 +779,40 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       tslib: 2.5.0
+    dev: true
+
+  /@oclif/core@2.4.0:
+    resolution: {integrity: sha512-wWUnOOfQQty0k1Cstm/iWW6pbG0mHzU7rcUtab2Sni9kjBPCcy6ENTgpsWbb/WdITopqtXmvpYII2fgcjKdzUA==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@types/cli-progress': 3.11.0
+      ansi-escapes: 4.3.2
+      ansi-styles: 4.3.0
+      cardinal: 2.1.1
+      chalk: 4.1.2
+      clean-stack: 3.0.1
+      cli-progress: 3.12.0
+      debug: 4.3.4(supports-color@8.1.1)
+      ejs: 3.1.9
+      fs-extra: 9.1.0
+      get-package-type: 0.1.0
+      globby: 11.1.0
+      hyperlinker: 1.0.0
+      indent-string: 4.0.0
+      is-wsl: 2.2.0
+      js-yaml: 3.14.1
+      natural-orderby: 2.0.3
+      object-treeify: 1.1.33
+      password-prompt: 1.1.2
+      semver: 7.5.0
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      supports-color: 8.1.1
+      supports-hyperlinks: 2.3.0
+      tslib: 2.5.0
+      widest-line: 3.1.0
+      wordwrap: 1.0.0
+      wrap-ansi: 7.0.0
     dev: true
 
   /@oclif/core@2.8.5(typescript@4.5.5):
@@ -5456,6 +5490,11 @@ packages:
       json-buffer: 3.0.1
     dev: true
 
+  /kleur@3.0.3:
+    resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
+    engines: {node: '>=6'}
+    dev: true
+
   /kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
@@ -7027,6 +7066,14 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       kleur: 4.1.5
+      sisteransi: 1.0.5
+    dev: true
+
+  /prompts@2.4.2:
+    resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
+    engines: {node: '>= 6'}
+    dependencies:
+      kleur: 3.0.3
       sisteransi: 1.0.5
     dev: true
 

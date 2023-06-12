@@ -101,3 +101,6 @@ extends:
     test: ci:test
     docs: true
     containerBaseDir: /usr/src/server
+    checks:
+    - prettier
+    - check:versions

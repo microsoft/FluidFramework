@@ -27,8 +27,6 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:full",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"bump": "node dist/bumpVersion/bumpVersionCli.js",
 		"clean": "rimraf --glob dist lib *.tsbuildinfo *.build.log",
@@ -85,7 +83,7 @@
 		"yaml": "^2.1.2"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/async": "^3.2.6",
 		"@types/fs-extra": "^8.1.0",

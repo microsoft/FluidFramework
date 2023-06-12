@@ -41,7 +41,8 @@
 			"rdkafkaAutomaticConsume": true,
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
-		}
+		},
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
