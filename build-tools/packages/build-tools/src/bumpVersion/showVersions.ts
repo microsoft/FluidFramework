@@ -5,10 +5,10 @@
 import { strict as assert } from "assert";
 import * as semver from "semver";
 
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { Context } from "./context";
-import { fatal } from "./utils";
+import { fatal, MonoRepoKind, isMonoRepoKind } from "./utils";
 import { ReferenceVersionBag } from "./versionBag";
 
 // TODO: Validate and document this function.
@@ -41,11 +41,11 @@ export async function showVersions(
 		if (isMonoRepoKind(releaseGroup)) {
 			if (releaseGroup === MonoRepoKind.Server) {
 				assert(
-					context.repo.serverMonoRepo,
+					context.repo.releaseGroups.get(MonoRepoKind.Server),
 					"Attempted show server versions on a Fluid repo with no server directory",
 				);
 			}
-			await processMonoRepo(context.repo.monoRepos.get(releaseGroup)!);
+			await processMonoRepo(context.repo.releaseGroups.get(releaseGroup)!);
 		} else {
 			pkg = context.fullPackageMap.get(releaseGroup);
 			if (!pkg) {

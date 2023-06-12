@@ -80,7 +80,6 @@ scribe:
   replicas: 8
   getDeltasViaAlfred: true
   verifyLastOpPersistence: false
-  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000
