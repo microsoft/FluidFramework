@@ -5,6 +5,7 @@
 
 import { IRevertible, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { UndoRedoManagerCommitType } from "../core";
+import { fail } from "../util";
 import { ISharedTreeView } from "./sharedTreeView";
 
 /**
@@ -14,15 +15,22 @@ import { ISharedTreeView } from "./sharedTreeView";
  * @alpha
  */
 export class SharedTreeViewUndoRedoHandler {
-	private detach?: () => void;
+	private readonly connectedTrees = new Map<ISharedTreeView, () => void>();
 
 	public constructor(private readonly stackManager: UndoRedoStackManager) {}
 
 	public attachTree(tree: ISharedTreeView) {
-		this.detach = tree.events.on("undoable", this.treeDeltaHandler);
+		if (this.connectedTrees.has(tree)) {
+			fail("Cannot attach the same tree twice");
+		}
+		this.connectedTrees.set(tree, tree.events.on("undoable", this.treeDeltaHandler));
 	}
 	public detachTree(tree: ISharedTreeView) {
-		this.detach?.();
+		const detach = this.connectedTrees.get(tree);
+		if (detach === undefined) {
+			fail("Cannot detach a tree that is not attached");
+		}
+		detach();
 	}
 
 	private readonly treeDeltaHandler = (
