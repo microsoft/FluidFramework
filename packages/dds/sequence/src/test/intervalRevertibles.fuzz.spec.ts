@@ -17,6 +17,11 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelAttributes,
+} from "@fluidframework/datastore-definitions";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
@@ -25,6 +30,7 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../revertibles";
+import { SharedString } from "../sharedString";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -65,6 +71,27 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	propertyNamePool: ["prop1", "prop2", "prop3"],
 	validateInterval: 100,
 };
+
+// Since the clients are created by the fuzz harness, the factory object must be
+// modified in order to set the mergeTreeUseNewLengthCalculations option on the
+// underlying merge tree.
+class RevertibleFactory extends SharedStringFactory {
+	options = { mergeTreeUseNewLengthCalculations: true };
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options = { ...runtime.options, mergeTreeUseNewLengthCalculations: true };
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options = { ...document.options, mergeTreeUseNewLengthCalculations: true };
+		return super.create(document, id);
+	}
+}
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -166,7 +193,7 @@ function operationGenerator(
 }
 
 describe.only("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () => take(100, operationGenerator()),
 		reducer:
@@ -174,8 +201,7 @@ describe.only("IntervalCollection fuzz testing", () => {
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 			makeReducer(),
 		validateConsistency: assertEquivalentSharedStrings,
-		// extend this that passes mergetreeusenew... in create and load functions
-		factory: new SharedStringFactory(),
+		factory: new RevertibleFactory(),
 	};
 
 	createDDSFuzzSuite(

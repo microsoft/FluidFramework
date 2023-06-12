@@ -120,7 +120,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    options: ILoaderOptions;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any): void;
