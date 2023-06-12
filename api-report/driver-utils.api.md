@@ -209,9 +209,6 @@ export interface IProgress {
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
 // @public (undocumented)
-export function isDeltaStreamConnectionForbiddenError(error: any): error is DeltaStreamConnectionForbiddenError;
-
-// @public (undocumented)
 export function isOnline(): OnlineStatus;
 
 // @public

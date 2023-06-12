@@ -6,7 +6,7 @@
 export { buildSnapshotTree } from "./buildSnapshotTree";
 export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-export { isDeltaStreamConnectionForbiddenError, UsageError } from "./error";
+export { UsageError } from "./error";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
 export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {

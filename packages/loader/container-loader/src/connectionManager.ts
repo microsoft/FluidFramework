@@ -26,7 +26,6 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
-	isDeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
