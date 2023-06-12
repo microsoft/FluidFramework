@@ -429,7 +429,7 @@ would likely result in user frustration because the local user may not want to u
 but also because the local user may not be aware of what those edits are,
 or may not be aware of their very existence.
 
-Despite all that, it can at time be desirable to undo of _a specific peer edit_.
+Despite all that, it can at times be desirable to undo of _a specific peer edit_.
 For example, a peer may delete content that the local user would not want deleted.
 The local user could verbally ask the peer to undo that change,
 but that may be impractical, or it may simply be impossible if the peer has terminated their session.
@@ -441,12 +441,15 @@ While this applies more memory pressure on the clients,
 it seems like a natural evolution of the system described in this document.
 
 This new capability would however make possible a new family of scenarios:
-two clients, may concurrently attempt to undo the same edit.
+two clients may concurrently attempt to undo the same edit.
 
 If the latter of the two such undos carries with it a refresher,
 then the receiving peers (as well as the issuing client) will end up
 creating the repair data as the refresher instructs, despite the same tree content having already been revived.
 This could be addressed by rendering refreshers ineffective when they are rebased over a revival of the associated subtree.
+For example, the `StygianForest` could keep a record of the repair data entries
+(but not the repair data itself)
+that have been revived by the edits that lie within the current collaboration window.
 
 #### Supporting Edits To Deleted Content
 
@@ -461,11 +464,11 @@ This could be supported by requiring clients with such a need to do the followin
 
 1.  Maintain repair data for the subtree in question.
 2.  Send a repair data refresher alongside any edit that affects the subtree in question,
-    similarly to the refresher sent in undo scenarios.
+    similarly to how a refresher is sent in undo scenarios.
 
 #1 is harder than it sounds because it requires determining which of possibly many deleted subtrees may be of interest to the local client.
 In principle, any local branch that was forked from the trunk before the deletion of a subtree may include edits for that subtree,
-or may in the future start include such edits.
+or may in the future start including such edits.
 This implies that none of the repair data for such edits could be collected.
 
 In addition to branches, one must also consider any anchors (on any and all branches) that point to nodes within the deleted subtrees.
@@ -478,10 +481,10 @@ The subtree's state may become relevant again due to its deletion being undone,
 but the issuer of the undo will issue a refresher for it if needed.
 Unfortunately, #2 is needed because any edit made to the deleted subtree may entail moving content out of that subtree and into the document tree.
 If clients that have garbage-collected the repair data for the subtree of interest have not been provided with a refresher before that,
-then they will be unable show an updated document tree.
+then they will be unable to show an updated document tree.
 
 This approach leads to the same "concurrent refresh" problem that [supporting undo of peer edits does](#supporting-undo-of-peer-edits),
-presumably with as similar solution:
+presumably with a similar solution:
 refreshers must be rendered ineffective when they are rebased over a concurrent revival or refresh of the associated subtree.
 
 #### Accommodating The Destructuring of Nodes
@@ -495,23 +498,23 @@ the it's either impossible to move the child out of the source field,
 or impossible to create the destination field's parent without the field being populated,
 or both.
 
-Node destructuring is a feature would allow a client to decompose a node by making it unreachable and uneditable,
+Node destructuring is a feature that would allow a client to decompose a node by making it unreachable and uneditable,
 while at the same time transforming all of the immediate children of that node into individual roots.
 The children can then be consumed to create a new node, or moved.
 
 This destructuring feature interacts with repair data because deleted nodes can be destructured.
 When that happens, the `StygianForest` would need to update its records to remove the entry for the destructured node if there is one,
-and add entries for the new root if any.
+and add entries for the new roots if the destructured node had any children.
 
 #### Garbage-Collecting Repair Data of Expired Sessions
 
 In our current system, only the session that produced a given edit is able to undo that edit.
 This means that, once an edit is sequenced, the repair data associated with it will only become relevant if the session undoes that edit.
 
-Each peer could take notice of peer sessions ending and garbage-collect any repair data associated with the edits of that session,
+Each client could take notice of peer sessions ending and garbage-collect any repair data associated with the edits of the session,
 so long as those edits were outside the collaboration window.
 
-Note that this trick will cause problem if _any_ of the following becomes true:
+Note that this performance optimization will cause problems if _any_ of the following becomes true:
 
 -   A client can edit deleted content even after witnessing the sequenced edit that performs the deletion.
 -   Edits from one session can be undone by a different session. There are different ways this could become true:
@@ -525,9 +528,9 @@ we describe a tradeoff between the memory needs of storting repair data on one s
 and the network latency and server costs of having to resend it to peers on the other.
 While we have established that the garbage collection can happen no earlier,
 it is certainly possible to make it happen later,
-thereby us to avoid sending repair data for a greater number of undo edits.
+thereby enabling us to avoid sending repair data for a greater number of undo edits.
 
 This adjustable tradeoff could be left to the discretion of the applications collaborating on the document,
 or even left to the users of said applications.
 The only rule is that this when this tradeoff is changed,
-the message indicating the change must be sequenced before it takes effect.
+the message indicating the change must fall out of the collaboration window before it takes effect.
