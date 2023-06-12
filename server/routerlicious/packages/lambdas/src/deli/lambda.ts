@@ -265,6 +265,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private noActiveClients: boolean;
 
+	private globalCheckpointOnly;
+
 	private closed: boolean = false;
 
 	// mapping of enabled nack message types. messages will be nacked based on the provided info
@@ -639,10 +641,18 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
+			// Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
+			if (checkpointReason === CheckpointReason.NoClients) {
+				this.globalCheckpointOnly = true;
+			} else {
+				if (this.lastMessageType === MessageType.ClientJoin) {
+					this.globalCheckpointOnly = false;
+				}
+			}
 			// checkpoint the current up to date state
-			this.checkpoint(checkpointReason);
+			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
 		} else {
-			this.updateCheckpointIdleTimer();
+			this.updateCheckpointIdleTimer(this.globalCheckpointOnly);
 		}
 
 		// Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -1901,7 +1911,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Checkpoints the current state once the pending kafka messages are produced
 	 */
-	private checkpoint(reason: CheckpointReason) {
+	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean) {
 		this.clearCheckpointIdleTimer();
 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
@@ -1916,6 +1926,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				void this.checkpointContext.checkpoint(
 					checkpointParams,
 					this.restartOnCheckpointFailure,
+					globalCheckpointOnly,
 				);
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
@@ -1956,7 +1967,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Updates the time until the state is checkpointed when idle
 	 * @param rawMessage - The current raw message that is initiating the timer
 	 */
-	private updateCheckpointIdleTimer() {
+	private updateCheckpointIdleTimer(globalCheckpointOnly: boolean = false) {
 		this.clearCheckpointIdleTimer();
 
 		const initialDeliCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
@@ -1968,7 +1979,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// if it matches, that means that delis state is for the raw message
 			// this means our checkpoint will result in the correct state
 			if (initialDeliCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
-				this.checkpoint(CheckpointReason.IdleTime);
+				this.checkpoint(CheckpointReason.IdleTime, globalCheckpointOnly);
 			}
 		}, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
 	}
