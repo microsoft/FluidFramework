@@ -143,7 +143,6 @@ export {
 	emptyField,
 	IdAllocator,
 	neverTree,
-	ModularChangeFamily,
 	ModularChangeset,
 	ModularEditBuilder,
 	EditDescription,

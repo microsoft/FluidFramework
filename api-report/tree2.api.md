@@ -1181,29 +1181,6 @@ interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.Modify;
 }
 
-// @alpha @sealed
-export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset> {
-    constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
-    // (undocumented)
-    buildEditor(changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet): ModularEditBuilder;
-    // (undocumented)
-    readonly codecs: ICodecFamily<ModularChangeset>;
-    // (undocumented)
-    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
-    // (undocumented)
-    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-    // (undocumented)
-    intoDelta(change: ModularChangeset): Delta.Root;
-    // (undocumented)
-    invert(change: TaggedChange<ModularChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
-    // (undocumented)
-    rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset;
-    // (undocumented)
-    rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void;
-    // (undocumented)
-    get rebaser(): ChangeRebaser<ModularChangeset>;
-}
-
 // @alpha (undocumented)
 export interface ModularChangeset extends HasFieldChanges {
     // (undocumented)
