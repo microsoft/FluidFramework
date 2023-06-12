@@ -15,6 +15,10 @@ parameters:
   type: boolean
   default: true
 
+- name: publishDocs
+  type: boolean
+  default: false
+
 - name: taskLint
   type: boolean
   default: true
@@ -178,6 +182,7 @@ stages:
                 LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
+                PublishDocs=${{ parameters.publishDocs }}
                 TestCoverage=$(testCoverage)
 
               Variables:
@@ -303,15 +308,26 @@ stages:
                   workingDir: ${{ parameters.buildDirectory }}
                   customCommand: 'run ${{ taskTestStep }}:coverage'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-            # Test - No coverage
-            - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
-                - task: Npm@1
-                  displayName: npm run ${{ taskTestStep }}
-                  inputs:
-                    command: 'custom'
-                    workingDir: ${{ parameters.buildDirectory }}
-                    customCommand: 'run ${{ taskTestStep }}'
-                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
+
+              # Test - No coverage
+            - ${{ else }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
@@ -384,13 +400,13 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
-                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+                  npx lerna@5.6.2 exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
+                  npx lerna@5.6.2 exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
+                  npx lerna@5.6.2 exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
 
                   # This saves a list of the packages in the working directory in topological order to a temporary file.
                   # Each package name is modified to match the packed tar files.
-                  npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
+                  npx lerna@5.6.2 ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
                   ${{ parameters.packageManager }} pack && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
@@ -539,6 +555,7 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
 
+        - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:

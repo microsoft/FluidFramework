@@ -8,7 +8,7 @@
 			"type": "node",
 			"request": "attach",
 			"name": "Attach",
-			"port": 9229
-		}
-	]
+			"port": 9229,
+		},
+	],
 }

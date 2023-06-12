@@ -13,11 +13,23 @@ export type {
 	IMigrationToolEvents,
 	IMigrator,
 	IMigratorEvents,
+	ISameContainerMigratableModel,
+	ISameContainerMigratableModelEvents,
+	ISameContainerMigrationTool,
+	ISameContainerMigrationToolEvents,
+	ISameContainerMigrator,
+	ISameContainerMigratorEvents,
 	IVersionedModel,
 	MigrationState,
+	SameContainerMigrationState,
 } from "./migrationInterfaces";
-export { MigrationTool, MigrationToolInstantiationFactory } from "./migrationTool";
-export { Migrator } from "./migrator";
+export {
+	MigrationTool,
+	MigrationToolInstantiationFactory,
+	SameContainerMigrationTool,
+	SameContainerMigrationToolInstantiationFactory,
+} from "./migrationTool";
+export { Migrator, SameContainerMigrator } from "./migrator";
 export {
 	IDetachedModel,
 	IModelLoader,

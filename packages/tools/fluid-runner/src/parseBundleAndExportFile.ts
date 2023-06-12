@@ -27,6 +27,7 @@ export async function parseBundleAndExportFile(
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -73,6 +74,7 @@ export async function parseBundleAndExportFile(
 						logger,
 						options,
 						timeout,
+						disableNetworkFetch,
 					),
 				);
 

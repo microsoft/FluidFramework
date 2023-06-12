@@ -17,7 +17,7 @@ import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest"
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
+import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
 	copyFileAsync,
@@ -340,44 +340,6 @@ export class Packages {
 		return packages;
 	}
 
-	/**
-	 * Loads all packages found under the specified glob path. Ignores files in node_modules.
-	 *
-	 * @param globPath The glob path to search for package.json files.
-	 * @param group The release group (monorepo) the packages are associated with.
-	 * @param ignoredGlobs Glob paths that should be ignored. Note: `**\/node_modules/**` is always ignored.
-	 * @param monoRepo A {@link MonoRepo} instance that will be associated with the packages.
-	 * @returns An array containing all the packages that were found under the globPath.
-	 */
-	public static loadGlob(
-		globPath: string,
-		group: MonoRepoKind,
-		ignoredGlobs: string[] | undefined,
-		monoRepo?: MonoRepo,
-	): Package[] {
-		const packages: Package[] = [];
-
-		if (hasMagic(globPath)) {
-			if (ignoredGlobs === undefined) {
-				ignoredGlobs = [];
-			}
-			ignoredGlobs.push("**/node_modules/**");
-
-			const globPkg = globPath + "/package.json";
-			for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-				log(`Loading from glob: ${pkg}`);
-				packages.push(new Package(pkg, group, monoRepo));
-			}
-		} else {
-			// Assume a path to a single package
-			const packageJsonFileName = path.join(globPath, "package.json");
-			if (existsSync(packageJsonFileName)) {
-				return [new Package(packageJsonFileName, group, monoRepo)];
-			}
-		}
-		return packages;
-	}
-
 	public async cleanNodeModules() {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
 	}
@@ -389,7 +351,7 @@ export class Packages {
 		);
 	}
 
-	public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
+	public async filterPackages(releaseGroup: string | undefined) {
 		if (releaseGroup === undefined) {
 			return this.packages;
 		}
