@@ -7,21 +7,18 @@ import { Flags } from "@oclif/core";
 import { command, Options } from "execa";
 import { PackageCommand, PackageKind } from "../../BasePackageCommand";
 import { Repository } from "../../lib";
-import fs from 'fs/promises';
+import fs from "fs/promises";
+import { CleanOptions } from "simple-git";
 
-async function replaceInFile(searchValue: string, replaceValue: string, filePath: string): Promise<void> {
-    // Read the file content
-    const content = await fs.readFile(filePath, 'utf8');
-
-    // Use global replace to change all occurrences of the searchValue
-	const newContent = content.replace(new RegExp(searchValue, 'g'), replaceValue);
-
-    // Write the new content back to the file
-    await fs.writeFile(filePath, newContent, 'utf8');
+async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
+	const content = await fs.readFile(path, "utf8");
+	const newContent = content.replace(new RegExp(search, "g"), replace);
+	await fs.writeFile(path, newContent, "utf8");
 }
 
-export default class GenerateChangeLogCommand extends PackageCommand<typeof GenerateChangeLogCommand> {
-
+export default class GenerateChangeLogCommand extends PackageCommand<
+	typeof GenerateChangeLogCommand
+> {
 	static description = "Generate a changelog for a new version";
 
 	static flags = {
@@ -55,7 +52,7 @@ export default class GenerateChangeLogCommand extends PackageCommand<typeof Gene
 		// Calls processPackage on all packages.
 		await super.run();
 
-		const opts: Options = { cwd: context.gitRepo.resolvedRoot }
+		const opts: Options = { cwd: context.gitRepo.resolvedRoot };
 		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
 		// const remote = await repo.getRemote(context.originRemotePartialUrl);
 
@@ -65,21 +62,36 @@ export default class GenerateChangeLogCommand extends PackageCommand<typeof Gene
 		const changesetVersionResult = await command("pnpm exec changeset version", opts);
 		this.log(changesetVersionResult.stdout);
 
-		const rawchangesetAdd = await repo.gitClient.raw("add", ".changeset");
+		const rawchangesetAdd = await repo.gitClient.add(".changeset");
 
 		await replaceInFile("## 2.0.0\\n", `## ${version}\\n`, "CHANGELOG.md");
 
-		const replace1Result = await command(`pnpm -r exec -- sd "## 2.0.0\\n" "## ${version}\\n" CHANGELOG.md`, opts); // TODO how to put replaceInFile instead of sd
+		const replace1Result = await command(
+			`pnpm -r exec -- sd "## 2.0.0\\n" "## ${version}\\n" CHANGELOG.md`,
+			opts,
+		); // TODO how to put replaceInFile instead of sd
 		this.log(replace1Result.stdout);
 
-		await replaceInFile(`## ${version}\\n\\n## `, `## ${version}\\n\\nDependency updates only.\\n\\n## ` ,"CHANGELOG.md");
-		const replace2Result = await command(`pnpm -r exec -- sd "## ${version}\\n\\n## " "## ${version}\\n\\nDependency updates only.\\n\\n## " CHANGELOG.md`, opts); // TODO how to put replaceInFile instead of sd
+		await replaceInFile(
+			`## ${version}\\n\\n## `,
+			`## ${version}\\n\\nDependency updates only.\\n\\n## `,
+			"CHANGELOG.md",
+		);
+		const replace2Result = await command(
+			`pnpm -r exec -- sd "## ${version}\\n\\n## " "## ${version}\\n\\nDependency updates only.\\n\\n## " CHANGELOG.md`,
+			opts,
+		); // TODO how to put replaceInFile instead of sd
 		this.log(replace2Result.stdout);
 
-		const result = await command("pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md", opts); // repo.gitClient here?
+		const result = await command(
+			"pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md",
+			opts,
+		); // repo.gitClient here?
 		this.log(result.stdout);
 
 		const rawRestore = await repo.gitClient.raw("restore", ".");
-		const rawClean = await repo.gitClient.raw("clean", "-df");
+		const cleanResponse = await repo.gitClient.clean(
+			CleanOptions.RECURSIVE + CleanOptions.FORCE,
+		);
 	}
 }
