@@ -4585,6 +4585,9 @@ importers:
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
+      esm-loader-css:
+        specifier: ^1.0.4
+        version: 1.0.4
       file-loader:
         specifier: ^3.0.1
         version: 3.0.1(webpack@5.83.0)
@@ -31408,6 +31411,13 @@ packages:
       capture-stack-trace: 1.0.2
     dev: true
 
+  /create-esm-loader@0.2.3:
+    resolution: {integrity: sha512-cllzD6IU/mzXBs5OdQVWL3+ne5Elpu3Wdm7h5OldMbGXk76yr9XzHlQXWJ4zfs0ZAibe26rkbs4KvMAJm7fIZA==}
+    engines: {node: '>=14.x'}
+    dependencies:
+      semver: 7.5.1
+    dev: true
+
   /create-hash@1.2.0:
     resolution: {integrity: sha512-z00bCGNHDG8mHAkP7CtT1qVu+bFQUPjYq/4Iv3C3kWjTFV10zIjfSoeqXo9Asws8gwSHDGj/hl2u4OGIjapeCg==}
     dependencies:
@@ -33505,6 +33515,14 @@ packages:
       v8-compile-cache: 2.3.0
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /esm-loader-css@1.0.4:
+    resolution: {integrity: sha512-4tzPASNlPSd+m+LmDMxGm/2vvKKooTS2tWY+0pUTvnacN05eQE8afJZujrobSmMRUtvdys2/BjHz9mq/D2i+Ow==}
+    dependencies:
+      create-esm-loader: 0.2.3
+      npm-run-all: 4.1.5
+      semver: 7.5.1
     dev: true
 
   /espree@9.5.2:
