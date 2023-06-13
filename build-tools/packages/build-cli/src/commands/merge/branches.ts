@@ -74,8 +74,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
-		// Get the name of the remote that corresponds to the Microsoft fluid repo
-		// const remote = gitRepo.getRemote(context.originRemotePartialUrl);
 		this.remote = "origin";
 
 		const prExists: boolean = await pullRequestExists(flags.auth, prTitle, this.logger);
@@ -136,7 +134,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			// There's a conflicting commit in the list, so we need to determine which commit to use as the HEAD for the PR.
 			if (conflictingCommitIndex === 0) {
 				// If it's the first item in the list that conflicted, then we want to open a single PR with the HEAD at that
-				// commit. The PR is expected to conflict with the target branch, so we leave prWillConflict to truethe PR owner will need to merge the branch
+				// commit. The PR is expected to conflict with the target branch, so we leave `prWillConflict` to true. The PR owner will need to merge the branch
 				// manually with next and push back to the PR, and then merge once CI passes.
 				prHeadCommit = unmergedCommitList[0];
 				prWillConflict = true;
@@ -147,7 +145,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			}
 		} else {
 			// No conflicting commits, so set the commit to merge to the last commit in the list.
-			prHeadCommit = unmergedCommitList[unmergedCommitList.length - 1];
+			prHeadCommit = unmergedCommitList[conflictingCommitIndex];
 			prWillConflict = false;
 		}
 
