@@ -212,7 +212,14 @@ function composeMarks<TNodeChange>(
 
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (areInverseMovesAtIntermediateLocation(baseMark, baseIntention, newMark, newIntention)) {
+			if (
+				areInverseMovesAtIntermediateLocation(
+					baseMark,
+					baseIntention,
+					newMark,
+					newIntention,
+				)
+			) {
 				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
 				srcEffect.modifyAfter = composeChildChanges(
 					srcEffect.modifyAfter,

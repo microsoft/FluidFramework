@@ -342,7 +342,7 @@ describe("Editing", () => {
 			const expectedState: JsonCompatible = ["C", "A"];
 			expectJsonTree(tree1, expectedState);
 			expectJsonTree(tree2, expectedState);
-		});		
+		});
 
 		it("can rebase cross-field move over value change of moved node", () => {
 			const tree1 = makeTreeFromJson({
@@ -411,7 +411,7 @@ describe("Editing", () => {
 			);
 
 			// Change value of A to C
-			tree2.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");			
+			tree2.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
 
 			const expectedState: JsonCompatible = [
 				{
@@ -425,7 +425,7 @@ describe("Editing", () => {
 
 			expectJsonTree(tree1, expectedState);
 			expectJsonTree([tree1, tree2], expectedState);
-		});		
+		});
 
 		it("move under move-out", () => {
 			const tree1 = makeTreeFromJson([{ foo: ["a", "b"] }, "x"]);
