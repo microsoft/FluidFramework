@@ -41,11 +41,11 @@ import { brand } from "../../../util";
 import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
 import { fullSchemaData, personData } from "./mockData";
 
-const fieldAddress: FieldKey = brand("address");
-const fieldZip: FieldKey = brand("zip");
-const fieldStreet: FieldKey = brand("street");
-const fieldPhones: FieldKey = brand("phones");
-const fieldSequencePhones: FieldKey = brand("sequencePhones");
+export const fieldAddress: FieldKey = brand("address");
+export const fieldZip: FieldKey = brand("zip");
+export const fieldStreet: FieldKey = brand("street");
+export const fieldPhones: FieldKey = brand("phones");
+export const fieldSequencePhones: FieldKey = brand("sequencePhones");
 
 describe("editable-tree: data binder", () => {
 	describe("buffering data binder", () => {
@@ -1307,7 +1307,7 @@ describe("editable-tree: data binder", () => {
 	});
 });
 
-function retrieveNodes() {
+export function retrieveNodes() {
 	const tree = treeView(personData);
 	const root = tree.context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
@@ -1325,7 +1325,7 @@ function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
 	});
 }
 
-function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
+export function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
 	if (a.type === BindingType.Delete && b.type === BindingType.Delete) {
 		return 0;
 	}
@@ -1338,6 +1338,6 @@ function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): n
 	return 0;
 }
 
-function compareAnchorsDepthFirst(a: UpPath, b: UpPath): number {
+export function compareAnchorsDepthFirst(a: UpPath, b: UpPath): number {
 	return getDepth(a) - getDepth(b);
 }
