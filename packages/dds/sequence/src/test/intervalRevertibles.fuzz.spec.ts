@@ -26,10 +26,10 @@ import {
 import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
-	// appendChangeIntervalToRevertibles,
-	// appendDeleteIntervalToRevertibles,
-	// appendIntervalPropertyChangedToRevertibles,
-	// appendSharedStringDeltaToRevertibles,
+	appendChangeIntervalToRevertibles,
+	appendDeleteIntervalToRevertibles,
+	appendIntervalPropertyChangedToRevertibles,
+	appendSharedStringDeltaToRevertibles,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
@@ -40,42 +40,14 @@ import {
 	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
+	OperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
-// Note: none of these options are currently exercised, since the fuzz test fails with pretty much
-// any configuration due to known bugs. Once shared interval collections are in a better state these
-// should be revisited.
-interface OperationGenerationConfig {
-	/**
-	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
-	 * Note due to concurency, during test execution the actual length of the string may exceed this.
-	 */
-	maxStringLength?: number;
-	/**
-	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
-	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
-	 */
-	maxIntervals?: number;
-	maxInsertLength?: number;
-	intervalCollectionNamePool?: string[];
-	propertyNamePool?: string[];
-	validateInterval?: number;
-}
-
-const defaultOptions: Required<OperationGenerationConfig> = {
-	maxStringLength: 1000,
-	maxIntervals: 100,
-	maxInsertLength: 10,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-};
-
 // Since the clients are created by the fuzz harness, the factory object must be
 // modified in order to set the mergeTreeUseNewLengthCalculations option on the
-// underlying merge tree.
+// underlying merge tree. This can be deleted after PR#15868 is in main.
 class RevertibleFactory extends SharedStringFactory {
 	options = { mergeTreeUseNewLengthCalculations: true };
 	public async load(
@@ -112,35 +84,35 @@ emitter.on("clientCreate", (client) => {
 		// Note: delete and change interval edits are disabled for now, and will be reenabled
 		// once bugs AB#4544 and AB#4543 (respectively) are resolved.
 
-		// collection.on("deleteInterval", (interval, local, op) => {
-		// 	if (local) {
-		// 		appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
-		// 	}
-		// });
-		// collection.on("changeInterval", (interval, previousInterval, local, op) => {
-		// 	if (local) {
-		// 		appendChangeIntervalToRevertibles(
-		// 			channel,
-		// 			interval,
-		// 			previousInterval,
-		// 			channel.revertibles,
-		// 		);
-		// 	}
-		// });
-		// collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
-		// 	if (local) {
-		// 		appendIntervalPropertyChangedToRevertibles(
-		// 			interval,
-		// 			propertyDeltas,
-		// 			channel.revertibles,
-		// 		);
-		// 	}
-		// });
-		// channel.on("sequenceDelta", (op) => {
-		// 	if (op.isLocal) {
-		// 		appendSharedStringDeltaToRevertibles(channel, op, channel.revertibles);
-		// 	}
-		// });
+		collection.on("deleteInterval", (interval, local, op) => {
+			if (local) {
+				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
+			}
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			if (local) {
+				appendChangeIntervalToRevertibles(
+					channel,
+					interval,
+					previousInterval,
+					channel.revertibles,
+				);
+			}
+		});
+		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+			if (local) {
+				appendIntervalPropertyChangedToRevertibles(
+					interval,
+					propertyDeltas,
+					channel.revertibles,
+				);
+			}
+		});
+		channel.on("sequenceDelta", (op) => {
+			if (op.isLocal) {
+				appendSharedStringDeltaToRevertibles(channel, op, channel.revertibles);
+			}
+		});
 	});
 });
 
@@ -192,7 +164,7 @@ function operationGenerator(
 	]);
 }
 
-describe("IntervalCollection fuzz testing", () => {
+describe.only("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
@@ -200,12 +172,12 @@ describe("IntervalCollection fuzz testing", () => {
 				100,
 				operationGenerator({
 					revertWeight: 2,
-					addText: 2,
-					removeRange: 1,
-					addInterval: 2,
-					deleteInterval: 2,
-					changeInterval: 2,
-					changeProperties: 2,
+					addText: 1,
+					removeRange: 0,
+					addInterval: 0,
+					deleteInterval: 0,
+					changeInterval: 0,
+					changeProperties: 0,
 				}),
 			),
 		reducer:

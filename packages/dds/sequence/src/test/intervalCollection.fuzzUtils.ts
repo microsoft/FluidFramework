@@ -80,6 +80,35 @@ export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
+// Note: none of these options are currently exercised, since the fuzz test fails with pretty much
+// any configuration due to known bugs. Once shared interval collections are in a better state these
+// should be revisited.
+export interface OperationGenerationConfig {
+	/**
+	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
+	 * Note due to concurency, during test execution the actual length of the string may exceed this.
+	 */
+	maxStringLength?: number;
+	/**
+	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
+	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
+	 */
+	maxIntervals?: number;
+	maxInsertLength?: number;
+	intervalCollectionNamePool?: string[];
+	propertyNamePool?: string[];
+	validateInterval?: number;
+}
+
+export const defaultOptions: Required<OperationGenerationConfig> = {
+	maxStringLength: 1000,
+	maxIntervals: 100,
+	maxInsertLength: 10,
+	intervalCollectionNamePool: ["comments"],
+	propertyNamePool: ["prop1", "prop2", "prop3"],
+	validateInterval: 100,
+};
+
 export interface LoggingInfo {
 	/** id of the interval to track over time */
 	intervalId: string;
