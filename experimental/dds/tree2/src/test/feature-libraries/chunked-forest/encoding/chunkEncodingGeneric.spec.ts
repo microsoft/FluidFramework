@@ -252,6 +252,15 @@ describe("chunkEncodingGeneric", () => {
 				data: [0, 0],
 			});
 		});
+
+		it("nested arrays", () => {
+			assert.deepEqual(
+				handleShapesAndIdentifiers(version, [
+					[[new IdentifierToken("long string"), new IdentifierToken("long string")]],
+				]),
+				{ version, identifiers: ["long string"], shapes: [], data: [[[0, 0]]] },
+			);
+		});
 	});
 
 	// it("encode: empty", () => {
