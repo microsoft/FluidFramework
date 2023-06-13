@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/view-interfaces",
-	"version": "2.0.0-internal.4.3.1",
+	"version": "2.0.0-internal.4.3.2",
 	"description": "View interfaces for rendering views",
 	"homepage": "https://fluidframework.com",
 	"repository": {
