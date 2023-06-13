@@ -73,6 +73,7 @@ export interface ILoaderProps {
     readonly options?: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope?: FluidObject;
+    readonly unsampledLogger?: ITelemetryBaseLogger;
     readonly urlResolver: IUrlResolver;
 }
 

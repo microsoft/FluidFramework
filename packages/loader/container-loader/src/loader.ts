@@ -191,16 +191,16 @@ export interface ILoaderProps {
 
 	/**
 	 * The logger that all regular telemetry should be pushed to.
-	 * Some telemetry is sampled by the framework itself, and this logger will only receive
-	 * the samples.
+	 * Some telemetry events are sampled by the framework itself, and this logger will only receive the samples.
+	 * See {@link ILoaderProps.unsampledLogger} for a logger that receives every instance of sampled events.
 	 */
 	readonly logger?: ITelemetryBaseLogger;
 
 	/**
-	 * The logger that all *unsampled* telemetry should be pushed to.
-	 * This logger will receive *all* telemetry events.
-	 * Whereas {@link logger} only receives samples for events that are normally sampled by the framework,
-	 * this logger will receive every instance of those events.
+	 * The logger that all telemetry (including unsampled one) should be pushed to.
+	 * Both this and {@link ILoaderProps.logger} receive all events for which the framework doesn't apply sampling.
+	 * For events for which the framework applies sampling, {@link ILoaderProps.logger} only receives the samples,
+	 * whereas this logger receives every instance.
 	 */
 	readonly unsampledLogger?: ITelemetryBaseLogger;
 
@@ -328,9 +328,14 @@ export class Loader implements IHostLoader {
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, {
-				all: telemetryProps,
-			}),
+			DebugLogger.mixinDebugLogger(
+				"fluid:telemetry",
+				loaderProps.logger,
+				loaderProps.unsampledLogger,
+				{
+					all: telemetryProps,
+				},
+			),
 			sessionStorageConfigProvider.value,
 			loaderProps.configProvider,
 		);

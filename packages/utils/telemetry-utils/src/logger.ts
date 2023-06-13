@@ -123,23 +123,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	) {}
 
 	/**
-	 * Send an event with the logger.
-	 * For telemetry events that are sampled inside the framework, this method should only receive the samples.
-	 * For sending all instances, use {@link sendUnsampled}.
-	 *
+	 * Send an event with the logger
 	 * @param event - the event to send
 	 */
 	public abstract send(event: ITelemetryBaseEvent): void;
-
-	/**
-	 * Send an event with the logger.
-	 * For telemetry events that are sampled inside the framework, this method should receives all instances, not just
-	 * the samples.
-	 * For sending only the samples, use {@link send}.
-	 *
-	 * @param event - the event to send
-	 */
-	public abstract sendUnsampled(event: ITelemetryBaseEvent): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -241,16 +228,6 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		}
 		return newEvent;
 	}
-
-	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
 }
 
 /**
@@ -311,15 +288,23 @@ export class ChildLogger extends TelemetryLogger {
 	 * is created, but it does not send telemetry events anywhere.
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
+	 * @param unsampledLogger - Logger that will be used to send unsampled events in addition to anything sent to baseLogger.
+	 * @param sampling - Sampling configuration for particular events. Map from event name to sampling rate. If undefined,
+	 * no sampling is performed on any events logged through this logger.
 	 */
 	public static create(
 		baseLogger?: ITelemetryBaseLogger,
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
+		unsampledLogger?: ITelemetryBaseLogger,
+		sampling?: Map<string, number>,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
 		if (baseLogger instanceof ChildLogger) {
+			if (baseLogger.unsampledLogger !== undefined && unsampledLogger !== undefined) {
+				throw new Error("Cannot specify an unsampledLogger when baseLogger already defines oneu");
+			}
 			const combinedProperties: ITelemetryLoggerPropertyBags = {};
 			for (const extendedProps of [baseLogger.properties, properties]) {
 				if (extendedProps !== undefined) {
@@ -345,13 +330,21 @@ export class ChildLogger extends TelemetryLogger {
 					? baseLogger.namespace
 					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
-			return new ChildLogger(baseLogger.baseLogger, combinedNamespace, combinedProperties);
+			return new ChildLogger(
+				baseLogger.baseLogger,
+				combinedNamespace,
+				combinedProperties,
+				baseLogger.unsampledLogger ?? unsampledLogger,
+				sampling,
+			);
 		}
 
 		return new ChildLogger(
 			baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
 			namespace,
 			properties,
+			unsampledLogger,
+			sampling,
 		);
 	}
 
@@ -359,6 +352,8 @@ export class ChildLogger extends TelemetryLogger {
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
+		protected readonly unsampledLogger?: ITelemetryBaseLogger,
+		private readonly samplingParams?: Map<string, number>,
 	) {
 		super(namespace, properties);
 
@@ -368,13 +363,33 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
+	private readonly actualSampling: { [key: string]: number } = {};
+
 	/**
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+		const preparedEvent = this.prepareEvent(event);
+
+		// The unsampled logger always gets the event.
+		this.unsampledLogger?.send(preparedEvent);
+
+		// The sampled logger gets it if there's no sampling configuration for it, or if it "passes sampling".
+		const params = this.samplingParams?.get(event.eventName);
+		if (params === undefined) {
+			this.baseLogger.send(preparedEvent);
+		} else {
+			if (this.actualSampling[event.eventName] === undefined) {
+				this.actualSampling[event.eventName] = 0;
+			}
+			this.actualSampling[event.eventName]++;
+			if (this.actualSampling[event.eventName] % params === 1) {
+				this.baseLogger.send(preparedEvent);
+				this.actualSampling[event.eventName] = 1;
+			}
+		}
 	}
 }
 
@@ -578,15 +593,6 @@ export class TelemetryUTLogger implements ITelemetryLoggerExt {
 	public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
 		this.reportError("shipAssert in UT logger!");
 	}
-	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
 
 	private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
 		const error = new Error(message);
@@ -623,9 +629,6 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
 	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
-	public sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void { }
-	public sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void { }
-	public sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void { }
 }
 
 /**

@@ -31,8 +31,10 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, unsampledLogger?: ITelemetryBaseLogger, sampling?: Map<string, number>): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    protected readonly unsampledLogger: ITelemetryBaseLogger;
 }
 
 // @public (undocumented)
@@ -45,7 +47,7 @@ export const connectedEventName = "connected";
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, unsampledLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 

@@ -97,34 +97,4 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * @param event - Event to send
 	 */
 	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
-
-	/**
-	 * Send information telemetry event with sampling applied.
-	 * @param event - Event to send
-	 * @param samplingRate - Only 1 out of this number of events sent with this method will flow to the
-	 * main logger provided by the host. All events sent with this method will flow to the unsampledLogger
-	 * provided by the host.
-	 * @param error - optional error object to log
-	 */
-	sendSampledTelemetryEvent(event: ITelemetryGenericEventExt, samplingRate: number, error?: any): void;
-
-	/**
-	 * Send error telemetry event with sampling applied.
-	 * @param event - Event to send
-	 * @param samplingRate - Only 1 out of this number of events sent with this method will flow to the
-	 * main logger provided by the host. All events sent with this method will flow to the unsampledLogger
-	 * provided by the host.
-	 * @param error - optional error object to log
-	 */
-	sendSampledErrorEvent(event: ITelemetryErrorEventExt, samplingRate: number, error?: any): void;
-
-	/**
-	 * Send performance telemetry event with sampling applied.
-	 * @param event - Event to send
-	 * @param samplingRate - Only 1 out of this number of events sent with this method will flow to the
-	 * main logger provided by the host. All events sent with this method will flow to the unsampledLogger
-	 * provided by the host.
-	 * @param error - optional error object to log
-	 */
-	sendSampledPerformanceEvent(event: ITelemetryPerformanceEventExt, samplingRate: number, error?: any): void;
 }

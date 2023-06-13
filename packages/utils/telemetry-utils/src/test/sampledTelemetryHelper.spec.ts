@@ -34,15 +34,6 @@ class TestLogger implements ITelemetryLoggerExt {
 	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {
 		throw new Error("Method not implemented.");
 	}
-	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
-	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
-		throw new Error("Method not implemented.");
-	}
 	supportsTags?: true | undefined;
 }
 

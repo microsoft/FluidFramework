@@ -176,4 +176,63 @@ describe("ChildLogger", () => {
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");
 	});
+
+	describe("Sampling", () => {
+		let events: ITelemetryBaseEvent[] = [];
+		let unsampledEvents: ITelemetryBaseEvent[] = [];
+		const baseLogger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				events.push(event);
+			},
+		};
+		const unsampledLogger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				unsampledEvents.push(event);
+			},
+		};
+
+		beforeEach(() => {
+			events = [];
+			unsampledEvents = [];
+		});
+
+		it("Sampled/unsampled events go to the correct loggers", () => {
+			const samplingConfiguration = new Map<string, number>([
+				["oneEveryTwo", 2],
+				["oneEveryFive", 5],
+			]);
+			const childLogger = ChildLogger.create(
+				baseLogger,
+				undefined,
+				undefined,
+				unsampledLogger,
+				samplingConfiguration,
+			);
+
+			for (let i = 0; i < 15; i++) {
+				childLogger.send({ category: "generic", eventName: "noSampling" });
+				childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
+				childLogger.send({ category: "generic", eventName: "oneEveryFive" });
+			}
+
+			// These counts also validate that we issue sampled events the first time we see them, not only until the specified
+			// number of samples have been seen.
+			assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 8);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
+
+			assert.equal(
+				unsampledEvents.filter((event) => event.eventName === "noSampling").length,
+				15,
+			);
+			assert.equal(
+				unsampledEvents.filter((event) => event.eventName === "oneEveryTwo").length,
+				15,
+			);
+			assert.equal(
+				unsampledEvents.filter((event) => event.eventName === "oneEveryFive").length,
+				15,
+			);
+		});
+	});
 });

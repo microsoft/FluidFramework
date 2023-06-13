@@ -62,17 +62,23 @@ export class DebugLogger extends TelemetryLogger {
 	public static mixinDebugLogger(
 		namespace: string,
 		baseLogger?: ITelemetryBaseLogger,
+		unsampledLogger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		if (!baseLogger) {
+		if (baseLogger === undefined && unsampledLogger === undefined) {
 			return DebugLogger.create(namespace, properties);
 		}
 
+		// TODO: before there was a single baseLogger so logic here was straightforward.
+		// Do we need more checks to try to get base logger props from both baseLogger and unsampledLogger?
+
 		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
+		const baseLoggerProps =
+			baseLogger === undefined ? properties : this.tryGetBaseLoggerProps(baseLogger);
+		multiSinkLogger.addLogger(DebugLogger.create(namespace, baseLoggerProps));
 		multiSinkLogger.addLogger(
-			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+			ChildLogger.create(baseLogger, namespace, undefined, unsampledLogger),
 		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
 		return multiSinkLogger;
 	}
