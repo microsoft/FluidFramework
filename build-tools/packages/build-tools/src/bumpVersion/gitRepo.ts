@@ -224,68 +224,6 @@ export class GitRepo {
 		return date;
 	}
 
-	/**
-	 * @param source - Source branch name
-	 * @param target - Target branch name
-	 * @return The last merge commit id between source and target branch
-	 */
-	public async mergeBase(source: string, target: string) {
-		const base = await this.exec(
-			`merge-base ${source} ${target}`,
-			`merge base ${source} and ${target} branch`,
-		);
-		return base.trim();
-	}
-
-	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
-		try {
-			await this.exec(`merge ${commit} --no-commit`, `check if ${commit} has conflicts`);
-			return true;
-		} catch (error: unknown) {
-			return false;
-		}
-	}
-
-	/**
-	 *
-	 * @param commitId - Commit id to merge
-	 * @returns Either merge the commit id provided or abort the merge if merge conflicts exists
-	 */
-	public async merge(commitId: string) {
-		try {
-			return await this.exec(`merge ${commitId} --no-ff`, `merge a commit id: ${commitId}`);
-		} catch (error: unknown) {
-			this.log?.errorLog(`Merge conflicts exists. Aborting the merge`);
-			await this.exec(`merge --abort`, `Abort merge`);
-			return "Abort";
-		}
-	}
-
-	/**
-	 * @param commitId - Last merged commit id between two branches
-	 * @param target - Target branch name
-	 * @return The list of unmerged commit ids between passed commit id and branch
-	 */
-	public async revList(commitId: string, branchName: string) {
-		await this.switchBranch(branchName);
-		return await this.exec(
-			`rev-list ${commitId}..HEAD --reverse`,
-			`lists commit objects in chronological order`,
-		);
-	}
-
-	public async mergeBranch(branchName: string, commitMsg: string) {
-		await this.exec(
-			`merge ${branchName} -m "${commitMsg}"`,
-			`merge branch ${branchName} and commit to a feature branch with commit message ${commitMsg}`,
-		);
-		await this.exec(`push`, `Push to the feature branch`);
-	}
-
-	public async resetBranch(commitId: string) {
-		return await this.exec(`reset --hard ${commitId}`, `reset branch to a commit id`);
-	}
-
 	public async setUpstream(branchName: string, remote: string = "origin") {
 		return await this.exec(`push --set-upstream ${remote} ${branchName}`, `publish branch`);
 	}

@@ -285,7 +285,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
  * @param log - An optional logger to use.
  * @returns a Boolean that indicates whether the commit at that index conflicts or not
  */
-export async function hasConflicts(
+async function hasConflicts(
 	commitIds: string[],
 	gitRepo: Repository,
 	log?: Logger,
