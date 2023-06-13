@@ -212,7 +212,7 @@ function composeMarks<TNodeChange>(
 
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
+			if (areInverseMovesAtIntermediateLocation(baseMark, baseIntention, newMark, newIntention)) {
 				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
 				srcEffect.modifyAfter = composeChildChanges(
 					srcEffect.modifyAfter,
@@ -645,8 +645,9 @@ interface ComposeMarks<T> {
 /**
  * Returns whether `baseMark` and `newMark` are inverses.
  * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
+ * This means that the marks are at the location of the moved content after the first move takes place, but before the second.
  */
-function areInverseMoves(
+function areInverseMovesAtIntermediateLocation(
 	baseMark: MoveMark<unknown>,
 	baseIntention: RevisionTag | undefined,
 	newMark: MoveMark<unknown>,
