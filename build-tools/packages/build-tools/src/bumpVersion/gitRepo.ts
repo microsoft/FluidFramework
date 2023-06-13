@@ -230,10 +230,11 @@ export class GitRepo {
 	 * @return The last merge commit id between source and target branch
 	 */
 	public async mergeBase(source: string, target: string) {
-		return await this.exec(
+		const base = await this.exec(
 			`merge-base ${source} ${target}`,
 			`merge base ${source} and ${target} branch`,
 		);
+		return base.trim();
 	}
 
 	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
@@ -275,7 +276,7 @@ export class GitRepo {
 
 	public async mergeBranch(branchName: string, commitMsg: string) {
 		await this.exec(
-			`merge ${branchName} -m ${commitMsg}`,
+			`merge ${branchName} -m "${commitMsg}"`,
 			`merge branch ${branchName} and commit to a feature branch with commit message ${commitMsg}`,
 		);
 		await this.exec(`push`, `Push to the feature branch`);
@@ -285,8 +286,8 @@ export class GitRepo {
 		return await this.exec(`reset --hard ${commitId}`, `reset branch to a commit id`);
 	}
 
-	public async setUpstream(branchName: string) {
-		return await this.exec(`push --set-upstream origin ${branchName}`, `publish branch`);
+	public async setUpstream(branchName: string, remote: string = "origin") {
+		return await this.exec(`push --set-upstream ${remote} ${branchName}`, `publish branch`);
 	}
 
 	public async addRemote(repoPath: string) {

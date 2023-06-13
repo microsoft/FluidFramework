@@ -49,7 +49,7 @@ export async function pullRequestInfo(
 		commit_sha,
 	});
 
-	log.verbose(`Get pull request info for ${commit_sha}: ${prInfo}`);
+	log.verbose(`Get pull request info for ${commit_sha}: ${JSON.stringify(prInfo)}`);
 	return prInfo;
 }
 
@@ -67,7 +67,7 @@ export async function getUserAccess(token: string, log: CommandLogger): Promise<
 		branch: "main",
 	});
 
-	log.verbose(`Get list of users with push access ${user}`);
+	log.verbose(`Get list of users with push access ${JSON.stringify(user)}`);
 	return user;
 }
 

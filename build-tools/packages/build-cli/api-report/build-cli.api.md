@@ -4,10 +4,11 @@
 
 ```ts
 
+import { MonoRepoKind } from '@fluidframework/build-tools';
 import { run } from '@oclif/core';
 
 // @internal
-export type ReleaseGroup = string;
+export type ReleaseGroup = MonoRepoKind;
 
 // @internal
 export type ReleasePackage = string;

@@ -15,7 +15,7 @@ USAGE
   $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-v]
 
 FLAGS
-  -a, --auth=<value>       (required) GitHub authentication token
+  -a, --auth=<value>       (required) GitHub authentication token.
   -b, --batchSize=<value>  (required) Maximum number of commits to include in the pull request
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name

@@ -87,7 +87,11 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 		this.verbose(`Remote is: ${remote}`);
 
 		// get merge base
-		const base = await repo.getMergeBase(branch1, remote, `refs/remotes/${remote}/${branch2}`);
+		const base = await repo.getMergeBaseRemote(
+			branch1,
+			remote,
+			`refs/remotes/${remote}/${branch2}`,
+		);
 		const rawRevs = await repo.gitClient.raw(
 			"rev-list",
 			`${base}..refs/remotes/${remote}/${branch1}`,
