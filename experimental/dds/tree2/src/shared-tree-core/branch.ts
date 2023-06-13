@@ -19,7 +19,7 @@ import {
 	TaggedChange,
 	rebaseBranch,
 	RevisionTag,
-	RevertType,
+	LocalCommitSource,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionStack } from "./transactionStack";
@@ -96,7 +96,7 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	/**
 	 * Fired when a revertible change is made to this branch.
 	 */
-	revertible(type: RevertType): void;
+	revertible(type: LocalCommitSource): void;
 
 	/**
 	 * Fired when this branch forks
@@ -163,13 +163,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		change: TChange,
 		revision: RevisionTag,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
-		return this.applyChange(change, revision, RevertType.Undoable);
+		return this.applyChange(change, revision, LocalCommitSource.Default);
 	}
 
 	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
-		undoRedoType: RevertType | undefined,
+		undoRedoType: LocalCommitSource | undefined,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -262,8 +262,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(this.head, RevertType.Undoable);
-				this.emit("revertible", RevertType.Undoable);
+				this.undoRedoManager.trackCommit(this.head, LocalCommitSource.Default);
+				this.emit("revertible", LocalCommitSource.Default);
 			}
 		}
 
@@ -353,7 +353,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager?.undo(this.getHead());
 		if (undoChange !== undefined) {
-			return this.applyChange(undoChange, mintRevisionTag(), RevertType.Undo);
+			return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
 		}
 
 		return undefined;
@@ -376,7 +376,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const redoChange = this.undoRedoManager?.redo(this.getHead());
 		if (redoChange !== undefined) {
-			return this.applyChange(redoChange, mintRevisionTag(), RevertType.Redo);
+			return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
 		}
 
 		return undefined;

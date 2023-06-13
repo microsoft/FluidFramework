@@ -95,7 +95,7 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
-	RevertType,
+	LocalCommitSource,
 } from "./core";
 
 export {

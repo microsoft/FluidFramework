@@ -12,7 +12,7 @@ import {
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
-import { RevertType, ReversibleCommit } from "../../core/undo/undoRedoManager";
+import { LocalCommitSource, ReversibleCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
 import { MockRepairDataStore } from "../utils";
 
@@ -25,7 +25,7 @@ describe("UndoRedoManager", () => {
 			};
 			const childCommit = createTestGraphCommit([0], 1);
 			const manager = undoRedoManagerFactory(parent);
-			manager.trackCommit(childCommit, RevertType.Undoable);
+			manager.trackCommit(childCommit, LocalCommitSource.Default);
 
 			const headUndoableCommit = manager.headUndoable;
 			assert.equal(headUndoableCommit?.commit, childCommit);
@@ -39,7 +39,7 @@ describe("UndoRedoManager", () => {
 			};
 			const childCommit = createTestGraphCommit([0], 1);
 			const manager = undoRedoManagerFactory(undefined, parent);
-			manager.trackCommit(childCommit, RevertType.Undo);
+			manager.trackCommit(childCommit, LocalCommitSource.Undo);
 
 			const headRedoableCommit = manager.headRedoable;
 			assert.equal(headRedoableCommit?.commit, childCommit);
@@ -53,7 +53,7 @@ describe("UndoRedoManager", () => {
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
-			manager.trackCommit(fakeInvertedCommit, RevertType.Undo);
+			manager.trackCommit(fakeInvertedCommit, LocalCommitSource.Undo);
 			// The head undo commit will not be the new inverted commit
 			assert.equal(manager.headUndoable, undefined);
 			// The fake undo commit will now be redoable
@@ -67,7 +67,7 @@ describe("UndoRedoManager", () => {
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
-			manager.trackCommit(fakeInvertedCommit, RevertType.Redo);
+			manager.trackCommit(fakeInvertedCommit, LocalCommitSource.Redo);
 			// The head undo commit will not be the new inverted commit
 			assert.equal(manager.headRedoable, undefined);
 			// The fake undo commit will now be redoable
@@ -81,7 +81,7 @@ describe("UndoRedoManager", () => {
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
-			manager.trackCommit(fakeInvertedCommit, RevertType.Undoable);
+			manager.trackCommit(fakeInvertedCommit, LocalCommitSource.Default);
 			// The head undo commit will not be the new inverted commit
 			assert.equal(manager.headUndoable?.commit, fakeInvertedCommit);
 			// The fake undo commit will now be redoable

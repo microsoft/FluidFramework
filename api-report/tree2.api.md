@@ -1142,6 +1142,13 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @alpha
+export enum LocalCommitSource {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha (undocumented)
@@ -1486,13 +1493,6 @@ type RequiredFields<T> = [
 ][_InlineTrick];
 
 // @alpha
-export enum RevertType {
-    Redo = 2,
-    Undo = 1,
-    Undoable = 0
-}
-
-// @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
@@ -1695,7 +1695,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 // @alpha
 export class SharedTreeViewRevertible implements IRevertible {
-    constructor(revertType: RevertType, tree: ISharedTree);
+    constructor(localCommitSource: LocalCommitSource, tree: ISharedTree);
     // (undocumented)
     discard(): void;
     // (undocumented)
@@ -2093,7 +2093,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    revertible(type: RevertType, target: ISharedTreeView): void;
+    revertible(type: LocalCommitSource, target: ISharedTreeView): void;
 }
 
 // @alpha

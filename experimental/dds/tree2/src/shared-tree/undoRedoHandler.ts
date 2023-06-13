@@ -4,7 +4,7 @@
  */
 
 import { IRevertible, UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { RevertType } from "../core";
+import { LocalCommitSource } from "../core";
 import { fail } from "../util";
 import { ISharedTree } from "./sharedTree";
 
@@ -33,7 +33,7 @@ export class SharedTreeViewUndoRedoHandler {
 		detach();
 	}
 
-	private readonly treeDeltaHandler = (type: RevertType, target: ISharedTree) => {
+	private readonly treeDeltaHandler = (type: LocalCommitSource, target: ISharedTree) => {
 		this.stackManager.pushToCurrentOperation(new SharedTreeViewRevertible(type, target));
 	};
 }
@@ -46,12 +46,12 @@ export class SharedTreeViewUndoRedoHandler {
  */
 export class SharedTreeViewRevertible implements IRevertible {
 	public constructor(
-		private readonly revertType: RevertType,
+		private readonly localCommitSource: LocalCommitSource,
 		private readonly tree: ISharedTree,
 	) {}
 
 	public revert() {
-		if (this.revertType === RevertType.Undo) {
+		if (this.localCommitSource === LocalCommitSource.Undo) {
 			this.tree.redo();
 		} else {
 			this.tree.undo();

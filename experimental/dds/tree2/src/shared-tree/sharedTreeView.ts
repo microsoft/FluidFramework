@@ -16,7 +16,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
-	RevertType,
+	LocalCommitSource,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -60,7 +60,7 @@ export interface ViewEvents {
 	/**
 	 * A revertible change has been made to this view.
 	 */
-	revertible(type: RevertType, target: ISharedTreeView): void;
+	revertible(type: LocalCommitSource, target: ISharedTreeView): void;
 }
 
 /**

@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { UndoRedoManager, RevertType } from "./undoRedoManager";
+export { UndoRedoManager, LocalCommitSource } from "./undoRedoManager";
