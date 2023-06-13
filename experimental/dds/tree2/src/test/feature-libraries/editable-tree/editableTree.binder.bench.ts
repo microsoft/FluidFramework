@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import {
 	BinderOptions,
 	BindingType,
@@ -25,18 +25,7 @@ import { ViewEvents } from "../../../shared-tree";
 import { retrieveNodes } from "./editableTree.binder.spec";
 
 describe("Data binder benchmarks", () => {
-	describe("Edit: baseline", () => {
-		const { address } = retrieveNodes();
-		benchmark({
-			type: BenchmarkType.Measurement,
-			title: `Edit baseline performance: no data binder`,
-			benchmarkFn: () => {
-				address.phones = [111, 112];
-			},
-		});
-	});
-
-	describe("Direct data binder, incl. edit", () => {
+	describe("Direct data binder", () => {
 		const { tree, root, address } = retrieveNodes();
 		const bindTree: BindTree = compileSyntaxTree({ address: true });
 		const options: BinderOptions = createBinderOptions({
@@ -58,18 +47,26 @@ describe("Data binder benchmarks", () => {
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: `Direct data binder: insert callback`,
+			title: `Direct data binder: single insert callback`,
 			after: () => {
 				dataBinder.unregisterAll();
 			},
-			benchmarkFnAsync: async () => {
-				address.phones = [111, 112];
-				await promise;
+			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				let duration = 0;
+				do {
+					address.phones = [111, 112];
+					const before = state.timer.now();
+					await promise;
+					const after = state.timer.now();
+					duration = state.timer.toSeconds(before, after);
+				} while (state.recordBatch(duration));
 			},
+			minBatchDurationSeconds: 0,
+			maxBenchmarkDurationSeconds: 1,
 		});
 	});
 
-	describe("Invalidation data binder, incl. edit", () => {
+	describe("Invalidation data binder", () => {
 		const { tree, root, address } = retrieveNodes();
 		const bindTree: BindTree = compileSyntaxTree({ address: true });
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
@@ -90,18 +87,26 @@ describe("Data binder benchmarks", () => {
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: `Invalidation data binder: invalidation callback`,
+			title: `Invalidation data binder: single insert invalidation callback`,
 			after: () => {
 				dataBinder.unregisterAll();
 			},
-			benchmarkFnAsync: async () => {
-				address.phones = [111, 112];
-				await promise;
+			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				let duration = 0;
+				do {
+					address.phones = [111, 112];
+					const before = state.timer.now();
+					await promise;
+					const after = state.timer.now();
+					duration = state.timer.toSeconds(before, after);
+				} while (state.recordBatch(duration));
 			},
+			minBatchDurationSeconds: 0,
+			maxBenchmarkDurationSeconds: 1,
 		});
 	});
 
-	describe("Buffering data binder, incl edit", () => {
+	describe("Buffering data binder", () => {
 		const { tree, root, address } = retrieveNodes();
 		const bindTree: BindTree = compileSyntaxTree({ address: true });
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
@@ -124,14 +129,22 @@ describe("Data binder benchmarks", () => {
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: `Buffering data binder: insert callback`,
+			title: `Buffering data binder: single insert callback`,
 			after: () => {
 				dataBinder.unregisterAll();
 			},
-			benchmarkFnAsync: async () => {
-				address.phones = [111, 112];
-				await promise;
+			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				let duration = 0;
+				do {
+					address.phones = [111, 112];
+					const before = state.timer.now();
+					await promise;
+					const after = state.timer.now();
+					duration = state.timer.toSeconds(before, after);
+				} while (state.recordBatch(duration));
 			},
+			minBatchDurationSeconds: 0,
+			maxBenchmarkDurationSeconds: 1,
 		});
 	});
 });
