@@ -190,9 +190,19 @@ export interface ILoaderProps {
 	readonly scope?: FluidObject;
 
 	/**
-	 * The logger that all telemetry should be pushed to.
+	 * The logger that all regular telemetry should be pushed to.
+	 * Some telemetry is sampled by the framework itself, and this logger will only receive
+	 * the samples.
 	 */
 	readonly logger?: ITelemetryBaseLogger;
+
+	/**
+	 * The logger that all *unsampled* telemetry should be pushed to.
+	 * This logger will receive *all* telemetry events.
+	 * Whereas {@link logger} only receives samples for events that are normally sampled by the framework,
+	 * this logger will receive every instance of those events.
+	 */
+	readonly unsampledLogger?: ITelemetryBaseLogger;
 
 	/**
 	 * Blobs storage for detached containers.

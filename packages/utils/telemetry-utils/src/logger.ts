@@ -123,11 +123,23 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	) {}
 
 	/**
-	 * Send an event with the logger
+	 * Send an event with the logger.
+	 * For telemetry events that are sampled inside the framework, this method should only receive the samples.
+	 * For sending all instances, use {@link sendUnsampled}.
 	 *
 	 * @param event - the event to send
 	 */
 	public abstract send(event: ITelemetryBaseEvent): void;
+
+	/**
+	 * Send an event with the logger.
+	 * For telemetry events that are sampled inside the framework, this method should receives all instances, not just
+	 * the samples.
+	 * For sending only the samples, use {@link send}.
+	 *
+	 * @param event - the event to send
+	 */
+	public abstract sendUnsampled(event: ITelemetryBaseEvent): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -228,6 +240,16 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			}
 		}
 		return newEvent;
+	}
+
+	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
+	}
+	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
+	}
+	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
 	}
 }
 
@@ -556,6 +578,15 @@ export class TelemetryUTLogger implements ITelemetryLoggerExt {
 	public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
 		this.reportError("shipAssert in UT logger!");
 	}
+	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
+	}
+	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
+	}
+	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
+		throw new Error("Method not implemented.");
+	}
 
 	private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
 		const error = new Error(message);
@@ -592,6 +623,9 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
 	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
+	public sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void { }
+	public sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void { }
+	public sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void { }
 }
 
 /**

@@ -31,6 +31,18 @@ class FakeTelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: any): void {
 		this.events.push(event);
 	}
+
+	sendSampledTelemetryEvent(event: ITelemetryGenericEvent, samplingRate: number, error?: any): void {
+		assert.fail("Should not be called");
+	}
+
+	sendSampledPerformanceEvent(event: ITelemetryPerformanceEvent, samplingRate: number, error?: any): void {
+		assert.fail("Should not be called");
+	}
+
+	sendSampledErrorEvent(event: ITelemetryErrorEvent, samplingRate: number, error?: any): void {
+		assert.fail("Should not be called");
+	}
 }
 
 describe("ThresholdCounter", () => {
