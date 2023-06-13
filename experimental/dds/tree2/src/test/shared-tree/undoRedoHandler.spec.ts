@@ -8,6 +8,7 @@ import { SharedTreeViewUndoRedoHandler } from "../../shared-tree";
 import {
 	TestTreeProviderLite,
 	getTestValue,
+	getTestValues,
 	initializeTestTree,
 	insert,
 	setTestValue,
@@ -84,6 +85,51 @@ describe("ShareTreeUndoRedoHandler", () => {
 		provider.processMessages();
 
 		assert.equal(getTestValue(tree), undefined);
+	});
+
+	it("can undo and redo a commit made on a fork", () => {
+		const undoRedoStack = new UndoRedoStackManager();
+		const handler = new SharedTreeViewUndoRedoHandler(undoRedoStack);
+		const provider = new TestTreeProviderLite();
+
+		const value = "42";
+		const tree = provider.trees[0];
+		handler.attachTree(tree);
+
+		const fork = tree.fork();
+
+		// Insert node
+		setTestValue(fork, value);
+
+		// Insert a node on the original tree to cause rebasing when merging
+		const value2 = "43";
+		setTestValue(tree, value2);
+		undoRedoStack.closeCurrentOperation();
+		tree.merge(fork);
+		provider.processMessages();
+
+		// Validate insertion
+		const valuesAfterInsertion = getTestValues(tree);
+		assert.equal(valuesAfterInsertion.length, 2);
+		assert.equal(valuesAfterInsertion[0], value2);
+		assert.equal(valuesAfterInsertion[1], value);
+
+		// Undo node insertion
+		undoRedoStack.undoOperation();
+		provider.processMessages();
+
+		const valuesAfterUndo = getTestValues(tree);
+		assert.equal(valuesAfterUndo.length, 1);
+		assert.equal(valuesAfterUndo[0], value2);
+
+		// Redo node insertion
+		undoRedoStack.redoOperation();
+		provider.processMessages();
+
+		const valuesAfterRedo = getTestValues(tree);
+		assert.equal(valuesAfterRedo.length, 2);
+		assert.equal(valuesAfterRedo[0], value2);
+		assert.equal(valuesAfterRedo[1], value);
 	});
 
 	it("can undo and redo rebased edits", () => {
