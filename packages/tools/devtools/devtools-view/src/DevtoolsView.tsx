@@ -98,8 +98,7 @@ const stackStyles: IStackStyles = {
 		"flexDirection": "row",
 		"flexWrap": "nowrap",
 		"width": "auto",
-		"height": "100%",
-		"overflowY": "auto",
+		"height": "auto",
 		"boxSizing": "border-box",
 		"> *": {
 			textOverflow: "ellipsis",
@@ -121,8 +120,7 @@ const contentViewStyles: IStackItemStyles = {
 		"flexDirection": "column",
 		"flexWrap": "nowrap",
 		"width": "auto",
-		"height": "100%",
-		"overflowY": "auto",
+		"height": "auto",
 		"boxSizing": "border-box",
 		"> *": {
 			textOverflow: "ellipsis",
@@ -143,9 +141,7 @@ const menuStyles: IStackItemStyles = {
 		"flexDirection": "column",
 		"borderRight": `2px solid`,
 		"minWidth": "150px",
-		// "maxHeight": "350px",
-		"height": "100%",
-		"overflowY": "auto",
+		"maxHeight": "350px",
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
@@ -156,15 +152,10 @@ const menuStyles: IStackItemStyles = {
 // #endregion
 
 /**
- * Primary Fluid Framework Devtools view.
- *
- * @remarks
- *
+ * Primary Devtools view.
  * Communicates with {@link @fluid-experimental/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
  * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
  * and sub-views.
- *
- * Requires {@link MessageRelayContext} to have been set.
  */
 export function DevtoolsView(): React.ReactElement {
 	// Set of features supported by the Devtools.
