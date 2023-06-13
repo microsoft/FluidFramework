@@ -1241,6 +1241,9 @@ importers:
       '@fluid-experimental/data-objects':
         specifier: workspace:~
         version: link:../../../experimental/framework/data-objects
+      '@fluidframework/azure-client':
+        specifier: workspace:~
+        version: link:../../../azure/packages/azure-client
       '@fluidframework/common-definitions':
         specifier: ^0.20.1
         version: 0.20.1
