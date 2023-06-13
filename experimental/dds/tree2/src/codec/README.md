@@ -1,7 +1,7 @@
 # Codec
 
 This library defines types and constructs for organizing code that works with persisted data.
-Its fundamental building block is a codec--a bit of code capable of transcoding between some encoded and in-memory format.
+Its fundamental building block is a codec--a bit of code capable of transcoding between a stable format used for persistence and a potentially less stable format only used in memory.
 Typically, for compatibility reasons, aspects of `SharedTree` should work with `ICodecFamily`s (which can do the above for multiple supported formats).
 
 ## JSON Validators
