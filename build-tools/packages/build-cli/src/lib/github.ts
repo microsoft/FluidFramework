@@ -5,8 +5,6 @@
 import { Octokit } from "@octokit/core";
 import { CommandLogger } from "../logging";
 
-const OWNER = "microsoft";
-const REPO_NAME = "FluidFramework";
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
 const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
@@ -23,11 +21,13 @@ const GET_USER = "GET /repos/{owner}/{repo}/branches/{branch}/protection/restric
 export async function pullRequestExists(
 	token: string,
 	title: string,
+	owner: string,
+	repo: string,
 	log: CommandLogger,
 ): Promise<boolean> {
 	log.verbose("Checking if pull request exists----------------");
 	const octokit = new Octokit({ auth: token });
-	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
+	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 
 	return response.data.some((d) => d.title === title);
 }
@@ -39,13 +39,15 @@ export async function pullRequestExists(
  */
 export async function pullRequestInfo(
 	token: string,
+	owner: string,
+	repo: string,
 	commit_sha: string,
 	log: CommandLogger,
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
 	const prInfo = await octokit.request(PULL_REQUEST_INFO, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner,
+		repo,
 		commit_sha,
 	});
 
@@ -58,12 +60,17 @@ export async function pullRequestInfo(
  * @param token - GitHub authentication token
  * @returns Lists the user who have push access to this branch
  */
-export async function getUserAccess(token: string, log: CommandLogger): Promise<any> {
+export async function getUserAccess(
+	token: string,
+	owner: string,
+	repo: string,
+	log: CommandLogger,
+): Promise<any> {
 	const octokit = new Octokit({ auth: token });
 
 	const user = await octokit.request(GET_USER, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner,
+		repo,
 		branch: "main",
 	});
 
@@ -82,6 +89,8 @@ export async function getUserAccess(token: string, log: CommandLogger): Promise<
 export async function createPullRequest(
 	pr: {
 		token: string;
+		owner: string;
+		repo: string;
 		source: string;
 		target: string;
 		assignee: string;
@@ -93,8 +102,8 @@ export async function createPullRequest(
 	log.verbose(`Creating a pull request---------------`);
 	const octokit = new Octokit({ auth: pr.token });
 	const newPr = await octokit.request(PULL_REQUEST, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		title: pr.title,
 		body: pr.description,
 		head: pr.source,
@@ -103,24 +112,24 @@ export async function createPullRequest(
 
 	log.verbose(`Assigning ${pr.assignee} to pull request ${newPr.data.number}`);
 	await octokit.request(ASSIGNEE, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		issue_number: newPr.data.number,
 		assignees: [pr.assignee],
 	});
 
 	log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
 	await octokit.request(REVIEWER, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		pull_number: newPr.data.number,
 		reviewer: [],
 	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);
 	await octokit.request(LABEL, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		issue_number: newPr.data.number,
 		labels: ["main-next-integrate", "do-not-squash-merge"],
 	});

@@ -25,7 +25,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 	static flags = {
 		auth: Flags.string({
-			description: "GitHub authentication token.",
+			description:
+				"GitHub authentication token. For security reasons, this value should be passed using the GITHUB_TOKEN environment variable.",
 			char: "a",
 			required: true,
 			env: "GITHUB_TOKEN",
@@ -45,6 +46,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "b",
 			required: true,
 		}),
+		remote: Flags.string({
+			description: "",
+			char: "r",
+			default: "origin",
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -52,10 +58,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	 * The branch that the command was run from. This is used to checkout the branch in the case of a failure.
 	 */
 	private initialBranch: string = "";
+
 	/**
 	 * A list of branches that should be deleted if the command fails.
 	 */
 	private readonly branchesToCleanup: string[] = [];
+
 	private gitRepo: Repository | undefined;
 	private remote: string | undefined;
 
@@ -63,23 +71,44 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const flags = this.flags;
 
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
-
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
 
 		if (this.gitRepo === undefined) {
+			this.log(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
+		const repoURL = await this.gitRepo.gitClient.raw(["config", "--get", "remote.origin.url"]);
+
+		const match = repoURL.match(/github\.com\/([^/]+)\/([^/]+)/i);
+
+		// fetch GitHub owner and repository name
+		const github =
+			match && match.length === 3
+				? { owner: match[1], repo: match[2] }
+				: this.error(`Empty owner and repository name`, { exit: -1 });
+
+		this.log(`owner: ${github.owner} and repo: ${github.repo}`);
+
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
+		console.log(`initialBranch: ${this.initialBranch}`);
 
-		this.remote = "origin";
-
-		const prExists: boolean = await pullRequestExists(flags.auth, prTitle, this.logger);
-
+		this.remote = flags.remote;
+		console.log(`initialBranch 1: ${this.initialBranch}`);
+		const prExists: boolean = await pullRequestExists(
+			flags.auth,
+			prTitle,
+			github.owner,
+			github.repo,
+			this.logger,
+		);
+		console.log(`initialBranch 2: ${this.initialBranch}`);
 		if (prExists) {
-			this.error(`Open pull request exists`, { exit: -1 });
+			this.verbose(`Open pull request exists`);
+			this.exit(-1);
+			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
 
@@ -107,18 +136,23 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 
 		const commitSize = Math.min(flags.batchSize, unmergedCommitList.length);
-		// `tempBranchToCheckConflicts` is used to check the conflicts of each commit with next.
+		// `tempBranchToCheckConflicts` is used to check the conflicts of each commit with the target branch.
 		const tempBranchToCheckConflicts = `${flags.target}-automation`;
 		this.branchesToCleanup.push(tempBranchToCheckConflicts);
 
-		await this.gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, flags.target);
+		await this.gitRepo.gitClient
+			.checkoutBranch(tempBranchToCheckConflicts, flags.target)
+			.push(this.remote, tempBranchToCheckConflicts)
+			.branch(["--set-upstream-to", `${this.remote}/${tempBranchToCheckConflicts}`]);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
 			unmergedCommitList.slice(0, commitSize),
 			this.gitRepo,
 			this.logger,
 		);
-		this.verbose(`conflicting commit: ${conflictingCommitIndex}`);
+		this.verbose(
+			`conflicting commit: ${unmergedCommitList[conflictingCommitIndex]} at index ${conflictingCommitIndex}`,
+		);
 
 		/**
 		 * The commit that should be used as the HEAD for the PR.
@@ -126,7 +160,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		let prHeadCommit = "";
 
 		/**
-		 * Defaults to true but will be set to false if the PR is expected to not have conflicts.
+		 * True if the PR is expected to have conflicts, false otherwise.
 		 */
 		let prWillConflict: boolean;
 
@@ -134,7 +168,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			// There's a conflicting commit in the list, so we need to determine which commit to use as the HEAD for the PR.
 			if (conflictingCommitIndex === 0) {
 				// If it's the first item in the list that conflicted, then we want to open a single PR with the HEAD at that
-				// commit. The PR is expected to conflict with the target branch, so we leave `prWillConflict` to true. The PR owner will need to merge the branch
+				// commit. The PR is expected to conflict with the target branch, so we set `prWillConflict` to true. The PR owner will need to merge the branch
 				// manually with next and push back to the PR, and then merge once CI passes.
 				prHeadCommit = unmergedCommitList[0];
 				prWillConflict = true;
@@ -152,7 +186,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const branchName = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
 		this.branchesToCleanup.push(branchName);
 
-		this.verbose(`Creating and checking out branch: ${branchName} at commit ${prHeadCommit}`);
+		this.verbose(
+			`Creating and checking out branch: ${branchName} at commit ${shortCommit(
+				prHeadCommit,
+			)}`,
+		);
 		await this.gitRepo.gitClient
 			.checkoutBranch(branchName, prHeadCommit)
 			.push(this.remote, branchName)
@@ -208,17 +246,25 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		/**
 		 * fetch name of owner associated to the pull request
 		 */
-		const pr = await pullRequestInfo(flags.auth, prHeadCommit, this.logger);
+		const pr = await pullRequestInfo(
+			flags.auth,
+			github.owner,
+			github.repo,
+			prHeadCommit,
+			this.logger,
+		);
 		console.debug(pr);
 		const author = pr.data?.[0]?.assignee?.login;
 		this.info(
 			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${author}`,
 		);
-		const user = await getUserAccess(flags.auth, this.logger);
-		this.info(`List users with push access to main branch: ${JSON.stringify(user.data)}`);
+		const user = await getUserAccess(flags.auth, github.owner, github.repo, this.logger);
+		this.verbose(`List users with push access to main branch: ${JSON.stringify(user.data)}`);
 
 		const prObject = {
 			token: flags.auth,
+			owner: github.owner,
+			repo: github.repo,
 			source: branchName,
 			target: flags.target,
 			assignee: author,

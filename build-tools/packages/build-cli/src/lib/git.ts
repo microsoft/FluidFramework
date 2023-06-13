@@ -104,10 +104,9 @@ export class Repository {
 	}
 
 	/**
-	 * @param branch - The branch to compare against.
-	 * @param remote - The remote to compare against.
-	 * @param localRef - The local ref to compare against. Defaults to HEAD.
-	 * @returns The ref of the merge base between the current HEAD and the remote branch.
+	 * @param ref1 - The first ref to compare.
+	 * @param ref2 - The ref to compare against.
+	 * @returns The ref of the merge base between the two refs.
 	 */
 	public async getMergeBase(ref1: string, ref2: string): Promise<string> {
 		const base = await this.gitClient.raw("merge-base", `${ref1}`, ref2);
