@@ -69,13 +69,9 @@ describe("ContextuallyTyped", () => {
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
 		const numbersObject = builder.object("numbers", { local: { numbers: numberSequence } });
 		const schema = builder.intoDocumentSchema(numberSequence);
-		const mapTree = applyTypesFromContext(
-			{ schema, fieldSource: () => undefined },
-			new Set([numbersObject.name]),
-			{
-				numbers: [],
-			},
-		);
+		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
+			numbers: [],
+		});
 		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
 		assert.deepEqual(mapTree, expected);
 	});
@@ -129,7 +125,7 @@ describe("ContextuallyTyped", () => {
 			assert.equal(treeFromContextualData.globalFields?.identifier[0].value, "x");
 		});
 
-		it("for nested contextual data with no global fields provided", () => {
+		it("for nested contextual data.", () => {
 			const builder = new SchemaBuilder("Identifier Domain");
 			const identifierSchema = builder.primitive("identifier", ValueSchema.String);
 			const identifierFieldSchema = builder.globalField(

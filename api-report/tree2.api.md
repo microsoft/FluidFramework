@@ -1114,12 +1114,6 @@ interface MakeNominal {
 }
 
 // @alpha
-export interface MapTree extends NodeData {
-    // (undocumented)
-    fields: Map<FieldKey, MapTree[]>;
-}
-
-// @alpha
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
 // @alpha
