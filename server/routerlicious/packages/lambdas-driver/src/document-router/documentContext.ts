@@ -111,7 +111,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 				partition: message.partition,
 			};
 			Lumberjack.error(
-				`Skipping checkpoint. Message offset is not between the current tail and head offsets.`,
+				`Skipping checkpoint and marking document as corrupted. Message offset is not between the current tail and head offsets.`,
 				properties,
 				error,
 			);
