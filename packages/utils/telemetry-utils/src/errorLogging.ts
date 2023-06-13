@@ -124,8 +124,19 @@ export function normalizeError(
 	// Anywhere they are set should be on a valid Fluid Error that would have been returned above,
 	// but we can't prove it with the types, so adding this defensive measure.
 	if (typeof error === "object" && error !== null) {
-		const { canRetry, retryAfterSeconds } = error as any;
-		Object.assign(normalizeError, { canRetry, retryAfterSeconds });
+		const maybeHasRetry: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> = error;
+		let retryProps: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> | undefined;
+		if ("canRetry" in error) {
+			retryProps ??= {};
+			retryProps.canRetry = maybeHasRetry.canRetry;
+		}
+		if ("retryAfterSeconds" in error) {
+			retryProps ??= {};
+			retryProps.retryAfterSeconds = maybeHasRetry.retryAfterSeconds;
+		}
+		if (retryProps !== undefined) {
+			Object.assign(fluidError, retryProps);
+		}
 	}
 
 	if (typeof error !== "object") {
