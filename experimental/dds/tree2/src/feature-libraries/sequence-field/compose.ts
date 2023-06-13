@@ -9,6 +9,7 @@ import { fail } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
+	getIntention,
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
@@ -628,13 +629,6 @@ function areInverseMoves(
 	}
 
 	return false;
-}
-
-function getIntention(
-	rev: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
 
 // TODO: Try to share more logic with the version in rebase.ts.

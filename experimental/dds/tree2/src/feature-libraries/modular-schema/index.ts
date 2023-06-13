@@ -28,6 +28,7 @@ export {
 	FieldChangeRebaser,
 	FieldChangeset,
 	FieldEditor,
+	getIntention,
 	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeComposer,

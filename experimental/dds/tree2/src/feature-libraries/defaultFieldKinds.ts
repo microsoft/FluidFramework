@@ -31,6 +31,10 @@ import {
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
 	NodeExistenceStateChange,
+	IdAllocator,
+	CrossFieldManager,
+	RevisionMetadataSource,
+	getIntention,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -447,7 +451,11 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
+		const overIntention = getIntention(overTagged.revision, revisionMetadata);
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
 			if (over.fieldChange !== undefined) {
@@ -462,7 +470,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			const rebasedChange = { ...change };
 			const overChildChange =
-				change.deletedBy === over.deletedBy ? over.childChange : undefined;
+				change.deletedBy === overIntention ? over.childChange : undefined;
 			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
 			if (rebasedChildChange !== undefined) {
 				rebasedChange.childChange = rebasedChildChange;
@@ -483,23 +491,25 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							over.deletedBy === undefined ? undefined : over.childChange,
 							NodeExistenceStateChange.Deleted,
 						),
-						deletedBy: overTagged.revision,
+						deletedBy: overIntention,
 					};
-				} else if (
-					over.fieldChange.newContent !== undefined &&
-					"revert" in over.fieldChange.newContent &&
-					over.fieldChange.newContent.revision === change.deletedBy
-				) {
-					// Over is reviving the node that change.childChange is referring to.
-					// Rebase change.childChange and remove deletedBy
-					// because we revived the node that childChange refers to
-					return {
-						childChange: rebaseChild(
-							change.childChange,
-							over.fieldChange.newContent.changes,
-							NodeExistenceStateChange.Revived,
-						),
-					};
+				} else if (over.fieldChange.newContent !== undefined) {
+					const rebasingOverRollback = overIntention === change.deletedBy;
+					const rebasingOverUndo =
+						"revert" in over.fieldChange.newContent &&
+						over.fieldChange.newContent.revision === change.deletedBy;
+					if (rebasingOverRollback || rebasingOverUndo) {
+						// Over is reviving the node that change.childChange is referring to.
+						// Rebase change.childChange and remove deletedBy
+						// because we revived the node that childChange refers to
+						return {
+							childChange: rebaseChild(
+								change.childChange,
+								over.fieldChange.newContent.changes,
+								NodeExistenceStateChange.Revived,
+							),
+						};
+					}
 				}
 			}
 		}
