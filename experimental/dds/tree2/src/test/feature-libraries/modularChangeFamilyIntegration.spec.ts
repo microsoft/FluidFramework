@@ -14,12 +14,14 @@ import {
 	mintRevisionTag,
 	tagChange,
 } from "../../core";
-import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../feature-libraries";
+import { DefaultEditBuilder, FieldKind } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/defaultFieldKinds";
 import { brand, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
@@ -76,8 +78,7 @@ describe("rebase", () => {
 		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
 
-	// See bug 4071
-	it.skip("cross-field move composition", () => {
+	it("cross-field move composition", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
 		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 		editor.move(

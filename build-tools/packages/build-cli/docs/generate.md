@@ -6,7 +6,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changeset`](#flub-generate-changeset)
-* [`flub generate packageJson`](#flub-generate-packagejson)
 
 ## `flub generate buildVersion`
 
@@ -107,23 +106,4 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
-```
-
-## `flub generate packageJson`
-
-Generate mono repo package json
-
-```
-USAGE
-  $ flub generate packageJson -g client|server|azure|build-tools|gitrest|historian [-v]
-
-FLAGS
-  -g, --releaseGroup=<option>  (required) Name of the release group
-                               <options: client|server|azure|build-tools|gitrest|historian>
-
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-
-DESCRIPTION
-  Generate mono repo package json
 ```

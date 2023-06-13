@@ -23,6 +23,7 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { mockIntoDelta } from "../utils";
 
 const revision1: RevisionTag = mintRevisionTag();
 const revision2: RevisionTag = mintRevisionTag();
@@ -38,7 +39,7 @@ describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema);
-		const store = new ForestRepairDataStore(forest);
+		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },
 			{
@@ -116,7 +117,7 @@ describe("ForestRepairDataStore", () => {
 	it("Captures overwritten values", () => {
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema);
-		const store = new ForestRepairDataStore(forest);
+		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const data = {
 			type: jsonObject.name,
 			fields: {

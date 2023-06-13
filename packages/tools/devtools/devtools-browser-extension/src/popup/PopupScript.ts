@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { browser } from "../utilities";
+import { browser } from "../Globals";
 
 /**
  * This module is the extensions "pop-up" script.

@@ -866,16 +866,12 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
-			// Insert node
-			setTestValue(tree1, "D");
-			setTestValue(tree1, "C");
-			setTestValue(tree1, "B");
-			setTestValue(tree1, "A");
+			// Initialize the tree
+			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
+			initializeTestTree(tree1, expectedState);
 			provider.processMessages();
 
-			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
-
-			// Validate insertion
+			// Validate initialization
 			validateTree(tree2, expectedState);
 
 			// Insert a node on tree 2
@@ -1322,6 +1318,200 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("handles ancestor revive", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+			// Undo delete of a
+			tree2.undo();
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				// Constraint should be not be violated after undo
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "a",
+					fields: {
+						foo: [
+							{
+								type: brand("TestValue"),
+								value: "bar",
+							},
+						],
+					},
+				},
+				{
+					type: brand("TestValue"),
+					value: "b",
+				},
+			];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("handles ancestor delete", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("sequence field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "b");
+			provider.processMessages();
+
+			const bPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			remove(tree1, 1, 1);
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint(bPath);
+				const sequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "c" }));
+			});
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "a",
+				},
+			];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("revived sequence field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "b");
+			provider.processMessages();
+
+			const bPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			// Remove and revive "b"
+			remove(tree1, 1, 1);
+			tree1.undo();
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint(bPath);
+				const sequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "c" }));
+			});
+
+			provider.processMessages();
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "c",
+				},
+				{
+					type: brand("TestValue"),
+					value: "a",
+				},
+				{
+					type: brand("TestValue"),
+					value: "b",
+				},
+			];
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		it("optional field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;

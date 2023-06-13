@@ -289,6 +289,7 @@ export function configureWebSocketServices(
 			if (throttleErrorPerTenant) {
 				return Promise.reject(throttleErrorPerTenant);
 			}
+
 			if (!message.token) {
 				throw new NetworkError(403, "Must provide an authorization token");
 			}
@@ -296,6 +297,47 @@ export function configureWebSocketServices(
 			// Validate token signature and claims
 			const token = message.token;
 			const claims = validateTokenClaims(token, message.id, message.tenantId);
+			const clientId = generateClientId();
+
+			const lumberjackProperties = {
+				...getLumberBaseProperties(claims.documentId, claims.tenantId),
+				[CommonProperties.clientId]: clientId,
+			};
+
+			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ConnectDocumentGetClients,
+				lumberjackProperties,
+			);
+			const clients = await clientManager
+				.getClients(claims.tenantId, claims.documentId)
+				.then((response) => {
+					connectDocumentGetClientsMetric.success(
+						"Successfully got clients from client manager",
+					);
+					return response;
+				})
+				.catch(async (err) => {
+					const errMsg = `Failed to get clients. Error: ${safeStringify(
+						err,
+						undefined,
+						2,
+					)}`;
+					connectDocumentGetClientsMetric.error(
+						"Failed to get clients during connectDocument",
+						err,
+					);
+					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+				});
+
+			if (clients.length > maxNumberOfClientsPerDocument) {
+				throw new NetworkError(
+					429,
+					"Too Many Clients Connected to Document",
+					true /* canRetry */,
+					false /* isFatal */,
+					5 * 60 * 1000 /* retryAfterMs (5 min) */,
+				);
+			}
 
 			try {
 				await tenantManager.verifyToken(claims.tenantId, token);
@@ -312,7 +354,6 @@ export function configureWebSocketServices(
 				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
 			}
 
-			const clientId = generateClientId();
 			const room: IRoom = {
 				tenantId: claims.tenantId,
 				documentId: claims.documentId,
@@ -377,46 +418,6 @@ export function configureWebSocketServices(
 					`Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(
 						connectVersions,
 					)}`,
-				);
-			}
-
-			const lumberjackProperties = {
-				...getLumberBaseProperties(claims.documentId, claims.tenantId),
-				[CommonProperties.clientId]: clientId,
-			};
-
-			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
-				LumberEventName.ConnectDocumentGetClients,
-				lumberjackProperties,
-			);
-			const clients = await clientManager
-				.getClients(claims.tenantId, claims.documentId)
-				.then((response) => {
-					connectDocumentGetClientsMetric.success(
-						"Successfully got clients from client manager",
-					);
-					return response;
-				})
-				.catch(async (err) => {
-					const errMsg = `Failed to get clients. Error: ${safeStringify(
-						err,
-						undefined,
-						2,
-					)}`;
-					connectDocumentGetClientsMetric.error(
-						"Failed to get clients during connectDocument",
-						err,
-					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-				});
-
-			if (clients.length > maxNumberOfClientsPerDocument) {
-				throw new NetworkError(
-					429,
-					"Too Many Clients Connected to Document",
-					true /* canRetry */,
-					false /* isFatal */,
-					5 * 60 * 1000 /* retryAfterMs (5 min) */,
 				);
 			}
 
@@ -641,6 +642,7 @@ export function configureWebSocketServices(
 				})
 				.catch((error) => {
 					socket.emit("connect_document_error", error);
+					clearExpirationTimer();
 					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
@@ -867,6 +869,15 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
+			if (roomMap.size >= 1) {
+				const rooms = Array.from(roomMap.values());
+				const documentId = rooms[0].documentId;
+				const tenantId = rooms[0].tenantId;
+				disconnectMetric.setProperties({
+					...getLumberBaseProperties(documentId, tenantId),
+				});
+			}
+
 			try {
 				clearExpirationTimer();
 				const removeAndStoreP: Promise<void>[] = [];
@@ -938,16 +949,7 @@ export function configureWebSocketServices(
 					socketTracker.removeSocket(socket.id);
 				}
 				await Promise.all(removeAndStoreP);
-				if (roomMap.size >= 1) {
-					const rooms = Array.from(roomMap.values());
-					const documentId = rooms[0].documentId;
-					const tenantId = rooms[0].tenantId;
-					const clients = await clientManager.getClients(tenantId, documentId);
-					disconnectMetric.setProperties({
-						...getLumberBaseProperties(documentId, tenantId),
-						[CommonProperties.clientCount]: clients.length,
-					});
-				}
+
 				disconnectMetric.success(`Successfully disconnected.`);
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
