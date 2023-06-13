@@ -55,7 +55,7 @@ describeFullVersionCompat(
 			},
 		};
 
-		it(`Test runtime version`, async () => {
+		it("Can create/load with the correct versions", async () => {
 			console.log(
 				(dataObject1.context.containerRuntime as any).createContainerMetadata
 					.createContainerRuntimeVersion,

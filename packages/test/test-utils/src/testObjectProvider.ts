@@ -265,7 +265,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * and factory for TestFluidObject
 	 */
 	constructor(
-		public readonly LoaderConstructor: typeof Loader,
+		public readonly loaderConstructor: typeof Loader,
 		public readonly driver: ITestDriver,
 		public readonly createFluidEntryPoint: (
 			testContainerConfig?: ITestContainerConfig,
@@ -338,7 +338,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 			multiSinkLogger.addLogger(loaderProps.logger);
 		}
 
-		const loader = new this.LoaderConstructor({
+		const loader = new this.loaderConstructor({
 			...loaderProps,
 			logger: multiSinkLogger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
@@ -525,8 +525,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 	constructor(
-		public readonly LoaderConstructor: typeof Loader,
-		public readonly LoaderConstructorForLoading: typeof Loader,
+		// The TestObjectProviderWithVersionedLoad accepts loaderConstructor and driver in two versions:
+		// The original version represents the loader/driver used for creating containers 
+		// The loader/driver with the suffix "ForLoading" is used to load test containers 
+		// This is done by overriding the loadTestContainer method while using the corresponding "ForLoading" versions of driver/loader
+		public readonly loaderConstructor: typeof Loader,
+		public readonly loaderConstructorForLoading: typeof Loader,
 		public readonly driver: ITestDriver,
 		public readonly driverForLoading: ITestDriver,
 		public readonly createFluidEntryPoint: (
@@ -536,7 +540,7 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
 	) {
-		super(LoaderConstructor, driver, createFluidEntryPoint);
+		super(loaderConstructor, driver, createFluidEntryPoint);
 	}
 
 	private createLoaderForLoading(
@@ -549,7 +553,7 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 			multiSinkLogger.addLogger(loaderProps.logger);
 		}
 
-		const loader = new this.LoaderConstructorForLoading({
+		const loader = new this.loaderConstructorForLoading({
 			...loaderProps,
 			logger: multiSinkLogger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),

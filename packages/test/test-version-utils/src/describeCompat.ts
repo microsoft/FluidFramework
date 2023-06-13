@@ -65,6 +65,9 @@ function createCompatSuite(
 	};
 }
 
+// Test wrapper used to create group tests with a specific TestObjectProvider
+// this is needed in test scenarios where we create test suites where the runtime
+// version varies between config items, so we would need separate providers
 function wrapTest(
 	name: string,
 	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,

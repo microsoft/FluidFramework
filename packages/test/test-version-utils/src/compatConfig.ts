@@ -30,11 +30,11 @@ interface CompatConfig {
 	dataRuntime?: string | number;
 }
 
-const DefaultCompatVersions = {
+const defaultCompatVersions = {
 	// N and N - 1
-	CurrentVersionDeltas: [0, -1],
+	currentVersionDeltas: [0, -1],
 	// we are currently supporting 1.3.4 long-term
-	LTSVersions: ["^1.3.4"],
+	ltsVersions: ["^1.3.4"],
 };
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
@@ -193,7 +193,7 @@ export interface CompatVersionConfig {
 }
 
 export const getMajorCompatConfig = (): CompatVersionConfig[] => {
-	const allDefaultDeltaVersions = DefaultCompatVersions.CurrentVersionDeltas.map((delta) => ({
+	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
 		base: pkgVersion,
 		// temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
 		delta: delta * 10,
@@ -228,19 +228,19 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	let _configList: CompatConfig[] = [];
 	if (!compatVersions || compatVersions.length === 0) {
-		DefaultCompatVersions.CurrentVersionDeltas.forEach((value) => {
+		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
-		DefaultCompatVersions.LTSVersions.forEach((value) => {
+		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
 	} else {
 		compatVersions.forEach((value) => {
 			if (value === "LTS") {
-				DefaultCompatVersions.LTSVersions.forEach((lts) => {
+				defaultCompatVersions.ltsVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
 			} else if (value === "FULL") {
