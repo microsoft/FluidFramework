@@ -67,10 +67,6 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	EditBuilder,
-	ChangeRebaser,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -143,9 +139,7 @@ export {
 	emptyField,
 	IdAllocator,
 	neverTree,
-	ModularChangeFamily,
 	ModularChangeset,
-	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
 	FieldEditor,
@@ -246,7 +240,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./feature-libraries";
 
 export {

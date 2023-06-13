@@ -57,7 +57,7 @@ import {
 	RevisionMetadataSource,
 	NodeExistsConstraint,
 	ValueConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -67,9 +67,6 @@ import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
- *
- * @sealed
- * @alpha
  */
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
@@ -556,6 +553,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		amend: boolean = false,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -581,7 +579,7 @@ export class ModularChangeFamily
 			const rebaseChild = (
 				child: NodeChangeset | undefined,
 				baseChild: NodeChangeset | undefined,
-				stateChange: NodeExistenceStateChange | undefined,
+				stateChange: NodeExistenceState | undefined,
 			) =>
 				this.rebaseNodeChange(
 					child,
@@ -662,6 +660,7 @@ export class ModularChangeFamily
 							fieldFilter,
 							revisionMetadata,
 							constraintState,
+							existenceState,
 						);
 					},
 					genId,
@@ -689,7 +688,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
-		existenceStateChange: NodeExistenceStateChange = NodeExistenceStateChange.Unchanged,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 		amend: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over.change?.fieldChanges === undefined) {
@@ -717,6 +716,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 			constraintState,
 			amend,
+			existenceState,
 		);
 
 		const rebasedChange: NodeChangeset = {};
@@ -752,11 +752,8 @@ export class ModularChangeFamily
 		}
 
 		// If there's a node exists constraint and we deleted or revived the node, update constraint state
-		if (
-			rebasedChange.nodeExistsConstraint !== undefined &&
-			existenceStateChange !== NodeExistenceStateChange.Unchanged
-		) {
-			const violatedAfter = existenceStateChange === NodeExistenceStateChange.Deleted;
+		if (!amend && rebasedChange.nodeExistsConstraint !== undefined) {
+			const violatedAfter = existenceState === NodeExistenceState.Dead;
 
 			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {
 				rebasedChange.nodeExistsConstraint = {
@@ -909,6 +906,9 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
+/**
+ * @alpha
+ */
 interface ConstraintState {
 	violationCount: number;
 }
@@ -1033,10 +1033,6 @@ function makeModularChangeset(
 	return changeset;
 }
 
-/**
- * @sealed
- * @alpha
- */
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;

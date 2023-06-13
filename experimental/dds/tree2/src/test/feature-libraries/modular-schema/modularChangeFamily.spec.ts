@@ -10,7 +10,6 @@ import {
 	FieldChangeRebaser,
 	FieldKind,
 	Multiplicity,
-	ModularChangeFamily,
 	FieldEditor,
 	NodeChangeset,
 	genericFieldKind,
@@ -43,6 +42,8 @@ import {
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
