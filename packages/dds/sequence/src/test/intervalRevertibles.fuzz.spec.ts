@@ -176,7 +176,7 @@ function operationGenerator(
 	]);
 }
 
-describe.only("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () => take(100, operationGenerator(defaultOptions)),
