@@ -704,7 +704,7 @@ describe("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		it.skip("can rebase an insert of and edit to a node", () => {
+		it("can rebase a node replacement and a dependent edit to the new node", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
@@ -714,7 +714,6 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			// e1
 			tree1.editor
 				.optionalField({
 					parent: undefined,
@@ -722,7 +721,6 @@ describe("Editing", () => {
 				})
 				.set(singleJsonCursor("41"), true);
 
-			// e2
 			tree2.editor
 				.optionalField({
 					parent: undefined,
@@ -730,17 +728,56 @@ describe("Editing", () => {
 				})
 				.set(singleJsonCursor("42"), true);
 
-			// e3
 			tree2.editor.setValue(rootPath, "43");
 
-			// Rebasing e3 over e2⁻¹ mutes e3
-			// Rebasing the muted e3 over e1 doesn't affect it
-			// Rebasing the muted e3 over e2' fails to unmute the change because e2' is expressed
-			// as `set` operation instead of a `revert`.
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], ["43"]);
+		});
+
+		it("can rebase a node edit over the node being replaced and restored", () => {
+			const tree1 = makeTreeFromJson(["40"]);
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			tree1.editor
+				.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.set(singleJsonCursor("41"), false);
+
+			tree1.undo();
+
+			tree2.editor.setValue(rootPath, "42");
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], ["42"]);
+		});
+
+		it("can replace and restore a node", () => {
+			const tree1 = makeTreeFromJson(["42"]);
+
+			tree1.editor
+				.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.set(singleJsonCursor("43"), false);
+
+			expectJsonTree(tree1, ["43"]);
+
+			tree1.undo();
+
+			expectJsonTree(tree1, ["42"]);
 		});
 	});
 });

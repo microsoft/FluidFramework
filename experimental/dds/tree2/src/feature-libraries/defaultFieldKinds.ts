@@ -30,6 +30,10 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
+	IdAllocator,
+	CrossFieldManager,
+	RevisionMetadataSource,
+	getIntention,
 	NodeExistenceState,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
@@ -447,6 +451,9 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
@@ -475,6 +482,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
+				const overIntention = getIntention(overTagged.revision, revisionMetadata);
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
@@ -483,23 +491,25 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							over.deletedBy === undefined ? undefined : over.childChange,
 							NodeExistenceState.Dead,
 						),
-						deletedBy: overTagged.revision,
+						deletedBy: overIntention,
 					};
-				} else if (
-					over.fieldChange.newContent !== undefined &&
-					"revert" in over.fieldChange.newContent &&
-					over.fieldChange.newContent.revision === change.deletedBy
-				) {
-					// Over is reviving the node that change.childChange is referring to.
-					// Rebase change.childChange and remove deletedBy
-					// because we revived the node that childChange refers to
-					return {
-						childChange: rebaseChild(
-							change.childChange,
-							over.fieldChange.newContent.changes,
-							NodeExistenceState.Alive,
-						),
-					};
+				} else if (over.fieldChange.newContent !== undefined) {
+					const rebasingOverRollback = overIntention === change.deletedBy;
+					const rebasingOverUndo =
+						"revert" in over.fieldChange.newContent &&
+						over.fieldChange.newContent.revision === change.deletedBy;
+					if (rebasingOverRollback || rebasingOverUndo) {
+						// Over is reviving the node that change.childChange is referring to.
+						// Rebase change.childChange and remove deletedBy
+						// because we revived the node that childChange refers to
+						return {
+							childChange: rebaseChild(
+								change.childChange,
+								over.fieldChange.newContent.changes,
+								NodeExistenceState.Alive,
+							),
+						};
+					}
 				}
 			}
 		}
