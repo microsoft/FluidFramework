@@ -21,7 +21,7 @@ import {
 	NodeIdentifier,
 } from "../../feature-libraries";
 import { symbolFromKey } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { nodeIdentifierSchema } from "../../domains";
 
 const {

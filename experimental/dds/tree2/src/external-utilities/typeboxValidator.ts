@@ -7,7 +7,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static, TSchema } from "@sinclair/typebox";
-import { JsonValidator } from "./codec";
+import type { JsonValidator } from "../codec";
 
 /**
  * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.

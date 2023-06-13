@@ -10,7 +10,7 @@ import { strict as assert } from "assert";
 import { makeSchemaCodec } from "../../feature-libraries/schemaIndexFormat";
 
 import { SchemaData } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { jsonSchema, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
 

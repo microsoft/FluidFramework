@@ -52,7 +52,7 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { jsonString } from "../../domains";
 

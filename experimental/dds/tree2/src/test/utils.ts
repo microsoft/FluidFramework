@@ -78,7 +78,8 @@ import {
 	InMemoryStoredSchemaRepository,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily, typeboxValidator } from "../codec";
+import { ICodecFamily } from "../codec";
+import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities

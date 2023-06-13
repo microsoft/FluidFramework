@@ -6,7 +6,7 @@ import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/data
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
 import { AnchorSet } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
 

@@ -20,7 +20,7 @@ import {
 import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
-import { typeboxValidator } from "../../../codec";
+import { typeboxValidator } from "../../../external-utilities";
 import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { Operation } from "./operationTypes";
 

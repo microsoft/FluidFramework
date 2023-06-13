@@ -35,7 +35,8 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec, noopValidator, typeboxValidator } from "../../../codec";
+import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { typeboxValidator } from "../../../external-utilities";
 import {
 	assertDeltaEqual,
 	deepFreeze,

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { typeboxValidator, withDefaultBinaryEncoding } from "../../codec";
+import { withDefaultBinaryEncoding } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";

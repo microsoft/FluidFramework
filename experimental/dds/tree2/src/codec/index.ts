@@ -19,4 +19,3 @@ export {
 	withSchemaValidation,
 } from "./codec";
 export { noopValidator } from "./noopValidator";
-export { typeboxValidator } from "./typeboxValidator";

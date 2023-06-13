@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { Type } from "@sinclair/typebox";
-import { IJsonCodec, typeboxValidator, withSchemaValidation } from "../../codec";
+import { IJsonCodec, withSchemaValidation } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {

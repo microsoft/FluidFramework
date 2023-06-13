@@ -19,7 +19,7 @@ import {
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,

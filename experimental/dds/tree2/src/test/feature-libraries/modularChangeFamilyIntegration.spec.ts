@@ -14,7 +14,7 @@ import {
 	mintRevisionTag,
 	tagChange,
 } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules

@@ -27,7 +27,8 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 } from "../../core";
-import { typeboxValidator } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
+
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
