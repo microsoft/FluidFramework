@@ -43,8 +43,6 @@ export class CheckpointService implements ICheckpointService {
 			[service]: JSON.stringify(checkpoint),
 		};
 
-		console.log(`HEREEEE#2: isLocal? ${isLocal}`);
-
 		if (!this.localCheckpointEnabled || !this.checkpointRepository) {
 			// Write to global collection when local checkpoints are disabled or there is no checkpoint repository
 			await this.documentRepository
