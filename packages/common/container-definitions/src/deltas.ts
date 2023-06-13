@@ -320,4 +320,7 @@ export type ReadOnlyInfo =
 			readonly permissions: boolean | undefined;
 			/** read-only with no delta stream connection */
 			readonly storageOnly: boolean;
+			/** extra info on why connection to delta stream is not possible. This info might be provided
+			 * if storageOnly is set to true */
+			readonly storageOnlyReason?: string;
 	  };
