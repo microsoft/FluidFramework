@@ -12,6 +12,7 @@ import {
 	isVersionBumpTypeExtended,
 	isVersionScheme,
 	VersionBumpType,
+	VersionBumpTypeExtended,
 	VersionScheme,
 } from "@fluid-tools/version-tools";
 
@@ -33,7 +34,9 @@ export const rootPathFlag = Flags.custom({
 export const releaseGroupFlag = Flags.custom({
 	char: "g",
 	description: "Name of the release group",
-	options: [...supportedMonoRepoValues()],
+	options: () => {
+		
+	},
 	parse: async (str: string) => {
 		const group = str.toLowerCase();
 		if (!isReleaseGroup(group)) {
@@ -69,7 +72,7 @@ export const semverRangeFlag = Flags.custom<string | undefined>({
 /**
  * A re-usable CLI flag to parse bump types.
  */
-export const bumpTypeExtendedFlag = Flags.custom({
+export const bumpTypeExtendedFlag = Flags.custom<VersionBumpTypeExtended | undefined>({
 	char: "t",
 	description: "Version bump type.",
 	options: ["major", "minor", "patch", "current"],
