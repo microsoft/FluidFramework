@@ -2230,6 +2230,11 @@ export class Container
 		if (this._dirtyContainer === dirty) {
 			return;
 		}
+		if (dirty && this.connectionState === ConnectionState.Disconnected) {
+			// If container is dirtied while disconnected, it should reconnect in write mode if possible.
+			// We expect a "DesiredConnectionModeMismatch" event from ConnectionManager to follow if and when we reconnect.
+			this.mc.logger.sendTelemetryEvent({ eventName: "ContainerDirtiedWhileDisconnected" });
+		}
 		this._dirtyContainer = dirty;
 		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
 	}
