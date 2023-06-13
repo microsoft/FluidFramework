@@ -485,6 +485,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// KLUDGE: Merging does not cause commits to change their ordering. This allows the
 			// undo redo handler to work for the local branch but it's not guaranteed to work for
 			// any other branch.
+			//
+			// Note that these commits will also be added to the same operation in the 
+			// UndoRedoStackManager. A configuration can be added to the branch to determine
+			// where the operation boundaries should be.
 			for (const commit of sourceCommits) {
 				const type = this.undoRedoManager.getCommitType(commit.revision);
 				if (type !== undefined) {
