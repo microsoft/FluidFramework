@@ -31,6 +31,7 @@ import {
 	Mutable,
 	NestedMap,
 	nestedSetContains,
+	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -57,7 +58,7 @@ import {
 	RevisionMetadataSource,
 	NodeExistsConstraint,
 	ValueConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -67,9 +68,6 @@ import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
- *
- * @sealed
- * @alpha
  */
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
@@ -202,41 +200,35 @@ export class ModularChangeFamily
 
 		const composedFields: FieldChangeMap = new Map();
 		for (const [field, changesForField] of fieldChanges) {
-			let composedField: FieldChange;
-			if (changesForField.length === 1) {
-				// BUG: This field might be affected by cross-field effects, so we must recurse into it.
-				composedField = changesForField[0];
-			} else {
-				const { fieldKind, changesets } = this.normalizeFieldChanges(
-					changesForField,
-					genId,
-					revisionMetadata,
-				);
-				assert(
-					changesets.length === changesForField.length,
-					0x4a8 /* Number of changes should be constant when normalizing */,
-				);
+			const { fieldKind, changesets } = this.normalizeFieldChanges(
+				changesForField,
+				genId,
+				revisionMetadata,
+			);
+			assert(
+				changesets.length === changesForField.length,
+				0x4a8 /* Number of changes should be constant when normalizing */,
+			);
 
-				const manager = newCrossFieldManager(crossFieldTable);
-				const taggedChangesets = changesets.map((change, i) =>
-					tagChange(change, changesForField[i].revision),
-				);
-				const composedChange = fieldKind.changeHandler.rebaser.compose(
-					taggedChangesets,
-					(children) =>
-						this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
-					genId,
-					manager,
-					revisionMetadata,
-				);
+			const manager = newCrossFieldManager(crossFieldTable);
+			const taggedChangesets = changesets.map((change, i) =>
+				tagChange(change, changesForField[i].revision),
+			);
+			const composedChange = fieldKind.changeHandler.rebaser.compose(
+				taggedChangesets,
+				(children) =>
+					this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+				genId,
+				manager,
+				revisionMetadata,
+			);
 
-				composedField = {
-					fieldKind: fieldKind.identifier,
-					change: brand(composedChange),
-				};
+			const composedField: FieldChange = {
+				fieldKind: fieldKind.identifier,
+				change: brand(composedChange),
+			};
 
-				addFieldData(manager, composedField);
-			}
+			addFieldData(manager, composedField);
 
 			// TODO: Could optimize by checking that composedField is non-empty
 			composedFields.set(field, composedField);
@@ -323,6 +315,11 @@ export class ModularChangeFamily
 		isRollback: boolean,
 		repairStore?: ReadonlyRepairDataStore,
 	): ModularChangeset {
+		// Return an empty inverse for changes with constraint violations
+		if ((change.change.constraintViolationCount ?? 0) > 0) {
+			return makeModularChangeset(new Map());
+		}
+
 		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
@@ -554,6 +551,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		amend: boolean = false,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -579,7 +577,7 @@ export class ModularChangeFamily
 			const rebaseChild = (
 				child: NodeChangeset | undefined,
 				baseChild: NodeChangeset | undefined,
-				stateChange: NodeExistenceStateChange | undefined,
+				stateChange: NodeExistenceState | undefined,
 			) =>
 				this.rebaseNodeChange(
 					child,
@@ -660,6 +658,7 @@ export class ModularChangeFamily
 							fieldFilter,
 							revisionMetadata,
 							constraintState,
+							existenceState,
 						);
 					},
 					genId,
@@ -687,7 +686,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
-		existenceStateChange: NodeExistenceStateChange = NodeExistenceStateChange.Unchanged,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 		amend: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over.change?.fieldChanges === undefined) {
@@ -715,6 +714,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 			constraintState,
 			amend,
+			existenceState,
 		);
 
 		const rebasedChange: NodeChangeset = {};
@@ -750,11 +750,8 @@ export class ModularChangeFamily
 		}
 
 		// If there's a node exists constraint and we deleted or revived the node, update constraint state
-		if (
-			rebasedChange.nodeExistsConstraint !== undefined &&
-			existenceStateChange !== NodeExistenceStateChange.Unchanged
-		) {
-			const violatedAfter = existenceStateChange === NodeExistenceStateChange.Deleted;
+		if (!amend && rebasedChange.nodeExistsConstraint !== undefined) {
+			const violatedAfter = existenceState === NodeExistenceState.Dead;
 
 			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {
 				rebasedChange.nodeExistsConstraint = {
@@ -781,6 +778,11 @@ export class ModularChangeFamily
 	}
 
 	public intoDelta(change: ModularChangeset): Delta.Root {
+		// Return an empty delta for changes with constraint violations
+		if ((change.constraintViolationCount ?? 0) > 0) {
+			return new Map();
+		}
+
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 
@@ -875,8 +877,8 @@ export function getChangeHandler(
 interface CrossFieldTable<TFieldData> {
 	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
 	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
-	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
-	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
+	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
 	invalidatedFields: Set<TFieldData>;
 }
 
@@ -902,6 +904,9 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
+/**
+ * @alpha
+ */
 interface ConstraintState {
 	violationCount: number;
 }
@@ -955,11 +960,9 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
-				const dependents = tryGetFromNestedMap(dependentsMap, revision, id);
-				if (dependents !== undefined) {
-					for (const dependent of dependents) {
-						crossFieldTable.invalidatedFields.add(dependent);
-					}
+				const dependent = tryGetFromNestedMap(dependentsMap, revision, id);
+				if (dependent !== undefined) {
+					crossFieldTable.invalidatedFields.add(dependent);
 				}
 
 				if (nestedSetContains(getQueries(target), revision, id)) {
@@ -987,24 +990,23 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	for (const [revision, ids] of manager.srcQueries) {
 		for (const id of ids.keys()) {
-			addToNestedListMap(manager.table.srcDependents, revision, id, fieldData);
+			// We assume that if there is already an entry for this ID it is because
+			// a field handler has called compose on the same node multiple times.
+			// In this case we only want to amend the latest version, so we overwrite the dependency.
+			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
 		}
 	}
 
 	for (const [revision, ids] of manager.dstQueries) {
 		for (const id of ids.keys()) {
-			addToNestedListMap(manager.table.dstDependents, revision, id, fieldData);
+			// See above comment
+			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
 		}
 	}
 
 	if (manager.fieldInvalidated) {
 		manager.table.invalidatedFields.add(fieldData);
 	}
-}
-
-function addToNestedListMap<K1, K2, V>(map: NestedMap<K1, K2, V[]>, key1: K1, key2: K2, value: V) {
-	const list = getOrAddInNestedMap(map, key1, key2, []);
-	list.push(value);
 }
 
 function makeModularChangeset(
@@ -1026,10 +1028,6 @@ function makeModularChangeset(
 	return changeset;
 }
 
-/**
- * @sealed
- * @alpha
- */
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;

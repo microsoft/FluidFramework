@@ -347,6 +347,8 @@ describe("EditManager", () => {
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
 			});
+
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 
 		it("Rebases anchors over local changes", () => {

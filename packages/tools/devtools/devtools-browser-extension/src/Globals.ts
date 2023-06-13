@@ -9,7 +9,8 @@ declare const browser: typeof chrome;
 const _browser: typeof chrome = typeof browser !== "undefined" ? browser : chrome;
 
 // Include references to web browser globals to facilitate mocks during testing.
-const _window = window;
+// Note: this will always be `undefined` in the BackgroundScript, but we expect it to be defined elsewhere.
+const _window = typeof window === "undefined" ? undefined : window;
 
 export {
 	_browser as browser,

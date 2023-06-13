@@ -1763,7 +1763,6 @@ declare function get_current_InterfaceDeclaration_MergeTreeRevertibleDriver():
 declare function use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
     use: TypeOnly<old.MergeTreeRevertibleDriver>);
 use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_MergeTreeRevertibleDriver());
 
 /*
@@ -2341,6 +2340,54 @@ declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
     use: TypeOnly<old.SerializedAttributionCollection>);
 use_old_InterfaceDeclaration_SerializedAttributionCollection(
     get_current_InterfaceDeclaration_SerializedAttributionCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_SlidingPreference": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_SlidingPreference():
+    TypeOnly<typeof old.SlidingPreference>;
+declare function use_current_VariableDeclaration_SlidingPreference(
+    use: TypeOnly<typeof current.SlidingPreference>);
+use_current_VariableDeclaration_SlidingPreference(
+    get_old_VariableDeclaration_SlidingPreference());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_SlidingPreference": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_SlidingPreference():
+    TypeOnly<typeof current.SlidingPreference>;
+declare function use_old_VariableDeclaration_SlidingPreference(
+    use: TypeOnly<typeof old.SlidingPreference>);
+use_old_VariableDeclaration_SlidingPreference(
+    get_current_VariableDeclaration_SlidingPreference());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SlidingPreference": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SlidingPreference():
+    TypeOnly<old.SlidingPreference>;
+declare function use_current_TypeAliasDeclaration_SlidingPreference(
+    use: TypeOnly<current.SlidingPreference>);
+use_current_TypeAliasDeclaration_SlidingPreference(
+    get_old_TypeAliasDeclaration_SlidingPreference());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SlidingPreference": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SlidingPreference():
+    TypeOnly<current.SlidingPreference>;
+declare function use_old_TypeAliasDeclaration_SlidingPreference(
+    use: TypeOnly<old.SlidingPreference>);
+use_old_TypeAliasDeclaration_SlidingPreference(
+    get_current_TypeAliasDeclaration_SlidingPreference());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -3133,6 +3180,30 @@ declare function use_old_FunctionDeclaration_internedSpaces(
     use: TypeOnly<typeof old.internedSpaces>);
 use_old_FunctionDeclaration_internedSpaces(
     get_current_FunctionDeclaration_internedSpaces());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isMergeTreeDeltaRevertible": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isMergeTreeDeltaRevertible():
+    TypeOnly<typeof old.isMergeTreeDeltaRevertible>;
+declare function use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof current.isMergeTreeDeltaRevertible>);
+use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    get_old_FunctionDeclaration_isMergeTreeDeltaRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isMergeTreeDeltaRevertible": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isMergeTreeDeltaRevertible():
+    TypeOnly<typeof current.isMergeTreeDeltaRevertible>;
+declare function use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof old.isMergeTreeDeltaRevertible>);
+use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    get_current_FunctionDeclaration_isMergeTreeDeltaRevertible());
 
 /*
 * Validate forward compat by using old type in place of current type
