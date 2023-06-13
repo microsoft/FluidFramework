@@ -67,6 +67,17 @@ export interface ChangeProperties extends IntervalCollectionSpec {
 
 export interface RevertSharedStringRevertibles {
 	type: "revertSharedStringRevertibles";
+	editsToRevert: number;
+}
+
+export interface RevertibleWeights {
+	revertWeight: number;
+	addText: number;
+	removeRange: number;
+	addInterval: number;
+	deleteInterval: number;
+	changeInterval: number;
+	changeProperties: number;
 }
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
@@ -98,6 +109,7 @@ export interface OperationGenerationConfig {
 	intervalCollectionNamePool?: string[];
 	propertyNamePool?: string[];
 	validateInterval?: number;
+	weights?: RevertibleWeights;
 }
 
 export const defaultOptions: Required<OperationGenerationConfig> = {
@@ -107,6 +119,15 @@ export const defaultOptions: Required<OperationGenerationConfig> = {
 	intervalCollectionNamePool: ["comments"],
 	propertyNamePool: ["prop1", "prop2", "prop3"],
 	validateInterval: 100,
+	weights: {
+		revertWeight: 2,
+		addText: 2,
+		removeRange: 1,
+		addInterval: 0,
+		deleteInterval: 2,
+		changeInterval: 2,
+		changeProperties: 2,
+	},
 };
 
 export interface LoggingInfo {
@@ -181,11 +202,9 @@ export function makeReducer(
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		revertSharedStringRevertibles: async ({ channel }) => {
-			// grab a random number of edits to revert
+		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(channel));
-			const rand = Math.floor(Math.random() * channel.revertibles.length + 1);
-			const few = channel.revertibles.slice(0, rand);
+			const few = channel.revertibles.slice(0, editsToRevert);
 			revertSharedStringRevertibles(channel, few);
 		},
 	});

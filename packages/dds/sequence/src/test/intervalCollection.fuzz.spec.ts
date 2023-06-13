@@ -194,18 +194,7 @@ export function makeOperationGenerator(
 describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
-		generatorFactory: () =>
-			take(
-				100,
-				makeOperationGenerator({
-					addText: 2,
-					removeRange: 1,
-					addInterval: 2,
-					deleteInterval: 2,
-					changeInterval: 2,
-					changeProperties: 2,
-				}),
-			),
+		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions.weights)),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }

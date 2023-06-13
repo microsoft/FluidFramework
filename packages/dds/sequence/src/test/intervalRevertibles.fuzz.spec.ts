@@ -41,6 +41,8 @@ import {
 	RevertibleSharedString,
 	isRevertibleSharedString,
 	OperationGenerationConfig,
+	RevertSharedStringRevertibles,
+	defaultOptions,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
@@ -149,17 +151,27 @@ const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 
 type ClientOpState = FuzzTestState;
 function operationGenerator(
-	weights: any,
-	optionsParam?: OperationGenerationConfig,
+	optionsParam: OperationGenerationConfig,
 ): Generator<RevertOperation, ClientOpState> {
+	async function revertSharedStringRevertibles(
+		state: ClientOpState,
+	): Promise<RevertSharedStringRevertibles> {
+		assert(isRevertibleSharedString(state.channel));
+		return {
+			type: "revertSharedStringRevertibles",
+			// grab a random number of edits to revert
+			editsToRevert: state.random.integer(0, state.channel.revertibles.length + 1),
+		};
+	}
+
 	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
 		assert(isRevertibleSharedString(channel));
 		return channel.revertibles.length > 0;
 	};
-
-	const baseGenerator = makeOperationGenerator(weights);
+	assert(optionsParam.weights !== undefined);
+	const baseGenerator = makeOperationGenerator(optionsParam.weights);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
-		[{ type: "revertSharedStringRevertibles" }, weights.revertWeight, hasRevertibles],
+		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
 	]);
 }
@@ -167,19 +179,7 @@ function operationGenerator(
 describe.only("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
-		generatorFactory: () =>
-			take(
-				100,
-				operationGenerator({
-					revertWeight: 2,
-					addText: 1,
-					removeRange: 0,
-					addInterval: 0,
-					deleteInterval: 0,
-					changeInterval: 0,
-					changeProperties: 0,
-				}),
-			),
+		generatorFactory: () => take(100, operationGenerator(defaultOptions)),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
