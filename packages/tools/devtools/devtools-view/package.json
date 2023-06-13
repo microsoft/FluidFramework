@@ -64,7 +64,7 @@
 		"@fluid-experimental/devtools": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-tools": "^0.18.2",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
