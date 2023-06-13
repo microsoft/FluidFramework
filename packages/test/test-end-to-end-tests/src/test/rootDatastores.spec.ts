@@ -34,9 +34,9 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullVersionCompat } from "@fluid-internal/test-version-utils";
 
-describeFullCompat("Named root data stores", (getTestObjectProvider) => {
+describeFullVersionCompat("Named root data stores", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

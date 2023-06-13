@@ -11,7 +11,7 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeFullVersionCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
@@ -81,7 +81,7 @@ async function getAndValidateDataObject(
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
+describeFullVersionCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container1: IContainer;
 	let containerRuntime1: IContainerRuntime;

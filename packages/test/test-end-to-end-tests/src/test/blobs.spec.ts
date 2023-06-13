@@ -16,7 +16,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeFullVersionCompat,
 	describeNoCompat,
 	ExpectedEvents,
 	ITestDataObject,
@@ -59,7 +59,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeFullCompat("blobs", (getTestObjectProvider) => {
+describeFullVersionCompat("blobs", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
