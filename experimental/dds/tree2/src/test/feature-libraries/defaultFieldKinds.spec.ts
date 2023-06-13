@@ -59,7 +59,13 @@ const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 // a tree format intended for in memory use, such as Cursor or MapTree.
 // TODO: Figure out issue with deepfreezing here
 const tree1 = jsonableTreeFromCursor(
-	cursorFromContextualData(schemaData, new Set([nodeSchema.name]), tree1ContextuallyTyped),
+	cursorFromContextualData(
+		{
+			schema: schemaData,
+		},
+		new Set([nodeSchema.name]),
+		tree1ContextuallyTyped,
+	),
 );
 
 const tree2 = { type: nodeSchema.name, value: "value2" };

@@ -91,6 +91,7 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
+	MapTree,
 } from "./core";
 
 export {
@@ -240,6 +241,8 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	FieldGenerator,
+	TreeDataContext,
 	NodeExistenceState,
 } from "./feature-libraries";
 
