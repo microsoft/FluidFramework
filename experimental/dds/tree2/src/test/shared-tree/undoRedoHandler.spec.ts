@@ -97,24 +97,26 @@ describe("ShareTreeUndoRedoHandler", () => {
 		initializeTestTree(tree1, expectedState);
 		provider.processMessages();
 
+		// Close the operation after initializing so that the initial state isn't undone
+		undoRedoStack.closeCurrentOperation();
+
 		// Validate insertion
 		validateTree(tree2, expectedState);
 
-		// Insert nodes on both trees
-		insert(tree1, 1, "x");
-		validateTree(tree1, stringToJsonableTree(["A", "x", "B", "C", "D"]));
-
-		insert(tree2, 3, "y");
-		validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D"]));
+		// Insert nodes on both trees to cause rebasing
+		insert(tree1, 3, "y");
+		validateTree(tree1, stringToJsonableTree(["A", "B", "C", "y", "D"]));
+		insert(tree2, 1, "x");
+		validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D"]));
 
 		// Syncing will cause both trees to rebase their local changes
 		provider.processMessages();
 
 		const expectedStateAfterUndo: JsonableTree[] = stringToJsonableTree([
 			"A",
+			"x",
 			"B",
 			"C",
-			"y",
 			"D",
 		]);
 
@@ -124,11 +126,12 @@ describe("ShareTreeUndoRedoHandler", () => {
 		validateTree(tree2, expectedStateAfterUndo);
 
 		// Insert additional node at the beginning to require rebasing
-		insert(tree1, 0, "0");
-		validateTree(tree1, stringToJsonableTree(["0", "A", "B", "C", "y", "D"]));
+		insert(tree2, 0, "0");
+		provider.processMessages();
+		validateTree(tree1, stringToJsonableTree(["0", "A", "x", "B", "C", "D"]));
 
 		const expectedAfterRedo = stringToJsonableTree(["0", "A", "x", "B", "C", "y", "D"]);
-		// Redo node insertion on both trees
+		// Redo node insertion
 		undoRedoStack.redoOperation();
 		provider.processMessages();
 		validateTree(tree1, expectedAfterRedo);
