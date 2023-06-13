@@ -404,6 +404,20 @@ export type Detach<TNodeChange = NodeChangeType> =
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
+/**
+ * Mark used during compose to temporarily remember the position of nodes which were being moved
+ * but had their move cancelled with an inverse.
+ * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
+ */
+export interface MovePlaceholder<TNodeChange>
+	extends CellTargetingMark,
+		HasRevisionTag,
+		HasMoveId,
+		HasChanges<TNodeChange> {
+	type: "Placeholder";
+	count: NodeCount;
+}
+
 export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
 	type: "Modify";
 	changes: TNodeChange;
@@ -422,6 +436,7 @@ export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
  */
 export type ExistingCellMark<TNodeChange> =
 	| NoopMark
+	| MovePlaceholder<TNodeChange>
 	| Delete<TNodeChange>
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>
@@ -451,6 +466,7 @@ export const EmptyInputCellMark = <Schema extends TSchema>(tNodeChange: Schema) 
 export type Mark<TNodeChange = NodeChangeType> =
 	| NoopMark
 	| Modify<TNodeChange>
+	| MovePlaceholder<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>

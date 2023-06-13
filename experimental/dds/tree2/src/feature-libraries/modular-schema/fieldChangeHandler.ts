@@ -40,7 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * and should be tagged with the revision of its parent change.
 	 * Children which were the result of an earlier call to `composeChild` should be tagged with
 	 * undefined revision if later passed as an argument to `composeChild`.
-	 * See {@link ChangeRebaser} for more details.
+	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
 		changes: TaggedChange<TChangeset>[],
@@ -63,7 +63,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * @returns the inverse of `changes`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	invert(
 		change: TaggedChange<TChangeset>,
@@ -86,7 +86,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * Rebase `change` over `over`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	rebase(
 		change: TChangeset,
@@ -292,6 +292,16 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
 	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+}
+
+/**
+ * @alpha
+ */
+export function getIntention(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
 
 /**

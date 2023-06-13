@@ -142,7 +142,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			}
 		}
 
-		return cursorsFromContextualData(this.context.schema, this.fieldSchema, content);
+		return cursorsFromContextualData(this.context, this.fieldSchema, content);
 	}
 
 	public get [proxyTargetSymbol](): FieldProxyTarget {
@@ -498,7 +498,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				);
 
 				const cursor = cursorFromContextualData(
-					target.context.schema,
+					target.context,
 					target.fieldSchema.types,
 					value as ContextuallyTypedNodeData,
 				);

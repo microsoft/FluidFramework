@@ -23,6 +23,7 @@ import {
 	MapTree,
 	symbolIsFieldKey,
 	ITreeCursorSynchronous,
+	symbolFromKey,
 } from "../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
@@ -145,27 +146,27 @@ export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
  * @returns all allowed child types for `typeSet`.
  */
 export function getAllowedTypes(
-	schema: SchemaDataAndPolicy,
+	schemaData: SchemaDataAndPolicy,
 	typeSet: TreeTypeSet,
 ): ReadonlySet<TreeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
-	return typeSet ?? new Set(schema.treeSchema.keys());
+	return typeSet ?? new Set(schemaData.treeSchema.keys());
 }
 
 /**
  * @returns all types, for which the data is schema-compatible.
  */
 export function getPossibleTypes(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 	data: ContextuallyTypedNodeData,
 ) {
 	// All types allowed by schema
-	const allowedTypes = getAllowedTypes(schemaData, typeSet);
+	const allowedTypes = getAllowedTypes(context.schema, typeSet);
 
 	const possibleTypes: TreeSchemaIdentifier[] = [];
 	for (const allowed of allowedTypes) {
-		if (shallowCompatibilityTest(schemaData, allowed, data)) {
+		if (shallowCompatibilityTest(context.schema, allowed, data)) {
 			possibleTypes.push(allowed);
 		}
 	}
@@ -233,6 +234,41 @@ export type ContextuallyTypedNodeData =
  * @alpha
  */
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+/**
+ * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
+ * @alpha
+ * TODO:
+ * Currently being exposed at the package level which also requires us to export MapTree at the package level.
+ * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ */
+export interface TreeDataContext {
+	/**
+	 * Schema for the document which the tree will be used in.
+	 */
+	readonly schema: SchemaDataAndPolicy;
+
+	/**
+	 * Procedural data generator for fields.
+	 * Fields which provide generators here can be omitted in the input contextually typed data.
+	 *
+	 * @remarks
+	 * TODO:
+	 * For implementers of this which are not pure (like identifier generation),
+	 * order of invocation should be made consistent and documented.
+	 * This will be important for identifier elision optimizations in tree encoding for session based identifier generation.
+	 */
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+}
+
+/**
+ * Generates field content for a MapTree on demand.
+ * @alpha
+ * TODO:
+ * Currently being exposed at the package level which also requires us to export MapTree at the package level.
+ * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ */
+export type FieldGenerator = () => MapTree[];
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
@@ -344,11 +380,11 @@ function shallowCompatibilityTest(
  * @alpha
  */
 export function cursorFromContextualData(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 	data: ContextuallyTypedNodeData,
 ): ITreeCursorSynchronous {
-	const mapTree = applyTypesFromContext(schemaData, typeSet, data);
+	const mapTree = applyTypesFromContext(context, typeSet, data);
 	return singleMapTreeCursor(mapTree);
 }
 
@@ -357,12 +393,12 @@ export function cursorFromContextualData(
  * @alpha
  */
 export function cursorForTypedTreeData<T extends TreeSchema>(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	schema: T,
 	data: TypedNode<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		schemaData,
+		context,
 		new Set([schema.name]),
 		data as ContextuallyTypedNodeData,
 	);
@@ -378,7 +414,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		schemaData,
+		{ schema: schemaData },
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -391,11 +427,11 @@ export function cursorForTypedData<T extends AllowedTypes>(
  * TODO: migrate APIs which take arrays of cursors to take cursors in fields mode.
  */
 export function cursorsFromContextualData(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	field: FieldStoredSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
-	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);
+	const mapTrees = applyFieldTypesFromContext(context, field, data);
 	return mapTrees.map(singleMapTreeCursor);
 }
 
@@ -408,7 +444,11 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
 	schema: T,
 	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
-	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
+	return cursorFromContextualData(
+		{ schema: schemaData },
+		schema.types,
+		data as ContextuallyTypedNodeData,
+	);
 }
 
 /**
@@ -422,11 +462,11 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
  * This should not be reexported from the parent module.
  */
 export function applyTypesFromContext(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 	data: ContextuallyTypedNodeData,
 ): MapTree {
-	const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(schemaData, typeSet, data);
+	const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(context, typeSet, data);
 
 	assert(
 		possibleTypes.length !== 0,
@@ -438,7 +478,8 @@ export function applyTypesFromContext(
 	);
 
 	const type = possibleTypes[0];
-	const schema = lookupTreeSchema(schemaData, type);
+	const schema = lookupTreeSchema(context.schema, type);
+
 	if (isPrimitiveValue(data)) {
 		// This check avoids returning an out of schema node
 		// in the case where schema permits the value, but has required fields.
@@ -457,7 +498,7 @@ export function applyTypesFromContext(
 			primary !== undefined,
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
-		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
+		const children = applyFieldTypesFromContext(context, primary.schema, data);
 		return {
 			value: undefined,
 			type,
@@ -467,10 +508,24 @@ export function applyTypesFromContext(
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
 			assert(!fields.has(key), 0x6b3 /* Keys should not be duplicated */);
-			const childSchema = getFieldSchema(key, schemaData, schema);
-			const children = applyFieldTypesFromContext(schemaData, childSchema, data[key]);
+			const childSchema = getFieldSchema(key, context.schema, schema);
+			const children = applyFieldTypesFromContext(context, childSchema, data[key]);
+
 			if (children.length > 0) {
 				fields.set(key, children);
+			}
+		}
+
+		for (const key of schema.globalFields.keys()) {
+			const currentKey = symbolFromKey(key);
+			if (data[currentKey] === undefined) {
+				setFieldForKey(currentKey, context, schema, fields);
+			}
+		}
+
+		for (const key of schema.localFields.keys()) {
+			if (data[key] === undefined) {
+				setFieldForKey(key, context, schema, fields);
 			}
 		}
 
@@ -480,6 +535,23 @@ export function applyTypesFromContext(
 			0x4d7 /* provided value not permitted by the schema */,
 		);
 		return { value, type, fields };
+	}
+}
+
+function setFieldForKey(
+	key: FieldKey,
+	context: TreeDataContext,
+	schema: TreeStoredSchema,
+	fields: Map<FieldKey, MapTree[]>,
+): void {
+	const requiredFieldSchema = getFieldSchema(key, context.schema, schema);
+	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
+	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
+		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
+		if (fieldGenerator !== undefined) {
+			const children = fieldGenerator();
+			fields.set(key, children);
+		}
 	}
 }
 
@@ -501,7 +573,7 @@ function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
  * This should not be reexported from the parent module.
  */
 export function applyFieldTypesFromContext(
-	schemaData: SchemaDataAndPolicy,
+	context: TreeDataContext,
 	field: FieldStoredSchema,
 	data: ContextuallyTypedFieldData,
 ): MapTree[] {
@@ -516,7 +588,7 @@ export function applyFieldTypesFromContext(
 	if (multiplicity === Multiplicity.Sequence) {
 		assert(isArrayLike(data), 0x4d9 /* expected array for a sequence field */);
 		const children = Array.from(data, (child) =>
-			applyTypesFromContext(schemaData, field.types, child),
+			applyTypesFromContext(context, field.types, child),
 		);
 		return children;
 	}
@@ -524,5 +596,5 @@ export function applyFieldTypesFromContext(
 		multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
 		0x4da /* single value provided for an unsupported field */,
 	);
-	return [applyTypesFromContext(schemaData, field.types, data)];
+	return [applyTypesFromContext(context, field.types, data)];
 }
