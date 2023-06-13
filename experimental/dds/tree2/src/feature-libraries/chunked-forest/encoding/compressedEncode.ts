@@ -94,11 +94,20 @@ export const anyFieldEncoder: FieldEncoderShape = {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
-		// TODO: Fast path uniform chunks and arrays of size one at least.
+		// TODO: Fast path uniform chunks.
 
-		// TODO: more pick more efficient shape than nested array of any.
-		const shape = cache.nestedArray(anyNodeEncoder);
-		AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+		// Fast path chunk of size one size one at least: skip nested array.
+		if (cursor.getFieldLength() === 1) {
+			cursor.enterNode(0);
+			anyNodeEncoder.encodeNodes(cursor, cache, outputBuffer);
+			cursor.exitNode();
+		} else {
+			// TODO: more efficient encoding for common cases.
+			// Could try to find more specific shape compatible with all children than `anyNodeEncoder`.
+
+			const shape = cache.nestedArray(anyNodeEncoder);
+			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+		}
 	},
 
 	shape: AnyShape.instance,
