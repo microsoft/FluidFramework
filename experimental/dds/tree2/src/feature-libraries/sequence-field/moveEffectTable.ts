@@ -300,23 +300,23 @@ function applyMoveEffectsToSource<T>(
 			effect.child,
 		);
 		assert(childEffect.count !== undefined, 0x56b /* Child effects should have size */);
-		const newMark: MoveOut<T> | ReturnFrom<T> = {
+		const splitMark: MoveOut<T> | ReturnFrom<T> = {
 			...mark,
 			id: effect.child,
 			count: childEffect.count,
 		};
-		if (newMark.detachEvent !== undefined) {
+		if (splitMark.detachEvent !== undefined) {
 			assert(
 				effect.count !== undefined,
 				0x69a /* Should specify a count when splitting a mark */,
 			);
-			newMark.detachEvent = {
-				...newMark.detachEvent,
-				index: newMark.detachEvent.index + effect.count,
+			splitMark.detachEvent = {
+				...splitMark.detachEvent,
+				index: splitMark.detachEvent.index + effect.count,
 			};
 		}
 		result.push(
-			...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),
+			...applyMoveEffectsToSource(splitMark, revision, effects, consumeEffect, composeChildren),
 		);
 	}
 
