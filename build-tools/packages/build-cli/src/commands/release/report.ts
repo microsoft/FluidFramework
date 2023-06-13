@@ -141,7 +141,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
 					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
-					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
+					rgs.push(...Object.keys(rgVerMap));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {
 					rgs.push(releaseGroupOrPackage);
