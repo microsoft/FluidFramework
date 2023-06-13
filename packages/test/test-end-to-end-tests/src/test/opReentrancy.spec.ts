@@ -168,7 +168,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				name: "Enabled by options, disabled by feature gate - ungrouped batches",
 			},
 		].forEach((testConfig) => {
-			it.only(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
+			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
 				await setupContainers(testConfig.options, testConfig.featureGates);
 
 				sharedMap1.on("valueChanged", (changed) => {
