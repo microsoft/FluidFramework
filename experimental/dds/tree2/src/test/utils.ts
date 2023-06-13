@@ -49,6 +49,9 @@ import {
 	mapTreeFromCursor,
 	namedTreeSchema,
 	NodeReviver,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -76,6 +79,7 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
+	TaggedChange,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -728,4 +732,19 @@ export function testChangeReceiver<TChange>(
 	const changes: TChange[] = [];
 	const changeReceiver = (change: TChange) => changes.push(change);
 	return [changeReceiver, () => [...changes]];
+}
+
+export function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<unknown>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
 }

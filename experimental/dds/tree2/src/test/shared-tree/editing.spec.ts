@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 
 import { singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
-import { brand, makeArray } from "../../util";
+import { JsonCompatible, brand, makeArray } from "../../util";
 import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
 import { SharedTreeView } from "../../shared-tree";
 
@@ -290,6 +290,143 @@ describe("Editing", () => {
 			expectJsonTree(tree2, ["B", "A", "C"]);
 		});
 
+		it("can concurrently change node's value and move node", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Change value of B to C
+			tree1.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
+				"C",
+			);
+
+			// Move B before A.
+			tree2.editor.move(
+				{ parent: undefined, field: rootFieldKeySymbol },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKeySymbol },
+				0,
+			);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			const expectedState: JsonCompatible = ["C", "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
+		it("can concurrently move node and change node's value", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Move B before A.
+			tree1.editor.move(
+				{ parent: undefined, field: rootFieldKeySymbol },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKeySymbol },
+				0,
+			);
+
+			// Change value of B to C
+			tree2.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
+				"C",
+			);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			const expectedState: JsonCompatible = ["C", "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
+		it("can rebase cross-field move over value change of moved node", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+				bar: ["B"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			// Change value of A to C
+			tree1.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+
+			// Move A after B.
+			tree2.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				1,
+				{ parent: barList, field: brand("") },
+				1,
+			);
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: [],
+					bar: ["B", "C"],
+				},
+			];
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
+		it("can rebase value change over cross-field move of changed node", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+				bar: ["B"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			// Move A after B.
+			tree1.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				1,
+				{ parent: barList, field: brand("") },
+				1,
+			);
+
+			// Change value of A to C
+			tree2.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: [],
+					bar: ["B", "C"],
+				},
+			];
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
 		it("move under move-out", () => {
 			const tree1 = makeTreeFromJson([{ foo: ["a", "b"] }, "x"]);
 
@@ -567,7 +704,7 @@ describe("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		it.skip("can rebase an insert of and edit to a node", () => {
+		it("can rebase a node replacement and a dependent edit to the new node", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
@@ -577,7 +714,6 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			// e1
 			tree1.editor
 				.optionalField({
 					parent: undefined,
@@ -585,7 +721,6 @@ describe("Editing", () => {
 				})
 				.set(singleJsonCursor("41"), true);
 
-			// e2
 			tree2.editor
 				.optionalField({
 					parent: undefined,
@@ -593,17 +728,56 @@ describe("Editing", () => {
 				})
 				.set(singleJsonCursor("42"), true);
 
-			// e3
 			tree2.editor.setValue(rootPath, "43");
 
-			// Rebasing e3 over e2⁻¹ mutes e3
-			// Rebasing the muted e3 over e1 doesn't affect it
-			// Rebasing the muted e3 over e2' fails to unmute the change because e2' is expressed
-			// as `set` operation instead of a `revert`.
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], ["43"]);
+		});
+
+		it("can rebase a node edit over the node being replaced and restored", () => {
+			const tree1 = makeTreeFromJson(["40"]);
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			tree1.editor
+				.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.set(singleJsonCursor("41"), false);
+
+			tree1.undo();
+
+			tree2.editor.setValue(rootPath, "42");
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], ["42"]);
+		});
+
+		it("can replace and restore a node", () => {
+			const tree1 = makeTreeFromJson(["42"]);
+
+			tree1.editor
+				.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.set(singleJsonCursor("43"), false);
+
+			expectJsonTree(tree1, ["43"]);
+
+			tree1.undo();
+
+			expectJsonTree(tree1, ["42"]);
 		});
 	});
 });

@@ -16,8 +16,8 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --parentProcess --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run build:test",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",

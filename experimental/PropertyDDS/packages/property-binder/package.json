@@ -20,10 +20,10 @@
 		"dist/index.d.ts"
 	],
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build . --task build",
 		"postbuild": "npm run gen:tscdef",
-		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",

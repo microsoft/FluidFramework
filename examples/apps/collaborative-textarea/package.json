@@ -15,8 +15,8 @@
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:esnext",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -52,7 +52,7 @@
 		"style-loader": "^1.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-165129",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.158186",
