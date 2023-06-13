@@ -316,7 +316,13 @@ function applyMoveEffectsToSource<T>(
 			};
 		}
 		result.push(
-			...applyMoveEffectsToSource(splitMark, revision, effects, consumeEffect, composeChildren),
+			...applyMoveEffectsToSource(
+				splitMark,
+				revision,
+				effects,
+				consumeEffect,
+				composeChildren,
+			),
 		);
 	}
 
