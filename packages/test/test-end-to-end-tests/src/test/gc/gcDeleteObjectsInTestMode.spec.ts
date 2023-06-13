@@ -24,8 +24,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates the state of the given node in the GC summary tree:
