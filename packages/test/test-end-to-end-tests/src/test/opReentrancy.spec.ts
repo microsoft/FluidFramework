@@ -173,7 +173,10 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				sharedMap1.on("valueChanged", (changed) => {
 					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated. Length ${sharedMap1.size}`);
+						sharedMap1.set(
+							"key2",
+							`${sharedMap1.get("key1")} updated. Length ${sharedMap1.size}`,
+						);
 					}
 				});
 
