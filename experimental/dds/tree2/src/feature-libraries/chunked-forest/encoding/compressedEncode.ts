@@ -5,32 +5,14 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
-	CursorLocationType,
-	FieldKey,
 	FieldStoredSchema,
-	GlobalFieldKey,
 	ITreeCursorSynchronous,
-	LocalFieldKey,
-	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	Value,
-	ValueSchema,
-	forEachField,
 	forEachNode,
-	isGlobalFieldKey,
-	lookupGlobalFieldSchema,
-	symbolFromKey,
 } from "../../../core";
-import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
-import { brand, fail, getOrCreate } from "../../../util";
-import { FieldKinds } from "../../defaultFieldKinds";
-import { getFieldKind } from "../../contextuallyTyped";
-import {
-	BufferFormat,
-	IdentifierToken,
-	Shape,
-	handleShapesAndIdentifiers,
-} from "./chunkEncodingGeneric";
+import { fail, getOrCreate } from "../../../util";
+import { BufferFormat, Shape, handleShapesAndIdentifiers } from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
 import { EncodedChunk, version, EncodedChunkShape, EncodedValueShape } from "./format";
 
@@ -40,12 +22,10 @@ import { EncodedChunk, version, EncodedChunkShape, EncodedValueShape } from "./f
  * Optimized for encoded size and encoding performance.
  */
 export function compressedEncode(
-	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
 	cursor: ITreeCursorSynchronous,
+	cache: EncoderCache,
 ): EncodedChunk {
 	const buffer: BufferFormat<EncodedChunkShape> = [];
-
-	const cache = new EncoderCache(schema);
 
 	// Populate buffer, including shape and identifier references
 	anyFieldEncoder.encodeField(cursor, cache, buffer);
@@ -77,7 +57,7 @@ class AnyShape extends Shape<EncodedChunkShape> {
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 		shape: FieldEncoderShape,
 	) {
-		outputBuffer.push(shape);
+		outputBuffer.push(shape.shape);
 		shape.encodeField(cursor, cache, outputBuffer);
 	}
 
@@ -87,13 +67,13 @@ class AnyShape extends Shape<EncodedChunkShape> {
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 		shape: NodeEncoderShape,
 	) {
-		outputBuffer.push(shape);
+		outputBuffer.push(shape.shape);
 		shape.encodeNodes(cursor, cache, outputBuffer);
 	}
 }
 
 // Encodes a single node polymorphically.
-const anyNodeEncoder: NodeEncoderShape = {
+export const anyNodeEncoder: NodeEncoderShape = {
 	encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -108,7 +88,7 @@ const anyNodeEncoder: NodeEncoderShape = {
 };
 
 // Encodes a field polymorphically.
-const anyFieldEncoder: FieldEncoderShape = {
+export const anyFieldEncoder: FieldEncoderShape = {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -164,22 +144,6 @@ export class InlineArrayShape extends Shape<EncodedChunkShape> implements NodeEn
 	}
 }
 
-function asFieldEncoder(encoder: NodeEncoderShape): FieldEncoderShape {
-	return {
-		encodeField(
-			cursor: ITreeCursorSynchronous,
-			shapes: EncoderCache,
-			outputBuffer: BufferFormat<EncodedChunkShape>,
-		): void {
-			assert(cursor.mode === CursorLocationType.Fields, "unexpected mode");
-			cursor.firstNode();
-			encoder.encodeNodes(cursor, shapes, outputBuffer);
-			assert(cursor.mode === CursorLocationType.Fields, "unexpected mode");
-		},
-		shape: encoder.shape,
-	};
-}
-
 class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderShape {
 	public readonly shape: Shape<EncodedChunkShape>;
 
@@ -195,7 +159,7 @@ class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderS
 	): void {
 		const buffer: BufferFormat<EncodedChunkShape> = [];
 		forEachNode(cursor, () => {
-			this.inner.encodeNodes(cursor, cache, outputBuffer);
+			this.inner.encodeNodes(cursor, cache, buffer);
 		});
 		outputBuffer.push(buffer);
 	}
@@ -217,7 +181,7 @@ class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderS
 	}
 }
 
-function encodeValue(
+export function encodeValue(
 	value: Value,
 	shape: EncodedValueShape,
 	outputBuffer: BufferFormat<EncodedChunkShape>,
@@ -242,12 +206,12 @@ function encodeValue(
 	}
 }
 
-interface FieldShape<TKey> {
+export interface FieldShape<TKey> {
 	readonly key: TKey;
 	readonly shape: FieldEncoderShape;
 }
 
-function encodeFieldShapes(
+export function encodeFieldShapes(
 	fields: readonly FieldShape<string>[],
 	identifiers: DeduplicationTable<string>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
@@ -262,7 +226,7 @@ function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<st
 	return identifiers.valueToIndex.get(identifier) ?? identifier;
 }
 
-function encodeOptionalIdentifier(
+export function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
 ) {
@@ -276,126 +240,14 @@ function dedupShape(
 	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
 }
 
-function encodeOptionalFieldShape(
+export function encodeOptionalFieldShape(
 	shape: FieldEncoderShape | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ) {
 	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
 }
 
-export class TreeShape extends Shape<EncodedChunkShape> implements NodeEncoderShape {
-	private readonly fields: FieldShape<FieldKey>[];
-	private readonly explicitKeys: Set<FieldKey>;
-
-	public constructor(
-		public readonly type: undefined | TreeSchemaIdentifier,
-		public readonly value: EncodedValueShape,
-		public readonly local: readonly FieldShape<LocalFieldKey>[],
-		public readonly global: readonly FieldShape<GlobalFieldKey>[],
-		public readonly extraLocal: undefined | FieldEncoderShape,
-		public readonly extraGlobal: undefined | FieldEncoderShape,
-	) {
-		super();
-
-		this.fields = [...this.local];
-		for (const field of this.global) {
-			this.fields.push({ key: symbolFromKey(field.key), shape: field.shape });
-		}
-		this.explicitKeys = new Set(this.fields.map((f) => f.key));
-	}
-
-	public encodeNodes(
-		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
-	): void {
-		if (this.type === undefined) {
-			outputBuffer.push(new IdentifierToken(cursor.type));
-		} else {
-			assert(cursor.type === this.type, "type must match shape");
-		}
-
-		encodeValue(cursor.value, this.value, outputBuffer);
-
-		for (const field of this.fields) {
-			cursor.enterField(brand(field.key));
-			field.shape.encodeField(cursor, cache, outputBuffer);
-			cursor.exitField();
-		}
-
-		const localBuffer: BufferFormat<EncodedChunkShape> = [];
-		const globalBuffer: BufferFormat<EncodedChunkShape> = [];
-
-		forEachField(cursor, () => {
-			const key = cursor.getFieldKey();
-			if (!this.explicitKeys.has(key)) {
-				if (isGlobalFieldKey(key)) {
-					assert(
-						this.extraGlobal !== undefined,
-						"had extra global fields when shape does not support them",
-					);
-					this.extraGlobal.encodeField(cursor, cache, globalBuffer);
-				} else {
-					assert(
-						this.extraLocal !== undefined,
-						"had extra local fields when shape does not support them",
-					);
-					this.extraLocal.encodeField(cursor, cache, localBuffer);
-				}
-			}
-		});
-
-		if (this.extraLocal !== undefined) {
-			outputBuffer.push(localBuffer);
-		}
-		if (this.extraGlobal !== undefined) {
-			outputBuffer.push(globalBuffer);
-		}
-	}
-
-	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-	): EncodedChunkShape {
-		return {
-			c: {
-				type: encodeOptionalIdentifier(this.type, identifiers),
-				value: this.value,
-				local: encodeFieldShapes(this.local, identifiers, shapes),
-				global: encodeFieldShapes(this.global, identifiers, shapes),
-				extraLocal: encodeOptionalFieldShape(this.extraLocal, shapes),
-				extraGlobal: encodeOptionalFieldShape(this.extraGlobal, shapes),
-			},
-		};
-	}
-
-	public count(
-		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
-	): void {
-		if (this.type !== undefined) {
-			identifiers.add(this.type);
-		}
-		for (const fields of [this.local, this.global]) {
-			for (const field of fields) {
-				identifiers.add(field.key);
-				shapes(field.shape.shape);
-			}
-		}
-		if (this.extraLocal !== undefined) {
-			shapes(this.extraLocal.shape);
-		}
-		if (this.extraGlobal !== undefined) {
-			shapes(this.extraGlobal.shape);
-		}
-	}
-
-	public get shape() {
-		return this;
-	}
-}
-
-interface NodeEncoderShape {
+export interface NodeEncoderShape {
 	/**
 	 * @param cursor - in Nodes mode. Moves cursor however many nodes it encodes.
 	 */
@@ -408,7 +260,7 @@ interface NodeEncoderShape {
 	readonly shape: Shape<EncodedChunkShape>;
 }
 
-interface FieldEncoderShape {
+export interface FieldEncoderShape {
 	/**
 	 * @param cursor - in Fields mode. Encodes entire field.
 	 */
@@ -421,16 +273,17 @@ interface FieldEncoderShape {
 	readonly shape: Shape<EncodedChunkShape>;
 }
 
-class EncoderCache implements TreeShaper, FieldShaper {
-	private readonly shapesFromSchema: Map<TreeSchemaIdentifier, TreeShape> = new Map();
+export class EncoderCache implements TreeShaper, FieldShaper {
+	private readonly shapesFromSchema: Map<TreeSchemaIdentifier, NodeEncoderShape> = new Map();
 	private readonly nestedArrays: Map<NodeEncoderShape, NestedArrayShape> = new Map();
-	public constructor(public readonly schema: SchemaDataAndPolicy<FullSchemaPolicy>) {}
+	public constructor(
+		private readonly treeEncoder: TreeShapePolicy,
+		private readonly fieldEncoder: FieldShapePolicy,
+	) {}
 
-	public shapeFromTree(schemaName: TreeSchemaIdentifier): TreeShape {
-		return getOrCreate(
-			this.shapesFromSchema,
-			schemaName,
-			(): TreeShape => treeEncoder(this.schema, this, schemaName),
+	public shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoderShape {
+		return getOrCreate(this.shapesFromSchema, schemaName, () =>
+			this.treeEncoder(this, schemaName),
 		);
 	}
 
@@ -439,59 +292,27 @@ class EncoderCache implements TreeShaper, FieldShaper {
 	}
 
 	public shapeFromField(field: FieldStoredSchema): FieldEncoderShape {
-		return new LazyFieldEncoder(this, field);
+		return new LazyFieldEncoder(this, field, this.fieldEncoder);
 	}
 }
 
-interface TreeShaper {
-	shapeFromTree(schemaName: TreeSchemaIdentifier): TreeShape;
+export interface TreeShaper {
+	shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoderShape;
 }
 
-interface FieldShaper {
+export interface FieldShaper {
 	shapeFromField(field: FieldStoredSchema): FieldEncoderShape;
 }
 
-export function fieldEncoder(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoderShape {
-	const kind = getFieldKind(field);
-	const type = oneFromSet(field.types);
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (kind.multiplicity === Multiplicity.Value) {
-		return asFieldEncoder(type !== undefined ? treeShaper.shapeFromTree(type) : anyNodeEncoder);
-	} else {
-		return anyFieldEncoder;
-	}
-}
+export type FieldShapePolicy = (
+	treeShaper: TreeShaper,
+	field: FieldStoredSchema,
+) => FieldEncoderShape;
 
-export function treeEncoder(
-	fullSchema: SchemaDataAndPolicy<FullSchemaPolicy>,
+export type TreeShapePolicy = (
 	fieldShaper: FieldShaper,
 	schemaName: TreeSchemaIdentifier,
-): TreeShape {
-	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
-
-	const local: FieldShape<LocalFieldKey>[] = [];
-	for (const [key, field] of schema.localFields) {
-		local.push({ key, shape: fieldShaper.shapeFromField(field) });
-	}
-
-	const global: FieldShape<GlobalFieldKey>[] = [];
-	for (const key of schema.globalFields) {
-		const field = lookupGlobalFieldSchema(fullSchema, key);
-		global.push({ key, shape: fieldShaper.shapeFromField(field) });
-	}
-
-	const shape = new TreeShape(
-		schemaName,
-		valueShapeFromSchema(schema.value),
-		local,
-		global,
-		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
-			? undefined
-			: fieldShaper.shapeFromField(schema.extraLocalFields),
-		schema.extraGlobalFields ? undefined : anyFieldEncoder,
-	);
-	return shape;
-}
+) => NodeEncoderShape;
 
 class LazyFieldEncoder implements FieldEncoderShape {
 	private encoderLazy: FieldEncoderShape | undefined;
@@ -499,6 +320,7 @@ class LazyFieldEncoder implements FieldEncoderShape {
 	public constructor(
 		public readonly cache: TreeShaper,
 		public readonly field: FieldStoredSchema,
+		private readonly fieldEncoder: FieldShapePolicy,
 	) {}
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -510,39 +332,12 @@ class LazyFieldEncoder implements FieldEncoderShape {
 
 	private get encoder(): FieldEncoderShape {
 		if (this.encoderLazy === undefined) {
-			this.encoderLazy = fieldEncoder(this.cache, this.field);
+			this.encoderLazy = this.fieldEncoder(this.cache, this.field);
 		}
 		return this.encoderLazy;
 	}
 
 	public get shape(): Shape<EncodedChunkShape> {
 		return this.encoder.shape;
-	}
-}
-
-function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
-}
-
-function valueShapeFromSchema(schema: ValueSchema): undefined | EncodedValueShape {
-	switch (schema) {
-		case ValueSchema.Nothing:
-			return false;
-		case ValueSchema.Number:
-		case ValueSchema.String:
-		case ValueSchema.Boolean:
-			return true;
-		case ValueSchema.Serializable:
-			return undefined;
-		default:
-			unreachableCase(schema);
 	}
 }

@@ -14,6 +14,16 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/uncompressedEncode";
 import {
+	NodeShape,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/encoding/nodeShape";
+import {
+	EncoderCache,
+	FieldEncoderShape,
+	FieldShaper,
+	NodeEncoderShape,
+	TreeShaper,
+	anyFieldEncoder,
 	compressedEncode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/encoding/compressedEncode";
@@ -22,8 +32,7 @@ import {
 	fieldCursorFromJsonableTrees,
 	jsonableTreesFromFieldCursor,
 } from "../fieldCursorTestUtilities";
-import { jsonRoot, jsonSchema } from "../../../../domains";
-import { SchemaBuilder } from "../../../../feature-libraries";
+import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
 
 describe("uncompressedEncode", () => {
 	describe("test trees", () => {
@@ -42,17 +51,23 @@ describe("uncompressedEncode", () => {
 	});
 });
 
-const schema = new SchemaBuilder("test", jsonSchema).intoDocumentSchema(
-	SchemaBuilder.fieldValue(...jsonRoot),
-);
+const anyNodeShape = new NodeShape(undefined, undefined, [], [], anyFieldEncoder, anyFieldEncoder);
 
 describe("compressedEncode", () => {
 	describe("test trees", () => {
 		for (const [name, jsonable] of testTrees) {
 			it(name, () => {
 				const input = fieldCursorFromJsonableTrees([jsonable]);
+				const cache = new EncoderCache(
+					(
+						fieldShaper: FieldShaper,
+						schemaName: TreeSchemaIdentifier,
+					): NodeEncoderShape => anyNodeShape,
+					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoderShape =>
+						anyFieldEncoder,
+				);
 				// TODO: correct schema
-				const result = compressedEncode(schema, input);
+				const result = compressedEncode(input, cache);
 				const before = JSON.stringify(input);
 				const output = JSON.stringify(result);
 
