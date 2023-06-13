@@ -1105,7 +1105,7 @@ export class MergeTree {
 			} else {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
-				if (this.options?.mergeTreeUseNewLengthCalculations === true) {
+				if (this.options?.mergeTreeUseNewLengthCalculations !== false) {
 					if (removalInfo !== undefined) {
 						if (seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
 							return undefined;
