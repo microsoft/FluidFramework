@@ -654,7 +654,7 @@ export class SharedDirectory
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
 						newSubDir = new SubDirectory(
-							createInfo !== undefined ? createInfo.csn : 0,
+							createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
 								: new Set(),
