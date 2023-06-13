@@ -499,6 +499,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		);
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
+            directConnection: true,
 			keepAlive: true,
 			keepAliveInitialDelay: 180000,
 			socketTimeoutMS: 120000,
