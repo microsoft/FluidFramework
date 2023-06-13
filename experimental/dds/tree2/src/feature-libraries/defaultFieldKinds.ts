@@ -470,7 +470,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			const rebasedChange = { ...change };
 			const overChildChange =
-				change.deletedBy === overIntention ? over.childChange : undefined;
+				change.deletedBy === over.deletedBy ? over.childChange : undefined;
 			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
 			if (rebasedChildChange !== undefined) {
 				rebasedChange.childChange = rebasedChildChange;
