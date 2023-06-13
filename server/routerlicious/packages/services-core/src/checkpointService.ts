@@ -146,12 +146,27 @@ export class CheckpointService implements ICheckpointService {
 						checkpointSource = "notFoundInLocalCollection";
 					});
 
-				if (checkpoint?.deli) {
-					lastCheckpoint = JSON.parse(checkpoint[service]);
-					checkpointSource = "foundInLocalCollection";
-					isLocalCheckpoint = true;
+				if (checkpoint?.[service]) {
+					const localCheckpoint: IDeliState | IScribe = JSON.parse(checkpoint[service]);
+					const globalCheckpoint: IDeliState | IScribe = JSON.parse(document[service]);
+
+					// Compare local and global checkpoints to use latest version
+					if (localCheckpoint.logOffset < globalCheckpoint.logOffset) {
+						// if local checkpoint is behind global, use global
+						lastCheckpoint = globalCheckpoint;
+						checkpointSource = "latestFoundInGlobalCollection";
+						isLocalCheckpoint = false;
+					} else {
+						lastCheckpoint = localCheckpoint;
+						checkpointSource = "latestFoundInLocalCollection";
+						isLocalCheckpoint = true;
+					}
 				} else {
 					// If checkpoint does not exist, use document
+					Lumberjack.info(
+						`Local checkpoint not found.`,
+						getLumberBaseProperties(documentId, tenantId),
+					);
 					checkpointSource = "notFoundInLocalCollection";
 					lastCheckpoint = JSON.parse(document[service]);
 				}

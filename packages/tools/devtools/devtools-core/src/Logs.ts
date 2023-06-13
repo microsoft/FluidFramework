@@ -71,5 +71,5 @@ export interface AudienceChangeLogEntry extends LogEntry {
 	/**
 	 * Whether the change represents a client being added to or removed from the collaborative session.
 	 */
-	changeKind: "added" | "removed";
+	changeKind: "joined" | "left";
 }

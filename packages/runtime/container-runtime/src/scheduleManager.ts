@@ -5,8 +5,7 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
@@ -41,7 +40,7 @@ export class ScheduleManager {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly emitter: EventEmitter,
 		readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.deltaScheduler = new DeltaScheduler(
 			this.deltaManager,
@@ -106,7 +105,7 @@ class ScheduleManagerCore {
 	constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		// Listen for delta manager sends and add batch metadata to messages
 		this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -147,14 +146,14 @@ class ScheduleManagerCore {
 		// We are intentionally directly listening to the "op" to inspect system ops as well.
 		// If we do not observe system ops, we are likely to hit 0x296 assert when system ops
 		// precedes start of incomplete batch.
-		this.deltaManager.on("op", (message) => this.afterOpProcessing(message.sequenceNumber));
+		this.deltaManager.on("op", (message) => this.afterOpProcessing(message));
 	}
 
 	/**
 	 * The only public function in this class - called when we processed an op,
 	 * to make decision if op processing should be paused or not after that.
 	 */
-	public afterOpProcessing(sequenceNumber: number) {
+	public afterOpProcessing(message: ISequencedDocumentMessage) {
 		assert(
 			!this.localPaused,
 			0x294 /* "can't have op processing paused if we are processing an op" */,
@@ -177,12 +176,24 @@ class ScheduleManagerCore {
 
 		// do we have incomplete batch to worry about?
 		if (this.pauseSequenceNumber !== undefined) {
-			assert(
-				sequenceNumber < this.pauseSequenceNumber,
-				0x296 /* "we should never start processing incomplete batch!" */,
-			);
+			if (message.sequenceNumber >= this.pauseSequenceNumber) {
+				throw DataProcessingError.create(
+					// Former assert 0x296
+					"Incomplete batch",
+					"ScheduleManager",
+					message,
+					{
+						type: message.type,
+						contentType: typeof message.contents,
+						batch: message.metadata?.batch,
+						compression: message.compression,
+						pauseSeqNum: this.pauseSequenceNumber,
+					},
+				);
+			}
+
 			// If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
-			if (sequenceNumber + 1 === this.pauseSequenceNumber) {
+			if (message.sequenceNumber + 1 === this.pauseSequenceNumber) {
 				this.pauseQueue();
 			}
 		}

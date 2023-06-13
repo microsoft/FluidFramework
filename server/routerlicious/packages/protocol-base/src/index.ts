@@ -3,22 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
-	addBlobToTree,
-	AttachmentTreeEntry,
-	BlobTreeEntry,
-	buildHierarchy,
-	getGitMode,
-	getGitType,
-	TreeTreeEntry,
-} from "./blobs";
-export {
-	ILocalSequencedClient,
-	IProtocolHandler,
-	IScribeProtocolState,
-	isSystemMessage,
-	ProtocolOpHandler,
-} from "./protocol";
+export { buildGitTreeHeirarchy, getGitMode, getGitType } from "./gitHelper";
+export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
 	IQuorumSnapshot,
 	Quorum,
@@ -27,8 +13,3 @@ export {
 	QuorumProposals,
 	QuorumProposalsSnapshot,
 } from "./quorum";
-export {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "./scribeHelper";

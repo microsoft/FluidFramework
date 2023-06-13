@@ -10,7 +10,6 @@ import registerDebug from "debug";
 import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
-import { ScriptDependencies } from "../../../common/npmPackage";
 import {
 	ExecAsyncResult,
 	execAsync,
@@ -25,26 +24,110 @@ import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGrap
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
-const { info, verbose } = defaultLogger;
+const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
-const traceTaskDep = registerDebug("fluid-build:task:dep");
+const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
+const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
+const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
 interface TaskExecResult extends ExecAsyncResult {
 	worker?: boolean;
 }
 
 export abstract class LeafTask extends Task {
-	private dependentTasks?: LeafTask[];
-	private parentCount: number = 0;
+	// initialize during initializeDependentLeafTasks
+	private dependentLeafTasks?: Set<LeafTask>;
 
-	constructor(node: BuildPackage, command: string, private scriptDeps: ScriptDependencies) {
-		super(node, command);
+	// set of direct parent that this task will unblock
+	private directParentLeafTasks: LeafTask[] = [];
+	private _parentLeafTasks: Set<LeafTask> | undefined | null;
+	private parentWeight = -1;
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
 		}
 	}
 
-	public get isLeaf(): boolean {
-		return true;
+	public initializeDependentLeafTasks() {
+		this.ensureDependentLeafTasks();
+	}
+
+	private ensureDependentLeafTasks() {
+		if (this.dependentLeafTasks === undefined) {
+			this.dependentLeafTasks = new Set();
+			this.addDependentLeafTasks(this.transitiveDependentLeafTask);
+		}
+		return this.dependentLeafTasks;
+	}
+
+	public addDependentLeafTasks(dependentLeafTasks: Iterable<LeafTask>): void {
+		const dependentLeafTaskSet = this.ensureDependentLeafTasks();
+		for (const task of dependentLeafTasks) {
+			if (!dependentLeafTaskSet.has(task)) {
+				dependentLeafTaskSet.add(task);
+				task.directParentLeafTasks.push(this);
+				traceTaskInitDep(`${this.nameColored} -> ${task.nameColored}`);
+			}
+		}
+	}
+
+	public collectLeafTasks(leafTasks: Set<LeafTask>) {
+		leafTasks.add(this);
+	}
+
+	public initializeWeight() {
+		if (this.parentWeight === -1) {
+			this.parentWeight = this.computeParentWeight() + this.taskWeight;
+			traceTaskInitWeight(`${this.nameColored}: ${this.parentWeight}`);
+		}
+		return this.parentWeight;
+	}
+
+	private computeParentWeight() {
+		let sum = 0;
+		for (const t of this.parentLeafTasks.values()) {
+			sum += t.taskWeight;
+		}
+		return sum;
+	}
+
+	private get parentLeafTasks(): Set<LeafTask> {
+		if (this._parentLeafTasks === null) {
+			// Circular dependency, start unrolling
+			throw [this];
+		}
+		try {
+			if (this._parentLeafTasks === undefined) {
+				const parentLeafTasks = new Set<LeafTask>(this.directParentLeafTasks);
+				this._parentLeafTasks = null;
+				this.directParentLeafTasks
+					.map((task) => task.parentLeafTasks)
+					.forEach((p) => p.forEach((t) => parentLeafTasks.add(t)));
+				this._parentLeafTasks = parentLeafTasks;
+			}
+			return this._parentLeafTasks;
+		} catch (e) {
+			if (Array.isArray(e)) {
+				// Add to the dependency chain
+				e.push(this);
+				if (e[0] === this) {
+					// detected a cycle, convert into a message
+					throw new Error(
+						`Circular dependency: ${e.map((v) => v.nameColored).join("->")}`,
+					);
+				}
+			}
+			throw e;
+		}
+	}
+
+	protected get taskWeight() {
+		return 1;
+	}
+
+	public get weight() {
+		assert.notStrictEqual(this.parentWeight, -1);
+		return this.parentWeight;
 	}
 
 	public get isDisabled() {
@@ -54,38 +137,6 @@ export abstract class LeafTask extends Task {
 
 	public get executable() {
 		return getExecutableFromCommand(this.command);
-	}
-
-	public initializeDependentTask() {
-		this.dependentTasks = new Array<LeafTask>();
-		if (Object.keys(this.scriptDeps).length) {
-			for (const depPackage of this.node.dependentPackages) {
-				const depScripts = this.scriptDeps[depPackage.pkg.name];
-				if (depScripts) {
-					for (const depScript of depScripts) {
-						if (
-							this.addChildTask(
-								this.dependentTasks,
-								depPackage,
-								`npm run ${depScript}`,
-							)
-						) {
-							this.logVerboseDependency(depPackage, depScript);
-						}
-					}
-				}
-			}
-		}
-		this.addDependentTasks(this.dependentTasks);
-	}
-
-	public matchTask(command: string, options?: any): LeafTask | undefined {
-		return this.command === command ? this : undefined;
-	}
-
-	public collectLeafTasks(leafTasks: LeafTask[]) {
-		leafTasks.push(this);
-		this.parentCount++;
 	}
 
 	protected get useWorker() {
@@ -103,7 +154,7 @@ export abstract class LeafTask extends Task {
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
-			info(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
+			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
@@ -225,7 +276,7 @@ export abstract class LeafTask extends Task {
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
 			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
-			info(statusString);
+			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.buildContext.failedTaskLines.push(statusString);
 			}
@@ -235,15 +286,15 @@ export abstract class LeafTask extends Task {
 	}
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-		this.logVerboseTask("Begin Leaf Task");
+		this.traceExec("Begin Leaf Task");
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
 			return BuildResult.Failed;
 		}
 
 		return new Promise((resolve, reject) => {
-			this.logVerboseTask(`[${this.parentCount}] Queue Leaf Task`);
-			q.push({ task: this, resolve }, -this.parentCount);
+			traceTaskQueue(`${this.nameColored}: queued with weight ${this.weight}`);
+			q.push({ task: this, resolve, queueTime: Date.now() }, -this.weight);
 		});
 	}
 
@@ -256,68 +307,36 @@ export abstract class LeafTask extends Task {
 		}
 
 		const leafIsUpToDate =
-			(await this.checkDependentTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
-			this.logVerboseTask(`Skipping Leaf Task`);
+			this.traceExec(`Skipping Leaf Task`);
 		}
 
 		return leafIsUpToDate;
 	}
 
-	protected addChildTask(
-		dependentTasks: LeafTask[],
-		node: BuildPackage,
-		command: string,
-		options?: any,
-	) {
-		const task = node.findTask(command, options);
-		if (task) {
-			task.collectLeafTasks(dependentTasks);
-			return task;
-		}
-		return undefined;
-	}
-
-	protected addChildCompileAndCopyScripts(
-		dependentTasks: LeafTask[],
-		node: BuildPackage,
-		script: string,
-		options?: any,
-	) {
-		const command = script === "tsc" ? script : `npm run ${script}`;
-		const task = this.addChildTask(dependentTasks, node, command, options);
-		if (task) {
-			this.logVerboseDependency(node, options ? task.command : script);
-
-			// Assume build:copy is needed as well
-			if (this.addChildTask(dependentTasks, node, "npm run build:copy")) {
-				this.logVerboseDependency(node, "build:copy");
-			}
-		}
-		return task;
-	}
-
-	private async checkDependentTasksIsUpToDate(): Promise<boolean> {
-		const dependentTasks = this.getDependentTasks();
-		for (const dependentTask of dependentTasks) {
-			if (!(await dependentTask.isUpToDate())) {
-				this.logVerboseTrigger(`dependent task ${dependentTask.toString()} not up to date`);
+	private async checkDependentLeafTasksIsUpToDate(): Promise<boolean> {
+		const dependentLeafTasks = this.getDependentLeafTasks();
+		for (const dependentLeafTask of dependentLeafTasks) {
+			if (!(await dependentLeafTask.isUpToDate())) {
+				this.traceTrigger(`dependent task ${dependentLeafTask.toString()} not up to date`);
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private getDependentTasks(): LeafTask[] {
-		assert.notStrictEqual(this.dependentTasks, undefined);
-		return this.dependentTasks!;
+	protected getDependentLeafTasks() {
+		assert.notStrictEqual(this.dependentLeafTasks, undefined);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.dependentLeafTasks!.values();
 	}
 
 	private async buildDependentTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const p = new Array<Promise<BuildResult>>();
-		for (const dependentTask of this.getDependentTasks()) {
-			p.push(dependentTask.run(q));
+		for (const dependentLeafTask of this.getDependentLeafTasks()) {
+			p.push(dependentLeafTask.run(q));
 		}
 
 		return summarizeBuildResult(await Promise.all(p));
@@ -341,17 +360,14 @@ export abstract class LeafTask extends Task {
 				}
 				seen.add(leafTask);
 				yield leafTask;
-				pending.push(...leafTask.getDependentTasks());
+				pending.push(...leafTask.getDependentLeafTasks());
 			}
-		})(this.getDependentTasks());
+		})(this.getDependentLeafTasks());
 	}
 
 	/**
 	 * Subclass should override these to configure the leaf task
 	 */
-
-	// collect the dependent task this leaf task has
-	protected abstract addDependentTasks(dependentTasks: LeafTask[]): void;
 
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
@@ -369,35 +385,13 @@ export abstract class LeafTask extends Task {
 		return errorMessages;
 	}
 
-	protected logVerboseNotUpToDate() {
-		this.logVerboseTrigger("not up to date");
+	protected traceNotUpToDate() {
+		this.traceTrigger("not up to date");
 	}
 
-	protected logVerboseTrigger(reason: string) {
-		const msg = `Triggering Leaf Task: [${reason}] ${this.node.pkg.nameColored} - ${this.command}`;
+	protected traceTrigger(reason: string) {
+		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
-		verbose(msg);
-	}
-
-	protected logVerboseDependency(child: BuildPackage, dep: string) {
-		const msg = `Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`;
-		traceTaskDep(msg);
-		verbose(msg);
-	}
-
-	protected logVerboseTask(msg: string) {
-		verbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
-	}
-
-	protected addAllDependentPackageTasks(dependentTasks: LeafTask[]) {
-		for (const child of this.node.dependentPackages) {
-			if (child.task) {
-				child.task.collectLeafTasks(dependentTasks);
-				this.logVerboseDependency(child, "*");
-			}
-		}
-
-		// TODO: we should add all the prefix tasks in the task tree of the current package as well.
 	}
 }
 
@@ -453,14 +447,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
-				this.logVerboseTrigger("mismatched compare file");
+				this.traceTrigger("mismatched compare file");
 				traceTaskTrigger(doneFileExpectedContent);
 				traceTaskTrigger(doneFileContent);
 			} else {
-				this.logVerboseTrigger("unable to generate done file expected content");
+				this.traceTrigger("unable to generate done file expected content");
 			}
 		} catch {
-			this.logVerboseTrigger("unable to read compare file");
+			this.traceTrigger("unable to read compare file");
 		}
 		return false;
 	}
@@ -484,11 +478,6 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		// Because we don't know, we need to depends on all the task in the dependent packages
-		this.addAllDependentPackageTasks(dependentTasks);
-	}
-
 	protected async checkLeafIsUpToDate() {
 		// Because we don't know, it is always out of date and need to rebuild
 		return false;
@@ -516,8 +505,8 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.logVerboseTask(`error comparing file times ${e.message}`);
-			this.logVerboseTrigger("failed to get file stats");
+			this.traceExec(`error comparing file times ${e.message}`);
+			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}
 	}

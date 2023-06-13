@@ -14,7 +14,6 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
@@ -162,31 +161,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			);
 		}
 		await this.hasInitialized();
-	}
-
-	/**
-	 * Retrieve Fluid object using the handle get
-	 *
-	 * @param key - key that object (handle/id) is stored with in the directory
-	 * @param directory - directory containing the object
-	 * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
-	 * define custom types/getters for object retrieval
-	 *
-	 * @deprecated - 2.0.0-internal.4.3.0 - Will be removed in an upcoming release.
-	 */
-	public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
-		key: string,
-		directory: IDirectory,
-		getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined,
-	): Promise<T | undefined> {
-		const handleMaybe = getObjectFromDirectory
-			? getObjectFromDirectory(key, directory)
-			: directory.get(key);
-		const handle = handleMaybe?.IFluidHandle;
-		if (handle) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return handle.get();
-		}
 	}
 
 	/**

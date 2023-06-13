@@ -13,7 +13,6 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
-	ensureFluidResolvedUrl,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
@@ -63,21 +62,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(createNewResolvedUrl);
-
 		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		const [, queryString] = odspResolvedUrl.url.split("?");
-
-		const searchParams = new URLSearchParams(queryString);
-		const filePath = searchParams.get("path");
-		if (filePath === undefined || filePath === null) {
-			throw new Error("File path should be provided!!");
-		}
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
 		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
@@ -89,6 +79,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 				itemId: odspResolvedUrl.itemId,
 			};
 		} else if (odspResolvedUrl.fileName) {
+			const [, queryString] = odspResolvedUrl.url.split("?");
+			const searchParams = new URLSearchParams(queryString);
+			const filePath = searchParams.get("path");
+			if (filePath === undefined || filePath === null) {
+				throw new Error("File path should be provided!!");
+			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",

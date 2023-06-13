@@ -1,5 +1,50 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.5.0.0
+
+### Major Changes
+
+-   The `@fluidframework/garbage-collector` package was deprecated in version 2.0.0-internal.4.1.0. [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+    It has now been removed with the following functions, interfaces, and types in it.
+
+    -   `cloneGCData`
+    -   `concatGarbageCollectionData`
+    -   `concatGarbageCollectionStates`
+    -   `GCDataBuilder`
+    -   `getGCDataFromSnapshot`
+    -   `IGCResult`
+    -   `removeRouteFromAllNodes`
+    -   `runGarbageCollection`
+    -   `trimLeadingAndTrailingSlashes`
+    -   `trimLeadingSlashes`
+    -   `trimTrailingSlashes`
+    -   `unpackChildNodesGCDetails`
+    -   `unpackChildNodesUsedRoutes`
+
+-   The following functions and classes were deprecated in previous releases and have been removed: [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+
+    -   `PureDataObject.getFluidObjectFromDirectory`
+    -   `IProvideContainerRuntime` and its `IContainerRuntime` member.
+    -   `ContainerRuntime`'s `IProvideContainerRuntime` has also been removed.
+
+-   The 'flush' concepts in the PendingStateManager in @fluidframework/container-runtime have been removed. This is [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+    primarily an internal change that should not affect package consumers.
+-   In @fluidframework/container-runtime, the `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics. [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+-   Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service. [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+
+    If the container is not expected to be used after the `close(...)` call, replace it instead with a
+    `IContainer.dispose(...)` call (this should be the most common case). Using `IContainer.dispose(...)` will no longer
+    switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+
+    If you intend to pass your own critical error to the container, use `IContainer.close(...)`. Once you are done using the
+    container, call `IContainer.dispose(...)`.
+
+    See the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+## 2.0.0-internal.4.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.4.1.0
 
 ### Minor Changes

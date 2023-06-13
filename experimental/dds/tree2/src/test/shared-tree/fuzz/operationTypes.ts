@@ -28,7 +28,7 @@ export interface TransactionBoundary {
 export type FuzzFieldChange = FuzzInsert | FuzzDelete;
 
 export interface FieldEdit {
-	editType: "fieldEdit";
+	type: "fieldEdit";
 	change: FieldEditTypes;
 }
 
@@ -66,7 +66,7 @@ export interface FuzzDelete extends NodeRangePath {
 export type FuzzNodeEditChange = SequenceNodeEdit | ValueNodeEdit | OptionalNodeEdit;
 
 export interface NodeEdit {
-	editType: "nodeEdit";
+	type: "nodeEdit";
 	edit: FuzzNodeEditChange;
 }
 

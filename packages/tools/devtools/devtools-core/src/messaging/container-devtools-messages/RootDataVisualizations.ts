@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { RootHandleNode } from "../../data-visualization";
 import { IDevtoolsMessage } from "../Messages";
 
@@ -25,7 +25,7 @@ export namespace RootDataVisualizations {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId {
+	export interface MessageData extends HasContainerKey {
 		/**
 		 * List of root Fluid objects.
 		 *

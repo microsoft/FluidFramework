@@ -44,7 +44,7 @@ import {
 } from "../../gc";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./garbageCollection.spec";
+import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -691,6 +691,30 @@ describe("Garbage Collection configurations", () => {
 						"shouldRunGC not set as expected",
 					);
 				});
+			});
+
+			it("shouldRunGC should be true when gcVersionInEffect is newer than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = stableGCVersion - 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, true, "shouldRunGC should be true");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
+			});
+
+			it("shouldRunGC should be false when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = currentGCVersion + 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, false, "shouldRunGC should be false");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
 			});
 		});
 		describe("shouldRunSweep", () => {

@@ -18,8 +18,9 @@ import {
 	wrapErrorAndLog,
 	isExternalError,
 	NORMALIZED_ERROR_TYPE,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -61,7 +62,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 	static wrap(
 		error: unknown,
 		retryAfterSeconds: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): IThrottlingWarning {
 		const newErrorFn = (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
 		return wrapErrorAndLog(error, newErrorFn, logger);

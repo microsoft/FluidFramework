@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 services:
   proxy:
     image: nginx:latest
@@ -139,14 +139,14 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: "kafka"
       KAFKA_ADVERTISED_PORT: "9092"
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1,deltas2:8:1,rawdeltas2:8:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     restart: on-failure
   redis:
     image: "redis:alpine"
   mongodb:
-    image: "mongo:3.4.3"
+    image: "mongo:4"
   rabbitmq:
     image: "rabbitmq:alpine"
 volumes:

@@ -9,8 +9,8 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
-import { browser } from "../utilities";
+import { browser, window } from "../Globals";
+import { extensionMessageSource, relayMessageToPort } from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
@@ -34,6 +34,13 @@ type Port = chrome.runtime.Port;
 
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
+// `window` should always be defined in the Content script context.
+if (window === undefined) {
+	throw new Error("Window object is not defined.");
+}
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 // Only establish messaging when activated by the Background Worker.
 browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
@@ -46,7 +53,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	): void {
 		const message = event.data;
 
-		// Only relay message if it is one of ours, and if the source is the window's debugger
+		// Only relay message if it is one of ours, and if the source is the window's Devtools instance
 		// (and not a message originating from the extension).
 		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			relayMessageToPort(
@@ -59,24 +66,28 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	}
 
 	// Relay messages to the Background Worker as appropriate.
-	globalThis.addEventListener("message", relayMessageFromPageToBackground);
+	window!.addEventListener("message", relayMessageFromPageToBackground);
 
 	// Relay messages from the Background Worker to the inspected window.
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
 		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
-			relayMessageToWindow(
+			console.debug(
+				formatContentScriptMessageForLogging(
+					`Relaying message from Background Script to the window:`,
+				),
 				message,
-				"Background Worker worker",
-				contentScriptMessageLoggingOptions,
 			);
+			window!.postMessage(message, "*");
 		}
 	});
 
 	// When the extension disconnects, clean up listeners.
 	backgroundPort.onDisconnect.addListener(() => {
 		// Unbind window listener
-		globalThis.removeEventListener("message", relayMessageFromPageToBackground);
+		window!.removeEventListener("message", relayMessageFromPageToBackground);
 	});
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

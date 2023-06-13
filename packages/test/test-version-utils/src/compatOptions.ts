@@ -87,6 +87,7 @@ nconf
 		whitelist: [
 			"fluid__test__compatKind",
 			"fluid__test__compatVersion",
+			"fluid__test__backCompat",
 			"fluid__test__driver",
 			"fluid__test__r11sEndpointName",
 			"fluid__test__baseVersion",

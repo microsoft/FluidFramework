@@ -5,38 +5,14 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-
-/**
- * Metadata describing a {@link @fluidframework/container-definitions#IContainer} registered with a debugger.
- *
- * @internal
- */
-export interface ContainerMetadata {
-	/**
-	 * The Container ID.
-	 */
-	id: string;
-
-	/**
-	 * Optional Container nickname.
-	 *
-	 * @remarks
-	 *
-	 * Associated tooling may take advantage of this to differentiate between container instances using
-	 * semantically meaningful names, rather than GUIDs.
-	 *
-	 * If not provided, the {@link ContainerMetadata.id} will be used for the purpose of distinguising
-	 * container instances.
-	 */
-	nickname?: string;
-}
+import { HasContainerKey } from "./CommonInterfaces";
 
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.
  *
  * @internal
  */
-export interface ContainerStateMetadata extends ContainerMetadata {
+export interface ContainerStateMetadata extends HasContainerKey {
 	/**
 	 * Whether or not the Container has been closed (disposed).
 	 */
@@ -62,5 +38,5 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 	 *
 	 * @remarks Will be undefined when the Container is not connected.
 	 */
-	audienceId?: string;
+	userId?: string;
 }

@@ -6,7 +6,6 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLogger,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
@@ -21,11 +20,17 @@ import {
 	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+	normalizeError,
+	logIfFalse,
+	safeRaiseEvent,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -339,7 +344,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
@@ -357,7 +362,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
+			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
+				this.disconnectHandler(reason, error),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
@@ -539,7 +545,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchMissingDeltas(args.reason);
 		}
 
-		this.connectionManager.connect(args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(
@@ -676,7 +682,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.disposeInternal(error);
 		} else {
 			this.emit("closed", error);
-			this.disposeInternal(error); // ! TODO: remove this call when Container close no longer disposes
 		}
 	}
 
@@ -700,9 +705,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string) {
+	private disconnectHandler(reason: string, error?: IAnyDriverError) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason, error);
 	}
 
 	/**

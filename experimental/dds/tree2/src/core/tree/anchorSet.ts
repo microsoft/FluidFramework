@@ -6,10 +6,11 @@
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
 import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
-import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
-import { Value, detachedFieldAsKey, DetachedField } from "./types";
+import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
+import { visitDelta, DeltaVisitor } from "./visitDelta";
+import * as Delta from "./delta";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.

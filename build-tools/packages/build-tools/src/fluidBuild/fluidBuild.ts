@@ -10,11 +10,11 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { existsSync } from "../common/utils";
-import { BuildResult } from "./buildGraph";
+import { BuildGraph, BuildResult } from "./buildGraph";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
 
-const { info, errorLog: error, warning: warn } = defaultLogger;
+const { log, errorLog: error, warning: warn } = defaultLogger;
 
 parseOptions(process.argv);
 
@@ -22,7 +22,7 @@ async function main() {
 	const timer = new Timer(commonOptions.timer);
 	const resolvedRoot = await getResolvedFluidRoot();
 
-	info(`Fluid Repo Root: ${resolvedRoot}`);
+	log(`Fluid Repo Root: ${resolvedRoot}`);
 
 	// Detect nohoist state mismatch and infer uninstall switch
 	if (options.install) {
@@ -34,7 +34,7 @@ async function main() {
 	}
 
 	// Load the package
-	const repo = new FluidRepoBuild(resolvedRoot, options.services);
+	const repo = new FluidRepoBuild(resolvedRoot);
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter
@@ -76,7 +76,7 @@ async function main() {
 
 	// Install or check install
 	if (options.install) {
-		info("Installing packages");
+		log("Installing packages");
 		if (!(await repo.install(options.nohoist))) {
 			error(`Install failed`);
 			process.exit(-5);
@@ -89,13 +89,17 @@ async function main() {
 	await repo.symlink(options);
 	timer.time(`${symlinkTaskName} completed`, options.symlink);
 
-	// Check scripts
-	await repo.checkPackages(options.fix);
-	timer.time("Check scripts completed");
+	// TODO: port these to repo-policy-checkes
+	if (process.env["FLUID_BUILD_CHECK"] === "1") {
+		// Check scripts
+		await repo.checkPackages(options.fix);
+		timer.time("Check scripts completed");
+	}
 
 	let failureSummary = "";
-	if (options.clean || options.build !== false) {
-		info(
+	let exitCode = 0;
+	if (options.buildTaskNames.length !== 0) {
+		log(
 			`Symlink in ${
 				options.fullSymlink
 					? "full"
@@ -106,7 +110,13 @@ async function main() {
 		);
 
 		// build the graph
-		const buildGraph = repo.createBuildGraph(options, options.buildScriptNames);
+		let buildGraph: BuildGraph;
+		try {
+			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
+		} catch (e: unknown) {
+			error((e as Error).message);
+			process.exit(-11);
+		}
 		timer.time("Build graph creation completed");
 
 		// Check install
@@ -116,37 +126,31 @@ async function main() {
 		}
 		timer.time("Check install completed");
 
-		if (options.clean) {
-			if (!(await buildGraph.clean())) {
-				error(`Clean failed`);
-				process.exit(-9);
-			}
-			timer.time("Clean completed");
+		// Run the build
+		const buildResult = await buildGraph.build(timer);
+		const buildStatus = buildResultString(buildResult);
+		const elapsedTime = timer.time();
+		if (commonOptions.timer) {
+			const totalElapsedTime = buildGraph.totalElapsedTime;
+			const concurrency = buildGraph.totalElapsedTime / elapsedTime;
+			log(
+				`Execution time: ${totalElapsedTime.toFixed(
+					3,
+				)}s, Concurrency: ${concurrency.toFixed(
+					3,
+				)}, Queue Wait time: ${buildGraph.totalQueueWaitTime.toFixed(3)}s`,
+			);
+			log(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
+		} else {
+			log(`Build ${buildStatus}`);
 		}
+		failureSummary = buildGraph.taskFailureSummary;
 
-		if (options.build !== false) {
-			// Run the build
-			const buildResult = await buildGraph.build(timer);
-			const buildStatus = buildResultString(buildResult);
-			const elapsedTime = timer.time();
-			if (commonOptions.timer) {
-				const totalElapsedTime = buildGraph.totalElapsedTime;
-				const concurrency = buildGraph.totalElapsedTime / elapsedTime;
-				info(
-					`Execution time: ${totalElapsedTime.toFixed(
-						3,
-					)}s, Concurrency: ${concurrency.toFixed(3)}`,
-				);
-				info(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
-			} else {
-				info(`Build ${buildStatus}`);
-			}
-			failureSummary = buildGraph.taskFailureSummary;
-		}
+		exitCode = buildResult === BuildResult.Failed ? -1 : 0;
 	}
 
 	if (options.build === false) {
-		info(`Other switches with no explicit build script, not building.`);
+		log(`Other switches with no explicit build script, not building.`);
 	}
 
 	const timeInMinutes =
@@ -156,11 +160,12 @@ async function main() {
 					1000
 			  ).toFixed(3)}s)`
 			: "";
-	info(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
+	log(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
 
 	if (failureSummary !== "") {
-		info(`\n${failureSummary}`);
+		log(`\n${failureSummary}`);
 	}
+	process.exit(exitCode);
 }
 
 function buildResultString(buildResult: BuildResult) {
@@ -174,7 +179,7 @@ function buildResultString(buildResult: BuildResult) {
 	}
 }
 
-main().catch((error) => {
-	info(`ERROR: Unexpected error. ${error.message}`);
-	info(error.stack);
+main().catch((e) => {
+	error(`Unexpected error. ${e.message}`);
+	error(e.stack);
 });

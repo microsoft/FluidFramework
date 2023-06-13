@@ -355,7 +355,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose?(error?: ICriticalContainerError): void;
+	dispose(error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.

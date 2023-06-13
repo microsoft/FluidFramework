@@ -6,9 +6,6 @@
 import { AnchorSet } from "../tree";
 import { ChangeFamily, ChangeFamilyEditor } from "./changeFamily";
 
-/**
- * @alpha
- */
 export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
 	public constructor(
 		protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>,

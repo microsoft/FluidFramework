@@ -1,13 +1,6 @@
-# Build metadata
-*.tsbuildinfo
-
-# Test code
+nyc
+*.log
+**/*.tsbuildinfo
 src/test
 dist/test
-
-# Temporary api-extractor build artifacts
-_api-extractor-temp
-
-# Test output
-coverage
-nyc
+**/_api-extractor-temp/**

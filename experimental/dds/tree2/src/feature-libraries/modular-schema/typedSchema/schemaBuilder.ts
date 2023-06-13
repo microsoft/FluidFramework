@@ -105,7 +105,7 @@ export class SchemaBuilder {
 		t: T,
 	): TreeSchema<Name, T> {
 		const schema = new TreeSchema(this, name, t);
-		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
+		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 		return schema;
 	}
@@ -150,7 +150,7 @@ export class SchemaBuilder {
 		field: FieldSchema<Kind, Types>,
 	): GlobalFieldSchema<Kind, Types> {
 		const schema = new GlobalFieldSchema(this, brand(key), field);
-		assert(!this.globalFieldSchema.has(schema.key), "Conflicting global field keys");
+		assert(!this.globalFieldSchema.has(schema.key), 0x6ac /* Conflicting global field keys */);
 		this.globalFieldSchema.set(schema.key, schema);
 		return schema;
 	}
@@ -238,7 +238,7 @@ export class SchemaBuilder {
 	}
 
 	private finalize(): void {
-		assert(!this.finalized, "SchemaBuilder can only be finalized once.");
+		assert(!this.finalized, 0x6ad /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,

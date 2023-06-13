@@ -4,8 +4,11 @@
 
 ```ts
 
+import { IDevtoolsMessage } from '@fluid-experimental/devtools-core';
 import { IMessageRelay } from '@fluid-experimental/devtools-core';
+import { IMessageRelayEvents } from '@fluid-experimental/devtools-core';
 import { default as React_2 } from 'react';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
@@ -16,5 +19,12 @@ export interface DevtoolsPanelProps {
 }
 
 export { IMessageRelay }
+
+// @internal
+export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
+    constructor(
+    messageSource: string);
+    postMessage(message: IDevtoolsMessage): void;
+}
 
 ```

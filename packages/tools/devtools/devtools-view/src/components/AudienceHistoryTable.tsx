@@ -13,8 +13,17 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
+import {
+	DoorArrowLeftRegular,
+	Clock12Regular,
+	Person12Regular,
+	ArrowJoinRegular,
+	ArrowExitRegular,
+} from "@fluentui/react-icons";
+
+import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
@@ -41,15 +50,30 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 	];
 
 	return (
-		<Table size="small" aria-label="Audience history table">
+		<Table size="extra-small" aria-label="Audience history table">
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
-							{column.columnKey === "clientId" && <Person24Regular />}
-							{column.columnKey === "time" && <Clock20Regular />}
-							{column.label}
+							{column.columnKey === "event" && (
+								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+
+							{column.columnKey === "clientId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "time" && (
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>
@@ -60,12 +84,24 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 						key={itemIndex}
 						style={{
 							backgroundColor:
-								item.changeKind === "added"
+								item.changeKind === "joined"
 									? tokens.colorPaletteRoyalBlueBackground2
 									: tokens.colorPaletteRedBorder1,
 						}}
 					>
-						<TableCell>{item.changeKind}</TableCell>
+						<TableCell>
+							<LabelCellLayout
+								icon={
+									item.changeKind === "joined" ? (
+										<ArrowJoinRegular />
+									) : (
+										<ArrowExitRegular />
+									)
+								}
+							>
+								{item.changeKind}
+							</LabelCellLayout>
+						</TableCell>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
 					</TableRow>

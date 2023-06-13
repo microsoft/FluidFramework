@@ -67,10 +67,6 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	EditBuilder,
-	ChangeRebaser,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -99,15 +95,8 @@ export {
 
 export {
 	Brand,
-	BrandedType,
 	Opaque,
 	extractFromOpaque,
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	ExtractFromOpaque,
-	isAny,
 	brand,
 	brandOpaque,
 	ValueFromBranded,
@@ -118,7 +107,6 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
-	Assume,
 } from "./util";
 
 export {
@@ -141,6 +129,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
+	nodeIdentifierKey,
+	nodeIdentifierSchema,
 } from "./domains";
 
 export {
@@ -149,9 +139,7 @@ export {
 	emptyField,
 	IdAllocator,
 	neverTree,
-	ModularChangeFamily,
 	ModularChangeset,
-	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
 	FieldEditor,
@@ -176,7 +164,7 @@ export {
 	isNeverField,
 	FullSchemaPolicy,
 	UnwrappedEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	isEditableField,
 	EditableTreeContext,
 	UnwrappedEditableTree,
@@ -191,18 +179,15 @@ export {
 	valueSymbol,
 	proxyTargetSymbol,
 	getField,
-	createField,
-	replaceField,
 	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	Identifier,
+	NodeIdentifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -243,6 +228,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -251,16 +237,18 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NewFieldContent,
+	NodeExistsConstraint,
+	cursorForTypedTreeData,
+	NodeExistenceState,
 } from "./feature-libraries";
 
 export {
-	identifierKey,
-	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
-	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";
@@ -273,3 +261,7 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 } from "./codec";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+import * as InternalTypes from "./internal";
+export { InternalTypes };

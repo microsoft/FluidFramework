@@ -5,10 +5,15 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	TrackingGroup,
-	MergeTreeDeltaOperationType,
 	MergeTreeDeltaType,
-	toRemovalInfo,
+	MergeTreeDeltaRevertible,
+	IMergeTreeDeltaCallbackArgs,
+	appendToMergeTreeDeltaRevertibles,
+	revertMergeTreeDeltaRevertibles,
+	MergeTreeRevertibleDriver,
+	discardMergeTreeDeltaRevertible,
+	TrackingGroup,
+	ITrackingGroup,
 } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
@@ -19,58 +24,55 @@ export class VectorUndoProvider {
 	// 'currentGroup' and 'currentOp' are used while applying an IRevertable.revert() to coalesce
 	// the recorded into a single IRevertable / tracking group as they move between the undo <->
 	// redo stacks.
-	private currentGroup?: TrackingGroup;
+	private currentGroup?: MergeTreeDeltaRevertible[];
 	private currentOp?: MergeTreeDeltaType;
+	private currentRemoveTrackingGroup?: TrackingGroup;
 
 	constructor(
 		private readonly manager: IUndoConsumer,
-		private readonly undoInsert: (segment: PermutationSegment) => void,
-		private readonly undoRemove: (segment: PermutationSegment) => void,
+		private readonly driver: MergeTreeRevertibleDriver,
 	) {}
 
-	public record(
-		operation: MergeTreeDeltaOperationType,
-		ranges: { segment: PermutationSegment }[],
-	) {
-		if (ranges.length > 0) {
-			// Link each segment to a new TrackingGroup.  A TrackingGroup keeps track of the original
-			// set of linked segments, including any fragmentatiton that occurs due to future splitting.
-			//
-			// A TrackingGroup also prevents removed segments from being unlinked from the tree during
-			// Zamboni and guarantees segments will not be merged/coalesced with segments outside of the
-			// current tracking group.
-			//
-			// These properties allow us to rely on MergeTree.getPosition() to find the locations/lengths
-			// of all content contained within the tracking group in the future.
-
+	public record(deltaArgs: IMergeTreeDeltaCallbackArgs) {
+		if (deltaArgs.deltaSegments.length > 0) {
 			// If we are in the process of reverting, the `IRevertible.revert()` will provide the tracking
 			// group so that we can preserve the original segment ranges as a single op/group as we move
 			// ops between the undo <-> redo stacks.
-			const trackingGroup = this.currentGroup ?? new TrackingGroup();
-			for (const range of ranges) {
-				trackingGroup.link(range.segment);
-			}
+			const revertibles: MergeTreeDeltaRevertible[] = this.currentGroup ?? [];
+			appendToMergeTreeDeltaRevertibles(deltaArgs, revertibles);
 
 			// For SharedMatrix, each IRevertibles always holds a single row/col operation.
 			// Therefore, 'currentOp' must either be undefined or equal to the current op.
 			assert(
-				this.currentOp === undefined || this.currentOp === operation,
+				this.currentOp === undefined || this.currentOp === deltaArgs.operation,
 				0x02a /* "On vector undo, unexpected 'currentOp' type/state!" */,
 			);
+			let removeTrackingGroup: TrackingGroup | undefined;
+			if (deltaArgs.operation === MergeTreeDeltaType.REMOVE) {
+				// for removed segment we need a tracking group.
+				// this is for a few reason:
+				// 1. the handle for the row/column on the removed segment is still allocated,
+				//		and needs to be in order to process unacked ops sent before the remove.
+				// 2. handles are freed on unlink(zamboni), but that also clears the row/column data.
+				//		which we don't want to happen, so we can re-insert the cells when the row/col comes back.
+				//		the tracking group prevents unlink.
+				// 3. when we re-insert we need to find the old segment and clear their handles
+				//		so the new segment takes them over. there is no efficient look-up for this.
+				//		the tracking group provides one.
+				const trackingGroup = (removeTrackingGroup =
+					this.currentRemoveTrackingGroup ?? new TrackingGroup());
+				deltaArgs.deltaSegments.forEach((d) =>
+					d.segment.trackingCollection.link(trackingGroup),
+				);
+			}
 
-			switch (operation) {
+			switch (deltaArgs.operation) {
+				case MergeTreeDeltaType.REMOVE:
 				case MergeTreeDeltaType.INSERT:
-					if (this.currentOp !== MergeTreeDeltaType.INSERT) {
-						this.pushRevertible(trackingGroup, this.undoInsert);
+					if (this.currentOp !== deltaArgs.operation) {
+						this.pushRevertible(revertibles, removeTrackingGroup);
 					}
 					break;
-
-				case MergeTreeDeltaType.REMOVE: {
-					if (this.currentOp !== MergeTreeDeltaType.REMOVE) {
-						this.pushRevertible(trackingGroup, this.undoRemove);
-					}
-					break;
-				}
 
 				default:
 					throw new Error("operation type not revertible");
@@ -80,50 +82,59 @@ export class VectorUndoProvider {
 			// another revertible until `IRevertable.revert()` finishes the current op and clears this
 			// field.
 			if (this.currentGroup !== undefined) {
-				this.currentOp = operation;
+				this.currentOp ??= deltaArgs.operation;
+				this.currentRemoveTrackingGroup ??= removeTrackingGroup;
 			}
 		}
 	}
 
 	private pushRevertible(
-		trackingGroup: TrackingGroup,
-		callback: (segment: PermutationSegment) => void,
+		revertibles: MergeTreeDeltaRevertible[],
+		removedTrackingGroup: ITrackingGroup | undefined,
 	) {
-		const revertible = {
+		const reverter = {
 			revert: () => {
 				assert(
 					this.currentGroup === undefined && this.currentOp === undefined,
 					0x02b /* "Must not nest calls to IRevertible.revert()" */,
 				);
 
-				this.currentGroup = new TrackingGroup();
+				this.currentGroup = [];
 
 				try {
-					while (trackingGroup.size > 0) {
-						const segment = trackingGroup.segments[0] as PermutationSegment;
-
-						// Unlink 'segment' from the current tracking group before invoking the callback
-						// to exclude the current undo/redo segment from those copied to the replacement
-						// segment (if any). (See 'PermutationSegment.transferToReplacement()')
-						segment.trackingCollection.unlink(trackingGroup);
-
-						callback(segment);
+					if (removedTrackingGroup !== undefined) {
+						while (removedTrackingGroup.size > 0) {
+							const tracked = removedTrackingGroup.tracked[0];
+							removedTrackingGroup.unlink(tracked);
+							// if there are groups tracked, this in a revert of a remove.
+							// this means we are about to re-insert the row/column
+							// with the same handle. We reuse the handle so the row/columns cells
+							// get re-inserted too.
+							// since a new segment will have the handle, we need to
+							// remove it from the  removed segment which was tracked
+							(tracked as PermutationSegment).reset();
+						}
 					}
+					revertMergeTreeDeltaRevertibles(this.driver, revertibles);
 				} finally {
 					this.currentOp = undefined;
 					this.currentGroup = undefined;
+					this.currentRemoveTrackingGroup = undefined;
 				}
 			},
 			discard: () => {
-				while (trackingGroup.size > 0) {
-					trackingGroup.unlink(trackingGroup.segments[0]);
+				if (removedTrackingGroup !== undefined) {
+					while (removedTrackingGroup.size > 0) {
+						removedTrackingGroup.unlink(removedTrackingGroup.tracked[0]);
+					}
 				}
+				discardMergeTreeDeltaRevertible(revertibles);
 			},
 		};
 
-		this.manager.pushToCurrentOperation(revertible);
+		this.manager.pushToCurrentOperation(reverter);
 
-		return revertible;
+		return reverter;
 	}
 }
 
@@ -134,30 +145,28 @@ export class MatrixUndoProvider<T> {
 		private readonly rows: PermutationVector,
 		private readonly cols: PermutationVector,
 	) {
-		rows.undo = new VectorUndoProvider(
-			consumer,
-			/* undoInsert: */ (segment: PermutationSegment) => {
-				if (toRemovalInfo(segment) === undefined) {
-					const start = this.rows.getPosition(segment);
-					this.matrix.removeRows(start, segment.cachedLength);
-				}
+		rows.undo = new VectorUndoProvider(consumer, {
+			annotateRange() {
+				throw new Error("not implemented");
 			},
-			/* undoRemove: */ (segment: PermutationSegment) => {
-				this.matrix._undoRemoveRows(segment);
+			insertFromSpec(pos, spec) {
+				matrix._undoRemoveRows(pos, spec);
 			},
-		);
-		cols.undo = new VectorUndoProvider(
-			consumer,
-			/* undoInsert: */ (segment: PermutationSegment) => {
-				if (toRemovalInfo(segment) === undefined) {
-					const start = this.cols.getPosition(segment);
-					this.matrix.removeCols(start, segment.cachedLength);
-				}
+			removeRange(start, end) {
+				matrix.removeRows(start, end - start);
 			},
-			/* undoRemove: */ (segment: PermutationSegment) => {
-				this.matrix._undoRemoveCols(segment);
+		});
+		cols.undo = new VectorUndoProvider(consumer, {
+			annotateRange() {
+				throw new Error("not implemented");
 			},
-		);
+			insertFromSpec(pos, spec) {
+				matrix._undoRemoveCols(pos, spec);
+			},
+			removeRange(start, end) {
+				matrix.removeCols(start, end - start);
+			},
+		});
 	}
 
 	cellSet(rowHandle: Handle, colHandle: Handle, oldValue: MatrixItem<T>) {

@@ -29,6 +29,8 @@ export {
 	PathRootPrefix,
 	inCursorField,
 	inCursorNode,
+	CursorMarker,
+	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
 export {

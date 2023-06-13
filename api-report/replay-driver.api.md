@@ -7,8 +7,6 @@
 import * as api from '@fluidframework/protocol-definitions';
 import * as api_2 from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -17,7 +15,7 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
@@ -137,27 +135,12 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 }
 
 // @public (undocumented)
-export class StaticStorageDocumentService implements IDocumentService {
-    constructor(storage: IDocumentStorageService);
-    // (undocumented)
-    connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    // (undocumented)
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
-    // (undocumented)
-    connectToStorage(): Promise<IDocumentStorageService>;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get resolvedUrl(): IResolvedUrl;
-}
-
-// @public (undocumented)
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLoggerExt, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected readonly storage: IDocumentStorageService;
 }

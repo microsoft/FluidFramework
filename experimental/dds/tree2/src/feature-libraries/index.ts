@@ -6,6 +6,7 @@ export {
 	DefaultChangeset,
 	DefaultChangeFamily,
 	defaultChangeFamily,
+	defaultIntoDelta,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
@@ -21,17 +22,16 @@ export {
 	typeSymbol,
 	isEditableField,
 	isPrimitive,
-	isUnwrappedNode,
+	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	NewFieldContent,
 } from "./editable-tree";
 
 export {
@@ -43,7 +43,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,
@@ -81,7 +80,6 @@ export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
@@ -128,28 +126,22 @@ export {
 	SchemaLibrary,
 	SchemaLibraryData,
 	Sourced,
+	NodeExistsConstraint,
+	NodeExistenceState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export {
-	ForestRepairDataStore,
-	ForestRepairDataStoreProvider,
-	repairDataStoreFromForest,
-} from "./forestRepairDataStore";
+export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export {
-	Identifier,
-	identifierFieldSchema,
-	IdentifierIndex,
-	identifierSchema,
-	identifierFieldSchemaLibrary,
-} from "./identifierIndex";
+export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
+
+export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
 
 export {
 	FieldKinds,
@@ -157,6 +149,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

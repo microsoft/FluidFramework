@@ -16,74 +16,38 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_AttachmentTreeEntry": {"forwardCompat": false}
+* "RemovedClassDeclaration_AttachmentTreeEntry": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_AttachmentTreeEntry():
-    TypeOnly<old.AttachmentTreeEntry>;
-declare function use_current_ClassDeclaration_AttachmentTreeEntry(
-    use: TypeOnly<current.AttachmentTreeEntry>);
-use_current_ClassDeclaration_AttachmentTreeEntry(
-    get_old_ClassDeclaration_AttachmentTreeEntry());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_AttachmentTreeEntry": {"backCompat": false}
+* "RemovedClassDeclaration_AttachmentTreeEntry": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_AttachmentTreeEntry():
-    TypeOnly<current.AttachmentTreeEntry>;
-declare function use_old_ClassDeclaration_AttachmentTreeEntry(
-    use: TypeOnly<old.AttachmentTreeEntry>);
-use_old_ClassDeclaration_AttachmentTreeEntry(
-    get_current_ClassDeclaration_AttachmentTreeEntry());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobTreeEntry": {"forwardCompat": false}
+* "RemovedClassDeclaration_BlobTreeEntry": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BlobTreeEntry():
-    TypeOnly<old.BlobTreeEntry>;
-declare function use_current_ClassDeclaration_BlobTreeEntry(
-    use: TypeOnly<current.BlobTreeEntry>);
-use_current_ClassDeclaration_BlobTreeEntry(
-    get_old_ClassDeclaration_BlobTreeEntry());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobTreeEntry": {"backCompat": false}
+* "RemovedClassDeclaration_BlobTreeEntry": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BlobTreeEntry():
-    TypeOnly<current.BlobTreeEntry>;
-declare function use_old_ClassDeclaration_BlobTreeEntry(
-    use: TypeOnly<old.BlobTreeEntry>);
-use_old_ClassDeclaration_BlobTreeEntry(
-    get_current_ClassDeclaration_BlobTreeEntry());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ILocalSequencedClient": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ILocalSequencedClient": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ILocalSequencedClient():
-    TypeOnly<old.ILocalSequencedClient>;
-declare function use_current_InterfaceDeclaration_ILocalSequencedClient(
-    use: TypeOnly<current.ILocalSequencedClient>);
-use_current_InterfaceDeclaration_ILocalSequencedClient(
-    get_old_InterfaceDeclaration_ILocalSequencedClient());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ILocalSequencedClient": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ILocalSequencedClient": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ILocalSequencedClient():
-    TypeOnly<current.ILocalSequencedClient>;
-declare function use_old_InterfaceDeclaration_ILocalSequencedClient(
-    use: TypeOnly<old.ILocalSequencedClient>);
-use_old_InterfaceDeclaration_ILocalSequencedClient(
-    get_current_InterfaceDeclaration_ILocalSequencedClient());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -305,98 +269,50 @@ use_old_TypeAliasDeclaration_QuorumProposalsSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TreeTreeEntry": {"forwardCompat": false}
+* "RemovedClassDeclaration_TreeTreeEntry": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TreeTreeEntry():
-    TypeOnly<old.TreeTreeEntry>;
-declare function use_current_ClassDeclaration_TreeTreeEntry(
-    use: TypeOnly<current.TreeTreeEntry>);
-use_current_ClassDeclaration_TreeTreeEntry(
-    get_old_ClassDeclaration_TreeTreeEntry());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TreeTreeEntry": {"backCompat": false}
+* "RemovedClassDeclaration_TreeTreeEntry": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TreeTreeEntry():
-    TypeOnly<current.TreeTreeEntry>;
-declare function use_old_ClassDeclaration_TreeTreeEntry(
-    use: TypeOnly<old.TreeTreeEntry>);
-use_old_ClassDeclaration_TreeTreeEntry(
-    get_current_ClassDeclaration_TreeTreeEntry());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addBlobToTree": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_addBlobToTree": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_addBlobToTree():
-    TypeOnly<typeof old.addBlobToTree>;
-declare function use_current_FunctionDeclaration_addBlobToTree(
-    use: TypeOnly<typeof current.addBlobToTree>);
-use_current_FunctionDeclaration_addBlobToTree(
-    get_old_FunctionDeclaration_addBlobToTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addBlobToTree": {"backCompat": false}
+* "RemovedFunctionDeclaration_addBlobToTree": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_addBlobToTree():
-    TypeOnly<typeof current.addBlobToTree>;
-declare function use_old_FunctionDeclaration_addBlobToTree(
-    use: TypeOnly<typeof old.addBlobToTree>);
-use_old_FunctionDeclaration_addBlobToTree(
-    get_current_FunctionDeclaration_addBlobToTree());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_buildHierarchy": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_buildHierarchy": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_buildHierarchy():
-    TypeOnly<typeof old.buildHierarchy>;
-declare function use_current_FunctionDeclaration_buildHierarchy(
-    use: TypeOnly<typeof current.buildHierarchy>);
-use_current_FunctionDeclaration_buildHierarchy(
-    get_old_FunctionDeclaration_buildHierarchy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_buildHierarchy": {"backCompat": false}
+* "RemovedFunctionDeclaration_buildHierarchy": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_buildHierarchy():
-    TypeOnly<typeof current.buildHierarchy>;
-declare function use_old_FunctionDeclaration_buildHierarchy(
-    use: TypeOnly<typeof old.buildHierarchy>);
-use_old_FunctionDeclaration_buildHierarchy(
-    get_current_FunctionDeclaration_buildHierarchy());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_generateServiceProtocolEntries": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_generateServiceProtocolEntries": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_generateServiceProtocolEntries():
-    TypeOnly<typeof old.generateServiceProtocolEntries>;
-declare function use_current_FunctionDeclaration_generateServiceProtocolEntries(
-    use: TypeOnly<typeof current.generateServiceProtocolEntries>);
-use_current_FunctionDeclaration_generateServiceProtocolEntries(
-    get_old_FunctionDeclaration_generateServiceProtocolEntries());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_generateServiceProtocolEntries": {"backCompat": false}
+* "RemovedFunctionDeclaration_generateServiceProtocolEntries": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_generateServiceProtocolEntries():
-    TypeOnly<typeof current.generateServiceProtocolEntries>;
-declare function use_old_FunctionDeclaration_generateServiceProtocolEntries(
-    use: TypeOnly<typeof old.generateServiceProtocolEntries>);
-use_old_FunctionDeclaration_generateServiceProtocolEntries(
-    get_current_FunctionDeclaration_generateServiceProtocolEntries());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -449,26 +365,14 @@ use_old_FunctionDeclaration_getGitType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getQuorumTreeEntries": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getQuorumTreeEntries": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getQuorumTreeEntries():
-    TypeOnly<typeof old.getQuorumTreeEntries>;
-declare function use_current_FunctionDeclaration_getQuorumTreeEntries(
-    use: TypeOnly<typeof current.getQuorumTreeEntries>);
-use_current_FunctionDeclaration_getQuorumTreeEntries(
-    get_old_FunctionDeclaration_getQuorumTreeEntries());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getQuorumTreeEntries": {"backCompat": false}
+* "RemovedFunctionDeclaration_getQuorumTreeEntries": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getQuorumTreeEntries():
-    TypeOnly<typeof current.getQuorumTreeEntries>;
-declare function use_old_FunctionDeclaration_getQuorumTreeEntries(
-    use: TypeOnly<typeof old.getQuorumTreeEntries>);
-use_old_FunctionDeclaration_getQuorumTreeEntries(
-    get_current_FunctionDeclaration_getQuorumTreeEntries());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -485,47 +389,23 @@ use_old_FunctionDeclaration_getQuorumTreeEntries(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isSystemMessage": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_isSystemMessage": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_isSystemMessage():
-    TypeOnly<typeof old.isSystemMessage>;
-declare function use_current_FunctionDeclaration_isSystemMessage(
-    use: TypeOnly<typeof current.isSystemMessage>);
-use_current_FunctionDeclaration_isSystemMessage(
-    get_old_FunctionDeclaration_isSystemMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isSystemMessage": {"backCompat": false}
+* "RemovedFunctionDeclaration_isSystemMessage": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_isSystemMessage():
-    TypeOnly<typeof current.isSystemMessage>;
-declare function use_old_FunctionDeclaration_isSystemMessage(
-    use: TypeOnly<typeof old.isSystemMessage>);
-use_old_FunctionDeclaration_isSystemMessage(
-    get_current_FunctionDeclaration_isSystemMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_mergeAppAndProtocolTree": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_mergeAppAndProtocolTree": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_mergeAppAndProtocolTree():
-    TypeOnly<typeof old.mergeAppAndProtocolTree>;
-declare function use_current_FunctionDeclaration_mergeAppAndProtocolTree(
-    use: TypeOnly<typeof current.mergeAppAndProtocolTree>);
-use_current_FunctionDeclaration_mergeAppAndProtocolTree(
-    get_old_FunctionDeclaration_mergeAppAndProtocolTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_mergeAppAndProtocolTree": {"backCompat": false}
+* "RemovedFunctionDeclaration_mergeAppAndProtocolTree": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_mergeAppAndProtocolTree():
-    TypeOnly<typeof current.mergeAppAndProtocolTree>;
-declare function use_old_FunctionDeclaration_mergeAppAndProtocolTree(
-    use: TypeOnly<typeof old.mergeAppAndProtocolTree>);
-use_old_FunctionDeclaration_mergeAppAndProtocolTree(
-    get_current_FunctionDeclaration_mergeAppAndProtocolTree());

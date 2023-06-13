@@ -18,9 +18,9 @@ export interface FieldChangeHandler<
 	TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
 > {
 	_typeCheck?: Invariant<TChangeset>;
-	rebaser: FieldChangeRebaser<TChangeset>;
-	codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
-	editor: TEditor;
+	readonly rebaser: FieldChangeRebaser<TChangeset>;
+	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
 	/**
@@ -40,7 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * and should be tagged with the revision of its parent change.
 	 * Children which were the result of an earlier call to `composeChild` should be tagged with
 	 * undefined revision if later passed as an argument to `composeChild`.
-	 * See {@link ChangeRebaser} for more details.
+	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
 		changes: TaggedChange<TChangeset>[],
@@ -63,7 +63,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * @returns the inverse of `changes`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	invert(
 		change: TaggedChange<TChangeset>,
@@ -86,7 +86,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * Rebase `change` over `over`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	rebase(
 		change: TChangeset,
@@ -135,7 +135,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 		...data,
 		amendCompose: () => fail("Not implemented"),
 		amendInvert: () => fail("Not implemented"),
-		amendRebase: () => fail("Not implemented"),
+		amendRebase: (change) => change,
 	};
 }
 
@@ -176,9 +176,22 @@ export type NodeChangeInverter = (
 /**
  * @alpha
  */
+export enum NodeExistenceState {
+	Alive,
+	Dead,
+}
+
+/**
+ * @alpha
+ */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
+	/**
+	 * Whether or not the node is alive or dead in the input context of change.
+	 * Defaults to Alive if undefined.
+	 */
+	state?: NodeExistenceState,
 ) => NodeChangeset | undefined;
 
 /**
@@ -200,6 +213,14 @@ export type IdAllocator = (count?: number) => ChangesetLocalId;
 export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
 	valueConstraint?: ValueConstraint;
+	nodeExistsConstraint?: NodeExistsConstraint;
+}
+
+/**
+ * @alpha
+ */
+export interface NodeExistsConstraint {
+	violated: boolean;
 }
 
 /**
@@ -271,6 +292,16 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
 	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+}
+
+/**
+ * @alpha
+ */
+export function getIntention(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
 
 /**

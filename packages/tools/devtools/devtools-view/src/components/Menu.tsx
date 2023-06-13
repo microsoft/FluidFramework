@@ -14,6 +14,11 @@ export type MenuSectionProps = React.PropsWithChildren<{
 	 * The text to display in header of the menu section.
 	 */
 	header: string;
+
+	/**
+	 * The icon to display in the header of the menu section.
+	 */
+	icon?: React.ReactElement;
 }>;
 
 /**
@@ -22,11 +27,14 @@ export type MenuSectionProps = React.PropsWithChildren<{
  * @internal
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
-	const { header, children } = props;
+	const { header, icon, children } = props;
 
 	return (
 		<Stack>
-			<Stack.Item styles={menuSectionHeaderStyles}>{header}</Stack.Item>
+			<Stack.Item styles={menuSectionHeaderStyles}>
+				{header}
+				{icon}
+			</Stack.Item>
 			{children}
 		</Stack>
 	);
