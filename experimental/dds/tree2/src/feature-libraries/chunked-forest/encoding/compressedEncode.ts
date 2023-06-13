@@ -100,7 +100,7 @@ const anyNodeEncoder: NodeEncoderShape = {
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
 		// TODO: Fast path uniform chunk content.
-		const shape = cache.shapeFromSchema(cursor.type);
+		const shape = cache.shapeFromTree(cursor.type);
 		AnyShape.encodeNodes(cursor, cache, outputBuffer, shape);
 	},
 
@@ -421,50 +421,83 @@ interface FieldEncoderShape {
 	readonly shape: Shape<EncodedChunkShape>;
 }
 
-class EncoderCache {
+class EncoderCache implements TreeShaper, FieldShaper {
 	private readonly shapesFromSchema: Map<TreeSchemaIdentifier, TreeShape> = new Map();
 	private readonly nestedArrays: Map<NodeEncoderShape, NestedArrayShape> = new Map();
 	public constructor(public readonly schema: SchemaDataAndPolicy<FullSchemaPolicy>) {}
 
-	public shapeFromSchema(schemaName: TreeSchemaIdentifier): TreeShape {
-		return getOrCreate(this.shapesFromSchema, schemaName, (): TreeShape => {
-			const schema = this.schema.treeSchema.get(schemaName) ?? fail("missing schema");
-
-			const local: FieldShape<LocalFieldKey>[] = [];
-			for (const [key, field] of schema.localFields) {
-				local.push({ key, shape: new LazyFieldEncoder(this, field) });
-			}
-
-			const global: FieldShape<GlobalFieldKey>[] = [];
-			for (const key of schema.globalFields) {
-				const field = lookupGlobalFieldSchema(this.schema, key);
-				global.push({ key, shape: new LazyFieldEncoder(this, field) });
-			}
-
-			const shape = new TreeShape(
-				schemaName,
-				valueShapeFromSchema(schema.value),
-				local,
-				global,
-				schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
-					? undefined
-					: new LazyFieldEncoder(this, schema.extraLocalFields),
-				schema.extraGlobalFields ? undefined : anyFieldEncoder,
-			);
-			return shape;
-		});
+	public shapeFromTree(schemaName: TreeSchemaIdentifier): TreeShape {
+		return getOrCreate(
+			this.shapesFromSchema,
+			schemaName,
+			(): TreeShape => treeEncoder(this.schema, this, schemaName),
+		);
 	}
 
 	public nestedArray(inner: NodeEncoderShape): NestedArrayShape {
 		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayShape(inner));
 	}
+
+	public shapeFromField(field: FieldStoredSchema): FieldEncoderShape {
+		return new LazyFieldEncoder(this, field);
+	}
+}
+
+interface TreeShaper {
+	shapeFromTree(schemaName: TreeSchemaIdentifier): TreeShape;
+}
+
+interface FieldShaper {
+	shapeFromField(field: FieldStoredSchema): FieldEncoderShape;
+}
+
+export function fieldEncoder(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoderShape {
+	const kind = getFieldKind(field);
+	const type = oneFromSet(field.types);
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (kind.multiplicity === Multiplicity.Value) {
+		return asFieldEncoder(type !== undefined ? treeShaper.shapeFromTree(type) : anyNodeEncoder);
+	} else {
+		return anyFieldEncoder;
+	}
+}
+
+export function treeEncoder(
+	fullSchema: SchemaDataAndPolicy<FullSchemaPolicy>,
+	fieldShaper: FieldShaper,
+	schemaName: TreeSchemaIdentifier,
+): TreeShape {
+	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+
+	const local: FieldShape<LocalFieldKey>[] = [];
+	for (const [key, field] of schema.localFields) {
+		local.push({ key, shape: fieldShaper.shapeFromField(field) });
+	}
+
+	const global: FieldShape<GlobalFieldKey>[] = [];
+	for (const key of schema.globalFields) {
+		const field = lookupGlobalFieldSchema(fullSchema, key);
+		global.push({ key, shape: fieldShaper.shapeFromField(field) });
+	}
+
+	const shape = new TreeShape(
+		schemaName,
+		valueShapeFromSchema(schema.value),
+		local,
+		global,
+		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
+			? undefined
+			: fieldShaper.shapeFromField(schema.extraLocalFields),
+		schema.extraGlobalFields ? undefined : anyFieldEncoder,
+	);
+	return shape;
 }
 
 class LazyFieldEncoder implements FieldEncoderShape {
 	private encoderLazy: FieldEncoderShape | undefined;
 
 	public constructor(
-		public readonly cache: EncoderCache,
+		public readonly cache: TreeShaper,
 		public readonly field: FieldStoredSchema,
 	) {}
 	public encodeField(
@@ -477,16 +510,7 @@ class LazyFieldEncoder implements FieldEncoderShape {
 
 	private get encoder(): FieldEncoderShape {
 		if (this.encoderLazy === undefined) {
-			const kind = getFieldKind(this.field);
-			const type = oneFromSet(this.field.types);
-			// eslint-disable-next-line unicorn/prefer-ternary
-			if (kind.multiplicity === Multiplicity.Value) {
-				this.encoderLazy = asFieldEncoder(
-					type !== undefined ? this.cache.shapeFromSchema(type) : anyNodeEncoder,
-				);
-			} else {
-				this.encoderLazy = anyFieldEncoder;
-			}
+			this.encoderLazy = fieldEncoder(this.cache, this.field);
 		}
 		return this.encoderLazy;
 	}
