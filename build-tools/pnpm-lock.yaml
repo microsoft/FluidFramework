@@ -129,6 +129,9 @@ importers:
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
+      human-id:
+        specifier: ^4.0.0
+        version: 4.0.0
       inquirer:
         specifier: ^8.2.5
         version: 8.2.5
@@ -7590,6 +7593,10 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
+
+  /human-id@4.0.0:
+    resolution: {integrity: sha512-pui0xZRgeAlaRt0I9r8N2pNlbNmluvn71EfjKRpM7jOpZbuHe5mm76r67gcprjw/Nd+GpvB9C3OlTbh7ZKLg7A==}
+    dev: false
 
   /human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
