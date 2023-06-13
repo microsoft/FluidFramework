@@ -12,7 +12,9 @@ import {
 	isSkipMark,
 	makeAnonChange,
 	mintRevisionTag,
+	RevisionTag,
 	tagChange,
+	tagRollbackInverse,
 } from "../../core";
 import { DefaultEditBuilder, FieldKind } from "../../feature-libraries";
 
@@ -33,80 +35,155 @@ const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");
 const fieldC: FieldKey = brand("FieldC");
 
-describe("rebase", () => {
-	it("delete over cross-field move", () => {
-		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
-		editor.move(
-			{ parent: undefined, field: fieldA },
-			1,
-			2,
-			{ parent: undefined, field: fieldB },
-			2,
-		);
-		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
-		editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
-		const [move, remove, expected] = getChanges();
-		const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
-		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
-		const expectedDelta = normalizeDelta(family.intoDelta(expected));
-		assert.deepEqual(rebasedDelta, expectedDelta);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
+
+// Tests the integration of ModularChangeFamily with the default field kinds.
+describe("ModularChangeFamily integration", () => {
+	describe("rebase", () => {
+		it("delete over cross-field move", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				2,
+				{ parent: undefined, field: fieldB },
+				2,
+			);
+			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
+			const [move, remove, expected] = getChanges();
+			const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
+			const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
+			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			assert.deepEqual(rebasedDelta, expectedDelta);
+		});
+
+		it("cross-field move over delete", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				2,
+				{ parent: undefined, field: fieldB },
+				2,
+			);
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{ parent: undefined, field: fieldB },
+				2,
+			);
+			const [remove, move, expected] = getChanges();
+			const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
+			const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
+			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			assert.deepEqual(rebasedDelta, expectedDelta);
+		});
 	});
 
-	it("cross-field move over delete", () => {
-		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
-		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
-		editor.move(
-			{ parent: undefined, field: fieldA },
-			1,
-			2,
-			{ parent: undefined, field: fieldB },
-			2,
-		);
-		editor.move(
-			{ parent: undefined, field: fieldA },
-			1,
-			1,
-			{ parent: undefined, field: fieldB },
-			2,
-		);
-		const [remove, move, expected] = getChanges();
-		const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
-		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
-		const expectedDelta = normalizeDelta(family.intoDelta(expected));
-		assert.deepEqual(rebasedDelta, expectedDelta);
-	});
+	describe("compose", () => {
+		it("cross-field move and nested changes", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
 
-	it("cross-field move composition", () => {
-		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
-		editor.move(
-			{ parent: undefined, field: fieldA },
-			0,
-			1,
-			{ parent: undefined, field: fieldB },
-			0,
-		);
-		editor.move(
-			{ parent: undefined, field: fieldB },
-			0,
-			1,
-			{ parent: undefined, field: fieldC },
-			0,
-		);
-		editor.move(
-			{ parent: undefined, field: fieldA },
-			0,
-			1,
-			{ parent: undefined, field: fieldC },
-			0,
-		);
-		const [move1, move2, expected] = getChanges();
-		const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-		const actualDelta = normalizeDelta(family.intoDelta(composed));
-		const expectedDelta = normalizeDelta(family.intoDelta(expected));
-		assert.deepEqual(actualDelta, expectedDelta);
+			const newValue = "new value";
+			editor.setValue({ parent: undefined, parentField: fieldB, parentIndex: 0 }, newValue);
+
+			const [move, setValue] = getChanges();
+			const composed = family.compose([makeAnonChange(move), makeAnonChange(setValue)]);
+			const expected: Delta.Root = new Map([
+				[
+					fieldA,
+					[
+						{
+							type: Delta.MarkType.MoveOut,
+							count: 1,
+							moveId: brand(0),
+							setValue: newValue,
+						},
+					],
+				],
+				[fieldB, [{ type: Delta.MarkType.MoveIn, count: 1, moveId: brand(0) }]],
+			]);
+
+			const delta = family.intoDelta(composed);
+			assert.deepEqual(delta, expected);
+		});
+
+		it("cross-field move and inverse with nested changes", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const value = 42;
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
+			editor.setValue({ parent: undefined, parentField: fieldA, parentIndex: 0 }, value);
+
+			const [move, setValue] = getChanges();
+			const moveTagged = tagChange(move, tag1);
+			const returnTagged = tagRollbackInverse(
+				family.invert(moveTagged, true),
+				tag3,
+				moveTagged.revision,
+			);
+
+			const moveAndSetValue = family.compose([tagChange(setValue, tag2), moveTagged]);
+			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
+			const actual = family.intoDelta(composed);
+			const expected: Delta.Root = new Map([
+				[fieldA, []],
+				[fieldB, [{ type: Delta.MarkType.Modify, setValue: value }]],
+			]);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("two cross-field moves of same node", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
+			editor.move(
+				{ parent: undefined, field: fieldB },
+				0,
+				1,
+				{ parent: undefined, field: fieldC },
+				0,
+			);
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldC },
+				0,
+			);
+			const [move1, move2, expected] = getChanges();
+			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+			const actualDelta = normalizeDelta(family.intoDelta(composed));
+			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			assert.deepEqual(actualDelta, expectedDelta);
+		});
 	});
 });
 

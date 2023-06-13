@@ -140,7 +140,7 @@ function composeMarkLists<TNodeChange>(
 		}
 	}
 
-	return amendComposeI(factory.list, composeChild, moveEffects);
+	return factory.list;
 }
 
 /**
@@ -200,6 +200,8 @@ function composeMarks<TNodeChange>(
 				isMoveMark(baseMark) && isMoveMark(newMark),
 				0x68f /* Only move marks have move IDs */,
 			);
+
+			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -208,21 +210,23 @@ function composeMarks<TNodeChange>(
 				true,
 			);
 
-			const dstEffect = getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				newMark.revision ?? newRev,
-				newMark.id,
-				true,
-			);
-
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
-				// BUG 4280: This will drop any node changes the marks had.
-				// In practice the node changes will typically also be inverses so this problem should rarely be noticeable.
-				srcEffect.shouldRemove = true;
-				dstEffect.shouldRemove = true;
+			if (
+				areInverseMovesAtIntermediateLocation(
+					baseMark,
+					baseIntention,
+					newMark,
+					newIntention,
+				)
+			) {
+				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
+				srcEffect.modifyAfter = composeChildChanges(
+					srcEffect.modifyAfter,
+					nodeChange,
+					undefined,
+					composeChild,
+				);
 			} else {
 				srcEffect.mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
 			}
@@ -259,6 +263,26 @@ function composeMarks<TNodeChange>(
 		// TODO: Create modify mark for transient node.
 		return { count: 0 };
 	} else {
+		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
+			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
+			const nodeChanges = getMoveEffect(
+				moveEffects,
+				CrossFieldTarget.Source,
+				baseMark.revision,
+				baseMark.id,
+			).modifyAfter;
+
+			// We return a placeholder instead of a modify because there may be more node changes on `newMark`'s source mark
+			// which need to be included here.
+			// We will remove the placeholder during `amendCompose`.
+			return {
+				type: "Placeholder",
+				count: baseMark.count,
+				revision: baseMark.revision,
+				id: baseMark.id,
+				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+			};
+		}
 		const length = getMarkLength(baseMark);
 		return createModifyMark(length, nodeChange);
 	}
@@ -370,6 +394,26 @@ function amendComposeI<TNodeChange>(
 				mark = effect.mark ?? mark;
 				delete effect.mark;
 				break;
+			}
+			case "Placeholder": {
+				const effect = getMoveEffect(
+					moveEffects,
+					CrossFieldTarget.Source,
+					mark.revision,
+					mark.id,
+				);
+				if (effect.modifyAfter !== undefined) {
+					const changes = composeChildChanges(
+						mark.changes,
+						effect.modifyAfter,
+						undefined,
+						composeChild,
+					);
+					delete effect.modifyAfter;
+					mark = createModifyMark(mark.count, changes);
+				} else {
+					mark = createModifyMark(mark.count, mark.changes);
+				}
 			}
 			default:
 				break;
@@ -607,18 +651,21 @@ interface ComposeMarks<T> {
 
 /**
  * Returns whether `baseMark` and `newMark` are inverses.
- * It is assumed that both marks are active and `baseMark` is an attach.
+ * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
+ * This means that the marks are at the location of the moved content after the first move takes place, but before the second.
  */
-function areInverseMoves(
+function areInverseMovesAtIntermediateLocation(
 	baseMark: MoveMark<unknown>,
 	baseIntention: RevisionTag | undefined,
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
 	assert(
-		baseMark.type === "MoveIn" || baseMark.type === "ReturnTo",
-		0x698 /* TODO: Handle case where `baseMark` is a detach */,
+		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
+			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
+		"baseMark should be an attach and newMark should be a detach",
 	);
+
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}

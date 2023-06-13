@@ -31,6 +31,7 @@ import {
 	Mutable,
 	NestedMap,
 	nestedSetContains,
+	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -876,8 +877,8 @@ export function getChangeHandler(
 interface CrossFieldTable<TFieldData> {
 	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
 	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
-	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
-	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
+	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
 	invalidatedFields: Set<TFieldData>;
 }
 
@@ -959,11 +960,9 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
-				const dependents = tryGetFromNestedMap(dependentsMap, revision, id);
-				if (dependents !== undefined) {
-					for (const dependent of dependents) {
-						crossFieldTable.invalidatedFields.add(dependent);
-					}
+				const dependent = tryGetFromNestedMap(dependentsMap, revision, id);
+				if (dependent !== undefined) {
+					crossFieldTable.invalidatedFields.add(dependent);
 				}
 
 				if (nestedSetContains(getQueries(target), revision, id)) {
@@ -991,24 +990,23 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	for (const [revision, ids] of manager.srcQueries) {
 		for (const id of ids.keys()) {
-			addToNestedListMap(manager.table.srcDependents, revision, id, fieldData);
+			// We assume that if there is already an entry for this ID it is because
+			// a field handler has called compose on the same node multiple times.
+			// In this case we only want to amend the latest version, so we overwrite the dependency.
+			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
 		}
 	}
 
 	for (const [revision, ids] of manager.dstQueries) {
 		for (const id of ids.keys()) {
-			addToNestedListMap(manager.table.dstDependents, revision, id, fieldData);
+			// See above comment
+			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
 		}
 	}
 
 	if (manager.fieldInvalidated) {
 		manager.table.invalidatedFields.add(fieldData);
 	}
-}
-
-function addToNestedListMap<K1, K2, V>(map: NestedMap<K1, K2, V[]>, key1: K1, key2: K2, value: V) {
-	const list = getOrAddInNestedMap(map, key1, key2, []);
-	list.push(value);
 }
 
 function makeModularChangeset(

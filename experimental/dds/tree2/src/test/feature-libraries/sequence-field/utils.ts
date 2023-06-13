@@ -74,7 +74,7 @@ function composeI<T>(
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(
+	let composed = SF.compose(
 		changes,
 		composer,
 		idAllocator,
@@ -86,7 +86,7 @@ function composeI<T>(
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		SF.amendCompose(composed, composer, idAllocator, moveEffects);
+		composed = SF.amendCompose(composed, composer, idAllocator, moveEffects);
 		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;
