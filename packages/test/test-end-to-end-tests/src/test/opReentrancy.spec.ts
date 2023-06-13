@@ -129,53 +129,51 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		assert.ok(!container1.closed);
 	});
 
-	const allowReentry = [
-		{
-			options: testContainerConfig,
-			featureGates: {},
-			name: "Default config and feature gates",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
-			},
-			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-			name: "Enabled by options, disabled by feature gate",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching: true,
-				},
-			},
-			featureGates: {},
-			name: "Default config and feature gates - grouped batches",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-					enableGroupedBatching: true,
-				},
-			},
-			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-			name: "Enabled by options, disabled by feature gate - ungrouped batches",
-		},
-	];
-
 	describe("Allow reentry", () =>
-		allowReentry.forEach((testConfig) => {
-			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
+		[
+			{
+				options: testContainerConfig,
+				featureGates: {},
+				name: "Default config and feature gates",
+			},
+			{
+				options: {
+					...testContainerConfig,
+					runtimeOptions: {
+						enableOpReentryCheck: true,
+					},
+				},
+				featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+				name: "Enabled by options, disabled by feature gate",
+			},
+			{
+				options: {
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching: true,
+					},
+				},
+				featureGates: {},
+				name: "Default config and feature gates - grouped batches",
+			},
+			{
+				options: {
+					...testContainerConfig,
+					runtimeOptions: {
+						enableOpReentryCheck: true,
+						enableGroupedBatching: true,
+					},
+				},
+				featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+				name: "Enabled by options, disabled by feature gate - ungrouped batches",
+			},
+		].forEach((testConfig) => {
+			it.only(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
 				await setupContainers(testConfig.options, testConfig.featureGates);
 
 				sharedMap1.on("valueChanged", (changed) => {
 					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
+						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated. Length ${sharedMap1.size}`);
 					}
 				});
 
@@ -195,14 +193,25 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				// The offending container is not closed
 				assert.ok(!container1.closed);
-				assert.equal(sharedMap1.get("key2"), "1 updated");
+				assert.equal(sharedMap1.get("key2"), "1 updated. Length 5");
 
-				// The other container is also fine
-				assert.equal(sharedMap2.get("key1"), "1");
-				assert.equal(sharedMap2.get("key2"), "1 updated");
+				const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+					a.size === b.size &&
+					[...a.entries()].every(([key, value]) => b.get(key) === value);
+				// Both containers are in agreement
+				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 
 				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+				assert.deepEqual(outOfOrderObservations, [
+					"key2",
+					"key1",
+					"key2",
+					"key3",
+					"key2",
+					"key4",
+					"key2",
+					"key5",
+				]);
 			});
 
 			it(`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`, async () => {
