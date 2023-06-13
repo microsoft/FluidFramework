@@ -289,7 +289,6 @@ export class ChildLogger extends TelemetryLogger {
 	 * is created, but it does not send telemetry events anywhere.
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	public static create(
 		baseLogger?: ITelemetryBaseLogger,
@@ -360,7 +359,6 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
- * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[] = [];
@@ -369,7 +367,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
 		super(namespace, properties);
