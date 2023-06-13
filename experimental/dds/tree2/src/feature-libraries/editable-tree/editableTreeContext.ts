@@ -106,7 +106,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	clear(): void;
 
 	/**
-	 * FiedSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
