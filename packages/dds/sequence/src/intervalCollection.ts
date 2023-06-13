@@ -1591,6 +1591,12 @@ export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	create: createSequenceInterval,
 };
 
+export const intervalHelpers: IIntervalHelpers<Interval> = {
+	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
+	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
+	create: createInterval,
+};
+
 class SequenceIntervalCollectionFactory
 	implements IValueFactory<IntervalCollection<SequenceInterval>>
 {
@@ -1640,7 +1646,7 @@ export class SequenceIntervalCollectionValueType
 
 const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
 
-export function createInterval(
+function createInterval(
 	label: string,
 	start: number,
 	end: number,
