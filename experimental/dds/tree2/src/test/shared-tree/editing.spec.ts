@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 
 import { singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
-import { brand, makeArray } from "../../util";
+import { JsonCompatible, brand, makeArray } from "../../util";
 import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
 import { SharedTreeView } from "../../shared-tree";
 
@@ -288,6 +288,143 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 			expectJsonTree(tree1, ["B", "A", "C"]);
 			expectJsonTree(tree2, ["B", "A", "C"]);
+		});
+
+		it("can concurrently change node's value and move node", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Change value of B to C
+			tree1.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
+				"C",
+			);
+
+			// Move B before A.
+			tree2.editor.move(
+				{ parent: undefined, field: rootFieldKeySymbol },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKeySymbol },
+				0,
+			);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			const expectedState: JsonCompatible = ["C", "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
+		it("can concurrently move node and change node's value", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Move B before A.
+			tree1.editor.move(
+				{ parent: undefined, field: rootFieldKeySymbol },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKeySymbol },
+				0,
+			);
+
+			// Change value of B to C
+			tree2.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
+				"C",
+			);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			const expectedState: JsonCompatible = ["C", "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
+		it("can rebase cross-field move over value change of moved node", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+				bar: ["B"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			// Change value of A to C
+			tree1.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+
+			// Move A after B.
+			tree2.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				1,
+				{ parent: barList, field: brand("") },
+				1,
+			);
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: [],
+					bar: ["B", "C"],
+				},
+			];
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
+		it("can rebase value change over cross-field move of changed node", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+				bar: ["B"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			// Move A after B.
+			tree1.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				1,
+				{ parent: barList, field: brand("") },
+				1,
+			);
+
+			// Change value of A to C
+			tree2.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: [],
+					bar: ["B", "C"],
+				},
+			];
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree([tree1, tree2], expectedState);
 		});
 
 		it("move under move-out", () => {
