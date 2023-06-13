@@ -639,15 +639,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 		this.updateCheckpointMessages(rawMessage);
 
+		if (this.lastMessageType === MessageType.ClientJoin) {
+			this.globalCheckpointOnly = false;
+		}
+
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
 			// Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
 			if (checkpointReason === CheckpointReason.NoClients) {
 				this.globalCheckpointOnly = true;
-			} else {
-				if (this.lastMessageType === MessageType.ClientJoin) {
-					this.globalCheckpointOnly = false;
-				}
 			}
 			// checkpoint the current up to date state
 			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
