@@ -455,7 +455,6 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
-		const overIntention = getIntention(overTagged.revision, revisionMetadata);
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
 			if (over.fieldChange !== undefined) {
@@ -483,6 +482,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
+				const overIntention = getIntention(overTagged.revision, revisionMetadata);
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
