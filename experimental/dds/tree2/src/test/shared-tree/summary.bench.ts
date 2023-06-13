@@ -100,7 +100,7 @@ describe("Summary benchmarks", () => {
 			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
 		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({ validator: typeboxValidator });
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
 				title: `a ${shape} tree with ${numberOfNodes} node${
 					numberOfNodes !== 1 ? "s" : ""

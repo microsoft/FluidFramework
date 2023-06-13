@@ -14,7 +14,7 @@ import { JsonValidator } from "./codec";
  * @alpha
  * @privateRemarks - Take care to not reference this validator directly in SharedTree code:
  * the intent of factoring JSON validation into an interface is to make validation more pay-to-play
- * (i.e. a JSON validator is only included in an application's bundle if that application references it)
+ * (i.e. a JSON validator is only included in an application's bundle if that application references it).
  *
  * Defining this validator in its own file also helps to ensure it is tree-shakeable.
  */

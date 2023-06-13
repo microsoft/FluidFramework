@@ -763,9 +763,9 @@ export interface ICodecFamily<TDecoded> {
     resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ICodecOptions {
-    validator: JsonValidator;
+    readonly jsonValidator: JsonValidator;
 }
 
 // @alpha
@@ -1637,7 +1637,7 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
     // (undocumented)
-    check(data: any): data is Static<Schema>;
+    check(data: unknown): data is Static<Schema>;
 }
 
 // @alpha (undocumented)

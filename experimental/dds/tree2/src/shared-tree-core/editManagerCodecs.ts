@@ -11,7 +11,7 @@ import { Commit, EncodedEditManager } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
-	{ validator }: ICodecOptions,
+	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>, string> {
 	const format = validator.compile(
 		EncodedEditManager(changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema),

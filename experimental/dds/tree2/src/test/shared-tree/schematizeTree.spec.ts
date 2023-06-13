@@ -9,7 +9,7 @@ import { SharedTreeFactory } from "../../shared-tree";
 import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../codec";
 
-const factory = new SharedTreeFactory({ validator: typeboxValidator });
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
 const root = builder.primitive("root", ValueSchema.Number);

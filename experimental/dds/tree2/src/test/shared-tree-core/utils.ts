@@ -30,10 +30,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	) {
 		super(
 			summarizables,
-			new DefaultChangeFamily({ validator: typeboxValidator }),
+			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
 			anchors,
 			new MockRepairDataStoreProvider(),
-			{ validator: typeboxValidator },
+			{ jsonValidator: typeboxValidator },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

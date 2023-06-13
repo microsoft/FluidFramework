@@ -40,7 +40,6 @@ import {
 	NodeIdentifierIndex,
 	NodeIdentifier,
 	ModularChangeset,
-	defaultIntoDelta,
 	NewFieldContent,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -87,7 +86,7 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		const options = { validator: noopValidator, ...optionsParam };
+		const options = { jsonValidator: noopValidator, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);

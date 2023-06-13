@@ -36,7 +36,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
 	 * @returns - Whether the data matches a schema.
 	 */
-	check(data: any): data is Static<Schema>;
+	check(data: unknown): data is Static<Schema>;
 }
 
 /**
@@ -52,6 +52,7 @@ export interface JsonValidator {
 }
 
 /**
+ * Options relating to handling of persisted data.
  * @alpha
  */
 export interface ICodecOptions {
@@ -63,7 +64,7 @@ export interface ICodecOptions {
 	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found, which reduces
 	 * the risk of further data corruption.
 	 */
-	validator: JsonValidator;
+	readonly jsonValidator: JsonValidator;
 }
 
 /**

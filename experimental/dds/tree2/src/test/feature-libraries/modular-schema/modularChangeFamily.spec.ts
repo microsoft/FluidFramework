@@ -101,7 +101,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, { validator: typeboxValidator });
+const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -789,7 +789,7 @@ describe("ModularChangeFamily", () => {
 			new Set(),
 		);
 		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
-			validator: noopValidator,
+			jsonValidator: noopValidator,
 		});
 
 		const changeA: ModularChangeset = {

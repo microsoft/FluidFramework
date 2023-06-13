@@ -56,7 +56,7 @@ import { typeboxValidator } from "../../codec";
 import { EditManager } from "../../shared-tree-core";
 import { jsonString } from "../../domains";
 
-const schemaCodec = makeSchemaCodec({ validator: typeboxValidator });
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -2637,7 +2637,7 @@ function initializeTestTree(
 }
 
 function testTreeView(): ISharedTreeView {
-	const factory = new SharedTreeFactory({ validator: typeboxValidator });
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
 	const treeSchema = builder.object("root", { value: ValueSchema.Number });
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));

@@ -8,8 +8,8 @@ import { JsonValidator } from "./codec";
 
 /**
  * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
- * @privateRemarks - This is useful to avoid conditional branching in codecs when the SharedTree configurer
- * passes no validator.
+ * @privateRemarks - Having this as an option unifies opting out of validation with selection of
+ * validators, simplifying code performing validation.
  * @alpha
  */
 export const noopValidator: JsonValidator = {

@@ -14,7 +14,7 @@ import { typeboxValidator } from "../../codec";
 import { jsonSchema, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
 
-const codec = makeSchemaCodec({ validator: typeboxValidator });
+const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 describe("SchemaIndex", () => {
 	it("roundtrip", () => {

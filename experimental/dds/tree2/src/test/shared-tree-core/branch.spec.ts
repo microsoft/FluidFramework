@@ -25,7 +25,7 @@ import { brand } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
 import { noopValidator } from "../../codec";
 
-const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 

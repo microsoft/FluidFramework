@@ -81,7 +81,7 @@ export const testSchema: SchemaData = {
 };
 
 export function makeTree(initialState: JsonableTree): ISharedTree {
-	const factory = new SharedTreeFactory({ validator: typeboxValidator });
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const runtime = new MockFluidDataStoreRuntime();
 	const tree = factory.create(runtime, "TestSharedTree");
 	tree.storedSchema.update(testSchema);

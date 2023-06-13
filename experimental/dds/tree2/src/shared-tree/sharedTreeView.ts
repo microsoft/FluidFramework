@@ -256,7 +256,7 @@ export function createSharedTreeView(args?: {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const changeFamily =
-		args?.changeFamily ?? new DefaultChangeFamily({ validator: noopValidator });
+		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
 	const repairDataStoreProvider =
 		args?.repairProvider ??
 		new ForestRepairDataStoreProvider(forest, schema, (change) =>

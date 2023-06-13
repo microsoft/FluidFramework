@@ -37,7 +37,7 @@ import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
 import { noopValidator } from "../../codec";
 
-const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 

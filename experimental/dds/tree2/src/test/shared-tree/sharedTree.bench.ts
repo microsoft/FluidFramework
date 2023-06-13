@@ -69,7 +69,7 @@ const deepSchema = deepBuilder.intoDocumentSchema(
 	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
-const factory = new SharedTreeFactory({ validator: typeboxValidator });
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 /**
  * JS object like a deep tree.

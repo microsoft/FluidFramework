@@ -61,7 +61,7 @@ describe("EditManagerSummarizer", () => {
 			]),
 		};
 		const codec = makeEditManagerCodec(withDefaultBinaryEncoding(TestChange.codec), {
-			validator: typeboxValidator,
+			jsonValidator: typeboxValidator,
 		});
 		const s1 = codec.encode(input);
 		const output = codec.decode(s1);

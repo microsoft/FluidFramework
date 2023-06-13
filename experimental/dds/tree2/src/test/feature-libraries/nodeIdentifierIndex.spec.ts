@@ -236,7 +236,7 @@ describe("Node Identifier Index", () => {
 		provider.processMessages();
 		const summary = await tree.summarize();
 
-		const factory = new SharedTreeFactory({ validator: typeboxValidator });
+		const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 		const tree2 = await factory.load(
 			new MockFluidDataStoreRuntime(),
 			factory.type,

@@ -197,7 +197,9 @@ function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
  *
  * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
  */
-export function makeSchemaCodec({ validator }: ICodecOptions): IJsonCodec<SchemaData, string> {
+export function makeSchemaCodec({
+	jsonValidator: validator,
+}: ICodecOptions): IJsonCodec<SchemaData, string> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(Format);
 	return {
