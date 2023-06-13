@@ -5,7 +5,7 @@
 		"importHelpers": true,
 		"declarationMap": false,
 		"rootDir": "./",
-		"outDir": "../../lib/test",
+		"outDir": "../../dist/test",
 		"types": ["node", "mocha", "chai"],
 		"skipLibCheck": true,
 	},
