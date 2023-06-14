@@ -29,6 +29,7 @@ import {
 	SchemaBuilder,
 	ValueSchema,
 	SharedTreeFactory,
+	valueSymbol,
 } from "@fluid-experimental/tree2";
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
@@ -141,9 +142,13 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	const numberSchema = builder.primitive("number-property", ValueSchema.Number);
 	const booleanSchema = builder.primitive("boolean-property", ValueSchema.Boolean);
 
+	const serializableSchema = builder.object("serializable-property", {
+		value: ValueSchema.Serializable,
+	});
+
 	const leafSchema = builder.object("nested-item", {
 		local: {
-			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+			leafField: SchemaBuilder.fieldValue(serializableSchema),
 		},
 	});
 
@@ -172,11 +177,15 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 			childrenOne: [
 				{
 					childField: "Hello world!",
-					childData: { leafField: "Hello world again!" },
+					childData: { leafField: { [valueSymbol]: "Hello world again!" } },
 				},
 				{
 					childField: true,
-					childData: { leafField: false },
+					childData: {
+						leafField: {
+							[valueSymbol]: { todo: "Make sharedText.handle work here" }, // TODO: SharedTree should encode the handle.
+						},
+					},
 				},
 			],
 			childrenTwo: [32],
