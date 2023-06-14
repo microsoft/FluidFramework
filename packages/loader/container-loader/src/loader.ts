@@ -443,12 +443,18 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { fromSequenceNumber } = this.parseHeader(parsed, request);
-		const canCache = this.cachingEnabled && request.headers?.[LoaderHeader.cache] !== false;
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
+		request.headers ??= {};
+		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
+		request.headers[LoaderHeader.version] =
+			parsed.version ?? request.headers[LoaderHeader.version];
+		const canCache =
+			this.cachingEnabled &&
+			request.headers[LoaderHeader.cache] !== false &&
+			pendingLocalState === undefined;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
 		let container: Container;
-		if (shouldCache) {
+		if (canCache) {
 			const key = this.getKeyForContainerCache(request, parsed);
 			const maybeContainer = await this.containers.get(key);
 			if (maybeContainer !== undefined) {
@@ -480,25 +486,6 @@ export class Loader implements IHostLoader {
 
 	private get cachingEnabled() {
 		return this.services.options.cache !== false;
-	}
-
-	private parseHeader(parsed: IParsedUrl, request: IRequest) {
-		let fromSequenceNumber = -1;
-
-		request.headers = request.headers ?? {};
-
-		const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-		if (headerSeqNum !== undefined) {
-			fromSequenceNumber = headerSeqNum;
-		}
-
-		// If set in both query string and headers, use query string
-		request.headers[LoaderHeader.version] =
-			parsed.version ?? request.headers[LoaderHeader.version];
-
-		return {
-			fromSequenceNumber,
-		};
 	}
 
 	private async loadContainer(
