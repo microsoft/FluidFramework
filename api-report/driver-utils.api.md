@@ -115,13 +115,15 @@ export const createWriteError: (message: string, props: DriverErrorTelemetryProp
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-    constructor(message: string, props: DriverErrorTelemetryProps);
+    constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
     readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    // (undocumented)
+    readonly storageOnlyReason: string | undefined;
 }
 
 // @public (undocumented)

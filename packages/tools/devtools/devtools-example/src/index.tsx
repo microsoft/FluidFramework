@@ -40,10 +40,12 @@ function DevToolsView(): React.ReactElement {
 				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
+			enable={{ left: true }} // Only allow re-sizing from the left.
 			defaultSize={{ width: 500, height: "100%" }}
-			className={"debugger-panel"}
 		>
-			<DevtoolsPanel messageRelay={new WindowMessageRelay("fluid-client-debugger-inline")} />
+			<DevtoolsPanel
+				messageRelay={new WindowMessageRelay("fluid-framwork-devtools-inline")}
+			/>
 		</Resizable>
 	);
 }
