@@ -1200,7 +1200,10 @@ interface HasComparisonOverride {
  * Compares two objects based on their comparison override properties.
  * @returns A number indicating the order of the intervals (negative for a is lower than b, 0 for tie, positive for a is greater than b).
  */
-function compareOverrideables(a: Partial<HasComparisonOverride>, b: Partial<HasComparisonOverride>): number {
+function compareOverrideables(
+	a: Partial<HasComparisonOverride>,
+	b: Partial<HasComparisonOverride>,
+): number {
 	const forceCompareA = a[forceCompare] ?? 0;
 	const forceCompareB = b[forceCompare] ?? 0;
 
@@ -1222,7 +1225,10 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 				return compareEndsResult;
 			}
 
-			const overrideablesComparison = compareOverrideables(a, b);
+			const overrideablesComparison = compareOverrideables(
+				a as Partial<HasComparisonOverride>,
+				b as Partial<HasComparisonOverride>,
+			);
 			if (overrideablesComparison !== 0) {
 				return overrideablesComparison;
 			}
@@ -1299,7 +1305,10 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 				return compareStartsResult;
 			}
 
-			const overrideablesComparison = compareOverrideables(a, b);
+			const overrideablesComparison = compareOverrideables(
+				a as Partial<HasComparisonOverride>,
+				b as Partial<HasComparisonOverride>,
+			);
 			if (overrideablesComparison !== 0) {
 				return overrideablesComparison;
 			}
