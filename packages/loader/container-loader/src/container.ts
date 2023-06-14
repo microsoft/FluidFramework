@@ -440,6 +440,21 @@ export class Container
 		);
 	}
 
+	// Tells if container can reconnect on losing fist connection
+	// If false, container gets closed on loss of connection.
+	private readonly _canReconnect: boolean;
+	private readonly clientDetailsOverride: IClientDetails | undefined;
+	private readonly urlResolver: IUrlResolver;
+	private readonly serviceFactory: IDocumentServiceFactory;
+	private readonly codeLoader: ICodeDetailsLoader;
+	public readonly options: ILoaderOptions;
+	private readonly scope: FluidObject;
+	public subLogger: TelemetryLogger;
+	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
+	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
+
+	private readonly mc: MonitoringContext;
+
 	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
 	 * @internal
@@ -448,14 +463,6 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createParamOverrides: Partial<IContainerCreateProps>,
 	) => Promise<Container>;
-
-	public subLogger: TelemetryLogger;
-
-	// Tells if container can reconnect on losing fist connection
-	// If false, container gets closed on loss of connection.
-	private readonly _canReconnect: boolean;
-
-	private readonly mc: MonitoringContext;
 
 	/**
 	 * Lifecycle state of the container, used mainly to prevent re-entrancy and telemetry
@@ -506,7 +513,6 @@ export class Container
 		return this.storageAdapter;
 	}
 
-	private readonly clientDetailsOverride: IClientDetails | undefined;
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
@@ -536,7 +542,6 @@ export class Container
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
-	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -671,13 +676,6 @@ export class Container
 		return this._dirtyContainer;
 	}
 
-	private readonly serviceFactory: IDocumentServiceFactory;
-	private readonly urlResolver: IUrlResolver;
-	public readonly options: ILoaderOptions;
-	private readonly scope: FluidObject;
-	private readonly codeLoader: ICodeDetailsLoader;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
-
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
@@ -753,7 +751,7 @@ export class Container
 		this.detachedBlobStorage = detachedBlobStorage;
 		this.protocolHandlerBuilder = protocolHandlerBuilder;
 
-		// Note that we capture the createProps here so we can replicate the creation call to clone.
+		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
 		this.clone = async (
 			_loadProps: IContainerLoadProps,
 			createParamOverrides: Partial<IContainerCreateProps>,
