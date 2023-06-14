@@ -40,6 +40,7 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"@fluidframework/test-client-utils": "workspace:~",
 		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {

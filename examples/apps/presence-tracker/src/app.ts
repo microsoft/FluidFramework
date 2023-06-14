@@ -5,10 +5,12 @@
 
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IFluidContainer, ContainerSchema } from "fluid-framework";
-import {
-	TinyliciousClient,
-	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
+import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+// import {
+// 	TinyliciousClient,
+// 	TinyliciousContainerServices,
+// } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 
@@ -89,9 +91,25 @@ function renderMousePresence(
 
 async function start(): Promise<void> {
 	// Get or create the document depending if we are running through the create new flow
-	const client = new TinyliciousClient();
+	// const client = new TinyliciousClient();
+	// let container: IFluidContainer;
+	// let services: TinyliciousContainerServices;
+	// let containerId: string;
+
+	const client = new AzureClient({
+		connection: {
+			type: "remote",
+			tenantId: "819fc504-44eb-4952-b649-948145915f45", // REPLACE WITH YOUR TENANT ID
+			tokenProvider: new InsecureTokenProvider("c9eae3f3287f9218d5c9894c86bb760b", {
+				id: "userId",
+				name: "Test User",
+			}),
+			endpoint: "https://us.fluidrelay.azure.com", // REPLACE WITH YOUR AZURE ENDPOINT
+		},
+	});
+
 	let container: IFluidContainer;
-	let services: TinyliciousContainerServices;
+	let services: AzureContainerServices;
 	let containerId: string;
 
 	// Get or create the document depending if we are running through the create new flow
