@@ -1188,34 +1188,23 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
 }
 
 /**
- * Represents an object that has comparison overrides for smaller and larger comparisons.
+ * Interface for intervals that have comparison override properties.
  */
-const alwaysCompareSmaller = Symbol();
-const alwaysCompareLarger = Symbol();
+const forceCompare = Symbol();
 
 interface HasComparisonOverride {
-	[alwaysCompareSmaller]: boolean;
-	[alwaysCompareLarger]: boolean;
+	[forceCompare]: number;
 }
 
 /**
- * Compares two partial objects with comparison overrides.
- * @returns A negative number if a should be considered smaller, a positive number if b should be considered smaller, or 0 if they are equal.
+ * Compares two objects based on their comparison override properties.
+ * @returns A number indicating the order of the intervals (-1 for a is lower than b, 0 for tie, 1 for a is greater than b).
  */
 function compareOverrideables(a: any, b: any): number {
-	if (
-		(a as Partial<HasComparisonOverride>)[alwaysCompareSmaller] ||
-		(b as Partial<HasComparisonOverride>)[alwaysCompareLarger]
-	) {
-		return -1;
-	}
-	if (
-		(a as Partial<HasComparisonOverride>)[alwaysCompareLarger] ||
-		(b as Partial<HasComparisonOverride>)[alwaysCompareSmaller]
-	) {
-		return 1;
-	}
-	return 0;
+	const forceCompareA = (a as HasComparisonOverride)[forceCompare] || 0;
+	const forceCompareB = (b as HasComparisonOverride)[forceCompare] || 0;
+
+	return forceCompareA - forceCompareB;
 }
 
 class EndpointInRangeIndex<TInterval extends ISerializableInterval>
@@ -1282,8 +1271,8 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 		);
 
 		// Add comparison overrides to the transient intervals
-		(transientStartInterval as Partial<HasComparisonOverride>)[alwaysCompareSmaller] = true;
-		(transientEndInterval as Partial<HasComparisonOverride>)[alwaysCompareLarger] = true;
+		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
+		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
@@ -1358,8 +1347,8 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		);
 
 		// Add comparison overrides to the transient intervals
-		(transientStartInterval as Partial<HasComparisonOverride>)[alwaysCompareSmaller] = true;
-		(transientEndInterval as Partial<HasComparisonOverride>)[alwaysCompareLarger] = true;
+		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
+		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
