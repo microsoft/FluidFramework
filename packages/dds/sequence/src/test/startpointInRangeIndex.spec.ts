@@ -44,21 +44,19 @@ class TestStartpointInRangeIndex implements IStartpointInRangeIndex<Interval> {
 }
 
 describe("findIntervalsWithStartpointInRange", () => {
-	let helpers;
+	const helpers = intervalHelpers;
+	// sort the query result by the interval startpoint value
+	const compareFn = (a: Interval, b: Interval) => {
+		if (a.start === b.start) {
+			return a.end - b.end;
+		}
+		return a.start - b.start;
+	};
 	let startpointInRangeIndex;
-	let compareFn;
 	let results;
 
 	beforeEach(() => {
-		helpers = intervalHelpers;
 		startpointInRangeIndex = createStartpointInRangeIndex(helpers, undefined as any as Client);
-		// sort the query result by the interval startpoint value
-		compareFn = (a: Interval, b: Interval) => {
-			if (a.start === b.start) {
-				return a.end - b.end;
-			}
-			return a.start - b.start;
-		};
 	});
 
 	describe("finds no intervals", () => {
@@ -67,36 +65,38 @@ describe("findIntervalsWithStartpointInRange", () => {
 			assert.equal(results.length, 0);
 		});
 
-		beforeEach(() => {
-			startpointInRangeIndex.add(createTestInterval(2, 2));
-			startpointInRangeIndex.add(createTestInterval(3, 4));
-		});
+		describe("with intervals in the index", () => {
+			beforeEach(() => {
+				startpointInRangeIndex.add(createTestInterval(2, 2));
+				startpointInRangeIndex.add(createTestInterval(3, 4));
+			});
 
-		it("when start > end for the query range", () => {
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(2, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when start > end for the query range", () => {
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(2, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when start is 0 for the query range", () => {
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(0, 2);
-			assert.equal(results.length, 0);
-		});
+			it("when start is 0 for the query range", () => {
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(0, 2);
+				assert.equal(results.length, 0);
+			});
 
-		it("when endpoints of the query range are negative", () => {
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-2, -1);
-			assert.equal(results.length, 0);
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-1, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when endpoints of the query range are negative", () => {
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-2, -1);
+				assert.equal(results.length, 0);
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(-1, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when all intervals are above the query range", () => {
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when all intervals are above the query range", () => {
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when all intervals are below the query range", () => {
-			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(5, 6);
-			assert.equal(results.length, 0);
+			it("when all intervals are below the query range", () => {
+				results = startpointInRangeIndex.findIntervalsWithStartpointInRange(5, 6);
+				assert.equal(results.length, 0);
+			});
 		});
 	});
 

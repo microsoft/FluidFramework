@@ -42,21 +42,19 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex<Interval> {
 }
 
 describe("findIntervalsWithEndpointInRange", () => {
-	let helpers;
+	const helpers = intervalHelpers;
+	// sort the query result by the interval endpoint value
+	const compareFn = (a: Interval, b: Interval) => {
+		if (a.end === b.end) {
+			return a.start - b.start;
+		}
+		return a.end - b.end;
+	};
 	let endpointInRangeIndex;
-	let compareFn;
 	let results;
 
 	beforeEach(() => {
-		helpers = intervalHelpers;
 		endpointInRangeIndex = createEndpointInRangeIndex(helpers, undefined as any as Client);
-		// sort the query result by the interval endpoint value
-		compareFn = (a: Interval, b: Interval) => {
-			if (a.end === b.end) {
-				return a.start - b.start;
-			}
-			return a.end - b.end;
-		};
 	});
 
 	describe("finds no intervals", () => {
@@ -65,36 +63,38 @@ describe("findIntervalsWithEndpointInRange", () => {
 			assert.equal(results.length, 0);
 		});
 
-		beforeEach(() => {
-			endpointInRangeIndex.add(createTestInterval(1, 2));
-			endpointInRangeIndex.add(createTestInterval(2, 3));
-		});
+		describe("with intervals in the index", () => {
+			beforeEach(() => {
+				endpointInRangeIndex.add(createTestInterval(1, 2));
+				endpointInRangeIndex.add(createTestInterval(2, 3));
+			});
 
-		it("when start > end for the query range", () => {
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(2, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when start > end for the query range", () => {
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(2, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when start is 0 for the query range", () => {
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(0, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when start is 0 for the query range", () => {
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(0, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when endpoints of the query range are negative", () => {
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(-2, -1);
-			assert.equal(results.length, 0);
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(-1, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when endpoint(s) of the query range are negative", () => {
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(-2, -1);
+				assert.equal(results.length, 0);
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(-1, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when all intervals are above the query range", () => {
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
-			assert.equal(results.length, 0);
-		});
+			it("when all intervals are above the query range", () => {
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
+				assert.equal(results.length, 0);
+			});
 
-		it("when all intervals are below the query range", () => {
-			results = endpointInRangeIndex.findIntervalsWithEndpointInRange(4, 5);
-			assert.equal(results.length, 0);
+			it("when all intervals are below the query range", () => {
+				results = endpointInRangeIndex.findIntervalsWithEndpointInRange(4, 5);
+				assert.equal(results.length, 0);
+			});
 		});
 	});
 
