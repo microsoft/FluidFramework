@@ -60,9 +60,9 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
-		// Keep a list of file that needs to be compiled based on the command line and config
-		// And remove the files that we sees from the tsBuildInfo.   The one that are left are
-		// new files and needs to be rebuild.
+		// Keep a list of files that need to be compiled based on the command line flags and config, and
+		// remove the files that we sees from the tsBuildInfo.  The remaining files are
+		// new files that need to be rebuilt.
 		const configFileNames = new Set(config.fileNames);
 
 		// Check dependencies file hashes
