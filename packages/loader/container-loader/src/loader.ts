@@ -431,7 +431,8 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+		const { fromSequenceNumber } = this.parseHeader(parsed, request);
+		const canCache = this.cachingEnabled && request.headers?.[LoaderHeader.cache] !== false;
 		const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
 		let container: Container;
@@ -469,10 +470,6 @@ export class Loader implements IHostLoader {
 		return this.services.options.cache !== false;
 	}
 
-	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
-	}
-
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
 		let fromSequenceNumber = -1;
 
@@ -487,10 +484,7 @@ export class Loader implements IHostLoader {
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
 
-		const canCache = this.canCacheForRequest(request.headers);
-
 		return {
-			canCache,
 			fromSequenceNumber,
 		};
 	}
