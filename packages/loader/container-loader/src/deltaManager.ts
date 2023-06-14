@@ -64,7 +64,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
-	(event: "establisingConnection", listener: (reason: string) => void);
+	(event: "establishingConnection", listener: (reason: string) => void);
 	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
 }
 
@@ -417,7 +417,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private establishingConnection(reason: string) {
-		this.emit("establisingConnection", reason);
+		this.emit("establishingConnection", reason);
 	}
 
 	private connectHandler(connection: IConnectionDetailsInternal) {

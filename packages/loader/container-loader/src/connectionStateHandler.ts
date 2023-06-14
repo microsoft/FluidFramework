@@ -245,18 +245,14 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
-			// ConnectionState.EstablishingConnection state would only be set when first establishing connection
-			// during Container.load() or container.connect().
+			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
+			// during container.connect() or reconnect because of an error.
 			case ConnectionState.EstablishingConnection:
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
 					"connectivity transition to establishing connection",
 				);
 				break;
-			// We will move from ConnectionState.Disconnected to ConnectionState.Catching up in case of reconnects
-			// while we move from ConnectionState.EstablishingConnection to ConnectionState.CatchingUp in case
-			// container.load() or container.connect() as we move first to EstablishingConnection from
-			// Disconnected state.
 			case ConnectionState.CatchingUp:
 				assert(
 					this._connectionState === ConnectionState.EstablishingConnection,

@@ -1863,7 +1863,7 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
-		deltaManager.on("establisingConnection", (reason: string) => {
+		deltaManager.on("establishingConnection", (reason: string) => {
 			this.connectionStateHandler.establishingConnection(reason);
 		});
 
