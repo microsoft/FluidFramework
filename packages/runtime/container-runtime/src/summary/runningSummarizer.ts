@@ -671,16 +671,6 @@ export class RunningSummarizer implements IDisposable {
 					}
 				}
 
-				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "FailToSummarize",
-						reason,
-						message: lastResult?.message,
-					},
-					lastResult?.error,
-				);
-
 				this.stopSummarizerCallback("failToSummarize");
 			},
 			() => {

@@ -170,10 +170,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:FailToSummarize",
-				error: "disconnected",
-			},
 		],
 		async () => {
 			const container = await createContainer();
