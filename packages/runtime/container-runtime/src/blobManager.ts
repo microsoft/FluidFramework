@@ -55,6 +55,7 @@ import { summarizerClientType } from "./summary";
  */
 export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	private attached: boolean = false;
+	private readonly onAttachGraph: () => void;
 
 	public get IFluidHandle(): IFluidHandle {
 		return this;
@@ -70,12 +71,15 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<any>,
+		onAttachGraph: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
+		this.onAttachGraph = onAttachGraph;
 	}
 
 	public attachGraph() {
 		this.attached = true;
+		this.onAttachGraph();
 	}
 
 	public bind(handle: IFluidHandle) {
@@ -122,6 +126,7 @@ export type IBlobManagerRuntime = Pick<
 enum PendingBlobStatus {
 	OnlinePendingUpload,
 	OnlinePendingOp,
+	OnlinePendingAttach,
 	OfflinePendingUpload,
 	OfflinePendingOp,
 }
@@ -132,7 +137,8 @@ interface PendingBlob {
 	blob: ArrayBufferLike;
 	status: PendingBlobStatus;
 	storageId?: string;
-	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
+	handleP: Deferred<BlobHandle>;
+	handle?: BlobHandle;
 	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
@@ -227,6 +233,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.runtime.on("disconnected", () => this.onDisconnected());
+		// this.runtime.on("attached", () => this.onAttached());
+		
 		this.redirectTable = this.load(snapshot);
 
 		// Begin uploading stashed blobs from previous container instance
@@ -286,6 +294,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return sendBlobAttachOp(localId, blobId);
 		};
 	}
+	// private onAttached(): void {
+	// 	this.pendingBlobs.forEach((entry, id) => {
+	// 		if(entry.status === PendingBlobStatus.OnlinePendingAttach){
+	// 			entry.handle?.attachGraph();
+	// 			this.deleteAndEmitsIfEmpty(id);
+	// 		}
+	// 	})
+	// }
 
 	private get pendingOfflineUploads() {
 		return Array.from(this.pendingBlobs.values()).filter(
@@ -391,13 +407,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
+	private getBlobHandle(id: string): BlobHandle {
 		assert(
 			this.redirectTable.has(id) || this.pendingBlobs.has(id),
 			0x384 /* requesting handle for unknown blob */,
 		);
 		return new BlobHandle(`${BlobManager.basePath}/${id}`, this.routeContext, async () =>
-			this.getBlob(id),
+			this.getBlob(id), () => {this.deleteAndEmitsIfEmpty(id);}
 		);
 	}
 
@@ -492,8 +508,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 					// happened before and so, the server won't delete it.
 					this.setRedirection(localId, response.id);
-					entry.handleP.resolve(this.getBlobHandle(localId));
-					this.deleteAndEmitsIfEmpty(localId);
+					const blobHandle = this.getBlobHandle(localId);
+					entry.handle = blobHandle;
+					entry.handleP.resolve(blobHandle);
+					entry.status = PendingBlobStatus.OnlinePendingAttach;
 				} else {
 					// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 					// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
@@ -616,23 +634,23 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// This is safe because the server will keep the blob alive and the op containing the local ID to
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
 				waitingBlobs.forEach((pendingLocalId) => {
-					const pendingBlobEntry = this.pendingBlobs.get(pendingLocalId);
+					const entry = this.pendingBlobs.get(pendingLocalId);
 					assert(
-						pendingBlobEntry !== undefined,
+						entry !== undefined,
 						0x38f /* local online BlobAttach op with no pending blob entry */,
 					);
 
 					// It's possible we transitioned to offline flow while waiting for this op.
-					if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
+					if (entry.status === PendingBlobStatus.OnlinePendingOp) {
 						this.setRedirection(pendingLocalId, blobId);
-						pendingBlobEntry.handleP.resolve(this.getBlobHandle(pendingLocalId));
-						this.deleteAndEmitsIfEmpty(pendingLocalId);
+						const blobHandle = this.getBlobHandle(localId);
+						entry.handle = blobHandle;
+						entry.handleP.resolve(blobHandle);
+						entry.status = PendingBlobStatus.OnlinePendingAttach;
 					}
 				});
 				this.opsInFlight.delete(blobId);
 			}
-			// For blobs that were transitioned to offline flow while waiting for this op, the entry should be deleted.
-			this.deleteAndEmitsIfEmpty(localId);
 		}
 	}
 
