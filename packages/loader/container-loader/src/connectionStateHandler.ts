@@ -500,12 +500,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			"Connection state should be EstablishingConnection",
 		);
 		assert(this.connection === undefined, "No connetion should be present");
-		this.setConnectionState(ConnectionState.Disconnected, reason);
+		const oldState = this._connectionState;
+		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
 	}
 
 	public establishingConnection(reason: string) {
 		const oldState = this._connectionState;
-		this._connectionState = ConnectionState.EstablishingConnection;
 		this.handler.connectionStateChanged(
 			ConnectionState.EstablishingConnection,
 			oldState,
