@@ -225,7 +225,7 @@ and into the area of the forest where the document is stored.
 Changesets themselves don't carry the repair data that is consumed,
 they just describe a change
 (such as the undo of a subtree deletion)
-and it is the `StygianForest` that interprets the change as prompting the consumption of its own repair data.
+and it is the `StygianForest` that interprets the change as prompting the consumption of the relevant repair data stored in the forest.
 
 There are three cases that can lead the consumption of repair data:
 
@@ -464,7 +464,7 @@ that have been revived by the edits that lie within the current collaboration wi
 
 Instead of prohibiting edits to content that has been deleted (and whose deletion is known as opposed to concurrent),
 we may want to allow such edits.
-This would give applications more options for dealing with situations where a client has locally performed some amount work
+This would give applications more options for dealing with situations where a client has locally performed some amount of work
 that involves editing the deleted region of the document.
 Indeed, under the current system, that work cannot be reconciled with the rest of the document, and must be abandoned.
 This is likely to occur if client applications use local branches to stage their work.
