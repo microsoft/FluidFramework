@@ -5,11 +5,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
-<<<<<<< HEAD
-* [`flub generate readme`](#flub-generate-readme)
-=======
 * [`flub generate changeset`](#flub-generate-changeset)
->>>>>>> main
 
 ## `flub generate buildVersion`
 
@@ -63,34 +59,6 @@ DESCRIPTION
   consumption
 ```
 
-<<<<<<< HEAD
-## `flub generate readme`
-
-Adds commands to README.md in current directory.
-
-```
-USAGE
-  $ flub generate readme --dir <value> [--multi] [--aliases]
-
-FLAGS
-  --[no-]aliases  include aliases in the command list
-  --dir=<value>   (required) [default: docs] output directory for multi docs
-  --multi         create a different markdown page for each topic
-
-DESCRIPTION
-  Adds commands to README.md in current directory.
-
-  The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
-
-  # Usage
-  <!-- usage -->
-  # Commands
-  <!-- commands -->
-  # Table of contents
-  <!-- toc -->
-
-  Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
-=======
 ## `flub generate changeset`
 
 Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.
@@ -138,5 +106,4 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
->>>>>>> main
 ```
