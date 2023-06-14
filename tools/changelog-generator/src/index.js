@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, unicorn/prefer-module
 const getReleaseLine = require("./getReleaseLine");
 const getDependencyReleaseLine = require("./getDependencyReleaseLine");
 const changelogFunctions = {
@@ -12,6 +11,3 @@ const changelogFunctions = {
 };
 
 exports.default = changelogFunctions;
-
-// eslint-disable-next-line import/no-default-export
-export default changelogFunctions;
