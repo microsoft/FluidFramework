@@ -18,6 +18,7 @@ import {
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
@@ -125,7 +126,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			sharedString1.insertText(0, "ad");
 			await provider.ensureSynchronized();
 			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if (sequenceDeltaEvent.opArgs.op.seg === "b") {
+				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 					sharedString2.insertText(3, "x");
 				}
 			});
