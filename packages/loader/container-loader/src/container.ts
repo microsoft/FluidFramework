@@ -453,7 +453,7 @@ export class Container
 
 	// Tells if container can reconnect on losing fist connection
 	// If false, container gets closed on loss of connection.
-	private readonly _canReconnect: boolean = true;
+	private readonly _canReconnect: boolean;
 
 	private readonly mc: MonitoringContext;
 
@@ -727,12 +727,31 @@ export class Container
 			);
 		});
 
-		this.serviceFactory = createProps.documentServiceFactory;
-		this.detachedBlobStorage = createProps.detachedBlobStorage;
-		this.urlResolver = createProps.urlResolver;
-		this.scope = createProps.scope;
-		this.codeLoader = createProps.codeLoader;
-		this.protocolHandlerBuilder = createProps.protocolHandlerBuilder;
+		const {
+			canReconnect,
+			clientDetailsOverride,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			subLogger,
+			detachedBlobStorage,
+			protocolHandlerBuilder,
+		} = createProps;
+
+		this._canReconnect = canReconnect ?? true;
+		this.clientDetailsOverride = clientDetailsOverride;
+		this.urlResolver = urlResolver;
+		this.serviceFactory = documentServiceFactory;
+		this.codeLoader = codeLoader;
+		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
+		// Tracking alternative ways to handle this in AB#4129.
+		this.options = { ...options };
+		this.scope = scope;
+		this.detachedBlobStorage = detachedBlobStorage;
+		this.protocolHandlerBuilder = protocolHandlerBuilder;
 
 		// Note that we capture the createProps here so we can replicate the creation call to clone.
 		this.clone = async (
@@ -745,11 +764,6 @@ export class Container
 			});
 		};
 
-		this.clientDetailsOverride = createProps.clientDetailsOverride;
-		if (createProps.canReconnect !== undefined) {
-			this._canReconnect = createProps.canReconnect;
-		}
-
 		// Create logger for data stores to use
 		const type = this.client.details.type;
 		const interactive = this.client.details.capabilities.interactive;
@@ -758,7 +772,7 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(createProps.subLogger, undefined, {
+		this.subLogger = ChildLogger.create(subLogger, undefined, {
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
@@ -792,13 +806,6 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
-		// all clients that were loaded from the same loader (including summarizer clients).
-		// Tracking alternative ways to handle this in AB#4129.
-		this.options = {
-			...createProps.options,
-		};
-
 		this._deltaManager = this.createDeltaManager();
 
 		this.connectionStateHandler = createConnectionStateHandler(
@@ -819,7 +826,7 @@ export class Container
 					}
 				},
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-				maxClientLeaveWaitTime: createProps.options.maxClientLeaveWaitTime,
+				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
@@ -875,10 +882,10 @@ export class Container
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
 		const forceEnableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			createProps.options.summarizeProtocolTree;
+			options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
-			createProps.detachedBlobStorage,
+			detachedBlobStorage,
 			this.mc.logger,
 			loadProps?.pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
