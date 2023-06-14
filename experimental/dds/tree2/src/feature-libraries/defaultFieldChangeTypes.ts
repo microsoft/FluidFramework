@@ -4,7 +4,7 @@
  */
 
 import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../core";
-import { NodeChangeset } from "./modular-schema";
+import { ChangesetLocalId, NodeChangeset } from "./modular-schema";
 
 export type NodeUpdate =
 	| {
@@ -26,6 +26,19 @@ export interface ValueChangeset {
 }
 
 export interface OptionalFieldChange {
+	/**
+	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+	 * Globally unique across all changesets when paired with the changeset's revision tag.
+	 */
+	readonly id: ChangesetLocalId;
+
+	/**
+	 * When populated, indicates the revision that this field change is associated with.
+	 * Is left undefined when the revision is the same as that of the whole changeset
+	 * (which would also be undefined in the case of an anonymous changeset).
+	 */
+	readonly revision?: RevisionTag;
+
 	/**
 	 * The new content for the trait. If undefined, the trait will be cleared.
 	 */
