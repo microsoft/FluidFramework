@@ -44,8 +44,8 @@ export interface IMergeNodeCommon {
 	isLeaf(): this is ISegment;
 }
 
-export type IMergeSegment = ISegment & { parent?: IMergeBlock };
-export type IMergeNode = IMergeBlock | IMergeSegment;
+export type IMergeLeaf = ISegment & { parent?: IMergeBlock };
+export type IMergeNode = IMergeBlock | IMergeLeaf;
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
  */
@@ -482,11 +482,11 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public splitAt(pos: number): ISegment | undefined {
 		if (pos > 0) {
-			const leafSegment: IMergeSegment | undefined = this.createSplitSegmentAt(pos);
+			const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
 			if (leafSegment) {
 				this.copyPropertiesTo(leafSegment);
 				// eslint-disable-next-line @typescript-eslint/no-this-alias
-				const thisAsMergeSegment: IMergeSegment = this;
+				const thisAsMergeSegment: IMergeLeaf = this;
 				leafSegment.parent = thisAsMergeSegment.parent;
 
 				// Give the leaf a temporary yet valid ordinal.

@@ -38,7 +38,7 @@ import {
 	InsertContext,
 	internedSpaces,
 	IRemovalInfo,
-	IMergeSegment as ISegment,
+	IMergeLeaf as ISegment,
 	ISegmentAction,
 	ISegmentChanges,
 	Marker,

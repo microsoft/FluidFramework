@@ -19,7 +19,7 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { List } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, IMergeSegment, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -148,7 +148,7 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			d.deltaSegments.forEach((s) => {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: IMergeSegment = s.segment;
+					const seg: IMergeLeaf = s.segment;
 					assert.notEqual(seg.parent, undefined);
 				}
 			});
