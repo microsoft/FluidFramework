@@ -124,7 +124,7 @@ export class KafkaRunner implements IRunner {
 			// Close the underlying consumer, but setting a timeout for safety
 			await promiseTimeout(30000, this.consumer.close());
 
-			// Mark ourselves done once the partition manager has stopped or failed to stop
+			// Mark ourselves done once the partition manager has stopped
 			if (caller === "sigterm" || caller === "uncaughtException") {
 				this.deferred?.reject({ customMessage: `Kafka runner stopped`, caller }); // so that the runService exits the process with exit(1)
 			} else {
