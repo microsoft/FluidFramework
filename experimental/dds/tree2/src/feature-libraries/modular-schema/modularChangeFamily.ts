@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ICodecFamily } from "../../codec";
+import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -74,8 +74,11 @@ export class ModularChangeFamily
 {
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
-	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		this.codecs = makeModularChangeCodecFamily(this.fieldKinds);
+	public constructor(
+		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+		codecOptions: ICodecOptions,
+	) {
+		this.codecs = makeModularChangeCodecFamily(this.fieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {

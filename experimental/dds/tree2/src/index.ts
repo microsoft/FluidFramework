@@ -251,6 +251,7 @@ export {
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeOptions,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
@@ -259,11 +260,16 @@ export {
 export type {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
+	SchemaValidationFunction,
 } from "./codec";
+export { noopValidator } from "./codec";
+export { typeboxValidator } from "./external-utilities";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

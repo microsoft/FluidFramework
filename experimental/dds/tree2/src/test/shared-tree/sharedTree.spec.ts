@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
-	getSchemaString,
+	makeSchemaCodec,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
 	on,
@@ -52,8 +52,11 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { jsonString } from "../../domains";
+
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -84,7 +87,7 @@ describe("SharedTree", () => {
 		assert(provider.trees[1].isAttached());
 
 		const value = "42";
-		const expectedSchema = getSchemaString(testSchema);
+		const expectedSchema = schemaCodec.encode(testSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
 		initializeTestTree(provider.trees[0]);
@@ -92,17 +95,17 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.equal(getTestValue(provider.trees[0]), value);
-		assert.equal(getSchemaString(provider.trees[0].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		assert.equal(getTestValue(provider.trees[1]), value);
 		// Ensure second tree got the schema from initialization:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
 		assert.equal(getTestValue(joinedLaterTree), value);
 		// Ensure schema catchup works:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
 	});
 
 	it("can summarize and load", async () => {
@@ -115,7 +118,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
 		assert.equal(getTestValue(loadingTree), value);
-		assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
+		assert.equal(schemaCodec.encode(loadingTree.storedSchema), schemaCodec.encode(testSchema));
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -2684,7 +2687,7 @@ function initializeTestTree(
 }
 
 function testTreeView(): ISharedTreeView {
-	const factory = new SharedTreeFactory();
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
 	const treeSchema = builder.object("root", { value: ValueSchema.Number });
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));

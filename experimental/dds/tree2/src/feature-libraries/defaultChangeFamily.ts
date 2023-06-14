@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -42,8 +42,8 @@ const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor() {
-		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
+	public constructor(codecOptions: ICodecOptions) {
+		this.modularFamily = new ModularChangeFamily(defaultFieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -65,9 +65,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return new DefaultEditBuilder(this, changeReceiver, anchorSet);
 	}
 }
-
-export const defaultChangeFamily = new DefaultChangeFamily();
-export const defaultIntoDelta = (change: DefaultChangeset) => defaultChangeFamily.intoDelta(change);
 
 /**
  * Default editor for transactions.
