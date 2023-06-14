@@ -113,7 +113,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		it.only(`Sequence inconsistency - ${
+		it(`Sequence inconsistency - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
 			await setupContainers({
@@ -134,6 +134,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			sharedString1.insertText(1, "b");
 			sharedString1.insertText(2, "c");
 			await provider.ensureSynchronized();
+			assert.strictEqual(sharedString1.getText(), enableGroupedBatching ? "abcxd" : "abcdx");
 			assert.strictEqual(
 				sharedString1.getText(),
 				sharedString2.getText(),
