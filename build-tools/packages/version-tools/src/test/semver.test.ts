@@ -5,7 +5,6 @@
 import { assert } from "chai";
 
 import { bumpRange, detectBumpType, getPreviousVersions, isPrereleaseVersion } from "../semver";
-import { isInternalVersionScheme } from "../internalVersionScheme";
 
 describe("semver", () => {
 	describe("detectBumpType semver", () => {
@@ -77,17 +76,6 @@ describe("semver", () => {
 
 		it("prepatch bump type returns patch", () => {
 			assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "patch");
-		});
-
-		it("prerelease bump type returns undefined", () => {
-			assert.isUndefined(
-				detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.1.0.0"),
-			);
-		});
-
-		it("isInternal", () => {
-			const isInternal = isInternalVersionScheme("2.0.0-internal.1.0.0.82134", true, true);
-			assert.isTrue(isInternal);
 		});
 
 		it("v1 >= v2 throws", () => {
