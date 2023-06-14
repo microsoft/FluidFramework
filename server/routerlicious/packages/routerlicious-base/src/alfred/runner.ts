@@ -173,7 +173,7 @@ export class AlfredRunner implements IRunner {
 			(error) => {
 				if (!this.runnerMetric.isCompleted()) {
 					this.runnerMetric.error(
-						"Alfred runner encountered an error during server.close",
+						"Alfred runner encountered an error during stop",
 						error,
 					);
 				}

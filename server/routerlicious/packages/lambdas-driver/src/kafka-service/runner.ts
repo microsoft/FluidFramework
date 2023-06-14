@@ -136,10 +136,7 @@ export class KafkaRunner implements IRunner {
 			}
 		} catch (error) {
 			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.error(
-					"Kafka runner encountered an error during server.close",
-					error,
-				);
+				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
 			this.deferred?.reject({
 				error,
