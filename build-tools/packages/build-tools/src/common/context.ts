@@ -10,12 +10,12 @@ import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { Logger, defaultLogger } from "../common/logging";
-import { MonoRepo } from "../common/monoRepo";
+import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
-import { fatal, prereleaseSatisfies, MonoRepoKind, isMonoRepoKind } from "./utils";
+import { fatal } from "./utils";
 import { ReferenceVersionBag, VersionBag } from "./versionBag";
 
 function prereleaseSatisfies(packageVersion: string, range: string) {

@@ -8,7 +8,7 @@ export { GitRepo } from "./common/gitRepo";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
-export { MonoRepo } from "./common/monoRepo";
+export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
 export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 export { VersionBag } from "./common/versionBag";
