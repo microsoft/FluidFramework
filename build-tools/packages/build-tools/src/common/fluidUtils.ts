@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as childProcess from "node:child_process";
 import * as path from "node:path";
 import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
@@ -55,9 +56,18 @@ async function isFluidRoot(dir: string) {
 }
 
 async function inferRoot(log: Logger = defaultLogger) {
-	const fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
+	let fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
 	if (fluidConfig === undefined) {
-		return undefined;
+		log?.verbose(`No fluidBuild.config.cjs found. Falling back to git root.`);
+		// Use the git root as a fallback for older branches where the fluidBuild config is still in
+		// package.json
+		const gitRoot = childProcess
+			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.trim();
+		fluidConfig = path.join(gitRoot, "package.json");
+		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
+			return undefined;
+		}
 	}
 	const isRoot = await isFluidRootPackage(path.dirname(fluidConfig), log);
 	if (isRoot) {
@@ -73,7 +83,7 @@ export async function getResolvedFluidRoot(log: Logger = defaultLogger) {
 	if (root) {
 		log.verbose(`Using argument root @ ${root}`);
 	} else {
-		root = await inferRoot();
+		root = await inferRoot(log);
 		if (root) {
 			checkFluidRoot = false;
 			log.verbose(`Using inferred root @ ${root}`);

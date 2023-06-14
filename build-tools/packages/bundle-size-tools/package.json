@@ -18,8 +18,6 @@
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist *.tsbuildinfo",
 		"eslint": "eslint --format stylish src",
