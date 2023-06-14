@@ -81,6 +81,7 @@ export {
 	_RecursiveTrick,
 	FlattenKeys,
 	AllowOptionalNotFlattened,
+	RestrictiveReadonlyRecord,
 } from "./typeUtils";
 
 export {

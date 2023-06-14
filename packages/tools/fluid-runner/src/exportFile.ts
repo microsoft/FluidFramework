@@ -42,6 +42,7 @@ export async function exportFile(
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -70,6 +71,7 @@ export async function exportFile(
 						logger,
 						options,
 						timeout,
+						disableNetworkFetch,
 					),
 				);
 
@@ -95,8 +97,15 @@ export async function createContainerAndExecute(
 	logger: ITelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
+	disableNetworkFetch: boolean = false,
 ): Promise<string> {
 	const fn = async () => {
+		if (disableNetworkFetch) {
+			global.fetch = async () => {
+				throw new Error("Network fetch is not allowed");
+			};
+		}
+
 		const loader = new Loader({
 			urlResolver: new FakeUrlResolver(),
 			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
