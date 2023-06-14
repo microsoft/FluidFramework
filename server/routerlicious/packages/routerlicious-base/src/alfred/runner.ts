@@ -148,45 +148,40 @@ export class AlfredRunner implements IRunner {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public stop(caller?: string): Promise<void> {
+	public async stop(caller?: string): Promise<void> {
 		if (this.stopped) {
 			return;
 		}
 		this.stopped = true;
 
-		// Close the underlying server and then resolve the runner once closed
-		return this.server.close().then(
-			() => {
-				if (caller === "sigterm" || caller === "uncaughtException") {
-					this.runningDeferred?.reject({
-						customMessage: `Alfred runner stopped`,
-						caller,
-					}); // so that the runService exits the process with exit(1)
-				} else {
-					this.runningDeferred?.resolve();
-				}
-				this.runningDeferred = undefined;
-				if (!this.runnerMetric.isCompleted()) {
-					this.runnerMetric.success("Alfred runner stopped");
-				}
-			},
-			(error) => {
-				if (!this.runnerMetric.isCompleted()) {
-					this.runnerMetric.error(
-						"Alfred runner encountered an error during stop",
-						error,
-					);
-				}
+		try {
+			// Close the underlying server and then resolve the runner once closed
+			await this.server.close();
+			if (caller === "sigterm" || caller === "uncaughtException") {
 				this.runningDeferred?.reject({
-					error,
-					customMessage: "Alfred runner couldnt be stopped",
+					customMessage: `Alfred runner stopped`,
 					caller,
-					forceKill: true,
-				});
-				this.runningDeferred = undefined;
-				throw error;
-			},
-		);
+				}); // so that the runService exits the process with exit(1)
+			} else {
+				this.runningDeferred?.resolve();
+			}
+			this.runningDeferred = undefined;
+			if (!this.runnerMetric.isCompleted()) {
+				this.runnerMetric.success("Alfred runner stopped");
+			}
+		} catch (error) {
+			if (!this.runnerMetric.isCompleted()) {
+				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
+			}
+			this.runningDeferred?.reject({
+				customMessage: "Alfred runner couldnt be stopped",
+				caller,
+				error,
+				forceKill: true,
+			});
+			this.runningDeferred = undefined;
+			throw error;
+		}
 	}
 
 	/**

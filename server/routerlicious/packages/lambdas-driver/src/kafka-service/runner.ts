@@ -139,9 +139,9 @@ export class KafkaRunner implements IRunner {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
 			this.deferred?.reject({
-				error,
 				customMessage: `Kafka runner couldnt be stopped`,
 				caller,
+				error,
 				forceKill: true,
 			});
 			this.deferred = undefined;
