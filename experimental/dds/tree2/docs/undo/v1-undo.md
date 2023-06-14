@@ -131,7 +131,7 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 -   Creating an undo (or redo) edit
 -   Applying a (peer or local) undo (or redo) edit on a `SharedTreeView`
--   Applying the effect of an move (peer or local) that pulls content out from a previously deleted subtree and into the document tree
+-   Applying the effect of a move (peer or local) that pulls content out from a previously deleted subtree and into the document tree
 -   Applying the effect of rebasing local destructive changes
     (i.e., overwrites and deletions)
     that were predicated on a constraint that was violated as part of the rebase
@@ -160,7 +160,8 @@ This coupling of repair data with the in-document data is motivated by the follo
 
 The alternative, coupling repair data with the changesets that birthed them, is undesirable for the following reasons:
 
--   While, once rebased, a changeset is fixed, the repair data that this changeset initially produced may change over time.
+-   While, once rebased, a changeset is fixed, the repair data that this changeset initially produced may change over time
+    due to concurrent edits that affect the removed portion of the tree.
 -   Several components/layers of the `SharedTree` system deal with changesets, not all of them need to care about repair data.
 -   Decoupling repair data from changesets frees the rebasing system from having to plumb through a repair data querying interface,
     making it more self-contained and therefore easier to implement and test.
@@ -187,8 +188,7 @@ Here is one approach that can be used:
 -   Store the repair data under a detached field with a unique ID such as `styx-${counter}` where...
     -   `counter` is monotonically increased integer that is scope to the `StygianForest`.
 -   Keep a `Map<RevisionId, { changeId: ChangesetLocalId, repairData: number }>` where..
-    -   The map key is the revision associated with the changeset that lead to the creation of the repair data.
-    -   The `changeId` field is the `ChangesetLocalId` associate with the change that lead to the creation of a specific piece of repair data.
+    -   The `changeId` field is the `ChangesetLocalId` associated with the change that lead to the creation of a specific piece of repair data.
     -   The `repairData` field is the value of the `counter` when deriving `styx-${counter}` .
 
 ### Creating Repair Data On Change Application
@@ -219,6 +219,13 @@ If it does, then it can safely keep the repair data that it has.
 If it doesn't, then it should add it to the inner forest and keep a record of where that particular piece of repair data is stored in the inner forest.
 
 ### Consuming Repair Data On Change Application
+
+"Consuming" refers to the act of moving content out of the area of the forest where repair data is stored
+and into the area of the forest where the document is stored.
+Changesets themselves don't carry the repair data that is consumed,
+they just describe a change
+(such as the undo of a subtree deletion)
+and it is the `StygianForest` that interprets the change as prompting the consumption of its own repair data.
 
 There are three cases that can lead the consumption of repair data:
 
@@ -333,7 +340,8 @@ The repair data associated with a given edit E must _not_ be garbage-collected i
 -   E was produced by the local session and E is within the undo window supported by the session.
 -   E was still in the collaboration window
     (meaning its sequence number was >= to the min ref sequence number)
-    when the edit whose sequence number is the same as the current min ref sequence number.
+    when edit X was sequenced,
+    where X is the edit whose sequence number is the same as the current min ref sequence number.
     (see diagrams below.)
 
 In all other cases, the repair data associated with E must be garbage-collected.
@@ -347,7 +355,8 @@ The one drawback,
 is that peers will not have the required repair data to apply the undo edit that a session might generate
 if the undo occurs sufficiently late.
 We address this problem by including in the undo commit being sent a copy of the relevant repair data,
-if the edit being undone lies outside of the current collaboration window.
+if the edit being undone lies outside of the current collaboration window
+(represented as a light blue rectangle in the diagrams below).
 This acts as a "refresher" for any peers that may have garbage collected that repair data.
 (See [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) for details on how that refresher is handled by the peers.)
 
@@ -388,12 +397,12 @@ so long as it is conceived within or before the light blue collaboration window 
 will be sequenced within or before the dark blue collaboration window span,
 during which peers will still be holding on to their copy of the repair data.
 
-While the repair data being send may be large,
+While the repair data being sent may be large,
 and therefore costly to send over the wire,
 this cost is only incurred when undo is actually used.
 
 While this repair data is part of the undo commit,
-it is not a change properly speaking a change and therefore does not take part in rebasing operations.
+it is not, properly speaking, a change and therefore does not take part in rebasing operations.
 
 Note that, contrary to cases where the repair data is consumed,
 generating such an undo should not remove the repair data from the `StygianForest`.
@@ -455,7 +464,7 @@ that have been revived by the edits that lie within the current collaboration wi
 
 Instead of prohibiting edits to content that has been deleted (and whose deletion is known as opposed to concurrent),
 we may want to allow such edits.
-This would give application more options for dealing with situations where a client has locally performed some amount work
+This would give applications more options for dealing with situations where a client has locally performed some amount work
 that involves editing the deleted region of the document.
 Indeed, under the current system, that work cannot be reconciled with the rest of the document, and must be abandoned.
 This is likely to occur if client applications use local branches to stage their work.
@@ -494,7 +503,7 @@ More generally, a client may want to create a node and populate its fields with 
 This is easy to accomplish using the move editing API when the source and destination fields of children being transplanted allow for the absence of said children.
 When either or both of those fields require the presence of a child
 (as is the case for a value field)
-the it's either impossible to move the child out of the source field,
+then it's either impossible to move the child out of the source field,
 or impossible to create the destination field's parent without the field being populated,
 or both.
 
