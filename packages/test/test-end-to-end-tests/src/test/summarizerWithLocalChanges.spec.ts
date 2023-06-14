@@ -16,7 +16,11 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
+import {
+	describeNoCompat,
+	getContainerRuntimeApi,
+	itExpects,
+} from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
@@ -151,17 +155,27 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
-	it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
-		const container = await createContainer();
-		await waitForContainerConnection(container);
-		const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "default");
-		const newDO = await dataStoreFactory1.createInstance(rootDataObject.containerRuntime);
-		rootDataObject._root.set("store", newDO.handle);
-		const summarizerClient = await createSummarizer(provider, container);
+	itExpects(
+		"No Summary Upload Error when DS gets realized between summarize and completeSummary",
+		[
+			{ eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+		],
+		async () => {
+			const container = await createContainer();
+			await waitForContainerConnection(container);
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(
+				container,
+				"default",
+			);
+			const newDO = await dataStoreFactory1.createInstance(rootDataObject.containerRuntime);
+			rootDataObject._root.set("store", newDO.handle);
+			const summarizerClient = await createSummarizer(provider, container);
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// This should not fail
-		await assert.rejects(waitForSummary(summarizerClient), "expected NodeDidNotRunGC");
-	});
+			// This should not fail
+			await assert.rejects(waitForSummary(summarizerClient), "expected NodeDidNotRunGC");
+		},
+	);
 });
