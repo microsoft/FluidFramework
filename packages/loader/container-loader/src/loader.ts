@@ -308,28 +308,41 @@ export class Loader implements IHostLoader {
 	private readonly mc: MonitoringContext;
 
 	constructor(loaderProps: ILoaderProps) {
-		const scope: FluidObject<ILoader> = { ...loaderProps.scope };
-		if (loaderProps.options?.provideScopeLoader !== false) {
-			scope.ILoader = this;
-		}
+		const {
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			logger,
+			detachedBlobStorage,
+			configProvider,
+			protocolHandlerBuilder,
+		} = loaderProps;
+
 		const telemetryProps = {
 			loaderId: uuid(),
 			loaderVersion: pkgVersion,
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, {
+			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
 				all: telemetryProps,
 			}),
 			sessionStorageConfigProvider.value,
-			loaderProps.configProvider,
+			configProvider,
 		);
 
 		this.services = {
-			...loaderProps,
-			scope,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options: options ?? {},
+			scope:
+				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+			detachedBlobStorage,
+			protocolHandlerBuilder,
 			subLogger: subMc.logger,
-			options: loaderProps.options ?? {},
 		};
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
 	}
