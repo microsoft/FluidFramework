@@ -431,6 +431,40 @@ describe("Runtime", () => {
 					})),
 				);
 			});
+
+			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{
+						flushMode: FlushMode.Immediate,
+					}, // runtimeOptions
+				);
+
+				assert.throws(() =>
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.orderSequentially(() => {});
+					}),
+				);
+			});
+
+			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				const callback = () => {
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.submitDataStoreOp("id", "test");
+						callback();
+					});
+				};
+				assert.throws(() => callback());
+			});
 		});
 
 		describe("orderSequentially with rollback", () =>
@@ -1148,6 +1182,7 @@ describe("Runtime", () => {
 					gcAllowed: true,
 				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+				enableBatchRebasing: true,
 			};
 
 			const defaultRuntimeOptions = {
@@ -1164,6 +1199,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
+				enableBatchRebasing: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -1180,7 +1216,10 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({ idCompressorEnabled: false }),
+						featureGates: JSON.stringify({
+							idCompressorEnabled: false,
+							enableBatchRebasing: true,
+						}),
 					},
 				]);
 			});
@@ -1191,6 +1230,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
+					"Fluid.ContainerRuntime.DisableBatchRebasing": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1209,6 +1249,7 @@ describe("Runtime", () => {
 							disableOpReentryCheck: false,
 							disableChunking: true,
 							idCompressorEnabled: true,
+							enableBatchRebasing: false,
 						}),
 					},
 				]);

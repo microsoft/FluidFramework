@@ -201,4 +201,28 @@ describe("BatchManager", () => {
 		// 10 bytes of content + 200 bytes overhead x 10
 		assert.equal(estimateSocketSize(batchManager.popBatch()), 2010);
 	});
+
+	it("Batch op reentry state preserved during its lifetime", () => {
+		const batchManager = new BatchManager({ hardLimit });
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+
+		assert.equal(batchManager.popBatch().hasReentrantOps, false);
+
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+		assert.equal(
+			batchManager.push(
+				{ ...smallMessage(), referenceSequenceNumber: 1 },
+				/* currentClientSequenceNumber */ undefined,
+				/* reentrant */ true,
+			),
+			true,
+		);
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+		assert.equal(batchManager.popBatch().hasReentrantOps, true);
+
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+		assert.equal(batchManager.popBatch().hasReentrantOps, false);
+	});
 });
