@@ -141,7 +141,12 @@ export class KafkaRunner implements IRunner {
 					error,
 				);
 			}
-			this.deferred?.reject({error, customMessage: `Kafka runner couldnt be stopped`, caller, forceKill: true});
+			this.deferred?.reject({
+				error,
+				customMessage: `Kafka runner couldnt be stopped`,
+				caller,
+				forceKill: true,
+			});
 			this.deferred = undefined;
 			throw error;
 		}

@@ -177,7 +177,12 @@ export class AlfredRunner implements IRunner {
 						error,
 					);
 				}
-				this.runningDeferred?.reject({error, customMessage: "Alfred runner couldnt be stopped", caller, forceKill: true});
+				this.runningDeferred?.reject({
+					error,
+					customMessage: "Alfred runner couldnt be stopped",
+					caller,
+					forceKill: true,
+				});
 				this.runningDeferred = undefined;
 				throw error;
 			},
