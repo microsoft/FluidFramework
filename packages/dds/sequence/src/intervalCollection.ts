@@ -1200,9 +1200,9 @@ interface HasComparisonOverride {
  * Compares two objects based on their comparison override properties.
  * @returns A number indicating the order of the intervals (-1 for a is lower than b, 0 for tie, 1 for a is greater than b).
  */
-function compareOverrideables(a: any, b: any): number {
-	const forceCompareA = (a as HasComparisonOverride)[forceCompare] || 0;
-	const forceCompareB = (b as HasComparisonOverride)[forceCompare] || 0;
+function compareOverrideables(a: Partial<HasComparisonOverride>, b: Partial<HasComparisonOverride>): number {
+	const forceCompareA = a[forceCompare] ?? 0;
+	const forceCompareB = b[forceCompare] ?? 0;
 
 	return forceCompareA - forceCompareB;
 }
