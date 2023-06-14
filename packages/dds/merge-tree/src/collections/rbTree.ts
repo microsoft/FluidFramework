@@ -600,7 +600,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		start?: TKey,
 		end?: TKey,
 	) {
-		this.nodeMap(this.root, action, start, end);
+		this.nodeMap(this.root, action, accum, start, end);
 	}
 
 	public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {

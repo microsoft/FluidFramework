@@ -16,6 +16,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 import { DefaultEditBuilder, FieldKind } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -29,7 +30,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds);
+const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

@@ -66,6 +66,12 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 // @public (undocumented)
+export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
+
+// @public (undocumented)
+export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
+
+// @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @alpha
@@ -76,6 +82,12 @@ export function getTextAndMarkers(sharedString: SharedString, label: string, sta
     parallelText: string[];
     parallelMarkers: Marker[];
 };
+
+// @public
+export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
+    // (undocumented)
+    findIntervalsWithEndpointInRange(start: number, end: number): any;
+}
 
 // @public
 export interface IInterval {
@@ -133,10 +145,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
+    // (undocumented)
+    compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
     create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
@@ -325,6 +339,12 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
+// @public
+export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
+    // (undocumented)
+    findIntervalsWithStartpointInRange(start: number, end: number): any;
+}
+
 // @internal
 export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
@@ -391,6 +411,9 @@ export class SequenceInterval implements ISerializableInterval {
     // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
+
+// @public (undocumented)
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
 // @public
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
