@@ -53,6 +53,8 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
+	FieldGenerator,
+	TreeDataContext,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";

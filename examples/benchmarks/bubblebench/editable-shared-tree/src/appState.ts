@@ -19,7 +19,10 @@ export class AppState implements IAppState {
 		clientsSequence.insertNodes(
 			clientsSequence.length,
 			cursorFromContextualData(
-				clientsSequence.context.schema,
+				{
+					schema: clientsSequence.context.schema,
+					fieldSource: () => undefined,
+				},
 				rootAppStateSchema.types,
 				this.createInitialClientNode(numBubbles),
 			),

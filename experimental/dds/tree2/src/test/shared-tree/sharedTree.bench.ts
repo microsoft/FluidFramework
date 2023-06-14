@@ -372,7 +372,9 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedTreeData(
-								tree.storedSchema,
+								{
+									schema: tree.storedSchema,
+								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),

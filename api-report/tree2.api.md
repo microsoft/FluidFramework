@@ -269,10 +269,10 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
-export function cursorForTypedTreeData<T extends TreeSchema>(schemaData: SchemaDataAndPolicy, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
+export function cursorForTypedTreeData<T extends TreeSchema>(context: TreeDataContext, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
 
 // @alpha
-export function cursorFromContextualData(schemaData: SchemaDataAndPolicy, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
 export const enum CursorLocationType {
@@ -384,6 +384,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 // @alpha
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
@@ -506,6 +507,9 @@ export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
+
+// @alpha
+export type FieldGenerator = () => MapTree[];
 
 // @alpha
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
@@ -1110,6 +1114,12 @@ interface MakeNominal {
 }
 
 // @alpha
+export interface MapTree extends NodeData {
+    // (undocumented)
+    fields: Map<FieldKey, MapTree[]>;
+}
+
+// @alpha
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
 // @alpha
@@ -1661,6 +1671,12 @@ export interface TreeAdapter {
     readonly input: TreeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeSchemaIdentifier;
+}
+
+// @alpha
+export interface TreeDataContext {
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+    readonly schema: SchemaDataAndPolicy;
 }
 
 // @alpha (undocumented)
