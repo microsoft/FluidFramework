@@ -10,23 +10,19 @@ import {
 	handleShapesAndIdentifiers,
 	IdentifierToken,
 	Shape,
-	DecoderCache,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingGeneric";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 
 import {
 	EncodedChunkGeneric,
 	unionOptions,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/formatGeneric";
+} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
 import {
-	ChunkDecoder,
 	Counter,
 	DeduplicationTable,
-	DiscriminatedUnionDispatcher,
-	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingUtilities";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
 import { ReferenceCountedBase } from "../../../../util";
 import { TreeChunk } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
@@ -127,27 +123,6 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 
 	protected dispose(): void {}
 }
-
-const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShape,
-	[cache: DecoderCache<EncodedChunkShape>],
-	ChunkDecoder
->({
-	a(shape: Constant, cache): ChunkDecoder {
-		return {
-			decode(decoders, stream): TreeChunk {
-				return new TestChunk2(readStreamNumber(stream));
-			},
-		};
-	},
-	b(shape: StringShape, cache): ChunkDecoder {
-		return {
-			decode(decoders, stream): TreeChunk {
-				return new TestChunk1(shape);
-			},
-		};
-	},
-});
 
 describe("chunkEncodingGeneric", () => {
 	describe("handleShapesAndIdentifiers", () => {
@@ -296,27 +271,5 @@ describe("chunkEncodingGeneric", () => {
 	// 		shapes: [{ b: "content" }],
 	// 		data: [0],
 	// 	});
-	// });
-
-	// it("decode: constant shape", () => {
-	// 	const chunk = decode(decoderLibrary, {
-	// 		version,
-	// 		identifiers: [],
-	// 		shapes: [{ a: 0 }],
-	// 		data: [0, 5],
-	// 	});
-	// 	assert(chunk instanceof TestChunk2);
-	// 	assert.equal(chunk.value, 5);
-	// });
-
-	// it("decode: flexible shape", () => {
-	// 	const chunk = decode(decoderLibrary, {
-	// 		version,
-	// 		identifiers: [],
-	// 		shapes: [{ b: "content" }],
-	// 		data: [0],
-	// 	});
-	// 	assert(chunk instanceof TestChunk1);
-	// 	assert.equal(chunk.value, "content");
 	// });
 });

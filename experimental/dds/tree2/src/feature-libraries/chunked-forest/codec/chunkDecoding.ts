@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { BrandedType, assertValidIndex } from "../../../util";
+import { assertValidIndex } from "../../../util";
 import {
 	FieldKey,
 	GlobalFieldKey,
@@ -16,6 +16,7 @@ import {
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
+import { emptyChunk } from "../emptyChunk";
 import {
 	EncodedAnyShape,
 	EncodedChunk,
@@ -29,14 +30,17 @@ import {
 	ChunkDecoder,
 	DiscriminatedUnionDispatcher,
 	StreamCursor,
-	generalDecoder,
 	getChecked,
 	readStream,
 	readStreamBoolean,
 	readStreamNumber,
 	readStreamStream,
-} from "./chunkEncodingUtilities";
-import { DecoderCache, decode as genericDecode } from "./chunkEncodingGeneric";
+} from "./chunkCodecUtilities";
+import {
+	DecoderCache,
+	decode as genericDecode,
+	readStreamIdentifier,
+} from "./chunkDecodingGeneric";
 
 export function decode(chunk: EncodedChunk): TreeChunk {
 	return genericDecode(
@@ -66,39 +70,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 });
 
-type BasicFieldDecoder = (
-	decoders: readonly ChunkDecoder[],
-	stream: StreamCursor,
-) => [FieldKey, TreeChunk];
-
-function fieldDecoder(
-	cache: DecoderCache<EncodedChunkShape>,
-	key: FieldKey,
-	shape: number | undefined,
-): BasicFieldDecoder {
-	if (shape !== undefined) {
-		assertValidIndex(shape, cache.shapes);
-		return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
-	} else {
-		return (decoders, stream) => {
-			return [key, generalDecoder(decoders, stream)];
-		};
-	}
-}
-
-export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
-	stream: StreamCursor,
-	cache: DecoderCache<EncodedChunkShape>,
-): T {
-	const content = readStream(stream);
-	assert(
-		typeof content === "number" || typeof content === "string",
-		"content to be a number or string",
-	);
-	return cache.identifier(content);
-}
-
-function readValue(stream: StreamCursor, shape: EncodedValueShape): Value {
+export function readValue(stream: StreamCursor, shape: EncodedValueShape): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStream(stream) : undefined;
 	} else {
@@ -116,7 +88,97 @@ function readValue(stream: StreamCursor, shape: EncodedValueShape): Value {
 	}
 }
 
-class TreeDecoder implements ChunkDecoder {
+export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
+	if (chunk === emptyChunk) {
+		return [];
+	}
+	// TODO: when handling of SequenceChunks has better performance (for example in cursors),
+	// consider keeping SequenceChunks here if they are longer than some threshold.
+	if (chunk instanceof SequenceChunk) {
+		// Could return [] here, however the logic in this file is designed to never produce an empty SequenceChunk, so its better to throw an error here to detect bugs.
+		assert(chunk.subChunks.length > 0, "Unexpected empty sequence");
+		// Logic in this file is designed to never produce an unneeded (single item) SequenceChunks, so its better to throw an error here to detect bugs.
+		assert(chunk.subChunks.length > 1, "Unexpected single item sequence");
+
+		for (const sub of chunk.subChunks) {
+			// The logic in this file is designed to never produce an nested SequenceChunks or emptyChunk, so its better to throw an error here to detect bugs.
+			assert(!(sub instanceof SequenceChunk), "unexpected nested sequence");
+			assert(sub !== emptyChunk, "unexpected empty chunk");
+
+			sub.referenceAdded();
+		}
+
+		chunk.referenceRemoved();
+		return chunk.subChunks;
+	} else {
+		return [chunk];
+	}
+}
+
+export function aggregateChunks(input: TreeChunk[]): TreeChunk {
+	const chunks = input.flatMap(deaggregateChunks);
+	switch (chunks.length) {
+		case 0:
+			return emptyChunk;
+		case 1:
+			return chunks[0];
+		default:
+			return new SequenceChunk(chunks);
+	}
+}
+
+export class NestedArrayDecoder implements ChunkDecoder {
+	public constructor(private readonly shape: EncodedNestedArray) {}
+	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		const decoder = decoders[this.shape];
+		const inner = readStreamStream(stream);
+		// TODO: uniform chunk fast path
+		const chunks: TreeChunk[] = [];
+		while (inner.offset !== inner.data.length) {
+			chunks.push(decoder.decode(decoders, inner));
+		}
+		return aggregateChunks(chunks);
+	}
+}
+
+export class InlineArrayDecoder implements ChunkDecoder {
+	public constructor(private readonly shape: EncodedInlineArray) {}
+	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		const length = this.shape.length;
+		const decoder = decoders[this.shape.shape];
+		const chunks: TreeChunk[] = [];
+		for (let index = 0; index < length; index++) {
+			chunks.push(decoder.decode(decoders, stream));
+		}
+		return aggregateChunks(chunks);
+	}
+}
+
+export class AnyDecoder implements ChunkDecoder {
+	public static readonly instance = new AnyDecoder();
+	private constructor() {}
+	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		const shapeIndex = readStreamNumber(stream);
+		const decoder = getChecked(decoders, shapeIndex);
+		return decoder.decode(decoders, stream);
+	}
+}
+
+type BasicFieldDecoder = (
+	decoders: readonly ChunkDecoder[],
+	stream: StreamCursor,
+) => [FieldKey, TreeChunk];
+
+function fieldDecoder(
+	cache: DecoderCache<EncodedChunkShape>,
+	key: FieldKey,
+	shape: number,
+): BasicFieldDecoder {
+	assertValidIndex(shape, cache.shapes);
+	return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
+}
+
+export class TreeDecoder implements ChunkDecoder {
 	private readonly type?: TreeSchemaIdentifier;
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
@@ -147,17 +209,10 @@ class TreeDecoder implements ChunkDecoder {
 		function addField(key: FieldKey, data: TreeChunk): void {
 			// TODO: when handling of ArrayChunks has better performance (for example in cursors),
 			// consider keeping array chunks here if they are longer than some threshold.
-			if (data instanceof SequenceChunk) {
-				if (data.subChunks.length === 0) {
-					return;
-				}
-				for (const sub of data.subChunks) {
-					sub.referenceAdded();
-				}
-				fields.set(key, data.subChunks);
-				data.referenceRemoved();
-			} else {
-				fields.set(key, [data]);
+			const chunks = deaggregateChunks(data);
+
+			if (chunks.length !== 0) {
+				fields.set(key, chunks);
 			}
 		}
 
@@ -185,47 +240,5 @@ class TreeDecoder implements ChunkDecoder {
 		}
 
 		return new BasicChunk(type, fields, value);
-	}
-}
-
-class NestedArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedNestedArray) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const decoder = decoders[this.shape];
-		const inner = readStreamStream(stream);
-		// TODO: uniform chunk fast path
-		const chunks: TreeChunk[] = [];
-		while (inner.offset !== inner.data.length) {
-			// TODO: maybe remove unneeded sequence chunks here?
-			chunks.push(decoder.decode(decoders, inner));
-		}
-		// TODO: maybe remove unneeded sequence chunks here?
-		return new SequenceChunk(chunks);
-	}
-}
-
-class InlineArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedInlineArray) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const length = this.shape.length;
-		const decoder = decoders[this.shape.shape];
-		const chunks: TreeChunk[] = [];
-		for (let index = 0; index < length; index++) {
-			// TODO: maybe remove unneeded sequence chunks here?
-			chunks.push(decoder.decode(decoders, stream));
-		}
-
-		// TODO: maybe remove unneeded sequence chunks here?
-		return new SequenceChunk(chunks);
-	}
-}
-
-class AnyDecoder implements ChunkDecoder {
-	public static readonly instance = new AnyDecoder();
-	private constructor() {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const shapeIndex = readStreamNumber(stream);
-		const decoder = getChecked(decoders, shapeIndex);
-		return decoder.decode(decoders, stream);
 	}
 }

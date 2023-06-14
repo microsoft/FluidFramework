@@ -13,7 +13,7 @@ import {
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
 import { BufferFormat, Shape, handleShapesAndIdentifiers } from "./chunkEncodingGeneric";
-import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import { EncodedChunk, version, EncodedChunkShape, EncodedValueShape } from "./format";
 
 /**

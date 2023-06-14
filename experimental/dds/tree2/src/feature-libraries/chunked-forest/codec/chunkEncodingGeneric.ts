@@ -3,38 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { BrandedType, fail } from "../../../util";
 import { TreeValue } from "../../../core";
-import { TreeChunk } from "../chunk";
+import { fail } from "../../../util";
 import { EncodedChunkGeneric } from "./formatGeneric";
-import {
-	ChunkDecoder,
-	Counter,
-	DeduplicationTable,
-	DiscriminatedUnionDispatcher,
-	getChecked,
-	jsonMinimizingFilter,
-} from "./chunkEncodingUtilities";
+import { Counter, DeduplicationTable, jsonMinimizingFilter } from "./chunkCodecUtilities";
 
 export class IdentifierToken {
 	public constructor(public readonly identifier: string) {}
 }
 
 export type BufferFormat<TEncodedShape> = (TreeValue | Shape<TEncodedShape> | IdentifierToken)[];
-
-export function decode<TEncodedShape extends object, TCache>(
-	decoderLibrary: DiscriminatedUnionDispatcher<TEncodedShape, [cache: TCache], ChunkDecoder>,
-	cache: TCache,
-	chunk: EncodedChunkGeneric<TEncodedShape>,
-	rootDecoder: ChunkDecoder,
-): TreeChunk {
-	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
-	const stream = { data: chunk.data, offset: 0 };
-	const result = rootDecoder.decode(decoders, stream);
-	assert(stream.offset === stream.data.length, "expected decode to consume full stream");
-	return result;
-}
 
 /**
  * Replace shapes and identifiers in buffer and any nested arrays.
@@ -125,26 +103,4 @@ export abstract class Shape<TEncodedShape> {
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape<TEncodedShape>>,
 	): TEncodedShape;
-}
-
-/**
- * Caches shared data for use in constructing decoders.
- */
-export class DecoderCache<TEncodedShape> {
-	/**
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 *
-	 * Unlike the other data stored in this object, identifiers and shapes are not really a cache since the decoders don't any any other way to access this information.
-	 */
-	public constructor(
-		public readonly identifiers: readonly string[],
-		public readonly shapes: readonly TEncodedShape[],
-	) {}
-
-	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
-		if (typeof encoded === "string") {
-			return encoded as T;
-		}
-		return getChecked(this.identifiers, encoded) as T;
-	}
 }

@@ -13,7 +13,7 @@ import {
 	readStream,
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/chunkEncodingUtilities";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
 import { makeArray } from "../../../../util";
 
 describe("chunkEncodingUtilities", () => {

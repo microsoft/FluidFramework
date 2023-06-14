@@ -12,7 +12,7 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric";
-import { Counter, DeduplicationTable } from "./chunkEncodingUtilities";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import { EncodedChunkShape, EncodedValueShape } from "./format";
 import {
 	NodeEncoderShape,

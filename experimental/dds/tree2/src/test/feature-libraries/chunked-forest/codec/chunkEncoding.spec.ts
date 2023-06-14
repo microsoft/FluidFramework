@@ -8,15 +8,15 @@ import { strict as assert } from "assert";
 import {
 	decode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/chunkDecoding";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 import {
 	uncompressedEncode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/uncompressedEncode";
+} from "../../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
 import {
 	NodeShape,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/nodeShape";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 import {
 	EncoderCache,
 	FieldEncoderShape,
@@ -26,7 +26,7 @@ import {
 	anyFieldEncoder,
 	compressedEncode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/encoding/compressedEncode";
+} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import { testTrees } from "../../../cursorTestSuite";
 import {
 	fieldCursorFromJsonableTrees,
