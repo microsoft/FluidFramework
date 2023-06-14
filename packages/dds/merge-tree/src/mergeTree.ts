@@ -437,7 +437,7 @@ export interface IMergeTreeOptions {
 	 * SnapshotLegacy stores a view of the merge-tree at the minimum sequence number along with the ops between
 	 * the minimum sequence number and the current sequence number.
 	 *
-	 * Both formats merge segments where possible (see {@link IMergeSegment.canAppend})
+	 * Both formats merge segments where possible (see {@link ISegment.canAppend})
 	 *
 	 * default: false
 	 *

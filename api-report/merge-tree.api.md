@@ -537,16 +537,6 @@ export interface IMergeTreeTextHelper {
 }
 
 // @public (undocumented)
-export enum IncrementalExecOp {
-    // (undocumented)
-    Go = 0,
-    // (undocumented)
-    Stop = 1,
-    // (undocumented)
-    Yield = 2
-}
-
-// @public (undocumented)
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
@@ -614,14 +604,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 export interface ISegmentAction<TClientData> {
     // (undocumented)
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
-}
-
-// @public (undocumented)
-export interface ISegmentChanges {
-    // (undocumented)
-    next?: ISegment;
-    // (undocumented)
-    replaceCurrent?: ISegment;
 }
 
 // @alpha
@@ -749,9 +731,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
 // @public (undocumented)
-export const MaxNodesInBlock = 8;
-
-// @public (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
@@ -824,21 +803,10 @@ export interface MergeTreeRevertibleDriver {
 }
 
 // @public (undocumented)
-export interface MinListener {
-    // (undocumented)
-    minRequired: number;
-    // (undocumented)
-    onMinGE(minSeq: number): void;
-}
-
-// @public (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
 export const NonCollabClient = -2;
-
-// @public (undocumented)
-export function ordinalToArray(ord: string): number[];
 
 // @public (undocumented)
 export class PropertiesManager {
@@ -1035,14 +1003,6 @@ export const reservedTileLabelsKey = "referenceTileLabels";
 
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @public (undocumented)
-export interface SearchResult {
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    text: string;
-}
 
 // @public (undocumented)
 export interface SegmentAccumulator {
