@@ -654,6 +654,8 @@ export class SharedDirectory
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
 						newSubDir = new SubDirectory(
+							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							// sub directory.
 							createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
