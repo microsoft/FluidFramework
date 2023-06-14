@@ -303,7 +303,9 @@ export class ChildLogger extends TelemetryLogger {
 		// the callstack overhead, just generate a new logger that includes everything from the previous
 		if (baseLogger instanceof ChildLogger) {
 			if (baseLogger.unsampledLogger !== undefined && unsampledLogger !== undefined) {
-				throw new Error("Cannot specify an unsampledLogger when baseLogger already defines oneu");
+				throw new Error(
+					"Cannot specify an unsampledLogger when baseLogger already defines oneu",
+				);
 			}
 			const combinedProperties: ITelemetryLoggerPropertyBags = {};
 			for (const extendedProps of [baseLogger.properties, properties]) {

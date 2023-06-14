@@ -34,7 +34,7 @@ export class ChildLogger extends TelemetryLogger {
     static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, unsampledLogger?: ITelemetryBaseLogger, sampling?: Map<string, number>): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
     // (undocumented)
-    protected readonly unsampledLogger: ITelemetryBaseLogger;
+    protected readonly unsampledLogger?: ITelemetryBaseLogger | undefined;
 }
 
 // @public (undocumented)
