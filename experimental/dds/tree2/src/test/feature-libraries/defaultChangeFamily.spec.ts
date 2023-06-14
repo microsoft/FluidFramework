@@ -23,8 +23,7 @@ import {
 } from "../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
-	defaultChangeFamily,
-	defaultChangeFamily as family,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
@@ -32,10 +31,15 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
-	defaultIntoDelta,
+	ModularChangeset,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
+import { noopValidator } from "../../codec";
+
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
+const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");

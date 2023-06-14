@@ -339,6 +339,7 @@ flowchart
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature
+        external-utilities-->feature
         subgraph feature ["feature-libraries"]
             direction TB
             editable-tree-->contextuallyTyped
