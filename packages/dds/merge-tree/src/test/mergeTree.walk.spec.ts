@@ -20,7 +20,7 @@ describe("MergeTree walks", () => {
 		mergeTree = new MergeTree();
 		mergeTree.insertSegments(
 			0,
-			[TextSegment.make(initialText) as IMergeSegment],
+			[TextSegment.make(initialText)],
 			UniversalSequenceNumber,
 			LocalClientId,
 			UniversalSequenceNumber,

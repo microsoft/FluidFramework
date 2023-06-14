@@ -40,7 +40,6 @@ export {
 } from "./mergeTreeOperationRunner";
 export { ProxString, TST, TSTNode, TSTResult } from "./tst";
 export { ClientSeq, clientSeqComparer, LRUSegment, MergeTree } from "../mergeTree";
-export { IMergeSegment } from "../mergeTreeNodes";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 export { SnapshotLegacy } from "../snapshotlegacy";
 export {

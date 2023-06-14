@@ -1126,7 +1126,7 @@ function checkInsertMergeTree(
 	const clockStart = clock();
 	mergeTree.insertSegments(
 		pos,
-		[new MergeTree.TextSegment(textSegment.text) as MergeTree.IMergeSegment],
+		[new MergeTree.TextSegment(textSegment.text)],
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.LocalClientId,
 		MergeTree.UniversalSequenceNumber,
@@ -1180,7 +1180,7 @@ export function mergeTreeCheckedTest() {
 	const mergeTree = new MergeTree.MergeTree();
 	mergeTree.insertSegments(
 		0,
-		[MergeTree.TextSegment.make("the cat is on the mat") as MergeTree.IMergeSegment],
+		[MergeTree.TextSegment.make("the cat is on the mat")],
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.LocalClientId,
 		MergeTree.UniversalSequenceNumber,
@@ -1824,7 +1824,7 @@ if (clientServerTest) {
 	}
 }
 
-export function ordinalToArray(ord: string) {
+function ordinalToArray(ord: string) {
 	const a: number[] = [];
 	if (ord) {
 		for (let i = 0, len = ord.length; i < len; i++) {

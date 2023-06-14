@@ -367,7 +367,6 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
-	public parent?: IMergeNodeCommon;
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
@@ -483,10 +482,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public splitAt(pos: number): ISegment | undefined {
 		if (pos > 0) {
-			const leafSegment = this.createSplitSegmentAt(pos);
+			const leafSegment: IMergeSegment | undefined = this.createSplitSegmentAt(pos);
 			if (leafSegment) {
 				this.copyPropertiesTo(leafSegment);
-				leafSegment.parent = this.parent;
+				// eslint-disable-next-line @typescript-eslint/no-this-alias
+				const thisAsMergeSegment: IMergeSegment = this;
+				leafSegment.parent = thisAsMergeSegment.parent;
 
 				// Give the leaf a temporary yet valid ordinal.
 				// when this segment is put in the tree, it will get its real ordinal,

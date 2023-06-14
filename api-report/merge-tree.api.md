@@ -66,8 +66,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     localSeq?: number;
     // (undocumented)
-    parent?: IMergeNodeCommon;
-    // (undocumented)
     properties?: PropertySet;
     // (undocumented)
     propertyManager?: PropertiesManager;
