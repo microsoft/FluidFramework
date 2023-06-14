@@ -653,24 +653,6 @@ const testSchema: SchemaData = {
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
-// export function initializeTestTree(
-// 	tree: ISharedTreeView,
-// 	state?: JsonableTree,
-// 	schema: SchemaData = testSchema,
-// ): void {
-// 	tree.storedSchema.update(schema);
-
-// 	if (state) {
-// 		// Apply an edit to the tree which inserts a node with a value
-// 		const writeCursor = singleTextCursor(state);
-// 		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-// 		field.insert(0, writeCursor);
-// 	}
-// }
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
 export function initializeTestTree(
 	tree: ISharedTreeView,
 	state?: JsonableTree | JsonableTree[],
