@@ -80,6 +80,7 @@ import {
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { NoOpSummarizerNodeWithGc } from "./noOpSummarizerNode";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -304,10 +305,13 @@ export abstract class FluidDataStoreContext
 			telemetryContext?: ITelemetryContext,
 		) => this.summarizeInternal(fullTree, trackState, telemetryContext);
 
-		this.summarizerNode = props.createSummarizerNodeFn(
-			thisSummarizeInternal,
-			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-		);
+		this.summarizerNode = this.isLocalDataStore
+			? new NoOpSummarizerNodeWithGc(thisSummarizeInternal, async (fullGC?: boolean) =>
+					this.getGCDataInternal(fullGC),
+			  )
+			: props.createSummarizerNodeFn(thisSummarizeInternal, async (fullGC?: boolean) =>
+					this.getGCDataInternal(fullGC),
+			  );
 
 		this.mc = loggerToMonitoringContext(
 			ChildLogger.create(this.logger, "FluidDataStoreContext"),
