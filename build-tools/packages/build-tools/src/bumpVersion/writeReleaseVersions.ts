@@ -6,8 +6,8 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { MonoRepoKind, isMonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { Context } from "./context";
+import { MonoRepoKind, isMonoRepoKind, supportedMonoRepoValues } from "./utils";
 
 /**
  * Write the versions of all the packages in the repo that would exist if the current

@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-	DriverErrorType,
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
@@ -52,6 +51,7 @@ import {
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
+import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -106,6 +106,9 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
+	constructor(public readonly storageOnlyReason?: string) {
+		super();
+	}
 	submit(messages: IDocumentMessage[]): void {
 		this.emit(
 			"nack",
@@ -132,6 +135,10 @@ class NoDeltaStream
 	public dispose() {
 		this._disposed = true;
 	}
+}
+
+function isNoDeltaStreamConnection(connection: any): connection is NoDeltaStream {
+	return connection instanceof NoDeltaStream;
 }
 
 const waitForOnline = async (): Promise<void> => {
@@ -309,14 +316,19 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
-		const storageOnly =
-			this.connection !== undefined && this.connection instanceof NoDeltaStream;
+		let storageOnly: boolean = false;
+		let storageOnlyReason: string | undefined;
+		if (isNoDeltaStreamConnection(this.connection)) {
+			storageOnly = true;
+			storageOnlyReason = this.connection.storageOnlyReason;
+		}
 		if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
 			return {
 				readonly: true,
 				forced: this._forceReadonly,
 				permissions: this._readonlyPermissions,
 				storageOnly,
+				storageOnlyReason,
 			};
 		}
 
@@ -562,12 +574,8 @@ export class ConnectionManager implements IConnectionManager {
 					connection = undefined;
 				}
 			} catch (origError: any) {
-				if (
-					typeof origError === "object" &&
-					origError !== null &&
-					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
-				) {
-					connection = new NoDeltaStream();
+				if (isDeltaStreamConnectionForbiddenError(origError)) {
+					connection = new NoDeltaStream(origError.storageOnlyReason);
 					requestedMode = "read";
 					break;
 				}
@@ -960,6 +968,7 @@ export class ConnectionManager implements IConnectionManager {
 				forcedReadonly: this.readOnlyInfo.forced,
 				readonlyPermissions: this.readOnlyInfo.permissions,
 				storageOnly: this.readOnlyInfo.storageOnly,
+				storageOnlyReason: this.readOnlyInfo.storageOnlyReason,
 			});
 			this.props.closeHandler(error);
 			return undefined;
