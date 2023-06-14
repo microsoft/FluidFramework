@@ -22,7 +22,7 @@ export interface IWebSocketTracker {
 }
 
 export interface ITokenRevocationResponse {
-	requestId: string,
+	requestId: string;
 }
 
 export class TokenRevocationError extends NetworkError {
@@ -58,7 +58,7 @@ export class TokenRevocationError extends NetworkError {
 		super(code, message, canRetry, isFatal, retryAfterMs);
 	}
 
-	public get details(): INetworkErrorDetails & { requestId: string } {	
+	public get details(): INetworkErrorDetails & { requestId: string } {
 		return {
 			message: this.message,
 			requestId: this.requestId,
@@ -68,15 +68,15 @@ export class TokenRevocationError extends NetworkError {
 			retryAfterMs: this.retryAfterMs,
 		};
 	}
-	
+
 	/**
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
 	 * @public
 	 */
-	public toJSON(): INetworkErrorDetails & { code: number, requestId: string } {
+	public toJSON(): INetworkErrorDetails & { code: number; requestId: string } {
 		return {
 			requestId: this.requestId,
-			...(super.toJSON()),
+			...super.toJSON(),
 		};
 	}
 }
@@ -96,7 +96,11 @@ export interface ITokenRevocationManager {
 	close(): Promise<void>;
 
 	// Revoke the access of a token given its jwtId
-	revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<ITokenRevocationResponse>;
+	revokeToken(
+		tenantId: string,
+		documentId: string,
+		jwtId: string,
+	): Promise<ITokenRevocationResponse>;
 
 	// Check if a given token id is revoked
 	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;

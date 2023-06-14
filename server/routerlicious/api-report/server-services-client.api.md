@@ -8,12 +8,16 @@ import * as api from '@fluidframework/protocol-definitions';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
 import { AxiosRequestHeaders } from 'axios';
+import { ICreateTreeEntry } from '@fluidframework/gitresources';
+import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { ITree } from '@fluidframework/gitresources';
+import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import * as resources from '@fluidframework/gitresources';
 import { ScopeType } from '@fluidframework/protocol-definitions';
@@ -28,6 +32,9 @@ export class BasicRestWrapper extends RestWrapper {
 
 // @public
 export const buildTreePath: (...nodeNames: string[]) => string;
+
+// @public
+export const canDeleteDoc: (scopes: string[]) => boolean;
 
 // @public (undocumented)
 export const canRead: (scopes: string[]) => boolean;
@@ -62,11 +69,17 @@ export function createFluidServiceNetworkError(statusCode: number, errorData?: I
 // @public (undocumented)
 export const defaultHash = "00000000";
 
+// @public
+export const DocDeleteScopeType = "doc:delete";
+
 // @public (undocumented)
 export const DriverVersionHeaderName = "x-driver-version";
 
 // @public (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
+
+// @public (undocumented)
+export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
 
 // @public
 export function generateToken(tenantId: string, documentId: string, key: string, scopes: ScopeType[], user?: IUser, lifetime?: number, ver?: string): string;
@@ -82,6 +95,9 @@ export function getNextHash(message: ISequencedDocumentMessage, lastHash: string
 
 // @public (undocumented)
 export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
+
+// @public (undocumented)
+export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
 // @public
 export const getRandomInt: (range: number) => number;
@@ -493,6 +509,9 @@ export interface IWriteSummaryResponse {
 // @public
 export const LatestSummaryId = "latest";
 
+// @public (undocumented)
+export function mergeAppAndProtocolTree(appSummaryTree: ITree, protocolTree: ITree): ICreateTreeEntry[];
+
 // @public
 export class NetworkError extends Error {
     constructor(
@@ -538,19 +557,19 @@ export abstract class RestWrapper {
     // (undocumented)
     protected defaultQueryString: Record<string, unknown>;
     // (undocumented)
-    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected generateQueryString(queryStringValues: Record<string, unknown>): string;
     // (undocumented)
-    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
@@ -564,6 +583,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 
 // @public
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
+
+// @public
+export const TokenRevokeScopeType = "token:revoke";
 
 // @public
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;

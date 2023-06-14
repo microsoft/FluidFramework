@@ -10,7 +10,7 @@ export class TestNotImplementedDocumentRepository implements IDocumentRepository
 	async create(document: IDocument): Promise<any> {
 		throw new Error(defaultErrorMsg);
 	}
-	
+
 	async readOne(filter: any): Promise<IDocument> {
 		throw new Error(defaultErrorMsg);
 	}

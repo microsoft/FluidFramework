@@ -71,7 +71,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		this.headInternal = head;
 	}
 
-	public checkpoint(message: IQueuedMessage) {
+	public checkpoint(message: IQueuedMessage, restartOnCheckpointFailure?: boolean) {
 		if (this.closed) {
 			return;
 		}
@@ -87,7 +87,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
-		this.emit("checkpoint", this);
+		this.emit("checkpoint", restartOnCheckpointFailure);
 	}
 
 	public error(error: any, errorData: IContextErrorData) {

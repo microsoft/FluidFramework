@@ -8,7 +8,6 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
-	ITelemetryLogger,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
@@ -263,7 +262,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					newEvent[key] = value;
 					break;
 				case TelemetryDataTag.UserData:
-					// Strip out anything tagged explicitly as PII.
+					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
@@ -290,7 +289,6 @@ export class ChildLogger extends TelemetryLogger {
 	 * is created, but it does not send telemetry events anywhere.
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	public static create(
 		baseLogger?: ITelemetryBaseLogger,
@@ -361,7 +359,6 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
- * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[] = [];
@@ -370,7 +367,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
 		super(namespace, properties);
@@ -416,7 +412,7 @@ export interface IPerformanceEventMarkers {
  */
 export class PerformanceEvent {
 	public static start(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 	) {
@@ -424,7 +420,7 @@ export class PerformanceEvent {
 	}
 
 	public static timedExec<T>(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
@@ -441,7 +437,7 @@ export class PerformanceEvent {
 	}
 
 	public static async timedExecAsync<T>(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
@@ -466,7 +462,7 @@ export class PerformanceEvent {
 	private startMark?: string;
 
 	protected constructor(
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 	) {
@@ -541,7 +537,7 @@ export class PerformanceEvent {
  * Logger that is useful for UT
  * It can be used in places where logger instance is required, but events should be not send over.
  */
-export class TelemetryUTLogger implements ITelemetryLogger {
+export class TelemetryUTLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
@@ -591,7 +587,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * Null logger
  * It can be used in places where logger instance is required, but events should be not send over.
  */
-export class TelemetryNullLogger implements ITelemetryLogger {
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
@@ -645,7 +641,7 @@ function convertToBasePropertyTypeUntagged(
 		case "undefined":
 			return x;
 		case "object":
-			// We assume this is an array based on the input types
+			// We assume this is an array or flat object based on the input types
 			return JSON.stringify(x);
 		default:
 			// should never reach this case based on the input types

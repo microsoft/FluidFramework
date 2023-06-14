@@ -23,6 +23,7 @@ import {
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
@@ -295,11 +296,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			[
 				{
 					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
-				},
-				{
-					error: "SweepReadyObject_Loaded",
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
 				},
 			],
 			async () => {
@@ -764,19 +760,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			return summarizer;
 		}
 
-		const ensureContainerConnectedWriteMode = async (container: IContainer) => {
-			const resolveIfActive = (res: () => void) => {
-				if (container.deltaManager.active) {
-					res();
-				}
-			};
-			if (!container.deltaManager.active) {
-				await new Promise<void>((resolve) =>
-					container.on("connected", () => resolveIfActive(resolve)),
-				);
-			}
-		};
-
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
@@ -811,7 +794,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Connect the container after the blob is uploaded. Send an op to transition it to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -870,7 +853,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
 				// the blob uploaded in disconnected mode should be mapped to the same storageId.
@@ -963,7 +946,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Add the blob's local handles to reference them.
 				mainDataStore._root.set("local1", localHandle1);

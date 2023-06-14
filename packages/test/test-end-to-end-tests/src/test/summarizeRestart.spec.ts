@@ -32,15 +32,16 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});
 
 	itExpects(
 		"Closes the summarizing client instead of refreshing",
 		[
 			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Restarting summarizer instead of refreshing",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
+				message: "Stopping fetch from storage",
 			},
 		],
 		async () => {
@@ -53,7 +54,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				mockConfigProvider(settings),
 			);
 
-			await provider.ensureSynchronized();
 			const summarizeResults = summarizer.summarizeOnDemand({
 				reason: "end-to-end test",
 				refreshLatestAck: true,
@@ -69,15 +69,11 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing with two clients",
 		[
 			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Restarting summarizer instead of refreshing",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
+				message: "Stopping fetch from storage",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_cancel",
-				error: "Restarting summarizer instead of refreshing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:HandleLastSummaryAckError",
 				error: "Restarting summarizer instead of refreshing",
 			},
 		],
@@ -100,10 +96,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 					mockConfigProvider(settings),
 				);
 
-			let summary2Error: any;
-			summarizingContainer2.on("closed", (error) => {
-				summary2Error = error;
-			});
 			await summarizeNow(summarizer);
 			await provider.ensureSynchronized();
 
@@ -113,11 +105,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			await summarizer2.run("test");
 
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
-			assert.equal(
-				summary2Error.message,
-				"Restarting summarizer instead of refreshing",
-				"Restarting summarizer error expected when receiving an ack from another summarizer",
-			);
 			assert(!summarizingContainer.closed, "summarizer1 should not be closed");
 			assert(!container.closed, "Original container should not be closed");
 		},
@@ -127,15 +114,11 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing when loading from an older summary",
 		[
 			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Restarting summarizer instead of refreshing",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
+				message: "Stopping fetch from storage",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_cancel",
-				error: "Restarting summarizer instead of refreshing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:HandleLastSummaryAckError",
 				error: "Restarting summarizer instead of refreshing",
 			},
 		],
@@ -168,10 +151,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				);
 
 			await provider.ensureSynchronized();
-			let summary2Error: any;
-			summarizingContainer2.on("closed", (error) => {
-				summary2Error = error;
-			});
 
 			// This tells the summarizer to process the latest summary ack
 			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
@@ -179,11 +158,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			await summarizer2.run("test");
 
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
-			assert.equal(
-				summary2Error.message,
-				"Restarting summarizer instead of refreshing",
-				"Restarting summarizer error expected when loading from an older summary",
-			);
 			assert(summarizingContainer.closed, "summarizer1 should be closed");
 			assert(!container.closed, "Original container should not be closed");
 		},

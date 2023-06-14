@@ -8,7 +8,6 @@ import * as util from "util";
 import {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IQueuedMessage,
 	IZookeeperClient,
 } from "@fluidframework/server-services-core";
@@ -167,14 +166,7 @@ export class KafkaNodeConsumer implements IConsumer {
 			const payloads = (this.consumerGroup as any).topicPayloads;
 			const partitions = this.getPartitions(payloads);
 
-			let partitionsWithEpoch: IPartitionWithEpoch[];
-			try {
-				partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
-			} catch (err) {
-				this.events.emit("error", err);
-			}
-
-			this.events.emit("rebalanced", partitionsWithEpoch);
+			this.events.emit("rebalanced", partitions);
 		});
 
 		this.consumerGroup.on("message", (message: any) => {
@@ -196,32 +188,5 @@ export class KafkaNodeConsumer implements IConsumer {
 			partition: parseInt(partition.partition, 10),
 			topic: partition.topic,
 		}));
-	}
-
-	private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
-		let epochs: number[];
-
-		if (this.zookeeperEndpoint) {
-			const epochsP = new Array<Promise<number>>();
-			for (const partition of partitions) {
-				epochsP.push(
-					this.zookeeper.getPartitionLeaderEpoch(this.topic, partition.partition),
-				);
-			}
-
-			epochs = await Promise.all(epochsP);
-		} else {
-			epochs = new Array(partitions.length).fill(0);
-		}
-
-		const partitionsWithEpoch: IPartitionWithEpoch[] = [];
-
-		for (let i = 0; i < partitions.length; ++i) {
-			const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
-			partitionWithEpoch.leaderEpoch = epochs[i];
-			partitionsWithEpoch.push(partitionWithEpoch);
-		}
-
-		return partitionsWithEpoch;
 	}
 }

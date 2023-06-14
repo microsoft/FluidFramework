@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, assertNotUndefined, ReplaceRecursive } from '../Common';
+
+import { assert } from '@fluidframework/common-utils';
+import { assertNotUndefined, ReplaceRecursive } from '../Common';
 // These are re-exported from a persisted-types file.
 import type {
 	IdCreationRange,
@@ -417,9 +419,14 @@ export const StableRangeInternal = {
 	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal } => ({
 		to: (end: StablePlaceInternal): StableRangeInternal => {
 			if (start.referenceTrait && end.referenceTrait) {
-				const message = 'StableRange must be constructed with endpoints from the same trait';
-				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
-				assert(start.referenceTrait.label === end.referenceTrait.label, message);
+				assert(
+					start.referenceTrait.parent === end.referenceTrait.parent,
+					0x65e /* StableRange must be constructed with endpoints from the same trait */
+				);
+				assert(
+					start.referenceTrait.label === end.referenceTrait.label,
+					0x65f /* StableRange must be constructed with endpoints from the same trait */
+				);
 			}
 			return { start, end };
 		},

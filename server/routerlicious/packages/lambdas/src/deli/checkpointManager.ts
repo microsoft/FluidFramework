@@ -4,15 +4,19 @@
  */
 
 import {
+	ICheckpointService,
 	IDeliState,
-	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
 
 export interface IDeliCheckpointManager {
-	writeCheckpoint(checkpoint: IDeliState, reason: CheckpointReason): Promise<void>;
-	deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
+	writeCheckpoint(
+		checkpoint: IDeliState,
+		isLocal: boolean,
+		reason: CheckpointReason,
+	): Promise<void>;
+	deleteCheckpoint(checkpointParams: ICheckpointParams, isLocal: boolean): Promise<void>;
 }
 
 export interface ICheckpointParams {
@@ -45,24 +49,21 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
-	documentRepository: IDocumentRepository,
+	checkpointService: ICheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
-		writeCheckpoint: async (checkpoint: IDeliState) => {
-			await documentRepository.updateOne(
-				{ tenantId, documentId },
-				{
-					deli: JSON.stringify(checkpoint),
-				},
+		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
+			return checkpointService.writeCheckpoint(
+				documentId,
+				tenantId,
+				"deli",
+				checkpoint,
+				isLocal,
 			);
 		},
-		deleteCheckpoint: async () => {
-			await documentRepository.updateOne(
-				{ tenantId, documentId },
-				{
-					deli: "",
-				},
-			);
+		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal);
 		},
 	};
 	return checkpointManager;

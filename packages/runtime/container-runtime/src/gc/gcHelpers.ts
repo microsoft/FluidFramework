@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -13,17 +12,8 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import {
-	disableTombstoneKey,
-	GCFeatureMatrix,
-	GCVersion,
-	IGCMetadata,
-	runSweepKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
-} from "./gcDefinitions";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
@@ -36,32 +26,6 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 		return 0;
 	}
 	return metadata.gcFeature ?? 0;
-}
-
-/**
- * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
- * tombstoned or deleted object is loaded.
- */
-export function sendGCUnexpectedUsageEvent(
-	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
-		category: "error" | "generic";
-		gcTombstoneEnforcementAllowed: boolean | undefined;
-	},
-	packagePath: readonly string[] | undefined,
-	error?: unknown,
-) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
-	event.tombstoneFlags = JSON.stringify({
-		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
-		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
-	});
-	event.sweepFlags = JSON.stringify({
-		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
-	});
-
-	mc.logger.sendTelemetryEvent(event, error);
 }
 
 /**
@@ -169,7 +133,7 @@ export function concatGarbageCollectionStates(
 			) {
 				assert(
 					nodeData.unreferencedTimestampMs === combineNodeData.unreferencedTimestampMs,
-					"Two entries for the same GC node with different unreferenced timestamp",
+					0x5d7 /* Two entries for the same GC node with different unreferenced timestamp */,
 				);
 			}
 			combineNodeData = {
@@ -188,12 +152,19 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
+ * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
+ * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
+export function cloneGCData(
+	gcData: IGarbageCollectionData,
+	filter?: (id: string) => boolean,
+): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		if (filter?.(id) !== true) {
+			clonedGCNodes[id] = Array.from(outboundRoutes);
+		}
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -253,7 +224,7 @@ export async function getGCDataFromSnapshot(
 			continue;
 		}
 		const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
-		assert(gcState !== undefined, "GC blob missing from snapshot");
+		assert(gcState !== undefined, 0x5d8 /* GC blob missing from snapshot */);
 		// Merge the GC state of this blob into the root GC state.
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
 	}
@@ -280,7 +251,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			continue;
 		}
 
-		assert(id.startsWith("/"), "node id should always be an absolute route");
+		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
 		const childId = id.split("/")[1];
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
@@ -294,7 +265,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}
 		// gcData should not undefined as its always at least initialized as  empty above.
-		assert(childGCDetails.gcData !== undefined, "Child GC data should have been initialized");
+		assert(
+			childGCDetails.gcData !== undefined,
+			0x5da /* Child GC data should have been initialized */,
+		);
 		childGCDetails.gcData.gcNodes[childGCNodeId] = [...new Set(outboundRoutes)];
 		childGCDetailsMap.set(childId, childGCDetails);
 	}
@@ -306,14 +280,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), "Used route should always be an absolute route");
+		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
 		assert(
 			childGCDetails?.usedRoutes !== undefined,
-			"This should have be initialized when generate GC nodes above",
+			0x5dc /* This should have be initialized when generate GC nodes above */,
 		);
 
 		childGCDetails.usedRoutes.push(childUsedRoute);
@@ -329,4 +303,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Tags the passed value as a CodeArtifact and returns the tagged value.
+ */
+export function tagAsCodeArtifact(value: string) {
+	return {
+		value,
+		tag: TelemetryDataTag.CodeArtifact,
+	};
 }

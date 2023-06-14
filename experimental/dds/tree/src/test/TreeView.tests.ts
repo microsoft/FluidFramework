@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { Definition, TraitLabel } from '../Identifiers';
 import { RevisionView } from '../RevisionView';
 import { ChangeNode } from '../persisted-types';
@@ -37,7 +39,10 @@ describe('TreeView', () => {
 		it('with different root ids', () => {
 			const viewA = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
 			const viewB = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
-			expect(() => viewA.delta(viewB)).to.throw('Delta can only be calculated between views that share a root');
+			assert.throws(
+				() => viewA.delta(viewB),
+				(e) => validateAssertionError(e, 'Delta can only be calculated between views that share a root')
+			);
 		});
 
 		it('with different subtrees', () => {

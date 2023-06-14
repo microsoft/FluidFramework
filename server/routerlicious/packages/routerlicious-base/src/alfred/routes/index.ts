@@ -16,6 +16,7 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -34,6 +35,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ) {
 	return {
@@ -48,6 +50,7 @@ export function create(
 			producer,
 			appTenants,
 			documentRepository,
+			documentDeleteService,
 			tokenManager,
 		),
 	};

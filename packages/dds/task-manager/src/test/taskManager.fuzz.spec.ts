@@ -6,12 +6,12 @@
 import * as path from "path";
 import { strict as assert } from "assert";
 import {
-	combineReducers,
-	createWeightedGenerator,
-	Generator,
+	combineReducersAsync as combineReducers,
+	createWeightedAsyncGenerator as createWeightedGenerator,
+	AsyncGenerator as Generator,
 	makeRandom,
-	Reducer,
-	take,
+	AsyncReducer as Reducer,
+	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
 import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { TaskManagerFactory } from "../taskManagerFactory";
@@ -89,28 +89,28 @@ function makeOperationGenerator(
 		),
 	);
 
-	function volunteer(state: OpSelectionState): Volunteer {
+	async function volunteer(state: OpSelectionState): Promise<Volunteer> {
 		return {
 			type: "volunteer",
 			taskId: state.taskId,
 		};
 	}
 
-	function abandon(state: OpSelectionState): Abandon {
+	async function abandon(state: OpSelectionState): Promise<Abandon> {
 		return {
 			type: "abandon",
 			taskId: state.taskId,
 		};
 	}
 
-	function subscribe(state: OpSelectionState): Subscribe {
+	async function subscribe(state: OpSelectionState): Promise<Subscribe> {
 		return {
 			type: "subscribe",
 			taskId: state.taskId,
 		};
 	}
 
-	function complete(state: OpSelectionState): Complete {
+	async function complete(state: OpSelectionState): Promise<Complete> {
 		return {
 			type: "complete",
 			taskId: state.taskId,
@@ -128,7 +128,7 @@ function makeOperationGenerator(
 		[complete, 1, isAssigned],
 	]);
 
-	return (state: FuzzTestState) =>
+	return async (state: FuzzTestState) =>
 		clientBaseOperationGenerator({
 			...state,
 			taskId: state.random.pick(taskIdPool),
@@ -146,7 +146,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const client of state.clients) {
 		const taskManager = client.channel;
 		assert(taskManager);
-		if (loggingInfo.taskManagerNames.includes(taskManager.id)) {
+		if (loggingInfo.taskManagerNames.includes(client.containerRuntime.clientId)) {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);
@@ -158,18 +158,18 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestState> {
 	const withLogging =
-		<T>(baseReducer: (state: FuzzTestState, operation: T) => void): Reducer<T, FuzzTestState> =>
-		(state, operation) => {
+		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
+		async (state, operation) => {
 			if (loggingInfo !== undefined && (operation as any).taskId === loggingInfo.taskId) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			baseReducer(state, operation);
+			await baseReducer(state, operation);
 		};
 
 	const reducer = combineReducers<Operation, FuzzTestState>({
-		volunteer: ({ channel }, { taskId }) => {
+		volunteer: async ({ channel }, { taskId }) => {
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
@@ -184,13 +184,13 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 				}
 			});
 		},
-		abandon: ({ channel }, { taskId }) => {
+		abandon: async ({ channel }, { taskId }) => {
 			channel.abandon(taskId);
 		},
-		subscribe: ({ channel }, { taskId }) => {
+		subscribe: async ({ channel }, { taskId }) => {
 			channel.subscribeToTask(taskId);
 		},
-		complete: ({ channel }, { taskId }) => {
+		complete: async ({ channel }, { taskId }) => {
 			channel.complete(taskId);
 		},
 	});
@@ -237,6 +237,7 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:

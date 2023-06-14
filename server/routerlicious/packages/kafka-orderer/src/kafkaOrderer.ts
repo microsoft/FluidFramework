@@ -53,27 +53,30 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 			detail: this.client,
 		};
 
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(clientDetail),
-            referenceSequenceNumber: -1,
-            traces: this.serviceConfiguration.enableTraces && clientJoinMessageServerMetadata?.connectDocumentStartTime
-            ? [ {
-                    action: "ConnectDocumentStart",
-                    service: "alfred",
-                    timestamp: clientJoinMessageServerMetadata.connectDocumentStartTime,
-                },
-                {
-                    action: "JoinRawOpStart",
-                    service: "alfred",
-                    timestamp: Date.now(),
-                }
-            ]
-            : undefined,
-            type: MessageType.ClientJoin,
-            serverMetadata: clientJoinMessageServerMetadata,
-        };
+		const operation: IDocumentSystemMessage = {
+			clientSequenceNumber: -1,
+			contents: null,
+			data: JSON.stringify(clientDetail),
+			referenceSequenceNumber: -1,
+			traces:
+				this.serviceConfiguration.enableTraces &&
+				clientJoinMessageServerMetadata?.connectDocumentStartTime
+					? [
+							{
+								action: "ConnectDocumentStart",
+								service: "alfred",
+								timestamp: clientJoinMessageServerMetadata.connectDocumentStartTime,
+							},
+							{
+								action: "JoinRawOpStart",
+								service: "alfred",
+								timestamp: Date.now(),
+							},
+					  ]
+					: undefined,
+			type: MessageType.ClientJoin,
+			serverMetadata: clientJoinMessageServerMetadata,
+		};
 
 		const message: core.IRawOperationMessage = {
 			clientId: null,

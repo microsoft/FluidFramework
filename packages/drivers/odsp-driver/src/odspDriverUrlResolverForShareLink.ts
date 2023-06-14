@@ -9,7 +9,8 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	IdentityType,
@@ -48,7 +49,7 @@ export interface ShareLinkFetcherProps {
  * This resolver also handles share links and try to generate one for the use by the app.
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly sharingLinkCache = new PromiseCache<string, string>();
 	private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
 

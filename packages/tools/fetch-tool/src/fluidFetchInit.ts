@@ -6,7 +6,7 @@
 import { URL } from "url";
 import child_process from "child_process";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
@@ -90,11 +90,7 @@ async function initializeODSPCore(
 	return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
-async function initializeR11s(
-	server: string,
-	pathname: string,
-	r11sResolvedUrl: IFluidResolvedUrl,
-) {
+async function initializeR11s(server: string, pathname: string, r11sResolvedUrl: IResolvedUrl) {
 	const path = pathname.split("/");
 	let tenantId: string;
 	let documentId: string;
@@ -170,7 +166,7 @@ export async function fluidFetchInit(urlStr: string) {
 	if (resolvedInfo === undefined) {
 		throw new Error(`Unknown URL ${urlStr}`);
 	}
-	const fluidResolvedUrl = resolvedInfo.resolvedUrl as IFluidResolvedUrl;
+	const fluidResolvedUrl = resolvedInfo.resolvedUrl;
 	if (resolvedInfo.serviceType === "odsp") {
 		const odspResolvedUrl = fluidResolvedUrl as IOdspResolvedUrl;
 		return initializeODSPCore(

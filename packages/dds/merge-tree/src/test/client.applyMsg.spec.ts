@@ -181,7 +181,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, 18);
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
@@ -234,7 +234,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert(segmentInfo.segment?.segmentGroups.empty);
@@ -594,7 +594,7 @@ describe("client.applyMsg", () => {
 	 * Client C does not match client A
 	 * ```
 	 */
-	it.skip("Concurrent insert into removed segment across block boundary", () => {
+	it("Concurrent insert into removed segment across block boundary", () => {
 		const clients = createClientsAtInitialState(
 			{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
 			"A",

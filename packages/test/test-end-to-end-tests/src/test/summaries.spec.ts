@@ -447,41 +447,58 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("TelemetryContext is populated with data", async () => {
-		const mockLogger = new MockLogger();
-		const container = await createContainer(provider, {}, mockLogger);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			container,
-			defaultDataStoreId,
-		);
-		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-		await provider.ensureSynchronized();
+	const getTestFn =
+		(injectFailure: boolean = false) =>
+		async () => {
+			const mockLogger = new MockLogger();
+			const container = await createContainer(provider, {}, mockLogger);
+			const defaultDataStore = await requestFluidObject<ITestDataObject>(
+				container,
+				defaultDataStoreId,
+			);
+			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+			await provider.ensureSynchronized();
 
-		const directory1 = defaultDataStore._root;
-		directory1.set("key", "value");
-		assert.strictEqual(await directory1.get("key"), "value", "value1 is not set");
+			const directory1 = defaultDataStore._root;
+			directory1.set("key", "value");
+			assert.strictEqual(await directory1.get("key"), "value", "value1 is not set");
 
-		await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+			if (injectFailure) {
+				// force an exception under containerRuntime.summarize.
+				// SummarizeTelemetry event should still be logged
+				(containerRuntime as any).summarizerNode = undefined;
+			}
 
-		const summarizeTelemetryEvents = mockLogger.events.filter(
-			(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
-		);
-		assert.strictEqual(summarizeTelemetryEvents.length, 1, "There should only be one event");
+			await containerRuntime
+				.summarize({
+					runGC: false,
+					fullTree: false,
+					trackState: false,
+					summaryLogger: new TelemetryNullLogger(),
+				})
+				.catch(() => {});
 
-		const parsed = JSON.parse(summarizeTelemetryEvents[0].details as string);
-		assert(parsed && typeof parsed === "object", "Should be proper JSON");
+			const summarizeTelemetryEvents = mockLogger.events.filter(
+				(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
+			);
+			assert.strictEqual(
+				summarizeTelemetryEvents.length,
+				1,
+				"There should be exactly one event",
+			);
 
-		assert.notStrictEqual(
-			summarizeTelemetryEvents[0].details,
-			"{}",
-			"Should not be empty JSON object",
-		);
-	});
+			const parsed = JSON.parse(summarizeTelemetryEvents[0].details as string);
+			assert(parsed && typeof parsed === "object", "Should be proper JSON");
+
+			assert.notStrictEqual(
+				summarizeTelemetryEvents[0].details,
+				"{}",
+				"Should not be empty JSON object",
+			);
+		};
+
+	it("TelemetryContext is populated with data", getTestFn());
+	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
 describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {

@@ -43,7 +43,6 @@ export class WebServer implements core.IWebServer {
 	public async close(): Promise<void> {
 		// Since httpServer is reused in webSocketServer, only need to shutdown webSocketServer.
 		await (this.webSocketServer ? this.webSocketServer.close() : this.httpServer.close());
-
 	}
 }
 

@@ -5,17 +5,17 @@
 
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	IFluidErrorBase,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
@@ -25,6 +25,7 @@ import { RunningSummarizer } from "./runningSummarizer";
 import {
 	IConnectableRuntime,
 	ISummarizer,
+	ISummarizeHeuristicData,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
@@ -46,7 +47,7 @@ export class SummarizingWarning
 		super(errorMessage);
 	}
 
-	static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
+	static wrap(error: any, logged: boolean = false, logger: ITelemetryLoggerExt) {
 		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
@@ -65,7 +66,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return this;
 	}
 
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private runningSummarizer?: RunningSummarizer;
 	private _disposed: boolean = false;
 	private starting: boolean = false;
@@ -87,7 +88,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		private readonly runCoordinatorCreateFn: (
 			runtime: IConnectableRuntime,
 		) => Promise<ICancellableSummarizerController>,
-		private readonly listenToDeltaManagerOps: boolean = true,
 	) {
 		super();
 		this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -152,7 +152,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		// This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
 		// unless stop() was called earlier
 		this.dispose();
-		(this.runtime.disposeFn ?? this.runtime.closeFn)();
+		this.runtime.disposeFn();
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
@@ -216,6 +216,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return stopReason === "parentNotConnected";
 	}
 
+	private _heuristicData: ISummarizeHeuristicData | undefined;
+
 	/**
 	 * Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
 	 * The start request can come either from the SummaryManager (in the auto-summarize case) or from the user
@@ -253,22 +255,26 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			throw new UsageError("clientId should be defined if connected.");
 		}
 
+		this._heuristicData = new SummarizeHeuristicData(
+			this.runtime.deltaManager.lastSequenceNumber,
+			{
+				/** summary attempt baseline for heuristics */
+				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+				summaryTime: Date.now(),
+			} as const,
+		);
+
 		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
-			new SummarizeHeuristicData(this.runtime.deltaManager.lastSequenceNumber, {
-				/** summary attempt baseline for heuristics */
-				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-				summaryTime: Date.now(),
-			} as const),
+			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
 			this.runtime,
-			this.listenToDeltaManagerOps,
 		);
 		this.runningSummarizer = runningSummarizer;
 		this.starting = false;
@@ -363,4 +369,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
+
+	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
+		this._heuristicData?.recordAttempt(summaryRefSeqNum);
+	}
 }

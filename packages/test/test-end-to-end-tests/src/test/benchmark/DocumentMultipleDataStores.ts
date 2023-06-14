@@ -16,15 +16,14 @@ import {
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import {
-	createAndAttachContainer,
-	createLoader,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+	assertDocumentTypeInfo,
+	isDocumentMultipleDataStoresInfo,
+} from "@fluid-internal/test-version-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.
@@ -71,14 +70,13 @@ const runtimeOptions: IContainerRuntimeOptions = {
 	},
 };
 
-const dsCountsPerIteration = 250;
-
 // implement IDocumentLoader methods
 export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly dataStoreCounts: number;
+	private readonly numberDataStoreCounts: number;
+	private readonly dsCountsPerIteration: number;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
@@ -89,7 +87,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		return this._mainContainer;
 	}
 
-	public get logger(): ITelemetryLogger | undefined {
+	public get logger(): ITelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 
@@ -124,9 +122,9 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		);
 		// Data stores are not created as to not generate too many ops, and hit the # of ops limit.
 		// This is a workaround to prevent that.
-		const totalIterations = this.dataStoreCounts / dsCountsPerIteration;
+		const totalIterations = this.numberDataStoreCounts / this.dsCountsPerIteration;
 		for (let i = 0; i < totalIterations; i++) {
-			for (let j = 0; j < dsCountsPerIteration; j++) {
+			for (let j = 0; j < this.dsCountsPerIteration; j++) {
 				const dataStore = await this.dataObjectFactory.createInstance(
 					this.containerRuntime,
 				);
@@ -162,12 +160,16 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			runtimeOptions,
 		);
 
+		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
+		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
+		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
+		assert(isDocumentMultipleDataStoresInfo(this.props.documentTypeInfo));
+
 		switch (this.props.documentType) {
-			case "MediumDocumentMultipleDataStores":
-				this.dataStoreCounts = 250;
-				break;
-			case "LargeDocumentMultipleDataStores":
-				this.dataStoreCounts = 500;
+			case "DocumentMultipleDataStores":
+				this.numberDataStoreCounts = this.props.documentTypeInfo.numberDataStores;
+				this.dsCountsPerIteration =
+					this.props.documentTypeInfo.numberDataStoresPerIteration;
 				break;
 			default:
 				throw new Error("Invalid document type");
@@ -190,17 +192,22 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	 * @returns the main container.
 	 */
 	public async loadDocument(): Promise<IContainer> {
-		const loader = createLoader(
-			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			this.props.provider.documentServiceFactory,
-			this.props.provider.urlResolver,
-			this.props.logger,
+		const requestUrl = await this.props.provider.driver.createContainerUrl(
+			this.props.provider.documentId,
+			this._mainContainer?.resolvedUrl,
 		);
-		return createAndAttachContainer(
-			this.props.provider.defaultCodeDetails,
-			loader,
-			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
-		);
+		const request: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+			},
+			url: requestUrl,
+		};
+
+		const loader = this.props.provider.createLoader([
+			[this.props.provider.defaultCodeDetails, this.runtimeFactory],
+		]);
+		const container2 = await loader.resolve(request);
+		return container2;
 	}
 
 	private async waitForSummary(summarizer: ISummarizer): Promise<string> {

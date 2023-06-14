@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
@@ -50,7 +50,7 @@ export class ParallelRequests<T> {
 		from: number,
 		private to: number | undefined,
 		private readonly payloadSize: number,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly requestCallback: (
 			request: number,
 			from: number,
@@ -409,14 +409,16 @@ async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
 	props: ITelemetryProperties,
 	strongTo: boolean,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
 	let lastSuccessTime: number | undefined;
-
+	let totalRetryAfterTime = 0;
+	let telemetryEvent: PerformanceEvent | undefined;
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
+	let waitStartTime: number = 0;
 
 	while (signal?.aborted !== true) {
 		retry++;
@@ -432,6 +434,12 @@ async function getSingleOpBatch(
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
 			if (messages.length !== 0 || !strongTo) {
+				// Report this event if we waited to fetch ops due to being offline or throttling.
+				telemetryEvent?.end({
+					duration: totalRetryAfterTime,
+					...props,
+					reason: scenarioName,
+				});
 				return { payload: messages, cancel: false, partial: partialResult };
 			}
 
@@ -487,6 +495,13 @@ async function getSingleOpBatch(
 			}
 		}
 
+		if (telemetryEvent === undefined) {
+			waitStartTime = performance.now();
+			telemetryEvent = PerformanceEvent.start(logger, {
+				eventName: "GetDeltasWaitTime",
+			});
+		}
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
@@ -497,6 +512,7 @@ async function getSingleOpBatch(
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
 		await waitForOnline();
+		totalRetryAfterTime += performance.now() - waitStartTime;
 	}
 
 	return nothing;
@@ -524,7 +540,7 @@ export function requestOps(
 	fromTotal: number,
 	toTotal: number | undefined,
 	payloadSize: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {

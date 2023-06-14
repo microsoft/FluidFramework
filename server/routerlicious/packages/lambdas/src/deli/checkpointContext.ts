@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IDeliState } from "@fluidframework/server-services-core";
+import { ICheckpointService, IContext, IDeliState } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { CheckpointReason } from "../utils";
 import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
@@ -18,13 +19,14 @@ export class CheckpointContext {
 		private readonly id: string,
 		private readonly checkpointManager: IDeliCheckpointManager,
 		private readonly context: IContext,
+		private readonly checkpointService: ICheckpointService,
 	) {}
 
 	/**
 	 * Checkpoints to the database & kafka
 	 * Note: This is an async method, but you should not await this
 	 */
-	public async checkpoint(checkpoint: ICheckpointParams) {
+	public async checkpoint(checkpoint: ICheckpointParams, restartOnCheckpointFailure?: boolean) {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
@@ -70,7 +72,7 @@ export class CheckpointContext {
 					kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)
 			) {
 				this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
-				this.context.checkpoint(kafkaCheckpointMessage);
+				this.context.checkpoint(kafkaCheckpointMessage, restartOnCheckpointFailure);
 			}
 		} catch (ex) {
 			// TODO flag context as error / use this.context.error() instead?
@@ -109,13 +111,21 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
+		const localCheckpointEnabled = this.checkpointService.localCheckpointEnabled;
+
+		// determine if checkpoint is local
+		const isLocal = localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
+
 		if (checkpoint.clear) {
-			updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
+			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);
 		} else {
 			// clone the checkpoint
 			const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
-
-			updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, checkpoint.reason);
+			updateP = this.checkpointManager.writeCheckpoint(
+				deliCheckpoint,
+				isLocal,
+				checkpoint.reason,
+			);
 		}
 
 		// Retry the checkpoint on error

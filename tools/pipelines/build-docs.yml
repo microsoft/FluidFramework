@@ -118,8 +118,6 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
-  env:
-    COREPACK_DEFAULT_TO_LATEST: 0
   dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables
@@ -193,20 +191,9 @@ stages:
           inputs:
             version: 16.x
 
-        - task: Cache@2
-          displayName: Cache pnpm store
-          inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
-            path: ${{ variables.pnpmStorePath }}
-
-        - task: Bash@3
-          displayName: Install and configure pnpm
-          inputs:
-            targetType: 'inline'
-            script: |
-              corepack enable
-              pnpm -v
-              pnpm config set store-dir $(pnpmStorePath)
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies

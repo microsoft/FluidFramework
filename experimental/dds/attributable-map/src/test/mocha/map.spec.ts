@@ -12,7 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IMapOptions, ISerializableValue, IValueChanged } from "../../interfaces";
+import { ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -24,32 +24,27 @@ import {
 import { MapFactory, AttributableMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
 
-function createConnectedMap(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-	options?: IMapOptions,
-): AttributableMap {
+function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
+
+	const map = new TestMap(id, dataStoreRuntime, MapFactory.Attributes);
 	map.connect(services);
 	return map;
 }
 
-function createLocalMap(id: string, options?: IMapOptions): AttributableMap {
+function createDetachedMap(id: string): TestMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
-	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
+	const map: TestMap = new TestMap(id, dataStoreRuntime, MapFactory.Attributes);
 	return map;
 }
 
-class TestSharedMap extends AttributableMap {
+class TestMap extends AttributableMap {
 	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
 		return this.applyStashedOp(content) as MapLocalOpMetadata;
 	}
@@ -57,10 +52,10 @@ class TestSharedMap extends AttributableMap {
 
 describe("Map", () => {
 	describe("Local state", () => {
-		let map: AttributableMap;
+		let map: TestMap;
 
 		beforeEach(async () => {
-			map = createLocalMap("testMap");
+			map = createDetachedMap("testMap");
 		});
 
 		describe("API", () => {
@@ -159,7 +154,7 @@ describe("Map", () => {
 				map.set("first", "second");
 				map.set("third", "fourth");
 				map.set("fifth", "sixth");
-				const subMap = createLocalMap("subMap");
+				const subMap = createDetachedMap("subMap");
 				map.set("object", subMap.handle);
 
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
@@ -167,7 +162,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","attribution":{"type":"detached","id":0}},"third":{"type":"Plain","value":"fourth","attribution":{"type":"detached","id":0}},"fifth":{"type":"Plain","value":"sixth","attribution":{"type":"detached","id":0}},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
@@ -176,7 +171,7 @@ describe("Map", () => {
 				map.set("third", "fourth");
 				map.set("fifth", undefined);
 				assert.ok(map.has("fifth"));
-				const subMap = createLocalMap("subMap");
+				const subMap = createDetachedMap("subMap");
 				map.set("object", subMap.handle);
 
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
@@ -184,13 +179,13 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","attribution":{"type":"detached","id":0}},"third":{"type":"Plain","value":"fourth","attribution":{"type":"detached","id":0}},"fifth":{"type":"Plain","attribution":{"type":"detached","id":0}},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
 			it("Should serialize an object with nested handles", async () => {
-				const subMap = createLocalMap("subMap");
-				const subMap2 = createLocalMap("subMap2");
+				const subMap = createDetachedMap("subMap");
+				const subMap2 = createDetachedMap("subMap2");
 				const containingObject = {
 					subMapHandle: subMap.handle,
 					nestedObj: {
@@ -205,7 +200,7 @@ describe("Map", () => {
 					.content;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`,
+					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
@@ -246,6 +241,10 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 					},
 				});
@@ -289,10 +288,18 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 						zzz: {
 							type: "Plain",
 							value: "the end",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 					},
 				});
@@ -300,6 +307,10 @@ describe("Map", () => {
 					longValue: {
 						type: "Plain",
 						value: longString,
+						attribution: {
+							type: "detached",
+							id: 0,
+						},
 					},
 				});
 
@@ -350,11 +361,7 @@ describe("Map", () => {
 			 */
 			it("should correctly process a set operation sent in local state", async () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const map1 = new AttributableMap(
-					"testMap1",
-					dataStoreRuntime1,
-					MapFactory.Attributes,
-				);
+				const map1 = new TestMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
 
 				// Set a key in local state.
 				const key = "testKey";
@@ -371,11 +378,7 @@ describe("Map", () => {
 				);
 				services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-				const map2 = new AttributableMap(
-					"testMap2",
-					dataStoreRuntime2,
-					MapFactory.Attributes,
-				);
+				const map2 = new TestMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
@@ -408,11 +411,7 @@ describe("Map", () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
-				const map1 = new TestSharedMap(
-					"testMap1",
-					dataStoreRuntime1,
-					MapFactory.Attributes,
-				);
+				const map1 = new TestMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
 				let metadata = map1.testApplyStashedOp(op);
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
@@ -441,8 +440,7 @@ describe("Map", () => {
 
 		describe("Attributor", () => {
 			it("should retrive proper attribution in detached state", async () => {
-				const options: IMapOptions = { attribution: { track: true } };
-				map = createLocalMap("testMap", options);
+				map = createDetachedMap("testMap");
 
 				map.set("key1", 1);
 				map.set("key2", 2);
@@ -462,7 +460,7 @@ describe("Map", () => {
 				const services = MockSharedObjectServices.createFromSummary(
 					map.getAttachSummary().summary,
 				);
-				const map2 = new AttributableMap(
+				const map2 = new TestMap(
 					"map2",
 					new MockFluidDataStoreRuntime(),
 					MapFactory.Attributes,
@@ -485,8 +483,8 @@ describe("Map", () => {
 
 	describe("Connected state", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let map1: AttributableMap;
-		let map2: AttributableMap;
+		let map1: TestMap;
+		let map2: TestMap;
 
 		beforeEach(async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -567,7 +565,7 @@ describe("Map", () => {
 				});
 
 				it("Should be able to set a shared object handle as a key", () => {
-					const subMap = createLocalMap("subMap");
+					const subMap = createDetachedMap("subMap");
 					map1.set("test", subMap.handle);
 
 					containerRuntimeFactory.processAllMessages();
@@ -592,8 +590,8 @@ describe("Map", () => {
 				});
 
 				it("Should be able to set and retrieve a plain object with nested handles", async () => {
-					const subMap = createLocalMap("subMap");
-					const subMap2 = createLocalMap("subMap2");
+					const subMap = createDetachedMap("subMap");
+					const subMap2 = createDetachedMap("subMap2");
 					const containingObject = {
 						subMapHandle: subMap.handle,
 						nestedObj: {
@@ -832,12 +830,11 @@ describe("Map", () => {
 
 		describe("Attributor", () => {
 			beforeEach(() => {
-				const options: IMapOptions = { attribution: { track: true } };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first map with attribution enabled.
-				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
-				// Create a second map with attribution enabled.
-				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
+				map1 = createConnectedMap("map1", containerRuntimeFactory);
+				// Create the second map with attribution enabled.
+				map2 = createConnectedMap("map2", containerRuntimeFactory);
 			});
 
 			it("Can retrieve proper attribution information with set/delete key operations", () => {
@@ -948,7 +945,7 @@ describe("Map", () => {
 				const service = MockSharedObjectServices.createFromSummary(
 					map1.getAttachSummary().summary,
 				);
-				const map3 = new AttributableMap(
+				const map3 = new TestMap(
 					"map3",
 					new MockFluidDataStoreRuntime(),
 					MapFactory.Attributes,
@@ -966,6 +963,26 @@ describe("Map", () => {
 					{ type: "op", seq: 2 },
 					"The loaded map should have valid op-based attribution for the second entry",
 				);
+			});
+
+			it("can update attribution properly while applying stashed ops", async () => {
+				const serializable: ISerializableValue = { type: "Plain", value: "value" };
+				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
+				map1.testApplyStashedOp(op);
+				assert.deepEqual(map1.getAttribution("key"), { type: "local" });
+
+				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
+				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
+				map1.testApplyStashedOp(op2);
+				assert.deepEqual(map1.getAttribution("key2"), { type: "local" });
+
+				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
+				map1.testApplyStashedOp(op3);
+				assert.equal(map1.getAttribution("key2"), undefined);
+
+				const op4: IMapClearOperation = { type: "clear" };
+				map1.testApplyStashedOp(op4);
+				assert.equal(map1.getAllAttribution()?.size, 0);
 			});
 		});
 	});

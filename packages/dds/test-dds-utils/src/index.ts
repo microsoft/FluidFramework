@@ -5,12 +5,16 @@
 
 export { IGCTestProvider, runGCTests } from "./gcTestRunner";
 export {
+	AddClient,
 	BaseOperation,
 	ChangeConnectionState,
 	Client,
 	ClientSpec,
 	createDDSFuzzSuite,
 	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	defaultDDSFuzzSuiteOptions,
 	Synchronize,
+	replayTest,
 } from "./ddsFuzzHarness";

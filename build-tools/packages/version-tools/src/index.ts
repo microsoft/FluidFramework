@@ -4,18 +4,29 @@
  */
 
 export {
+	isInterdependencyRange,
+	isRangeOperator,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
+	isWorkspaceRange,
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+	RangeOperator,
+	RangeOperators,
+	RangeOperatorWithVersion,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,
 	VersionChangeType,
 	VersionChangeTypeExtended,
+	WorkspaceRange,
+	WorkspaceRanges,
 } from "./bumpTypes";
 export {
 	changePreReleaseIdentifier,
 	getVersionRange,
 	fromInternalScheme,
+	isInternalVersionRange,
 	isInternalVersionScheme,
 	toInternalScheme,
 } from "./internalVersionScheme";

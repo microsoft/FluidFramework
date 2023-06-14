@@ -15,7 +15,7 @@ export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
 	const filteredUsedRoutes = usedRoutes.filter((route) => route !== "" && route !== "/");
 	const childUsedRoutesMap: Map<string, string[]> = new Map();
 	for (const route of filteredUsedRoutes) {
-		assert(route.startsWith("/"), "Used route should always be an absolute route");
+		assert(route.startsWith("/"), 0x5e0 /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
 		const childUsedRoute = route.slice(childId.length + 1);
 

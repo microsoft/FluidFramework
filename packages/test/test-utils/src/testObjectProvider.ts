@@ -8,6 +8,7 @@ import {
 	IHostLoader,
 	IFluidCodeDetails,
 	LoaderHeader,
+	ILoader,
 } from "@fluidframework/container-definitions";
 import {
 	ITelemetryGenericEvent,
@@ -26,7 +27,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -112,6 +112,9 @@ export interface ITestContainerConfig {
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/** Temporary flag: simulate read connection using delay connection, default is true */
+	simulateReadConnectionUsingDelay?: boolean;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -142,8 +145,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();
@@ -382,12 +384,20 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return this.resolveContainer(loader, requestHeader);
+	}
 
-		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+	private async resolveContainer(
+		loader: ILoader,
+		requestHeader?: IRequestHeader,
+		delay: boolean = true,
+	) {
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
 		// to load "delayed" across the board. Remove the following code.
 		const delayConnection =
-			requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false;
-		const headers: IRequestHeader = delayConnection
+			delay &&
+			(requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false);
+		const headers: IRequestHeader | undefined = delayConnection
 			? {
 					[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
 					...requestHeader,
@@ -399,19 +409,18 @@ export class TestObjectProvider implements ITestObjectProvider {
 			headers,
 		});
 
-		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
 		// to load "delayed" across the board. Remove the following code.
 		if (delayConnection) {
-			// Older version may not have connect, use resume instead.
+			// Older version may not have connect/disconnect. It was add in PR#9439, and available >= 0.59.1000
 			const maybeContainer = container as Partial<IContainer>;
 			if (maybeContainer.connect !== undefined) {
 				container.connect();
 			} else {
-				// back compat
+				// back compat. Remove when we don't support < 0.59.1000
 				(container as any).resume();
 			}
 		}
-
 		return container;
 	}
 
@@ -464,10 +473,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
-		});
+
+		const container = await this.resolveContainer(
+			loader,
+			requestHeader,
+			testContainerConfig?.simulateReadConnectionUsingDelay,
+		);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
@@ -486,7 +497,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
+	public async ensureSynchronized(): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized();
 	}
 

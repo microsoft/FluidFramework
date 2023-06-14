@@ -1,6 +1,27 @@
 # @fluidframework/test-runtime-utils
 
-Test utilities for the Fluid Framework Runtime. Include mock implementation of various runtime interfaces, as well as a mock logger for validating a particular log sequence.
+Test utilities for the Fluid Framework Runtime. Include mock implementation of various runtime interfaces, as well as a
+mock logger for validating a particular log sequence.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
+scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
+[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Writing unit test for a DDS
 
@@ -43,3 +64,21 @@ To write a unit test for these scenarios, follow these steps:
 -   To reconnect the client, set `connection = true` on the `MockContainerRuntimeForReconnection`. This will trigger a `reSubmit` call on the DDS to resubmit unack'd / unsent ops.
 
 Examples - [sharedString](../sequence/src/test/sharedString.spec.ts), [consensusOrderedCollection](../consensus-ordered-collection/src/test/consensusOrderedCollection.spec.ts), [consensusRegisterCollection](../consensus-register-collection/src/test/consensusRegisterCollection.spec.ts).
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -355,7 +355,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose?(error?: ICriticalContainerError): void;
+	dispose(error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -369,7 +369,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
 	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState(): string;
 

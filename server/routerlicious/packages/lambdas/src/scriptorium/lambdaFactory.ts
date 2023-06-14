@@ -8,7 +8,6 @@ import {
 	ICollection,
 	IContext,
 	IPartitionLambda,
-	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 	MongoManager,
 } from "@fluidframework/server-services-core";
@@ -23,10 +22,7 @@ export class ScriptoriumLambdaFactory extends EventEmitter implements IPartition
 		super();
 	}
 
-	public async create(
-		config: IPartitionLambdaConfig,
-		context: IContext,
-	): Promise<IPartitionLambda> {
+	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
 		// Takes in the io as well as the collection. I can probably keep the same lambda but only ever give it stuff
 		// from a single document
 		return new ScriptoriumLambda(this.opCollection, context, this.providerConfig);

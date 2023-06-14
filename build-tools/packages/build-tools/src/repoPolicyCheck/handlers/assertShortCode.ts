@@ -59,7 +59,7 @@ function getAssertMessageParams(sourceFile: SourceFile): Node[] {
 
 export const handler: Handler = {
 	name: "assert-short-codes",
-	match: /^(packages|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base)).*\/tsconfig\.json/i,
+	match: /^(packages|experimental|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base)).*\/tsconfig\.json/i,
 	handler: (tsconfigPath) => {
 		if (tsconfigPath.includes("test")) {
 			return;

@@ -6,6 +6,7 @@ import {
 	ApiClass,
 	ApiDeclaredItem,
 	ApiDocumentedItem,
+	ApiEntryPoint,
 	ApiInterface,
 	ApiItem,
 	ApiItemKind,
@@ -32,6 +33,7 @@ import {
 	SingleLineDocumentationNode,
 	SingleLineSpanNode,
 	SpanNode,
+	UnorderedListNode,
 } from "../../documentation-domain";
 import { injectSeparator } from "../../utilities";
 import {
@@ -352,25 +354,18 @@ export function createBreadcrumbParagraph(
 
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
-	const contents: DocumentationNode[] = [];
+	const links = ancestry.map((hierarchyItem) =>
+		LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)),
+	);
 
-	// Render ancestry links
-	let writtenAnythingYet = false;
-	for (const hierarchyItem of ancestry) {
-		// TODO: join helper?
-		if (writtenAnythingYet) {
-			contents.push(breadcrumbSeparator);
-		}
-		contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)));
+	// Add link for current document item
+	links.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
 
-		writtenAnythingYet = true;
-	}
-
-	// Render entry for the item itself
-	if (writtenAnythingYet) {
-		contents.push(breadcrumbSeparator);
-	}
-	contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
+	// Inject breadcrumb separator between each link
+	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
+		links,
+		breadcrumbSeparator,
+	);
 
 	return new ParagraphNode(contents);
 }
@@ -741,5 +736,26 @@ export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): Se
 	return new SectionNode(
 		nodes,
 		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,
+	);
+}
+
+/**
+ * Creates an {@link UnorderedListNode} containing links to each of the specified entry-points.
+ *
+ * @param apiEntryPoints - The list of entry-points to display / link to.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+export function createEntryPointList(
+	apiEntryPoints: readonly ApiEntryPoint[],
+	config: Required<ApiItemTransformationConfiguration>,
+): UnorderedListNode | undefined {
+	if (apiEntryPoints.length === 0) {
+		return undefined;
+	}
+
+	return new UnorderedListNode(
+		apiEntryPoints.map((entryPoint) =>
+			LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+		),
 	);
 }

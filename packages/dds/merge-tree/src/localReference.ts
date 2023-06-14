@@ -18,6 +18,27 @@ import {
 } from "./referencePositions";
 
 /**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
+export const SlidingPreference = {
+	/**
+	 * Prefer sliding towards the start of the tree
+	 */
+	BACKWARD: 0,
+	/**
+	 * Prefer sliding towards the end of the tree
+	 */
+	FORWARD: 1,
+} as const;
+
+/**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+
+/**
  * @internal
  */
 function _validateReferenceType(refType: ReferenceType) {
@@ -66,7 +87,11 @@ class LocalReference implements LocalReferencePosition {
 		return (this._trackingCollection ??= new TrackingGroupCollection(this));
 	}
 
-	constructor(public refType = ReferenceType.Simple, properties?: PropertySet) {
+	constructor(
+		public refType = ReferenceType.Simple,
+		properties?: PropertySet,
+		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
 	}
@@ -134,6 +159,37 @@ interface IRefsAtOffset {
 
 function assertLocalReferences(lref: any): asserts lref is LocalReference {
 	assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
+}
+
+/**
+ * @returns true if `func` returns true for any position within the collection
+ */
+export function anyLocalReferencePosition(
+	collection: LocalReferenceCollection,
+	func: (pos: LocalReferencePosition) => boolean,
+): boolean {
+	for (const pos of collection) {
+		if (func(pos)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @returns only the local reference positions for which the `predicate` returns
+ * true
+ */
+export function* filterLocalReferencePositions(
+	collection: LocalReferenceCollection,
+	predicate: (pos: LocalReferencePosition) => boolean,
+): Generator<LocalReferencePosition> {
+	for (const pos of collection) {
+		if (predicate(pos)) {
+			yield pos;
+		}
+	}
 }
 
 /**
@@ -261,8 +317,9 @@ export class LocalReferenceCollection {
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties);
+		const ref = new LocalReference(refType, properties, slidingPreference);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);

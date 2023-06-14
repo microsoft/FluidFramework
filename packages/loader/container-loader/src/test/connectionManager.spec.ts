@@ -76,6 +76,7 @@ describe("connectionManager", () => {
 	function createConnectionManager(): ConnectionManager {
 		return new ConnectionManager(
 			() => mockDocumentService,
+			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger,
@@ -86,7 +87,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - exceptions invoke closeHandler", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect();
+		connectionManager.connect("test:reconnectOnError");
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
@@ -110,7 +111,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - error, disconnect, and nack handling", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect();
+		connectionManager.connect("test:reconnectOnError");
 		let connection = await waitForConnection();
 
 		// Act I - retryableError
@@ -210,6 +211,7 @@ describe("connectionManager", () => {
 				forced: true,
 				permissions: undefined,
 				storageOnly: false,
+				storageOnlyReason: undefined,
 			});
 		});
 
@@ -225,6 +227,7 @@ describe("connectionManager", () => {
 				forced: false,
 				permissions: true,
 				storageOnly: false,
+				storageOnlyReason: undefined,
 			});
 		});
 
@@ -234,12 +237,13 @@ describe("connectionManager", () => {
 
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
-			connectionManager.connect();
+			connectionManager.connect("test");
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
 				forced: false,
 				permissions: true, // storageOnly also implies client does not have write permissions
 				storageOnly: true,
+				storageOnlyReason: undefined,
 			});
 		});
 	});

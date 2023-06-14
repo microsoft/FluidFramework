@@ -151,16 +151,6 @@ export function resolveNodeModule(basePath: string, lookupPath: string) {
 	return undefined;
 }
 
-export async function readJsonAsync(filename: string) {
-	const content = await readFileAsync(filename, "utf-8");
-	return JSON.parse(content);
-}
-
-export function readJsonSync(filename: string) {
-	const content = fs.readFileSync(filename, "utf-8");
-	return JSON.parse(content);
-}
-
 export async function lookUpDirAsync(
 	dir: string,
 	callback: (currentDir: string) => Promise<boolean>,

@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	LoggingError,
+	ChildLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	Deferred,
@@ -12,7 +17,6 @@ import {
 	Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -177,7 +181,7 @@ export class SummaryGenerator {
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
@@ -275,6 +279,9 @@ export class SummaryGenerator {
 		// Use record type to prevent unexpected value types
 		let summaryData: SubmitSummaryResult | undefined;
 		try {
+			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
+			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
+
 			summaryData = await this.submitSummaryCallback({
 				fullTree,
 				refreshLatestAck,
@@ -282,19 +289,17 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
-			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
-
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
-				opsSinceLastAttempt:
-					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+				opsSinceLastAttempt: referenceSequenceNumber - lastAttemptRefSeqNum,
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+				stage: summaryData.stage,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
 				summaryData,
@@ -480,6 +485,7 @@ export class SummaryGenerator {
 					hasMissingOpData: this.heuristicData.hasMissingOpData,
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
 
 			default:

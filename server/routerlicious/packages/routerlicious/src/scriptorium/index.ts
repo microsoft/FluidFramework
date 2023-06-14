@@ -6,7 +6,9 @@
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import {
+	CheckpointService,
 	IPartitionLambdaFactory,
+	MongoCheckpointRepository,
 	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
@@ -25,6 +27,7 @@ export async function create(
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 	const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
 
 	const softDeletionRetentionPeriodMs = config.get(
@@ -37,6 +40,8 @@ export async function create(
 
 	const enableTelemetry = (config.get("scriptorium:enableTelemetry") as boolean) ?? false;
 	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
+	const restartOnCheckpointFailure =
+		(config.get("scriptorium:restartOnCheckpointFailure") as boolean) ?? true;
 
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
@@ -56,12 +61,24 @@ export async function create(
 	const documentRepository =
 		customizations?.documentRepository ??
 		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
+
+	// Required for checkpoint service
+	const checkpointRepository = new MongoCheckpointRepository(
+		operationsDb.collection(checkpointsCollectionName),
+		undefined /* checkpoint type */,
+	);
+	const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
+
+	const checkpointService = new CheckpointService(
+		checkpointRepository,
+		documentRepository,
+		isLocalCheckpointEnabled,
+	);
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
 		await opCollection.createIndex({ tenantId: 1 }, false);
 		await opCollection.createIndex({ documentId: 1 }, false);
-		await opCollection.createIndex({ "operation.term": 1 }, false);
 		await opCollection.createIndex({ "operation.timestamp": 1 }, false);
 		await opCollection.createIndex({ scheduledDeletionTime: 1 }, false);
 		await opCollection.createIndex({ "operation.sequenceNumber": 1 }, false);
@@ -69,7 +86,6 @@ export async function create(
 		await opCollection.createIndex(
 			{
 				"documentId": 1,
-				"operation.term": 1,
 				"operation.sequenceNumber": 1,
 				"tenantId": 1,
 			},
@@ -87,11 +103,11 @@ export async function create(
 		async () =>
 			deleteSummarizedOps(
 				opCollection,
-				documentRepository,
 				softDeletionRetentionPeriodMs,
 				offlineWindowMs,
 				softDeletionEnabled,
 				permanentDeletionEnabled,
+				checkpointService,
 			),
 		deletionIntervalMs,
 		"deleteSummarizedOps",
@@ -101,5 +117,9 @@ export async function create(
 		},
 	);
 
-	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry, maxDbBatchSize });
+	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
+		enableTelemetry,
+		maxDbBatchSize,
+		restartOnCheckpointFailure,
+	});
 }

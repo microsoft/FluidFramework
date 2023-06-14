@@ -23,14 +23,14 @@ describe("resetPendingSegmentsToOp", () => {
 	describe("with a number of nested inserts", () => {
 		const insertCount = 5;
 		const expectedSegmentCount = insertCount * 2 - 1;
-		let opList: IMergeTreeOp[];
+		let opList: { op: IMergeTreeOp; refSeq: number }[];
 		let opCount: number = 0;
 
 		function applyOpList(cli: TestClient) {
 			while (opList.length > 0) {
 				const op = opList.shift();
 				if (op) {
-					const seqOp = cli.makeOpMessage(op, ++opCount);
+					const seqOp = cli.makeOpMessage(op.op, ++opCount, op.refSeq);
 					cli.applyMsg(seqOp);
 				}
 			}
@@ -42,7 +42,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 			for (let i = 0; i < insertCount; i++) {
 				const op = client.insertTextLocal(i, "hello")!;
-				opList.push(op);
+				opList.push({ op, refSeq: client.getCurrentSeq() });
 				assert.equal(client.mergeTree.pendingSegments?.length, i + 1);
 			}
 		});
@@ -81,18 +81,20 @@ describe("resetPendingSegmentsToOp", () => {
 				},
 			);
 			const oldops = opList;
-			opList = oldops.map((op) =>
-				client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data),
-			);
+			opList = oldops.map((op) => ({
+				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				refSeq: client.getCurrentSeq(),
+			}));
 			applyOpList(client);
 			assert.equal(localPartialsComputeCount, 1);
 		});
 
 		it("nacked insertSegment", async () => {
 			const oldops = opList;
-			opList = oldops.map((op) =>
-				client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data),
-			);
+			opList = oldops.map((op) => ({
+				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				refSeq: client.getCurrentSeq(),
+			}));
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -105,7 +107,10 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(client.removeRangeLocal(0, client.getLength())!);
+			opList.push({
+				op: client.removeRangeLocal(0, client.getLength())!,
+				refSeq: client.getCurrentSeq(),
+			});
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -114,13 +119,17 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(client.removeRangeLocal(0, client.getLength())!);
-			opList.push(
-				client.regeneratePendingOp(
-					opList.shift()!,
+			opList.push({
+				op: client.removeRangeLocal(0, client.getLength())!,
+				refSeq: client.getCurrentSeq(),
+			});
+			opList.push({
+				op: client.regeneratePendingOp(
+					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,
 				),
-			);
+				refSeq: client.getCurrentSeq(),
+			});
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -130,11 +139,15 @@ describe("resetPendingSegmentsToOp", () => {
 		});
 
 		it("nacked insertSegment and removeRange", async () => {
-			opList.push(client.removeRangeLocal(0, client.getLength())!);
+			opList.push({
+				op: client.removeRangeLocal(0, client.getLength())!,
+				refSeq: client.getCurrentSeq(),
+			});
 			const oldops = opList;
-			opList = oldops.map((op) =>
-				client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data),
-			);
+			opList = oldops.map((op) => ({
+				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				refSeq: client.getCurrentSeq(),
+			}));
 
 			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount * 2);
 
@@ -147,9 +160,10 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(
-				client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
-			);
+			opList.push({
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				refSeq: client.getCurrentSeq(),
+			});
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -158,15 +172,17 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(
-				client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
-			);
-			opList.push(
-				client.regeneratePendingOp(
-					opList.shift()!,
+			opList.push({
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				refSeq: client.getCurrentSeq(),
+			});
+			opList.push({
+				op: client.regeneratePendingOp(
+					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,
 				),
-			);
+				refSeq: client.getCurrentSeq(),
+			});
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -176,13 +192,15 @@ describe("resetPendingSegmentsToOp", () => {
 		});
 
 		it("nacked insertSegment and annotateRange", async () => {
-			opList.push(
-				client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
-			);
+			opList.push({
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				refSeq: client.getCurrentSeq(),
+			});
 			const oldops = opList;
-			opList = oldops.map((op) =>
-				client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data),
-			);
+			opList = oldops.map((op) => ({
+				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				refSeq: client.getCurrentSeq(),
+			}));
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -209,7 +227,7 @@ describe("resetPendingSegmentsToOp", () => {
 			otherClient.startOrUpdateCollaboration("other user");
 			const regeneratedInsert = client.regeneratePendingOp(
 				insertOp,
-				client.mergeTree.pendingSegments!.first!.data,
+				client.mergeTree.pendingSegments.first!.data,
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
@@ -232,7 +250,7 @@ describe("resetPendingSegmentsToOp", () => {
 			otherClient.startOrUpdateCollaboration("other user");
 			const regeneratedInsert = client.regeneratePendingOp(
 				insertOp,
-				client.mergeTree.pendingSegments!.first!.data,
+				client.mergeTree.pendingSegments.first!.data,
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 

@@ -17,24 +17,30 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
 jobs:
   - job: runTests
     displayName: Run tests
     pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     variables:
+    - group: ado-feeds
     - name: isTestBranch
       value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
       readonly: true
     - name: feed
       ${{ if eq(variables.isTestBranch, 'true') }}:
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
       ${{ else }}:
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+        value: $(ado-feeds-build) # Comes from the ado-feeds variable group
     - name: devFeed
       ${{ if eq(variables.isTestBranch, 'true') }}:
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
       ${{ else }}:
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+        value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
 
     steps:
     # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
@@ -86,6 +92,7 @@ jobs:
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.testWorkspace }}
+        # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
         script: |
           echo Initialize package
           npm init --yes
@@ -98,8 +105,8 @@ jobs:
           echo "@fluid-experimental:registry=$(feed)" >> ./.npmrc
           echo "@fluid-tools:registry=$(feed)" >> ./.npmrc
           echo "@fluid-internal:registry=$(devFeed)" >> ./.npmrc
-          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+          echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+          echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
 

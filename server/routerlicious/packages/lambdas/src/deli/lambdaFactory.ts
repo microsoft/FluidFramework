@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
-import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+	ICheckpointService,
 	IClientManager,
 	IContext,
 	IDeliState,
@@ -23,8 +23,6 @@ import {
 	LambdaCloseType,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
 	Lumber,
@@ -36,20 +34,14 @@ import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionVali
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
-// Epoch should never tick in our current setting. This flag is just for being extra cautious.
-// TODO: Remove when everything is up to date.
-const FlipTerm = false;
-
-const getDefaultCheckpooint = (epoch: number): IDeliState => {
+const getDefaultCheckpoint = (): IDeliState => {
 	return {
 		clients: undefined,
 		durableSequenceNumber: 0,
-		epoch,
 		expHash1: defaultHash,
 		logOffset: -1,
 		sequenceNumber: 0,
 		signalClientConnectionNumber: 0,
-		term: 1,
 		lastSentMSN: 0,
 		nackMessages: undefined,
 		successfullyStartedLambdas: [],
@@ -57,16 +49,22 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 	};
 };
 
-export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class DeliLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly checkpointService: ICheckpointService,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -75,7 +73,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		config: IPartitionLambdaConfig,
 		context: IContext,
 	): Promise<IPartitionLambda> {
-		const { documentId, tenantId, leaderEpoch } = config;
+		const { documentId, tenantId } = config;
 		const sessionMetric = createSessionMetric(
 			tenantId,
 			documentId,
@@ -136,7 +134,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			throw error;
 		}
 
-		let lastCheckpoint: IDeliState;
+		let lastCheckpoint;
 
 		// Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
 		// both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
@@ -145,7 +143,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			const message = "New document. Setting empty deli checkpoint";
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
-			lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
+			lastCheckpoint = getDefaultCheckpoint();
 		} else {
 			if (document.deli === "") {
 				const docExistsMessge = "Existing document. Fetching checkpoint from summary";
@@ -164,7 +162,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
 					this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
 
-					lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
+					lastCheckpoint = getDefaultCheckpoint();
 				} else {
 					lastCheckpoint = lastCheckpointFromSummary;
 					// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
@@ -172,7 +170,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					// is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
 					// the sequence number is 'n' rather than '0'.
 					lastCheckpoint.logOffset = -1;
-					lastCheckpoint.epoch = leaderEpoch;
 					const message = `Deli checkpoint from summary: ${JSON.stringify(
 						lastCheckpoint,
 					)}`;
@@ -180,7 +177,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-				lastCheckpoint = JSON.parse(document.deli);
+				lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(
+					documentId,
+					tenantId,
+					"deli",
+					document,
+				);
 			}
 		}
 
@@ -192,36 +194,17 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			lastCheckpoint.checkpointTimestamp = Date.now();
 		}
 
-		// For cases such as detached container where the document was generated outside the scope of deli
-		// and checkpoint was written manually.
-		if (lastCheckpoint.epoch === undefined) {
-			lastCheckpoint.epoch = leaderEpoch;
-			lastCheckpoint.term = 1;
-		}
-
-		const newCheckpoint = FlipTerm
-			? await this.resetCheckpointOnEpochTick(
-					tenantId,
-					documentId,
-					gitManager,
-					context.log,
-					lastCheckpoint,
-					leaderEpoch,
-			  )
-			: lastCheckpoint;
-
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
 			documentId,
-			this.documentRepository,
+			this.checkpointService,
 		);
 
-		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?
 		const deliLambda = new DeliLambda(
 			context,
 			tenantId,
 			documentId,
-			newCheckpoint,
+			lastCheckpoint,
 			checkpointManager,
 			this.clientManager,
 			// The producer as well it shouldn't take. Maybe it just gives an output stream?
@@ -231,6 +214,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
+			this.checkpointService,
+			this.restartOnCheckpointFailure,
+			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		deliLambda.on("close", (closeType) => {
@@ -337,112 +323,5 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 				return undefined;
 			}
 		}
-	}
-
-	// Check the current epoch with last epoch. If not matched, we need to flip the term.
-	// However, we need to store the current term and epoch reliably before we kick off the lambda.
-	// Hence we need to create another summary. Logically its an update but in a git sense,
-	// its a new commit in the chain.
-
-	// Another aspect is the starting summary. What happens when epoch ticks and we never had a prior summary?
-	// For now we are just skipping the step if no prior summary was present.
-	// TODO: May be alfred/deli should create a summary at inception?
-	private async resetCheckpointOnEpochTick(
-		tenantId: string,
-		documentId: string,
-		gitManager: IGitManager,
-		logger: ILogger | undefined,
-		checkpoint: IDeliState,
-		leaderEpoch: number,
-	): Promise<IDeliState> {
-		let newCheckpoint = checkpoint;
-		if (leaderEpoch !== newCheckpoint.epoch) {
-			const lastSummaryState = await this.loadStateFromSummary(
-				tenantId,
-				documentId,
-				gitManager,
-				logger,
-			);
-			if (lastSummaryState === undefined) {
-				newCheckpoint.epoch = leaderEpoch;
-			} else {
-				// Log offset should never move backwards.
-				const logOffset = newCheckpoint.logOffset;
-				newCheckpoint = lastSummaryState;
-				newCheckpoint.epoch = leaderEpoch;
-				++newCheckpoint.term;
-				newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
-				newCheckpoint.logOffset = logOffset;
-				// Now create the summary.
-				await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-				const message = "Created a summary on epoch tick";
-				logger?.info(message, {
-					messageMetaData: {
-						documentId,
-						tenantId,
-					},
-				});
-				Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
-			}
-		}
-		return newCheckpoint;
-	}
-
-	private async createSummaryWithLatestTerm(
-		gitManager: IGitManager,
-		checkpoint: IDeliState,
-		documentId: string,
-	) {
-		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-		const [lastCommit, scribeContent] = await Promise.all([
-			gitManager.getCommit(existingRef.object.sha),
-			gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
-		]);
-
-		const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-		const serviceProtocolEntries = generateServiceProtocolEntries(
-			JSON.stringify(checkpoint),
-			scribe,
-		);
-
-		const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
-			gitManager.createTree({ entries: serviceProtocolEntries }),
-			gitManager.getTree(lastCommit.tree.sha, false),
-		]);
-
-		const newTreeEntries = lastSummaryTree.tree
-			.filter((value) => value.path !== ".serviceProtocol")
-			.map((value) => {
-				const createTreeEntry: ICreateTreeEntry = {
-					mode: value.mode,
-					path: value.path,
-					sha: value.sha,
-					type: value.type,
-				};
-				return createTreeEntry;
-			});
-
-		newTreeEntries.push({
-			mode: FileMode.Directory,
-			path: ".serviceProtocol",
-			sha: serviceProtocolTree.sha,
-			type: "tree",
-		});
-
-		const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
-		const commitParams: ICreateCommitParams = {
-			author: {
-				date: new Date().toISOString(),
-				email: "praguertdev@microsoft.com",
-				name: "Routerlicious Service",
-			},
-			message: `Term Change Summary @T${checkpoint.term}S${checkpoint.sequenceNumber}`,
-			parents: [lastCommit.sha],
-			tree: gitTree.sha,
-		};
-
-		// Finally commit the summary and update the ref.
-		const commit = await gitManager.createCommit(commitParams);
-		await gitManager.upsertRef(documentId, commit.sha);
 	}
 }
