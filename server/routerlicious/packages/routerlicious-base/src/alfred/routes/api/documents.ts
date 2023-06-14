@@ -287,11 +287,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(
-			tenantManager,
-			config,
-			defaultTokenValidationOptions,
-		),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
