@@ -79,8 +79,7 @@ export class RelativeLoader implements ILoader {
 				return this.container;
 			} else {
 				ensureResolvedUrlDefined(this.container.resolvedUrl);
-				const container = await Container.clone(
-					this.container,
+				const container = await this.container.clone(
 					{
 						resolvedUrl: { ...this.container.resolvedUrl },
 						version: request.headers?.[LoaderHeader.version] ?? undefined,
