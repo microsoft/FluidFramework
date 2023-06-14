@@ -153,3 +153,18 @@ export type _RecursiveTrick = never;
 
 	/* eslint-enable @typescript-eslint/no-unused-vars */
 }
+
+/**
+ * Alternative to the built in Record type which does not permit unexpected members,
+ * and is readonly.
+ *
+ * @privateRemarks
+ * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
+ * The cause for this is unclear, but empirically it was the case when this comment was written.
+ *
+ *
+ * @alpha
+ */
+export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
+	readonly [P in symbol | string]: P extends K ? T : never;
+};

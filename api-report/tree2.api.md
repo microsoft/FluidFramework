@@ -12,7 +12,9 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
-import { TAnySchema } from '@sinclair/typebox';
+import type { Static } from '@sinclair/typebox';
+import type { TAnySchema } from '@sinclair/typebox';
+import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {
@@ -269,10 +271,10 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
-export function cursorForTypedTreeData<T extends TreeSchema>(schemaData: SchemaDataAndPolicy, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
+export function cursorForTypedTreeData<T extends TreeSchema>(context: TreeDataContext, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
 
 // @alpha
-export function cursorFromContextualData(schemaData: SchemaDataAndPolicy, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
 export const enum CursorLocationType {
@@ -384,6 +386,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 // @alpha
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
@@ -506,6 +509,9 @@ export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
+
+// @alpha
+export type FieldGenerator = () => MapTree[];
 
 // @alpha
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
@@ -719,6 +725,11 @@ export interface ICodecFamily<TDecoded> {
 }
 
 // @alpha
+export interface ICodecOptions {
+    readonly jsonValidator: JsonValidator;
+}
+
+// @alpha
 export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 // @alpha (undocumented)
@@ -846,7 +857,8 @@ declare namespace InternalTypes {
         _RecursiveTrick,
         FlattenKeys,
         AllowOptionalNotFlattened,
-        isAny
+        isAny,
+        RestrictiveReadonlyRecord
     }
 }
 export { InternalTypes }
@@ -1090,6 +1102,11 @@ export const jsonString: TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>;
 
+// @alpha
+export interface JsonValidator {
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
+
 // @alpha (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
@@ -1107,6 +1124,12 @@ interface LocalFields {
 
 // @alpha
 interface MakeNominal {
+}
+
+// @alpha
+export interface MapTree extends NodeData {
+    // (undocumented)
+    fields: Map<FieldKey, MapTree[]>;
 }
 
 // @alpha
@@ -1274,6 +1297,9 @@ export type NodeReviver = (revision: RevisionTag, index: number, count: number) 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
+// @alpha
+export const noopValidator: JsonValidator;
+
 // @alpha (undocumented)
 type NormalizedFlexList<Item> = readonly Item[];
 
@@ -1392,6 +1418,11 @@ type RequiredFields<T> = [
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
 ][_InlineTrick];
+
+// @alpha
+type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
+    readonly [P in symbol | string]: P extends K ? T : never;
+};
 
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
@@ -1529,6 +1560,12 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
+// @alpha
+export interface SchemaValidationFunction<Schema extends TSchema> {
+    // (undocumented)
+    check(data: unknown): data is Static<Schema>;
+}
+
 // @alpha (undocumented)
 export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {
 }
@@ -1543,6 +1580,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
+    constructor(options?: SharedTreeOptions);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
@@ -1551,6 +1589,10 @@ export class SharedTreeFactory implements IChannelFactory {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
+}
+
+// @alpha (undocumented)
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
 }
 
 // @alpha
@@ -1663,6 +1705,12 @@ export interface TreeAdapter {
     readonly output: TreeSchemaIdentifier;
 }
 
+// @alpha
+export interface TreeDataContext {
+    fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+    readonly schema: SchemaDataAndPolicy;
+}
+
 // @alpha (undocumented)
 export interface TreeLocation {
     // (undocumented)
@@ -1729,9 +1777,7 @@ interface TreeSchemaSpecification {
     // (undocumented)
     readonly global?: FlexList<GlobalFieldSchema>;
     // (undocumented)
-    readonly local?: {
-        readonly [key: string]: FieldSchema;
-    };
+    readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
     // (undocumented)
     readonly value?: ValueSchema;
 }
@@ -1762,6 +1808,9 @@ TypedNode<Assume<Head, TreeSchema>, Mode>,
 ...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>
 ] : []
 ][_InlineTrick];
+
+// @alpha
+export const typeboxValidator: JsonValidator;
 
 // @alpha
 type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [

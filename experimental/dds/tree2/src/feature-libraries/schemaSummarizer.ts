@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
 	Dependee,
@@ -34,7 +35,7 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { getSchemaString, parseSchemaString } from "./schemaIndexFormat";
+import { makeSchemaCodec } from "./schemaIndexFormat";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -50,14 +51,17 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
+	private readonly codec: IJsonCodec<SchemaData, string>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: StoredSchemaRepository,
+		options: ICodecOptions,
 	) {
+		this.codec = makeSchemaCodec(options);
 		this.schemaBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.schema);
-			const schemaText = getSchemaString(this.schema);
+			const schemaText = this.codec.encode(this.schema);
 
 			// For now we are not chunking the the schema, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
@@ -71,7 +75,7 @@ export class SchemaSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
-		const dataString = getSchemaString(this.schema);
+		const dataString = this.codec.encode(this.schema);
 		builder.addBlob(schemaStringKey, dataString);
 		return builder.getSummaryTree();
 	}
@@ -126,7 +130,7 @@ export class SchemaSummarizer implements Summarizable {
 		);
 
 		const schemaString = bufferToString(schemaBuffer, "utf-8");
-		const decoded = parseSchemaString(schemaString);
+		const decoded = this.codec.decode(schemaString);
 		this.schema.update(decoded);
 	}
 }
@@ -144,10 +148,14 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
+	private readonly codec: IJsonCodec<SchemaData, string>;
 	public constructor(
 		public readonly inner: TRepository,
 		private readonly submit: (op: SchemaOp) => void,
-	) {}
+		options: ICodecOptions,
+	) {
+		this.codec = makeSchemaCodec(options);
+	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
 		return this.inner.on(eventName, listener);
@@ -162,7 +170,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
 		const op: JsonCompatibleReadOnly = message.contents;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
-			const data = parseSchemaString(op.data as string);
+			assert(typeof op.data === "string", "SchemaOps should have string data");
+			const data = this.codec.decode(op.data);
 			// TODO: This does not correctly handle concurrency of schema edits.
 			this.inner.update(data);
 			return true;
@@ -194,7 +203,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	}
 
 	public update(newSchema: SchemaData): void {
-		const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema) };
+		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
 		this.submit(op);
 		this.inner.update(newSchema);
 	}

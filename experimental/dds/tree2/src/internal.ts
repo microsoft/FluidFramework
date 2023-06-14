@@ -20,4 +20,5 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	isAny,
+	RestrictiveReadonlyRecord,
 } from "./util";
