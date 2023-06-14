@@ -20,9 +20,8 @@
 	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
-		"build:commonjs": "npm run tsc && npm run build:test",
+		"build:commonjs": "npm run tsc",
 		"build:compile": "npm run build:commonjs",
-		"build:test": "echo \"No build required.\"",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -31,11 +30,6 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "npm run test:mocha",
-		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
-		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
