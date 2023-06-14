@@ -6,12 +6,7 @@ import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
 
 import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
-import {
-	rootFieldKeySymbol,
-	UpPath,
-	moveToDetachedField,
-	FieldUpPath,
-} from "../../core";
+import { rootFieldKeySymbol, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
 import { SharedTreeView } from "../../shared-tree";
@@ -1195,7 +1190,7 @@ describe("Editing", () => {
 					parentIndex: 0,
 				};
 
-				tree.editor.setValue(rootPath, "a")
+				tree.editor.setValue(rootPath, "a");
 
 				tree2.transaction.start();
 				tree2.editor.addValueConstraint(rootPath, "a");
