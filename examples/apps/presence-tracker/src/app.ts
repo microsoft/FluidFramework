@@ -5,12 +5,11 @@
 
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IFluidContainer, ContainerSchema } from "fluid-framework";
-import { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
-// import {
-// 	TinyliciousClient,
-// 	TinyliciousContainerServices,
-// } from "@fluidframework/tinylicious-client";
+import {
+	TinyliciousClient,
+	TinyliciousContainerServices,
+	TinyliciousMember,
+} from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 
@@ -24,20 +23,21 @@ const containerSchema: ContainerSchema = {
 	},
 };
 
-function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "70px";
 	div.appendChild(wrapperDiv);
 
 	const focusDiv = document.createElement("div");
+	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
 	const onFocusChanged = () => {
-		focusDiv.innerHTML = `
-            Current user: ${focusTracker.audience.getMyself()?.userName}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
+		focusDiv.innerHTML = `Current user: ${
+			(focusTracker.audience.getMyself() as TinyliciousMember)?.userName
+		}</br>
+            ${getFocusPresencesString("</br>", focusTracker)}`;
 	};
 
 	onFocusChanged();
@@ -65,7 +65,7 @@ function getFocusPresencesString(
 	return focusString.join(newLineSeparator);
 }
 
-function renderMousePresence(
+export function renderMousePresence(
 	mouseTracker: MouseTracker,
 	focusTracker: FocusTracker,
 	div: HTMLDivElement,
@@ -74,6 +74,7 @@ function renderMousePresence(
 		div.innerHTML = "";
 		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
 			const posDiv = document.createElement("div");
+			posDiv.className = "posDiv";
 			posDiv.textContent = userName;
 			posDiv.style.position = "absolute";
 			posDiv.style.left = `${mousePosition.x}px`;
@@ -89,27 +90,11 @@ function renderMousePresence(
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
 
-async function start(): Promise<void> {
+export async function start(): Promise<void> {
 	// Get or create the document depending if we are running through the create new flow
-	// const client = new TinyliciousClient();
-	// let container: IFluidContainer;
-	// let services: TinyliciousContainerServices;
-	// let containerId: string;
-
-	const client = new AzureClient({
-		connection: {
-			type: "remote",
-			tenantId: "819fc504-44eb-4952-b649-948145915f45", // REPLACE WITH YOUR TENANT ID
-			tokenProvider: new InsecureTokenProvider("c9eae3f3287f9218d5c9894c86bb760b", {
-				id: "userId",
-				name: "Test User",
-			}),
-			endpoint: "https://us.fluidrelay.azure.com", // REPLACE WITH YOUR AZURE ENDPOINT
-		},
-	});
-
+	const client = new TinyliciousClient();
 	let container: IFluidContainer;
-	let services: AzureContainerServices;
+	let services: TinyliciousContainerServices;
 	let containerId: string;
 
 	// Get or create the document depending if we are running through the create new flow

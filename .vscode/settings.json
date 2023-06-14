@@ -61,5 +61,6 @@
 	},
 
 	// Temporary workaround for https://github.com/prettier/prettier-vscode/issues/3000
-	"prettier.prettierPath": "./node_modules/prettier"
+	"prettier.prettierPath": "./node_modules/prettier",
+	"git-blame.gitWebUrl": ""
 }
