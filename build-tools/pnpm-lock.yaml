@@ -183,6 +183,9 @@ importers:
       type-fest:
         specifier: ^2.19.0
         version: 2.19.0
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
     devDependencies:
       '@fluid-internal/readme-command':
         specifier: workspace:*
@@ -301,9 +304,6 @@ importers:
       tslib:
         specifier: ^2.3.1
         version: 2.4.0
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
 
   packages/build-tools:
     dependencies:
