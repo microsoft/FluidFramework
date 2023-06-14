@@ -15,6 +15,7 @@ export type BatchMessage = IBatchMessage & {
 	type: ContainerMessageType;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
+	reentrant?: boolean;
 };
 
 /**
@@ -34,6 +35,8 @@ export interface IBatch {
 	 * The reference sequence number for the batch
 	 */
 	readonly referenceSequenceNumber: number | undefined;
+
+	readonly hasReentrantOps?: boolean;
 }
 
 export interface IBatchCheckpoint {

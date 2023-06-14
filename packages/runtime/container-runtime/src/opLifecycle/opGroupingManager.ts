@@ -57,6 +57,7 @@ export class OpGroupingManager {
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
 					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
+					reentrant: false,
 				},
 			],
 		};

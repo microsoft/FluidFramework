@@ -201,6 +201,12 @@ export class Outbox {
 	}
 
 	private flushInternal(rawBatch: IBatch) {
+		if (rawBatch.hasReentrantOps === true) {
+			this.persistBatch(rawBatch.content);
+			this.params.pendingStateManager.replayPendingStates(/* isRetry */ true);
+			return;
+		}
+
 		const processedBatch = this.compressBatch(rawBatch);
 		this.sendBatch(processedBatch);
 

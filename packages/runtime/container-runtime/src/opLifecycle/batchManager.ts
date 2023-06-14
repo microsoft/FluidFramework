@@ -29,6 +29,7 @@ const opOverhead = 200;
 export class BatchManager {
 	private pendingBatch: BatchMessage[] = [];
 	private batchContentSize = 0;
+	private hasReentrantOps = false;
 
 	public get length() {
 		return this.pendingBatch.length;
@@ -57,6 +58,7 @@ export class BatchManager {
 	public push(message: BatchMessage, currentClientSequenceNumber?: number): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;
+		this.hasReentrantOps = this.hasReentrantOps === true || message.reentrant === true;
 
 		// Attempt to estimate batch size, aka socket message size.
 		// Each op has pretty large envelope, estimating to be 200 bytes.
@@ -100,11 +102,13 @@ export class BatchManager {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
+			hasReentrantOps: this.hasReentrantOps,
 		};
 
 		this.pendingBatch = [];
 		this.batchContentSize = 0;
 		this.clientSequenceNumber = undefined;
+		this.hasReentrantOps = false;
 
 		return addBatchMetadata(batch);
 	}

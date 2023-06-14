@@ -333,7 +333,7 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 */
-	public replayPendingStates() {
+	public replayPendingStates(isRetry: boolean = false) {
 		assert(
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
@@ -341,7 +341,7 @@ export class PendingStateManager implements IDisposable {
 
 		// This assert suggests we are about to send same ops twice, which will result in data loss.
 		assert(
-			this.clientId !== this.stateHandler.clientId(),
+			isRetry || this.clientId !== this.stateHandler.clientId(),
 			0x173 /* "replayPendingStates called twice for same clientId!" */,
 		);
 		this.clientId = this.stateHandler.clientId();

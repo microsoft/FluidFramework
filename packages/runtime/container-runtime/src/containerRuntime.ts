@@ -925,6 +925,7 @@ export class ContainerRuntime
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		this.ensureNoDataModelChangesCalls++;
+
 		try {
 			return callback();
 		} finally {
@@ -2988,6 +2989,7 @@ export class ContainerRuntime
 					metadata: undefined,
 					localOpMetadata: this.idCompressor?.serialize(true),
 					type: ContainerMessageType.IdAllocation,
+					reentrant: this.ensureNoDataModelChangesCalls > 0,
 				};
 			}
 
@@ -3029,6 +3031,7 @@ export class ContainerRuntime
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			reentrant: this.ensureNoDataModelChangesCalls > 0,
 		};
 
 		try {
