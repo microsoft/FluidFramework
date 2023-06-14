@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
+// @ts-check
+
+/** @type {import("syncpack").RcFile} */
+const config = {
 	indent: "\t",
 
 	// Custom types are used to define additional fields in package.json that contain versions that should be
@@ -234,3 +237,5 @@ module.exports = {
 		},
 	],
 };
+
+exports.default = config;
