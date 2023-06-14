@@ -28,6 +28,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start": "webpack serve",
+		"start:test": "webpack serve --config webpack.test.js",
 		"test": "npm run test:jest",
 		"test:jest": "jest --passWithNoTests",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
