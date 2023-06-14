@@ -275,6 +275,7 @@ declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeEx
 declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     use: TypeOnly<old.ITaggedTelemetryPropertyTypeExt>);
 use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
 
 /*
@@ -299,6 +300,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryErrorEventExt():
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
     use: TypeOnly<old.ITelemetryErrorEventExt>);
 use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryErrorEventExt());
 
 /*
@@ -323,6 +325,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryEventExt():
 declare function use_old_InterfaceDeclaration_ITelemetryEventExt(
     use: TypeOnly<old.ITelemetryEventExt>);
 use_old_InterfaceDeclaration_ITelemetryEventExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryEventExt());
 
 /*
@@ -347,6 +350,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryGenericEventExt():
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
     use: TypeOnly<old.ITelemetryGenericEventExt>);
 use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryGenericEventExt());
 
 /*
@@ -443,6 +447,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     use: TypeOnly<old.ITelemetryPerformanceEventExt>);
 use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt());
 
 /*
@@ -467,6 +472,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryPropertiesExt():
 declare function use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<old.ITelemetryPropertiesExt>);
 use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryPropertiesExt());
 
 /*
@@ -707,6 +713,7 @@ declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     use: TypeOnly<old.TelemetryEventPropertyTypeExt>);
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt());
 
 /*
