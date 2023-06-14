@@ -1,4 +1,4 @@
-# @fluid-internal/changelog-generator
+# @fluid-internal/changelog-generator-wrapper
 
 This tool is used to transform changesets into CHANGELOG.md entries. It uses the extensibility that the default
 changesets tools provide, which is documented here:

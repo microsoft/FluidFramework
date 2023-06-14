@@ -1,12 +1,12 @@
 {
-	"name": "@fluid-internal/changelog-generator",
+	"name": "@fluid-internal/changelog-generator-wrapper",
 	"version": "1.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "tools/changelog-generator"
+		"directory": "tools/changelog-generator-wrapper"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
