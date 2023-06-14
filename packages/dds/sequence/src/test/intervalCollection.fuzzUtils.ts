@@ -97,7 +97,7 @@ export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 export interface OperationGenerationConfig {
 	/**
 	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
-	 * Note due to concurency, during test execution the actual length of the string may exceed this.
+	 * Note due to concurrency, during test execution the actual length of the string may exceed this.
 	 */
 	maxStringLength?: number;
 	/**
