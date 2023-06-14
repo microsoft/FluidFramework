@@ -134,10 +134,10 @@ type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TVal
 // @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
-// @alpha (undocumented)
-export interface BatchBindingContext extends CommonBindingContext {
+// @alpha
+export interface BatchBindingContext extends BindingContext {
     // (undocumented)
-    readonly events: BindingContext[];
+    readonly events: VisitorBindingContext[];
     // (undocumented)
     readonly type: typeof BindingType.Batch;
 }
@@ -147,7 +147,7 @@ export interface BinderEvents {
 }
 
 // @alpha
-export type BinderEventsCompare = CompareFunction<BindingContext>;
+export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 // @alpha
 export interface BinderOptions {
@@ -158,9 +158,12 @@ export interface BinderOptions {
 }
 
 // @alpha
-export type BindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+export interface BindingContext {
+    // (undocumented)
+    readonly type: BindingContextType;
+}
 
-// @alpha (undocumented)
+// @alpha
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
 // @alpha
@@ -266,12 +269,6 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
-export interface CommonBindingContext {
-    // (undocumented)
-    readonly type: BindingContextType;
-}
-
-// @alpha
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 // @alpha
@@ -315,25 +312,25 @@ interface Covariant<T> {
     _removeContravariance?: T;
 }
 
-// @alpha (undocumented)
+// @alpha
 export function createBinderOptions({ matchPolicy, sortFn, }: {
     matchPolicy?: MatchPolicy;
     sortFn?: BinderEventsCompare;
 }): BinderOptions;
 
-// @alpha (undocumented)
+// @alpha
 export function createDataBinderBuffering<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<OperationBinderEvents>;
 
-// @alpha (undocumented)
+// @alpha
 export function createDataBinderDirect<E extends Events<E>>(view: ISubscribable<E>, options: BinderOptions): DataBinder<OperationBinderEvents>;
 
-// @alpha (undocumented)
+// @alpha
 export function createDataBinderInvalidating<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<InvalidationBinderEvents>;
 
 // @alpha
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
-// @alpha (undocumented)
+// @alpha
 export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy, sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
     matchPolicy?: MatchPolicy;
     sortFn?: BinderEventsCompare;
@@ -405,8 +402,8 @@ interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.Delete;
 }
 
-// @alpha (undocumented)
-export interface DeleteBindingContext extends CommonBindingContext {
+// @alpha
+export interface DeleteBindingContext extends BindingContext {
     // (undocumented)
     readonly count: number;
     // (undocumented)
@@ -946,8 +943,8 @@ interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.Insert;
 }
 
-// @alpha (undocumented)
-export interface InsertBindingContext extends CommonBindingContext {
+// @alpha
+export interface InsertBindingContext extends BindingContext {
     // (undocumented)
     readonly content: ProtoNodes;
     // (undocumented)
@@ -1034,8 +1031,8 @@ export interface InvalidationBinderEvents extends BinderEvents {
     invalidation(context: InvalidationBindingContext): void;
 }
 
-// @alpha (undocumented)
-export interface InvalidationBindingContext extends CommonBindingContext {
+// @alpha
+export interface InvalidationBindingContext extends BindingContext {
     // (undocumented)
     readonly type: typeof BindingType.Invalidation;
 }
@@ -1513,9 +1510,7 @@ export interface PathRootPrefix {
 
 // @alpha
 export interface PathStep {
-    // (undocumented)
     readonly field: FieldKey;
-    // (undocumented)
     readonly index?: number;
 }
 
@@ -1728,8 +1723,8 @@ export interface SequenceFieldEditBuilder {
     revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
 }
 
-// @alpha (undocumented)
-export interface SetValueBindingContext extends CommonBindingContext {
+// @alpha
+export interface SetValueBindingContext extends BindingContext {
     // (undocumented)
     readonly path: UpPath;
     // (undocumented)
@@ -1846,7 +1841,7 @@ export interface TaggedChange<TChangeset> {
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
-// @alpha (undocumented)
+// @alpha
 export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T;
 
 // @alpha
@@ -2177,6 +2172,9 @@ export const valueSymbol: unique symbol;
 export interface ViewEvents {
     afterBatch(): void;
 }
+
+// @alpha
+export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;

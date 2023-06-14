@@ -46,7 +46,7 @@ export type CompareFunction<T> = (a: T, b: T) => number;
  *
  * @alpha
  */
-export type BinderEventsCompare = CompareFunction<BindingContext>;
+export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 /**
  * Compare function for anchors.
@@ -80,7 +80,12 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
 }
 
 /**
- * Match categories for bind paths.
+ * Match policy for binding: subtree or path.
+ *
+ * - `subtree` match policy means that path filtering would return events matching the exact path and its subpaths,
+ * ie. changes to children would be allowed to bubble up to parent listeners.
+ * - `path` match policy means that path filtering would return events matching the _exact_ path only. In this case
+ * _exact_ semantics include interpreting an `undefined` _index_ field in the {@link PathStep} as a wildcard.
  *
  * @alpha
  */
@@ -137,7 +142,14 @@ export interface FlushableDataBinder<B extends BinderEvents>
  * @alpha
  */
 export interface PathStep {
+	/**
+	 * The field being traversed
+	 */
 	readonly field: FieldKey;
+
+	/**
+	 * The index of the element being navigated to
+	 */
 	readonly index?: number;
 }
 
@@ -167,6 +179,12 @@ export const indexSymbol = Symbol("editable-tree-binder:index");
 /**
  * A syntax node for the bind language
  *
+ * The bind language is a compact representation of related {@link BindPath}s. It can be used to
+ * simplify usage and construction of {@link BindTree}s.
+ *
+ * see {@link BindTree}
+ * see {@link compileSyntaxTree}
+ *
  * @alpha
  */
 export interface BindSyntaxTree {
@@ -175,7 +193,7 @@ export interface BindSyntaxTree {
 }
 
 /**
- * A top down path in a bind or path tree
+ * A top down path in a bind or path tree is a collection of {@link PathStep}s
  *
  * see {@link BindTree}
  * see {@link UpPath}
@@ -196,7 +214,10 @@ export type BindPath = DownPath;
  *
  * @alpha
  */
-export type BindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+export type VisitorBindingContext =
+	| DeleteBindingContext
+	| InsertBindingContext
+	| SetValueBindingContext;
 
 /**
  * Enumeration of binding categories
@@ -212,59 +233,71 @@ export const BindingType = {
 } as const;
 
 /**
+ * The type of a binding context
+ *
  * @alpha
  */
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
 /**
- * Common binding context for all binding categories
+ * The binding context attribution common to all binding events
  *
  * @alpha
  */
-export interface CommonBindingContext {
+export interface BindingContext {
 	readonly type: BindingContextType;
 }
 
 /**
+ * The binding context for a delete event
+ *
  * @alpha
  */
-export interface DeleteBindingContext extends CommonBindingContext {
+export interface DeleteBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Delete;
 	readonly path: UpPath;
 	readonly count: number;
 }
 
 /**
+ * The binding context for an insert event
+ *
  * @alpha
  */
-export interface InsertBindingContext extends CommonBindingContext {
+export interface InsertBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Insert;
 	readonly path: UpPath;
 	readonly content: ProtoNodes;
 }
 
 /**
+ * The binding context for a set value event
+ *
  * @alpha
  */
-export interface SetValueBindingContext extends CommonBindingContext {
+export interface SetValueBindingContext extends BindingContext {
 	readonly type: typeof BindingType.SetValue;
 	readonly path: UpPath;
 	readonly value: TreeValue;
 }
 
 /**
+ * The binding context for an invalidation event
+ *
  * @alpha
  */
-export interface InvalidationBindingContext extends CommonBindingContext {
+export interface InvalidationBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Invalidation;
 }
 
 /**
+ * The binding context for a batch event
+ *
  * @alpha
  */
-export interface BatchBindingContext extends CommonBindingContext {
+export interface BatchBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Batch;
-	readonly events: BindingContext[];
+	readonly events: VisitorBindingContext[];
 }
 
 /**
@@ -281,6 +314,10 @@ type Listener = (...args: unknown[]) => void;
  */
 type CallTree = BindTree<CallTree> & { listeners: Set<Listener> };
 
+/**
+ * A generic implementation of a {@link PathVisitor} enabling the registration of listeners
+ * categorized by {@link BindingContextType} and {@link BindTree}.
+ */
 abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
 		new Map();
@@ -429,6 +466,9 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	}
 }
 
+/**
+ * A visitor that invokes listeners immediately when a path is traversed.
+ */
 class DirectPathVisitor extends AbstractPathVisitor {
 	public constructor(options: BinderOptions) {
 		super(options);
@@ -477,6 +517,9 @@ class DirectPathVisitor extends AbstractPathVisitor {
 	}
 }
 
+/**
+ * A visitor that invokes listeners only once when flushed if any modifications detected on the registered paths.
+ */
 class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
@@ -520,10 +563,14 @@ class InvalidatingPathVisitor
 	}
 }
 
-type CallableBindingContext = BindingContext & {
+type CallableBindingContext = VisitorBindingContext & {
 	listeners: Set<Listener>;
 };
 
+/**
+ * A visitor that buffers all events which match the registered event categories and corresponding paths.
+ * Listeners are invoked when flushed. Flushing has also the ability to sort and batch the events.
+ */
 class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
 	private readonly eventQueue: CallableBindingContext[] = [];
 
@@ -776,6 +823,8 @@ class InvalidateDataBinder<E extends Events<E>>
 }
 
 /**
+ * Compute a top-town {@link DownPath} from an {@link UpPath}.
+ *
  * @alpha
  */
 export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T {
@@ -788,6 +837,8 @@ export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T {
 }
 
 /**
+ * Create a buffering data binder.
+ *
  * @alpha
  */
 export function createDataBinderBuffering<E extends Events<E>>(
@@ -798,6 +849,8 @@ export function createDataBinderBuffering<E extends Events<E>>(
 }
 
 /**
+ * Create a direct data binder.
+ *
  * @alpha
  */
 export function createDataBinderDirect<E extends Events<E>>(
@@ -808,6 +861,8 @@ export function createDataBinderDirect<E extends Events<E>>(
 }
 
 /**
+ * Create an invalidating data binder.
+ *
  * @alpha
  */
 export function createDataBinderInvalidating<E extends Events<E>>(
@@ -818,6 +873,10 @@ export function createDataBinderInvalidating<E extends Events<E>>(
 }
 
 /**
+ * Create binder options. If not specified, the default values are:
+ * - matchPolicy: "path"
+ * - sortFn: no sorting
+ *
  * @alpha
  */
 export function createBinderOptions({
@@ -831,6 +890,12 @@ export function createBinderOptions({
 }
 
 /**
+ * Create flushable binder options. If not specified, the default values are:
+ * - matchPolicy: "path"
+ * - sortFn: no sorting
+ * - sortAnchorsFn: no sorting
+ * - autoFlush: true
+ *
  * @alpha
  */
 export function createFlushableBinderOptions<E extends Events<E>>({
@@ -855,10 +920,23 @@ export function createFlushableBinderOptions<E extends Events<E>>({
 	};
 }
 
-export function compareBinderEventsZero(a: BindingContext, b: BindingContext): number {
+/**
+ * A compare function yielding no sorting.
+ *
+ * @alpha
+ */
+export function compareBinderEventsZero(
+	a: VisitorBindingContext,
+	b: VisitorBindingContext,
+): number {
 	return 0;
 }
 
+/**
+ * A compare function yielding no sorting.
+ *
+ * @alpha
+ */
 export function compareAnchorsZero(a: UpPath, b: UpPath): number {
 	return 0;
 }

@@ -14,7 +14,7 @@ import {
 	toDownPath,
 	InsertBindingContext,
 	DeleteBindingContext,
-	BindingContext,
+	VisitorBindingContext,
 	FlushableDataBinder,
 	BinderOptions,
 	FlushableBinderOptions,
@@ -377,7 +377,7 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
-				sortFn: (a: BindingContext, b: BindingContext) => {
+				sortFn: (a: VisitorBindingContext, b: VisitorBindingContext) => {
 					const aIndex = prescribeOrder.indexOf(a.path.parentField);
 					const bIndex = prescribeOrder.indexOf(b.path.parentField);
 					return aIndex - bIndex;
@@ -580,13 +580,16 @@ describe("editable-tree: data binder", () => {
 				address: true,
 			};
 			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
-			const compareBinderEventsCustom = (a: BindingContext, b: BindingContext): number => {
+			const compareBinderEventsCustom = (
+				a: VisitorBindingContext,
+				b: VisitorBindingContext,
+			): number => {
 				const aField = String(a.path.parentField);
 				const bField = String(b.path.parentField);
 				return aField.localeCompare(bField, "en-US", { caseFirst: "lower" });
 			};
 			// stable sort, deletes first, then lexicographically by parent field (phones, sequencePhones, street, zip)
-			const sortPipeline: CompareFunction<BindingContext> = comparePipeline(
+			const sortPipeline: CompareFunction<VisitorBindingContext> = comparePipeline(
 				compareBinderEventsDeleteFirst,
 				compareBinderEventsCustom,
 			);
@@ -1325,7 +1328,10 @@ function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
 	});
 }
 
-export function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
+export function compareBinderEventsDeleteFirst(
+	a: VisitorBindingContext,
+	b: VisitorBindingContext,
+): number {
 	if (a.type === BindingType.Delete && b.type === BindingType.Delete) {
 		return 0;
 	}
