@@ -199,6 +199,16 @@ Please note that hosts can implement various strategies on how to handle disconn
 
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a data store that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such data store).
 
+## Connection State Transitions Flow Chart
+
+```mermaid
+flowchart TD;
+    A[Disconnected]---------->B{Reconnect on error if AutoReconnect Enabled?};
+    B----No-->C[Connection during Container.connect()];
+
+
+```
+
 ## Readonly states
 
 User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
