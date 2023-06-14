@@ -134,17 +134,14 @@ export class KafkaRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.success("Kafka runner stopped");
 			}
-		} catch (error: any) {
+		} catch (error) {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error(
 					"Kafka runner encountered an error during server.close",
 					error,
 				);
 			}
-			error.customMessage = "Kafka runner couldnt be stopped";
-			error.caller = caller;
-			error.forceKill = true;
-			this.deferred?.reject(error);
+			this.deferred?.reject({error, customMessage: `Kafka runner couldnt be stopped`, caller, forceKill: true});
 			this.deferred = undefined;
 			throw error;
 		}
