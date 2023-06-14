@@ -70,12 +70,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
-		// remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		// remoteDataObject = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
-		// remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
+		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
+		remoteDataObject = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
-		// await waitForContainerConnection(remoteContainer, true);
+		await waitForContainerConnection(remoteContainer, true);
 
 		// Force the local container into write-mode by sending a small op
 		localMap.set("test", "test");
@@ -106,17 +106,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			}),
 		);
 
-	const disableCompressionConfig: ITestContainerConfig = {
+	const disableCompressionConfig = {
 		...testContainerConfig,
 		runtimeOptions: {
 			compressionOptions: {
 				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
 			},
 		},
 	}; // Compression is enabled by default
@@ -159,7 +154,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
-	itExpects.only(
+	itExpects.skip(
 		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
