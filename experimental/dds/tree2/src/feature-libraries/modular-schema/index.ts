@@ -28,6 +28,7 @@ export {
 	FieldChangeRebaser,
 	FieldChangeset,
 	FieldEditor,
+	getIntention,
 	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeComposer,
@@ -43,7 +44,7 @@ export {
 	ValueChange,
 	ValueConstraint,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./fieldChangeHandler";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
 export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";

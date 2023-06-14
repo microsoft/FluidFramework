@@ -53,6 +53,8 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
+	FieldGenerator,
+	TreeDataContext,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -80,7 +82,6 @@ export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
@@ -128,8 +129,8 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
 	LazyTreeSchema,
+	NodeExistenceState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
