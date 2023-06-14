@@ -20,8 +20,8 @@ importers:
         specifier: ^2.26.1
         version: 2.26.1
       '@fluid-internal/changelog-generator':
-        specifier: file:build-tools/packages/changelog-generator
-        version: file:build-tools/packages/changelog-generator
+        specifier: file:tools/changelog-generator
+        version: file:tools/changelog-generator
       '@fluid-tools/build-cli':
         specifier: ^0.19.0-166151
         version: 0.19.0-166151
@@ -48486,8 +48486,8 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
-  file:build-tools/packages/changelog-generator:
-    resolution: {directory: build-tools/packages/changelog-generator, type: directory}
+  file:tools/changelog-generator:
+    resolution: {directory: tools/changelog-generator, type: directory}
     name: '@fluid-internal/changelog-generator'
     version: 0.19.0
     requiresBuild: true
