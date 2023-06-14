@@ -278,7 +278,7 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 	if (isInternal) {
 		if (requested === -10) {
 			return "^1.3.6";
-		} else if (requested === -20){
+		} else if (requested === -20) {
 			return "0.59.0";
 		}
 

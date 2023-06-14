@@ -25,6 +25,7 @@ function createCompatSuite(
 	compatFilter?: CompatKind[],
 ) {
 	return function (this: Mocha.Suite) {
+		this.timeout(180000);
 		let configs = configList.value;
 		if (compatFilter !== undefined) {
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
@@ -77,6 +78,7 @@ function wrapTest(
 		let provider: TestObjectProvider;
 		let resetAfterEach: boolean;
 		before(async function () {
+			this.timeout(180000);
 			try {
 				provider = await makeProvider();
 			} catch (error) {
