@@ -11,30 +11,37 @@
 const config = {
 	indent: "\t",
 	semverRange: "^",
+	// semverGroups: [
+	// 	{
+	// 		label: "Deps in pnpm overrides are ignored",
+	// 		dependencyTypes: ["pnpmOverrides"],
+	// 		dependencies: ["**"],
+	// 		packages: ["**"],
+	// 		isIgnored: true,
+	// 	},
+
+	// 	// All deps should use caret ranges unless previously overridden
+	// 	{
+	// 		label: "Dependencies should use caret dependency ranges",
+	// 		dependencies: ["**"],
+	// 		dependencyTypes: ["dev", "peer", "prod"],
+	// 		packages: ["**"],
+	// 		range: "^",
+	// 		isIgnored: true,
+	// 	},
+
+	// ],
+
 	semverGroups: [
 		{
-			label: "Deps in pnpm overrides are ignored",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			isIgnored: true,
-		},
-		{
-			label: "ignore typescript",
-			dependencyTypes: ["dev"],
-			dependencies: ["typescript"],
-			packages: ["**"],
-			isIgnored: true,
-		},
-		{
-			range: "",
+			range: "^",
 			dependencyTypes: ["prod", "resolutions", "overrides", "pnpmOverrides", "workspace"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
 		{
 			range: "~",
-			dependencyTypes: ["dev"],
+			dependencyTypes: ["devDependencies"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
