@@ -102,7 +102,7 @@ export interface OperationGenerationConfig {
 	maxStringLength?: number;
 	/**
 	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
-	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
+	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
 	 */
 	maxIntervals?: number;
 	maxInsertLength?: number;
