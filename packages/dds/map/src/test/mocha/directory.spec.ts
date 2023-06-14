@@ -817,6 +817,7 @@ describe("Directory", () => {
 				);
 				await directory2.load(services2);
 
+				// Now connect the first SharedDirectory
 				dataStoreRuntime.local = false;
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
