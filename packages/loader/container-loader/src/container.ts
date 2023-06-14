@@ -352,7 +352,7 @@ export class Container
 	): Promise<Container> {
 		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
-		const container = new Container(createProps, pendingLocalState);
+		const container = new Container(createProps, loadProps);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -714,7 +714,10 @@ export class Container
 	/**
 	 * @internal
 	 */
-	constructor(createProps: IContainerCreateProps, pendingLocalState?: IPendingContainerState) {
+	constructor(
+		createProps: IContainerCreateProps,
+		loadProps?: Pick<IContainerLoadProps, "pendingLocalState">,
+	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
 				{
@@ -737,6 +740,8 @@ export class Container
 			detachedBlobStorage,
 			protocolHandlerBuilder,
 		} = createProps;
+
+		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
