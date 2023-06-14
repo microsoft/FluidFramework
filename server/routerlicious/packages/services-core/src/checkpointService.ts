@@ -177,6 +177,8 @@ export class CheckpointService implements ICheckpointService {
 				service,
 				checkpointSource,
 				retrievedFromLocalDatabase: isLocalCheckpoint,
+				logOffset: lastCheckpoint.logOffset,
+				sequenceNumber: lastCheckpoint.sequenceNumber,
 			});
 		} catch (error) {
 			Lumberjack.error(

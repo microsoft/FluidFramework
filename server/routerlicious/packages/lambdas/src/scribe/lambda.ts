@@ -461,6 +461,7 @@ export class ScribeLambda implements IPartitionLambda {
 			scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
 			kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
 			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
+			sequenceNumber: checkpoint.sequenceNumber,
 		};
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
@@ -780,8 +781,11 @@ export class ScribeLambda implements IPartitionLambda {
 			if (initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
 				this.checkpoint(CheckpointReason.IdleTime);
 				if (initialScribeCheckpointMessage) {
+					const checkpoint = this.generateScribeCheckpoint(
+						initialScribeCheckpointMessage.offset,
+					);
 					this.checkpointCore(
-						this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset),
+						checkpoint,
 						initialScribeCheckpointMessage,
 						this.clearCache,
 					);
@@ -797,6 +801,7 @@ export class ScribeLambda implements IPartitionLambda {
 							this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
 						kafkaCheckpointPartition:
 							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
+						sequenceNumber: checkpoint.sequenceNumber,
 					};
 					Lumberjack.info(checkpointResult, lumberjackProperties);
 				}
