@@ -203,10 +203,21 @@ It's worth pointing out that being connected does not mean all user edits are pr
 
 ```mermaid
 flowchart TD;
-    A[Disconnected]---------->B{Reconnect on error if AutoReconnect Enabled?};
-    B----No-->C[Connection during Container.connect()];
-
-
+    A(Disconnected)-->B{Reconnect on error if \n AutoReconnect Enabled?};
+    B--Yes-->C(Establishing Connection);
+    B--No-->D[Connection during Container \n connect call];
+    D-->C
+    C-->E{Connection Success \n including any Retry?};
+    E--No-->F[Error or container.close or container.disconnect];
+    A-->F;
+    F-->A;
+    E--Yes-->G(Catching Up);
+    G-->F;
+    G-->H{Which Connection Mode?};
+    H--Read-->I(Connected);
+    H--Write-->J[Wait for Join Op];
+    J-->I;
+    I-->F;
 ```
 
 ## Readonly states
