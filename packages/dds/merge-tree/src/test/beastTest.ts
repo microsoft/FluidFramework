@@ -27,6 +27,7 @@ import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from
 import {
 	IJSONMarkerSegment,
 	IMergeNode,
+	IMergeSegment,
 	ISegment,
 	Marker,
 	reservedMarkerIdKey,
@@ -287,7 +288,7 @@ function printTextSegment(textSegment: ISegment, pos: number) {
 }
 
 export function makeTextSegment(text: string): IMergeNode {
-	return new TextSegment(text);
+	return new TextSegment(text) as IMergeSegment;
 }
 
 function makeCollabTextSegment(text: string) {
@@ -369,7 +370,7 @@ export function mergeTreeTest1() {
 	const mergeTree = new MergeTree();
 	mergeTree.insertSegments(
 		0,
-		[TextSegment.make("the cat is on the mat")],
+		[TextSegment.make("the cat is on the mat") as IMergeSegment],
 		UniversalSequenceNumber,
 		LocalClientId,
 		UniversalSequenceNumber,
@@ -395,7 +396,7 @@ export function mergeTreeLargeTest() {
 	const mergeTree = new MergeTree();
 	mergeTree.insertSegments(
 		0,
-		[TextSegment.make("the cat is on the mat")],
+		[TextSegment.make("the cat is on the mat") as IMergeSegment],
 		UniversalSequenceNumber,
 		LocalClientId,
 		UniversalSequenceNumber,
@@ -481,7 +482,7 @@ export function mergeTreeCheckedTest() {
 	const mergeTree = new MergeTree();
 	mergeTree.insertSegments(
 		0,
-		[TextSegment.make("the cat is on the mat")],
+		[TextSegment.make("the cat is on the mat") as IMergeSegment],
 		UniversalSequenceNumber,
 		LocalClientId,
 		UniversalSequenceNumber,

@@ -66,6 +66,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     localSeq?: number;
     // (undocumented)
+    parent?: IMergeNodeCommon;
+    // (undocumented)
     properties?: PropertySet;
     // (undocumented)
     propertyManager?: PropertiesManager;
@@ -85,18 +87,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
-}
-
-// @public (undocumented)
-export interface BlockAction<TClientData> {
-    // (undocumented)
-    (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
-}
-
-// @public @deprecated (undocumented)
-export interface BlockUpdateActions {
-    // (undocumented)
-    child: (block: IMergeBlock, index: number) => void;
 }
 
 // Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
@@ -371,18 +361,6 @@ export interface IConsensusValue {
     value: any;
 }
 
-// @public (undocumented)
-export interface IHierBlock extends IMergeBlock {
-    // (undocumented)
-    hierToString(indentCount: number): string;
-    // (undocumented)
-    leftmostTiles: MapLike<ReferencePosition>;
-    // (undocumented)
-    rangeStacks: RangeStackMap;
-    // (undocumented)
-    rightmostTiles: MapLike<ReferencePosition>;
-}
-
 // @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
@@ -422,33 +400,11 @@ export interface IMarkerModifiedAction {
 }
 
 // @public
-export interface IMergeBlock extends IMergeNodeCommon {
-    // (undocumented)
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    cachedLength: number | undefined;
-    childCount: number;
-    children: IMergeNode[];
-    // (undocumented)
-    hierBlock(): IHierBlock | undefined;
-    // (undocumented)
-    needsScour?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "PartialSequenceLengths" needs to be exported by the entry point index.d.ts
-    partialLengths?: PartialSequenceLengths;
-    // (undocumented)
-    setOrdinal(child: IMergeNode, index: number): void;
-}
-
-// @public (undocumented)
-export type IMergeNode = IMergeBlock | ISegment;
-
-// @public
 export interface IMergeNodeCommon {
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
     ordinal: string;
-    // (undocumented)
-    parent?: IMergeBlock;
 }
 
 // @public (undocumented)
@@ -581,12 +537,6 @@ export interface IMergeTreeTextHelper {
 }
 
 // @public (undocumented)
-export interface IncrementalBlockAction<TContext> {
-    // (undocumented)
-    (state: IncrementalMapState<TContext>): any;
-}
-
-// @public (undocumented)
 export enum IncrementalExecOp {
     // (undocumented)
     Go = 0,
@@ -594,61 +544,6 @@ export enum IncrementalExecOp {
     Stop = 1,
     // (undocumented)
     Yield = 2
-}
-
-// @public (undocumented)
-export class IncrementalMapState<TContext> {
-    constructor(block: IMergeBlock, actions: IncrementalSegmentActions<TContext>, pos: number, refSeq: number, clientId: number, context: TContext, start: number, end: number, childIndex?: number);
-    // (undocumented)
-    actions: IncrementalSegmentActions<TContext>;
-    // (undocumented)
-    block: IMergeBlock;
-    // (undocumented)
-    childIndex: number;
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    context: TContext;
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    op: IncrementalExecOp;
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    start: number;
-}
-
-// @public (undocumented)
-export interface IncrementalSegmentAction<TContext> {
-    // (undocumented)
-    (segment: ISegment, state: IncrementalMapState<TContext>): any;
-}
-
-// @public (undocumented)
-export interface IncrementalSegmentActions<TContext> {
-    // (undocumented)
-    leaf: IncrementalSegmentAction<TContext>;
-    // (undocumented)
-    post?: IncrementalBlockAction<TContext>;
-    // (undocumented)
-    pre?: IncrementalBlockAction<TContext>;
-}
-
-// @public (undocumented)
-export interface InsertContext {
-    // (undocumented)
-    candidateSegment?: ISegment;
-    // (undocumented)
-    continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
-    // (undocumented)
-    leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
-    // (undocumented)
-    prepareEvents?: boolean;
-    // (undocumented)
-    structureChange?: boolean;
 }
 
 // @public (undocumented)
@@ -860,21 +755,6 @@ export const MaxNodesInBlock = 8;
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
-export class MergeBlock extends MergeNode implements IMergeBlock {
-    constructor(childCount: number);
-    // (undocumented)
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
-    childCount: number;
-    // (undocumented)
-    children: IMergeNode[];
-    // (undocumented)
-    hierBlock(): IHierBlock | undefined;
-    // (undocumented)
-    setOrdinal(child: IMergeNode, index: number): void;
-}
-
-// @public (undocumented)
 export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     cachedLength: number;
@@ -884,8 +764,6 @@ export class MergeNode implements IMergeNodeCommon {
     isLeaf(): boolean;
     // (undocumented)
     ordinal: string;
-    // (undocumented)
-    parent?: IMergeBlock;
 }
 
 // @public (undocumented)
@@ -955,12 +833,6 @@ export interface MinListener {
 
 // @public (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
-
-// @public (undocumented)
-export interface NodeAction<TClientData> {
-    // (undocumented)
-    (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, clientData: TClientData): boolean;
-}
 
 // @public (undocumented)
 export const NonCollabClient = -2;
@@ -1176,20 +1048,6 @@ export interface SearchResult {
 export interface SegmentAccumulator {
     // (undocumented)
     segments: ISegment[];
-}
-
-// @public (undocumented)
-export interface SegmentActions<TClientData> {
-    // (undocumented)
-    contains?: NodeAction<TClientData>;
-    // (undocumented)
-    leaf?: ISegmentAction<TClientData>;
-    // (undocumented)
-    post?: BlockAction<TClientData>;
-    // (undocumented)
-    pre?: BlockAction<TClientData>;
-    // (undocumented)
-    shift?: NodeAction<TClientData>;
 }
 
 // @public (undocumented)

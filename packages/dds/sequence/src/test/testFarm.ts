@@ -582,9 +582,9 @@ export function TestPack(verbose = true) {
 							} else if (segoff1.segment.ordinal > segoff2.segment.ordinal) {
 								ordErrors++;
 								console.log(
-									`reverse ordinals ${MergeTree.ordinalToArray(
+									`reverse ordinals ${ordinalToArray(
 										segoff1.segment.ordinal,
-									)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`,
+									)} > ${ordinalToArray(segoff2.segment.ordinal)}`,
 								);
 								console.log(
 									`segments ${segoff1.segment.toString()} ${segoff2.segment.toString()}`,
@@ -1126,7 +1126,7 @@ function checkInsertMergeTree(
 	const clockStart = clock();
 	mergeTree.insertSegments(
 		pos,
-		[new MergeTree.TextSegment(textSegment.text)],
+		[new MergeTree.TextSegment(textSegment.text) as MergeTree.IMergeSegment],
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.LocalClientId,
 		MergeTree.UniversalSequenceNumber,
@@ -1180,7 +1180,7 @@ export function mergeTreeCheckedTest() {
 	const mergeTree = new MergeTree.MergeTree();
 	mergeTree.insertSegments(
 		0,
-		[MergeTree.TextSegment.make("the cat is on the mat")],
+		[MergeTree.TextSegment.make("the cat is on the mat") as MergeTree.IMergeSegment],
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.LocalClientId,
 		MergeTree.UniversalSequenceNumber,
@@ -1822,4 +1822,14 @@ if (clientServerTest) {
 	} else {
 		testPack.clientServer(undefined, 100000);
 	}
+}
+
+export function ordinalToArray(ord: string) {
+	const a: number[] = [];
+	if (ord) {
+		for (let i = 0, len = ord.length; i < len; i++) {
+			a.push(ord.charCodeAt(i));
+		}
+	}
+	return a;
 }

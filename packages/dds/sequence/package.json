@@ -125,6 +125,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SubSequence": {
+				"backCompat": false
+			}
+		}
 	}
 }

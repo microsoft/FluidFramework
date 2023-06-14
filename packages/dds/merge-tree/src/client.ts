@@ -25,6 +25,7 @@ import {
 	CollaborationWindow,
 	compareStrings,
 	IConsensusInfo,
+	IMergeSegment,
 	ISegment,
 	ISegmentAction,
 	Marker,
@@ -355,11 +356,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		if (segment?.parent === undefined) {
+		const mergeSegment: IMergeSegment | undefined = segment;
+		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
-			segment,
+			mergeSegment,
 			this.getCurrentSeq(),
 			this.getClientId(),
 			localSeq,

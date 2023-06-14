@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
 import { MergeTree } from "./mergeTree";
-import { ISegment, IRemovalInfo } from "./mergeTreeNodes";
+import { IMergeSegment as ISegment, IRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 
 /**

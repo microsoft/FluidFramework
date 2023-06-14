@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes";
+import { IMergeBlock, IMergeSegment, ISegment, Marker } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TextSegment } from "../textSegment";
 import { ReferenceType } from "../ops";
@@ -45,7 +45,14 @@ export function insertMarker({
 	props,
 	opArgs,
 }: InsertMarkerArgs) {
-	mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
+	mergeTree.insertSegments(
+		pos,
+		[Marker.make(behaviors, props) as IMergeSegment],
+		refSeq,
+		clientId,
+		seq,
+		opArgs,
+	);
 }
 
 interface InsertTextArgs {
@@ -69,7 +76,14 @@ export function insertText({
 	props,
 	opArgs,
 }: InsertTextArgs) {
-	mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
+	mergeTree.insertSegments(
+		pos,
+		[TextSegment.make(text, props) as IMergeSegment],
+		refSeq,
+		clientId,
+		seq,
+		opArgs,
+	);
 }
 
 interface InsertSegmentsArgs {

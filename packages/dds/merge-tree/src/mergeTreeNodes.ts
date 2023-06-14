@@ -32,7 +32,6 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
  * Common properties for a node in a merge tree.
  */
 export interface IMergeNodeCommon {
-	parent?: IMergeBlock;
 	/**
 	 * The index of this node in its parent's list of children.
 	 */
@@ -45,12 +44,14 @@ export interface IMergeNodeCommon {
 	isLeaf(): this is ISegment;
 }
 
-export type IMergeNode = IMergeBlock | ISegment;
-
+export type IMergeSegment = ISegment & { parent?: IMergeBlock };
+export type IMergeNode = IMergeBlock | IMergeSegment;
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
  */
 export interface IMergeBlock extends IMergeNodeCommon {
+	parent?: IMergeBlock;
+
 	needsScour?: boolean;
 	/**
 	 * Number of direct children of this node
@@ -312,21 +313,11 @@ export interface SegmentGroup {
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
-	parent?: IMergeBlock;
 	cachedLength: number = 0;
 
 	isLeaf() {
 		return false;
 	}
-}
-export function ordinalToArray(ord: string) {
-	const a: number[] = [];
-	if (ord) {
-		for (let i = 0, len = ord.length; i < len; i++) {
-			a.push(ord.charCodeAt(i));
-		}
-	}
-	return a;
 }
 
 // Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
@@ -336,6 +327,7 @@ export function ordinalToArray(ord: string) {
 export const MaxNodesInBlock = 8;
 
 export class MergeBlock extends MergeNode implements IMergeBlock {
+	parent?: IMergeBlock;
 	public children: IMergeNode[];
 	public constructor(public childCount: number) {
 		super();
@@ -375,6 +367,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
+	public parent?: IMergeNodeCommon;
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;

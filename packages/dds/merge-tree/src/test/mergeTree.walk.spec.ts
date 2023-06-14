@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeBlock, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, IMergeSegment, MaxNodesInBlock } from "../mergeTreeNodes";
 import { TextSegment } from "../textSegment";
 import { LocalClientId, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
@@ -20,7 +20,7 @@ describe("MergeTree walks", () => {
 		mergeTree = new MergeTree();
 		mergeTree.insertSegments(
 			0,
-			[TextSegment.make(initialText)],
+			[TextSegment.make(initialText) as IMergeSegment],
 			UniversalSequenceNumber,
 			LocalClientId,
 			UniversalSequenceNumber,
@@ -56,7 +56,7 @@ describe("MergeTree walks", () => {
 		it("visits only descendants", () => {
 			for (const block of getAllDescendantBlocks(mergeTree.root)) {
 				let walkedAnySegments = false;
-				walkAllChildSegments(block, (seg) => {
+				walkAllChildSegments(block, (seg: IMergeSegment) => {
 					walkedAnySegments = true;
 					let current = seg.parent;
 					while (current !== block && current !== undefined) {
