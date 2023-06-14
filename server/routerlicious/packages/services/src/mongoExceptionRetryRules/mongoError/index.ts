@@ -227,6 +227,19 @@ class RequestTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class ConnectionPoolClearedErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "MongoPoolClearedError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("ConnectionPoolClearedErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return error.name && (error.name as string) === ConnectionPoolClearedErrorRule.errorName;
+	}
+}
+
 // This handles server side temporary 503 issue
 class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 	private static readonly errorDetails =
@@ -298,6 +311,42 @@ class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class ConnectionTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "MongoBulkWriteError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("ConnectionTimedOutBulkWriteErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.name &&
+			(error.name as string) === ConnectionTimedOutBulkWriteErrorRule.errorName &&
+			error.message &&
+			/^connection .*timed out$/.test(error.message as string) === true
+		);
+	}
+}
+
+class MongoServerSelectionErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "MongoServerSelectionError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("MongoServerSelectionErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.name &&
+			(error.name as string) === MongoServerSelectionErrorRule.errorName &&
+			error.message &&
+			/^connection .*closed$/.test(error.message as string) === true
+		);
+	}
+}
+
 // Maintain the list from more strick faster comparison to less strict slower comparison
 export function createMongoErrorRetryRuleset(
 	retryRuleOverride: Map<string, boolean>,
@@ -314,6 +363,7 @@ export function createMongoErrorRetryRuleset(
 		new RequestTimedOutBulkWriteErrorRule(retryRuleOverride),
 		new TopologyDestroyed(retryRuleOverride),
 		new UnauthorizedRule(retryRuleOverride),
+		new ConnectionPoolClearedErrorRule(retryRuleOverride),
 
 		// The rules are using multiple compare
 		new PoolDestroyedRule(retryRuleOverride),
@@ -328,6 +378,8 @@ export function createMongoErrorRetryRuleset(
 
 		// The rules are using regex
 		new ConnectionClosedMongoErrorRule(retryRuleOverride),
+		new ConnectionTimedOutBulkWriteErrorRule(retryRuleOverride),
+		new MongoServerSelectionErrorRule(retryRuleOverride),
 	];
 	return mongoErrorRetryRuleset;
 }
