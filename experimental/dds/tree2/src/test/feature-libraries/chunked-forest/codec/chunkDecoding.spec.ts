@@ -13,6 +13,8 @@ import {
 	readValue,
 	NestedArrayDecoder,
 	InlineArrayDecoder,
+	AnyDecoder,
+	TreeDecoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 import {
@@ -35,6 +37,9 @@ import { ReferenceCountedBase, brand } from "../../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk";
 import { TreeChunk } from "../../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { DecoderCache } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
@@ -208,6 +213,130 @@ describe("chunkDecoding", () => {
 			assert(result instanceof SequenceChunk);
 			assert(compareArrays(result.subChunks, [basic, basic]));
 			assertRefCount(basic, "shared");
+		});
+	});
+
+	it("AnyDecoder", () => {
+		const decoder = AnyDecoder.instance;
+		const log: string[] = [];
+		const basic0 = new BasicChunk(brand("0"), new Map());
+		const basic1 = new BasicChunk(brand("1"), new Map());
+		const decoders = [makeLoggingDecoder(log, basic0), makeLoggingDecoder(log, basic1)];
+		const stream = { data: [0, "a", 0, "b", 1, "c"], offset: 0 };
+		assert.equal(decoder.decode(decoders, stream), basic0);
+		assert.equal(decoder.decode(decoders, stream), basic0);
+		assert.equal(decoder.decode(decoders, stream), basic1);
+		assert.deepEqual(log, ["a", "b", "c"]);
+	});
+
+	describe("TreeDecoder", () => {
+		it("empty node", () => {
+			const cache = new DecoderCache([], []);
+			const decoder = new TreeDecoder(
+				{
+					value: false,
+					local: [],
+					global: [],
+				},
+				cache,
+			);
+			const stream = { data: ["foo"], offset: 0 };
+			const result = decoder.decode([], stream);
+			assertChunkCursorEquals(result, [{ type: brand("foo") }]);
+		});
+
+		it("typed node", () => {
+			const cache = new DecoderCache([], []);
+			const decoder = new TreeDecoder(
+				{
+					type: "baz",
+					value: false,
+					local: [],
+					global: [],
+				},
+				cache,
+			);
+			const stream = { data: [], offset: 0 };
+			const result = decoder.decode([], stream);
+			assertChunkCursorEquals(result, [{ type: brand("baz") }]);
+		});
+
+		it("dynamic", () => {
+			const cache = new DecoderCache(["l2", "g2"], []);
+			const log: string[] = [];
+			const localChunk = new BasicChunk(brand("local"), new Map());
+			const globalChunk = new BasicChunk(brand("global"), new Map());
+			const decoders = [
+				makeLoggingDecoder(log, localChunk),
+				makeLoggingDecoder(log, globalChunk),
+			];
+			const decoder = new TreeDecoder(
+				{
+					local: [],
+					global: [],
+					extraLocal: 0,
+					extraGlobal: 1,
+				},
+				cache,
+			);
+			const stream = {
+				data: ["type", true, "value", ["a", "l1", "b", 0], ["c", "g1", "d", 1, "e", "g3"]],
+				offset: 0,
+			};
+			const result = decoder.decode(decoders, stream);
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("type"),
+					value: "value",
+					fields: {
+						a: [{ type: brand("local") }],
+						b: [{ type: brand("local") }],
+					},
+					globalFields: {
+						c: [{ type: brand("global") }],
+						d: [{ type: brand("global") }],
+						e: [{ type: brand("global") }],
+					},
+				},
+			]);
+			assert.deepEqual(log, ["l1", "l2", "g1", "g2", "g3"]);
+		});
+
+		it("fixed fields", () => {
+			const cache = new DecoderCache(["key"], []);
+			const log: string[] = [];
+			const localChunk = new BasicChunk(brand("local"), new Map());
+			const globalChunk = new BasicChunk(brand("global"), new Map());
+			const decoders = [
+				makeLoggingDecoder(log, localChunk),
+				makeLoggingDecoder(log, globalChunk),
+			];
+			const decoder = new TreeDecoder(
+				{
+					local: [{ shape: 0, key: 0 }],
+					global: [{ shape: 1, key: 0 }],
+					value: false,
+				},
+				cache,
+			);
+			const stream = {
+				data: ["type", "l1", "g1"],
+				offset: 0,
+			};
+			const result = decoder.decode(decoders, stream);
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("type"),
+					value: "value",
+					fields: {
+						key: [{ type: brand("local") }],
+					},
+					globalFields: {
+						key: [{ type: brand("global") }],
+					},
+				},
+			]);
+			assert.deepEqual(log, ["l1", "g1"]);
 		});
 	});
 });

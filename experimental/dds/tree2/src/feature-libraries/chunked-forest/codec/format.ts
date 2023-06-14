@@ -91,9 +91,9 @@ export const EncodedTreeShape = Type.Object(
 		value: Type.Optional(EncodedValueShape),
 		local: Type.Array(EncodedFieldShape),
 		global: Type.Array(EncodedFieldShape),
-		// If undefined, no data. If true, nested array of `[key, ...data]*`
+		// If undefined, no data. Otherwise, nested array of `[key, ...data]*`
 		extraLocal: Type.Optional(ShapeIndex),
-		// If undefined, no data. If true, nested array of `[key, ...data]*`
+		// If undefined, no data. Otherwise, nested array of `[key, ...data]*`
 		extraGlobal: Type.Optional(ShapeIndex),
 	},
 	{ additionalProperties: false },

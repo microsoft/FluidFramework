@@ -21,6 +21,8 @@ import { EncodedChunk, version, EncodedChunkShape, EncodedValueShape } from "./f
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
+ *
+ * Most of the compression strategy comes from the policy provided via `cache`.
  */
 export function compressedEncode(
 	cursor: ITreeCursorSynchronous,

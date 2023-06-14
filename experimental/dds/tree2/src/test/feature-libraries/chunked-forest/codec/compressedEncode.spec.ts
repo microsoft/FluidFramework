@@ -10,10 +10,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 import {
-	uncompressedEncode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
-import {
 	NodeShape,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
@@ -33,23 +29,6 @@ import {
 	jsonableTreesFromFieldCursor,
 } from "../fieldCursorTestUtilities";
 import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
-
-describe("uncompressedEncode", () => {
-	describe("test trees", () => {
-		for (const [name, jsonable] of testTrees) {
-			it(name, () => {
-				const input = fieldCursorFromJsonableTrees([jsonable]);
-				const result = uncompressedEncode(input);
-				const before = JSON.stringify(input);
-				const output = JSON.stringify(result);
-
-				const decoded = decode(result);
-				const decodedJson = jsonableTreesFromFieldCursor(decoded.cursor());
-				assert.deepEqual([jsonable], decodedJson);
-			});
-		}
-	});
-});
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], [], anyFieldEncoder, anyFieldEncoder);
 
