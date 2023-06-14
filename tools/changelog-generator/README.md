@@ -20,6 +20,11 @@ has been built, which should happen automatically when running `pnpm i` in the r
 
 For more information see the build-cli documentation.
 
+## Developer notes
+
+This package is written in JS instead of TypeScript primarily so it doesn't need to be compiled before use. The code is
+a wrapper around other implementations, so the code is simple and doesn't benefit much from typing.
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
