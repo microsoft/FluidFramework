@@ -352,7 +352,7 @@ export class Container
 	): Promise<Container> {
 		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
-		const container = new Container(createProps, loadProps);
+		const container = new Container(createProps, pendingLocalState);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -714,7 +714,7 @@ export class Container
 	/**
 	 * @internal
 	 */
-	constructor(createProps: IContainerCreateProps, loadProps?: IContainerLoadProps) {
+	constructor(createProps: IContainerCreateProps, pendingLocalState?: IPendingContainerState) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
 				{
@@ -779,7 +779,7 @@ export class Container
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: loadProps?.pendingLocalState !== undefined,
+				serializedContainer: pendingLocalState !== undefined,
 			},
 			// we need to be judicious with our logging here to avoid generating too much data
 			// all data logged here should be broadly applicable, and not specific to a
@@ -862,7 +862,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			loadProps?.pendingLocalState?.clientId,
+			pendingLocalState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -886,7 +886,7 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			detachedBlobStorage,
 			this.mc.logger,
-			loadProps?.pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
