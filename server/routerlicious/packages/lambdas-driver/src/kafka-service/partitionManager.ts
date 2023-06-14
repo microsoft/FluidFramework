@@ -14,6 +14,7 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { Partition } from "./partition";
 
 /**
@@ -31,6 +32,7 @@ export class PartitionManager extends EventEmitter {
 		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 		listenForConsumerErrors = true,
 	) {
 		super();
@@ -209,6 +211,7 @@ export class PartitionManager extends EventEmitter {
 				this.factory,
 				this.consumer,
 				this.logger,
+				this.config,
 			);
 
 			// Listen for error events to know when the partition has stopped processing due to an error

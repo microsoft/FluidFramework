@@ -17,7 +17,7 @@ import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest"
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
+import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
 	copyFileAsync,
@@ -29,7 +29,7 @@ import {
 	unlinkAsync,
 } from "./utils";
 
-const { info, verbose, errorLog: error } = defaultLogger;
+const { log, verbose, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -128,6 +128,13 @@ export class Package {
 	 */
 	public get nameUnscoped(): string {
 		return PackageName.getUnscopedName(this.name);
+	}
+
+	/**
+	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
+	 */
+	public get scope(): string {
+		return PackageName.getScope(this.name);
 	}
 
 	public get version(): string {
@@ -257,7 +264,7 @@ export class Package {
 			throw new Error("Package in a monorepo shouldn't be installed");
 		}
 
-		info(`${this.nameColored}: Installing - ${this.installCommand}`);
+		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
 	}
 }
@@ -279,7 +286,7 @@ async function queueExec<TItem, TResult>(
 				const startTime = Date.now();
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
 						3,
 					)}s`,
@@ -333,44 +340,6 @@ export class Packages {
 		return packages;
 	}
 
-	/**
-	 * Loads all packages found under the specified glob path. Ignores files in node_modules.
-	 *
-	 * @param globPath The glob path to search for package.json files.
-	 * @param group The release group (monorepo) the packages are associated with.
-	 * @param ignoredGlobs Glob paths that should be ignored. Note: `**\/node_modules/**` is always ignored.
-	 * @param monoRepo A {@link MonoRepo} instance that will be associated with the packages.
-	 * @returns An array containing all the packages that were found under the globPath.
-	 */
-	public static loadGlob(
-		globPath: string,
-		group: MonoRepoKind,
-		ignoredGlobs: string[] | undefined,
-		monoRepo?: MonoRepo,
-	): Package[] {
-		const packages: Package[] = [];
-
-		if (hasMagic(globPath)) {
-			if (ignoredGlobs === undefined) {
-				ignoredGlobs = [];
-			}
-			ignoredGlobs.push("**/node_modules/**");
-
-			const globPkg = globPath + "/package.json";
-			for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-				info(`Loading from glob: ${pkg}`);
-				packages.push(new Package(pkg, group, monoRepo));
-			}
-		} else {
-			// Assume a path to a single package
-			const packageJsonFileName = path.join(globPath, "package.json");
-			if (existsSync(packageJsonFileName)) {
-				return [new Package(packageJsonFileName, group, monoRepo)];
-			}
-		}
-		return packages;
-	}
-
 	public async cleanNodeModules() {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
 	}
@@ -382,7 +351,7 @@ export class Packages {
 		);
 	}
 
-	public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
+	public async filterPackages(releaseGroup: string | undefined) {
 		if (releaseGroup === undefined) {
 			return this.packages;
 		}
@@ -427,7 +396,7 @@ export class Packages {
 
 			if (status) {
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${cleanP.length}] ${
 						pkg.nameColored
 					}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,

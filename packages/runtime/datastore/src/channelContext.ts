@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
@@ -24,7 +24,6 @@ import {
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ChannelStorageService } from "./channelStorageService";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -77,7 +76,7 @@ export function createChannelServiceEndpoints(
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	storageService: IDocumentStorageService,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
 ): ChannelServiceEndpoints {
@@ -188,7 +187,7 @@ export async function loadChannel(
 	attributes: IChannelAttributes,
 	factory: IChannelFactory,
 	services: ChannelServiceEndpoints,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
 	// Compare snapshot version to collaborative object version

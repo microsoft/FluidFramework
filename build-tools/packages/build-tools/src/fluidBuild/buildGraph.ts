@@ -23,10 +23,10 @@ import {
 import registerDebug from "debug";
 
 const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
-const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
-const { info } = defaultLogger;
+const { log } = defaultLogger;
 
 export enum BuildResult {
 	Success,
@@ -53,6 +53,7 @@ class TaskStats {
 	public leafUpToDateCount = 0;
 	public leafBuiltCount = 0;
 	public leafExecTimeTotal = 0;
+	public leafQueueWaitTimeTotal = 0;
 }
 
 class BuildContext {
@@ -208,9 +209,42 @@ export class BuildPackage {
 		return dependentTasks;
 	}
 
+	public finalizeDependentTasks() {
+		// Set up the dependencies for "before"
+		this.tasks.forEach((task) => {
+			if (task.taskName === undefined) {
+				return;
+			}
+			const taskConfig = this.taskDefinitions[task.taskName];
+			if (taskConfig.before.includes("*")) {
+				this.tasks.forEach((depTask) => {
+					if (depTask !== task) {
+						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						depTask.dependentTasks!.push(task);
+					}
+				});
+			} else {
+				for (const dep of taskConfig.before) {
+					const depTask = this.tasks.get(dep);
+					if (depTask === undefined) {
+						continue;
+					}
+					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					depTask.dependentTasks!.push(task);
+				}
+			}
+		});
+	}
+
 	public initializeDependentLeafTasks() {
 		this.tasks.forEach((task) => {
 			task.initializeDependentLeafTasks();
+		});
+	}
+
+	public initializeWeight() {
+		this.tasks.forEach((task) => {
+			task.initializeWeight();
 		});
 	}
 
@@ -289,7 +323,7 @@ export class BuildGraph {
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
-		info(
+		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${
 				this.matchedPackages
 			} matched packages (${this.buildContext.taskStats.leafTotalCount} total tasks in ${
@@ -300,7 +334,7 @@ export class BuildGraph {
 			return BuildResult.UpToDate;
 		}
 		if (this.numSkippedTasks) {
-			info(`Skipping ${this.numSkippedTasks} up to date tasks.`);
+			log(`Skipping ${this.numSkippedTasks} up to date tasks.`);
 		}
 		this.buildContext.fileHashCache.clear();
 		const q = Task.createTaskQueue();
@@ -333,6 +367,10 @@ export class BuildGraph {
 
 	public get totalElapsedTime(): number {
 		return this.buildContext.taskStats.leafExecTimeTotal;
+	}
+
+	public get totalQueueWaitTime(): number {
+		return this.buildContext.taskStats.leafQueueWaitTimeTotal;
 	}
 
 	public get taskFailureSummary(): string {
@@ -477,9 +515,21 @@ export class BuildGraph {
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
+			node.finalizeDependentTasks();
+		});
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
 			node.initializeDependentLeafTasks();
 		});
 
 		traceGraph("dependent task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.initializeWeight();
+		});
+
+		traceGraph("task weight initialized");
 	}
 }

@@ -5,7 +5,13 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+	normalizeError,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
 	RateLimiter,
@@ -23,12 +29,6 @@ import {
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-	PerformanceEvent,
-	isFluidError,
-	normalizeError,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,
@@ -88,7 +88,7 @@ export class EpochTracker implements IPersistedFileCache {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		// Limits the max number of concurrent requests to 24.
@@ -477,7 +477,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		super(cache, fileEntry, logger, clientIsSummarizer);
@@ -601,7 +601,7 @@ export function createOdspCacheAndTracker(
 	persistedCacheArg: IPersistedCache,
 	nonpersistentCache: INonPersistentCache,
 	fileEntry: IFileEntry,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	clientIsSummarizer?: boolean,
 ): ICacheAndTracker {
 	const epochTracker = new EpochTrackerWithRedemption(

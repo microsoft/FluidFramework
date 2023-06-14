@@ -654,7 +654,10 @@ export class SharedDirectory
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
 						newSubDir = new SubDirectory(
-							createInfo !== undefined ? createInfo.csn : 0,
+							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							// sub directory. This could be done at serialization time too, but we need to maintain
+							// back compat too and also we will actually know the state when it was serialized.
+							createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
 								: new Set(),
@@ -2182,7 +2185,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (localOpMetadata.type === "deleteSubDir") {
 					assert(
 						pendingDeleteCount !== undefined && pendingDeleteCount > 0,
-						"pendingDeleteCount should exist",
+						0x6c2 /* pendingDeleteCount should exist */,
 					);
 					this.decrementPendingSubDirCount(
 						this.pendingDeleteSubDirectoriesTracker,
@@ -2191,7 +2194,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				} else if (localOpMetadata.type === "createSubDir") {
 					assert(
 						pendingCreateCount !== undefined && pendingCreateCount > 0,
-						"pendingCreateCount should exist",
+						0x6c3 /* pendingCreateCount should exist */,
 					);
 					this.decrementPendingSubDirCount(
 						this.pendingCreateSubDirectoriesTracker,

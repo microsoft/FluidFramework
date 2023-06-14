@@ -201,6 +201,7 @@ export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T
 		case "ReturnFrom":
 		case "ReturnTo":
 		case "Revive":
+		case "Placeholder":
 			return true;
 		case "Insert":
 		case "MoveIn":
@@ -230,6 +231,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case "MoveOut":
 			return true;
 		case "Modify":
+		case "Placeholder":
 			return mark.detachEvent !== undefined;
 		case "ReturnFrom":
 			return mark.detachEvent !== undefined || !mark.isDstConflicted;
@@ -259,6 +261,7 @@ export function getMarkLength(mark: Mark<unknown>): number {
 		case "ReturnFrom":
 		case "ReturnTo":
 		case "Revive":
+		case "Placeholder":
 			return mark.count;
 		default:
 			unreachableCase(type);
@@ -986,6 +989,8 @@ export function splitMark<T, TMark extends Mark<T>>(
 			}
 			return [mark1, mark2];
 		}
+		case "Placeholder":
+			fail("TODO");
 		default:
 			unreachableCase(type);
 	}
@@ -1036,6 +1041,7 @@ export function getNodeChange<TNodeChange>(mark: Mark<TNodeChange>): TNodeChange
 		case "MoveOut":
 		case "ReturnFrom":
 		case "Revive":
+		case "Placeholder":
 			return mark.changes;
 		default:
 			unreachableCase(type);
@@ -1062,7 +1068,8 @@ export function withNodeChange<TNodeChange>(
 		case "Modify":
 		case "MoveOut":
 		case "ReturnFrom":
-		case "Revive": {
+		case "Revive":
+		case "Placeholder": {
 			const newMark = { ...mark };
 			if (changes !== undefined) {
 				newMark.changes = changes;

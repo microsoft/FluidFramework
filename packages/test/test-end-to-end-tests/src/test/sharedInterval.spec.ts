@@ -10,12 +10,14 @@ import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tr
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-	IntervalCollection,
+	IIntervalCollection,
 	IntervalType,
 	SequenceInterval,
 	SharedString,
-	ISerializedIntervalCollectionV2,
 } from "@fluidframework/sequence";
+// This is not in sequence's public API, but an e2e test in this file sniffs the summary.
+// eslint-disable-next-line import/no-internal-modules
+import { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -29,7 +31,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const assertIntervalsHelper = (
 	sharedString: SharedString,
-	intervalView: IntervalCollection<SequenceInterval>,
+	intervalView: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 ) => {
 	let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
@@ -63,7 +65,7 @@ const assertIntervalsHelper = (
 	}
 };
 
-function testIntervalOperations(intervalCollection: IntervalCollection<SequenceInterval>) {
+function testIntervalOperations(intervalCollection: IIntervalCollection<SequenceInterval>) {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
@@ -260,7 +262,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		const stringId = "stringKey";
 
 		let sharedString: SharedString;
-		let intervals: IntervalCollection<SequenceInterval>;
+		let intervals: IIntervalCollection<SequenceInterval>;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
 		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
@@ -1012,26 +1014,26 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
 			await provider.ensureSynchronized();
 
-			const serialized1 = intervalCollection1.serializeInternal();
-			const serialized2 = intervalCollection2.serializeInternal();
-			const serialized3 = intervalCollection3.serializeInternal();
+			const serialized1 = Array.from(intervalCollection1);
+			const serialized2 = Array.from(intervalCollection2);
+			const serialized3 = Array.from(intervalCollection3);
 			assert.equal(
-				serialized1.intervals.length,
+				serialized1.length,
 				3,
 				"Incorrect interval collection size in container 1",
 			);
 			assert.equal(
-				serialized2.intervals.length,
+				serialized2.length,
 				3,
 				"Incorrect interval collection size in container 2",
 			);
 			assert.equal(
-				serialized3.intervals.length,
+				serialized3.length,
 				3,
 				"Incorrect interval collection size in container 3",
 			);
 
-			const interval1From3Properties = serialized3.intervals[0][4];
+			const interval1From3Properties = serialized3[0].properties;
 			assert(interval1From3Properties);
 			const comment1From3 = await (
 				interval1From3Properties.story as IFluidHandle<SharedString>
@@ -1041,7 +1043,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				"a comment...",
 				"Incorrect text in interval collection's shared string",
 			);
-			const interval3From3Properties = serialized3.intervals[2][4];
+			const interval3From3Properties = serialized3[2].properties;
 			assert(interval3From3Properties);
 			const mapFrom3 = await (
 				interval3From3Properties.story as IFluidHandle<SharedMap>

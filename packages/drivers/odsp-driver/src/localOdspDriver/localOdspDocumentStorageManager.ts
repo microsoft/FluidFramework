@@ -4,11 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase";
 import { ISnapshotContents } from "../odspPublicUtils";
 import { IOdspSnapshot } from "../contracts";
@@ -23,7 +22,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 	private snapshotTreeId: string | undefined;
 
 	constructor(
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly localSnapshot: Uint8Array | string,
 	) {
 		super(loggerToMonitoringContext(logger).config);

@@ -118,7 +118,7 @@ export class NodeIdentifierIndex<TField extends GlobalFieldKey>
 					const id = identifierNode[valueSymbol];
 					assert(
 						typeof id === "string" && isStableId(id),
-						"Malformed value encountered in identifier field",
+						0x6b4 /* Malformed value encountered in identifier field */,
 					);
 					yield [brand(id), node];
 				}

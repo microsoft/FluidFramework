@@ -10,7 +10,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
-	IHelpMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -29,28 +28,9 @@ export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
 	fluidDataStoreChannel?: { bindToContext?(): void };
 }
 
-/**
- * @deprecated This will be removed in a later release.
- */
-export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export interface IProvideContainerRuntime {
-	/**
-	 * @deprecated This will be removed in a later release.
-	 */
-	IContainerRuntime: IContainerRuntime;
-}
-
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-	/**
-	 * @deprecated - 2.0.0-internal.4.3.0 - This will be removed in a later release.
-	 */
-	(event: "localHelp", listener: (message: IHelpMessage) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -60,8 +40,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IContainerRuntime
-	extends IProvideContainerRuntime,
-		IProvideFluidDataStoreRegistry,
+	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;

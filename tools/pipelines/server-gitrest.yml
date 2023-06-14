@@ -90,3 +90,5 @@ extends:
     tagName: gitrest
     lint: true
     pack: true
+    checks:
+    - prettier

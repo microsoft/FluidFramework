@@ -44,16 +44,27 @@ export class TscTask extends LeafTask {
 		// Using tsc incremental information
 		const tsBuildInfo = await this.readTsBuildInfo();
 		if (tsBuildInfo === undefined) {
-			this.logVerboseTrigger("tsBuildInfo not found");
+			this.traceTrigger("tsBuildInfo not found");
 			return false;
 		}
 
 		// Check previous build errors
 		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
 		if (diag?.some((item) => Array.isArray(item))) {
-			this.logVerboseTrigger("previous build error");
+			this.traceTrigger("previous build error");
 			return false;
 		}
+
+		const config = this.readTsConfig();
+		if (!config) {
+			return false;
+		}
+
+		// Keep a list of files that need to be compiled based on the command line flags and config, and
+		// remove the files that we sees from the tsBuildInfo.  The remaining files are
+		// new files that need to be rebuilt.
+		const configFileNames = new Set(config.fileNames);
+
 		// Check dependencies file hashes
 		const fileNames = tsBuildInfo.program.fileNames;
 		const fileInfos = tsBuildInfo.program.fileInfos;
@@ -61,7 +72,7 @@ export class TscTask extends LeafTask {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
 			if (fileName === undefined) {
-				this.logVerboseTrigger(`missing file name for file info id ${i}`);
+				this.traceTrigger(`missing file name for file info id ${i}`);
 				return false;
 			}
 			try {
@@ -70,46 +81,52 @@ export class TscTask extends LeafTask {
 
 				// If we have project reference, see if this is in reference to one of the file, and map it to the d.ts file instead
 				if (this._projectReference) {
-					fullPath = this._projectReference.remapSrcDeclFile(fullPath);
+					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
 				}
 				const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
-					this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
+					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
 					return false;
 				}
+
+				// Remove files that we have built before
+				configFileNames.delete(fullPath);
 			} catch (e: any) {
-				this.logVerboseTrigger(`exception generating hash for ${fileName}`);
-				verbose(e.stack);
+				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
 				return false;
 			}
 		}
 
+		if (configFileNames.size !== 0) {
+			// New files that are not in the previous build, we are not up to date.
+			this.traceTrigger(`new file detected ${[...configFileNames.values()].join(",")}`);
+			return false;
+		}
+
 		// Check tsconfig.json
-		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo);
+		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string) {
+	private remapSrcDeclFile(fullPath: string, config: ts.ParsedCommandLine) {
 		if (!this._sourceStats) {
-			const config = this.readTsConfig();
 			this._sourceStats = config ? config.fileNames.map((v) => fs.lstatSync(v)) : [];
 		}
 
-		const parsed = path.parse(fullPath);
-		const directory = parsed.dir;
 		const stat = fs.lstatSync(fullPath);
 		if (this._sourceStats.some((value) => isEqual(value, stat))) {
-			return this.remapOutFile(this.readTsConfig()!, directory, `${parsed.name}.d.ts`);
+			const parsed = path.parse(fullPath);
+			const directory = parsed.dir;
+			return this.remapOutFile(config, directory, `${parsed.name}.d.ts`);
 		}
 		return fullPath;
 	}
 
-	private checkTsConfig(tsBuildInfoFileDirectory: string, tsBuildInfo: ITsBuildInfo) {
-		const options = this.readTsConfig();
-		if (!options) {
-			return false;
-		}
-
+	private checkTsConfig(
+		tsBuildInfoFileDirectory: string,
+		tsBuildInfo: ITsBuildInfo,
+		options: ts.ParsedCommandLine,
+	) {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
 			assert.fail();
@@ -128,11 +145,13 @@ export class TscTask extends LeafTask {
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			verbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
-			verbose("Config:");
-			verbose(JSON.stringify(configOptions, undefined, 2));
-			verbose("BuildInfo:");
-			verbose(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+			this.traceTrigger(
+				`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`,
+			);
+			this.traceTrigger("Config:");
+			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
+			this.traceTrigger("BuildInfo:");
+			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
 			return false;
 		}
 		return true;
@@ -367,7 +386,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify({ tsBuildInfoFiles, config });
 		} catch (e) {
-			this.logVerboseTask(`error generating done file content ${e}`);
+			this.traceExec(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}

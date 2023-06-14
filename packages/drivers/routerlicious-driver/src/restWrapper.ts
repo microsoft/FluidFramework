@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
 	getAuthorizationTokenFromCredentials,
 	RestLessClient,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
@@ -102,7 +106,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	private token: ITokenResponse | undefined;
 
 	constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -235,7 +239,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -259,7 +263,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	public static async load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -296,7 +300,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -319,7 +323,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
 	public static async load(
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -349,7 +353,7 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tenantId: string,
 	documentId: string | undefined,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
@@ -376,7 +380,7 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tenantId: string,
 	documentId: string,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(

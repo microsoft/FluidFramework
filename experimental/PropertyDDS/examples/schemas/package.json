@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/schemas",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "Centralized package for storing schemas used by the samples.",
 	"homepage": "https://fluidframework.com",
@@ -15,10 +15,8 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -31,7 +29,7 @@
 		"tsc": "tsc"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",

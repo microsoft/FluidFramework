@@ -7,7 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -403,7 +403,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * @remarks This will allow the Customer Service to pass on the container information
 	 * to the Fluid Service to send the signal that some new information has come through.
 	 */
-	private async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+	private async registerWithCustomerService(containerUrlData: IResolvedUrl): Promise<void> {
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}

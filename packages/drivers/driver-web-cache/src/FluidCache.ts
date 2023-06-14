@@ -6,8 +6,8 @@
 import { IDBPDatabase } from "idb";
 import { assert } from "@fluidframework/common-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {
 	getFluidCacheIndexedDbInstance,
@@ -61,7 +61,7 @@ export interface FluidCacheConfig {
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance
  */
 export class FluidCache implements IPersistedCache {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	private readonly partitionKey: string | null;
 
@@ -165,14 +165,14 @@ export class FluidCache implements IPersistedCache {
 				this.db = undefined;
 			});
 			// Schedule db close after this.closeDbAfterMs.
-			assert(this.dbCloseTimer === undefined, "timer should not be set yet!!");
+			assert(this.dbCloseTimer === undefined, 0x6c6 /* timer should not be set yet!! */);
 			this.dbCloseTimer = setTimeout(() => {
 				this.db?.close();
 				this.db = undefined;
 				this.dbCloseTimer = undefined;
 			}, this.closeDbAfterMs);
 		}
-		assert(this.db !== undefined, "db should be intialized by now");
+		assert(this.db !== undefined, 0x6c7 /* db should be intialized by now */);
 		this.dbReuseCount += 1;
 		return this.db;
 	}

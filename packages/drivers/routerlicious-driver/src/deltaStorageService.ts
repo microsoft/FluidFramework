@@ -12,8 +12,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 
@@ -28,7 +31,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly id: string,
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
@@ -95,7 +98,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 	constructor(
 		private readonly url: string,
 		private readonly restWrapper: RestWrapper,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
 		private readonly getDeltaStorageUrl: () => string = () => this.url,
 	) {}

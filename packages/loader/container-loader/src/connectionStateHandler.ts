@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLogger,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
@@ -27,7 +27,7 @@ const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,
