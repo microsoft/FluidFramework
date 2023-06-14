@@ -34,14 +34,14 @@ const config = {
 
 	semverGroups: [
 		{
-			range: "^",
+			range: "",
 			dependencyTypes: ["prod", "resolutions", "overrides", "pnpmOverrides", "workspace"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
 		{
 			range: "~",
-			dependencyTypes: ["devDependencies"],
+			dependencyTypes: ["dev"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
