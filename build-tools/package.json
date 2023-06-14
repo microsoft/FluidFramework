@@ -104,7 +104,7 @@
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"engines": {
-		"node": ">=14.13.0"
+		"node": ">=14.17.0"
 	},
 	"pnpm": {
 		"peerDependencyRules": {
