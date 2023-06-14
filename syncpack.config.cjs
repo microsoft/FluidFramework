@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// @ts-check
-
-/** @type {import("syncpack").RcFile} */
-const config = {
+module.exports = {
 	indent: "\t",
 
 	// Custom types are used to define additional fields in package.json that contain versions that should be
@@ -109,11 +106,11 @@ const config = {
 		},
 
 		{
-			label: "Deps in pnpm overrides are ignored",
+			label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
-			isIgnored: true
+			range: "^",
 		},
 
 		{
@@ -132,7 +129,6 @@ const config = {
 				"@types/url-parse",
 				"fake-indexeddb",
 				"json-stringify-safe",
-				"sort-package-json",
 				"tinylicious",
 				"yargs",
 			],
@@ -145,7 +141,6 @@ const config = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
-				"@typescript-eslint/*",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -237,5 +232,3 @@ const config = {
 		},
 	],
 };
-
-exports.default = config;
