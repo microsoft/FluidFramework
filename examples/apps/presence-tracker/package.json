@@ -30,8 +30,8 @@
 		"start": "webpack serve",
 		"start:test": "webpack serve --config webpack.test.js",
 		"test": "npm run test:jest",
-		"test:jest": "jest --passWithNoTests",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
+		"test:jest": "jest --detectOpenHandles",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
