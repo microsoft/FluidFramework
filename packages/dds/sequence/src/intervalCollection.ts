@@ -1187,12 +1187,41 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
 	findIntervalsWithStartpointInRange(start: number, end: number);
 }
 
+/**
+ * Represents an object that has comparison overrides for smaller and larger comparisons.
+ */
+const alwaysCompareSmaller = Symbol();
+const alwaysCompareLarger = Symbol();
+
+interface HasComparisonOverride {
+	[alwaysCompareSmaller]: boolean;
+	[alwaysCompareLarger]: boolean;
+}
+
+/**
+ * Compares two partial objects with comparison overrides.
+ * @returns A negative number if a should be considered smaller, a positive number if b should be considered smaller, or 0 if they are equal.
+ */
+function compareOverrideables(a: any, b: any): number {
+	if (
+		(a as Partial<HasComparisonOverride>)[alwaysCompareSmaller] ||
+		(b as Partial<HasComparisonOverride>)[alwaysCompareLarger]
+	) {
+		return -1;
+	}
+	if (
+		(a as Partial<HasComparisonOverride>)[alwaysCompareLarger] ||
+		(b as Partial<HasComparisonOverride>)[alwaysCompareSmaller]
+	) {
+		return 1;
+	}
+	return 0;
+}
+
 class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IEndpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
-	private static readonly alwaysCompareSmaller = Symbol();
-	private static readonly alwaysCompareLarger = Symbol();
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
@@ -1203,16 +1232,12 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			if (compareEndsResult !== 0) {
 				return compareEndsResult;
 			}
-			/**
-			 * The Symbol is only applied on the transient interval, which is always intended to be the first input
-			 * in the comparison. Therefore, it is sufficient to only check the Symbol of 'a' in the comparison logic.
-			 */
-			if ((a as any)[EndpointInRangeIndex.alwaysCompareSmaller]) {
-				return -1;
+
+			const overrideablesComparison = compareOverrideables(a, b);
+			if (overrideablesComparison !== 0) {
+				return overrideablesComparison;
 			}
-			if ((a as any)[EndpointInRangeIndex.alwaysCompareLarger]) {
-				return 1;
-			}
+
 			const aId = a.getIntervalId();
 			const bId = b.getIntervalId();
 			if (aId !== undefined && bId !== undefined) {
@@ -1247,7 +1272,6 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
-		(transientStartInterval as any)[EndpointInRangeIndex.alwaysCompareSmaller] = true;
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
@@ -1256,7 +1280,10 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
-		(transientEndInterval as any)[EndpointInRangeIndex.alwaysCompareLarger] = true;
+
+		// Add comparison overrides to the transient intervals
+		(transientStartInterval as Partial<HasComparisonOverride>)[alwaysCompareSmaller] = true;
+		(transientEndInterval as Partial<HasComparisonOverride>)[alwaysCompareLarger] = true;
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
@@ -1267,29 +1294,25 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IStartpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
-	private static readonly alwaysCompareSmaller = Symbol();
-	private static readonly alwaysCompareLarger = Symbol();
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly client: Client,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
-			if ("compareStarts" in helpers && typeof helpers.compareStarts === "function") {
-				const compareStartsResult = helpers.compareStarts(a, b);
-				if (compareStartsResult !== 0) {
-					return compareStartsResult;
-				}
+			assert(
+				typeof helpers.compareStarts === "function",
+				"compareStarts does not exist in the helpers",
+			);
+
+			const compareStartsResult = helpers.compareStarts(a, b);
+			if (compareStartsResult !== 0) {
+				return compareStartsResult;
 			}
-			/**
-			 * The Symbol is only applied on the transient interval, which is always intended to be the first input
-			 * in the comparison. Therefore, it is sufficient to only check the Symbol of 'a' in the comparison logic.
-			 */
-			if ((a as any)[StartpointInRangeIndex.alwaysCompareSmaller]) {
-				return -1;
-			}
-			if ((a as any)[StartpointInRangeIndex.alwaysCompareLarger]) {
-				return 1;
+
+			const overrideablesComparison = compareOverrideables(a, b);
+			if (overrideablesComparison !== 0) {
+				return overrideablesComparison;
 			}
 			const aId = a.getIntervalId();
 			const bId = b.getIntervalId();
@@ -1325,7 +1348,6 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
-		(transientStartInterval as any)[StartpointInRangeIndex.alwaysCompareSmaller] = true;
 
 		const transientEndInterval = this.helpers.create(
 			"transient",
@@ -1334,7 +1356,10 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			this.client,
 			IntervalType.Transient,
 		);
-		(transientEndInterval as any)[StartpointInRangeIndex.alwaysCompareLarger] = true;
+
+		// Add comparison overrides to the transient intervals
+		(transientStartInterval as Partial<HasComparisonOverride>)[alwaysCompareSmaller] = true;
+		(transientEndInterval as Partial<HasComparisonOverride>)[alwaysCompareLarger] = true;
 
 		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
 		return results;
