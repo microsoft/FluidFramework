@@ -451,7 +451,7 @@ export class Container
 	private readonly scope: FluidObject;
 	public subLogger: TelemetryLogger;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
+	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
 	private readonly mc: MonitoringContext;
 
@@ -749,7 +749,8 @@ export class Container
 		this.options = { ...options };
 		this.scope = scope;
 		this.detachedBlobStorage = detachedBlobStorage;
-		this.protocolHandlerBuilder = protocolHandlerBuilder;
+		this.protocolHandlerBuilder =
+			protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
 
 		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
 		this.clone = async (
@@ -1725,10 +1726,7 @@ export class Container
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
 	): void {
-		const protocolHandlerBuilder =
-			this.protocolHandlerBuilder ??
-			((...args) => new ProtocolHandler(...args, new Audience()));
-		const protocol = protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
+		const protocol = this.protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
 			this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
 		);
 
