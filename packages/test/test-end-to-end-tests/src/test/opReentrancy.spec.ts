@@ -16,11 +16,16 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
-	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const sharedStringId = "sharedStringKey";
+	const registry: ChannelFactoryRegistry = [
+		[mapId, SharedMap.getFactory()],
+		[sharedStringId, SharedString.getFactory()],
+	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -32,6 +37,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	let dataObject2: ITestFluidObject;
 	let sharedMap1: SharedMap;
 	let sharedMap2: SharedMap;
+	let sharedString1: SharedString;
+	let sharedString2: SharedString;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -59,6 +66,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+
+		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
+		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
 		await provider.ensureSynchronized();
 	};
@@ -100,6 +110,36 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			assert.equal(sharedMap2.get("key2"), "2");
 		},
 	);
+
+	[false, true].forEach((enableGroupedBatching) => {
+		it.only(`Sequence inconsistency - ${
+			enableGroupedBatching ? "Grouped" : "Regular"
+		} batches`, async () => {
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					enableGroupedBatching,
+				},
+			});
+
+			sharedString1.insertText(0, "ad");
+			await provider.ensureSynchronized();
+			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+				if (sequenceDeltaEvent.opArgs.op.seg === "b") {
+					sharedString2.insertText(3, "x");
+				}
+			});
+
+			sharedString1.insertText(1, "b");
+			sharedString1.insertText(2, "c");
+			await provider.ensureSynchronized();
+			assert.strictEqual(
+				sharedString1.getText(),
+				sharedString2.getText(),
+				"Eventual consistency broken",
+			);
+		});
+	});
 
 	it("Should throw when submitting an op while handling an event - offline", async () => {
 		await setupContainers({
