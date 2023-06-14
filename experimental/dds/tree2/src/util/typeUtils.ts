@@ -159,7 +159,7 @@ export type _RecursiveTrick = never;
  * and is readonly.
  *
  * @privateRemarks
- * `number` is now allowed as a key here since doing so causes the compiler to reject recursive schema.
+ * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
  *
  *
