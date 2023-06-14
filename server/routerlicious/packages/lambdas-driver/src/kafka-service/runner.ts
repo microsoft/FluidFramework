@@ -51,6 +51,7 @@ export class KafkaRunner implements IRunner {
 		this.factory.on("error", (error) => {
 			this.runnerMetric.error("Kafka factory encountered an error", error);
 			deferred.reject(error);
+			this.deferred = undefined;
 		});
 
 		this.partitionManager = new PartitionManager(
@@ -92,6 +93,7 @@ export class KafkaRunner implements IRunner {
 					Lumberjack.error(errorMsg, lumberProperties, error);
 				}
 				deferred.reject(error);
+				this.deferred = undefined;
 			}
 		});
 
@@ -103,30 +105,48 @@ export class KafkaRunner implements IRunner {
 	/**
 	 * Signals to stop the service
 	 */
-	public async stop(): Promise<void> {
-		if (!this.deferred || this.stopped) {
+	public async stop(caller?: string): Promise<void> {
+		if (this.stopped) {
 			return;
 		}
 
 		this.stopped = true;
+		try {
+			// Stop listening for new updates
+			await this.consumer.pause();
 
-		// Stop listening for new updates
-		await this.consumer.pause();
+			// Stop the partition manager
+			await this.partitionManager?.stop();
 
-		// Stop the partition manager
-		await this.partitionManager?.stop();
+			// Dispose the factory
+			await this.factory.dispose();
 
-		// Dispose the factory
-		await this.factory.dispose();
+			// Close the underlying consumer, but setting a timeout for safety
+			await promiseTimeout(30000, this.consumer.close());
 
-		// Close the underlying consumer, but setting a timeout for safety
-		await promiseTimeout(30000, this.consumer.close());
-
-		// Mark ourselves done once the partition manager has stopped
-		this.deferred.resolve();
-		this.deferred = undefined;
-		if (!this.runnerMetric.isCompleted()) {
-			this.runnerMetric.success("Kafka runner stopped");
+			// Mark ourselves done once the partition manager has stopped or failed to stop
+			if (caller === "sigterm" || caller === "uncaughtException") {
+				this.deferred?.reject({ customMessage: `Kafka runner stopped`, caller }); // so that the runService exits the process with exit(1)
+			} else {
+				this.deferred?.resolve();
+			}
+			this.deferred = undefined;
+			if (!this.runnerMetric.isCompleted()) {
+				this.runnerMetric.success("Kafka runner stopped");
+			}
+		} catch (error: any) {
+			if (!this.runnerMetric.isCompleted()) {
+				this.runnerMetric.error(
+					"Kafka runner encountered an error during server.close",
+					error,
+				);
+			}
+			error.customMessage = "Kafka runner couldnt be stopped";
+			error.caller = caller;
+			error.forceKill = true;
+			this.deferred?.reject(error);
+			this.deferred = undefined;
+			throw error;
 		}
 	}
 }

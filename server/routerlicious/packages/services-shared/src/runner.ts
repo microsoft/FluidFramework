@@ -42,7 +42,7 @@ export async function run<T extends IResources>(
 
 	process.on("SIGTERM", () => {
 		Lumberjack.info(`Received SIGTERM request to stop the service.`);
-		runner.stop().catch((error) => {
+		runner.stop("sigterm").catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
 		});
@@ -50,7 +50,7 @@ export async function run<T extends IResources>(
 
 	process.on("uncaughtException", (error, origin) => {
 		Lumberjack.error(`Encountered uncaughtException while running service`, { origin }, error);
-		runner.stop().catch((innerError) => {
+		runner.stop("uncaughtException").catch((innerError) => {
 			logger?.error(
 				`Could not stop runner after uncaughtException event due to error: ${innerError}`,
 			);

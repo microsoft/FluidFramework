@@ -19,7 +19,7 @@ export interface IRunner {
 	/**
 	 * Stops the runner
 	 */
-	stop(): Promise<void>;
+	stop(caller?: string): Promise<void>;
 }
 
 /**
