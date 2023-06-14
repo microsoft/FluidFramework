@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
+	CursorLocationType,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	TreeSchemaIdentifier,
@@ -96,8 +97,11 @@ export const anyFieldEncoder: FieldEncoderShape = {
 	): void {
 		// TODO: Fast path uniform chunks.
 
-		// Fast path chunk of size one size one at least: skip nested array.
-		if (cursor.getFieldLength() === 1) {
+		if (cursor.getFieldLength() === 0) {
+			const shape = InlineArrayShape.empty;
+			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+		} else if (cursor.getFieldLength() === 1) {
+			// Fast path chunk of size one size one at least: skip nested array.
 			cursor.enterNode(0);
 			anyNodeEncoder.encodeNodes(cursor, cache, outputBuffer);
 			cursor.exitNode();
@@ -113,7 +117,23 @@ export const anyFieldEncoder: FieldEncoderShape = {
 	shape: AnyShape.instance,
 };
 
-export class InlineArrayShape extends Shape<EncodedChunkShape> implements NodeEncoderShape {
+export class InlineArrayShape
+	extends Shape<EncodedChunkShape>
+	implements NodeEncoderShape, FieldEncoderShape
+{
+	public static readonly empty: InlineArrayShape = new InlineArrayShape(0, {
+		get shape() {
+			return InlineArrayShape.empty;
+		},
+		encodeNodes(
+			cursor: ITreeCursorSynchronous,
+			shapes: EncoderCache,
+			outputBuffer: BufferFormat<EncodedChunkShape>,
+		): void {
+			InlineArrayShape.empty.encodeNodes(cursor, shapes, outputBuffer);
+		},
+	});
+
 	public constructor(public readonly length: number, public readonly inner: NodeEncoderShape) {
 		super();
 	}
@@ -126,9 +146,24 @@ export class InlineArrayShape extends Shape<EncodedChunkShape> implements NodeEn
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let index = 0; index < this.length; index++) {
-			this.shape.encodeNodes(cursor, shapes, outputBuffer);
+			this.inner.encodeNodes(cursor, shapes, outputBuffer);
 		}
 	}
+
+	public encodeField(
+		cursor: ITreeCursorSynchronous,
+		shapes: EncoderCache,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+	): void {
+		assert(cursor.getFieldLength() === this.length, "unexpected length for fixed length array");
+		cursor.firstNode();
+		this.encodeNodes(cursor, shapes, outputBuffer);
+		assert(
+			cursor.mode === CursorLocationType.Fields,
+			"should return to fields mode when finished encoding",
+		);
+	}
+
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
