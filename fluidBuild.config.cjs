@@ -138,6 +138,7 @@ module.exports = {
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
+			"@fluid-internal/changelog-generator",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

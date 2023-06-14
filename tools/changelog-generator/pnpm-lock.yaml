@@ -13,6 +13,9 @@ importers:
       changesets-format-with-issue-links:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.26.1)
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^2.0.0
@@ -38,9 +41,6 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
 
 packages:
 
@@ -5608,7 +5608,6 @@ packages:
     resolution: {integrity: sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: true
 
   /unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
