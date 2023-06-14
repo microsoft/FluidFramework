@@ -12,12 +12,11 @@ import {
 	isVersionBumpTypeExtended,
 	isVersionScheme,
 	VersionBumpType,
-	VersionBumpTypeExtended,
 	VersionScheme,
 } from "@fluid-tools/version-tools";
 
 import { DependencyUpdateType } from "./lib";
-import { isReleaseGroup } from "./releaseGroups";
+import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
@@ -31,15 +30,30 @@ export const rootPathFlag = Flags.custom({
 /**
  * A re-usable CLI flag to parse release groups.
  */
-export const releaseGroupFlag = Flags.custom({
+export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 	char: "g",
-	description: "Name of the release group",
-	options: () => {
-		
-	},
+	description: "Name of a release group.",
+	options: [...supportedMonoRepoValues()],
 	parse: async (str: string) => {
 		const group = str.toLowerCase();
 		if (!isReleaseGroup(group)) {
+			throw new TypeError(`Not a release group: ${str}`);
+		}
+
+		return group;
+	},
+});
+
+/**
+ * A re-usable CLI flag to parse release groups along with the value "all" to indicate all release groups.
+ */
+export const releaseGroupWithAllFlag = Flags.custom({
+	char: "g",
+	description: "Name of a release group.",
+	options: [...supportedMonoRepoValues(), "all"],
+	parse: async (str: string) => {
+		const group = str.toLowerCase();
+		if (group !== "all" && !isReleaseGroup(group)) {
 			throw new TypeError(`Not a release group: ${str}`);
 		}
 
@@ -72,7 +86,7 @@ export const semverRangeFlag = Flags.custom<string | undefined>({
 /**
  * A re-usable CLI flag to parse bump types.
  */
-export const bumpTypeExtendedFlag = Flags.custom<VersionBumpTypeExtended | undefined>({
+export const bumpTypeExtendedFlag = Flags.custom({
 	char: "t",
 	description: "Version bump type.",
 	options: ["major", "minor", "patch", "current"],
@@ -194,3 +208,71 @@ export const skipCheckFlag = Flags.boolean({
 	description: "Skip all checks.",
 	exclusive: ["install", "commit", "branchCheck", "updateCheck", "policyCheck"],
 });
+
+/**
+ * A set of flags that can be used to select packages in the repo. These flags provide a common way for commands to
+ * implement package selection and filtering.
+ */
+export const selectionFlags = {
+	all: Flags.boolean({
+		char: "a",
+		description:
+			"Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.",
+		exclusive: ["dir", "packages", "releaseGroup"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	dir: Flags.directory({
+		char: "d",
+		description:
+			"Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.",
+		exclusive: ["packages", "releaseGroup", "all"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	packages: Flags.boolean({
+		description:
+			"Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.",
+		default: false,
+		exclusive: ["dir", "releaseGroup", "all"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	releaseGroup: releaseGroupWithAllFlag({
+		description:
+			"Run on all packages within the release group. Cannot be used with --all, --dir, or --packages. This does not include release group root packages; to include those as well, use the --releaseGroupRoots argument.",
+		exclusive: ["all", "dir", "packages"],
+		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
+	}),
+	releaseGroupRoots: releaseGroupWithAllFlag({
+		char: undefined,
+		description:
+			"Run on the root package of the specified release groups. Cannot be used with --all, --dir, or --packages.",
+		exclusive: ["all", "dir", "packages"],
+		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
+	}),
+};
+
+/**
+ * A set of flags that can be used to filter selected packages in the repo. These flags provide a common set of
+ */
+export const filterFlags = {
+	private: Flags.boolean({
+		description:
+			"Only include private packages. Use --no-private to exclude private packages instead.",
+		allowNo: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+	scope: Flags.string({
+		description: "Package scopes to filter to. Cannot be used with --skipScope.",
+		exclusive: ["skipScope"],
+		multiple: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+	skipScope: releaseGroupFlag({
+		description: "Package scopes to filter out. Cannot be used with --scope.",
+		exclusive: ["scope"],
+		aliases: ["no-scope"],
+		multiple: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+};

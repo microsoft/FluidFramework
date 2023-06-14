@@ -18,7 +18,7 @@ USAGE
     major|minor|patch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
+  -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
                                @fluid-tools/markdown-magic and markdown-magic are valid.
@@ -91,7 +91,7 @@ USAGE
     [--json]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
+  -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.

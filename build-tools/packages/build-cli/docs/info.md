@@ -14,7 +14,7 @@ USAGE
   $ flub info [-v] [-g client|server|azure|build-tools|gitrest|historian] [-p] [--json]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
+  -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --[no-]private           Include private packages (default true).
 

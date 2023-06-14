@@ -11,29 +11,31 @@ Run a shell command in the context of a package or release group.
 
 ```
 USAGE
-  $ flub exec CMD [-v] [-a | -d <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian] [--releaseGroupRoots] [--private] [--scope <value> | -g
-    client|server|azure|build-tools|gitrest|historian]
+  $ flub exec CMD [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all |  | [-d
+    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | ] | ] [--private] [--scope <value>
+    | -g client|server|azure|build-tools|gitrest|historian]
 
 ARGUMENTS
   CMD  The shell command to execute.
 
-FLAGS
-  -a, --all                    Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                               --releaseGroup.
-  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --all, --packages, or
-                               --releaseGroup.
-  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --all, --dir, or
-                               --packages.
+PACKAGE SELECTION FLAGS
+  -d, --dir=<value>                Run on the package in this directory. Cannot be used with --all, --packages, or
+                                   --releaseGroup.
+  -g, --releaseGroup=<option>...   Run on all packages within the release group. Cannot be used with --all, --dir, or
+                                   --packages. This does not include release group root packages; to include those as
+                                   well, use the --releaseGroupRoots argument.
+                                   <options: client|server|azure|build-tools|gitrest|historian|all>
+  --packages                       Run on all independent packages in the repo. Cannot be used with --all, --dir, or
+                                   --releaseGroup.
+  --releaseGroupRoots=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
+                                   --dir, or --packages.
+                                   <options: client|server|azure|build-tools|gitrest|historian|all>
+
+PACKAGE FILTER FLAGS
+  -g, --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -g, --skipScope=<option>...  Package scopes to filter out.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --packages                   Run on all independent packages in the repo. Cannot be used with --all, --dir, or
-                               --releaseGroup.
-  --[no-]private               Only include private packages (or non-private packages for --no-private)
-  --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
-                               --releaseGroup.
-  --scope=<value>...           Package scopes to filter to.
+  --[no-]private               Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...           Package scopes to filter to. Cannot be used with --skipScope.
 
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
