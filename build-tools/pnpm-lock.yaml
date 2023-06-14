@@ -1,8 +1,8 @@
 lockfileVersion: '6.0'
 
 overrides:
-  json5@<1.0.2: '>=1.0.2'
-  json5@>=2.0.0 <2.2.2: '>=2.2.2'
+  json5@<1.0.2: ^1.0.2
+  json5@>=2.0.0 <2.2.2: ^2.2.2
   qs: ^6.11.0
 
 importers:
@@ -70,7 +70,7 @@ importers:
         specifier: ^1.1.6
         version: 1.1.6
       syncpack:
-        specifier: ^9
+        specifier: ^9.8.4
         version: 9.8.6
       typescript:
         specifier: ~4.5.5
@@ -232,12 +232,6 @@ importers:
       '@types/sort-json':
         specifier: ^2.0.1
         version: 2.0.1
-      '@typescript-eslint/eslint-plugin':
-        specifier: ~5.9.0
-        version: 5.9.1(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)(typescript@4.5.5)
-      '@typescript-eslint/parser':
-        specifier: ~5.9.0
-        version: 5.9.1(eslint@8.6.0)(typescript@4.5.5)
       chai:
         specifier: ^4.2.0
         version: 4.3.6
@@ -265,18 +259,6 @@ importers:
       eslint-config-prettier:
         specifier: ~8.5.0
         version: 8.5.0(eslint@8.6.0)
-      eslint-plugin-eslint-comments:
-        specifier: ~3.2.0
-        version: 3.2.0(eslint@8.6.0)
-      eslint-plugin-import:
-        specifier: ~2.25.4
-        version: 2.25.4(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)
-      eslint-plugin-unicorn:
-        specifier: ~40.0.0
-        version: 40.0.0(eslint@8.6.0)
-      eslint-plugin-unused-imports:
-        specifier: ~2.0.0
-        version: 2.0.0(@typescript-eslint/eslint-plugin@5.9.1)(eslint@8.6.0)
       globby:
         specifier: ^11
         version: 11.1.0
@@ -446,30 +428,12 @@ importers:
       '@types/shelljs':
         specifier: ^0.8.8
         version: 0.8.11
-      '@typescript-eslint/eslint-plugin':
-        specifier: ~5.9.0
-        version: 5.9.1(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)(typescript@4.5.5)
-      '@typescript-eslint/parser':
-        specifier: ~5.9.0
-        version: 5.9.1(eslint@8.6.0)(typescript@4.5.5)
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
-      eslint-plugin-eslint-comments:
-        specifier: ~3.2.0
-        version: 3.2.0(eslint@8.6.0)
-      eslint-plugin-import:
-        specifier: ~2.25.4
-        version: 2.25.4(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)
-      eslint-plugin-unicorn:
-        specifier: ~40.0.0
-        version: 40.0.0(eslint@8.6.0)
-      eslint-plugin-unused-imports:
-        specifier: ~2.0.0
-        version: 2.0.0(@typescript-eslint/eslint-plugin@5.9.1)(eslint@8.6.0)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -589,12 +553,6 @@ importers:
       '@types/semver':
         specifier: ^7.3.10
         version: 7.3.12
-      '@typescript-eslint/eslint-plugin':
-        specifier: ~5.9.0
-        version: 5.9.1(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)(typescript@4.5.5)
-      '@typescript-eslint/parser':
-        specifier: ~5.9.0
-        version: 5.9.1(eslint@8.6.0)(typescript@4.5.5)
       chai:
         specifier: ^4.2.0
         version: 4.3.6
@@ -622,18 +580,6 @@ importers:
       eslint-config-prettier:
         specifier: ~8.5.0
         version: 8.5.0(eslint@8.6.0)
-      eslint-plugin-eslint-comments:
-        specifier: ~3.2.0
-        version: 3.2.0(eslint@8.6.0)
-      eslint-plugin-import:
-        specifier: ~2.25.4
-        version: 2.25.4(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)
-      eslint-plugin-unicorn:
-        specifier: ~40.0.0
-        version: 40.0.0(eslint@8.6.0)
-      eslint-plugin-unused-imports:
-        specifier: ~2.0.0
-        version: 2.0.0(@typescript-eslint/eslint-plugin@5.9.1)(eslint@8.6.0)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
