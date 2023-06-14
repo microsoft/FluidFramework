@@ -90,7 +90,7 @@ export class TscTask extends LeafTask {
 					return false;
 				}
 
-				// Remove files that we have build before
+				// Remove files that we have built before
 				configFileNames.delete(fullPath);
 			} catch (e: any) {
 				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
