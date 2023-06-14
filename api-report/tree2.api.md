@@ -850,7 +850,8 @@ declare namespace InternalTypes {
         _RecursiveTrick,
         FlattenKeys,
         AllowOptionalNotFlattened,
-        isAny
+        isAny,
+        RestrictiveReadonlyRecord
     }
 }
 export { InternalTypes }
@@ -1404,6 +1405,11 @@ type RequiredFields<T> = [
 ][_InlineTrick];
 
 // @alpha
+type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
+    readonly [P in symbol | string]: P extends K ? T : never;
+};
+
+// @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
@@ -1745,9 +1751,7 @@ interface TreeSchemaSpecification {
     // (undocumented)
     readonly global?: FlexList<GlobalFieldSchema>;
     // (undocumented)
-    readonly local?: {
-        readonly [key: string]: FieldSchema;
-    };
+    readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
     // (undocumented)
     readonly value?: ValueSchema;
 }
