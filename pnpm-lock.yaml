@@ -19,9 +19,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.26.1
         version: 2.26.1
-      '@fluid-internal/changelog-generator':
-        specifier: file:tools/changelog-generator
-        version: file:tools/changelog-generator
+      '@fluid-internal/changelog-generator-wrapper':
+        specifier: file:tools/changelog-generator-wrapper
+        version: file:tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.19.0-166151
         version: 0.19.0-166151
@@ -48495,15 +48495,15 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
-  file:tools/changelog-generator:
-    resolution: {directory: tools/changelog-generator, type: directory}
-    name: '@fluid-internal/changelog-generator'
-    version: 0.19.0
-    requiresBuild: true
+  file:tools/changelog-generator-wrapper:
+    resolution: {directory: tools/changelog-generator-wrapper, type: directory}
+    name: '@fluid-internal/changelog-generator-wrapper'
+    version: 1.0.0
     dependencies:
       '@changesets/cli': 2.26.1
       '@changesets/types': 5.2.1
       changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.26.1)
+      typescript: 4.5.5
     transitivePeerDependencies:
       - supports-color
     dev: true
