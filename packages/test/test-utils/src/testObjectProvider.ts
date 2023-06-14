@@ -251,7 +251,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-	private _loaderContainerTracker = new LoaderContainerTracker();
+	protected _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	private _logger: EventAndErrorTrackingLogger | undefined;
@@ -520,6 +520,70 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
+	}
+}
+
+export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+	constructor(
+		// The TestObjectProviderWithVersionedLoad accepts loaderConstructor and driver in two versions:
+		// The original version represents the loader/driver used for creating containers
+		// The loader/driver with the suffix "ForLoading" is used to load test containers
+		// This is done by overriding the loadTestContainer method while using the corresponding "ForLoading" versions of driver/loader
+		public readonly LoaderConstructor: typeof Loader,
+		public readonly LoaderConstructorForLoading: typeof Loader,
+		public readonly driver: ITestDriver,
+		public readonly driverForLoading: ITestDriver,
+		public readonly createFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+		public readonly versionedCreateFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+	) {
+		super(LoaderConstructor, driver, createFluidEntryPoint);
+	}
+
+	private createLoaderForLoading(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const multiSinkLogger = new MultiSinkLogger();
+		multiSinkLogger.addLogger(this.logger);
+		if (loaderProps?.logger !== undefined) {
+			multiSinkLogger.addLogger(loaderProps.logger);
+		}
+
+		const loader = new this.LoaderConstructorForLoading({
+			...loaderProps,
+			logger: multiSinkLogger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+		this._loaderContainerTracker.add(loader);
+		return loader;
+	}
+
+	private makeTestLoaderForLoading(testContainerConfig?: ITestContainerConfig) {
+		return this.createLoaderForLoading(
+			[[defaultCodeDetails, this.versionedCreateFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+		);
+	}
+
+	public async loadTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		const loader = this.makeTestLoaderForLoading(testContainerConfig);
+		const container = await loader.resolve({
+			url: await this.driverForLoading.createContainerUrl(this.documentId),
+			headers: requestHeader,
+		});
+		await this.waitContainerToCatchUp(container);
+
+		return container;
 	}
 }
 
