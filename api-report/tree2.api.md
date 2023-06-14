@@ -12,7 +12,9 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
-import { TAnySchema } from '@sinclair/typebox';
+import type { Static } from '@sinclair/typebox';
+import type { TAnySchema } from '@sinclair/typebox';
+import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {
@@ -723,6 +725,11 @@ export interface ICodecFamily<TDecoded> {
 }
 
 // @alpha
+export interface ICodecOptions {
+    readonly jsonValidator: JsonValidator;
+}
+
+// @alpha
 export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 // @alpha (undocumented)
@@ -1095,6 +1102,11 @@ export const jsonString: TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>;
 
+// @alpha
+export interface JsonValidator {
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
+
 // @alpha (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
@@ -1284,6 +1296,9 @@ export type NodeReviver = (revision: RevisionTag, index: number, count: number) 
 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
+
+// @alpha
+export const noopValidator: JsonValidator;
 
 // @alpha (undocumented)
 type NormalizedFlexList<Item> = readonly Item[];
@@ -1545,6 +1560,12 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
+// @alpha
+export interface SchemaValidationFunction<Schema extends TSchema> {
+    // (undocumented)
+    check(data: unknown): data is Static<Schema>;
+}
+
 // @alpha (undocumented)
 export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {
 }
@@ -1559,6 +1580,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
+    constructor(options?: SharedTreeOptions);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
@@ -1567,6 +1589,10 @@ export class SharedTreeFactory implements IChannelFactory {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
+}
+
+// @alpha (undocumented)
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
 }
 
 // @alpha
@@ -1782,6 +1808,9 @@ TypedNode<Assume<Head, TreeSchema>, Mode>,
 ...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>
 ] : []
 ][_InlineTrick];
+
+// @alpha
+export const typeboxValidator: JsonValidator;
 
 // @alpha
 type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
