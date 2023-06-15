@@ -35,6 +35,7 @@ import {
 	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -349,7 +350,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
-		let fieldChange: OptionalFieldChange | undefined;
+		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
 		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
@@ -364,7 +365,16 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (change.fieldChange !== undefined) {
 				if (fieldChange === undefined) {
-					fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+					fieldChange = {
+						id: change.fieldChange.id,
+						wasEmpty: change.fieldChange.wasEmpty,
+					};
+				} else {
+					fieldChange.id = change.fieldChange.id;
+				}
+				const fieldChangeRevision = change.fieldChange.revision ?? revision;
+				if (fieldChangeRevision !== undefined) {
+					fieldChange.revision = fieldChangeRevision;
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
@@ -413,7 +423,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const fieldChange = change.fieldChange;
 		if (fieldChange !== undefined) {
-			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+			inverse.fieldChange = {
+				id: fieldChange.id,
+				wasEmpty: fieldChange.newContent === undefined,
+			};
 			if (fieldChange.newContent?.changes !== undefined) {
 				// The node inserted by change will be the node deleted by inverse
 				// Move the inverted changes to the child change field
@@ -554,13 +567,23 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param id - the ID associated with the change.
 	 */
-	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+	set(
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalFieldEditor: OptionalFieldEditor = {
-	set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
+	set: (
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset => ({
 		fieldChange: {
+			id,
 			newContent:
 				newContent === undefined
 					? undefined

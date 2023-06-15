@@ -70,7 +70,10 @@ function makeOptionalFieldCodec(
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.fieldChange !== undefined) {
-				encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+				encoded.fieldChange = {
+					id: change.fieldChange.id,
+					wasEmpty: change.fieldChange.wasEmpty,
+				};
 				if (change.fieldChange.newContent !== undefined) {
 					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
 						change.fieldChange.newContent,
@@ -89,6 +92,7 @@ function makeOptionalFieldCodec(
 			const decoded: OptionalChangeset = {};
 			if (encoded.fieldChange !== undefined) {
 				decoded.fieldChange = {
+					id: encoded.fieldChange.id,
 					wasEmpty: encoded.fieldChange.wasEmpty,
 				};
 
