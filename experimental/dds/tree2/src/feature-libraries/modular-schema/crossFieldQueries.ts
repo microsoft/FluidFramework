@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { brand, NestedSet } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
-import { ChangesetLocalId } from "./modularSchemaTypes";
+import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 

@@ -741,6 +741,7 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
+		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
@@ -1391,15 +1392,7 @@ export class Container
 		return versions[0];
 	}
 
-	private recordConnectStartTime() {
-		if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-			this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
-		}
-	}
-
 	private connectToDeltaStream(args: IConnectionArgs) {
-		this.recordConnectStartTime();
-
 		// All agents need "write" access, including summarizer.
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
 			args.mode = "write";
@@ -1870,6 +1863,14 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
+		deltaManager.on("establishingConnection", (reason: string) => {
+			this.connectionStateHandler.establishingConnection(reason);
+		});
+
+		deltaManager.on("cancelEstablishingConnection", (reason: string) => {
+			this.connectionStateHandler.cancelEstablishingConnection(reason);
+		});
+
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {
 			this.collabWindowTracker?.stopSequenceNumberUpdate();
 			if (!this.closed) {
@@ -1946,8 +1947,8 @@ export class Container
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-			} else {
-				// This info is of most interest on establishing connection only.
+			} else if (value === ConnectionState.CatchingUp) {
+				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
 				if (this.deltaManager.hasCheckpointSequenceNumber) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;

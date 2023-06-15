@@ -55,8 +55,6 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.51",
 		"@types/semver": "^7.5.0",
-		"@typescript-eslint/eslint-plugin": "~5.9.1",
-		"@typescript-eslint/parser": "~5.9.1",
 		"chai": "^4.3.7",
 		"chai-arrays": "^2.2.0",
 		"concurrently": "^7.6.0",
@@ -66,10 +64,6 @@
 		"eslint-config-oclif": "^4.0.0",
 		"eslint-config-oclif-typescript": "^1.0.3",
 		"eslint-config-prettier": "~8.5.0",
-		"eslint-plugin-eslint-comments": "~3.2.0",
-		"eslint-plugin-import": "~2.25.4",
-		"eslint-plugin-unicorn": "~40.0.0",
-		"eslint-plugin-unused-imports": "~2.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
@@ -82,7 +76,7 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=14.17.0"
 	},
 	"oclif": {
 		"bin": "fluid-readme",
