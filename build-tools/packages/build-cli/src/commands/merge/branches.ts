@@ -79,32 +79,22 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		const repoURL = await this.gitRepo.gitClient.raw(["config", "--get", "remote.origin.url"]);
+		const [owner, repo] = context.originRemotePartialUrl.split("/");
 
-		const match = repoURL.match(/github\.com\/([^/]+)\/([^/]+)/i);
-
-		// fetch GitHub owner and repository name
-		const github =
-			match && match.length === 3
-				? { owner: match[1], repo: match[2] }
-				: this.error(`Empty owner and repository name`, { exit: -1 });
-
-		this.log(`owner: ${github.owner} and repo: ${github.repo}`);
+		this.log(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
-		console.log(`initialBranch: ${this.initialBranch}`);
 
 		this.remote = flags.remote;
-		console.log(`initialBranch 1: ${this.initialBranch}`);
 		const prExists: boolean = await pullRequestExists(
 			flags.auth,
 			prTitle,
-			github.owner,
-			github.repo,
+			owner,
+			repo,
 			this.logger,
 		);
-		console.log(`initialBranch 2: ${this.initialBranch}`);
+
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
 			this.exit(-1);
@@ -246,25 +236,19 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		/**
 		 * fetch name of owner associated to the pull request
 		 */
-		const pr = await pullRequestInfo(
-			flags.auth,
-			github.owner,
-			github.repo,
-			prHeadCommit,
-			this.logger,
-		);
+		const pr = await pullRequestInfo(flags.auth, owner, repo, prHeadCommit, this.logger);
 		console.debug(pr);
 		const author = pr.data?.[0]?.assignee?.login;
 		this.info(
 			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${author}`,
 		);
-		const user = await getUserAccess(flags.auth, github.owner, github.repo, this.logger);
+		const user = await getUserAccess(flags.auth, owner, repo, this.logger);
 		this.verbose(`List users with push access to main branch: ${JSON.stringify(user.data)}`);
 
 		const prObject = {
 			token: flags.auth,
-			owner: github.owner,
-			repo: github.repo,
+			owner,
+			repo,
 			source: branchName,
 			target: flags.target,
 			assignee: author,
