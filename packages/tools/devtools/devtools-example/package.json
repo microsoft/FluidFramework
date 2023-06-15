@@ -38,7 +38,6 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.109.3",
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools": "workspace:~",
