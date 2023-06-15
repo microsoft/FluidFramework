@@ -10,7 +10,7 @@ import {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
@@ -43,6 +43,9 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
+	readonly replayOps: () => void;
+	readonly reentrancy: () => boolean;
+	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
 function getLongStack(action: () => Error): Error {
@@ -143,6 +146,7 @@ export class Outbox {
 			!this.mainBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+				this.params.reentrancy(),
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -161,6 +165,7 @@ export class Outbox {
 			!this.attachFlowBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+				this.params.reentrancy(),
 			)
 		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
@@ -171,6 +176,7 @@ export class Outbox {
 				!this.attachFlowBatch.push(
 					message,
 					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+					this.params.reentrancy(),
 				)
 			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -196,14 +202,25 @@ export class Outbox {
 	}
 
 	public flush() {
+		if (this.params.reentrancy()) {
+			const error = new UsageError(
+				"Flushing is not supported inside reentrant event handlers",
+			);
+			this.params.closeContainer(error);
+			throw error;
+		}
+
 		this.flushInternal(this.attachFlowBatch.popBatch());
 		this.flushInternal(this.mainBatch.popBatch());
 	}
 
 	private flushInternal(rawBatch: IBatch) {
 		if (rawBatch.hasReentrantOps === true) {
+			// If a batch contains reentrant ops (ops created as a result from processing another op)
+			// it needs to be rebased so that we ensure there are no inconsistencies between client views
 			this.persistBatch(rawBatch.content);
-			this.params.pendingStateManager.replayPendingStates(/* isRetry */ true);
+			this.params.replayOps();
+			this.flush();
 			return;
 		}
 

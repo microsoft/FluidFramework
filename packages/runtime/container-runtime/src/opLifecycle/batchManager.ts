@@ -55,10 +55,14 @@ export class BatchManager {
 
 	constructor(public readonly options: IBatchManagerOptions) {}
 
-	public push(message: BatchMessage, currentClientSequenceNumber?: number): boolean {
+	public push(
+		message: BatchMessage,
+		currentClientSequenceNumber?: number,
+		reentrant?: boolean,
+	): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;
-		this.hasReentrantOps = this.hasReentrantOps === true || message.reentrant === true;
+		this.hasReentrantOps = this.hasReentrantOps || reentrant === true;
 
 		// Attempt to estimate batch size, aka socket message size.
 		// Each op has pretty large envelope, estimating to be 200 bytes.

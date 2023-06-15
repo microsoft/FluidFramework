@@ -370,6 +370,38 @@ describe("Runtime", () => {
 					})),
 				);
 			});
+
+			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				assert.throws(() =>
+					containerRuntime.ensureNoDataModelChanges(() => {
+						(containerRuntime as any).flush();
+					}),
+				);
+			});
+
+			it("Can't call ensureNoDataModelChanges recursively deeper than 100", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				const callback = () => {
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.submitDataStoreOp("id", "test");
+						callback();
+					});
+				};
+				assert.throws(() => callback());
+			});
 		});
 
 		describe("orderSequentially with rollback", () =>

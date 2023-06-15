@@ -198,7 +198,6 @@ export class OpSplitter {
 			content: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
-			hasReentrantOps: false,
 		};
 	}
 }
@@ -218,7 +217,6 @@ const chunkToBatchMessage = (
 		metadata,
 		localOpMetadata: undefined,
 		referenceSequenceNumber,
-		reentrant: false,
 	};
 };
 

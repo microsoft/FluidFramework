@@ -15,7 +15,6 @@ export type BatchMessage = IBatchMessage & {
 	type: ContainerMessageType;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
-	reentrant?: boolean;
 };
 
 /**

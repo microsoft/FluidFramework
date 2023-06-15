@@ -924,7 +924,11 @@ export class ContainerRuntime
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		this.ensureNoDataModelChangesCalls++;
+		if (++this.ensureNoDataModelChangesCalls === 100) {
+			const error = new UsageError("Op reentrancy detected with a recursion depth of 100");
+			this.closeFn(error);
+			throw error;
+		}
 
 		try {
 			return callback();
@@ -1336,6 +1340,9 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
+			replayOps: () => this.replayPendingStates(true),
+			reentrancy: () => this.ensureNoDataModelChangesCalls > 0,
+			closeContainer: this.closeFn,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1766,7 +1773,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private replayPendingStates() {
+	private replayPendingStates(isRebase: boolean = false) {
 		// We need to be able to send ops to replay states
 		if (!this.canSendOps()) {
 			return;
@@ -1786,7 +1793,7 @@ export class ContainerRuntime
 
 		try {
 			// replay the ops
-			this.pendingStateManager.replayPendingStates();
+			this.pendingStateManager.replayPendingStates(isRebase);
 		} finally {
 			// Save the new start and restore the old state, re-enable event emit
 			newState = this.dirtyContainer;
@@ -2989,7 +2996,6 @@ export class ContainerRuntime
 					metadata: undefined,
 					localOpMetadata: this.idCompressor?.serialize(true),
 					type: ContainerMessageType.IdAllocation,
-					reentrant: this.ensureNoDataModelChangesCalls > 0,
 				};
 			}
 
@@ -3031,7 +3037,6 @@ export class ContainerRuntime
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			reentrant: this.ensureNoDataModelChangesCalls > 0,
 		};
 
 		try {

@@ -51,7 +51,6 @@ export class OpCompressor {
 				localOpMetadata: message.localOpMetadata,
 				metadata: message.metadata,
 				referenceSequenceNumber: message.referenceSequenceNumber,
-				reentrant: false,
 			});
 		}
 
@@ -59,7 +58,6 @@ export class OpCompressor {
 			contentSizeInBytes: compressedContent.length,
 			content: messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
-			hasReentrantOps: false,
 		};
 
 		if (batch.contentSizeInBytes > 200000) {

@@ -19,6 +19,7 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
@@ -113,7 +114,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		it.only(`Sequence inconsistency - ${
+		it(`Sequence consistency - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
 			await setupContainers({
@@ -133,13 +134,89 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 			sharedString1.insertText(1, "b");
 			sharedString1.insertText(2, "c");
+			sharedString2.insertText(0, "y");
+
 			await provider.ensureSynchronized();
+			assert.strictEqual(sharedString1.getText(), "yabxcd");
 			assert.strictEqual(
 				sharedString1.getText(),
 				sharedString2.getText(),
 				"Eventual consistency broken",
 			);
 		});
+	});
+
+	describe("Reentry safeguards", () => {
+		itExpects(
+			"Deep recursion is not supported",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Op reentrancy detected with a recursion depth of 100",
+				},
+			],
+			async () => {
+				await setupContainers(testContainerConfig);
+
+				sharedString1.on("sequenceDelta", () => {
+					sharedString1.insertText(0, "x");
+				});
+				assert.throws(() => sharedString1.insertText(0, "ad"));
+				await provider.ensureSynchronized();
+			},
+		);
+
+		itExpects(
+			"Deep recursion is not supported, two clients, two data structures",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Op reentrancy detected with a recursion depth of 100",
+				},
+			],
+			async () => {
+				await setupContainers(testContainerConfig);
+
+				sharedString1.on("sequenceDelta", () => {
+					sharedMap2.set("0", 1);
+				});
+				sharedMap2.on("valueChanged", () => {
+					sharedString1.insertText(0, "x");
+				});
+
+				assert.throws(() => sharedString1.insertText(0, "ad"));
+				await provider.ensureSynchronized();
+			},
+		);
+
+		itExpects(
+			"Flushing is not supported",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Flushing is not supported inside reentrant event handlers",
+				},
+			],
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+					},
+				});
+
+				sharedString1.on("sequenceDelta", () =>
+					assert.throws(() =>
+						dataObject1.context.containerRuntime.orderSequentially(() =>
+							sharedMap1.set("0", 1),
+						),
+					),
+				);
+
+				assert.throws(() => sharedString1.insertText(0, "ad"));
+				await provider.ensureSynchronized();
+			},
+		);
 	});
 
 	it("Should throw when submitting an op while handling an event - offline", async () => {
