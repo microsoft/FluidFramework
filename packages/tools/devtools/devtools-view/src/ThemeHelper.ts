@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import React from "react";
 import {
 	webDarkTheme,
 	webLightTheme,
@@ -44,3 +45,15 @@ export function getFluentUIThemeToUse(): { name: string; theme: Theme } {
 
 	return defaultTheme;
 }
+
+// Create a type for the context value
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type ThemeContextValue = {
+	themeInfo: { name: string; theme: Theme };
+	setTheme: React.Dispatch<React.SetStateAction<{ name: string; theme: Theme }>>;
+};
+
+/**
+ * Context for accessing a shared theme for communicating with the webpage.
+ */
+export const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
