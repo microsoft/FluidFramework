@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
 
 /**
  * The collaboration session may be in one of these states:
