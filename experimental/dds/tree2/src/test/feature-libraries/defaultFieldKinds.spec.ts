@@ -31,7 +31,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnly, brand } from "../../util";
 import {
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
@@ -299,19 +299,24 @@ describe("Optional field changesets", () => {
 
 	const change1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
-			fieldChange: { newContent: { set: tree1, changes: nodeChange1 }, wasEmpty: true },
+			fieldChange: {
+				id: brand(1),
+				newContent: { set: tree1, changes: nodeChange1 },
+				wasEmpty: true,
+			},
 		},
 		mintRevisionTag(),
 	);
 
 	const change2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), false),
+		editor.set(singleTextCursor(tree2), false, brand(2)),
 		mintRevisionTag(),
 	);
 
 	const revertChange2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
+				id: brand(2),
 				newContent: { revert: singleTextCursor(tree1), revision: change2.revision },
 				wasEmpty: false,
 			},
@@ -319,19 +324,39 @@ describe("Optional field changesets", () => {
 		mintRevisionTag(),
 	);
 
-	const change3: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), true),
-		mintRevisionTag(),
+	/**
+	 * Represents what change2 would have been had it been concurrent with change1.
+	 */
+	const change2PreChange1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+		editor.set(singleTextCursor(tree2), true, brand(2)),
+		change2.revision,
 	);
+
+	/**
+	 * Represents the outcome of composing change1 and change2.
+	 */
+	const change1And2: TaggedChange<FieldKindsTypes.OptionalChangeset> = makeAnonChange({
+		fieldChange: {
+			id: brand(2),
+			revision: change2.revision,
+			newContent: { set: tree2 },
+			wasEmpty: true,
+		},
+	});
+
 	const change4: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		editor.buildChildChange(0, nodeChange2),
 		mintRevisionTag(),
 	);
 
 	it("can be created", () => {
-		const actual: FieldKindsTypes.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
+		const actual: FieldKindsTypes.OptionalChangeset = editor.set(
+			singleTextCursor(tree1),
+			true,
+			brand(42),
+		);
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
+			fieldChange: { id: brand(42), newContent: { set: tree1 }, wasEmpty: true },
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -346,12 +371,17 @@ describe("Optional field changesets", () => {
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([change1, change2]),
 		);
-		assert.deepEqual(composed, change3.change);
+		assert.deepEqual(composed, change1And2.change);
 	});
 
 	it("can compose child changes", () => {
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { wasEmpty: true, newContent: { set: tree1, changes: nodeChange3 } },
+			fieldChange: {
+				id: brand(1),
+				revision: change1.revision,
+				wasEmpty: true,
+				newContent: { set: tree1, changes: nodeChange3 },
+			},
 		};
 
 		assert.deepEqual(
@@ -373,7 +403,7 @@ describe("Optional field changesets", () => {
 		};
 
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { wasEmpty: false },
+			fieldChange: { id: brand(1), wasEmpty: false },
 			childChange: nodeChange2,
 		};
 
@@ -404,7 +434,7 @@ describe("Optional field changesets", () => {
 			) => assert.fail("Should not be called");
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
-					change3.change,
+					change2PreChange1.change,
 					change1,
 					childRebaser,
 					idAllocator,
@@ -447,7 +477,7 @@ describe("Optional field changesets", () => {
 			const tag1 = mintRevisionTag();
 			const tag2 = mintRevisionTag();
 			const changeToRebase = editor.buildChildChange(0, nodeChange1);
-			const deletion = tagChange(editor.set(undefined, false), tag1);
+			const deletion = tagChange(editor.set(undefined, false, brand(1)), tag1);
 			const revive = tagRollbackInverse(
 				fieldHandler.rebaser.invert(
 					deletion,
