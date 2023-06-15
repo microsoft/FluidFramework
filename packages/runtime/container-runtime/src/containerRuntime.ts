@@ -1341,7 +1341,7 @@ export class ContainerRuntime
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
-			reentrancy: () => this.ensureNoDataModelChangesCalls > 0,
+			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
 		});
 

@@ -48,7 +48,7 @@ export interface IOutboxParameters {
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) => void;
-	readonly reentrancy: () => boolean;
+	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
@@ -151,7 +151,7 @@ export class Outbox {
 			!this.mainBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				this.params.reentrancy(),
+				this.params.opReentrancy(),
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -170,7 +170,7 @@ export class Outbox {
 			!this.attachFlowBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				this.params.reentrancy(),
+				this.params.opReentrancy(),
 			)
 		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
@@ -181,7 +181,7 @@ export class Outbox {
 				!this.attachFlowBatch.push(
 					message,
 					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-					this.params.reentrancy(),
+					this.params.opReentrancy(),
 				)
 			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -207,10 +207,8 @@ export class Outbox {
 	}
 
 	public flush() {
-		if (this.params.reentrancy()) {
-			const error = new UsageError(
-				"Flushing is not supported inside reentrant event handlers",
-			);
+		if (this.params.opReentrancy()) {
+			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}

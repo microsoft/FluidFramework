@@ -204,7 +204,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Flushing is not supported inside reentrant event handlers",
+					error: "Flushing is not supported inside DDS event handlers",
 				},
 			],
 			async () => {
