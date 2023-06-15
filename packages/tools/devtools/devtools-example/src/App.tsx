@@ -231,6 +231,9 @@ const useStyles = makeStyles({
 		...shorthands.padding("10px"),
 	},
 
+	/**
+	 * Styles for the loading view
+	 */
 	loadingAppView: {
 		alignItems: "stretch", // Center the items horizontally
 		display: "flex",
