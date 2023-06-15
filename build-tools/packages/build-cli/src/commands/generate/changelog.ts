@@ -44,7 +44,6 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 			return;
 		}
 
-		this.log(`directory: ${directory}`);
 		const pkg = new Package(`${directory}/package.json`, "none");
 		const version = this.flags.version ?? pkg.version;
 
@@ -58,40 +57,37 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 	public async init(): Promise<void> {
 		await super.init();
+
 		const context = await this.getContext();
+		
 		this.options = { cwd: context.gitRepo.resolvedRoot };
-		const changesetVersionResult = await command("pnpm exec changeset version", this.options);
-		this.log(changesetVersionResult.stdout);
 
-		// I remember you said during the meeting you can check if we need to pnpm i from context
+		await command("pnpm exec changeset version", this.options);
 
-		const installResult = await command(`pnpm i`, this.options);
-		this.log(installResult.stdout);
+		// which property do I check on context so I can not install if its already installed?
+		await command(`pnpm i`, this.options);
 
 		this.repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
 
-		const rawchangesetAdd = await this.repo.gitClient.add(".changeset");
-		this.log(rawchangesetAdd);
+		await this.repo.gitClient.add(".changeset");
 	}
 
 	public async run(): Promise<void> {
-		// Calls processPackage on all packages.
-		await super.run();
-
 		if (this.repo === undefined) {
 			this.error("repo is possibly 'undefined'");
 		}
 
-		const result = await command(
+		// Calls processPackage on all packages.
+		await super.run();
+
+		await command(
 			"pnpm -r --workspace-concurrency=1 exec -- git add CHANGELOG.md",
 			this.options,
-		); // repo.gitClient here?
-		this.log(result.stdout);
-
-		const rawRestore = await this.repo.gitClient.raw("restore", ".");
-		const cleanResponse = await this.repo.gitClient.clean(
-			CleanOptions.RECURSIVE + CleanOptions.FORCE,
 		);
+
+		await this.repo.gitClient.raw("restore", ".");
+		
+		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
 
 		this.log("Commit and open a PR!");
 	}
