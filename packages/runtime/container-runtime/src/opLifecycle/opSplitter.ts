@@ -144,7 +144,6 @@ export class OpSplitter {
 			batch.referenceSequenceNumber !== undefined,
 			0x58a /* Batch must have a reference sequence number if non-empty */,
 		);
-		assert(batch.hasReentrantOps !== true, "Batches with reentrant ops are not supported");
 		assert(this.chunkSizeInBytes !== 0, 0x515 /* Chunk size needs to be non-zero */);
 		assert(
 			this.chunkSizeInBytes < this.maxBatchSizeInBytes,

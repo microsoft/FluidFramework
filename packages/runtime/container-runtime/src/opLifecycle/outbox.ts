@@ -31,6 +31,7 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
+	readonly disableBatchRebasing: boolean;
 }
 
 export interface IOutboxParameters {
@@ -223,7 +224,7 @@ export class Outbox {
 	}
 
 	private flushInternal(rawBatch: IBatch) {
-		if (rawBatch.hasReentrantOps === true) {
+		if (rawBatch.hasReentrantOps === true && !this.params.config.disableBatchRebasing) {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.

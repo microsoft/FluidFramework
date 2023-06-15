@@ -130,7 +130,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(3, "x");
+					sharedString2.insertText(1, "x");
 				}
 			});
 
@@ -139,11 +139,10 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			await provider.ensureSynchronized();
 
 			// The offending container is still alive
-			sharedString2.insertText(0, "|");
-			sharedString2.insertText(sharedString2.getText().length, "|");
+			sharedString2.insertText(0, "z");
 			await provider.ensureSynchronized();
 
-			assert.strictEqual(sharedString1.getText(), "|yabxcd|");
+			assert.strictEqual(sharedString1.getText(), "zyxabcd");
 			assert.strictEqual(
 				sharedString1.getText(),
 				sharedString2.getText(),
@@ -154,6 +153,37 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			assert.ok(!container1.closed);
 			assert.ok(!container2.closed);
 		});
+	});
+
+	it("Eventual consistency broken with op reentry, grouped batches and batch rebasing disabled", async () => {
+		await setupContainers(
+			{
+				...testContainerConfig,
+				runtimeOptions: {
+					enableGroupedBatching: true,
+				},
+			},
+			{ "Fluid.ContainerRuntime.DisableBatchRebasing": true },
+		);
+
+		sharedString1.insertText(0, "ad");
+		await provider.ensureSynchronized();
+
+		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+				sharedString2.insertText(3, "x");
+			}
+		});
+
+		sharedString1.insertText(1, "b");
+		sharedString1.insertText(2, "c");
+		await provider.ensureSynchronized();
+
+		assert.notStrictEqual(
+			sharedString1.getText(),
+			sharedString2.getText(),
+			"Unexpected eventual consistency",
+		);
 	});
 
 	describe("Reentry safeguards", () => {
