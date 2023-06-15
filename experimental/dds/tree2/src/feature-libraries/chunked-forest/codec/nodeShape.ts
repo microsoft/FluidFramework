@@ -10,19 +10,16 @@ import {
 	keyFromSymbol,
 	symbolFromKey,
 } from "../../../core";
-import { brand } from "../../../util";
+import { brand, fail } from "../../../util";
 import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
-import { EncodedChunkShape, EncodedValueShape } from "./format";
+import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format";
 import {
 	NodeEncoderShape,
 	FieldShape,
 	FieldEncoderShape,
 	EncoderCache,
 	encodeValue,
-	encodeOptionalIdentifier,
-	encodeFieldShapes,
-	encodeOptionalFieldShape,
 } from "./compressedEncode";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderShape {
@@ -137,4 +134,40 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderSh
 	public get shape() {
 		return this;
 	}
+}
+
+export function encodeFieldShapes(
+	fields: readonly FieldShape<string>[],
+	identifiers: DeduplicationTable<string>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+): EncodedFieldShape[] {
+	return fields.map((field) => ({
+		key: encodeIdentifier(field.key, identifiers),
+		shape: shapes.valueToIndex.get(field.shape.shape) ?? fail("missing shape"),
+	}));
+}
+
+function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {
+	return identifiers.valueToIndex.get(identifier) ?? identifier;
+}
+
+export function encodeOptionalIdentifier(
+	identifier: string | undefined,
+	identifiers: DeduplicationTable<string>,
+) {
+	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
+}
+
+export function encodeOptionalFieldShape(
+	shape: FieldEncoderShape | undefined,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+) {
+	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
+}
+
+function dedupShape(
+	shape: Shape<EncodedChunkShape>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+) {
+	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
 }

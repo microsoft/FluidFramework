@@ -35,6 +35,37 @@ export function compressedEncode(
 	return handleShapesAndIdentifiers(version, buffer);
 }
 
+export interface FieldShape<TKey> {
+	readonly key: TKey;
+	readonly shape: FieldEncoderShape;
+}
+
+export interface NodeEncoderShape {
+	/**
+	 * @param cursor - in Nodes mode. Moves cursor however many nodes it encodes.
+	 */
+	encodeNodes(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+	): void;
+
+	readonly shape: Shape<EncodedChunkShape>;
+}
+
+export interface FieldEncoderShape {
+	/**
+	 * @param cursor - in Fields mode. Encodes entire field.
+	 */
+	encodeField(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
+	): void;
+
+	readonly shape: Shape<EncodedChunkShape>;
+}
+
 // Encodes a chunk polymorphically.
 class AnyShape extends Shape<EncodedChunkShape> {
 	private constructor() {
@@ -250,73 +281,6 @@ export function encodeValue(
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");
 		}
 	}
-}
-
-export interface FieldShape<TKey> {
-	readonly key: TKey;
-	readonly shape: FieldEncoderShape;
-}
-
-export function encodeFieldShapes(
-	fields: readonly FieldShape<string>[],
-	identifiers: DeduplicationTable<string>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
-	return fields.map((field) => ({
-		key: encodeIdentifier(field.key, identifiers),
-		shape: shapes.valueToIndex.get(field.shape.shape) ?? fail("missing shape"),
-	}));
-}
-
-function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {
-	return identifiers.valueToIndex.get(identifier) ?? identifier;
-}
-
-export function encodeOptionalIdentifier(
-	identifier: string | undefined,
-	identifiers: DeduplicationTable<string>,
-) {
-	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
-}
-
-function dedupShape(
-	shape: Shape<EncodedChunkShape>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
-	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
-}
-
-export function encodeOptionalFieldShape(
-	shape: FieldEncoderShape | undefined,
-	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
-	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
-}
-
-export interface NodeEncoderShape {
-	/**
-	 * @param cursor - in Nodes mode. Moves cursor however many nodes it encodes.
-	 */
-	encodeNodes(
-		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
-	): void;
-
-	readonly shape: Shape<EncodedChunkShape>;
-}
-
-export interface FieldEncoderShape {
-	/**
-	 * @param cursor - in Fields mode. Encodes entire field.
-	 */
-	encodeField(
-		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
-	): void;
-
-	readonly shape: Shape<EncodedChunkShape>;
 }
 
 export class EncoderCache implements TreeShaper, FieldShaper {
