@@ -36,6 +36,7 @@ export async function run<T extends IResources>(
 			logger?.error(`Could not stop runner due to error: ${innerError}`);
 			Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
 			error.forceKill = true;
+			error.runnerStopException = innerError;
 		});
 		return Promise.reject(error);
 	});
