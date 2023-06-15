@@ -15,7 +15,12 @@ import { revertSharedStringRevertibles, SharedStringRevertible } from "../revert
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 
-export type RevertibleSharedString = SharedString & { revertibles: SharedStringRevertible[] };
+export type RevertibleSharedString = SharedString & {
+	revertibles: SharedStringRevertible[];
+	// This field prevents change events that are emitted while in the process of a revert from
+	// being added into the revertibles stack.
+	isCurrentRevert: boolean;
+};
 export function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
 }
@@ -201,8 +206,10 @@ export function makeReducer(
 		},
 		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(channel));
+			channel.isCurrentRevert = true;
 			const few = channel.revertibles.splice(-editsToRevert, editsToRevert);
 			revertSharedStringRevertibles(channel, few);
+			channel.isCurrentRevert = false;
 		},
 	});
 
