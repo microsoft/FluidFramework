@@ -105,6 +105,9 @@
 		"broken": {
 			"ClassDeclaration_TenantManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_SecretManager": {
+				"forwardCompat": false
 			}
 		}
 	}
