@@ -28,7 +28,6 @@ export class OpCompressor {
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
 			0x5a4 /* Batch should not be empty */,
 		);
-		assert(batch.hasReentrantOps !== true, "Batches with reentrant ops are not supported");
 
 		const compressionStart = Date.now();
 		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatch(batch));
