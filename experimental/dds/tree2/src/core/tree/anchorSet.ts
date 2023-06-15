@@ -5,15 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
-import {
-	brand,
-	Brand,
-	fail,
-	Opaque,
-	ReferenceCountedBase,
-	BrandedKey,
-	BrandedMapSubset,
-} from "../../util";
+import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
 import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
@@ -54,12 +46,42 @@ export interface AnchorLocator {
 export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
 
 /**
+ * @alpha
+ */
+export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
+
+/**
+ * @alpha
+ */
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
+	unknown,
+	infer TContent
+>
+	? TContent
+	: never;
+
+/**
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
  * @alpha
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
+
+/**
+ * A Map where the keys carry the types of values which they correspond to.
+ *
+ * @remarks
+ * These APIs are designed so that a Map can be used to implement this type.
+ *
+ * @alpha
+ */
+export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
+	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
+	has(key: K): boolean;
+	set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
+	delete(key: K): boolean;
+}
 
 /**
  * Events for {@link AnchorNode}.

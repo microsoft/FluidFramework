@@ -83,11 +83,3 @@ export {
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 } from "./typeUtils";
-
-export {
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
-	getOrCreateSlot,
-	brandedSlot,
-} from "./brandedMapSubset";

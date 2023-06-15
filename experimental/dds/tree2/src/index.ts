@@ -77,6 +77,9 @@ export {
 	PathRootPrefix,
 	AnchorKeyBrand,
 	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	UpPathDefault,
@@ -105,9 +108,6 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 } from "./util";
 
 export {
