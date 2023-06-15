@@ -250,7 +250,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 			case ConnectionState.EstablishingConnection:
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
-					"connectivity transition to establishing connection",
+					0x6d2 /* connectivity transition to establishing connection */,
 				);
 				break;
 			case ConnectionState.CatchingUp:
@@ -497,9 +497,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	public cancelEstablishingConnection(reason: string) {
 		assert(
 			this._connectionState === ConnectionState.EstablishingConnection,
-			"Connection state should be EstablishingConnection",
+			0x6d3 /* Connection state should be EstablishingConnection */,
 		);
-		assert(this.connection === undefined, "No connetion should be present");
+		assert(this.connection === undefined, 0x6d4 /* No connetion should be present */);
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.Disconnected;
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);

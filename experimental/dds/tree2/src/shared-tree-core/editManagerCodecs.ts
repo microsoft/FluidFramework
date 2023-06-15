@@ -36,12 +36,12 @@ export function makeEditManagerCodec<TChangeset>(
 					{ ...branch, commits: branch.commits.map(encodeCommit) },
 				]),
 			};
-			assert(format.check(json), "Encoded schema should validate");
+			assert(format.check(json), 0x6cc /* Encoded schema should validate */);
 			return JSON.stringify(json);
 		},
 		decode: (summary) => {
 			const json: EncodedEditManager<TChangeset> = JSON.parse(summary);
-			assert(format.check(json), "Encoded schema should validate");
+			assert(format.check(json), 0x6cd /* Encoded schema should validate */);
 			return {
 				trunk: json.trunk.map(decodeCommit),
 				branches: new Map(
