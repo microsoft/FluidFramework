@@ -79,9 +79,7 @@ module.exports = {
 
 		{
 			label: "Must use exact dependency ranges",
-			dependencies: [
-				"sort-package-json",
-			],
+			dependencies: ["sort-package-json"],
 			packages: ["**"],
 			range: "",
 		},
