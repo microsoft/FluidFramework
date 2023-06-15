@@ -232,12 +232,6 @@ importers:
       '@types/sort-json':
         specifier: ^2.0.1
         version: 2.0.1
-      '@typescript-eslint/eslint-plugin':
-        specifier: ~5.9.1
-        version: 5.9.1(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)(typescript@4.5.5)
-      '@typescript-eslint/parser':
-        specifier: ~5.9.1
-        version: 5.9.1(eslint@8.6.0)(typescript@4.5.5)
       chai:
         specifier: ^4.3.7
         version: 4.3.7
@@ -434,12 +428,6 @@ importers:
       '@types/shelljs':
         specifier: ^0.8.12
         version: 0.8.12
-      '@typescript-eslint/eslint-plugin':
-        specifier: ~5.9.1
-        version: 5.9.1(@typescript-eslint/parser@5.9.1)(eslint@8.6.0)(typescript@4.5.5)
-      '@typescript-eslint/parser':
-        specifier: ~5.9.1
-        version: 5.9.1(eslint@8.6.0)(typescript@4.5.5)
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
