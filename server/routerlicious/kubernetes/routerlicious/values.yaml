@@ -117,6 +117,7 @@ mongodb:
   globalDbEnabled: false
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
+  directConnection: true
   softDeletionRetentionPeriodMs: 2592000000
   offlineWindowMs: 86400000
   softDeletionEnabled: false

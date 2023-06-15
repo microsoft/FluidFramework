@@ -5,6 +5,7 @@
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
 import { EncodedJsonableTree, RevisionTagSchema } from "../core";
+import { ChangesetLocalIdSchema } from "./modular-schema";
 
 export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([
@@ -60,6 +61,10 @@ export type EncodedValueChangeset<Schema extends TSchema> = Static<
 
 export const EncodedOptionalFieldChange = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object({
+		/**
+		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+		 */
+		id: ChangesetLocalIdSchema,
 		/**
 		 * The new content for the trait. If undefined, the trait will be cleared.
 		 */

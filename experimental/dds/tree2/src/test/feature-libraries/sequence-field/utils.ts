@@ -9,13 +9,17 @@ import {
 	IdAllocator,
 	idAllocatorFromMaxId,
 	RevisionInfo,
-	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
+import {
+	assertMarkListEqual,
+	deepFreeze,
+	defaultRevisionMetadataFromChanges,
+	fakeTaggedRepair as fakeRepair,
+} from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -50,21 +54,6 @@ export function shallowCompose<T>(
 		},
 		revInfos,
 	);
-}
-
-function defaultRevisionMetadataFromChanges(
-	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
-): RevisionMetadataSource {
-	const revInfos: RevisionInfo[] = [];
-	for (const change of changes) {
-		if (change.revision !== undefined) {
-			revInfos.push({
-				revision: change.revision,
-				rollbackOf: change.rollbackOf,
-			});
-		}
-	}
-	return revisionMetadataSourceFromInfo(revInfos);
 }
 
 function composeI<T>(

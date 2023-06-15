@@ -17,7 +17,7 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -183,10 +183,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis(redisOptions2);
+		const redisClient = new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache = new Redis(redisOptions2);
+		const redisClientForJwtCache = new Redis.default(redisOptions2);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -273,7 +273,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -449,7 +449,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 					servername: redisConfig.host,
 				};
 			}
-			const redisClientForLogging = new Redis(redisOptions);
+			const redisClientForLogging = new Redis.default(redisOptions);
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

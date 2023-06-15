@@ -275,6 +275,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		statusComponents.push(containerState.attachState);
 		if (containerState.attachState === AttachState.Attached) {
 			statusComponents.push(connectionStateToString(containerState.connectionState));
+		} else {
+			/*
+			 * If the container is not attached, it is not connected
+			 * TODO: If the container is detached, it is advisable to disable the action buttons
+			 * since Fluid will consistently fail to establish a connection with a detached container.
+			 */
+			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
 		}
 	}
 
