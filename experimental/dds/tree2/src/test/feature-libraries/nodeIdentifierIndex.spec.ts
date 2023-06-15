@@ -21,6 +21,7 @@ import {
 	NodeIdentifier,
 } from "../../feature-libraries";
 import { symbolFromKey } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 import { nodeIdentifierSchema } from "../../domains";
 
 const {
@@ -235,7 +236,7 @@ describe("Node Identifier Index", () => {
 		provider.processMessages();
 		const summary = await tree.summarize();
 
-		const factory = new SharedTreeFactory();
+		const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 		const tree2 = await factory.load(
 			new MockFluidDataStoreRuntime(),
 			factory.type,

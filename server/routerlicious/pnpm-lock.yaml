@@ -10,14 +10,14 @@ importers:
   .:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.21.6
@@ -49,14 +49,14 @@ importers:
   packages/gitresources:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -89,14 +89,14 @@ importers:
         version: link:../services-core
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -192,14 +192,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -298,14 +298,14 @@ importers:
         version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -389,14 +389,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -522,14 +522,14 @@ importers:
         version: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -580,14 +580,14 @@ importers:
         version: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -682,8 +682,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       nconf:
         specifier: ^0.12.0
         version: 0.12.0
@@ -692,14 +692,14 @@ importers:
         version: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -712,9 +712,6 @@ importers:
       '@fluidframework/server-test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/nconf':
         specifier: ^0.10.2
         version: 0.10.3
@@ -803,8 +800,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -831,14 +828,14 @@ importers:
         version: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -872,9 +869,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.32
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/json-stringify-safe':
         specifier: ^5.0.0
         version: 5.0.0
@@ -981,8 +975,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       lru-cache:
         specifier: ^6.0.0
         version: 6.0.0
@@ -1006,14 +1000,14 @@ importers:
         version: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1029,9 +1023,9 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
+      '@types/ioredis-mock':
+        specifier: ^8.2.1
+        version: 8.2.2
       '@types/lru-cache':
         specifier: ^5.1.0
         version: 5.1.1
@@ -1057,8 +1051,8 @@ importers:
         specifier: ~8.27.0
         version: 8.27.0
       ioredis-mock:
-        specifier: ^5.2.5
-        version: 5.9.1(ioredis@4.28.5)(redis-commands@1.7.0)
+        specifier: ^8.2.3
+        version: 8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.2.3)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -1124,14 +1118,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1218,14 +1212,14 @@ importers:
         version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1273,14 +1267,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1355,14 +1349,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1425,14 +1419,14 @@ importers:
         version: 5.6.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1518,8 +1512,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -1552,14 +1546,14 @@ importers:
         version: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1572,9 +1566,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.14.184
@@ -1640,14 +1631,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1712,8 +1703,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1746,14 +1737,14 @@ importers:
         version: 4.5.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1772,9 +1763,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.32
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/json-stringify-safe':
         specifier: ^5.0.0
         version: 5.0.0
@@ -1867,14 +1855,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@16.18.34)
+        specifier: ^0.19.0-165129
+        version: 0.19.0-165129(@types/node@16.18.34)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -2992,14 +2980,122 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli@0.18.0:
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
+  /@fluid-tools/build-cli@0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1):
+    resolution: {integrity: sha512-i1qzGDii8mC2t9i+ptXZ3CK1+6J61LCmqJXSI+zTDpuj3vAvE0JbvimzjMmxa69CDmYGtDs4DpEDPtGU5U5i1w==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/build-tools': 0.19.0-165129(@types/node@16.18.34)
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.1.3
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
+      '@oclif/plugin-plugins': 2.3.2
+      '@oclif/test': 2.3.8
+      '@octokit/core': 4.1.0
+      '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
+      async: 3.2.4
+      chalk: 2.4.2
+      danger: 10.9.0(@octokit/core@4.1.0)
+      date-fns: 2.29.3
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      human-id: 4.0.0
+      inquirer: 8.2.5
+      jssm: 5.86.3
+      jssm-viz-cli: 5.86.3
+      minimatch: 7.4.2
+      npm-check-updates: 16.4.3
+      oclif: 3.7.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
+      prettier: 2.6.2
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      semver: 7.3.8
+      semver-utils: 1.1.4
+      simple-git: 3.16.1
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - encoding
+      - esbuild
+      - mem-fs
+      - mem-fs-editor
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli@0.19.0-165129(@types/node@16.18.34)(mem-fs-editor@9.5.0)(mem-fs@2.2.1)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-i1qzGDii8mC2t9i+ptXZ3CK1+6J61LCmqJXSI+zTDpuj3vAvE0JbvimzjMmxa69CDmYGtDs4DpEDPtGU5U5i1w==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/build-tools': 0.19.0-165129(@types/node@16.18.34)(webpack-cli@4.10.0)
+      '@fluidframework/bundle-size-tools': 0.19.0-165129(webpack-cli@4.10.0)
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.1.3
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
+      '@oclif/plugin-plugins': 2.3.2
+      '@oclif/test': 2.3.8
+      '@octokit/core': 4.1.0
+      '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
+      async: 3.2.4
+      chalk: 2.4.2
+      danger: 10.9.0(@octokit/core@4.1.0)
+      date-fns: 2.29.3
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      human-id: 4.0.0
+      inquirer: 8.2.5
+      jssm: 5.86.3
+      jssm-viz-cli: 5.86.3
+      minimatch: 7.4.2
+      npm-check-updates: 16.4.3
+      oclif: 3.7.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
+      prettier: 2.6.2
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      semver: 7.3.8
+      semver-utils: 1.1.4
+      simple-git: 3.16.1
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - encoding
+      - esbuild
+      - mem-fs
+      - mem-fs-editor
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli@0.19.0-165129(mem-fs-editor@9.5.0)(mem-fs@2.2.1):
+    resolution: {integrity: sha512-i1qzGDii8mC2t9i+ptXZ3CK1+6J61LCmqJXSI+zTDpuj3vAvE0JbvimzjMmxa69CDmYGtDs4DpEDPtGU5U5i1w==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/build-tools': 0.19.0-165129
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.1.3
       '@oclif/plugin-commands': 2.2.10
@@ -3021,9 +3117,9 @@ packages:
       jssm-viz-cli: 5.86.3
       minimatch: 7.4.2
       npm-check-updates: 16.4.3
-      oclif: 3.7.0
+      oclif: 3.7.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
+      prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.3.8
       semver-utils: 1.1.4
@@ -3039,117 +3135,15 @@ packages:
       - bluebird
       - encoding
       - esbuild
+      - mem-fs
+      - mem-fs-editor
       - supports-color
       - uglify-js
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli@0.18.0(@types/node@16.18.34):
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0(@types/node@16.18.34)
-      '@fluidframework/bundle-size-tools': 0.18.0
-      '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.1.3
-      '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
-      '@oclif/plugin-not-found': 2.3.21
-      '@oclif/plugin-plugins': 2.3.2
-      '@oclif/test': 2.3.8
-      '@octokit/core': 4.1.0
-      '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
-      async: 3.2.4
-      chalk: 2.4.2
-      danger: 10.9.0(@octokit/core@4.1.0)
-      date-fns: 2.29.3
-      execa: 5.1.1
-      fs-extra: 9.1.0
-      human-id: 4.0.0
-      inquirer: 8.2.5
-      jssm: 5.86.3
-      jssm-viz-cli: 5.86.3
-      minimatch: 7.4.2
-      npm-check-updates: 16.4.3
-      oclif: 3.7.0
-      prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
-      read-pkg-up: 7.0.1
-      semver: 7.3.8
-      semver-utils: 1.1.4
-      simple-git: 3.16.1
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluid-tools/build-cli@0.18.0(@types/node@16.18.34)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0(@types/node@16.18.34)(webpack-cli@4.10.0)
-      '@fluidframework/bundle-size-tools': 0.18.0(webpack-cli@4.10.0)
-      '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.1.3
-      '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
-      '@oclif/plugin-not-found': 2.3.21
-      '@oclif/plugin-plugins': 2.3.2
-      '@oclif/test': 2.3.8
-      '@octokit/core': 4.1.0
-      '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
-      async: 3.2.4
-      chalk: 2.4.2
-      danger: 10.9.0(@octokit/core@4.1.0)
-      date-fns: 2.29.3
-      execa: 5.1.1
-      fs-extra: 9.1.0
-      human-id: 4.0.0
-      inquirer: 8.2.5
-      jssm: 5.86.3
-      jssm-viz-cli: 5.86.3
-      minimatch: 7.4.2
-      npm-check-updates: 16.4.3
-      oclif: 3.7.0
-      prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
-      read-pkg-up: 7.0.1
-      semver: 7.3.8
-      semver-utils: 1.1.4
-      simple-git: 3.16.1
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluid-tools/version-tools@0.18.0:
-    resolution: {integrity: sha512-MbpR1kB+rpBu4Ztw7kXALz1543or8f1NQxch5R5bN/Zcq864RYvPD1NwBkOvdukA9HquHqu+hOYVqd6gek7q4A==}
+  /@fluid-tools/version-tools@0.19.0-165129:
+    resolution: {integrity: sha512-BMCfXNJtolGvQMJZMMefIjKYP2C72jDPEchbTE+9xjAwAqYlvT/VpPg0G4h4ATXeY2OA0MJh/8iBSOv2/JNDbQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -3166,18 +3160,18 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common@1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common@1.2.0:
+    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.18.0:
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-165129:
+    resolution: {integrity: sha512-R/03OjHLJBTMXLmzcQOY/Dc5sOUJNvCP1mIecAJjygrKY4Q8KnXHXcYRWe030VJ0HSURduYDbm7yDWdOoTs/sA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.55.2
@@ -3217,13 +3211,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(@types/node@16.18.34):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-165129(@types/node@16.18.34):
+    resolution: {integrity: sha512-R/03OjHLJBTMXLmzcQOY/Dc5sOUJNvCP1mIecAJjygrKY4Q8KnXHXcYRWe030VJ0HSURduYDbm7yDWdOoTs/sA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
@@ -3263,13 +3257,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(@types/node@16.18.34)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-165129(@types/node@16.18.34)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-R/03OjHLJBTMXLmzcQOY/Dc5sOUJNvCP1mIecAJjygrKY4Q8KnXHXcYRWe030VJ0HSURduYDbm7yDWdOoTs/sA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.19.0-165129
+      '@fluidframework/bundle-size-tools': 0.19.0-165129(webpack-cli@4.10.0)
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.55.2(@types/node@16.18.34)
@@ -3309,8 +3303,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.18.0:
-    resolution: {integrity: sha512-e6pupP3KLUGpbQMznZpd7OcTBJOL331seFhB2GNVXQu9UqKAtCwpjgIQwg5vdGBp5p+MZGrsh8VqyHJw9a0Jpw==}
+  /@fluidframework/bundle-size-tools@0.19.0-165129:
+    resolution: {integrity: sha512-Pb4fvOEIAwOWT/mkieNku4k978isb4B795qLrJApEYMXWfEbL+yjR8A4a052ub0kPzL1ENcJ4Qk2/N1zVQPJNA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -3325,8 +3319,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.18.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-e6pupP3KLUGpbQMznZpd7OcTBJOL331seFhB2GNVXQu9UqKAtCwpjgIQwg5vdGBp5p+MZGrsh8VqyHJw9a0Jpw==}
+  /@fluidframework/bundle-size-tools@0.19.0-165129(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-Pb4fvOEIAwOWT/mkieNku4k978isb4B795qLrJApEYMXWfEbL+yjR8A4a052ub0kPzL1ENcJ4Qk2/N1zVQPJNA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -3821,6 +3815,13 @@ packages:
     resolution: {integrity: sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==}
     engines: {node: '>=6.9.0'}
     dev: true
+
+  /@ioredis/as-callback@3.0.0:
+    resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
+    dev: true
+
+  /@ioredis/commands@1.2.0:
+    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
   /@isaacs/string-locale-compare@1.1.0:
     resolution: {integrity: sha512-SQ7Kzhh9+D+ZW9MA0zkYv3VXhIDNx+LzM6EJ+/65I3QY+enU6Itte7E5XX7EWrqLW2FN4n06GWzBnPoC3th2aQ==}
@@ -5917,10 +5918,12 @@ packages:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
     dev: true
 
-  /@types/ioredis@4.28.10:
-    resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
+  /@types/ioredis-mock@8.2.2:
+    resolution: {integrity: sha512-bnbPHOjxy4TUDjRh61MMoK2QvDNZqrMDXJYrEDZP/HPFvBubR24CQ0DBi5lgWhLxG4lvVsXPRDXtZ03+JgonoQ==}
     dependencies:
-      '@types/node': 16.18.34
+      ioredis: 5.2.3
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@types/json-schema@7.0.11:
@@ -8433,6 +8436,10 @@ packages:
     resolution: {integrity: sha512-XwE+iZ4D6ZUB7mfYRMb5wByE8L74HCn30FBN7sWnXksWc1LO1bPDl67pBR9o/kC4z/xSNAwkMYcGgqDV3BE3Hw==}
     engines: {node: '>=0.10'}
 
+  /denque@2.1.0:
+    resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
+    engines: {node: '>=0.10'}
+
   /depd@1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
     engines: {node: '>= 0.6'}
@@ -10545,19 +10552,20 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /ioredis-mock@5.9.1(ioredis@4.28.5)(redis-commands@1.7.0):
-    resolution: {integrity: sha512-ZirdGJFOqH5nP8FYXuHUJmexvtZ6r2Ybc5alaGMzt38QA0kse5/rYnBQcb4ofxkyqzhXHuaCsXiwLlfG6NyhhQ==}
-    engines: {node: '>=10'}
+  /ioredis-mock@8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.2.3):
+    resolution: {integrity: sha512-BJcSjkR3sIMKbH93fpFzwlWi/jl1kd5I3vLvGQxnJ/W/6bD2ksrxnyQN186ljAp3Foz4p1ivViDE3rZeKEAluA==}
+    engines: {node: '>=12.22'}
     peerDependencies:
-      ioredis: 4.x
-      redis-commands: 1.x
+      '@types/ioredis-mock': ^8
+      ioredis: ^5
     dependencies:
+      '@ioredis/as-callback': 3.0.0
+      '@ioredis/commands': 1.2.0
+      '@types/ioredis-mock': 8.2.2
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
-      ioredis: 4.28.5
-      lodash: 4.17.21
-      redis-commands: 1.7.0
-      standard-as-callback: 2.1.0
+      ioredis: 5.2.3
+      semver: 7.3.8
     dev: true
 
   /ioredis@4.28.5:
@@ -10572,6 +10580,23 @@ packages:
       lodash.isarguments: 3.1.0
       p-map: 2.1.0
       redis-commands: 1.7.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /ioredis@5.2.3:
+    resolution: {integrity: sha512-gQNcMF23/NpvjCaa1b5YycUyQJ9rBNH2xP94LWinNpodMWVUPP5Ai/xXANn/SM7gfIvI62B5CCvZxhg5pOgyMw==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
       redis-errors: 1.2.0
       redis-parser: 3.0.0
       standard-as-callback: 2.1.0
@@ -11305,6 +11330,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /kleur@3.0.3:
+    resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
+    engines: {node: '>=6'}
+    dev: true
+
   /kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
@@ -11515,6 +11545,7 @@ packages:
 
   /lodash.flatten@4.4.0:
     resolution: {integrity: sha512-C5N2Z3DgnnKr0LOpv/hKCgKdb7ZZwafIrsesve6lmzvZIRZRGaZ/l6Q8+2W7NaT+ZwO3fFlSCzCzrDCFdJfZ4g==}
+    dev: true
 
   /lodash.flattendeep@4.4.0:
     resolution: {integrity: sha512-uHaJFihxmJcEX3kT4I23ABqKKalJ/zDrDg0lsFtc1h+3uw49SIJ5beyhx5ExVRti3AvKoOJngIj7xz3oylPdWQ==}
@@ -12920,7 +12951,7 @@ packages:
       es-abstract: 1.20.4
     dev: true
 
-  /oclif@3.7.0:
+  /oclif@3.7.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1):
     resolution: {integrity: sha512-LtLc7/3lOQ0d6/JKGj8QriIK/MiIcjZXVX3WoynbXUswG/X8oIsSr1+F6Q69VVbXnjbYlbfiP+uYASr36Mrjzg==}
     engines: {node: '>=12.0.0'}
     hasBin: true
@@ -12941,12 +12972,14 @@ packages:
       semver: 7.3.8
       shelljs: 0.8.5
       tslib: 2.5.0
-      yeoman-environment: 3.13.0
+      yeoman-environment: 3.13.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
       yeoman-generator: 5.7.0(yeoman-environment@3.13.0)
       yosay: 2.0.2
     transitivePeerDependencies:
       - bluebird
       - encoding
+      - mem-fs
+      - mem-fs-editor
       - supports-color
     dev: true
 
@@ -13113,6 +13146,7 @@ packages:
   /p-map@2.1.0:
     resolution: {integrity: sha512-y3b8Kpd8OAN444hxfBbFfj1FY/RjtTd8tzYwhUqNYXx0fXx2iX4maP4Qr6qhIKbQXI02wTLAda4fYUbDagTUFw==}
     engines: {node: '>=6'}
+    dev: true
 
   /p-map@3.0.0:
     resolution: {integrity: sha512-d3qXVTF/s+W+CdJ5A29wywV2n8CQQYahlgz2bFiA+4eVNJbHJodPZ+/gXwPGh0bOqA+j8S+6+ckmvLGPk1QpxQ==}
@@ -13652,11 +13686,11 @@ packages:
       sisteransi: 1.0.5
     dev: true
 
-  /prompts-ncu@3.0.0:
-    resolution: {integrity: sha512-qyz9UxZ5MlPKWVhWrCmSZ1ahm2GVYdjLb8og2sg0IPth1KRuhcggHGuijz0e41dkx35p1t1q3GRISGH7QGALFA==}
-    engines: {node: '>= 14'}
+  /prompts@2.4.2:
+    resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
+    engines: {node: '>= 6'}
     dependencies:
-      kleur: 4.1.5
+      kleur: 3.0.3
       sisteransi: 1.0.5
     dev: true
 
@@ -14014,6 +14048,7 @@ packages:
 
   /redis-commands@1.7.0:
     resolution: {integrity: sha512-nJWqw3bTFy21hX/CPKHth6sfhZbdiHP6bTawSgQBlKOVRG7EZkfHbbHwQJnrE4vsQf0CMNE+3gJ4Fmm16vdVlQ==}
+    dev: true
 
   /redis-errors@1.2.0:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
@@ -16387,10 +16422,13 @@ packages:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
 
-  /yeoman-environment@3.13.0:
+  /yeoman-environment@3.13.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1):
     resolution: {integrity: sha512-eBPpBZCvFzx6yk17x+ZrOHp8ADDv6qHradV+SgdugaQKIy9NjEX5AkbwdTHLOgccSTkQ9rN791xvYOu6OmqjBg==}
     engines: {node: '>=12.10.0'}
     hasBin: true
+    peerDependencies:
+      mem-fs: ^1.2.0 || ^2.0.0
+      mem-fs-editor: ^8.1.2 || ^9.0.0
     dependencies:
       '@npmcli/arborist': 4.3.1
       are-we-there-yet: 2.0.0
@@ -16455,7 +16493,7 @@ packages:
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
-      yeoman-environment: 3.13.0
+      yeoman-environment: 3.13.0(mem-fs-editor@9.5.0)(mem-fs@2.2.1)
     transitivePeerDependencies:
       - encoding
       - supports-color

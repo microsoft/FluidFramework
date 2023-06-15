@@ -3,25 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// TODO:
-// It is unclear if we would want to use the TypeBox compiler
-// (which generates code at runtime for maximum validation perf).
-// This might be an issue with security policies (ex: no eval) and/or more bundle size than we want.
-// We could disable validation or pull in a different validator (like ajv).
-// Only using its validation when testing is another option.
-// typebox documents using this internal module, so it should be ok to access.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
-import { IJsonCodec, IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
 import { Commit, EncodedEditManager } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
+	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>, string> {
-	const format = TypeCompiler.Compile(
+	const format = validator.compile(
 		EncodedEditManager(changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema),
 	);
 
@@ -44,12 +36,12 @@ export function makeEditManagerCodec<TChangeset>(
 					{ ...branch, commits: branch.commits.map(encodeCommit) },
 				]),
 			};
-			assert(format.Check(json), "Encoded schema should validate");
+			assert(format.check(json), "Encoded schema should validate");
 			return JSON.stringify(json);
 		},
 		decode: (summary) => {
 			const json: EncodedEditManager<TChangeset> = JSON.parse(summary);
-			assert(format.Check(json), "Encoded schema should validate");
+			assert(format.check(json), "Encoded schema should validate");
 			return {
 				trunk: json.trunk.map(decodeCommit),
 				branches: new Map(

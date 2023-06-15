@@ -452,6 +452,7 @@ interface IMongoDBConfig {
 	globalDbEnabled?: boolean;
 	connectionPoolMinSize?: number;
 	connectionPoolMaxSize?: number;
+	directConnection?: boolean;
 	facadeLevelRetry?: boolean;
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
@@ -463,6 +464,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly globalDbEndpoint?: string;
 	private readonly connectionPoolMinSize?: number;
 	private readonly connectionPoolMaxSize?: number;
+	private readonly directConnection: boolean;
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
 	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
@@ -474,6 +476,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			globalDbEndpoint,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
+			directConnection,
 			connectionNotAvailableMode,
 		} = config;
 		if (globalDbEnabled) {
@@ -484,6 +487,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
+		this.directConnection = directConnection ?? false;
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -499,6 +503,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		);
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
+			directConnection: this.directConnection ?? false,
 			keepAlive: true,
 			keepAliveInitialDelay: 180000,
 			socketTimeoutMS: 120000,

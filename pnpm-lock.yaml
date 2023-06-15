@@ -17,17 +17,20 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.26.0
+        specifier: ^2.26.1
         version: 2.26.1
+      '@fluid-internal/changelog-generator-wrapper':
+        specifier: file:tools/changelog-generator-wrapper
+        version: file:tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/test-tools':
         specifier: ^0.2.158186
         version: 0.2.158186
@@ -132,8 +135,8 @@ importers:
         version: 0.26.1
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -144,11 +147,11 @@ importers:
         specifier: workspace:~
         version: link:../azure-local-service
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/counter':
         specifier: workspace:~
         version: link:../../../packages/dds/counter
@@ -211,8 +214,8 @@ importers:
         version: 0.7.2
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -260,17 +263,17 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.0.0-internal.5.0.0
         version: /@fluidframework/azure-service-utils@2.0.0-internal.5.0.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -336,8 +339,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -511,8 +514,8 @@ importers:
         specifier: workspace:~
         version: link:../../azure-local-service
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -626,14 +629,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -711,11 +714,11 @@ importers:
         version: link:../../../packages/runtime/runtime-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -838,11 +841,11 @@ importers:
         version: 1.3.0(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -968,11 +971,11 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1125,11 +1128,11 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1255,11 +1258,11 @@ importers:
         version: link:../../../packages/framework/fluid-framework
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1376,11 +1379,11 @@ importers:
         version: 1.3.0(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1494,8 +1497,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1609,11 +1612,11 @@ importers:
         version: 7.1.0(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1709,8 +1712,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1830,8 +1833,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -1945,8 +1948,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2057,14 +2060,14 @@ importers:
         version: 4.6.0(@types/express@4.17.17)(webpack-cli@4.10.0)(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2169,11 +2172,11 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2299,8 +2302,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2420,8 +2423,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2562,8 +2565,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2641,8 +2644,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2744,8 +2747,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2862,8 +2865,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -2953,8 +2956,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3041,8 +3044,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3177,8 +3180,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3283,8 +3286,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3358,11 +3361,11 @@ importers:
   examples/data-objects/multiview/interface:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3428,8 +3431,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3528,8 +3531,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3628,8 +3631,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3806,8 +3809,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -3942,8 +3945,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/test-tools':
         specifier: ^0.2.158186
         version: 0.2.158186
@@ -4099,8 +4102,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4193,11 +4196,11 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4299,8 +4302,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4396,8 +4399,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4541,8 +4544,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4755,8 +4758,8 @@ importers:
         version: 1.0.9
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -4933,11 +4936,11 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0(webpack@5.83.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/bundle-size-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5019,6 +5022,9 @@ importers:
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
+      '@fluidframework/protocol-definitions':
+        specifier: ^1.1.0
+        version: 1.2.0
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../../packages/dds/register-collection
@@ -5051,11 +5057,11 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5133,11 +5139,11 @@ importers:
         version: 1.3.0(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5195,6 +5201,205 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      ts-jest:
+        specifier: ^26.4.4
+        version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
+      ts-loader:
+        specifier: ^9.3.0
+        version: 9.4.2(typescript@4.5.5)(webpack@5.83.0)
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
+      webpack:
+        specifier: ^5.82.0
+        version: 5.83.0(webpack-cli@4.10.0)
+      webpack-cli:
+        specifier: ^4.9.2
+        version: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.83.0)
+      webpack-dev-server:
+        specifier: ~4.6.0
+        version: 4.6.0(webpack-cli@4.10.0)(webpack@5.83.0)
+      webpack-merge:
+        specifier: ^5.8.0
+        version: 5.8.0
+
+  examples/version-migration/same-container:
+    dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
+      '@fluid-experimental/react-inputs':
+        specifier: workspace:~
+        version: link:../../../experimental/framework/react-inputs
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/cell':
+        specifier: workspace:~
+        version: link:../../../packages/dds/cell
+      '@fluidframework/common-definitions':
+        specifier: ^0.20.1
+        version: 0.20.1
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../packages/dds/map
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../../packages/dds/register-collection
+      '@fluidframework/request-handler':
+        specifier: workspace:~
+        version: link:../../../packages/framework/request-handler
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../../packages/dds/sequence
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../../packages/dds/task-manager
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+      events:
+        specifier: ^3.1.0
+        version: 3.3.0
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      uuid:
+        specifier: ^8.3.1
+        version: 8.3.2
+    devDependencies:
+      '@fluid-tools/build-cli':
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
+      '@fluidframework/build-common':
+        specifier: ^1.2.0
+        version: 1.2.0
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
+      '@fluidframework/test-tools':
+        specifier: ^0.2.158186
+        version: 0.2.158186
+      '@types/expect-puppeteer':
+        specifier: 2.2.1
+        version: 2.2.1
+      '@types/jest':
+        specifier: 22.2.3
+        version: 22.2.3
+      '@types/jest-environment-puppeteer':
+        specifier: 2.2.0
+        version: 2.2.0
+      '@types/node':
+        specifier: ^14.18.38
+        version: 14.18.47
+      '@types/puppeteer':
+        specifier: 1.3.0
+        version: 1.3.0
+      '@types/react':
+        specifier: 17.0.52
+        version: 17.0.52
+      '@types/react-dom':
+        specifier: 17.0.18
+        version: 17.0.18
+      '@types/uuid':
+        specifier: ^8.3.0
+        version: 8.3.4
+      clean-webpack-plugin:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.83.0)
+      concurrently:
+        specifier: ^7.6.0
+        version: 7.6.0
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      css-loader:
+        specifier: ^1.0.0
+        version: 1.0.1(webpack@5.83.0)
+      eslint:
+        specifier: ~8.6.0
+        version: 8.6.0
+      eslint-plugin-eslint-comments:
+        specifier: ~3.2.0
+        version: 3.2.0(eslint@8.6.0)
+      eslint-plugin-import:
+        specifier: ~2.25.4
+        version: 2.25.4(eslint@8.6.0)
+      eslint-plugin-jsdoc:
+        specifier: ~39.3.0
+        version: 39.3.25(eslint@8.6.0)
+      eslint-plugin-prefer-arrow:
+        specifier: ~1.2.2
+        version: 1.2.3(eslint@8.6.0)
+      eslint-plugin-react:
+        specifier: ~7.28.0
+        version: 7.28.0(eslint@8.6.0)
+      eslint-plugin-unicorn:
+        specifier: ~40.0.0
+        version: 40.0.0(eslint@8.6.0)
+      eslint-plugin-unused-imports:
+        specifier: ~2.0.0
+        version: 2.0.0(eslint@8.6.0)
+      html-webpack-plugin:
+        specifier: ^5.5.0
+        version: 5.5.1(webpack@5.83.0)
+      jest:
+        specifier: ^26.6.3
+        version: 26.6.3
+      jest-junit:
+        specifier: ^10.0.0
+        version: 10.0.0
+      jest-puppeteer:
+        specifier: ^4.3.0
+        version: 4.4.0(puppeteer@1.20.0)
+      prettier:
+        specifier: ~2.6.2
+        version: 2.6.2
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^1.20.0
+        version: 1.20.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      style-loader:
+        specifier: ^1.0.0
+        version: 1.3.0(webpack@5.83.0)
       ts-jest:
         specifier: ^26.4.4
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
@@ -5296,11 +5501,11 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5459,11 +5664,11 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5574,11 +5779,11 @@ importers:
         version: 1.3.0(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5695,11 +5900,11 @@ importers:
         version: 2.6.14
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -5903,8 +6108,8 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@types/expect-puppeteer':
         specifier: 2.2.1
         version: 2.2.1
@@ -6102,8 +6307,8 @@ importers:
         version: 1.0.7(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@types/expect-puppeteer':
         specifier: 2.2.1
         version: 2.2.1
@@ -6180,8 +6385,8 @@ importers:
   experimental/PropertyDDS/examples/schemas:
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -6235,8 +6440,8 @@ importers:
         specifier: ^7.2.0
         version: 7.21.5(@babel/core@7.21.8)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -6359,8 +6564,8 @@ importers:
         version: 0.6.6
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -6450,8 +6655,8 @@ importers:
         version: 0.6.6
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -6591,8 +6796,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-drivers
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../../packages/loader/container-loader
@@ -6748,8 +6953,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@storybook/addon-actions':
         specifier: ^6.4.22
         version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
@@ -6917,8 +7122,8 @@ importers:
         version: 1.13.6
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -6990,8 +7195,8 @@ importers:
         specifier: ^7.2.0
         version: 7.21.5(@babel/core@7.21.8)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7359,14 +7564,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7450,8 +7655,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7541,8 +7746,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7626,14 +7831,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7753,8 +7958,8 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -7868,8 +8073,8 @@ importers:
         version: 7.0.5(graphql@15.8.0)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -7992,14 +8197,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -8119,11 +8324,11 @@ importers:
         version: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8183,11 +8388,11 @@ importers:
         version: link:../../../packages/dds/shared-summary-block
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8250,11 +8455,11 @@ importers:
         version: 17.0.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8302,14 +8507,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8393,14 +8598,14 @@ importers:
         version: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/container-definitions-previous':
         specifier: npm:@fluidframework/container-definitions@2.0.0-internal.5.0.0
         version: /@fluidframework/container-definitions@2.0.0-internal.5.0.0
@@ -8435,14 +8640,14 @@ importers:
   packages/common/core-interfaces:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/core-interfaces-previous':
         specifier: npm:@fluidframework/core-interfaces@2.0.0-internal.5.0.0
         version: /@fluidframework/core-interfaces@2.0.0-internal.5.0.0
@@ -8480,14 +8685,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8559,14 +8764,14 @@ importers:
         version: 1.2.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/driver-definitions-previous':
         specifier: npm:@fluidframework/driver-definitions@2.0.0-internal.5.0.0
         version: /@fluidframework/driver-definitions@2.0.0-internal.5.0.0
@@ -8623,14 +8828,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/cell-previous':
         specifier: npm:@fluidframework/cell@2.0.0-internal.5.0.0
         version: /@fluidframework/cell@2.0.0-internal.5.0.0
@@ -8714,14 +8919,14 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/counter-previous':
         specifier: npm:@fluidframework/counter@2.0.0-internal.5.0.0
         version: /@fluidframework/counter@2.0.0-internal.5.0.0
@@ -8808,14 +9013,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -8917,14 +9122,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9038,14 +9243,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9168,14 +9373,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9274,14 +9479,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9374,8 +9579,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9465,14 +9670,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9580,14 +9785,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9707,14 +9912,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9807,14 +10012,14 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -9925,14 +10130,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10016,11 +10221,11 @@ importers:
         version: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10092,14 +10297,14 @@ importers:
         version: 1.4.1
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/debugger-previous':
         specifier: npm:@fluidframework/debugger@2.0.0-internal.5.0.0
         version: /@fluidframework/debugger@2.0.0-internal.5.0.0
@@ -10159,14 +10364,14 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.0.0-internal.5.0.0
         version: /@fluidframework/driver-base@2.0.0-internal.5.0.0
@@ -10220,14 +10425,14 @@ importers:
         version: 6.1.5
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/driver-web-cache-previous':
         specifier: npm:@fluidframework/driver-web-cache@2.0.0-internal.5.0.0
         version: /@fluidframework/driver-web-cache@2.0.0-internal.5.0.0
@@ -10290,14 +10495,14 @@ importers:
         version: link:../replay-driver
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10348,17 +10553,17 @@ importers:
         version: link:../odsp-driver-definitions
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluid-tools/fluidapp-odsp-urlresolver-previous':
         specifier: npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.5.0.0
         version: /@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.5.0.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10460,14 +10665,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10581,14 +10786,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10663,14 +10868,14 @@ importers:
         version: link:../../common/driver-definitions
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10721,14 +10926,14 @@ importers:
         version: link:../odsp-driver-definitions
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10797,14 +11002,14 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -10897,14 +11102,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11003,14 +11208,14 @@ importers:
         version: 0.11.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11091,14 +11296,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11188,17 +11393,17 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.0.0-internal.5.0.0
         version: /@fluidframework/agent-scheduler@2.0.0-internal.5.0.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11282,17 +11487,17 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.0.0-internal.5.0.0
         version: /@fluidframework/aqueduct@2.0.0-internal.5.0.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11388,14 +11593,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -11470,8 +11675,8 @@ importers:
         version: 2.8.13(tslib@1.14.1)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -11567,14 +11772,14 @@ importers:
         version: link:../../dds/shared-object-base
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/data-object-base-previous':
         specifier: npm:@fluidframework/data-object-base@2.0.0-internal.5.0.0
         version: /@fluidframework/data-object-base@2.0.0-internal.5.0.0
@@ -11634,14 +11839,14 @@ importers:
         version: link:../../dds/sequence
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/dds-interceptions-previous':
         specifier: npm:@fluidframework/dds-interceptions@2.0.0-internal.5.0.0
         version: /@fluidframework/dds-interceptions@2.0.0-internal.5.0.0
@@ -11734,14 +11939,14 @@ importers:
         version: link:../../dds/sequence
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11816,14 +12021,14 @@ importers:
         version: link:../../runtime/runtime-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11904,14 +12109,14 @@ importers:
         specifier: workspace:~
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -11977,14 +12182,14 @@ importers:
         version: link:../../runtime/runtime-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12062,14 +12267,14 @@ importers:
         version: 1.1.1
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -12147,14 +12352,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12229,17 +12434,17 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../aqueduct
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -12311,14 +12516,14 @@ importers:
         version: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12408,14 +12613,14 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12457,14 +12662,14 @@ importers:
         version: link:../../common/core-interfaces
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12554,14 +12759,14 @@ importers:
         specifier: workspace:~
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/container-loader-previous':
         specifier: npm:@fluidframework/container-loader@2.0.0-internal.5.0.0
         version: /@fluidframework/container-loader@2.0.0-internal.5.0.0
@@ -12651,14 +12856,14 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/container-utils-previous':
         specifier: npm:@fluidframework/container-utils@2.0.0-internal.5.0.0
         version: /@fluidframework/container-utils@2.0.0-internal.5.0.0
@@ -12754,14 +12959,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.0.0-internal.5.0.0
         version: /@fluidframework/driver-utils@2.0.0-internal.5.0.0
@@ -12839,14 +13044,14 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -12924,14 +13129,14 @@ importers:
         version: 1.2.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -13015,14 +13220,14 @@ importers:
         specifier: ^0.46.0
         version: 0.46.133527
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.0.0-internal.5.0.0
         version: /@fluidframework/container-runtime@2.0.0-internal.5.0.0
@@ -13115,14 +13320,14 @@ importers:
         version: link:../runtime-definitions
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/container-runtime-definitions-previous':
         specifier: npm:@fluidframework/container-runtime-definitions@2.0.0-internal.5.0.0
         version: /@fluidframework/container-runtime-definitions@2.0.0-internal.5.0.0
@@ -13200,14 +13405,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.0.0-internal.5.0.0
         version: /@fluidframework/datastore@2.0.0-internal.5.0.0
@@ -13291,14 +13496,14 @@ importers:
         version: link:../runtime-definitions
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/datastore-definitions-previous':
         specifier: npm:@fluidframework/datastore-definitions@2.0.0-internal.5.0.0
         version: /@fluidframework/datastore-definitions@2.0.0-internal.5.0.0
@@ -13349,14 +13554,14 @@ importers:
         version: 1.2.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -13419,14 +13624,14 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -13540,14 +13745,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -13619,11 +13824,11 @@ importers:
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
@@ -13715,8 +13920,8 @@ importers:
         specifier: workspace:~
         version: link:../../framework/aqueduct
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
@@ -13896,14 +14101,14 @@ importers:
         version: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14011,11 +14216,11 @@ importers:
         version: link:../test-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14075,8 +14280,8 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14145,11 +14350,11 @@ importers:
         version: 2.6.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14209,14 +14414,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14318,14 +14523,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14520,11 +14725,11 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14546,133 +14751,15 @@ importers:
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
-      nock:
-        specifier: ^10.0.1
-        version: 10.0.6
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-      prettier:
-        specifier: ~2.6.2
-        version: 2.6.2
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
-
-  packages/test/test-gc-sweep-tests:
-    dependencies:
-      '@fluid-internal/stochastic-test-utils':
-        specifier: workspace:~
-        version: link:../stochastic-test-utils
-      '@fluid-internal/test-version-utils':
-        specifier: workspace:~
-        version: link:../test-version-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
-      '@fluidframework/cell':
-        specifier: workspace:~
-        version: link:../../dds/cell
-      '@fluidframework/common-definitions':
-        specifier: ^0.20.1
-        version: 0.20.1
-      '@fluidframework/common-utils':
-        specifier: ^1.1.1
-        version: 1.1.1
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../common/container-definitions
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
-      '@fluidframework/counter':
-        specifier: workspace:~
-        version: link:../../dds/counter
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/datastore-definitions
-      '@fluidframework/ink':
-        specifier: workspace:~
-        version: link:../../dds/ink
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../dds/map
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../dds/matrix
-      '@fluidframework/ordered-collection':
-        specifier: workspace:~
-        version: link:../../dds/ordered-collection
-      '@fluidframework/register-collection':
-        specifier: workspace:~
-        version: link:../../dds/register-collection
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../dds/sequence
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions':
-        specifier: workspace:~
-        version: link:../test-driver-definitions
-      '@fluidframework/test-utils':
-        specifier: workspace:~
-        version: link:../test-utils
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
-      random-js:
-        specifier: ^1.0.8
-        version: 1.0.8
-      uuid:
-        specifier: ^8.3.1
-        version: 8.3.2
-    devDependencies:
-      '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
-      '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^2.0.0
-        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
-      '@fluidframework/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../mocha-test-setup
-      '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
-      '@types/node':
-        specifier: ^14.18.38
-        version: 14.18.47
-      '@types/uuid':
-        specifier: ^8.3.0
-        version: 8.3.4
-      concurrently:
-        specifier: ^7.6.0
-        version: 7.6.0
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.6.0
-        version: 8.6.0
+      mocha-json-output-reporter:
+        specifier: ^2.0.1
+        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.2.0)
+      moment:
+        specifier: ^2.21.0
+        version: 2.29.4
       nock:
         specifier: ^10.0.1
         version: 10.0.6
@@ -14699,14 +14786,14 @@ importers:
         version: 1.0.8
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14826,14 +14913,14 @@ importers:
         version: 0.7.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -14950,14 +15037,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15122,14 +15209,14 @@ importers:
         version: 7.5.1
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15219,11 +15306,11 @@ importers:
         version: link:../../../framework/fluid-static
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15310,11 +15397,11 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -15482,11 +15569,11 @@ importers:
         version: link:../../../utils/telemetry-utils
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../common/driver-definitions
@@ -15562,9 +15649,6 @@ importers:
 
   packages/tools/devtools/devtools-example:
     dependencies:
-      '@fluentui/react':
-        specifier: ^8.109.3
-        version: 8.109.4(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)
       '@fluentui/react-components':
         specifier: ~9.19.1
         version: 9.19.1(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)(scheduler@0.20.2)
@@ -15645,11 +15729,11 @@ importers:
         version: 0.20.2
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15787,11 +15871,11 @@ importers:
         version: 0.20.2
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
@@ -15926,14 +16010,14 @@ importers:
         version: link:../../utils/tool-utils
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluid-tools/fetch-tool-previous':
         specifier: npm:@fluid-tools/fetch-tool@2.0.0-internal.5.0.0
         version: /@fluid-tools/fetch-tool@2.0.0-internal.5.0.0
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15993,14 +16077,14 @@ importers:
         version: 13.2.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -16144,11 +16228,11 @@ importers:
         version: 1.0.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -16265,17 +16349,17 @@ importers:
         version: 4.6.0(@types/express@4.17.17)(webpack-cli@4.10.0)(webpack@5.83.0)
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluid-tools/webpack-fluid-loader-previous':
         specifier: npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.5.0.0
         version: /@fluid-tools/webpack-fluid-loader@2.0.0-internal.5.0.0(@types/express@4.17.17)(webpack-cli@4.10.0)(webpack@5.83.0)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -16368,14 +16452,14 @@ importers:
         version: 2.6.11
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -16447,14 +16531,14 @@ importers:
         version: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -16550,14 +16634,14 @@ importers:
         version: 4.1.2
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@fluidframework/build-tools':
-        specifier: ^0.18.0
-        version: 0.18.0(@types/node@14.18.47)
+        specifier: ^0.19.0-166151
+        version: 0.19.0-167971(@types/node@14.18.47)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -20048,42 +20132,42 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluid-tools/build-cli@0.18.0:
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
+  /@fluid-tools/build-cli@0.19.0-167971:
+    resolution: {integrity: sha512-vlr++WYg67YfBUCKIK5H6wJE6rEhmMAILWgQwmQJMk2S12ic6UbZoruLdBOmtFaaRdt8xsnNFytViLxOvC4cvg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/build-tools': 0.19.0-167971
+      '@fluidframework/bundle-size-tools': 0.19.0-167971
       '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.2.0
+      '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
       '@oclif/plugin-help': 5.2.9
-      '@oclif/plugin-not-found': 2.3.23
-      '@oclif/plugin-plugins': 2.4.7
-      '@oclif/test': 2.3.20
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0
+      '@oclif/plugin-not-found': 2.3.25
+      '@oclif/plugin-plugins': 3.1.2
+      '@oclif/test': 2.3.22
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3
       async: 3.2.4
       chalk: 2.4.2
-      danger: 10.9.0(@octokit/core@4.2.0)
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       execa: 5.1.1
       fs-extra: 9.1.0
       human-id: 4.0.0
       inquirer: 8.2.5
-      jssm: 5.89.1
-      jssm-viz-cli: 5.89.1
+      jssm: 5.89.2
+      jssm-viz-cli: 5.89.2
       minimatch: 7.4.6
       npm-check-updates: 16.10.12
-      oclif: 3.9.0
+      oclif: 3.9.1
       prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
+      prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.1
       semver-utils: 1.1.4
-      simple-git: 3.18.0
+      simple-git: 3.19.0
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
@@ -20101,42 +20185,42 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli@0.18.0(@types/node@14.18.47):
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
+  /@fluid-tools/build-cli@0.19.0-167971(@types/node@14.18.47):
+    resolution: {integrity: sha512-vlr++WYg67YfBUCKIK5H6wJE6rEhmMAILWgQwmQJMk2S12ic6UbZoruLdBOmtFaaRdt8xsnNFytViLxOvC4cvg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0(@types/node@14.18.47)
-      '@fluidframework/bundle-size-tools': 0.18.0
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/build-tools': 0.19.0-167971(@types/node@14.18.47)
+      '@fluidframework/bundle-size-tools': 0.19.0-167971
       '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.2.0
+      '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
       '@oclif/plugin-help': 5.2.9
-      '@oclif/plugin-not-found': 2.3.23
-      '@oclif/plugin-plugins': 2.4.7
-      '@oclif/test': 2.3.20
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.47)
+      '@oclif/plugin-not-found': 2.3.25
+      '@oclif/plugin-plugins': 3.1.2
+      '@oclif/test': 2.3.22
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3(@types/node@14.18.47)
       async: 3.2.4
       chalk: 2.4.2
-      danger: 10.9.0(@octokit/core@4.2.0)
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       execa: 5.1.1
       fs-extra: 9.1.0
       human-id: 4.0.0
       inquirer: 8.2.5
-      jssm: 5.89.1
-      jssm-viz-cli: 5.89.1
+      jssm: 5.89.2
+      jssm-viz-cli: 5.89.2
       minimatch: 7.4.6
       npm-check-updates: 16.10.12
-      oclif: 3.9.0
+      oclif: 3.9.1
       prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
+      prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.1
       semver-utils: 1.1.4
-      simple-git: 3.18.0
+      simple-git: 3.19.0
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
@@ -20154,42 +20238,42 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli@0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-4UkmED0Vw//vJ/g6MBTQf1YjN1HxAwtsKMwuJyhSTCm5bujsWFtfqrQwm2TAz2fuTjdT/b6MZdUbIl3o8Mtnbg==}
+  /@fluid-tools/build-cli@0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-vlr++WYg67YfBUCKIK5H6wJE6rEhmMAILWgQwmQJMk2S12ic6UbZoruLdBOmtFaaRdt8xsnNFytViLxOvC4cvg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/build-tools': 0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0)
-      '@fluidframework/bundle-size-tools': 0.18.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/build-tools': 0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0)
+      '@fluidframework/bundle-size-tools': 0.19.0-167971(webpack-cli@4.10.0)
       '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.2.0
+      '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
       '@oclif/plugin-help': 5.2.9
-      '@oclif/plugin-not-found': 2.3.23
-      '@oclif/plugin-plugins': 2.4.7
-      '@oclif/test': 2.3.20
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.47)
+      '@oclif/plugin-not-found': 2.3.25
+      '@oclif/plugin-plugins': 3.1.2
+      '@oclif/test': 2.3.22
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3(@types/node@14.18.47)
       async: 3.2.4
       chalk: 2.4.2
-      danger: 10.9.0(@octokit/core@4.2.0)
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       execa: 5.1.1
       fs-extra: 9.1.0
       human-id: 4.0.0
       inquirer: 8.2.5
-      jssm: 5.89.1
-      jssm-viz-cli: 5.89.1
+      jssm: 5.89.2
+      jssm-viz-cli: 5.89.2
       minimatch: 7.4.6
       npm-check-updates: 16.10.12
-      oclif: 3.9.0
+      oclif: 3.9.1
       prettier: 2.6.2
-      prompts: /prompts-ncu@3.0.0
+      prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.1
       semver-utils: 1.1.4
-      simple-git: 3.18.0
+      simple-git: 3.19.0
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
@@ -20251,17 +20335,17 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools@0.18.0:
-    resolution: {integrity: sha512-MbpR1kB+rpBu4Ztw7kXALz1543or8f1NQxch5R5bN/Zcq864RYvPD1NwBkOvdukA9HquHqu+hOYVqd6gek7q4A==}
+  /@fluid-tools/version-tools@0.19.0-167971:
+    resolution: {integrity: sha512-0KmQhpEuPcICvkhnd0P4DbB6qNC7cVSomkRBXEF2aCuXM0j+vt6KyHMS0hZvyAGJW5959aMnDaqFCgTQreB7Mw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.2.0
+      '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
       '@oclif/plugin-help': 5.2.9
-      '@oclif/plugin-not-found': 2.3.23
-      '@oclif/plugin-plugins': 2.4.7
+      '@oclif/plugin-not-found': 2.3.25
+      '@oclif/plugin-plugins': 3.1.2
       chalk: 2.4.2
       semver: 7.5.1
       table: 6.8.1
@@ -20413,26 +20497,26 @@ packages:
       uuid: 8.3.2
     dev: true
 
-  /@fluidframework/build-common@1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common@1.2.0:
+    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.18.0:
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-167971:
+    resolution: {integrity: sha512-AbPnbyxlglKq/eUIL2Hn7i2UWda+1hXbgo84+21boVWmD75Yzo31O4+BDAHvmVOwx1TdhKu6IZaFycTFWv3Glg==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
-      '@manypkg/get-packages': 2.1.0
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/bundle-size-tools': 0.19.0-167971
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
-      cosmiconfig: 8.1.3
-      danger: 10.9.0(@octokit/core@4.2.0)
+      cosmiconfig: 8.2.0
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       debug: 4.3.4
       detect-indent: 6.1.0
@@ -20453,7 +20537,7 @@ packages:
       sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
-      yaml: 2.2.2
+      yaml: 2.3.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@types/node'
@@ -20464,21 +20548,21 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(@types/node@14.18.47):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-167971(@types/node@14.18.47):
+    resolution: {integrity: sha512-AbPnbyxlglKq/eUIL2Hn7i2UWda+1hXbgo84+21boVWmD75Yzo31O4+BDAHvmVOwx1TdhKu6IZaFycTFWv3Glg==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0
-      '@manypkg/get-packages': 2.1.0
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.47)
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/bundle-size-tools': 0.19.0-167971
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3(@types/node@14.18.47)
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
-      cosmiconfig: 8.1.3
-      danger: 10.9.0(@octokit/core@4.2.0)
+      cosmiconfig: 8.2.0
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       debug: 4.3.4
       detect-indent: 6.1.0
@@ -20499,7 +20583,7 @@ packages:
       sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
-      yaml: 2.2.2
+      yaml: 2.3.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@types/node'
@@ -20510,21 +20594,21 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(@types/node@14.18.47)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-167971(@types/node@14.18.47)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-AbPnbyxlglKq/eUIL2Hn7i2UWda+1hXbgo84+21boVWmD75Yzo31O4+BDAHvmVOwx1TdhKu6IZaFycTFWv3Glg==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0(webpack-cli@4.10.0)
-      '@manypkg/get-packages': 2.1.0
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.47)
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/bundle-size-tools': 0.19.0-167971(webpack-cli@4.10.0)
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3(@types/node@14.18.47)
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
-      cosmiconfig: 8.1.3
-      danger: 10.9.0(@octokit/core@4.2.0)
+      cosmiconfig: 8.2.0
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       debug: 4.3.4
       detect-indent: 6.1.0
@@ -20545,7 +20629,7 @@ packages:
       sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
-      yaml: 2.2.2
+      yaml: 2.3.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@types/node'
@@ -20556,21 +20640,21 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.18.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-W36GcyJ2Q6qh94Uiqc4sjQfiOMqTXcdLxqD1bKfR+ySQaZoJjUAtYPPFA6ySjCCnDIWRT5doR+SACR8ZJ8J8EA==}
+  /@fluidframework/build-tools@0.19.0-167971(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-AbPnbyxlglKq/eUIL2Hn7i2UWda+1hXbgo84+21boVWmD75Yzo31O4+BDAHvmVOwx1TdhKu6IZaFycTFWv3Glg==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.18.0
-      '@fluidframework/bundle-size-tools': 0.18.0(webpack-cli@4.10.0)
-      '@manypkg/get-packages': 2.1.0
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.59.0
+      '@fluid-tools/version-tools': 0.19.0-167971
+      '@fluidframework/bundle-size-tools': 0.19.0-167971(webpack-cli@4.10.0)
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.1
+      '@rushstack/node-core-library': 3.59.3
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
-      cosmiconfig: 8.1.3
-      danger: 10.9.0(@octokit/core@4.2.0)
+      cosmiconfig: 8.2.0
+      danger: 10.9.0(@octokit/core@4.2.1)
       date-fns: 2.30.0
       debug: 4.3.4
       detect-indent: 6.1.0
@@ -20591,7 +20675,7 @@ packages:
       sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
-      yaml: 2.2.2
+      yaml: 2.3.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@types/node'
@@ -20602,15 +20686,15 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.18.0:
-    resolution: {integrity: sha512-e6pupP3KLUGpbQMznZpd7OcTBJOL331seFhB2GNVXQu9UqKAtCwpjgIQwg5vdGBp5p+MZGrsh8VqyHJw9a0Jpw==}
+  /@fluidframework/bundle-size-tools@0.19.0-167971:
+    resolution: {integrity: sha512-ruTtfpzkGbqtPgtA7WasaHfqwiyaDlHFhXvjDazn5LtxdZXhhoJk2O+8/MdLusN5luhhEK1NhRqHSwYy/X9YzQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
       msgpack-lite: 0.1.26
       pako: 2.1.0
       typescript: 4.5.5
-      webpack: 5.83.0
+      webpack: 5.87.0
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -20618,15 +20702,15 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.18.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-e6pupP3KLUGpbQMznZpd7OcTBJOL331seFhB2GNVXQu9UqKAtCwpjgIQwg5vdGBp5p+MZGrsh8VqyHJw9a0Jpw==}
+  /@fluidframework/bundle-size-tools@0.19.0-167971(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-ruTtfpzkGbqtPgtA7WasaHfqwiyaDlHFhXvjDazn5LtxdZXhhoJk2O+8/MdLusN5luhhEK1NhRqHSwYy/X9YzQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
       msgpack-lite: 0.1.26
       pako: 2.1.0
       typescript: 4.5.5
-      webpack: 5.83.0(webpack-cli@4.10.0)
+      webpack: 5.87.0(webpack-cli@4.10.0)
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -23405,11 +23489,11 @@ packages:
       fs-extra: 8.1.0
     dev: true
 
-  /@manypkg/find-root@2.1.0:
-    resolution: {integrity: sha512-NEYRVlZCJYhRTqQURhv+WBpDcvmsp/M423Wcdvggv8lYJYD4GtqnTMLrQaTjA10fYt/PIc3tSdwV+wxJnWqPfQ==}
+  /@manypkg/find-root@2.2.0:
+    resolution: {integrity: sha512-NET+BNIMmBWUUUfFtuDgaTIav6pVlkkSdI2mt+2rFWPd6TQ0DXyhQH47Ql+d7x2oIkJ69dkVKwsTErRt2ROPbw==}
     engines: {node: '>=14.18.0'}
     dependencies:
-      '@manypkg/tools': 1.0.0
+      '@manypkg/tools': 1.1.0
       '@types/node': 14.18.47
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -23426,16 +23510,16 @@ packages:
       read-yaml-file: 1.1.0
     dev: true
 
-  /@manypkg/get-packages@2.1.0:
-    resolution: {integrity: sha512-IgWPEGgeKeR3ISlgHAMbY+m042yjNe3NPt8UmJT0xMwofe/UifUVtOq5aUBkNSygfOrcUh/j5JExLPuOx72quA==}
+  /@manypkg/get-packages@2.2.0:
+    resolution: {integrity: sha512-B5p5BXMwhGZKi/syEEAP1eVg5DZ/9LP+MZr0HqfrHLgu9fq0w4ZwH8yVen4JmjrxI2dWS31dcoswYzuphLaRxg==}
     engines: {node: '>=14.18.0'}
     dependencies:
-      '@manypkg/find-root': 2.1.0
-      '@manypkg/tools': 1.0.0
+      '@manypkg/find-root': 2.2.0
+      '@manypkg/tools': 1.1.0
     dev: true
 
-  /@manypkg/tools@1.0.0:
-    resolution: {integrity: sha512-W8uDMhDGtwNyXYr6A+MWggxdL3spOQ8rfMNYpNph1GDJ0v084MnBFdpF1jvcPZ0okHAeYccV7le8AUs+fzwsAQ==}
+  /@manypkg/tools@1.1.0:
+    resolution: {integrity: sha512-SkAyKAByB9l93Slyg8AUHGuM2kjvWioUTCckT/03J09jYnfEzMO/wSXmEhnKGYs6qx9De8TH4yJCl0Y9lRgnyQ==}
     engines: {node: '>=14.18.0'}
     dependencies:
       fs-extra: 8.1.0
@@ -24221,8 +24305,8 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/color@1.0.4:
-    resolution: {integrity: sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==}
+  /@oclif/color@1.0.6:
+    resolution: {integrity: sha512-U6hABUkwoUoEZ1K5mJ2E7AeJ7udjYP3ZYWq18LLoMyjV+Us9hh3UwAghOY75F9PAzF8q5kvhoGu70LnPASbZ8g==}
     engines: {node: '>=12.0.0'}
     dependencies:
       ansi-styles: 4.3.0
@@ -24266,8 +24350,8 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
-  /@oclif/plugin-autocomplete@2.2.0:
-    resolution: {integrity: sha512-nG+j6UR2D0VCR/kEPdFRYnHGLJwFKp4UHESDmbMNjMtzdw5VDPdV1ziaWYD3wMUUeHNbxyKzmmR6wVwmVqxWkw==}
+  /@oclif/plugin-autocomplete@2.3.0:
+    resolution: {integrity: sha512-32gdneCAQbtjAvpX7lYFYrxsMPAfOh2hyvP4QEMspTiZkygT8m/NwayBVA+Ua5EM3/rk7jxTKYFQ7Gm/ZgSFuA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.4.0
@@ -24293,30 +24377,32 @@ packages:
       '@oclif/core': 2.4.0
     dev: true
 
-  /@oclif/plugin-not-found@2.3.23:
-    resolution: {integrity: sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==}
+  /@oclif/plugin-not-found@2.3.25:
+    resolution: {integrity: sha512-M9wSPP+mS4ZDbnVOYq/Im/Opz8wFhloJlcGBOQAN8Fwryh+UY/SbkkfN+U96czzkUQQOqPKVwOdGK277KPT6HA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.4
+      '@oclif/color': 1.0.6
       '@oclif/core': 2.4.0
       fast-levenshtein: 3.0.0
-      lodash: 4.17.21
     dev: true
 
-  /@oclif/plugin-plugins@2.4.7:
-    resolution: {integrity: sha512-6fzUDLWrSK7n6+EBrEekEEYrYTCneRoOF9TzojkjuFn1+ailvUlr98G90bblxKOyy8fqMe7QjvqwTgIDQ9ZIzg==}
-    engines: {node: '>=12.0.0'}
+  /@oclif/plugin-plugins@3.1.2:
+    resolution: {integrity: sha512-gBfnPBnGR3bMqCgwwuDW+tUCxWhmDtpdiNTLCXfZz/h1Rmgk96XoEM0Tx/w1AfjgWrL8dzsS477qyLbr0M+htg==}
+    engines: {node: '>=16'}
     dependencies:
-      '@oclif/color': 1.0.4
+      '@oclif/color': 1.0.6
       '@oclif/core': 2.4.0
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
       http-call: 5.3.0
       load-json-file: 5.3.0
+      npm: 9.7.1
       npm-run-path: 4.0.1
       semver: 7.5.1
+      shelljs: 0.8.5
       tslib: 2.5.0
+      validate-npm-package-name: 5.0.0
       yarn: 1.22.19
     transitivePeerDependencies:
       - supports-color
@@ -24337,12 +24423,12 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/test@2.3.20:
-    resolution: {integrity: sha512-Ig85O70K7Cm3HS6Zkn8xygQZgbVvbtQqNyu8meZoHcIBLikAEvrWUhRmv70yxL1WQxIkbW2SQol6X5JdGLYfyA==}
+  /@oclif/test@2.3.22:
+    resolution: {integrity: sha512-0wLW8YnLS9Gvipgu64ZtzPmi7HfyJkPziU/tfW8T/4lQyalDvL8MS05+1UPR6V6hXu86Ehg0CbWJDeU4TB+e1Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.4.0
-      fancy-test: 2.0.23
+      fancy-test: 2.0.26
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -24376,6 +24462,21 @@ packages:
 
   /@octokit/core@4.2.0:
     resolution: {integrity: sha512-AgvDRUg3COpR82P7PBdGZF/NNqGmtMq2NiPqeSsDIeCfYFOZ9gddqWNQHnFdEUf+YwOj4aZYmJnlPp7OXmDIDg==}
+    engines: {node: '>= 14'}
+    dependencies:
+      '@octokit/auth-token': 3.0.3
+      '@octokit/graphql': 5.0.5
+      '@octokit/request': 6.2.4
+      '@octokit/request-error': 3.0.3
+      '@octokit/types': 9.2.2
+      before-after-hook: 2.2.3
+      universal-user-agent: 6.0.0
+    transitivePeerDependencies:
+      - encoding
+    dev: true
+
+  /@octokit/core@4.2.1:
+    resolution: {integrity: sha512-tEDxFx8E38zF3gT7sSMDrT1tGumDgsw5yPG6BBh/X+5ClIQfMH/Yqocxz1PnHx6CHyF6pxmovUTOfZAUvQ0Lvw==}
     engines: {node: '>= 14'}
     dependencies:
       '@octokit/auth-token': 3.0.3
@@ -24466,6 +24567,14 @@ packages:
       '@octokit/core': 4.2.0
     dev: true
 
+  /@octokit/plugin-request-log@1.0.4(@octokit/core@4.2.1):
+    resolution: {integrity: sha512-mLUsMkgP7K/cnFEw07kWqXGF5LKrOkD+lhCrKvPHXWDywAwuDUeDwWBpc69XK3pNX0uKiVt8g5z96PJ6z9xCFA==}
+    peerDependencies:
+      '@octokit/core': '>=3'
+    dependencies:
+      '@octokit/core': 4.2.1
+    dev: true
+
   /@octokit/plugin-rest-endpoint-methods@2.4.0:
     resolution: {integrity: sha512-EZi/AWhtkdfAYi01obpX0DF7U6b1VRr30QNQ5xSFPITMdLSfhcBqjamE3F+sKcxPbD7eZuMHu3Qkk2V+JGxBDQ==}
     dependencies:
@@ -24541,6 +24650,30 @@ packages:
       '@octokit/auth-token': 2.5.0
       '@octokit/plugin-paginate-rest': 1.1.2
       '@octokit/plugin-request-log': 1.0.4(@octokit/core@4.2.0)
+      '@octokit/plugin-rest-endpoint-methods': 2.4.0
+      '@octokit/request': 5.6.3
+      '@octokit/request-error': 1.2.1
+      atob-lite: 2.0.0
+      before-after-hook: 2.2.3
+      btoa-lite: 1.0.0
+      deprecation: 2.3.1
+      lodash.get: 4.4.2
+      lodash.set: 4.3.2
+      lodash.uniq: 4.5.0
+      octokit-pagination-methods: 1.1.0
+      once: 1.4.0
+      universal-user-agent: 4.0.1
+    transitivePeerDependencies:
+      - '@octokit/core'
+      - encoding
+    dev: true
+
+  /@octokit/rest@16.43.2(@octokit/core@4.2.1):
+    resolution: {integrity: sha512-ngDBevLbBTFfrHZeiS7SAMAZ6ssuVmXuya+F/7RaVvlysgGa1JKJkKWY+jV6TCJYcW0OALfJ7nTIGXcBXzycfQ==}
+    dependencies:
+      '@octokit/auth-token': 2.5.0
+      '@octokit/plugin-paginate-rest': 1.1.2
+      '@octokit/plugin-request-log': 1.0.4(@octokit/core@4.2.1)
       '@octokit/plugin-rest-endpoint-methods': 2.4.0
       '@octokit/request': 5.6.3
       '@octokit/request-error': 1.2.1
@@ -24686,7 +24819,7 @@ packages:
       html-entities: 2.3.3
       loader-utils: 2.0.4
       react-refresh: 0.11.0
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       source-map: 0.7.4
       webpack: 5.83.0(webpack-cli@4.10.0)
       webpack-dev-server: 4.6.0(webpack-cli@4.10.0)(webpack@5.83.0)
@@ -24828,6 +24961,41 @@ packages:
 
   /@rushstack/node-core-library@3.59.0(@types/node@14.18.47):
     resolution: {integrity: sha512-f8ilzooAu8vj60dDe7weqHvR1NujOaKfe3TaNgAoT22rk+daUTmDtY3TlVGJ3HayVPmw3ffWToDatITi7Ic4ag==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 14.18.47
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.2
+      semver: 7.3.8
+      z-schema: 5.0.5
+    dev: true
+
+  /@rushstack/node-core-library@3.59.3:
+    resolution: {integrity: sha512-OGk0nQc+SvDkn+IQN16co691A/96gPoRIoWdIlpUds+sYPAGWdTcNVjKMwFOAsCSASqOeF2lh1GdPtWoWJCkPQ==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.2
+      semver: 7.3.8
+      z-schema: 5.0.5
+    dev: true
+
+  /@rushstack/node-core-library@3.59.3(@types/node@14.18.47):
+    resolution: {integrity: sha512-OGk0nQc+SvDkn+IQN16co691A/96gPoRIoWdIlpUds+sYPAGWdTcNVjKMwFOAsCSASqOeF2lh1GdPtWoWJCkPQ==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -31146,6 +31314,16 @@ packages:
       path-type: 4.0.0
     dev: true
 
+  /cosmiconfig@8.2.0:
+    resolution: {integrity: sha512-3rTMnFJA1tCOPwRxtgF4wd7Ab2qvDbL8jX+3smjIbS4HlZBagTlpERbdN7iAbWlrfxE3M8c27kTwTawQ7st+OQ==}
+    engines: {node: '>=14'}
+    dependencies:
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
+    dev: true
+
   /cp-file@7.0.0:
     resolution: {integrity: sha512-0Cbj7gyvFVApzpK/uhCtQ/9kE9UnYpxMzaq5nQQC/Dh4iaj5fxp7iEFIullrYwzj8nf0qnsI1Qsx34hAeAebvw==}
     engines: {node: '>=8'}
@@ -31391,7 +31569,7 @@ packages:
       postcss-modules-scope: 3.0.0(postcss@8.4.23)
       postcss-modules-values: 4.0.0(postcss@8.4.23)
       postcss-value-parser: 4.2.0
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       semver: 7.5.1
       webpack: 5.83.0(webpack-cli@4.10.0)
     dev: true
@@ -31584,6 +31762,52 @@ packages:
     dependencies:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2(@octokit/core@4.2.0)
+      async-retry: 1.2.3
+      chalk: 2.4.1
+      commander: 2.20.3
+      debug: 4.3.4
+      fast-json-patch: 3.1.1
+      get-stdin: 6.0.0
+      gitlab: 10.2.1
+      http-proxy-agent: 2.1.0
+      https-proxy-agent: 2.2.4
+      hyperlinker: 1.0.0
+      json5: 2.2.3
+      jsonpointer: 5.0.1
+      jsonwebtoken: 8.5.1
+      lodash.find: 4.6.0
+      lodash.includes: 4.3.0
+      lodash.isobject: 3.0.2
+      lodash.keys: 4.2.0
+      lodash.mapvalues: 4.6.0
+      lodash.memoize: 4.1.2
+      memfs-or-file-map-to-github-branch: 1.2.1
+      micromatch: 4.0.5
+      node-cleanup: 2.1.2
+      node-fetch: 2.6.11
+      override-require: 1.1.1
+      p-limit: 2.3.0
+      parse-diff: 0.7.1
+      parse-git-config: 2.0.3
+      parse-github-url: 1.0.2
+      parse-link-header: 2.0.0
+      pinpoint: 1.1.0
+      prettyjson: 1.2.5
+      readline-sync: 1.4.10
+      require-from-string: 2.0.2
+      supports-hyperlinks: 1.0.1
+    transitivePeerDependencies:
+      - '@octokit/core'
+      - encoding
+      - supports-color
+    dev: true
+
+  /danger@10.9.0(@octokit/core@4.2.1):
+    resolution: {integrity: sha512-eEWQAaIPfWSfzlQiFx+w9fWuP3jwq8VAV9W22EZRxfmCBnkdDa5aN0Akr7lzfCKudzy+4uEmIGUtxnYeFgTthQ==}
+    hasBin: true
+    dependencies:
+      '@babel/polyfill': 7.12.1
+      '@octokit/rest': 16.43.2(@octokit/core@4.2.1)
       async-retry: 1.2.3
       chalk: 2.4.1
       commander: 2.20.3
@@ -32489,6 +32713,14 @@ packages:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.2.1
+
+  /enhanced-resolve@5.15.0:
+    resolution: {integrity: sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==}
+    engines: {node: '>=10.13.0'}
+    dependencies:
+      graceful-fs: 4.2.11
+      tapable: 2.2.1
+    dev: true
 
   /enquirer@2.3.6:
     resolution: {integrity: sha512-yjNnPr315/FjS4zIsUxYguYUPP2e1NK4d7E7ZOLiyYCcbFBiTMyID+2wvm2w6+pZ/odMA7cRkjhsPbltwBOrLg==}
@@ -33683,8 +33915,8 @@ packages:
       realistic-structured-clone: 2.0.4
     dev: true
 
-  /fancy-test@2.0.23:
-    resolution: {integrity: sha512-RPX4iAzAioH9nxkqk2yrcunBLBmnMLxtIsw3Pjgj2PGPHTdT3wZ6asKv9U332+UQyZwZWWc4bP64JOa6DcVhnQ==}
+  /fancy-test@2.0.26:
+    resolution: {integrity: sha512-VZnjjta4hYLCjqrdOKgR42dHZ/IBdQKYctLNooXuoXYGU7esLoFC+memPgGgBFZ5nTpWqUGddnwl3GTgbEWvxA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@types/chai': 4.3.5
@@ -33878,7 +34110,7 @@ packages:
       webpack: ^4.0.0 || ^5.0.0 || ^5.82.0
     dependencies:
       loader-utils: 2.0.4
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
 
@@ -37990,34 +38222,34 @@ packages:
       tiny-warning: 1.0.3
     dev: false
 
-  /jssm-viz-cli@5.89.1:
-    resolution: {integrity: sha512-rdxFmRuI/qyz9CvYOnPTeCsKop3ZOFJTDxsu46z4HRR3xnPq2UvBB1nSlCRqH+cBIrNSPqSyEvkJF2jSAlzY3g==}
+  /jssm-viz-cli@5.89.2:
+    resolution: {integrity: sha512-LMUh0iqc8vXK1IzbarXgmWyeNEAHoYOIS0qt6NeC4slIhY+l3Pz7t1Qh+FLLbtECXWJJcBdlUMeLVB2E4re5Bg==}
     hasBin: true
     dependencies:
       ansi-256-colors: 1.1.0
       better_git_changelog: 1.6.2
       commander: 4.1.1
       glob: 7.2.3
-      jssm-viz: 5.89.1
+      jssm-viz: 5.89.2
       sharp: 0.30.7
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /jssm-viz@5.89.1:
-    resolution: {integrity: sha512-8nfF4SASgui5JEhGxBSQaZ8Acl4aLdY4VNBfI0UOuSOocS1u1Lj9fhFseFuzw53GLCKTXAx7mJsFqGJ3C7qD9Q==}
+  /jssm-viz@5.89.2:
+    resolution: {integrity: sha512-2kKqnTsgJ+ncSX3IsrpclVIcZH6UGyTLGRfc7axTKhViTWoftJF2WxBA02Smc5ZkmXOov2t3jsuBBJ+IJ3lZ7Q==}
     dependencies:
       better_git_changelog: 1.6.2
       eslint: 8.40.0
-      jssm: 5.89.1
+      jssm: 5.89.2
       reduce-to-639-1: 1.1.0
       text_audit: 0.9.3
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /jssm@5.89.1:
-    resolution: {integrity: sha512-yKJg6GnwHMePrRN0O0xLowwkhAGRQ04rweLxpI3cIPctnbyttfgoWei3h8HLOFi49WVDIu09bx6GPP5CCvV7fg==}
+  /jssm@5.89.2:
+    resolution: {integrity: sha512-I70+UdH7KZs542loBlsh1xKDsT5Lx5RZWf6hKmujzgvSJj9DRymEe46HUCTd6+hzouIebuNwQo5I2ftMzfrhnQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       better_git_changelog: 1.6.2
@@ -40508,6 +40740,78 @@ packages:
     dependencies:
       path-key: 3.1.1
 
+  /npm@9.7.1:
+    resolution: {integrity: sha512-kxMviaiLX4Lfnjy2dt7EWB87v5QdLiGpy04S2ORdKLmPqFhgy8g4cgJjQfnWob4mJIaNHjBO+hk45CvLlsZZ8g==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    hasBin: true
+    dev: true
+    bundledDependencies:
+      - '@isaacs/string-locale-compare'
+      - '@npmcli/arborist'
+      - '@npmcli/config'
+      - '@npmcli/map-workspaces'
+      - '@npmcli/package-json'
+      - '@npmcli/run-script'
+      - abbrev
+      - archy
+      - cacache
+      - chalk
+      - ci-info
+      - cli-columns
+      - cli-table3
+      - columnify
+      - fastest-levenshtein
+      - fs-minipass
+      - glob
+      - graceful-fs
+      - hosted-git-info
+      - ini
+      - init-package-json
+      - is-cidr
+      - json-parse-even-better-errors
+      - libnpmaccess
+      - libnpmdiff
+      - libnpmexec
+      - libnpmfund
+      - libnpmhook
+      - libnpmorg
+      - libnpmpack
+      - libnpmpublish
+      - libnpmsearch
+      - libnpmteam
+      - libnpmversion
+      - make-fetch-happen
+      - minimatch
+      - minipass
+      - minipass-pipeline
+      - ms
+      - node-gyp
+      - nopt
+      - npm-audit-report
+      - npm-install-checks
+      - npm-package-arg
+      - npm-pick-manifest
+      - npm-profile
+      - npm-registry-fetch
+      - npm-user-validate
+      - npmlog
+      - p-map
+      - pacote
+      - parse-conflict-json
+      - proc-log
+      - qrcode-terminal
+      - read
+      - semver
+      - sigstore
+      - ssri
+      - tar
+      - text-table
+      - tiny-relative-date
+      - treeverse
+      - validate-npm-package-name
+      - which
+      - write-file-atomic
+
   /npmlog@5.0.1:
     resolution: {integrity: sha512-AqZtDUWOMKs1G/8lwylVjrdYgqA4d9nu8hc+0gzRxlDb1I10+FHBGMXs6aiQHFdCUUlqH99MUMuLfzWDNDtfxw==}
     dependencies:
@@ -40709,14 +41013,14 @@ packages:
   /obuf@1.1.2:
     resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
 
-  /oclif@3.9.0:
-    resolution: {integrity: sha512-fsFyHVQYJdE50EcKrBjwzl2WT5sZUtTiRY1vqMwykgLFUDYrQS0lj7yqy2IgcPSmAWaLQryODdfBujCWOU98Ww==}
+  /oclif@3.9.1:
+    resolution: {integrity: sha512-gJ8gJrohFY8qEeVBOw7wgAFdwPt2CTTkEFXDTkfUeXap6URIy6ngP7g/E1A2zFt2I0wH/qQHwcfuTpfBbj1+Uw==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.4.0
       '@oclif/plugin-help': 5.2.9
-      '@oclif/plugin-not-found': 2.3.23
+      '@oclif/plugin-not-found': 2.3.25
       '@oclif/plugin-warn-if-update-available': 2.0.37
       aws-sdk: 2.1379.0
       concurrently: 7.6.0
@@ -41653,7 +41957,7 @@ packages:
       klona: 2.0.6
       loader-utils: 2.0.4
       postcss: 7.0.39
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       semver: 7.5.1
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
@@ -42548,7 +42852,7 @@ packages:
       webpack: ^4.0.0 || ^5.0.0 || ^5.82.0
     dependencies:
       loader-utils: 2.0.4
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
 
@@ -43880,6 +44184,15 @@ packages:
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
+  /schema-utils@3.3.0:
+    resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
+    engines: {node: '>= 10.13.0'}
+    dependencies:
+      '@types/json-schema': 7.0.11
+      ajv: 6.12.6
+      ajv-keywords: 3.5.2(ajv@6.12.6)
+    dev: true
+
   /schema-utils@4.0.1:
     resolution: {integrity: sha512-lELhBAAly9NowEsX0yZBlw9ahZG+sK/1RJ21EpzdYHKEs13Vku3LJ+MIPhh4sMs0oCCeufZQEQbMekiA4vuVIQ==}
     engines: {node: '>= 12.13.0'}
@@ -44206,8 +44519,8 @@ packages:
       once: 1.4.0
       simple-concat: 1.0.1
 
-  /simple-git@3.18.0:
-    resolution: {integrity: sha512-Yt0GJ5aYrpPci3JyrYcsPz8Xc05Hi4JPSOb+Sgn/BmPX35fn/6Fp9Mef8eMBCrL2siY5w4j49TA5Q+bxPpri1Q==}
+  /simple-git@3.19.0:
+    resolution: {integrity: sha512-hyH2p9Ptxjf/xPuL7HfXbpYt9gKhC1yWDh3KYIAYJJePAKV7AEjLN4xhp7lozOdNiaJ9jlVvAbBymVlcS2jRiA==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
@@ -45124,7 +45437,7 @@ packages:
       webpack: ^4.0.0 || ^5.0.0 || ^5.82.0
     dependencies:
       loader-utils: 2.0.4
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       webpack: 5.83.0(webpack-cli@4.10.0)
     dev: true
 
@@ -45526,7 +45839,7 @@ packages:
       find-cache-dir: 3.3.2
       jest-worker: 26.6.2
       p-limit: 3.1.0
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       serialize-javascript: 5.0.1
       source-map: 0.6.1
       terser: 5.17.4
@@ -45558,6 +45871,30 @@ packages:
       serialize-javascript: 6.0.1
       terser: 5.17.4
       webpack: 5.83.0(webpack-cli@4.10.0)
+
+  /terser-webpack-plugin@5.3.8(webpack@5.87.0):
+    resolution: {integrity: sha512-WiHL3ElchZMsK27P8uIUh4604IgJyAW47LVXGbEoB21DbQcZ+OuMpGjVYnEUaqcWM6dO8uS2qUbA7LSCWqvsbg==}
+    engines: {node: '>= 10.13.0'}
+    peerDependencies:
+      '@swc/core': '*'
+      esbuild: '*'
+      uglify-js: '*'
+      webpack: ^5.1.0 || ^5.82.0
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      esbuild:
+        optional: true
+      uglify-js:
+        optional: true
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.18
+      jest-worker: 27.5.1
+      schema-utils: 3.1.2
+      serialize-javascript: 6.0.1
+      terser: 5.17.4
+      webpack: 5.87.0(webpack-cli@4.10.0)
+    dev: true
 
   /terser@4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -46676,7 +47013,7 @@ packages:
       file-loader: 6.2.0(webpack@4.46.0)
       loader-utils: 2.0.4
       mime-types: 2.1.35
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
 
@@ -47328,7 +47665,7 @@ packages:
       memfs: 3.5.1
       mime-types: 2.1.35
       range-parser: 1.2.1
-      schema-utils: 3.1.2
+      schema-utils: 3.3.0
       webpack: 5.83.0(webpack-cli@4.10.0)
     dev: true
 
@@ -47656,6 +47993,87 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
+
+  /webpack@5.87.0:
+    resolution: {integrity: sha512-GOu1tNbQ7p1bDEoFRs2YPcfyGs8xq52yyPBZ3m2VGnXGtV9MxjrkABHm4V9Ia280OefsSLzvbVoXcfLxjKY/Iw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+    dependencies:
+      '@types/eslint-scope': 3.7.4
+      '@types/estree': 1.0.1
+      '@webassemblyjs/ast': 1.11.6
+      '@webassemblyjs/wasm-edit': 1.11.6
+      '@webassemblyjs/wasm-parser': 1.11.6
+      acorn: 8.8.2
+      acorn-import-assertions: 1.9.0(acorn@8.8.2)
+      browserslist: 4.21.5
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.15.0
+      es-module-lexer: 1.2.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.3.0
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.8(webpack@5.87.0)
+      watchpack: 2.4.0
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    dev: true
+
+  /webpack@5.87.0(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-GOu1tNbQ7p1bDEoFRs2YPcfyGs8xq52yyPBZ3m2VGnXGtV9MxjrkABHm4V9Ia280OefsSLzvbVoXcfLxjKY/Iw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+    dependencies:
+      '@types/eslint-scope': 3.7.4
+      '@types/estree': 1.0.1
+      '@webassemblyjs/ast': 1.11.6
+      '@webassemblyjs/wasm-edit': 1.11.6
+      '@webassemblyjs/wasm-parser': 1.11.6
+      acorn: 8.8.2
+      acorn-import-assertions: 1.9.0(acorn@8.8.2)
+      browserslist: 4.21.5
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.15.0
+      es-module-lexer: 1.2.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.3.0
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.8(webpack@5.87.0)
+      watchpack: 2.4.0
+      webpack-cli: 4.10.0(webpack-bundle-analyzer@4.8.0)(webpack@5.83.0)
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    dev: true
 
   /websocket-driver@0.7.4:
     resolution: {integrity: sha512-b17KeDIQVjvb0ssuSDF2cYXSg2iztliJ4B9WdsuB6J952qCPKmnVq4DyW5motImXHDC1cBT/1UezrJVsKw5zjg==}
@@ -48138,8 +48556,8 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
 
-  /yaml@2.2.2:
-    resolution: {integrity: sha512-CBKFWExMn46Foo4cldiChEzn7S7SRV+wqiluAb6xmueD/fGyRHIhX8m14vVGgeFWjN540nKCNVj6P21eQjgTuA==}
+  /yaml@2.3.1:
+    resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
     engines: {node: '>= 14'}
     dev: true
 
@@ -48412,4 +48830,17 @@ packages:
 
   /zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
+    dev: true
+
+  file:tools/changelog-generator-wrapper:
+    resolution: {directory: tools/changelog-generator-wrapper, type: directory}
+    name: '@fluid-internal/changelog-generator-wrapper'
+    version: 1.0.0
+    dependencies:
+      '@changesets/cli': 2.26.1
+      '@changesets/types': 5.2.1
+      changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.26.1)
+      typescript: 4.5.5
+    transitivePeerDependencies:
+      - supports-color
     dev: true
