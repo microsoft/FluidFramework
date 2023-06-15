@@ -292,7 +292,10 @@ let deterministicStableIdCount: number | undefined;
  * ```
  */
 export function useDeterministicStableId<T>(f: () => T): T {
-	assert(deterministicStableIdCount === undefined, 0x6ce /* useDeterministicStableId cannot be nested */);
+	assert(
+		deterministicStableIdCount === undefined,
+		0x6ce /* useDeterministicStableId cannot be nested */,
+	);
 	deterministicStableIdCount = 1;
 	const result = f();
 	deterministicStableIdCount = undefined;
