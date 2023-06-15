@@ -44,6 +44,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
+	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -546,6 +547,7 @@ export class Container
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
+	private readonly clientsWhoShouldHaveLeft = new Set<string>();
 
 	private setAutoReconnectTime = performance.now();
 
@@ -865,6 +867,9 @@ export class Container
 						this.disconnect();
 						this.connect();
 					}
+				},
+				clientShouldHaveLeft: (clientId: string) => {
+					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
 			},
 			this.deltaManager,
@@ -2111,6 +2116,25 @@ export class Container
 			this.savedOps.push(message);
 		}
 		const local = this.clientId === message.clientId;
+
+		// Check and report if we're getting messages from a clientId that we previously
+		// flagged should have left, or from a client that's not in the quorum but should be
+		if (message.clientId != null) {
+			const client = this.protocolHandler.quorum.getMember(message.clientId);
+
+			if (client === undefined && message.type !== MessageType.ClientJoin) {
+				// pre-0.58 error message: messageClientIdMissingFromQuorum
+				throw new Error("Remote message's clientId is missing from the quorum");
+			}
+
+			if (
+				this.clientsWhoShouldHaveLeft.has(message.clientId) &&
+				!canBeCoalescedByService(message)
+			) {
+				// pre-0.58 error message: messageClientIdShouldHaveLeft
+				throw new Error("Remote message's clientId already should have left");
+			}
+		}
 
 		// Allow the protocol handler to process the message
 		const result = this.protocolHandler.processMessage(message, local);
