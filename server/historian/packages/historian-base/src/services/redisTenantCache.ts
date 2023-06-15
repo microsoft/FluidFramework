@@ -5,7 +5,7 @@
 
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
@@ -14,7 +14,7 @@ export class RedisTenantCache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "tenant";
 
-	constructor(private readonly client: Redis, parameters?: IRedisParameters) {
+	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
