@@ -20,6 +20,8 @@ export class OpGroupingManager {
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
 	public groupBatch(batch: IBatch): IBatch {
+		assert(batch.hasReentrantOps !== true, "Batches with reentrant ops are not supported");
+
 		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
 			return batch;
 		}
