@@ -42,7 +42,6 @@ import {
 	isRevertibleSharedString,
 	OperationGenerationConfig,
 	RevertSharedStringRevertibles,
-	defaultOptions,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
@@ -160,7 +159,7 @@ function operationGenerator(
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(0, state.channel.revertibles.length + 1),
+			editsToRevert: state.random.integer(0, state.channel.revertibles.length),
 		};
 	}
 
@@ -168,6 +167,7 @@ function operationGenerator(
 		assert(isRevertibleSharedString(channel));
 		return channel.revertibles.length > 0;
 	};
+
 	assert(optionsParam.weights !== undefined);
 	const baseGenerator = makeOperationGenerator(optionsParam.weights);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
@@ -179,7 +179,21 @@ function operationGenerator(
 describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
-		generatorFactory: () => take(100, operationGenerator(defaultOptions)),
+		generatorFactory: () =>
+			take(
+				100,
+				operationGenerator({
+					weights: {
+						revertWeight: 2,
+						addText: 2,
+						removeRange: 0,
+						addInterval: 2,
+						deleteInterval: 0,
+						changeInterval: 0,
+						changeProperties: 2,
+					},
+				}),
+			),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }

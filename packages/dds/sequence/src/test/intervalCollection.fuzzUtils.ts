@@ -91,9 +91,6 @@ export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
-// Note: none of these options are currently exercised, since the fuzz test fails with pretty much
-// any configuration due to known bugs. Once shared interval collections are in a better state these
-// should be revisited.
 export interface OperationGenerationConfig {
 	/**
 	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
@@ -123,7 +120,7 @@ export const defaultOptions: Required<OperationGenerationConfig> = {
 		revertWeight: 2,
 		addText: 2,
 		removeRange: 1,
-		addInterval: 0,
+		addInterval: 2,
 		deleteInterval: 2,
 		changeInterval: 2,
 		changeProperties: 2,
@@ -204,7 +201,7 @@ export function makeReducer(
 		},
 		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(channel));
-			const few = channel.revertibles.slice(0, editsToRevert);
+			const few = channel.revertibles.splice(-editsToRevert, editsToRevert);
 			revertSharedStringRevertibles(channel, few);
 		},
 	});
