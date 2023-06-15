@@ -138,7 +138,6 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
-	handle?: BlobHandle;
 	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
@@ -508,7 +507,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// happened before and so, the server won't delete it.
 					this.setRedirection(localId, response.id);
 					const blobHandle = this.getBlobHandle(localId, true);
-					entry.handle = blobHandle;
 					entry.handleP.resolve(blobHandle);
 					entry.status = PendingBlobStatus.PendingAttach;
 				} else {
@@ -643,7 +641,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					if (entry.status === PendingBlobStatus.OnlinePendingOp) {
 						this.setRedirection(pendingLocalId, blobId);
 						const blobHandle = this.getBlobHandle(localId, true);
-						entry.handle = blobHandle;
 						entry.handleP.resolve(blobHandle);
 						entry.status = PendingBlobStatus.PendingAttach;
 					}
