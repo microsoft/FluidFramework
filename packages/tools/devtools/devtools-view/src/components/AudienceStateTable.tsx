@@ -115,7 +115,11 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							</TableCell>
 							<TableCell>{item.mode}</TableCell>
 							<TableCell>
-								<span>{item.scopes.join("\n")}</span>
+								<span>
+									{item.scopes.map((each_scope, index) => (
+										<li key={index}>{each_scope}</li>
+									))}
+								</span>
 							</TableCell>
 						</TableRow>
 					);
