@@ -501,11 +501,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		);
 		assert(this.connection === undefined, "No connetion should be present");
 		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.Disconnected;
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
 	}
 
 	public establishingConnection(reason: string) {
 		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.EstablishingConnection;
 		this.handler.connectionStateChanged(
 			ConnectionState.EstablishingConnection,
 			oldState,
