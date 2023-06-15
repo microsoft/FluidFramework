@@ -74,7 +74,7 @@
 			"ClassDeclaration_MongoDatabaseManager": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_ISecretManager" : {
+			"InterfaceDeclaration_ISecretManager": {
 				"forwardCompat": false
 			}
 		}
