@@ -780,6 +780,32 @@ describe("Editing", () => {
 
 			expectJsonTree(tree1, ["42"]);
 		});
+
+		it("rebases repair data", () => {
+			const tree = makeTreeFromJson(["42"]);
+			const tree2 = tree.fork();
+
+			tree.editor
+				.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.set(singleJsonCursor("43"), false);
+
+			tree2.editor
+				.optionalField({ parent: undefined, field: rootFieldKeySymbol })
+				.set(undefined, false);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			tree.undo();
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], ["43"]);
+		});
 	});
 
 	describe("Constraints", () => {
@@ -1011,6 +1037,176 @@ describe("Editing", () => {
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{ foo: "x" }]);
+			});
+
+			it("new test", () => {
+				const tree = makeTreeFromJson([{}]);
+				const tree2 = tree.fork();
+
+				const rootPath: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				const nestedPath: UpPath = {
+					parent: rootPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				};
+
+				const sequence = tree.editor.sequenceField({
+					parent: rootPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				const nestedSequence = tree.editor.sequenceField({
+					field: brand("bar"),
+					parent: nestedPath,
+				});
+				nestedSequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+
+				const tree2RootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				tree2RootSequence.insert(1, singleTextCursor({ type: jsonObject.name }));
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], [{ foo: { bar: "a" } }, {}]);
+			});
+
+			it("new test with delete", () => {
+				const tree = makeTreeFromJson([{}]);
+				const tree2 = tree.fork();
+
+				const rootPath: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				const nestedPath: UpPath = {
+					parent: rootPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				};
+
+				const sequence = tree.editor.sequenceField({
+					parent: rootPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				const nestedSequence = tree.editor.sequenceField({
+					field: brand("bar"),
+					parent: nestedPath,
+				});
+				nestedSequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+
+				const tree2RootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				tree2RootSequence.delete(0, 1);
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], []);
+			});
+
+			it.skip("constraint works with node created as part of transaction", () => {
+				const tree = makeTreeFromJson([{}]);
+				const tree2 = tree.fork();
+
+				const rootPath: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				const sequence = tree.editor.sequenceField({
+					parent: rootPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+
+				tree.transaction.start();
+				tree.editor.addNodeExistsConstraint({
+					parent: rootPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const rootSequence = tree.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				rootSequence.insert(1, singleTextCursor({ type: jsonObject.name }));
+				tree.transaction.commit();
+
+				const tree2Sequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				tree2Sequence.delete(0, 1);
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree], []);
+			});
+
+			it.skip("cross-field move test", () => {
+				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+				const tree2 = tree.fork();
+
+				const firstPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				const secondPath = {
+					...firstPath,
+					parentIndex: 1,
+				};
+
+				tree.editor.move(
+					{ field: brand("foo"), parent: firstPath },
+					0,
+					1,
+					{
+						field: brand("foo2"),
+						parent: secondPath,
+					},
+					0,
+				);
+
+				const rootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				rootSequence.delete(0, 1);
+
+				tree2.transaction.start();
+				tree2.editor.addNodeExistsConstraint({
+					parent: firstPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const tree2RootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				tree2RootSequence.insert(2, singleTextCursor({ type: jsonObject.name }));
+				tree2.transaction.commit();
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], []);
 			});
 		});
 
