@@ -9,9 +9,9 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
-import { ITable } from "../table";
-import { TableDocument } from "../document";
-import { createTableWithInterception } from "../interception";
+import { ITable } from "../table.js";
+import { TableDocument } from "../document.js";
+import { createTableWithInterception } from "../interception/index.js";
 
 describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
 	describe("Simple User Attribution", () => {
