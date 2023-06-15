@@ -13,9 +13,12 @@ import {
 	Anchor,
 	SchemaDataAndPolicy,
 	ForestEvents,
+	FieldStoredSchema,
+	FieldKey,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
+import { FieldGenerator } from "../contextuallyTyped";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -101,6 +104,11 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * to create new trees starting from the root.
 	 */
 	clear(): void;
+
+	/**
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 */
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**

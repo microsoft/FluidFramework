@@ -4,15 +4,6 @@
  */
 
 import { Static, TAnySchema, Type } from "@sinclair/typebox";
-// TODO:
-// It is unclear if we would want to use the TypeBox compiler
-// (which generates code at runtime for maximum validation perf).
-// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
-// We could disable validation or pull in a different validator (like ajv).
-// Only using its validation when testing is another option.
-// typebox documents using this internal module, so it should be ok to access.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCheck, TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
@@ -34,7 +25,14 @@ import {
 	JsonCompatibleReadOnlySchema,
 	Mutable,
 } from "../../util";
-import { ICodecFamily, IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../../codec";
+import {
+	ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	IMultiFormatCodec,
+	makeCodecFamily,
+	SchemaValidationFunction,
+} from "../../codec";
 import { ChangesetLocalIdSchema } from "./crossFieldQueries";
 import {
 	FieldChangeMap,
@@ -126,6 +124,7 @@ type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
@@ -138,7 +137,7 @@ function makeV0Codec(
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
-				? TypeCompiler.Compile(codec.json.encodedSchema)
+				? validator.compile(codec.json.encodedSchema)
 				: undefined,
 		};
 	};
@@ -146,7 +145,7 @@ function makeV0Codec(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: TypeCheck<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TAnySchema>;
 			codec: IMultiFormatCodec<FieldChangeset>;
 		}
 	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
@@ -157,7 +156,10 @@ function makeV0Codec(
 
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
-	): { codec: IMultiFormatCodec<FieldChangeset>; compiledSchema?: TypeCheck<TAnySchema> } => {
+	): {
+		codec: IMultiFormatCodec<FieldChangeset>;
+		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
 		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
 		return entry;
@@ -168,7 +170,7 @@ function makeV0Codec(
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change);
-			if (compiledSchema !== undefined && !compiledSchema.Check(encodedChange)) {
+			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
 
@@ -213,7 +215,7 @@ function makeV0Codec(
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
-			if (compiledSchema !== undefined && !compiledSchema.Check(field.change)) {
+			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
 			const fieldChangeset = codec.json.decode(field.change);
@@ -283,6 +285,7 @@ function makeV0Codec(
 
 export function makeModularChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
-	return makeCodecFamily([[0, makeV0Codec(fieldKinds)]]);
+	return makeCodecFamily([[0, makeV0Codec(fieldKinds, options)]]);
 }
