@@ -220,7 +220,13 @@ export const personData: ContextuallyTypedNodeDataObject = {
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
-		cursorFromContextualData(fullSchemaData, rootPersonSchema.types, personData),
+		cursorFromContextualData(
+			{
+				schema: fullSchemaData,
+			},
+			rootPersonSchema.types,
+			personData,
+		),
 	);
 }
 
@@ -282,7 +288,13 @@ export function setupForest<T extends GlobalFieldSchema>(
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
-	const root = cursorsFromContextualData(schemaRepo, schema.root.schema, data);
+	const root = cursorsFromContextualData(
+		{
+			schema: schemaRepo,
+		},
+		schema.root.schema,
+		data,
+	);
 	initializeForest(forest, root);
 	return forest;
 }

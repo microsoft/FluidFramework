@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
-	getSchemaString,
+	makeSchemaCodec,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
 	on,
@@ -52,8 +52,11 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { jsonString } from "../../domains";
+
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -84,7 +87,7 @@ describe("SharedTree", () => {
 		assert(provider.trees[1].isAttached());
 
 		const value = "42";
-		const expectedSchema = getSchemaString(testSchema);
+		const expectedSchema = schemaCodec.encode(testSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
 		initializeTestTree(provider.trees[0]);
@@ -92,17 +95,17 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.equal(getTestValue(provider.trees[0]), value);
-		assert.equal(getSchemaString(provider.trees[0].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		assert.equal(getTestValue(provider.trees[1]), value);
 		// Ensure second tree got the schema from initialization:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
 		assert.equal(getTestValue(joinedLaterTree), value);
 		// Ensure schema catchup works:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		assert.equal(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
 	});
 
 	it("can summarize and load", async () => {
@@ -115,7 +118,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
 		assert.equal(getTestValue(loadingTree), value);
-		assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
+		assert.equal(schemaCodec.encode(loadingTree.storedSchema), schemaCodec.encode(testSchema));
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -1163,71 +1166,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it.skip("can rebase cross-field move over unrelated change", () => {
-			const provider = new TestTreeProviderLite(2);
-			const [tree1, tree2] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Node"), value: "a" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "e" },
-					],
-				},
-			};
-			initializeTestTree(tree1, initialState);
-			provider.processMessages();
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			// Change value of c to f
-			runSynchronous(tree1, () => {
-				tree1.editor.setValue(
-					{ parent: rootPath, parentField: brand("foo"), parentIndex: 2 },
-					"f",
-				);
-			});
-
-			// Move bc between d and e.
-			runSynchronous(tree2, () => {
-				tree2.editor.move(
-					{ parent: rootPath, field: brand("foo") },
-					1,
-					2,
-					{ parent: rootPath, field: brand("bar") },
-					1,
-				);
-			});
-
-			provider.processMessages();
-
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [{ type: brand("Node"), value: "a" }],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "f" },
-						{ type: brand("Node"), value: "e" },
-					],
-				},
-			};
-			validateTree(tree1, [expectedState]);
-			validateTree(tree2, [expectedState]);
-		});
-
-		it.skip("can rebase cross-field move over delete", () => {
+		it("can rebase cross-field move over delete", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
@@ -1318,6 +1257,120 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("handles ancestor revive", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+			// Undo delete of a
+			tree2.undo();
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				// Constraint should be not be violated after undo
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "a",
+					fields: {
+						foo: [
+							{
+								type: brand("TestValue"),
+								value: "bar",
+							},
+						],
+					},
+				},
+				{
+					type: brand("TestValue"),
+					value: "b",
+				},
+			];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("handles ancestor delete", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		it("sequence field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -2634,7 +2687,7 @@ function initializeTestTree(
 }
 
 function testTreeView(): ISharedTreeView {
-	const factory = new SharedTreeFactory();
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
 	const treeSchema = builder.object("root", { value: ValueSchema.Number });
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));

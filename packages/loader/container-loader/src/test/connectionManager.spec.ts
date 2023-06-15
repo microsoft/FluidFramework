@@ -211,6 +211,7 @@ describe("connectionManager", () => {
 				forced: true,
 				permissions: undefined,
 				storageOnly: false,
+				storageOnlyReason: undefined,
 			});
 		});
 
@@ -226,6 +227,7 @@ describe("connectionManager", () => {
 				forced: false,
 				permissions: true,
 				storageOnly: false,
+				storageOnlyReason: undefined,
 			});
 		});
 
@@ -241,6 +243,7 @@ describe("connectionManager", () => {
 				forced: false,
 				permissions: true, // storageOnly also implies client does not have write permissions
 				storageOnly: true,
+				storageOnlyReason: undefined,
 			});
 		});
 	});
