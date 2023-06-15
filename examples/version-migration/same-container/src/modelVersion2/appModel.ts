@@ -35,7 +35,7 @@ export class InventoryListAppModel
 	public constructor(
 		public readonly inventoryList: IInventoryList,
 		public readonly migrationTool: ISameContainerMigrationTool,
-		private readonly container: IContainer,
+		public readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
 		super();
