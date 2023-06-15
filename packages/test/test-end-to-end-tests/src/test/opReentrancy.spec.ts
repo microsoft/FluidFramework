@@ -114,7 +114,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		it(`Sequence consistency - ${
+		it(`Eventual consistency with op reentry- ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
 			await setupContainers({
