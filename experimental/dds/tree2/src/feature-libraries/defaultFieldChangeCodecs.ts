@@ -85,6 +85,10 @@ function makeOptionalFieldCodec(
 				encoded.childChange = childCodec.encode(change.childChange);
 			}
 
+			if (change.deletedBy !== undefined) {
+				encoded.deletedBy = change.deletedBy;
+			}
+
 			return encoded;
 		},
 
@@ -105,6 +109,10 @@ function makeOptionalFieldCodec(
 
 			if (encoded.childChange !== undefined) {
 				decoded.childChange = childCodec.decode(encoded.childChange);
+			}
+
+			if (encoded.deletedBy !== undefined) {
+				decoded.deletedBy = encoded.deletedBy;
 			}
 
 			return decoded;

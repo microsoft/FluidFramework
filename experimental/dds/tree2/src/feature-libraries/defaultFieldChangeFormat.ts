@@ -83,6 +83,7 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object({
 		fieldChange: Type.Optional(EncodedOptionalFieldChange(tNodeChange)),
 		childChange: Type.Optional(tNodeChange),
+		deletedBy: Type.Optional(RevisionTagSchema),
 	});
 
 export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
