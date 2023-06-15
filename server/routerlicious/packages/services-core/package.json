@@ -75,7 +75,8 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ISecretManager": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
