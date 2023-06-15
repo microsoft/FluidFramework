@@ -190,12 +190,12 @@ export interface DDSFuzzHarnessEvents {
 	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
 
 	/**
-	 * Raised after creating the initialState prior to performing the fuzzActions.
+	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
 	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
 
 	/**
-	 * Raised after creating the initialState prior to performing the fuzzActions.
+	 * Raised after all fuzzActions have been completed.
 	 */
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
