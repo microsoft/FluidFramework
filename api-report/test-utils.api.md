@@ -44,6 +44,7 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { ISharedMap } from '@fluidframework/map';
 import { ISummarizer } from '@fluidframework/container-runtime';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
+import { ISummaryRuntimeOptions } from '@fluidframework/container-runtime';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
@@ -69,6 +70,12 @@ export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidE
 
 // @public
 export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase, logger?: ITelemetryBaseLogger): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
+// @public (undocumented)
+export function createSummarizerCore(container: IContainer, loader: IHostLoader, summaryVersion?: string): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -108,6 +115,9 @@ export enum DataObjectFactoryType {
     // (undocumented)
     Test = 1
 }
+
+// @public (undocumented)
+export const defaultSummaryOptions: ISummaryRuntimeOptions;
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
@@ -239,7 +249,7 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public
-export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
+export function summarizeNow(summarizer: ISummarizer, reason?: string, refreshLatestAck?: boolean): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
     summaryRefSeq: number;
