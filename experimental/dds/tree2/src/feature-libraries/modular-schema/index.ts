@@ -17,35 +17,37 @@ export {
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
-export { ChangeAtomId, ChangesetLocalId } from "./modularSchemaTypes";
-export { EncodedChangeAtomId, ChangesetLocalIdSchema } from "./modularSchemaFormat";
+export { ChangesetLocalId } from "./modularChangeTypes";
+export { ChangesetLocalIdSchema } from "./modularChangeFormat";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	FieldChange,
 	FieldChangeHandler,
-	FieldChangeMap,
 	FieldChangeRebaser,
-	FieldChangeset,
 	FieldEditor,
 	getIntention,
-	HasFieldChanges,
-	ModularChangeset,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
 	RevisionMetadataSource,
 	RevisionIndexer,
-	RevisionInfo,
 	ToDelta,
+	NodeExistenceState,
+} from "./fieldChangeHandler";
+export {
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	RevisionInfo,
 	ValueChange,
 	ValueConstraint,
 	NodeExistsConstraint,
-	NodeExistenceState,
-} from "./fieldChangeHandler";
+} from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
 export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 export {

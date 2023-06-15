@@ -130,7 +130,7 @@ function makeNodeUpdateCodec(
 				"revert" in update
 					? {
 							revert: jsonableTreeFromCursor(update.revert),
-							changeId: update.changeId,
+							revision: update.revision,
 					  }
 					: {
 							set: update.set,
@@ -147,7 +147,7 @@ function makeNodeUpdateCodec(
 				"revert" in encoded
 					? {
 							revert: singleTextCursor(encoded.revert),
-							changeId: encoded.changeId,
+							revision: encoded.revision,
 					  }
 					: { set: encoded.set };
 

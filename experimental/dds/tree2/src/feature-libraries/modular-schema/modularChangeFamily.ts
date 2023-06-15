@@ -45,25 +45,27 @@ import {
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	FieldChangeMap,
-	FieldChange,
-	FieldChangeset,
-	NodeChangeset,
-	ValueChange,
-	ModularChangeset,
 	IdAllocator,
-	HasFieldChanges,
-	RevisionInfo,
 	RevisionMetadataSource,
-	NodeExistsConstraint,
-	ValueConstraint,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
-import { ChangesetLocalId } from "./modularSchemaTypes";
+import {
+	ChangesetLocalId,
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	NodeExistsConstraint,
+	RevisionInfo,
+	ValueChange,
+	ValueConstraint,
+} from "./modularChangeTypes";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
