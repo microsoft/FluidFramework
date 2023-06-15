@@ -8,7 +8,11 @@ import * as crypto from "crypto";
 import express from "express";
 import request from "supertest";
 import { TestDbFactory } from "@fluidframework/server-test-utils";
-import { EncryptionKeyVersion, MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import {
+	EncryptionKeyVersion,
+	MongoManager,
+	ISecretManager,
+} from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
 
 const documentsCollectionName = "testDocuments";
