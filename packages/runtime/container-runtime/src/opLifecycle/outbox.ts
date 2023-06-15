@@ -227,7 +227,8 @@ export class Outbox {
 	private flushInternal(rawBatch: IBatch) {
 		if (rawBatch.hasReentrantOps === true) {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
-			// it needs to be rebased so that we ensure there are no inconsistencies between client views
+			// it needs to be rebased so that we can ensure consistent reference sequence numbers
+			// and eventual consistency at the DDS level.
 			this.rebase(rawBatch);
 			return;
 		}
@@ -238,6 +239,12 @@ export class Outbox {
 		this.persistBatch(rawBatch.content);
 	}
 
+	/**
+	 * Rebases a batch. All the ops in the batch are resubmitted to the runtime and
+	 * they will eventually end up in the batch manager and subsequently flushed.
+	 *
+	 * @param rawBatch - the batch to be rebased
+	 */
 	private rebase(rawBatch: IBatch) {
 		for (const message of rawBatch.content) {
 			this.params.reSubmit(
