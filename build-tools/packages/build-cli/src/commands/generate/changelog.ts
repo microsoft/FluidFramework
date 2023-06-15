@@ -59,7 +59,7 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		await super.init();
 
 		const context = await this.getContext();
-		
+
 		this.options = { cwd: context.gitRepo.resolvedRoot };
 
 		await command("pnpm exec changeset version", this.options);
@@ -86,7 +86,7 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		);
 
 		await this.repo.gitClient.raw("restore", ".");
-		
+
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
 
 		this.log("Commit and open a PR!");
