@@ -27301,7 +27301,7 @@ packages:
   /@types/xml@1.0.8:
     resolution: {integrity: sha512-IptEZBtDwSPayCP8FmbordhAdjdxsif4zH29xTbBRacZeCHFHZp8OxyG1/CrS8AS0MziJUPTGWCTKbYtvHGYPg==}
     dependencies:
-      '@types/node': 14.18.38
+      '@types/node': 14.18.47
     dev: true
 
   /@types/yargs-parser@21.0.0:
@@ -28997,7 +28997,7 @@ packages:
   /axios@0.27.2(debug@4.3.4):
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.2(debug@4.3.4)
+      follow-redirects: 1.15.2
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
