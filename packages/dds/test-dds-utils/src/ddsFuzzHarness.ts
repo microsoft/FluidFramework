@@ -188,6 +188,16 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
 	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+
+	/**
+	 * Raised after creating the initialState prior to performing the fuzzActions.
+	 */
+	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised after creating the initialState prior to performing the fuzzActions.
+	 */
+	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
 
 export interface DDSFuzzSuiteOptions {
@@ -672,12 +682,17 @@ export async function runTestForSeed<
 		client: makeUnreachableCodepathProxy("client"),
 	};
 
+	options.emitter.emit("testStart", initialState);
+
 	const finalState = await performFuzzActions(
 		model.generatorFactory(),
 		model.reducer,
 		initialState,
 		saveInfo,
 	);
+
+	options.emitter.emit("testEnd", finalState);
+
 	return finalState;
 }
 
