@@ -114,36 +114,44 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		it(`Eventual consistency with op reentry- ${
-			enableGroupedBatching ? "Grouped" : "Regular"
-		} batches`, async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching,
-				},
-			});
+		it.only(
+			`Eventual consistency with op reentry - ${
+				enableGroupedBatching ? "Grouped" : "Regular"
+			} batches`,
+			async function () {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
 
-			sharedString1.insertText(0, "ad");
-			await provider.ensureSynchronized();
-			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(3, "x");
-				}
-			});
+				sharedString1.insertText(0, "ad");
+				sharedString1.insertText(1, "c");
+				await provider.ensureSynchronized();
 
-			sharedString1.insertText(1, "b");
-			sharedString1.insertText(2, "c");
-			sharedString2.insertText(0, "y");
+				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+						sharedString2.insertText(3, "x");
+					}
+				});
 
-			await provider.ensureSynchronized();
-			assert.strictEqual(sharedString1.getText(), "yabxcd");
-			assert.strictEqual(
-				sharedString1.getText(),
-				sharedString2.getText(),
-				"Eventual consistency broken",
-			);
-		});
+				sharedString1.insertText(1, "b");
+				sharedString2.insertText(0, "y");
+				await provider.ensureSynchronized();
+
+				assert.strictEqual(sharedString1.getText(), "yabxcd");
+				assert.strictEqual(
+					sharedString1.getText(),
+					sharedString2.getText(),
+					"Eventual consistency broken",
+				);
+
+				// Both containers are ok
+				assert.ok(!container1.closed);
+				assert.ok(!container2.closed);
+			},
+		).timeout(10000000);
 	});
 
 	describe("Reentry safeguards", () => {

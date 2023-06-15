@@ -43,7 +43,11 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly replayOps: () => void;
+	readonly reSubmit: (
+		content: string,
+		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
+	) => void;
 	readonly reentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -235,8 +239,15 @@ export class Outbox {
 	}
 
 	private rebase(rawBatch: IBatch) {
-		this.persistBatch(rawBatch.content);
-		this.params.replayOps();
+		for (const message of rawBatch.content) {
+			this.params.reSubmit(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
+				message.localOpMetadata,
+				message.metadata,
+			);
+		}
+
 		this.flush();
 
 		if (this.batchRebasesToReport > 0) {

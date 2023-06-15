@@ -125,15 +125,13 @@ describe("Outbox", () => {
 		},
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
-		return {
-			contents: JSON.stringify({ type, contents }),
-			type,
-			metadata: { test: true },
-			localOpMetadata: {},
-			referenceSequenceNumber: Number.POSITIVE_INFINITY,
-		};
-	};
+	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
+		contents: JSON.stringify({ type, contents }),
+		type,
+		metadata: { test: true },
+		localOpMetadata: {},
+		referenceSequenceNumber: Number.POSITIVE_INFINITY,
+	});
 
 	const batchedMessage = (
 		message: BatchMessage,
@@ -204,7 +202,11 @@ describe("Outbox", () => {
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			replayOps: () => {},
+			reSubmit: (
+				content: string,
+				localOpMetadata: unknown,
+				opMetadata: Record<string, unknown> | undefined,
+			) => {},
 			reentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});

@@ -1340,7 +1340,7 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
-			replayOps: () => this.replayPendingStates(true),
+			reSubmit: this.reSubmit.bind(this),
 			reentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
 		});
@@ -1773,7 +1773,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private replayPendingStates(isRebase: boolean = false) {
+	private replayPendingStates() {
 		// We need to be able to send ops to replay states
 		if (!this.canSendOps()) {
 			return;
@@ -1793,7 +1793,7 @@ export class ContainerRuntime
 
 		try {
 			// replay the ops
-			this.pendingStateManager.replayPendingStates(isRebase);
+			this.pendingStateManager.replayPendingStates();
 		} finally {
 			// Save the new start and restore the old state, re-enable event emit
 			newState = this.dirtyContainer;
