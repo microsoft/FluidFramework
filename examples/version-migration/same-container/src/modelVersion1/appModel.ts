@@ -5,7 +5,8 @@
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
@@ -83,12 +84,6 @@ export class InventoryListAppModel
 	public close() {
 		this.container.close();
 	}
-
-	public readonly DEBUG_proposeCodeDetails = async (
-		codeDetails: IFluidCodeDetails,
-	): Promise<void> => {
-		await this.container.proposeCodeDetails(codeDetails);
-	};
 
 	public readonly DEBUG_summarizeOnDemand = () => {
 		(this.runtime as any) /* ContainerRuntime */
