@@ -1778,6 +1778,7 @@ declare function get_old_InterfaceDeclaration_ISecretManager():
 declare function use_current_InterfaceDeclaration_ISecretManager(
     use: TypeOnly<current.ISecretManager>);
 use_current_InterfaceDeclaration_ISecretManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISecretManager());
 
 /*
