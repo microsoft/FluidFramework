@@ -18,7 +18,6 @@ import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
 import {
 	FluidObjectTreeNode,
-	FluidObjectValueNode,
 	FluidUnknownObjectNode,
 	VisualNodeKind,
 	VisualChildNode,
@@ -50,13 +49,16 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-): Promise<FluidObjectValueNode> => {
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
+	const value = sharedCounter.value;
+	const renderedValue = await visualizeChildData(value);
 	return {
 		fluidObjectId: sharedCounter.id,
-		value: sharedCounter.value,
+		children: { data: renderedValue },
 		typeMetadata: "SharedCounter",
-		nodeKind: VisualNodeKind.FluidValueNode,
+		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
 
@@ -178,15 +180,17 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
  */
 export const visualizeSharedString: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-): Promise<FluidObjectValueNode> => {
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
 	const sharedString = sharedObject as SharedString;
 	const text = sharedString.getText();
 
+	const renderedString = await visualizeChildData(text);
 	return {
 		fluidObjectId: sharedString.id,
-		value: text,
+		children: { data: renderedString },
 		typeMetadata: "SharedString",
-		nodeKind: VisualNodeKind.FluidValueNode,
+		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
 

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { Spinner } from "@fluentui/react-components";
+import { Spinner, Button } from "@fluentui/react-components";
+import { TooltipHost } from "@fluentui/react";
 
 import {
 	DataVisualization,
@@ -16,6 +17,7 @@ import {
 	FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
 
+import { ClipboardPaste16Regular } from "@fluentui/react-icons";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
@@ -35,6 +37,7 @@ export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId,
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
+	console.log(label);
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
 
@@ -87,5 +90,20 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <TreeItem header={header} />;
 	}
 
-	return <TreeDataView containerKey={containerKey} label={label} node={visualTree} />;
+	const button = (
+		<TooltipHost content={`Click to copy handle ${fluidObjectId}`}>
+			<Button
+				onClick={async (): Promise<void> => navigator.clipboard.writeText(fluidObjectId)}
+				icon={<ClipboardPaste16Regular />}
+			></Button>
+		</TooltipHost>
+	);
+
+	const header2 = <TreeHeader label={label} inlineValue={button} />;
+
+	return (
+		<TreeItem header={header2}>
+			<TreeDataView containerKey={containerKey} label={label} node={visualTree} />{" "}
+		</TreeItem>
+	);
 }
