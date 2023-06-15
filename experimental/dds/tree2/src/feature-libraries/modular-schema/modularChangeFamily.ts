@@ -36,7 +36,6 @@ import {
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -64,6 +63,7 @@ import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
+import { ChangesetLocalId } from "./modularSchemaTypes";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

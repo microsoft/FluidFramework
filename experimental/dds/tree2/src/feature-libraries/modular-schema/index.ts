@@ -12,13 +12,13 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
-	ChangesetLocalId,
-	ChangesetLocalIdSchema,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
+export { ChangeAtomId, ChangesetLocalId } from "./modularSchemaTypes";
+export { EncodedChangeAtomId, ChangesetLocalIdSchema } from "./modularSchemaFormat";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,

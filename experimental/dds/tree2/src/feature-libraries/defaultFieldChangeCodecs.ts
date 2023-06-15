@@ -85,6 +85,10 @@ function makeOptionalFieldCodec(
 				encoded.childChange = childCodec.encode(change.childChange);
 			}
 
+			if (change.deletedBy !== undefined) {
+				encoded.deletedBy = change.deletedBy;
+			}
+
 			return encoded;
 		},
 
@@ -107,6 +111,10 @@ function makeOptionalFieldCodec(
 				decoded.childChange = childCodec.decode(encoded.childChange);
 			}
 
+			if (encoded.deletedBy !== undefined) {
+				decoded.deletedBy = encoded.deletedBy;
+			}
+
 			return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
@@ -122,7 +130,7 @@ function makeNodeUpdateCodec(
 				"revert" in update
 					? {
 							revert: jsonableTreeFromCursor(update.revert),
-							revision: update.revision,
+							changeId: update.changeId,
 					  }
 					: {
 							set: update.set,
@@ -139,7 +147,7 @@ function makeNodeUpdateCodec(
 				"revert" in encoded
 					? {
 							revert: singleTextCursor(encoded.revert),
-							revision: encoded.revision,
+							changeId: encoded.changeId,
 					  }
 					: { set: encoded.set };
 

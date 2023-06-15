@@ -33,7 +33,6 @@ import {
 	makeCodecFamily,
 	SchemaValidationFunction,
 } from "../../codec";
-import { ChangesetLocalIdSchema } from "./crossFieldQueries";
 import {
 	FieldChangeMap,
 	FieldChangeset,
@@ -43,6 +42,7 @@ import {
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
+import { ChangesetLocalIdSchema } from "./modularSchemaFormat";
 
 const EncodedValueChange = Type.Object(
 	{
