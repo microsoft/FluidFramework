@@ -106,7 +106,7 @@ export class KafkaRunner implements IRunner {
 	/**
 	 * Signals to stop the service
 	 */
-	public async stop(caller?: string): Promise<void> {
+	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
 			return;
 		}
@@ -127,7 +127,11 @@ export class KafkaRunner implements IRunner {
 
 			// Mark ourselves done once the partition manager has stopped
 			if (caller === "sigterm" || caller === "uncaughtException") {
-				this.deferred?.reject({ caller, customMessage: `Kafka runner stopped` }); // so that the runService exits the process with exit(1)
+				this.deferred?.reject({
+					caller,
+					uncaughtException: serializeError(uncaughtException),
+					customMessage: `Kafka runner stopped`,
+				}); // so that the runService exits the process with exit(1)
 			} else {
 				this.deferred?.resolve();
 			}
@@ -140,10 +144,11 @@ export class KafkaRunner implements IRunner {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
 			this.deferred?.reject({
-				caller,
-				customMessage: `Kafka runner couldnt be stopped`,
-				error: serializeError(error),
 				forceKill: true,
+				caller,
+				uncaughtException: serializeError(uncaughtException),
+				customMessage: "Kafka runner couldnt be stopped",
+				runnerStopException: serializeError(error),
 			});
 			this.deferred = undefined;
 			throw error;

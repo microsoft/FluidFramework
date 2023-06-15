@@ -149,7 +149,7 @@ export class AlfredRunner implements IRunner {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public async stop(caller?: string): Promise<void> {
+	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
 			return;
 		}
@@ -161,6 +161,7 @@ export class AlfredRunner implements IRunner {
 			if (caller === "sigterm" || caller === "uncaughtException") {
 				this.runningDeferred?.reject({
 					caller,
+					uncaughtException: serializeError(uncaughtException),
 					customMessage: `Alfred runner stopped`,
 				}); // so that the runService exits the process with exit(1)
 			} else {
@@ -175,10 +176,11 @@ export class AlfredRunner implements IRunner {
 				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
 			}
 			this.runningDeferred?.reject({
-				caller,
-				customMessage: "Alfred runner couldnt be stopped",
-				error: serializeError(error),
 				forceKill: true,
+				caller,
+				uncaughtException: serializeError(uncaughtException),
+				customMessage: "Alfred runner couldnt be stopped",
+				runnerStopException: serializeError(error),
 			});
 			this.runningDeferred = undefined;
 			throw error;
