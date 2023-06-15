@@ -28,11 +28,11 @@ import { timeoutAwait } from "./timeoutUtils";
 
 const summarizerClientType = "summarizer";
 
-async function createSummarizerCore(
+export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
-) {
+): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const absoluteUrl = await container.getAbsoluteUrl("");
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
@@ -68,7 +68,7 @@ async function createSummarizerCore(
 	};
 }
 
-const defaultSummaryOptions: ISummaryRuntimeOptions = {
+export const defaultSummaryOptions: ISummaryRuntimeOptions = {
 	summaryConfigOverrides: {
 		state: "disableHeuristics",
 		maxAckWaitTime: 10000,
@@ -164,8 +164,12 @@ export async function createSummarizerWithTestConfig(
  * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
  * submitted summary.
  */
-export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
-	const result = summarizer.summarizeOnDemand({ reason });
+export async function summarizeNow(
+	summarizer: ISummarizer,
+	reason: string = "end-to-end test",
+	refreshLatestAck?: boolean,
+) {
+	const result = summarizer.summarizeOnDemand({ reason, refreshLatestAck });
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {

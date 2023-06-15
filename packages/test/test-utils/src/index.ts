@@ -31,7 +31,9 @@ export {
 } from "./testObjectProvider";
 export {
 	createSummarizer,
+	createSummarizerCore,
 	createSummarizerFromFactory,
+	defaultSummaryOptions,
 	summarizeNow,
 	createSummarizerWithTestConfig,
 } from "./TestSummaryUtils";

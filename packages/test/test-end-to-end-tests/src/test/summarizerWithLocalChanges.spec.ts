@@ -7,43 +7,32 @@ import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedMap } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 	summarizeNow,
-	createSummarizerFromFactory,
+	createSummarizerCore,
+	defaultSummaryOptions,
+	mockConfigProvider,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
 	getContainerRuntimeApi,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "../packageVersion";
 
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: true },
 };
 export const rootDataObjectType = "@fluid-example/rootDataObject";
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
-export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
-class TestDataObject2 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-	public get _context() {
-		return this.context;
-	}
-	// If this datastore created DDSes it would be even more nodes created without running gc
-}
 
 class TestDataObject1 extends DataObject {
 	public get _root() {
@@ -56,9 +45,11 @@ class TestDataObject1 extends DataObject {
 
 	private readonly datastoreKey = "TestDataObject2";
 
+	public createdDataStoreId?: string;
+
 	protected async hasInitialized() {
-		// This can be fired synchronously as well, which would cause an even worse half state
-		await this.init();
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		this.init();
 	}
 
 	private async init() {
@@ -66,6 +57,7 @@ class TestDataObject1 extends DataObject {
 			this.context.containerRuntime,
 		);
 		this.root.set(this.datastoreKey, dataObject2.handle);
+		this.createdDataStoreId = dataObject2.id;
 	}
 }
 
@@ -94,15 +86,11 @@ const rootDataObjectFactory = new DataObjectFactory(
 const dataStoreFactory1 = new DataObjectFactory(
 	TestDataObjectType1,
 	TestDataObject1,
-	[SharedMap.getFactory(), SharedMatrix.getFactory()],
 	[],
 	[],
-	// it would be nice to move away from this flow
+	[],
 	mixinSummaryHandler(getComponent),
 );
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
@@ -114,7 +102,7 @@ const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
 	rootDataObjectFactory,
 	registryStoreEntries,
 	undefined,
-	[innerRequestHandler],
+	[],
 	runtimeOptions,
 );
 
@@ -122,16 +110,22 @@ async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
 	summaryVersion?: string,
-): Promise<ISummarizer> {
-	const createSummarizerResult = await createSummarizerFromFactory(
-		provider,
-		container,
-		dataStoreFactory1,
-		summaryVersion,
-		containerRuntimeFactoryWithDefaultDataStore,
+) {
+	const summarizerRuntimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
+		rootDataObjectFactory,
 		registryStoreEntries,
+		undefined,
+		[],
+		{ summaryOptions: defaultSummaryOptions },
 	);
-	return createSummarizerResult.summarizer;
+	const loader = provider.createLoader(
+		[[provider.defaultCodeDetails, summarizerRuntimeFactory]],
+		{
+			configProvider: mockConfigProvider(),
+		},
+	);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return createSummarizerCore(container, loader, summaryVersion);
 }
 
 /**
@@ -144,10 +138,10 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 		return provider.createContainer(runtimeFactory);
 	};
 
-	async function waitForSummary(summarizer: ISummarizer) {
+	async function waitForSummary(summarizer: ISummarizer, refreshLatestAck?: boolean) {
 		// Wait for all pending ops to be processed by all clients.
 		await provider.ensureSynchronized();
-		const summaryResult = await summarizeNow(summarizer);
+		const summaryResult = await summarizeNow(summarizer, "test", refreshLatestAck);
 		return summaryResult;
 	}
 
@@ -160,22 +154,40 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 		[
 			{ eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC" },
 			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
 		],
 		async () => {
 			const container = await createContainer();
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(
-				container,
-				"default",
-			);
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
 			const newDO = await dataStoreFactory1.createInstance(rootDataObject.containerRuntime);
 			rootDataObject._root.set("store", newDO.handle);
-			const summarizerClient = await createSummarizer(provider, container);
-
-			await provider.ensureSynchronized();
+			const { summarizer } = await createSummarizer(provider, container);
 
 			// This should not fail
-			await assert.rejects(waitForSummary(summarizerClient), "expected NodeDidNotRunGC");
+			await assert.rejects(
+				waitForSummary(summarizer),
+				(error) => {
+					return error.message === "NodeDidNotRunGC";
+				},
+				"expected NodeDidNotRunGC",
+			);
+
+			const secondSummary = await waitForSummary(summarizer, true /* refreshLatestAck */);
+			const tree = secondSummary.summaryTree;
+			const runtimeSummary = tree.tree[".channels"];
+			assert(runtimeSummary.type === SummaryType.Tree, "DataStores summary should be a tree");
+			assert(newDO.createdDataStoreId !== undefined, "expected a datastore to be created!");
+			const datastoreSummary = runtimeSummary.tree[newDO.createdDataStoreId];
+			assert(
+				datastoreSummary.type === SummaryType.Tree,
+				"DataStore summary should be a tree",
+			);
+			// The datastore should be referenced instead of unreferenced
+			assert(
+				datastoreSummary.unreferenced !== undefined,
+				"Data store should be unreferenced",
+			);
 		},
 	);
 });
