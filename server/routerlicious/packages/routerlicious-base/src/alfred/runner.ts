@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { serializeError } from "serialize-error";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
@@ -159,8 +160,8 @@ export class AlfredRunner implements IRunner {
 			await this.server.close();
 			if (caller === "sigterm" || caller === "uncaughtException") {
 				this.runningDeferred?.reject({
-					customMessage: `Alfred runner stopped`,
 					caller,
+					customMessage: `Alfred runner stopped`,
 				}); // so that the runService exits the process with exit(1)
 			} else {
 				this.runningDeferred?.resolve();
@@ -174,9 +175,9 @@ export class AlfredRunner implements IRunner {
 				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
 			}
 			this.runningDeferred?.reject({
-				customMessage: "Alfred runner couldnt be stopped",
 				caller,
-				error,
+				customMessage: "Alfred runner couldnt be stopped",
+				error: serializeError(error),
 				forceKill: true,
 			});
 			this.runningDeferred = undefined;

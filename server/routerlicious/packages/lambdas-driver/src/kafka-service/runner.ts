@@ -4,6 +4,7 @@
  */
 
 import { inspect } from "util";
+import { serializeError } from "serialize-error";
 import { Deferred } from "@fluidframework/common-utils";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import {
@@ -126,7 +127,7 @@ export class KafkaRunner implements IRunner {
 
 			// Mark ourselves done once the partition manager has stopped
 			if (caller === "sigterm" || caller === "uncaughtException") {
-				this.deferred?.reject({ customMessage: `Kafka runner stopped`, caller }); // so that the runService exits the process with exit(1)
+				this.deferred?.reject({ caller, customMessage: `Kafka runner stopped` }); // so that the runService exits the process with exit(1)
 			} else {
 				this.deferred?.resolve();
 			}
@@ -139,9 +140,9 @@ export class KafkaRunner implements IRunner {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
 			this.deferred?.reject({
-				customMessage: `Kafka runner couldnt be stopped`,
 				caller,
-				error,
+				customMessage: `Kafka runner couldnt be stopped`,
+				error: serializeError(error),
 				forceKill: true,
 			});
 			this.deferred = undefined;
