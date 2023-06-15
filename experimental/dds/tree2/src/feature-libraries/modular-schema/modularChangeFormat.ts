@@ -43,8 +43,7 @@ const EncodedFieldChange = Type.Object({
 	fieldKind: FieldKindIdentifierSchema,
 	// Implementation note: node and field change encoding is mutually recursive.
 	// This field marks a boundary in that recursion to avoid constructing excessively complex
-	// recursive types. Encoded changes are validated at this boundary at runtime--see logic
-	// later in this file's codec.
+	// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
 	change: JsonCompatibleReadOnlySchema,
 });
 
