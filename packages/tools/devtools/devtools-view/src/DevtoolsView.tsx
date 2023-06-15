@@ -6,7 +6,7 @@ import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
-import { ArrowSync24Regular, Home20Regular, Settings20Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -246,7 +246,7 @@ export function DevtoolsView(): React.ReactElement {
 				) : (
 					<>
 						<Waiting />
-						<LandingView />
+						<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={{}} />
 					</>
 				)
 			) : (
@@ -479,7 +479,6 @@ function Menu(props: MenuProps): React.ReactElement {
 				onClick={onHomeClicked}
 			>
 				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
-				<Home20Regular />
 			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 			<div
