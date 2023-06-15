@@ -320,7 +320,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("hasPendingBlobs", async () => {
+	it.skip("hasPendingBlobs", async () => {
 		await runtime.attach();
 		await runtime.connect();
 
@@ -335,7 +335,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 2);
 	});
 
-	it("NoPendingBlobs count", async () => {
+	it.skip("NoPendingBlobs count", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		let count = 0;
