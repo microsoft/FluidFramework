@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-live-schema-upgrade",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "Example application that demonstrates how to add a data object to a live container.",
 	"homepage": "https://fluidframework.com",
@@ -15,11 +15,9 @@
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:esnext",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -54,8 +52,8 @@
 		"style-loader": "^1.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/expect-puppeteer": "2.2.1",

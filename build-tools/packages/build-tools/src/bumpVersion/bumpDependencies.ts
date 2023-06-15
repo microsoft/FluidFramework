@@ -5,10 +5,10 @@
 import * as semver from "semver";
 
 import { FluidRepo } from "../common/fluidRepo";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { Context } from "./context";
-import { fatal, prereleaseSatisfies } from "./utils";
+import { fatal, prereleaseSatisfies, MonoRepoKind } from "./utils";
 import { VersionBag } from "./versionBag";
 
 /**

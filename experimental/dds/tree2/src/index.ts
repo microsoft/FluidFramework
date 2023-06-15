@@ -67,10 +67,6 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	EditBuilder,
-	ChangeRebaser,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -95,19 +91,13 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
+	MapTree,
 } from "./core";
 
 export {
 	Brand,
-	BrandedType,
 	Opaque,
 	extractFromOpaque,
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	ExtractFromOpaque,
-	isAny,
 	brand,
 	brandOpaque,
 	ValueFromBranded,
@@ -118,7 +108,6 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
-	Assume,
 } from "./util";
 
 export {
@@ -141,6 +130,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
+	nodeIdentifierKey,
+	nodeIdentifierSchema,
 } from "./domains";
 
 export {
@@ -149,9 +140,7 @@ export {
 	emptyField,
 	IdAllocator,
 	neverTree,
-	ModularChangeFamily,
 	ModularChangeset,
-	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
 	FieldEditor,
@@ -195,12 +184,11 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	Identifier,
+	NodeIdentifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -241,6 +229,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -252,15 +241,17 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	FieldGenerator,
+	TreeDataContext,
+	NodeExistenceState,
 } from "./feature-libraries";
 
 export {
-	identifierKey,
-	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeOptions,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
@@ -269,8 +260,17 @@ export {
 export type {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
+	SchemaValidationFunction,
 } from "./codec";
+export { noopValidator } from "./codec";
+export { typeboxValidator } from "./external-utilities";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+import * as InternalTypes from "./internal";
+export { InternalTypes };

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/odspsnapshotfetch-perftestapp",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -14,11 +14,9 @@
 	"main": "dist/expressApp.js",
 	"types": "dist/expressApp.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:esnext",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
@@ -48,9 +46,9 @@
 		"webpack-dev-server": "~4.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/express": "^4.11.0",
 		"@types/fs-extra": "^9.0.11",

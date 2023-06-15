@@ -14,6 +14,10 @@ const tscDependsOn = ["^tsc", "build:genver", "typetests:gen"];
  */
 module.exports = {
 	tasks: {
+		"ci:build": {
+			dependsOn: ["compile", "eslint", "ci:build:docs"],
+			script: false,
+		},
 		"full": {
 			dependsOn: ["build", "webpack"],
 			script: false,
@@ -41,11 +45,29 @@ module.exports = {
 		"build:esnext": tscDependsOn,
 		"build:test": [...tscDependsOn, "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
+		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
-		"webpack": ["^build:esnext"],
-		"clean": [],
+		"webpack": ["^tsc", "^build:esnext"],
+		"webpack:profile": ["^tsc", "^build:esnext"],
+		"clean": {
+			before: ["*"],
+		},
+
+		// alias for back compat
+		"build:full": {
+			dependsOn: ["full"],
+			script: false,
+		},
+		"build:compile": {
+			dependsOn: ["compile"],
+			script: false,
+		},
+		"build:commonjs": {
+			dependsOn: ["commonjs"],
+			script: false,
+		},
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
@@ -73,16 +95,11 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
+			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 			"server/tinylicious",
 		],
-
-		// Services
-		"services": {
-			directory: "server",
-			ignoredDirs: ["routerlicious", "tinylicious", "gitrest", "historian"],
-		},
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
@@ -122,6 +139,7 @@ module.exports = {
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
+			"@fluid-internal/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

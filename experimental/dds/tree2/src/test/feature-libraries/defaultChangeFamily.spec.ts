@@ -17,15 +17,13 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 	ReadonlyRepairDataStore,
-	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
 } from "../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
-	defaultChangeFamily,
-	defaultChangeFamily as family,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
@@ -33,9 +31,15 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
+	ModularChangeset,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
+import { noopValidator } from "../../codec";
+
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
+const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");
@@ -84,21 +88,15 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
-		assert(
-			revision === currentRevision,
-			"The repair data store should only ask for the current forest state",
-		);
-		return forest;
-	});
+	const repairStore = new ForestRepairDataStore(forest, defaultIntoDelta);
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
+			repairStore.capture(change, currentRevision);
 			const delta = defaultChangeFamily.intoDelta(change);
-			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();

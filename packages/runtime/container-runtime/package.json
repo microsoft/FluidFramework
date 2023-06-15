@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,13 +15,11 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
@@ -73,8 +71,6 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/garbage-collector": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
@@ -88,10 +84,10 @@
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.46.0",
-		"@fluid-tools/build-cli": "^0.17.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
-		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.4.1.0",
+		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
+		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.5.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -116,19 +112,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"EnumDeclaration_ContainerMessageType": {
-				"backCompat": false
-			},
-			"ClassDeclaration_ContainerRuntime": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ContainerRuntimeMessage": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IChunkedOp": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

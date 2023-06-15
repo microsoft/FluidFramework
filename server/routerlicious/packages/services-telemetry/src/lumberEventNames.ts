@@ -41,6 +41,7 @@ export enum LumberEventName {
 	ConnectDocumentOrdererConnection = "ConnectDocumentOrdererConnection",
 	CreateDocumentUpdateDocumentCollection = "CreateDocumentUpdateDocumentCollection",
 	CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
+	DisconnectDocument = "DisconnectDocument",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
 	TotalConnectionCount = "TotalConnectionCount",

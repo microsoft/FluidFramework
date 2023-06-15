@@ -37,8 +37,6 @@ export interface IGCSummaryTrackingData {
  * On summarize, it decides whether to write new state or re-use previous summary's state.
  */
 export class GCSummaryStateTracker {
-	// The current version of GC running.
-	public readonly currentGCVersion: GCVersion = this.configs.gcVersionInEffect;
 	// This is the version of GC data in the latest summary being tracked.
 	private latestSummaryGCVersion: GCVersion;
 
@@ -66,7 +64,8 @@ export class GCSummaryStateTracker {
 		this.wasGCRunInLatestSummary = wasGCRunInBaseSnapshot;
 		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
 		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion = this.configs.gcVersionInBaseSnapshot ?? this.currentGCVersion;
+		this.latestSummaryGCVersion =
+			this.configs.gcVersionInBaseSnapshot ?? this.configs.gcVersionInEffect;
 	}
 
 	/**
@@ -105,7 +104,8 @@ export class GCSummaryStateTracker {
 	public get doesSummaryStateNeedReset(): boolean {
 		return (
 			this.doesGCStateNeedReset ||
-			(this.configs.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
+			(this.configs.shouldRunGC &&
+				this.latestSummaryGCVersion !== this.configs.gcVersionInEffect)
 		);
 	}
 
@@ -287,7 +287,7 @@ export class GCSummaryStateTracker {
 		// If the summary was tracked by this client, it was the one that generated the summary in the first place.
 		// Update latest state from pending.
 		if (result.wasSummaryTracked) {
-			this.latestSummaryGCVersion = this.currentGCVersion;
+			this.latestSummaryGCVersion = this.configs.gcVersionInEffect;
 			this.latestSummaryData = this.pendingSummaryData;
 			this.pendingSummaryData = undefined;
 			this.updatedDSCountSinceLastSummary = 0;
@@ -316,7 +316,7 @@ export class GCSummaryStateTracker {
 		// in the snapshot cannot be interpreted correctly. Set everything to undefined except for deletedNodes
 		// because irrespective of GC versions, these nodes have been deleted and cannot be brought back. The
 		// deletedNodes info is needed to identify when these nodes are used.
-		if (getGCVersion(metadata) !== this.currentGCVersion) {
+		if (getGCVersion(metadata) !== this.configs.gcVersionInEffect) {
 			snapshotData = {
 				gcState: undefined,
 				tombstones: undefined,

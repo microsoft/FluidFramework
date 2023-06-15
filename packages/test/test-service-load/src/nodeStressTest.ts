@@ -13,7 +13,7 @@ import {
 	DriverEndpoint,
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { GcFailureExitCode, ILoadTestConfig } from "./testConfigFile";
 import {
 	createLogger,
@@ -328,7 +328,7 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
  */
 function setupTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	runId: number,
 	username?: string,
 ) {

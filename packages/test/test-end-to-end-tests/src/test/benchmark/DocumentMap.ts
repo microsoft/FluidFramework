@@ -21,20 +21,15 @@ import {
 } from "@fluidframework/test-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
+import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
-
-enum numberOfKeysInMap {
-	NotDefined = 0,
-	Medium = 1,
-	Large = 2,
-}
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+const maxMessageSizeInBytes = 1 * 1024 * 1024; // 1MB
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
 
@@ -55,13 +50,14 @@ function validateMapKeys(map: SharedMap, count: number, expectedSize: number): v
 export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
-	private readonly numberOfKeysInMap: numberOfKeysInMap = numberOfKeysInMap.NotDefined;
+	private readonly keysInMap: number;
+	private readonly sizeOfItemMb: number;
 	private _mainContainer: IContainer | undefined;
 	private dataObject1: ITestFluidObject | undefined;
 	private dataObject1map: SharedMap | undefined;
 	private fileName: string = "";
 	private containerUrl: IResolvedUrl | undefined;
-	public get logger(): ITelemetryLogger | undefined {
+	public get logger(): ITelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 	public get mainContainer(): IContainer | undefined {
@@ -71,15 +67,17 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	/**
 	 * Creates a new DocumentCreator using configuration parameters.
 	 * @param props - Properties for initializing the Document Creator.
-	 * @param numberOfKeysInMap - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
+		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
+		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
+		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
+		assert(isDocumentMapInfo(this.props.documentTypeInfo));
+
 		switch (this.props.documentType) {
-			case "MediumDocumentMap":
-				this.numberOfKeysInMap = numberOfKeysInMap.Medium;
-				break;
-			case "LargeDocumentMap":
-				this.numberOfKeysInMap = numberOfKeysInMap.Large;
+			case "DocumentMap":
+				this.keysInMap = this.props.documentTypeInfo.numberOfItems;
+				this.sizeOfItemMb = this.props.documentTypeInfo.itemSizeMb;
 				break;
 			default:
 				throw new Error("Invalid document type");
@@ -116,9 +114,9 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			"default",
 		);
 		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
-		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes * this.sizeOfItemMb);
 
-		setMapKeys(this.dataObject1map, this.numberOfKeysInMap, largeString);
+		setMapKeys(this.dataObject1map, this.keysInMap, largeString);
 		this.fileName = uuid();
 
 		await this._mainContainer.attach(
@@ -148,7 +146,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			defaultDataStoreId,
 		);
 		const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		validateMapKeys(dataObject2map, this.numberOfKeysInMap, maxMessageSizeInBytes);
+		validateMapKeys(dataObject2map, this.keysInMap, maxMessageSizeInBytes * this.sizeOfItemMb);
 
 		return container2;
 	}

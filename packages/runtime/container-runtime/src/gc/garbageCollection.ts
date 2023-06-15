@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LazyPromise, Timer, assert } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -17,6 +16,7 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -206,10 +206,7 @@ export class GarbageCollector implements IGarbageCollector {
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					if (
-						this.configs.gcVersionInBaseSnapshot !==
-						this.summaryStateTracker.currentGCVersion
-					) {
+					if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
 						return {
 							gcState: undefined,
 							tombstones: undefined,
@@ -453,7 +450,7 @@ export class GarbageCollector implements IGarbageCollector {
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -535,7 +532,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -648,7 +645,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		sweepReadyNodes: string[],
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] {
 		// Log events for objects that are ready to be deleted by sweep. This will give us data on sweep when
 		// its not enabled.
@@ -726,7 +723,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
 		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
@@ -827,10 +824,10 @@ export class GarbageCollector implements IGarbageCollector {
 	public getMetadata(): IGCMetadata {
 		return {
 			/**
-			 * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
+			 * If GC is enabled, the GC data is written using the GC version in effect and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
+			gcFeature: this.configs.gcEnabled ? this.configs.gcVersionInEffect : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed

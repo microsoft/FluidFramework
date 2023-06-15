@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.1.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -12,11 +12,9 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
-		"build:compile": "concurrently npm:tsc npm:build:webpack",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"clean": "rimraf \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
 		"eslint": "eslint src",
@@ -68,8 +66,8 @@
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-166151",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",

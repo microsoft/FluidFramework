@@ -51,6 +51,18 @@ export interface IMapMessageLocalMetadata {
 }
 
 /**
+ * Optional flags that configure options for sequence DDSs
+ */
+export interface SequenceOptions {
+	/**
+	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
+	 * other than "end"
+	 */
+	intervalStickinessEnabled: boolean;
+	[key: string]: boolean;
+}
+
+/**
  * A value factory is used to serialize/deserialize value types to a map
  * @alpha
  */
@@ -63,7 +75,7 @@ export interface IValueFactory<T> {
 	 * @returns The new value type
 	 * @alpha
 	 */
-	load(emitter: IValueOpEmitter, raw: any): T;
+	load(emitter: IValueOpEmitter, raw: any, options?: Partial<SequenceOptions>): T;
 
 	/**
 	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be

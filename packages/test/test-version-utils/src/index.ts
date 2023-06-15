@@ -21,6 +21,7 @@ export {
 export {
 	describeE2EDocs,
 	DocumentType,
+	DocumentTypeInfo,
 	DescribeE2EDocInfo,
 	BenchmarkType,
 	describeE2EDocsMemory,
@@ -28,6 +29,11 @@ export {
 	describeE2EDocRun,
 	getCurrentBenchmarkType,
 	isMemoryTest,
+	DocumentMapInfo,
+	DocumentMultipleDataStoresInfo,
+	assertDocumentTypeInfo,
+	isDocumentMapInfo,
+	isDocumentMultipleDataStoresInfo,
 } from "./describeE2eDocs";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {

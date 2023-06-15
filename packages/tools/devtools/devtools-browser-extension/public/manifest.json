@@ -1,14 +1,19 @@
 {
 	"manifest_version": 3,
-	"name": "Fluid Framework Devtools",
+	"name": "Fluid Framework Developer Tools (Preview)",
 	"description": "Devtools extension for viewing live data about your Fluid application.",
 	"author": "Microsoft",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"action": {
-		"default_icon": "images/Icon.png",
+		"default_icon": {
+			"16": "icons/icon_16.png",
+			"32": "icons/icon_32.png",
+			"48": "icons/icon_48.png",
+			"128": "icons/icon_128.png"
+		},
 		"default_popup": "popup/popup.html"
 	},
-	"permissions": ["activeTab", "scripting"],
+	"permissions": ["activeTab"],
 	"devtools_page": "devtools/devtools.html",
 	"background": {
 		"service_worker": "background/BackgroundScript.js"
@@ -18,5 +23,11 @@
 			"js": ["content/ContentScript.js"],
 			"matches": ["<all_urls>"]
 		}
-	]
+	],
+	"icons": {
+		"16": "icons/icon_16.png",
+		"32": "icons/icon_32.png",
+		"48": "icons/icon_48.png",
+		"128": "icons/icon_128.png"
+	}
 }

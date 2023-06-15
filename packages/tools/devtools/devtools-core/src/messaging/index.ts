@@ -32,6 +32,7 @@ export {
 } from "./container-devtools-messages";
 export {
 	ContainerList,
+	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,

@@ -32,6 +32,9 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: toolAbsolutePath
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
@@ -39,7 +42,7 @@ variables:
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - stage:
+  - stage: stress_tests_odsp
     displayName:  Stress tests - Odsp
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -66,7 +69,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
-  - stage:
+  - stage: stress_tests_tinylicious
     displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:

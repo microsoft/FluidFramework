@@ -61,7 +61,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	}
 
 	public get isAttached(): boolean {
-		return this.attached;
+		return this.routeContext.isAttached && this.attached;
 	}
 
 	public readonly absolutePath: string;
@@ -470,7 +470,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
-		assert(entry !== undefined, "pending blob entry not found for uploaded blob");
+		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		assert(
 			entry.status === PendingBlobStatus.OnlinePendingUpload ||
 				entry.status === PendingBlobStatus.OfflinePendingUpload,

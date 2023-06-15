@@ -13,6 +13,7 @@
 		"globalDbEnabled": false,
 		"expireAfterSeconds": -1,
 		"createCosmosDBIndexes": false,
+		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
 		"offlineWindowMs": 86400000,
 		"softDeletionEnabled": false,
@@ -41,7 +42,8 @@
 			"rdkafkaAutomaticConsume": true,
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
-		}
+		},
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -52,7 +54,8 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"kafkaCheckpointOnReprocessingOp": false
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -139,7 +142,9 @@
 			"maxMessages": 500
 		},
 		"getDeltasViaAlfred": true,
-		"restartOnCheckpointFailure": true
+		"verifyLastOpPersistence": false,
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true
 	},
 	"system": {
 		"httpServer": {

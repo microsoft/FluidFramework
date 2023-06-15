@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 export { UndoRedoManager, UndoRedoManagerCommitType } from "./undoRedoManager";

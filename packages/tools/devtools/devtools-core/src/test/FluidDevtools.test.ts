@@ -29,21 +29,21 @@ describe("FluidDevtools unit tests", () => {
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 
 		const container = createMockContainer();
-		const containerId = "test-container-id";
+		const containerKey = "test-container-key";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container,
 		};
 		devtools.registerContainerDevtools(containerProps);
 
 		expect(devtools.getAllContainerDevtools().length).to.equal(1);
 
-		const containerDevtools = devtools.getContainerDevtools(containerId);
+		const containerDevtools = devtools.getContainerDevtools(containerKey);
 		expect(containerDevtools).to.not.be.undefined;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.false;
 
-		devtools.closeContainerDevtools(containerId);
+		devtools.closeContainerDevtools(containerKey);
 
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -60,9 +60,9 @@ describe("FluidDevtools unit tests", () => {
 		expect(devtools.disposed).to.be.true;
 
 		const container = createMockContainer();
-		const containerId = "test-container-id";
+		const containerKey = "test-container-key";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container,
 		};
 
@@ -70,31 +70,31 @@ describe("FluidDevtools unit tests", () => {
 		expect(() => devtools.registerContainerDevtools(containerProps)).to.throw(
 			useAfterDisposeErrorText,
 		);
-		expect(() => devtools.closeContainerDevtools(containerId)).to.throw(
+		expect(() => devtools.closeContainerDevtools(containerKey)).to.throw(
 			useAfterDisposeErrorText,
 		);
 	});
 
-	it("Registering a duplicate Container ID throws", () => {
+	it("Registering a duplicate Container key throws", () => {
 		const devtools = FluidDevtools.initialize();
 
-		const containerId = "test-container-id";
+		const containerKey = "test-container-key";
 
 		const container1 = createMockContainer();
 		const container1Props: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container: container1,
 		};
 		devtools.registerContainerDevtools(container1Props);
 
 		const container2 = createMockContainer();
 		const container2Props: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container: container2,
 		};
 
 		expect(() => devtools.registerContainerDevtools(container2Props)).to.throw(
-			getContainerAlreadyRegisteredErrorText(containerId),
+			getContainerAlreadyRegisteredErrorText(containerKey),
 		);
 	});
 

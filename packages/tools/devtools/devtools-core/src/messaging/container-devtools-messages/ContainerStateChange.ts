@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { ContainerStateMetadata } from "../../ContainerMetadata";
 import { IDevtoolsMessage } from "../Messages";
 
@@ -25,7 +25,7 @@ export namespace ContainerStateChange {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId {
+	export interface MessageData extends HasContainerKey {
 		/**
 		 * Updated Container state metadata.
 		 */

@@ -3,29 +3,31 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { useId } from "@fluentui/react-hooks";
+
+import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
+import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
+
 import {
+	ContainerKey,
 	ContainerList,
-	ContainerMetadata,
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
+	HasContainerKey,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-
-import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
-import { FluentProvider, Button } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
 	MenuItem,
 	MenuSection,
 	LandingView,
+	SettingsView,
 	Waiting,
 } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
@@ -51,16 +53,11 @@ const getContainerListMessage = GetContainerList.createMessage();
  * Indicates that the currently selected menu option is a particular Container.
  * @see {@link MenuSection} for other possible options.
  */
-interface ContainerMenuSelection {
+interface ContainerMenuSelection extends HasContainerKey {
 	/**
 	 * String to differentiate between different types of options in menu.
 	 */
 	type: "containerMenuSelection";
-
-	/**
-	 * The containerId for the selected menu option that this object represents.
-	 */
-	containerId: string;
 }
 
 /**
@@ -75,12 +72,23 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Settings view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface SettingsMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "settingsMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
- * is selected, and has a 'containerId' property to indicate which Container.
+ * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
 
 // #region Styles definitions
 
@@ -129,10 +137,15 @@ const contentViewStyles: IStackItemStyles = {
 const menuStyles: IStackItemStyles = {
 	root: {
 		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		borderRight: `2px solid`,
-		minWidth: 150,
+		"display": "flex",
+		"flexDirection": "column",
+		"borderRight": `2px solid`,
+		"minWidth": "150px",
+		"maxHeight": "350px",
+		// Ensures the last div/component is anchored to the bottom.
+		"> :last-child": {
+			marginTop: "auto",
+		},
 	},
 };
 
@@ -149,7 +162,10 @@ export function DevtoolsView(): React.ReactElement {
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
+	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
 
+	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -157,7 +173,7 @@ export function DevtoolsView(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
 				return true;
@@ -183,18 +199,51 @@ export function DevtoolsView(): React.ReactElement {
 		};
 	}, [messageRelay, setSupportedFeatures]);
 
+	// Manage the query timeout
+	React.useEffect(() => {
+		if (supportedFeatures === undefined) {
+			// If we have queried for the supported feature list but have not received
+			// a response yet, queue a timer.
+			const queryTimer = setTimeout(() => {
+				setQueryTimedOut(true);
+			}, queryTimeoutInMilliseconds);
+			return (): void => {
+				clearTimeout(queryTimer);
+			};
+		}
+	}, [supportedFeatures, setQueryTimedOut]);
+
+	function retryQuery(): void {
+		setQueryTimedOut(false);
+		messageRelay.postMessage(getSupportedFeaturesMessage);
+	}
+
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
+		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
-				<Waiting />
+				queryTimedOut ? (
+					<>
+						<div>Devtools not found. Timeout exceeded.</div>
+						<Tooltip content="Retry searching for Devtools" relationship="description">
+							<Button onClick={retryQuery}>Search again</Button>
+						</Tooltip>
+					</>
+				) : (
+					<Waiting />
+				)
 			) : (
-				<_DevtoolsView supportedFeatures={supportedFeatures} />
+				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
 			)}
 		</FluentProvider>
 	);
 }
 
 interface _DevtoolsViewProps {
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
+
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -205,11 +254,10 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures } = props;
+	const { supportedFeatures, setTheme } = props;
 
-	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -217,7 +265,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerList.MessageType]: (untypedMessage) => {
+			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
@@ -251,7 +299,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} />
+			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
 		</Stack>
 	);
 }
@@ -270,14 +318,19 @@ interface ViewProps {
 	/**
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
+
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers } = props;
+	const { menuSelection, containers, setTheme } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
@@ -286,13 +339,18 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
-			const container = containers?.find((x) => x.id === menuSelection.containerId);
+			const container: ContainerKey | undefined = containers?.find(
+				(containerKey) => containerKey === menuSelection.containerKey,
+			);
 			view =
 				container === undefined ? (
 					<div>Could not find a Devtools instance for that container.</div>
 				) : (
-					<ContainerDevtoolsView containerId={menuSelection.containerId} />
+					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
+			break;
+		case "settingsMenuSelection":
+			view = <SettingsView setTheme={setTheme} />;
 			break;
 		default:
 			view = <LandingView />;
@@ -336,7 +394,7 @@ interface MenuProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
 }
 
 /**
@@ -345,12 +403,16 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
-	function onContainerClicked(id: string): void {
-		setSelection({ type: "containerMenuSelection", containerId: id });
+	function onContainerClicked(containerKey: ContainerKey): void {
+		setSelection({ type: "containerMenuSelection", containerKey });
 	}
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+	}
+
+	function onSettingsClicked(): void {
+		setSelection({ type: "settingsMenuSelection" });
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -361,7 +423,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			containers={containers}
 			currentContainerSelection={
 				currentSelection?.type === "containerMenuSelection"
-					? currentSelection.containerId
+					? currentSelection.containerKey
 					: undefined
 			}
 			selectContainer={onContainerClicked}
@@ -380,10 +442,20 @@ function Menu(props: MenuProps): React.ReactElement {
 			</MenuSection>,
 		);
 	}
-
 	return (
 		<Stack.Item styles={menuStyles}>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
+			<div
+				style={{
+					minWidth: "250px",
+					display: "flex",
+					cursor: "pointer",
+				}}
+				onClick={onSettingsClicked}
+			>
+				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
+				<Settings20Regular />
+			</div>
 		</Stack.Item>
 	);
 }
@@ -395,19 +467,19 @@ interface ContainersMenuSectionProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
 
 	/**
-	 * The currently selected Container ID, if one is currently selected.
+	 * The currently selected Container key, if one is currently selected.
 	 */
-	currentContainerSelection: string | undefined;
+	currentContainerSelection: ContainerKey | undefined;
 
 	/**
-	 * Updates the Container selection to the specified ID.
+	 * Updates the Container selection to the specified key.
 	 *
 	 * @remarks Passing `undefined` clears the selection.
 	 */
-	selectContainer(containerId: string | undefined): void;
+	selectContainer(containerKey: ContainerKey | undefined): void;
 }
 
 /**
@@ -425,15 +497,16 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
+		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((container) => (
+				{containers.map((containerKey: string) => (
 					<MenuItem
-						key={container.id}
-						isActive={currentContainerSelection === container.id}
-						text={container.nickname ?? container.id}
+						key={containerKey}
+						isActive={currentContainerSelection === containerKey}
+						text={containerKey}
 						onClick={(event): void => {
-							selectContainer(`${container.id}`);
+							selectContainer(`${containerKey}`);
 						}}
 					/>
 				))}
@@ -453,11 +526,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 }
 
 /**
- * A refresh button to retrive the latest list of containers.
+ * A refresh button to retrieve the latest list of containers.
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const refreshButtonTooltipId = useId("refresh-container-list-button-tooltip");
+
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
 		border: "none",
@@ -470,13 +543,13 @@ function RefreshButton(): React.ReactElement {
 	}
 
 	return (
-		<TooltipHost content="Refresh Containers list" id={refreshButtonTooltipId}>
+		<Tooltip content="Refresh Containers list" relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
 				aria-label="Refresh Containers list"
 			></Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 }

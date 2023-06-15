@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Accordion, AccordionProps } from "./Accordion";
+export { LabelCellLayout, LabelCellLayoutProps } from "./LabelCellLayout";

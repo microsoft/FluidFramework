@@ -25,14 +25,13 @@ import {
 	FieldKinds,
 	valueSymbol,
 	typeNameSymbol,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
-	EditableField,
 	getPrimaryField,
 	SchemaBuilder,
 	FieldKindTypes,
 	TypedSchemaCollection,
 	GlobalFieldSchema,
+	UnwrappedEditableField,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -176,37 +175,42 @@ describe("editable-tree: editing", () => {
 		}
 		maybePerson.address.street = "unknown";
 
-		// can use strict types to access the data
-		assert.equal((maybePerson.address.phones as Phones)[0], "+491234567890");
-
-		assert(isWritableArrayLike(maybePerson.address.phones));
-		assert.equal(maybePerson.address.phones[0], "+491234567890");
-		assert.equal(Array.isArray(maybePerson.address.phones), false);
-		maybePerson.address.phones[0] = "+1234567890";
-
-		// can still use the EditableTree API at children
 		{
-			const phones: EditableField = maybePerson.address.phones as EditableField;
-			assert.equal(
-				phones.fieldSchema.kind.identifier,
-				getPrimaryField(phonesSchema)?.schema.kind.identifier,
-			);
-			assert.deepEqual(phones.fieldSchema.types, getPrimaryField(phonesSchema)?.schema.types);
-			// can use the contextually typed API again
-			phones[1] = {
-				[typeNameSymbol]: complexPhoneSchema.name,
-				prefix: "+1",
-				number: "2345",
-			} as unknown as ComplexPhone;
+			// TODO: fix typing of property access in EditableTree (broken by assignment support) and remove this "as"
+			const phones = maybePerson.address.phones as UnwrappedEditableField;
+			assert(isEditableField(phones));
+
+			// can use strict types to access the data
+			assert.equal((phones as Phones)[0], "+491234567890");
+
+			assert.equal(phones[0], "+491234567890");
+			assert.equal(Array.isArray(phones), false);
+			phones[0] = "+1234567890";
+
+			// can still use the EditableTree API at children
+			{
+				assert.equal(
+					phones.fieldSchema.kind.identifier,
+					getPrimaryField(phonesSchema)?.schema.kind.identifier,
+				);
+				assert.deepEqual(
+					phones.fieldSchema.types,
+					getPrimaryField(phonesSchema)?.schema.types,
+				);
+				// can use the contextually typed API again
+				phones[1] = {
+					[typeNameSymbol]: complexPhoneSchema.name,
+					prefix: "+1",
+					number: "2345",
+				} as unknown as ComplexPhone;
+			}
 		}
 
 		const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;
 		maybePerson.address[globalPhonesKey] = ["111"];
-		// TypeScript can't this
-		// assert(isWritableArrayLike(maybePerson.address[globalField]));
-		// maybePerson.address[globalField][1] = "888";
-		const globalPhones = maybePerson.address[globalPhonesKey];
-		assert(isWritableArrayLike(globalPhones));
+		// TODO: fix typing of property access in EditableTree (broken by assignment support) and remove this "as"
+		const globalPhones = maybePerson.address[globalPhonesKey] as UnwrappedEditableField;
+		assert(isEditableField(globalPhones));
 		globalPhones[0] = "222";
 		globalPhones[1] = "333";
 		// explicitly check and delete the global field as `clone` (used below)

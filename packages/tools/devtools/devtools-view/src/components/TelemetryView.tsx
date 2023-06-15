@@ -5,8 +5,10 @@
 import { IStackTokens, Stack, StackItem } from "@fluentui/react";
 import {
 	tokens,
+	Button,
 	Combobox,
 	ComboboxProps,
+	CounterBadge,
 	DataGridBody,
 	DataGridRow,
 	DataGrid,
@@ -22,6 +24,7 @@ import {
 import React, { useState, useRef } from "react";
 import SplitPane from "react-split-pane";
 import {
+	DevtoolsDisposed,
 	GetTelemetryHistory,
 	handleIncomingMessage,
 	InboundHandlers,
@@ -59,24 +62,38 @@ export function TelemetryView(): React.ReactElement {
 	const [telemetryEvents, setTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
+	/**
+	 * The inboundMessageHandlers update `bufferedEvents` with incoming events.
+	 * If `telemetryEvents` has not reached its capacity (`maxEventsToDisplay`),
+	 * `bufferedEvents` transfers events to `telemetryEvents` in a FIFO (First In First Out) manner.
+	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
+	 */
+	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
+	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[TelemetryEvent.MessageType]: (untypedMessage) => {
+			[TelemetryEvent.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				setTelemetryEvents((currentEvents) => [
+				setBufferedEvents((currentBuffer) => [
 					message.data.event,
-					...(currentEvents ?? []),
+					...(currentBuffer ?? []),
 				]);
 				return true;
 			},
-			[TelemetryHistory.MessageType]: (untypedMessage) => {
+			[TelemetryHistory.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryHistory.Message;
 				setTelemetryEvents(message.data.contents);
+				return true;
+			},
+			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
+				// Require latest feature state to ensure we aren't displaying stale data
+				setBufferedEvents([]);
+				setTelemetryEvents([]);
 				return true;
 			},
 		};
@@ -96,31 +113,79 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
+	React.useEffect(() => {
+		if (
+			telemetryEvents &&
+			bufferedEvents.length > 0 &&
+			telemetryEvents.length < maxEventsToDisplay
+		) {
+			const newEvents = bufferedEvents.slice(0, maxEventsToDisplay - telemetryEvents.length);
+			const remainingBuffer = bufferedEvents.slice(
+				maxEventsToDisplay - telemetryEvents.length,
+			);
+			setTelemetryEvents([...newEvents, ...telemetryEvents]);
+			setSelectedIndex((prevIndex) => {
+				if (prevIndex !== undefined) {
+					return prevIndex + newEvents.length;
+				}
+			});
+			setBufferedEvents(remainingBuffer);
+		}
+	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay, selectedIndex]);
+
+	const handleLoadMore = (): void => {
+		const newEvents =
+			bufferedEvents.length > maxEventsToDisplay
+				? bufferedEvents.slice(0, maxEventsToDisplay)
+				: [...bufferedEvents];
+
+		// Add new events to telemetryEvents
+		let refreshedList = [...newEvents, ...(telemetryEvents ?? [])];
+		// If the length of telemetryEvents exceeds maxEventsToDisplay, truncate oldest events
+		if (refreshedList.length > maxEventsToDisplay) {
+			refreshedList = refreshedList.slice(0, maxEventsToDisplay);
+		}
+		setTelemetryEvents(refreshedList);
+		setSelectedIndex((prevIndex) => {
+			if (prevIndex !== undefined) {
+				return prevIndex + newEvents.length;
+			}
+		});
+		// Update bufferedEvents to remove the events just moved to telemetryEvents
+		const remainingBuffer = bufferedEvents.slice(newEvents.length);
+		setBufferedEvents(remainingBuffer);
+	};
+
 	return (
 		<Stack>
 			<StackItem>
+				<ListLengthSelection
+					currentLimit={maxEventsToDisplay}
+					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
+				/>
+			</StackItem>
+			<StackItem style={{ height: "95vh" }}>
+				<div style={{ width: "100%", flexDirection: "row" }}>
+					{bufferedEvents.length > 0 ? (
+						<div style={{ marginLeft: "6px" }}>
+							<CounterBadge size="large" color="brand">
+								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
+							</CounterBadge>
+							&nbsp; Newer telemetry events received.
+						</div>
+					) : (
+						<> {`You're up to date!`} </>
+					)}
+				</div>
+				<Button style={{ margin: "10px" }} onClick={handleLoadMore}>
+					Refresh
+				</Button>
 				{telemetryEvents !== undefined ? (
-					<>
-						<table>
-							<tr>
-								<td>
-									<h3 style={{ marginLeft: "6px" }}>
-										Telemetry events (newest first):
-									</h3>
-								</td>
-								<td>
-									<ListLengthSelection
-										currentLimit={maxEventsToDisplay}
-										onChangeSelection={(key): void =>
-											setMaxEventsToDisplay(key)
-										}
-									/>
-								</td>
-							</tr>
-						</table>
-						<br />
-						<FilteredTelemetryView telemetryEvents={telemetryEvents} />
-					</>
+					<FilteredTelemetryView
+						telemetryEvents={telemetryEvents}
+						setIndex={setSelectedIndex}
+						index={selectedIndex}
+					/>
 				) : (
 					<Waiting label={"Waiting for Telemetry events"} />
 				)}
@@ -197,10 +262,18 @@ interface FilteredTelemetryViewProps {
 	 *
 	 */
 	telemetryEvents: ITimestampedTelemetryEvent[];
+	/**
+	 * A setter use to update the selected row when filtering or refreshing event data.
+	 */
+	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+	/**
+	 * The selected index/row in the table. Undefined means no row is selected.
+	 */
+	index: number | undefined;
 }
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
-	const { telemetryEvents } = props;
+	const { telemetryEvents, setIndex, index } = props;
 	const [selectedCategory, setSelectedCategory] = useState("");
 	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
@@ -262,10 +335,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		]);
 		// Initially matching options are all options
 		setMatchingOptions(eventNameOptionsRef.current);
-
 		const filtered = getFilteredEvents();
 		setFilteredTelemetryEvents(filtered);
-	}, [telemetryEvents, selectedCategory, customSearch]);
+		if (filtered !== undefined && index !== undefined) {
+			setIndex(index + (telemetryEvents.length - filtered?.length));
+		}
+	}, [telemetryEvents, selectedCategory, customSearch, index, setIndex]);
 
 	/**
 	 * Gets list of valid categories for displayed telemetry events.
@@ -433,6 +508,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					position: "relative",
 					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
 				}}
+				pane1Style={{ overflowY: "scroll" }}
 				pane2Style={{ margin: "10px" }}
 				resizerStyle={{
 					borderRight: `2px solid ${tokens.colorNeutralForeground2}`,
@@ -447,6 +523,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					size="extra-small"
 					resizableColumns
 					selectionMode="single"
+					subtleSelection
+					onSelectionChange={(e, data): void => {
+						// Set the index to the appropriate row index in the table.
+						setIndex(Number([...data.selectedItems][0]));
+					}}
+					selectedItems={[index !== undefined && index > 0 ? index : 0]}
 					columnSizingOptions={{
 						category: {
 							minWidth: 110,

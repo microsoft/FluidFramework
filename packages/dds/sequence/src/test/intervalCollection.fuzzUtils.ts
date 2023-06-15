@@ -10,7 +10,7 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalType } from "../intervalCollection";
+import { IntervalStickiness, IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 
 export interface RangeSpec {
@@ -39,6 +39,7 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	// what happened to an interval over the course of its lifetime based on the history
 	// file, which is useful for debugging test failures.
 	id: string;
+	stickiness: IntervalStickiness;
 }
 
 export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {

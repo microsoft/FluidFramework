@@ -23,8 +23,9 @@ import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../compo
 import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";
 
-const CONTAINERID = "test-container-id";
-const LABEL = "test-node-key";
+const testContainerKey = "test-container-key";
+const testFluidObjectId = "test-fluid-object-id";
+const testLabel = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
@@ -41,7 +42,7 @@ describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
 	it("UnknownFluidObjectView", async (): Promise<void> => {
 		const input: FluidUnknownObjectNode = {
-			fluidObjectId: "test-fluid-object-id",
+			fluidObjectId: testFluidObjectId,
 			typeMetadata: "test-fluid-object-type",
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};
@@ -65,7 +66,7 @@ describe("VisualTreeView component tests", () => {
 					return {
 						type: DataVisualization.MessageType,
 						data: {
-							CONTAINERID,
+							containerKey: testContainerKey,
 							visualization,
 						},
 					};
@@ -105,7 +106,7 @@ describe("VisualTreeView component tests", () => {
 					nodeKind: VisualNodeKind.TreeNode,
 				},
 				"test-handle": {
-					fluidObjectId: CONTAINERID,
+					fluidObjectId: testFluidObjectId,
 					typeMetadata: "Fluid Handle",
 					nodeKind: VisualNodeKind.FluidHandleNode,
 				},
@@ -115,7 +116,7 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView containerId={CONTAINERID} label={LABEL} node={treeData} />,
+				<FluidTreeView containerKey={testContainerKey} label={testLabel} node={treeData} />,
 			</MessageRelayContext.Provider>,
 		);
 

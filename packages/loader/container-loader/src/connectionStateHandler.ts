@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLogger,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
@@ -26,12 +27,13 @@ const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		error?: IAnyDriverError,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -56,7 +58,7 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: string): void;
+	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
 }
 
 export function createConnectionStateHandler(
@@ -138,8 +140,8 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: string) {
-		return this.pimpl.receivedDisconnectEvent(reason);
+	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
+		return this.pimpl.receivedDisconnectEvent(reason, error);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -157,8 +159,9 @@ class ConnectionStateHandlerPassThrough
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		error?: IAnyDriverError,
 	) {
-		return this.inputs.connectionStateChanged(value, oldState, reason);
+		return this.inputs.connectionStateChanged(value, oldState, reason, error);
 	}
 	public shouldClientJoinWrite() {
 		return this.inputs.shouldClientJoinWrite();
@@ -200,6 +203,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		error?: IAnyDriverError,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -235,7 +239,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 			default:
 		}
 		this._connectionState = value;
-		this.inputs.connectionStateChanged(value, oldState, reason);
+		this.inputs.connectionStateChanged(value, oldState, reason, error);
 	}
 
 	private readonly transitionToConnectedState = () => {
@@ -462,9 +466,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: string) {
+	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason);
+		this.setConnectionState(ConnectionState.Disconnected, reason, error);
 	}
 
 	private shouldWaitForJoinSignal() {
@@ -507,7 +511,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this._pendingClientId = details.clientId;
 
 		// IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
-		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState);
+		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState, details.reason);
 
 		// Check if we need to wait for join op/signal, and if we need to wait for leave op from previous connection.
 		// Pending clientId could have joined already (i.e. join op/signal already processed):
@@ -527,11 +531,16 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// else - We are waiting for Leave op still, do nothing for now, we will transition to Connected later
 	}
 
-	private setConnectionState(value: ConnectionState.Disconnected, reason: string): void;
+	private setConnectionState(
+		value: ConnectionState.Disconnected,
+		reason: string,
+		error?: IAnyDriverError,
+	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
 		reason?: string,
+		error?: IAnyDriverError,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -592,7 +601,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 
 		// Report transition before we propagate event across layers
-		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
+		this.handler.connectionStateChanged(this._connectionState, oldState, reason, error);
 	}
 
 	// Helper method to switch between quorum and audience.

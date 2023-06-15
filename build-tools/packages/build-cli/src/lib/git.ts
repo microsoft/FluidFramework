@@ -94,7 +94,7 @@ export class Repository {
 	 */
 	public async getMergeBase(branch: string, remote: string, localRef = "HEAD"): Promise<string> {
 		const base = await this.gitClient
-			.fetch("--all") // make sure we have the latest remote refs
+			.fetch(["--all"]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}
@@ -103,7 +103,7 @@ export class Repository {
 		const divergedAt = await this.getMergeBase(ref, remote);
 		// Now we can find which files we added
 		const added = await this.gitClient
-			.fetch() // make sure we have the latest remote refs
+			.fetch(["--all"]) // make sure we have the latest remote refs
 			.diff(["--name-only", "--diff-filter=d", divergedAt]);
 
 		const files = added
@@ -142,13 +142,14 @@ export class Repository {
 		const files = await this.getChangedFilesSinceRef(ref, remote);
 		const dirs = await this.getChangedDirectoriesSinceRef(ref, remote);
 
-		const changedPackages = [
-			...new Set(
-				dirs
-					.map((dir) => readPkgUp.sync({ cwd: dir })?.packageJson.name)
-					.filter((name): name is string => name !== undefined),
-			),
-		]
+		const changedPackageNames = dirs
+			.map((dir) => {
+				const cwd = path.resolve(context.repo.resolvedRoot, dir);
+				return readPkgUp.sync({ cwd })?.packageJson.name;
+			})
+			.filter((name): name is string => name !== undefined);
+
+		const changedPackages = [...new Set(changedPackageNames)]
 			.map((name) => context.fullPackageMap.get(name))
 			.filter((pkg): pkg is Package => pkg !== undefined);
 

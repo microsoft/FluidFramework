@@ -103,7 +103,7 @@ async function main() {
 	const resolvedRoot = await getResolvedFluidRoot();
 
 	// Load the package
-	const packages = new FluidRepo(resolvedRoot, false).packages;
+	const packages = new FluidRepo(resolvedRoot).packages;
 	timer.time("Package scan completed");
 
 	try {

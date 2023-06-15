@@ -11,7 +11,7 @@ import {
 	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	handleIncomingMessage,
-	HasContainerId,
+	HasContainerKey,
 	HasFluidObjectId,
 	FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
@@ -27,13 +27,13 @@ const loggingContext = "EXTENSION(HandleView)";
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId, HasLabel {}
+export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId, HasLabel {}
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
-	const { containerId, fluidObjectId, label } = props;
+	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
@@ -43,10 +43,10 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		 * Handlers for inbound message related to Data View.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DataVisualization.MessageType]: (untypedMessage) => {
+			[DataVisualization.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DataVisualization.Message;
 				if (
-					message.data.containerId === containerId &&
+					message.data.containerKey === containerKey &&
 					message.data.fluidObjectId === fluidObjectId
 				) {
 					setVisualTree(message.data.visualization);
@@ -71,7 +71,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		// POST Request for FluidObjectNode.
 		messageRelay.postMessage(
 			GetDataVisualization.createMessage({
-				containerId,
+				containerKey,
 				fluidObjectId,
 			}),
 		);
@@ -80,12 +80,12 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
+	}, [containerKey, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
 		return <TreeItem header={header} />;
 	}
 
-	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;
+	return <TreeDataView containerKey={containerKey} label={label} node={visualTree} />;
 }
