@@ -20,17 +20,11 @@ export enum ThemeOption {
 	Dark = "Dark",
 	HighContrast = "High Contrast",
 }
-// interface SettingsProps {
-// 	/**
-// 	 * Sets the theme of the DevTools app (light, dark, high contrast)
-// 	 */
-// 	setTheme(newTheme: { name: string; theme: Theme }): void;
-// }
+
 /**
  * Settings page for the debugger
  */
 export function SettingsView(): React.ReactElement {
-	// const { setTheme } = props;
 	const { setTheme } = React.useContext(ThemeContext) ?? {};
 	function handleThemeChange(
 		event,

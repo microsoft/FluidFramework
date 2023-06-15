@@ -5,7 +5,7 @@
 import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
+import { Button, FluentProvider, Tooltip } from "@fluentui/react-components";
 import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
@@ -236,7 +236,7 @@ export function DevtoolsView(): React.ReactElement {
 						<Waiting />
 					)
 				) : (
-					<_DevtoolsView theme={selectedTheme} supportedFeatures={supportedFeatures} />
+					<_DevtoolsView supportedFeatures={supportedFeatures} />
 				)}
 			</FluentProvider>
 		</ThemeContext.Provider>
@@ -244,11 +244,6 @@ export function DevtoolsView(): React.ReactElement {
 }
 
 interface _DevtoolsViewProps {
-	/**
-	 * Object representing the current page theme.
-	 */
-	theme: { name: string; theme: Theme };
-
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -259,7 +254,7 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures, theme } = props;
+	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
@@ -304,7 +299,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} theme={theme} />
+			<View menuSelection={menuSelection} containers={containers} />
 		</Stack>
 	);
 }
@@ -313,11 +308,6 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
  * {@link View} input props.
  */
 interface ViewProps {
-	/**
-	 * Object representing the current page theme.
-	 */
-	theme: { name: string; theme: Theme };
-
 	/**
 	 * The current menu selection.
 	 *
@@ -335,12 +325,12 @@ interface ViewProps {
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers, theme } = props;
+	const { menuSelection, containers } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
-			view = <TelemetryView theme={theme} />;
+			view = <TelemetryView />;
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
