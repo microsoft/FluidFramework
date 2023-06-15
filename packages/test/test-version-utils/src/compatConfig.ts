@@ -280,7 +280,6 @@ export async function mochaGlobalSetup() {
 	for (const p of installP) {
 		try {
 			const pkg = await p;
-			console.log(pkg?.modulePath, pkg?.version);
 		} catch (e) {
 			error = e;
 		}
