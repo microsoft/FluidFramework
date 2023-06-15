@@ -16,11 +16,8 @@ import {
 	ICache,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import {
-	BaseTelemetryProperties,
-	LumberEventName,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -56,8 +53,18 @@ export interface ITenantDocument {
 	scheduledDeletionTime?: string;
 }
 
+enum FetchTenantKeyMetric {
+	RetrievedFromCache = "retreivedFromCache",
+	NotFoundInCache = "notFoundInCache",
+	SetKeyInCacheSuccess = "settingKeyInCacheSucceeded",
+	SetKeyInCacheFailure = "settingKeyInCacheFailed",
+}
+
 export class TenantManager {
 	private readonly isCacheEnabled;
+	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(FetchTenantKeyMetric),
+	);
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly collectionName: string,
@@ -68,6 +75,13 @@ export class TenantManager {
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
+		setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			Lumberjack.info("Fetch tenant key api counters", this.apiCounter.getCounters());
+			this.apiCounter.resetAllCounters();
+		}, 60 * 1000);
 	}
 
 	/**
@@ -333,11 +347,6 @@ export class TenantManager {
 			includeDisabledTenant,
 			bypassCache,
 		};
-		const fetchTenantKeyMetric = Lumberjack.newLumberMetric(
-			LumberEventName.RiddlerFetchTenantKey,
-		);
-		let uncaughtException;
-		let retrievedFromCache = false;
 
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
@@ -345,8 +354,10 @@ export class TenantManager {
 				const cachedKey = await this.getKeyFromCache(tenantId);
 
 				if (cachedKey) {
-					retrievedFromCache = true;
+					this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrievedFromCache);
 					return this.decryptCachedKeys(cachedKey);
+				} else {
+					this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
 				}
 			}
 
@@ -394,10 +405,12 @@ export class TenantManager {
 					key2: encryptedTenantKey2,
 				};
 				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-				fetchTenantKeyMetric.setProperty(
-					"settingKeyInCacheSucceeded",
-					setKeyInCacheSucceeded,
-				);
+
+				if (setKeyInCacheSucceeded) {
+					this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheSuccess);
+				} else {
+					this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheFailure);
+				}
 			}
 
 			return {
@@ -405,18 +418,8 @@ export class TenantManager {
 				key2: tenantKey2,
 			};
 		} catch (error) {
-			uncaughtException = error;
+			Lumberjack.error(`Error trying to retrieve tenant keys.`, error);
 			throw error;
-		} finally {
-			fetchTenantKeyMetric.setProperty("retrievedFromCache", retrievedFromCache);
-			if (!uncaughtException) {
-				fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
-			} else {
-				fetchTenantKeyMetric.error(
-					`Error trying to retrieve tenant keys.`,
-					uncaughtException,
-				);
-			}
 		}
 	}
 
@@ -670,7 +673,6 @@ export class TenantManager {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		try {
 			await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
-			Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
 			return true;
 		} catch (error) {
 			Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);

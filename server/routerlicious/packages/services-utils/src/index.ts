@@ -42,3 +42,4 @@ export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
