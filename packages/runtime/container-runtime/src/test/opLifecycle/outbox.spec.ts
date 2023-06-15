@@ -207,7 +207,7 @@ describe("Outbox", () => {
 				localOpMetadata: unknown,
 				opMetadata: Record<string, unknown> | undefined,
 			) => {},
-			reentrancy: () => false,
+			opReentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 
