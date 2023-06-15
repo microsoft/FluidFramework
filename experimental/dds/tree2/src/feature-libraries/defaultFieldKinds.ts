@@ -521,14 +521,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						},
 					};
 				} else if (over.fieldChange.newContent !== undefined) {
+					const overContent = over.fieldChange.newContent;
 					const rebasingOverRollback =
 						overIntention === change.deletedBy.revision &&
 						over.fieldChange.id.localId === change.deletedBy.localId;
 					const rebasingOverUndo =
-						"revert" in over.fieldChange.newContent &&
-						(over.fieldChange.newContent.changeId.revision ?? overTagged.revision) ===
-							change.deletedBy.revision &&
-						over.fieldChange.newContent.changeId.localId === change.deletedBy.localId;
+						"revert" in overContent &&
+						overContent.changeId.revision === change.deletedBy.revision &&
+						overContent.changeId.localId === change.deletedBy.localId;
 					if (rebasingOverRollback || rebasingOverUndo) {
 						// Over is reviving the node that change.childChange is referring to.
 						// Rebase change.childChange and remove deletedBy
@@ -536,7 +536,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						return {
 							childChange: rebaseChild(
 								change.childChange,
-								over.fieldChange.newContent.changes,
+								overContent.changes,
 								NodeExistenceState.Alive,
 							),
 						};
