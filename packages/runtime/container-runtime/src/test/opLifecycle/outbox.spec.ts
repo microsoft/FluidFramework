@@ -169,6 +169,7 @@ describe("Outbox", () => {
 			.reduce((a, b) => a + b, 0),
 		referenceSequenceNumber:
 			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+		hasReentrantOps: false,
 	});
 
 	const DefaultCompressionOptions = {
@@ -205,7 +206,7 @@ describe("Outbox", () => {
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
 			replayOps: () => {},
 			reentrancy: () => false,
-			closeContainer: (error: ICriticalContainerError) => {},
+			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 
 	beforeEach(() => {

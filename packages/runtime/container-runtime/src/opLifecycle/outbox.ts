@@ -66,6 +66,7 @@ export class Outbox {
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
+	private batchRebasesToReport = 5;
 
 	/**
 	 * Track the number of ops which were detected to have a mismatched
@@ -210,17 +211,20 @@ export class Outbox {
 			throw error;
 		}
 
-		this.flushInternal(this.attachFlowBatch.popBatch());
-		this.flushInternal(this.mainBatch.popBatch());
+		if (!this.attachFlowBatch.empty) {
+			this.flushInternal(this.attachFlowBatch.popBatch());
+		}
+
+		if (!this.mainBatch.empty) {
+			this.flushInternal(this.mainBatch.popBatch());
+		}
 	}
 
 	private flushInternal(rawBatch: IBatch) {
 		if (rawBatch.hasReentrantOps === true) {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we ensure there are no inconsistencies between client views
-			this.persistBatch(rawBatch.content);
-			this.params.replayOps();
-			this.flush();
+			this.rebase(rawBatch);
 			return;
 		}
 
@@ -228,6 +232,24 @@ export class Outbox {
 		this.sendBatch(processedBatch);
 
 		this.persistBatch(rawBatch.content);
+	}
+
+	private rebase(rawBatch: IBatch) {
+		this.persistBatch(rawBatch.content);
+		this.params.replayOps();
+		this.flush();
+
+		if (this.batchRebasesToReport > 0) {
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "BatchRebase",
+					length: rawBatch.content.length,
+					referenceSequenceNumber: rawBatch.referenceSequenceNumber,
+				},
+				new UsageError("BatchRebase"),
+			);
+			this.batchRebasesToReport--;
+		}
 	}
 
 	private compressBatch(batch: IBatch): IBatch {
