@@ -1838,7 +1838,7 @@ export interface TaggedChange<TChangeset> {
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 // @alpha
-export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T;
+export function toDownPath(upPath: UpPath): DownPath;
 
 // @alpha
 export enum TransactionResult {
