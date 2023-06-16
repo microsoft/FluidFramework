@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import {
@@ -15,16 +19,11 @@ import {
 	defaultSummaryOptions,
 	mockConfigProvider,
 } from "@fluidframework/test-utils";
-import {
-	describeNoCompat,
-	getContainerRuntimeApi,
-	itExpects,
-} from "@fluid-internal/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "../packageVersion";
 
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
@@ -96,9 +95,7 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 ]);
-const containerRuntimeFactoryWithDefaultDataStore =
-	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
-const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 	rootDataObjectFactory,
 	registryStoreEntries,
 	undefined,
@@ -111,7 +108,7 @@ async function createSummarizer(
 	container: IContainer,
 	summaryVersion?: string,
 ) {
-	const summarizerRuntimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
+	const summarizerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		rootDataObjectFactory,
 		registryStoreEntries,
 		undefined,
@@ -160,8 +157,10 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 			const container = await createContainer();
 			await waitForContainerConnection(container);
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
-			const newDO = await dataStoreFactory1.createInstance(rootDataObject.containerRuntime);
-			rootDataObject._root.set("store", newDO.handle);
+			const dataObject = await dataStoreFactory1.createInstance(
+				rootDataObject.containerRuntime,
+			);
+			rootDataObject._root.set("store", dataObject.handle);
 			const { summarizer } = await createSummarizer(provider, container);
 
 			// This should not fail
@@ -177,8 +176,11 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 			const tree = secondSummary.summaryTree;
 			const runtimeSummary = tree.tree[".channels"];
 			assert(runtimeSummary.type === SummaryType.Tree, "DataStores summary should be a tree");
-			assert(newDO.createdDataStoreId !== undefined, "expected a datastore to be created!");
-			const datastoreSummary = runtimeSummary.tree[newDO.createdDataStoreId];
+			assert(
+				dataObject.createdDataStoreId !== undefined,
+				"expected a datastore to be created!",
+			);
+			const datastoreSummary = runtimeSummary.tree[dataObject.createdDataStoreId];
 			assert(
 				datastoreSummary.type === SummaryType.Tree,
 				"DataStore summary should be a tree",
