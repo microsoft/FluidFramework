@@ -614,7 +614,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	public flush(): BufferingPathVisitor {
 		const sortedQueue: CallableBindingContext[] = nativeSort(
 			this.eventQueue,
-			this.options.sortFn ?? compareBinderEventsZero,
+			this.options.sortFn ?? (() => 0),
 		);
 		const batchEventIndices = new Set<number>();
 		const batchEvents: CallableBindingContext[] = [];
@@ -743,7 +743,7 @@ class BufferingDataBinder<E extends Events<E>>
 
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
 		const unsortedVisitors: BufferingPathVisitor[] = Array.from(this.visitorLocations.keys());
-		const sortFn = this.options.sortAnchorsFn ?? compareAnchorsZero;
+		const sortFn = this.options.sortAnchorsFn ?? (() => 0);
 		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
@@ -908,27 +908,6 @@ export function createFlushableBinderOptions<E extends Events<E>>({
 		autoFlush,
 		autoFlushPolicy,
 	};
-}
-
-/**
- * A compare function yielding no sorting.
- *
- * @alpha
- */
-export function compareBinderEventsZero(
-	a: VisitorBindingContext,
-	b: VisitorBindingContext,
-): number {
-	return 0;
-}
-
-/**
- * A compare function yielding no sorting.
- *
- * @alpha
- */
-export function compareAnchorsZero(a: UpPath, b: UpPath): number {
-	return 0;
 }
 
 /**
