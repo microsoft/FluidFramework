@@ -8,12 +8,13 @@ import { assert, Deferred } from "@fluidframework/common-utils";
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;
 
-// TestTimeout class manage tracking of test timeout. It create a timer when timeout is in effect,
-// and provide a promise that will be reject before the test timeout happen with a `timeBuffer` of 15 ms.
-// Once rejected, a new TestTimeout object will be create for the timeout.
-
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
+// TestTimeout class that manages tracking of test timeout. It creates a timer when timeout is in effect,
+// and provides a promise that will be rejected before the test timeout happens with a `timeBuffer` of 15 ms.
+// This will ensure that async awaits in tests do not end up timing out the tests but resolve / reject
+// before that happens.
+// Once rejected, a new TestTimeout object will be create for the timeout.
 class TestTimeout {
 	private timeout: number = 0;
 	private timer: NodeJS.Timeout | undefined;
@@ -125,11 +126,70 @@ export type PromiseExecutor<T = void> = (
 	reject: (reason?: any) => void,
 ) => void;
 
+/**
+ * Wraps the given promise around another promise that will complete after a specific timeout if the original
+ * promise does not resolve by then. By default, it will use the mocha test timeout and complete the promise
+ * just before that so that tests don't time out because of unpredictable awaits.
+ * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
+ * @param promise - The promise to be awaited.
+ * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior
+ * when the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a
+ * specific value.
+ * @returns A new promise that will complete when the given promise resolves or the timeout expires.
+ */
 export async function timeoutAwait<T = void>(
 	promise: PromiseLike<T>,
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
-) {
+): Promise<T> {
 	return Promise.race([promise, timeoutPromise<T>(() => {}, timeoutOptions)]);
+}
+
+/**
+ * Creates a promise from the given executor that will complete after a specific timeout if the original
+ * promise does not resolve by then. By default, it will use the mocha test timeout and complete the promise
+ * just before that so that tests don't time out because of unpredictable awaits.
+ * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
+ * @param promise - The promise to be awaited.
+ * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior
+ * when the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a
+ * specific value.
+ * @returns A new promise that will complete when the given promise resolves or the timeout expires.
+ */
+export async function timeoutPromise<T = void>(
+	executor: (
+		resolve: (value: T | PromiseLike<T>) => void,
+		reject: (reason?: any) => void,
+	) => void,
+	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
+): Promise<T> {
+	// create the timeout error outside the async task, so its callstack includes
+	// the original call site, this makes it easier to debug
+	const err =
+		timeoutOptions.reject === false
+			? undefined
+			: new Error(timeoutOptions.errorMsg ?? "Timed out");
+	const executorPromise = getTimeoutPromise(executor, timeoutOptions, err);
+
+	const currentTestTimeout = TestTimeout.getInstance();
+	if (currentTestTimeout === undefined) {
+		return executorPromise;
+	}
+
+	return Promise.race([executorPromise, currentTestTimeout.getPromise()]).catch((e) => {
+		if (e === currentTestTimeout) {
+			if (timeoutOptions.reject !== false) {
+				// If the rejection is because of the timeout then
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const errorObject = err!;
+				errorObject.message = `${
+					timeoutOptions.errorMsg ?? "Test timed out"
+				} (${currentTestTimeout.getTimeout()}ms)`;
+				throw errorObject;
+			}
+			return timeoutOptions.value;
+		}
+		throw e;
+	}) as Promise<T>;
 }
 
 // Create a promise based on the timeout options
@@ -172,42 +232,4 @@ async function getTimeoutPromise<T = void>(
 			},
 		);
 	});
-}
-
-// Create a promise based on test timeout and the timeout options
-export async function timeoutPromise<T = void>(
-	executor: (
-		resolve: (value: T | PromiseLike<T>) => void,
-		reject: (reason?: any) => void,
-	) => void,
-	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
-): Promise<T> {
-	// create the timeout error outside the async task, so its callstack includes
-	// the original call site, this makes it easier to debug
-	const err =
-		timeoutOptions.reject === false
-			? undefined
-			: new Error(timeoutOptions.errorMsg ?? "Timed out");
-	const executorPromise = getTimeoutPromise(executor, timeoutOptions, err);
-
-	const currentTestTimeout = TestTimeout.getInstance();
-	if (currentTestTimeout === undefined) {
-		return executorPromise;
-	}
-
-	return Promise.race([executorPromise, currentTestTimeout.getPromise()]).catch((e) => {
-		if (e === currentTestTimeout) {
-			if (timeoutOptions.reject !== false) {
-				// If the rejection is because of the timeout then
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const errorObject = err!;
-				errorObject.message = `${
-					timeoutOptions.errorMsg ?? "Test timed out"
-				} (${currentTestTimeout.getTimeout()}ms)`;
-				throw errorObject;
-			}
-			return timeoutOptions.value;
-		}
-		throw e;
-	}) as Promise<T>;
 }
