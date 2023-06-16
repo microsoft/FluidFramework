@@ -80,7 +80,7 @@ export const ensurePackageInstalled = async (
 	return pkg;
 };
 
-// We'd like to support synchronous functions to import packages once their install has been completed.
+// This module supports synchronous functions to import packages once their install has been completed.
 // Since dynamic import is async, we thus cache the modules based on their package version.
 const loaderCache = new Map<string, typeof LoaderApi>();
 const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
