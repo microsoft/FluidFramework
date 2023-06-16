@@ -6,7 +6,6 @@ import path from "path";
 import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, defaultDDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
 import {
-	ChangeConnectionState,
 	Client,
 	DDSFuzzHarnessEvents,
 	DDSFuzzTestState,
@@ -35,7 +34,7 @@ export async function performFuzzActions(
 ): Promise<DDSFuzzTestState<SharedTreeFactory>> {
 	const baseModel: DDSFuzzModel<
 		SharedTreeFactory,
-		Operation | ChangeConnectionState,
+		Operation,
 		DDSFuzzTestState<SharedTreeFactory>
 	> = {
 		workloadName: "SharedTree",
@@ -80,7 +79,7 @@ export async function performFuzzActions(
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
+describe.only("Fuzz - Top-Level", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;

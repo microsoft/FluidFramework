@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
-import { ChangeConnectionState, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { toJsonableTree } from "../../utils";
@@ -20,10 +20,7 @@ import {
 	Operation,
 } from "./operationTypes";
 
-export const fuzzReducer = combineReducersAsync<
-	Operation | ChangeConnectionState,
-	DDSFuzzTestState<SharedTreeFactory>
->({
+export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
@@ -49,9 +46,6 @@ export const fuzzReducer = combineReducersAsync<
 		const { contents, treeIndex } = operation;
 		const tree = state.clients[treeIndex].channel;
 		applyTransactionEdit(tree, contents);
-		return state;
-	},
-	changeConnectionState: async (state, operation) => {
 		return state;
 	},
 });
