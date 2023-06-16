@@ -82,6 +82,17 @@ export class List<T>
 		// try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
+	find(predicate: (value: ListNode<T>, obj: List<T>) => unknown): ListNode<T> | undefined {
+		let found: ListNode<T> | undefined;
+		walkList(this, (node) => {
+			if (predicate(node, this)) {
+				found = node;
+				return false;
+			}
+		});
+		return found;
+	}
+
 	map<U>(callbackfn: (value: ListNode<T>) => U): Iterable<U> {
 		let node = this.first;
 		const iterator: IterableIterator<U> = {
@@ -127,6 +138,31 @@ export class List<T>
 		return insertAfter(this.headNode, items);
 	}
 
+	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): List<T> {
+		const newList = new List<T>();
+		walkList(
+			this,
+			(node) => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const removedNode = this._remove(node)!;
+				// whats special here is we preserve the node
+				// this allow looking up the old node in the new list
+				// when something preserves a reference
+				removedNode.headNode = newList.headNode;
+				removedNode._next = newList.headNode;
+				removedNode._prev = newList.headNode._prev;
+				newList.headNode._prev._next = removedNode;
+				newList.headNode._prev = removedNode;
+				this._len++;
+				if (node === countOrEnd || newList.length === countOrEnd) {
+					return false;
+				}
+			},
+			start,
+		);
+		return newList;
+	}
+
 	public includes(node: ListNode<T> | undefined): node is ListNode<T> {
 		return this._includes(node);
 	}
@@ -135,7 +171,7 @@ export class List<T>
 		return node instanceof DataNode && node.headNode === this.headNode;
 	}
 
-	remove(node: ListNode<T> | undefined): ListNode<T> | undefined {
+	private _remove(node: ListNode<T> | undefined): DataNode<T> | undefined {
 		if (this._includes(node)) {
 			node._prev._next = node._next;
 			node._next._prev = node._prev;
@@ -144,6 +180,10 @@ export class List<T>
 			return node;
 		}
 		return undefined;
+	}
+
+	public remove(node: ListNode<T> | undefined): ListNode<T> | undefined {
+		return this._remove(node);
 	}
 
 	public [Symbol.iterator](): IterableIterator<ListNode<T>> {
