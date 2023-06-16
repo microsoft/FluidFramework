@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
+import { Type } from "@sinclair/typebox";
+import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark, NoopMarkType } from "./format";
@@ -63,6 +63,8 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnTo":
 						jsonMarks.push(mark as unknown as JsonCompatible);
 						break;
+					case "Placeholder":
+						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}
@@ -117,6 +119,8 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnTo":
 						marks.push(mark);
 						break;
+					case "Placeholder":
+						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}

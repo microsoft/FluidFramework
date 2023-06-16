@@ -11,13 +11,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.19.0-165129
-        version: 0.19.0-165129(typescript@4.5.5)
+        version: 0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.2.0
         version: 1.2.0
       '@fluidframework/build-tools':
         specifier: ^0.19.0-165129
-        version: 0.19.0-165129(typescript@4.5.5)
+        version: 0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -65,7 +65,7 @@ importers:
         version: 3.1.2(eslint@8.27.0)
       eslint-plugin-import:
         specifier: ~2.25.4
-        version: 2.25.4(eslint@8.27.0)
+        version: 2.25.4(@typescript-eslint/parser@5.20.0)(eslint@8.27.0)
       eslint-plugin-jsdoc:
         specifier: ~39.3.0
         version: 39.3.25(eslint@8.27.0)
@@ -133,8 +133,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       lodash:
         specifier: ^4.17.19
         version: 4.17.21
@@ -163,9 +163,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/lodash':
         specifier: ^4.14.119
         version: 4.14.194
@@ -198,7 +195,7 @@ importers:
         version: 3.1.2(eslint@8.27.0)
       eslint-plugin-import:
         specifier: ~2.25.4
-        version: 2.25.4(eslint@8.27.0)
+        version: 2.25.4(@typescript-eslint/parser@5.20.0)(eslint@8.27.0)
       eslint-plugin-jsdoc:
         specifier: ~39.3.0
         version: 39.3.25(eslint@8.27.0)
@@ -284,8 +281,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: 5.0.1
         version: 5.0.1
@@ -332,9 +329,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.34
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/mocha':
         specifier: ^10.0.0
         version: 10.0.1
@@ -367,7 +361,7 @@ importers:
         version: 3.1.2(eslint@8.27.0)
       eslint-plugin-import:
         specifier: ~2.25.4
-        version: 2.25.4(eslint@8.27.0)
+        version: 2.25.4(@typescript-eslint/parser@5.20.0)(eslint@8.27.0)
       eslint-plugin-jsdoc:
         specifier: ~39.3.0
         version: 39.3.25(eslint@8.27.0)
@@ -681,23 +675,23 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli@0.19.0-165129(typescript@4.5.5):
+  /@fluid-tools/build-cli@0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-i1qzGDii8mC2t9i+ptXZ3CK1+6J61LCmqJXSI+zTDpuj3vAvE0JbvimzjMmxa69CDmYGtDs4DpEDPtGU5U5i1w==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.19.0-165129(typescript@4.5.5)
-      '@fluidframework/build-tools': 0.19.0-165129(typescript@4.5.5)
+      '@fluid-tools/version-tools': 0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5)
+      '@fluidframework/build-tools': 0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5)
       '@fluidframework/bundle-size-tools': 0.19.0-165129
-      '@oclif/core': 2.8.5(typescript@4.5.5)
-      '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
-      '@oclif/plugin-commands': 2.2.15(typescript@4.5.5)
-      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
-      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
-      '@oclif/plugin-plugins': 2.4.7(typescript@4.5.5)
-      '@oclif/test': 2.3.19(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-autocomplete': 2.1.9(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-commands': 2.2.15(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-plugins': 2.4.7(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/test': 2.3.19(@types/node@16.18.27)(typescript@4.5.5)
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.58.0(@types/node@16.18.27)
       async: 3.2.4
       chalk: 2.4.2
       danger: 10.9.0(@octokit/core@4.2.0)
@@ -710,7 +704,7 @@ packages:
       jssm-viz-cli: 5.89.0
       minimatch: 7.4.6
       npm-check-updates: 16.10.10
-      oclif: 3.9.0(typescript@4.5.5)
+      oclif: 3.9.0(@types/node@16.18.27)(typescript@4.5.5)
       prettier: 2.6.2
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -736,17 +730,17 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools@0.19.0-165129(typescript@4.5.5):
+  /@fluid-tools/version-tools@0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-BMCfXNJtolGvQMJZMMefIjKYP2C72jDPEchbTE+9xjAwAqYlvT/VpPg0G4h4ATXeY2OA0MJh/8iBSOv2/JNDbQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
-      '@oclif/plugin-commands': 2.2.15(typescript@4.5.5)
-      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
-      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
-      '@oclif/plugin-plugins': 2.4.7(typescript@4.5.5)
+      '@oclif/plugin-autocomplete': 2.1.9(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-commands': 2.2.15(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-plugins': 2.4.7(@types/node@16.18.27)(typescript@4.5.5)
       chalk: 2.4.2
       semver: 7.5.0
       table: 6.8.1
@@ -763,16 +757,16 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.19.0-165129(typescript@4.5.5):
+  /@fluidframework/build-tools@0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-R/03OjHLJBTMXLmzcQOY/Dc5sOUJNvCP1mIecAJjygrKY4Q8KnXHXcYRWe030VJ0HSURduYDbm7yDWdOoTs/sA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.19.0-165129(typescript@4.5.5)
+      '@fluid-tools/version-tools': 0.19.0-165129(@types/node@16.18.27)(typescript@4.5.5)
       '@fluidframework/bundle-size-tools': 0.19.0-165129
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.58.0(@types/node@16.18.27)
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -1098,6 +1092,10 @@ packages:
     resolution: {integrity: sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==}
     engines: {node: '>=6.9.0'}
     dev: true
+
+  /@ioredis/commands@1.2.0:
+    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
+    dev: false
 
   /@isaacs/cliui@8.0.2:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -2455,7 +2453,7 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
-  /@oclif/core@2.8.5(typescript@4.5.5):
+  /@oclif/core@2.8.5(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-316DLfrHQDYmWDriI4Woxk9y1wVUrPN1sZdbQLHdOdlTA9v/twe7TdHpWOriEypfl6C85NWEJKc1870yuLtjrQ==}
     engines: {node: '>=14.0.0'}
     dependencies:
@@ -2483,7 +2481,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      ts-node: 10.9.1(typescript@4.5.5)
+      ts-node: 10.9.1(@types/node@16.18.27)(typescript@4.5.5)
       tslib: 2.5.0
       widest-line: 3.1.0
       wordwrap: 1.0.0
@@ -2495,11 +2493,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-autocomplete@2.1.9(typescript@4.5.5):
+  /@oclif/plugin-autocomplete@2.1.9(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-Fx3YTb1tZJUZXlWw41HOCTJnrE58Qiyta7PxKzqlCl7TxFPHst1lxIdNo+93Kqc3StWc6+zOEHnqNLHsu/+HrA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2511,11 +2509,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-commands@2.2.15(typescript@4.5.5):
+  /@oclif/plugin-commands@2.2.15(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-QaTIZhG5SW7sr42p4crJyE7jindr1hdHdazWTjiiPjsFEP3zUxVsNmwEMWPsBBVsjzw/gtztgpAexkZWJD8rXA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       lodash: 4.17.21
     transitivePeerDependencies:
       - '@swc/core'
@@ -2524,11 +2522,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-help@5.2.9(typescript@4.5.5):
+  /@oclif/plugin-help@5.2.9(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -2536,12 +2534,12 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-not-found@2.3.23(typescript@4.5.5):
+  /@oclif/plugin-not-found@2.3.23(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.4
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       fast-levenshtein: 3.0.0
       lodash: 4.17.21
     transitivePeerDependencies:
@@ -2551,12 +2549,12 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-plugins@2.4.7(typescript@4.5.5):
+  /@oclif/plugin-plugins@2.4.7(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-6fzUDLWrSK7n6+EBrEekEEYrYTCneRoOF9TzojkjuFn1+ailvUlr98G90bblxKOyy8fqMe7QjvqwTgIDQ9ZIzg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.4
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2574,11 +2572,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-warn-if-update-available@2.0.36(typescript@4.5.5):
+  /@oclif/plugin-warn-if-update-available@2.0.36(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-mHWoEWFICw1Amqn8C7oURxOsR6sT2Hx+xNi30Jbsui5MrCIYYo369dhjl27VfaWlcLjVqpjMVzVFMn5zXjgzBw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2593,11 +2591,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/test@2.3.19(typescript@4.5.5):
+  /@oclif/test@2.3.19(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-sdGVAr2ZnONJUpNaivC+LQqIgv/vqwUXp1SbzGWz9UtoUWCOduBS/Oile/pum0nFJvXfiSGf+V8ni9jZd2xALA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
       fancy-test: 2.0.22
     transitivePeerDependencies:
       - '@swc/core'
@@ -3014,7 +3012,7 @@ packages:
       - typescript
     dev: true
 
-  /@rushstack/node-core-library@3.58.0:
+  /@rushstack/node-core-library@3.58.0(@types/node@16.18.27):
     resolution: {integrity: sha512-DHAZ3LTOEq2/EGURznpTJDnB3SNE2CKMDXuviQ6afhru6RykE3QoqXkeyjbpLb5ib5cpIRCPE/wykNe0xmQj3w==}
     peerDependencies:
       '@types/node': '*'
@@ -3022,6 +3020,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
+      '@types/node': 16.18.27
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -3277,12 +3276,6 @@ packages:
 
   /@types/http-cache-semantics@4.0.1:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
-    dev: true
-
-  /@types/ioredis@4.28.10:
-    resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
-    dependencies:
-      '@types/node': 16.18.27
     dev: true
 
   /@types/json-schema@7.0.11:
@@ -5744,6 +5737,11 @@ packages:
     engines: {node: '>=0.10'}
     dev: false
 
+  /denque@2.1.0:
+    resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
+    engines: {node: '>=0.10'}
+    dev: false
+
   /depd@2.0.0:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
     engines: {node: '>= 0.8'}
@@ -6146,6 +6144,35 @@ packages:
       - supports-color
     dev: true
 
+  /eslint-module-utils@2.8.0(@typescript-eslint/parser@5.20.0)(eslint-import-resolver-node@0.3.7)(eslint@8.27.0):
+    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: '*'
+      eslint-import-resolver-node: '*'
+      eslint-import-resolver-typescript: '*'
+      eslint-import-resolver-webpack: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+      eslint:
+        optional: true
+      eslint-import-resolver-node:
+        optional: true
+      eslint-import-resolver-typescript:
+        optional: true
+      eslint-import-resolver-webpack:
+        optional: true
+    dependencies:
+      '@typescript-eslint/parser': 5.20.0(eslint@8.27.0)(typescript@4.5.5)
+      debug: 3.2.7
+      eslint: 8.27.0
+      eslint-import-resolver-node: 0.3.7
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /eslint-module-utils@2.8.0(@typescript-eslint/parser@5.9.1)(eslint-import-resolver-node@0.3.7)(eslint@8.27.0):
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
@@ -6168,34 +6195,6 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/parser': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
-      debug: 3.2.7
-      eslint: 8.27.0
-      eslint-import-resolver-node: 0.3.7
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /eslint-module-utils@2.8.0(eslint-import-resolver-node@0.3.7)(eslint@8.27.0):
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
       debug: 3.2.7
       eslint: 8.27.0
       eslint-import-resolver-node: 0.3.7
@@ -6238,6 +6237,37 @@ packages:
       ignore: 5.2.4
     dev: true
 
+  /eslint-plugin-import@2.25.4(@typescript-eslint/parser@5.20.0)(eslint@8.27.0):
+    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+    dependencies:
+      '@typescript-eslint/parser': 5.20.0(eslint@8.27.0)(typescript@4.5.5)
+      array-includes: 3.1.6
+      array.prototype.flat: 1.3.1
+      debug: 2.6.9
+      doctrine: 2.1.0
+      eslint: 8.27.0
+      eslint-import-resolver-node: 0.3.7
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.20.0)(eslint-import-resolver-node@0.3.7)(eslint@8.27.0)
+      has: 1.0.3
+      is-core-module: 2.12.0
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      object.values: 1.1.6
+      resolve: 1.22.2
+      tsconfig-paths: 3.14.2
+    transitivePeerDependencies:
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+    dev: true
+
   /eslint-plugin-import@2.25.4(@typescript-eslint/parser@5.9.1)(eslint@8.27.0):
     resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
     engines: {node: '>=4'}
@@ -6256,36 +6286,6 @@ packages:
       eslint: 8.27.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.9.1)(eslint-import-resolver-node@0.3.7)(eslint@8.27.0)
-      has: 1.0.3
-      is-core-module: 2.12.0
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      object.values: 1.1.6
-      resolve: 1.22.2
-      tsconfig-paths: 3.14.2
-    transitivePeerDependencies:
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
-  /eslint-plugin-import@2.25.4(eslint@8.27.0):
-    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flat: 1.3.1
-      debug: 2.6.9
-      doctrine: 2.1.0
-      eslint: 8.27.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-module-utils: 2.8.0(eslint-import-resolver-node@0.3.7)(eslint@8.27.0)
       has: 1.0.3
       is-core-module: 2.12.0
       is-glob: 4.0.3
@@ -7963,6 +7963,23 @@ packages:
       lodash.isarguments: 3.1.0
       p-map: 2.1.0
       redis-commands: 1.7.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /ioredis@5.2.3:
+    resolution: {integrity: sha512-gQNcMF23/NpvjCaa1b5YycUyQJ9rBNH2xP94LWinNpodMWVUPP5Ai/xXANn/SM7gfIvI62B5CCvZxhg5pOgyMw==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
       redis-errors: 1.2.0
       redis-parser: 3.0.0
       standard-as-callback: 2.1.0
@@ -10349,15 +10366,15 @@ packages:
       es-abstract: 1.21.2
     dev: true
 
-  /oclif@3.9.0(typescript@4.5.5):
+  /oclif@3.9.0(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-fsFyHVQYJdE50EcKrBjwzl2WT5sZUtTiRY1vqMwykgLFUDYrQS0lj7yqy2IgcPSmAWaLQryODdfBujCWOU98Ww==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.8.5(typescript@4.5.5)
-      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
-      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
-      '@oclif/plugin-warn-if-update-available': 2.0.36(typescript@4.5.5)
+      '@oclif/core': 2.8.5(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(@types/node@16.18.27)(typescript@4.5.5)
+      '@oclif/plugin-warn-if-update-available': 2.0.36(@types/node@16.18.27)(typescript@4.5.5)
       aws-sdk: 2.1374.0
       concurrently: 7.6.0
       debug: 4.3.4
@@ -12830,7 +12847,7 @@ packages:
       code-block-writer: 11.0.3
     dev: true
 
-  /ts-node@10.9.1(typescript@4.5.5):
+  /ts-node@10.9.1(@types/node@16.18.27)(typescript@4.5.5):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -12849,6 +12866,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
+      '@types/node': 16.18.27
       acorn: 8.8.2
       acorn-walk: 8.2.0
       arg: 4.1.3

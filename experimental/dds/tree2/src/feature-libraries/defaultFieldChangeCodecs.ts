@@ -70,7 +70,10 @@ function makeOptionalFieldCodec(
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.fieldChange !== undefined) {
-				encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+				encoded.fieldChange = {
+					id: change.fieldChange.id,
+					wasEmpty: change.fieldChange.wasEmpty,
+				};
 				if (change.fieldChange.newContent !== undefined) {
 					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
 						change.fieldChange.newContent,
@@ -82,6 +85,10 @@ function makeOptionalFieldCodec(
 				encoded.childChange = childCodec.encode(change.childChange);
 			}
 
+			if (change.deletedBy !== undefined) {
+				encoded.deletedBy = change.deletedBy;
+			}
+
 			return encoded;
 		},
 
@@ -89,6 +96,7 @@ function makeOptionalFieldCodec(
 			const decoded: OptionalChangeset = {};
 			if (encoded.fieldChange !== undefined) {
 				decoded.fieldChange = {
+					id: encoded.fieldChange.id,
 					wasEmpty: encoded.fieldChange.wasEmpty,
 				};
 
@@ -101,6 +109,10 @@ function makeOptionalFieldCodec(
 
 			if (encoded.childChange !== undefined) {
 				decoded.childChange = childCodec.decode(encoded.childChange);
+			}
+
+			if (encoded.deletedBy !== undefined) {
+				decoded.deletedBy = encoded.deletedBy;
 			}
 
 			return decoded;

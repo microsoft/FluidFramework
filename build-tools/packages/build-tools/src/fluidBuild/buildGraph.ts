@@ -209,6 +209,33 @@ export class BuildPackage {
 		return dependentTasks;
 	}
 
+	public finalizeDependentTasks() {
+		// Set up the dependencies for "before"
+		this.tasks.forEach((task) => {
+			if (task.taskName === undefined) {
+				return;
+			}
+			const taskConfig = this.taskDefinitions[task.taskName];
+			if (taskConfig.before.includes("*")) {
+				this.tasks.forEach((depTask) => {
+					if (depTask !== task) {
+						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						depTask.dependentTasks!.push(task);
+					}
+				});
+			} else {
+				for (const dep of taskConfig.before) {
+					const depTask = this.tasks.get(dep);
+					if (depTask === undefined) {
+						continue;
+					}
+					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					depTask.dependentTasks!.push(task);
+				}
+			}
+		});
+	}
+
 	public initializeDependentLeafTasks() {
 		this.tasks.forEach((task) => {
 			task.initializeDependentLeafTasks();
@@ -485,6 +512,11 @@ export class BuildGraph {
 		}
 
 		traceGraph("package task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.finalizeDependentTasks();
+		});
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
