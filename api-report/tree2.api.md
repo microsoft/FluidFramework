@@ -143,10 +143,6 @@ export interface BatchBindingContext extends BindingContext {
 }
 
 // @alpha
-export interface BinderEvents {
-}
-
-// @alpha
 export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 // @alpha
@@ -387,7 +383,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 // @alpha
-export interface DataBinder<B extends BinderEvents> {
+export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
     register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindTree[], listener?: B[K]): void;
     unregisterAll(): void;
 }
@@ -757,7 +753,7 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
 }
 
 // @alpha
-export interface FlushableDataBinder<B extends BinderEvents> extends DataBinder<B>, Flushable<FlushableDataBinder<B>> {
+export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> extends DataBinder<B>, Flushable<FlushableDataBinder<B>> {
 }
 
 // @alpha (undocumented)
@@ -1026,7 +1022,7 @@ declare namespace InternalTypes_2 {
 }
 
 // @alpha
-export interface InvalidationBinderEvents extends BinderEvents {
+export interface InvalidationBinderEvents {
     // (undocumented)
     invalidation(context: InvalidationBindingContext): void;
 }
@@ -1471,7 +1467,7 @@ export const on: unique symbol;
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @alpha
-export interface OperationBinderEvents extends BinderEvents {
+export interface OperationBinderEvents {
     // (undocumented)
     batch(context: BatchBindingContext): void;
     // (undocumented)

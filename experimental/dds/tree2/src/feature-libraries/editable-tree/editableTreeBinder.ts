@@ -10,16 +10,10 @@ import { brand } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
- * Interface that describes generic binder events
- * @alpha
- */
-export interface BinderEvents {}
-
-/**
  * Binder events reflecting atomic data operations
  * @alpha
  */
-export interface OperationBinderEvents extends BinderEvents {
+export interface OperationBinderEvents {
 	delete(context: DeleteBindingContext): void;
 	insert(context: InsertBindingContext): void;
 	setValue(context: SetValueBindingContext): void;
@@ -30,7 +24,7 @@ export interface OperationBinderEvents extends BinderEvents {
  * Binder events signaling state invalidation
  * @alpha
  */
-export interface InvalidationBinderEvents extends BinderEvents {
+export interface InvalidationBinderEvents {
 	invalidation(context: InvalidationBindingContext): void;
 }
 
@@ -96,7 +90,7 @@ export type MatchPolicy = "subtree" | "path";
  *
  * @alpha
  */
-export interface DataBinder<B extends BinderEvents> {
+export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
 	/**
 	 * Register an event listener
 	 *
@@ -132,7 +126,7 @@ export interface Flushable<T> {
  *
  * @alpha
  */
-export interface FlushableDataBinder<B extends BinderEvents>
+export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents>
 	extends DataBinder<B>,
 		Flushable<FlushableDataBinder<B>> {}
 
@@ -666,7 +660,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 }
 
 class AbstractDataBinder<
-	B extends BinderEvents,
+	B extends OperationBinderEvents | InvalidationBinderEvents,
 	V extends AbstractPathVisitor,
 	O extends BinderOptions,
 > implements DataBinder<B>

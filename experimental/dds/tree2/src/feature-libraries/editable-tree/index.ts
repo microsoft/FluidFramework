@@ -50,7 +50,6 @@ export {
 	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
-	BinderEvents,
 	OperationBinderEvents,
 	InvalidationBinderEvents,
 	CompareFunction,
