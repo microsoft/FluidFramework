@@ -705,8 +705,6 @@ export class ContainerRuntime
 				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 			]);
 
-		const loadExisting = existing === true || context.existing === true;
-
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
 			context.baseSnapshot?.trees[blobsTreeName],
@@ -780,7 +778,7 @@ export class ContainerRuntime
 			},
 			containerScope,
 			logger,
-			loadExisting,
+			existing,
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,

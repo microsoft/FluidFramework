@@ -92,7 +92,6 @@ export class ContainerContext implements IContainerContext {
 			closeFn,
 			version,
 			updateDirtyContainerState,
-			existing,
 			pendingLocalState,
 		);
 		await context.instantiateRuntime(existing);
@@ -238,7 +237,6 @@ export class ContainerContext implements IContainerContext {
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly version: string,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
-		public readonly existing: boolean,
 		public readonly pendingLocalState?: unknown,
 	) {
 		this._connected = this.container.connected;
