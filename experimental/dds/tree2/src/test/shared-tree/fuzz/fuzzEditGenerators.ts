@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
 	Generator,
-	BaseFuzzTestState,
 	done,
 	IRandom,
 	asyncGeneratorFromArray,
@@ -15,9 +14,9 @@ import {
 	Weights,
 } from "@fluid-internal/stochastic-test-utils";
 import { safelyParseJSON } from "@fluidframework/common-utils";
-import { ISharedTree } from "../../../shared-tree";
+import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
-import { ITestTreeProvider } from "../../utils";
 import {
 	CursorLocationType,
 	FieldKey,
@@ -46,12 +45,6 @@ import {
 	ValueFieldEdit,
 } from "./operationTypes";
 
-export interface FuzzTestState extends BaseFuzzTestState {
-	trees: readonly ISharedTree[];
-	testTreeProvider?: ITestTreeProvider;
-	numberOfEdits: number;
-}
-
 /**
  * Context for a 'selected tree'. This is useful at op generation time: most fuzz test operation generators
  * work by picking a tree to perform an operation on, and afterward deciding the operation to perform.
@@ -70,7 +63,7 @@ export interface TreeSelectionContext {
 	tree: ISharedTree;
 }
 
-export type EditState = FuzzTestState & TreeSelectionContext;
+export type EditState = DDSFuzzTestState<SharedTreeFactory> & TreeSelectionContext;
 
 export interface EditGeneratorOpWeights {
 	insert: number;
@@ -79,7 +72,6 @@ export interface EditGeneratorOpWeights {
 	start: number;
 	commit: number;
 	abort: number;
-	synchronize: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -88,13 +80,12 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	start: 0,
 	commit: 0,
 	abort: 0,
-	synchronize: 0,
 };
 
 export const makeNodeEditGenerator = (): Generator<NodeEdit, EditState> => {
 	function setPayloadGenerator(state: EditState): FuzzNodeEditChange {
-		const trees = state.trees;
-		const tree = trees[state.treeIndex];
+		const trees = state.clients;
+		const tree = trees[state.treeIndex].channel;
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
 		const setPayload: FuzzSetPayload = {
@@ -137,8 +128,8 @@ export const makeFieldEditGenerator = (
 		...opWeights,
 	};
 	function fieldEditGenerator(state: EditState): FieldEditTypes {
-		const trees = state.trees;
-		const tree = trees[state.treeIndex];
+		const trees = state.clients;
+		const tree = trees[state.treeIndex].channel;
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
 		assert(fieldPath.parent !== undefined);
@@ -287,12 +278,12 @@ export const makeEditGenerator = (
 				delete: passedOpWeights.delete,
 			}),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-			({ trees, treeIndex }) => containsAtLeastOneNode(trees[treeIndex]),
+			({ clients, treeIndex }) => containsAtLeastOneNode(clients[treeIndex].channel),
 		],
 		[
 			makeNodeEditGenerator(),
 			passedOpWeights.setPayload,
-			({ trees, treeIndex }) => containsAtLeastOneNode(trees[treeIndex]),
+			({ clients, treeIndex }) => containsAtLeastOneNode(clients[treeIndex].channel),
 		],
 	]);
 
@@ -324,12 +315,12 @@ export const makeTransactionEditGenerator = (
 		[
 			commit,
 			passedOpWeights.commit,
-			({ trees, treeIndex }) => transactionsInProgress(trees[treeIndex]),
+			({ clients, treeIndex }) => transactionsInProgress(clients[treeIndex].channel),
 		],
 		[
 			abort,
 			passedOpWeights.abort,
-			({ trees, treeIndex }) => transactionsInProgress(trees[treeIndex]),
+			({ clients, treeIndex }) => transactionsInProgress(clients[treeIndex].channel),
 		],
 	]);
 
@@ -348,7 +339,7 @@ export const makeTransactionEditGenerator = (
 
 export function makeOpGenerator(
 	opWeights: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
-): AsyncGenerator<Operation, FuzzTestState> {
+): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
 	const passedOpWeights = {
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
@@ -362,7 +353,6 @@ export function makeOpGenerator(
 				passedOpWeights.setPayload,
 			]),
 		],
-		[{ type: "synchronize" }, passedOpWeights.synchronize],
 		[
 			makeTransactionEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
@@ -380,9 +370,10 @@ export function makeOpGenerator(
 		// a passive client to compare against is convenient.
 		// TODO: If clients can join & leave mid-test, 'the last client' isn't stable with the natural
 		// array operations.
+
 		const treeIndex =
-			state.trees.length === 1 ? 0 : state.random.integer(0, state.trees.length - 2);
-		const tree = state.trees[treeIndex];
+			state.clients.length === 1 ? 0 : state.random.integer(0, state.clients.length - 2);
+		const tree = state.clients[treeIndex].channel;
 		return generatorAssumingTreeIsSelected({ ...state, treeIndex, tree });
 	};
 }
@@ -399,7 +390,7 @@ function sumWeights(values: (number | undefined)[]): number {
 
 export async function makeOpGeneratorFromFilePath(
 	filepath: string,
-): Promise<AsyncGenerator<Operation, FuzzTestState>> {
+): Promise<AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>> {
 	const savedOperationsStr = await fs.readFile(filepath, "utf-8");
 	const operations: Operation[] = safelyParseJSON(savedOperationsStr) ?? [];
 	return asyncGeneratorFromArray(operations);

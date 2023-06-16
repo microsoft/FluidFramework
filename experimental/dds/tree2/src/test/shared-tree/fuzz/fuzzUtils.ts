@@ -10,6 +10,7 @@ import {
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
 	JsonableTree,
 	fieldSchema,
@@ -21,18 +22,18 @@ import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-
 import { brand } from "../../../util";
 import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
-import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { Operation } from "./operationTypes";
 
 export function runFuzzBatch(
 	opGenerator: (
 		editGeneratorOpWeights?: Partial<EditGeneratorOpWeights>,
-	) => AsyncGenerator<Operation, FuzzTestState>,
+	) => AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
 	fuzzActions: (
-		generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
+		generatorFactory: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
 		seed: number,
 		saveInfo?: SaveInfo,
-	) => Promise<FuzzTestState>,
+	) => Promise<DDSFuzzTestState<SharedTreeFactory>>,
 	opsPerRun: number,
 	runsPerBatch: number,
 	random: IRandom,

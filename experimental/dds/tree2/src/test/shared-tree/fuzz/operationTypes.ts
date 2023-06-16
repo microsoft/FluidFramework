@@ -5,7 +5,7 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation | Synchronize;
+export type Operation = TreeOperation;
 
 export type TreeOperation = TreeEdit | TransactionBoundary;
 
@@ -13,10 +13,6 @@ export interface TreeEdit {
 	type: "edit";
 	contents: FieldEdit | NodeEdit;
 	index: number;
-}
-
-export interface Synchronize {
-	type: "synchronize";
 }
 
 export interface TransactionBoundary {

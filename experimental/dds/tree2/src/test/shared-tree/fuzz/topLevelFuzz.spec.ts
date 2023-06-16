@@ -3,49 +3,70 @@
  * Licensed under the MIT License.
  */
 import path from "path";
+import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
+import { DDSFuzzModel, defaultDDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
 import {
-	AsyncGenerator,
-	makeRandom,
-	performFuzzActionsAsync,
-	SaveInfo,
-} from "@fluid-internal/stochastic-test-utils";
-import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils";
+	ChangeConnectionState,
+	Client,
+	DDSFuzzHarnessEvents,
+	DDSFuzzTestState,
+	mixinSynchronization,
+	runTestForSeed,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { SharedTreeFactory } from "../../../shared-tree";
+import { rootFieldKeySymbol } from "../../../core";
+import { singleTextCursor } from "../../../feature-libraries";
+import { validateTreeConsistency } from "../../utils";
 import {
-	FuzzTestState,
 	makeOpGenerator,
 	makeOpGeneratorFromFilePath,
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
-import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
+import { fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<FuzzTestState> {
-	const random = makeRandom(seed);
-	const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-	await provider.ensureSynchronized();
-
-	const initialState: FuzzTestState = {
-		random,
-		trees: provider.trees,
-		testTreeProvider: provider,
-		numberOfEdits: 0,
+): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+	const baseModel: DDSFuzzModel<
+		SharedTreeFactory,
+		Operation | ChangeConnectionState,
+		DDSFuzzTestState<SharedTreeFactory>
+	> = {
+		workloadName: "SharedTree",
+		factory: new SharedTreeFactory(),
+		generatorFactory: () => generator,
+		reducer: fuzzReducer,
+		validateConsistency: validateTreeConsistency,
 	};
-	await initialState.testTreeProvider?.ensureSynchronized();
-
-	const finalState = await performFuzzActionsAsync(
-		generator,
-		fuzzReducer,
-		initialState,
-		saveInfo,
+	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
+		client.channel.storedSchema.update(testSchema);
+		const field = client.channel.editor.sequenceField({
+			parent: undefined,
+			field: rootFieldKeySymbol,
+		});
+		field.insert(0, singleTextCursor(initialTreeState));
+	});
+	const options = {
+		...defaultDDSFuzzSuiteOptions,
+		numberOfClients: 3,
+		emitter,
+	};
+	const model = mixinSynchronization(
+		{
+			...baseModel,
+			generatorFactory: () => generator,
+		},
+		options,
 	);
-	await finalState.testTreeProvider?.ensureSynchronized();
-	checkTreesAreSynchronized(finalState.trees);
+
+	const finalState = await runTestForSeed(model, options, seed, saveInfo);
 	return finalState;
 }
 
@@ -64,7 +85,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		setPayload: 1,
+		insert: 1,
 	};
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented

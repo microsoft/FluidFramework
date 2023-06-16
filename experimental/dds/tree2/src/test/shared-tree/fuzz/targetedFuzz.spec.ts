@@ -3,69 +3,80 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
-	AsyncGenerator,
-	makeRandom,
-	performFuzzActionsAsync,
-	SaveInfo,
-} from "@fluid-internal/stochastic-test-utils";
+	Client,
+	DDSFuzzHarnessEvents,
+	defaultDDSFuzzSuiteOptions,
+	runTestForSeed,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
-import {
-	TestTreeProvider,
-	SummarizeType,
-	initializeTestTree,
-	validateTree,
-	toJsonableTree,
-} from "../../utils";
-import { FuzzTestState, makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { toJsonableTree, validateTree } from "../../utils";
+import { SharedTreeFactory } from "../../../shared-tree";
+import { singleTextCursor } from "../../../feature-libraries";
+import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, makeTree, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActionsAbort(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<FuzzTestState> {
-	const random = makeRandom(seed);
-	const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
-	const tree = provider.trees[0];
-
-	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-	validateTree(provider.trees[0], [initialTreeState]);
-
-	// building the anchor for anchor stability test
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	cursor.enterNode(0);
-	cursor.getPath();
-	cursor.firstField();
-	cursor.getFieldKey();
-	cursor.enterNode(1);
-	const firstAnchor = cursor.buildAnchor();
-	cursor.free();
-
-	const initialState: FuzzTestState = {
-		random,
-		trees: provider.trees,
-		testTreeProvider: provider,
-		numberOfEdits: 0,
+): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+	const baseModel: DDSFuzzModel<
+		SharedTreeFactory,
+		Operation,
+		DDSFuzzTestState<SharedTreeFactory>
+	> = {
+		workloadName: "SharedTree",
+		factory: new SharedTreeFactory(),
+		generatorFactory: () => generator,
+		reducer: fuzzReducer,
+		validateConsistency: () => {},
+	};
+	let firstAnchor;
+	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
+		client.channel.storedSchema.update(testSchema);
+		const field = client.channel.editor.sequenceField({
+			parent: undefined,
+			field: rootFieldKeySymbol,
+		});
+		field.insert(0, singleTextCursor(initialTreeState));
+	});
+	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeFactory>) => {
+		// building the anchor for anchor stability test
+		const cursor = initialState.clients[0].channel.forest.allocateCursor();
+		moveToDetachedField(initialState.clients[0].channel.forest, cursor);
+		cursor.enterNode(0);
+		cursor.getPath();
+		cursor.firstField();
+		cursor.getFieldKey();
+		cursor.enterNode(1);
+		firstAnchor = cursor.buildAnchor();
+		cursor.free();
+		initialState.clients[0].channel.transaction.start();
+	});
+	const options = {
+		...defaultDDSFuzzSuiteOptions,
+		numberOfClients: 1,
+		emitter,
+	};
+	const model = {
+		...baseModel,
+		generatorFactory: () => generator,
 	};
 
-	provider.trees[0].transaction.start();
-
-	const finalState = await performFuzzActionsAsync(
-		generator,
-		fuzzReducer,
-		initialState,
-		saveInfo,
-	);
+	const finalState = await runTestForSeed(model, options, seed, saveInfo);
 
 	// aborts any transactions that may still be in progress
-	const finalTree = provider.trees[0];
-	finalTree.transaction.abort();
-	validateTree(provider.trees[0], [initialTreeState]);
+	finalState.clients[0].channel.transaction.abort();
+	validateTree(finalState.clients[0].channel, [initialTreeState]);
 
 	// validate anchor
 	const expectedPath: UpPath = {
@@ -77,37 +88,56 @@ export async function performFuzzActionsAbort(
 		parentField: brand("foo"),
 		parentIndex: 1,
 	};
-	const anchorPath = tree.locate(firstAnchor);
+	assert(firstAnchor !== undefined);
+	const anchorPath = finalState.clients[0].channel.locate(firstAnchor);
 
 	assert(compareUpPaths(expectedPath, anchorPath));
 	return finalState;
 }
 
 export async function performFuzzActionsComposeVsIndividual(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<FuzzTestState> {
-	const random = makeRandom(seed);
-
-	const tree = makeTree(initialTreeState);
-	const initialState: FuzzTestState = {
-		random,
-		trees: [tree],
-		numberOfEdits: 0,
+): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+	const baseModel: DDSFuzzModel<
+		SharedTreeFactory,
+		Operation,
+		DDSFuzzTestState<SharedTreeFactory>
+	> = {
+		workloadName: "SharedTree",
+		factory: new SharedTreeFactory(),
+		generatorFactory: () => generator,
+		reducer: fuzzReducer,
+		validateConsistency: () => {},
+	};
+	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
+		client.channel.storedSchema.update(testSchema);
+		const field = client.channel.editor.sequenceField({
+			parent: undefined,
+			field: rootFieldKeySymbol,
+		});
+		field.insert(0, singleTextCursor(initialTreeState));
+	});
+	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeFactory>) => {
+		initialState.clients[0].channel.transaction.start();
+	});
+	const options = {
+		...defaultDDSFuzzSuiteOptions,
+		numberOfClients: 1,
+		emitter,
+	};
+	const model = {
+		...baseModel,
+		generatorFactory: () => generator,
 	};
 
-	tree.transaction.start();
-	const finalState = await performFuzzActionsAsync(
-		generator,
-		fuzzReducer,
-		initialState,
-		saveInfo,
-	);
-
-	const treeViewBeforeCommit = toJsonableTree(tree);
-	tree.transaction.commit();
-	validateTree(tree, treeViewBeforeCommit);
+	const finalState = await runTestForSeed(model, options, seed, saveInfo);
+	const treeViewBeforeCommit = toJsonableTree(finalState.clients[0].channel);
+	finalState.clients[0].channel.transaction.commit();
+	assert(treeViewBeforeCommit !== undefined);
+	validateTree(finalState.clients[0].channel, treeViewBeforeCommit);
 
 	return finalState;
 }
