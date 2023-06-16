@@ -118,13 +118,10 @@ const DataRuntimeApi = {
 	},
 };
 
-async function loadLoader(
-	baseVersion: string,
-	requested?: number | string,
-): Promise<typeof LoaderApi> {
+async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedRange(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
-		return LoaderApi;
+		return;
 	}
 
 	const { version, modulePath } = checkInstalled(requestedStr);
@@ -135,16 +132,15 @@ async function loadLoader(
 		};
 		loaderCache.set(version, loader);
 	}
-	return loaderCache.get(version) ?? throwNotFound("Loader", version);
 }
 
 async function loadContainerRuntime(
 	baseVersion: string,
 	requested?: number | string,
-): Promise<typeof ContainerRuntimeApi> {
+): Promise<void> {
 	const requestedStr = getRequestedRange(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
-		return ContainerRuntimeApi;
+		return;
 	}
 
 	const { version, modulePath } = checkInstalled(requestedStr);
@@ -159,16 +155,12 @@ async function loadContainerRuntime(
 		};
 		containerRuntimeCache.set(version, containerRuntime);
 	}
-	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
-async function loadDataRuntime(
-	baseVersion: string,
-	requested?: number | string,
-): Promise<typeof DataRuntimeApi> {
+async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedRange(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
-		return DataRuntimeApi;
+		return;
 	}
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!dataRuntimeCache.has(version)) {
@@ -225,16 +217,12 @@ async function loadDataRuntime(
 		};
 		dataRuntimeCache.set(version, dataRuntime);
 	}
-	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
-async function loadDriver(
-	baseVersion: string,
-	requested?: number | string,
-): Promise<typeof DriverApi> {
+async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedRange(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
-		return DriverApi;
+		return;
 	}
 
 	const { version, modulePath } = checkInstalled(requestedStr);
@@ -284,7 +272,6 @@ async function loadDriver(
 			RouterliciousDriverApi,
 		});
 	}
-	return driverCache.get(version) ?? throwNotFound("Driver", version);
 }
 
 function throwNotFound(layer: string, version: string): never {
