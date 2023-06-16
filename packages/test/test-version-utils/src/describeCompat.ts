@@ -20,6 +20,7 @@ import {
 	getDriverApi,
 } from "./testApi.js";
 
+// See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
 
 /*
@@ -39,9 +40,11 @@ function createCompatSuite(
 			describe(config.name, function () {
 				let provider: TestObjectProvider;
 				let resetAfterEach: boolean;
+				const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.dataRuntime);
 				const apis: CompatApis = {
 					containerRuntime: getContainerRuntimeApi(baseVersion, config.containerRuntime),
-					dataRuntime: getDataRuntimeApi(baseVersion, config.dataRuntime),
+					dataRuntime: dataRuntimeApi,
+					dds: dataRuntimeApi.dds,
 					driver: getDriverApi(baseVersion, config.driver),
 					loader: getLoaderApi(baseVersion, config.loader),
 				};

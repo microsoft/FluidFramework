@@ -97,7 +97,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
 
 export async function getVersionedTestObjectProviderFromApis(
-	apis: CompatApis,
+	apis: Omit<CompatApis, "dds">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;
@@ -141,12 +141,13 @@ export async function getVersionedTestObjectProvider(
 	runtimeVersion?: number | string,
 	dataRuntimeVersion?: number | string,
 ): Promise<TestObjectProvider> {
-	const apis: CompatApis = {
-		loader: getLoaderApi(baseVersion, loaderVersion),
-		containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
-		dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
-		driver: getDriverApi(baseVersion, driverConfig?.version),
-	};
-
-	return getVersionedTestObjectProviderFromApis(apis, driverConfig);
+	return getVersionedTestObjectProviderFromApis(
+		{
+			loader: getLoaderApi(baseVersion, loaderVersion),
+			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
+			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
+			driver: getDriverApi(baseVersion, driverConfig?.version),
+		},
+		driverConfig,
+	);
 }

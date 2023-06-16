@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
@@ -68,6 +68,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 	}
 
 	let provider: ITestObjectProvider;
+	const { SharedMatrix, SharedString } = apis.dds;
 	const factory = new apis.dataRuntime.DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,

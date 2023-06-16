@@ -262,8 +262,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * });
  * ```
  *
- * If the linked github issue is ever fixed, the module load logic in `./testApi.js` can be simplified considerably
- * and this can be once again used as a global setup fixture.
+ * If the linked github issue is ever fixed, this can be once again used as a global setup fixture.
  */
 export async function mochaGlobalSetup() {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));
@@ -279,7 +278,7 @@ export async function mochaGlobalSetup() {
 	let error: unknown | undefined;
 	for (const p of installP) {
 		try {
-			const pkg = await p;
+			await p;
 		} catch (e) {
 			error = e;
 		}
