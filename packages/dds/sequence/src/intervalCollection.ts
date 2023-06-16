@@ -949,10 +949,15 @@ export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	remove(interval: TInterval): void;
 }
 
+/**
+ * Collection of intervals.
+ *
+ * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
+ */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
-	 * @returns an array of all intervals whose segment + offset are overlapped
+	 * @returns an array of all intervals that overlap with the specified SegOff range (includes both ends)
 	 */
 	findOverlappingIntervalsBySegoff(
 		startSegment: ISegment,

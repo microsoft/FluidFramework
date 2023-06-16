@@ -37,6 +37,8 @@ export {
 	IStartpointInRangeIndex,
 	createEndpointInRangeIndex,
 	createStartpointInRangeIndex,
+	IOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export {

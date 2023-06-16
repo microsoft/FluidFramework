@@ -69,6 +69,9 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
+export function createOverlappingSequenceIntervalsIndex(helpers: IIntervalHelpers<SequenceInterval>, client: Client): IOverlappingIntervalsIndex<SequenceInterval>;
+
+// @public (undocumented)
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
@@ -283,6 +286,12 @@ export enum IntervalType {
     SlideOnRemove = 2,
     // @internal
     Transient = 4
+}
+
+// @public
+export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
+    // (undocumented)
+    findOverlappingIntervalsBySegoff(startSegment: ISegment, startOffset: number, endSegment: ISegment, endOffset: number): Iterable<TInterval>;
 }
 
 // @public
