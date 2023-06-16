@@ -130,7 +130,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(1, "x");
+					sharedString2.insertText(3, "x");
 				}
 			});
 
@@ -142,7 +142,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			sharedString2.insertText(0, "z");
 			await provider.ensureSynchronized();
 
-			assert.strictEqual(sharedString1.getText(), "zyxabcd");
+			assert.strictEqual(sharedString1.getText(), "zyabxcd");
 			assert.strictEqual(
 				sharedString1.getText(),
 				sharedString2.getText(),
@@ -150,8 +150,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			);
 
 			// Both containers are alive at the end
-			assert.ok(!container1.closed);
-			assert.ok(!container2.closed);
+			assert.ok(!container1.closed, "Local container is closed");
+			assert.ok(!container2.closed, "Remote container is closed");
 		});
 	});
 
