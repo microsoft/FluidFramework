@@ -92,10 +92,24 @@ export class Repository {
 	 * @param localRef - The local ref to compare against. Defaults to HEAD.
 	 * @returns The ref of the merge base between the current HEAD and the remote branch.
 	 */
-	public async getMergeBase(branch: string, remote: string, localRef = "HEAD"): Promise<string> {
+	public async getMergeBaseRemote(
+		branch: string,
+		remote: string,
+		localRef = "HEAD",
+	): Promise<string> {
 		const base = await this.gitClient
 			.fetch(["--all"]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
+		return base;
+	}
+
+	/**
+	 * @param ref1 - The first ref to compare.
+	 * @param ref2 - The ref to compare against.
+	 * @returns The ref of the merge base between the two refs.
+	 */
+	public async getMergeBase(ref1: string, ref2: string): Promise<string> {
+		const base = await this.gitClient.raw("merge-base", `${ref1}`, ref2);
 		return base;
 	}
 
@@ -163,5 +177,26 @@ export class Repository {
 			releaseGroups: changedReleaseGroups,
 			packages: changedPackages,
 		};
+	}
+
+	/**
+	 * Calls `git rev-list` to get all commits between the base and head commits.
+	 *
+	 * @param baseCommit - The base commit.
+	 * @param headCommit - The head commit. Defaults to HEAD.
+	 * @returns An array of all commits between the base and head commits.
+	 */
+	public async revList(baseCommit: string, headCommit: string = "HEAD"): Promise<string[]> {
+		const result = await this.git.raw("rev-list", `${baseCommit}..${headCommit}`);
+		return result
+			.split(/\r?\n/)
+			.filter((value) => value !== null && value !== undefined && value !== "");
+	}
+
+	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
+		const mergeResult = await this.git.merge([commit, "--no-commit"]);
+		await this.git.merge(["--abort"]);
+		const canMerge = mergeResult.result === "success";
+		return canMerge;
 	}
 }

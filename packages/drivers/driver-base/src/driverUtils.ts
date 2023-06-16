@@ -4,6 +4,8 @@
  */
 
 import { performance } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Extract and return the w3c data.
@@ -102,4 +104,40 @@ export async function promiseRaceWithWinner<T>(
 			p.then((v) => resolve({ index, value: v })).catch(reject);
 		});
 	});
+}
+
+export function validateMessages(
+	reason: string,
+	messages: ISequencedDocumentMessage[],
+	from: number,
+	logger: ITelemetryLoggerExt,
+) {
+	if (messages.length !== 0) {
+		const start = messages[0].sequenceNumber;
+		const length = messages.length;
+		const last = messages[length - 1].sequenceNumber;
+		if (start !== from) {
+			logger.sendErrorEvent({
+				eventName: "OpsFetchViolation",
+				reason,
+				from,
+				start,
+				last,
+				length,
+			});
+			messages.length = 0;
+		}
+		if (last + 1 !== from + length) {
+			logger.sendErrorEvent({
+				eventName: "OpsFetchViolation",
+				reason,
+				from,
+				start,
+				last,
+				length,
+			});
+			// we can do better here by finding consecutive sub-block and return it
+			messages.length = 0;
+		}
+	}
 }

@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { exec, execSync } from "child_process";
+import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
@@ -200,9 +200,18 @@ export async function ensureInstalled(
 
 		// Check installed status again under lock the modulePath lock
 		if (force || !(await isInstalled(version))) {
+			const options: ExecOptions = {
+				cwd: modulePath,
+				env: {
+					...process.env,
+					// Reset any parent process node options: path-specific options (ex: --require, --experimental-loader)
+					// will otherwise propagate to these commands but fail to resolve.
+					NODE_OPTIONS: "",
+				},
+			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				exec(`npm init --yes`, { cwd: modulePath }, (error, stdout, stderr) => {
+				exec(`npm init --yes`, options, (error, stdout, stderr) => {
 					if (error) {
 						reject(new Error(`Failed to initialize install directory ${modulePath}`));
 					}
@@ -214,7 +223,7 @@ export async function ensureInstalled(
 					`npm i --no-package-lock ${adjustedPackageList
 						.map((pkg) => `${pkg}@${version}`)
 						.join(" ")}`,
-					{ cwd: modulePath },
+					options,
 					(error, stdout, stderr) => {
 						if (error) {
 							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));

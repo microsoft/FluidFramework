@@ -28,7 +28,7 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "./mockDetachedBlobStorage";
+} from "./mockDetachedBlobStorage.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

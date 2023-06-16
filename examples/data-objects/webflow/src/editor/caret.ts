@@ -4,12 +4,12 @@
  */
 
 import { LocalReferencePosition, ReferencePosition } from "@fluidframework/merge-tree";
-import { DocSegmentKind, getDocSegmentKind } from "../document";
-import { clamp, Dom, hasTagName, TagName } from "../util";
-import { updateRef } from "../util/localref";
+import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
+import { clamp, Dom, hasTagName, TagName } from "../util/index.js";
+import { updateRef } from "../util/localref.js";
 
-import { eotSegment, Layout } from "../view/layout";
-import { debug } from "./debug";
+import { eotSegment, Layout } from "../view/layout.js";
+import { debug } from "./debug.js";
 
 export class Caret {
 	private get doc() {
