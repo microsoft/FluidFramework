@@ -37,8 +37,12 @@ export interface IBatch {
 	/**
 	 * Wether or not the batch contains at least one op which was produced as the result
 	 * of processing another op. This means that the batch must be rebased before
-	 * submitted, to ensure that all ops have the same sequence numbers and a
-	 * consistent view of the data model.
+	 * submitted, to ensure that all ops have the same reference sequence numbers and a
+	 * consistent view of the data model. This happens when the op is created within a
+	 * 'changed' event handler of a DDS and will have a different reference sequence number
+	 * than the rest of the ops in the batch, meaning that it has a different view of the
+	 * state of the data model, therefore all ops must be resubmitted and rebased to the current
+	 * reference sequence number to be in agreement about the data model state.
 	 */
 	readonly hasReentrantOps?: boolean;
 }
