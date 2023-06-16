@@ -162,7 +162,6 @@ export class AlfredRunner implements IRunner {
 				this.runningDeferred?.reject({
 					caller,
 					uncaughtException: serializeError(uncaughtException),
-					customMessage: `Alfred runner stopped`,
 				}); // so that the runService exits the process with exit(1)
 			} else {
 				this.runningDeferred?.resolve();
@@ -179,7 +178,6 @@ export class AlfredRunner implements IRunner {
 				forceKill: true,
 				caller,
 				uncaughtException: serializeError(uncaughtException),
-				customMessage: "Alfred runner couldnt be stopped",
 				runnerStopException: serializeError(error),
 			});
 			this.runningDeferred = undefined;

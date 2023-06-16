@@ -130,7 +130,6 @@ export class KafkaRunner implements IRunner {
 				this.deferred?.reject({
 					caller,
 					uncaughtException: serializeError(uncaughtException),
-					customMessage: `Kafka runner stopped`,
 				}); // so that the runService exits the process with exit(1)
 			} else {
 				this.deferred?.resolve();
@@ -147,7 +146,6 @@ export class KafkaRunner implements IRunner {
 				forceKill: true,
 				caller,
 				uncaughtException: serializeError(uncaughtException),
-				customMessage: "Kafka runner couldnt be stopped",
 				runnerStopException: serializeError(error),
 			});
 			this.deferred = undefined;
