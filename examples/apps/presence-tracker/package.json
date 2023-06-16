@@ -11,9 +11,9 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
+	"main": "lib/index.js",
 	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -27,9 +27,8 @@
 		"prepack": "npm run webpack",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"start:client:test": "webpack serve --config webpack.test.js",
 		"start": "webpack serve",
-		"start:test": "webpack serve --config webpack.test.js",
+		"start:client:test": "webpack serve --config webpack.test.js",
 		"test": "npm run test:jest",
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
@@ -38,11 +37,9 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/data-objects": "workspace:~",
-		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/tinylicious-client": "workspace:~",
-		"@fluidframework/test-client-utils": "workspace:~",
 		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
