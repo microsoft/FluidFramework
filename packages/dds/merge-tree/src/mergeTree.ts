@@ -95,7 +95,7 @@ import { Client } from "./client";
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-type ISegmentLeaf = ISegment & IMergeLeaf;
+export type ISegmentLeaf = ISegment & IMergeLeaf;
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -1281,7 +1281,7 @@ export class MergeTree {
 		if (searchInfo.tile) {
 			let pos: number;
 			if (searchInfo.tile.isLeaf()) {
-				const marker: ISegment = searchInfo.tile;
+				const marker = <Marker>searchInfo.tile;
 				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
 			} else {
 				const localRef = searchInfo.tile;
@@ -1544,9 +1544,9 @@ export class MergeTree {
 		clientId = this.collabWindow.clientId,
 	) {
 		let pos = -1;
-		let marker: ISegment | undefined;
+		let marker: Marker | undefined;
 		if (relativePos.id) {
-			marker = this.getMarkerFromId(relativePos.id);
+			marker = this.getMarkerFromId(relativePos.id) as Marker;
 		}
 		if (marker) {
 			pos = this.getPosition(marker, refseq, clientId);

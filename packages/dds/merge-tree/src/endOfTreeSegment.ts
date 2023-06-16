@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/common-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
-import { MergeTree } from "./mergeTree";
-import { IMergeLeaf as ISegment, IRemovalInfo } from "./mergeTreeNodes";
+import { ISegmentLeaf, MergeTree } from "./mergeTree";
+import { IRemovalInfo, ISegment } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 
 /**
@@ -56,7 +56,7 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
 	private getEndSegProps() {
-		let lastSegment: ISegment | undefined;
+		let lastSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
