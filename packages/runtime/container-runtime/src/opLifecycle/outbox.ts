@@ -177,7 +177,7 @@ export class Outbox {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.attachFlowBatch.popBatch());
+			this.flushInternal(this.attachFlowBatch);
 			if (
 				!this.attachFlowBatch.push(
 					message,
@@ -203,7 +203,7 @@ export class Outbox {
 			this.attachFlowBatch.contentSizeInBytes >=
 			this.params.config.compressionOptions.minimumBatchSizeInBytes
 		) {
-			this.flushInternal(this.attachFlowBatch.popBatch());
+			this.flushInternal(this.attachFlowBatch);
 		}
 	}
 
@@ -214,21 +214,23 @@ export class Outbox {
 			throw error;
 		}
 
-		if (!this.attachFlowBatch.empty) {
-			this.flushInternal(this.attachFlowBatch.popBatch());
-		}
-
-		if (!this.mainBatch.empty) {
-			this.flushInternal(this.mainBatch.popBatch());
-		}
+		this.flushInternal(this.attachFlowBatch);
+		this.flushInternal(this.mainBatch);
 	}
 
-	private flushInternal(rawBatch: IBatch) {
+	private flushInternal(batchManager: BatchManager) {
+		if (batchManager.empty) {
+			return;
+		}
+
+		const rawBatch = batchManager.popBatch();
 		if (rawBatch.hasReentrantOps === true && !this.params.config.disableBatchRebasing) {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			this.rebase(rawBatch);
+			// After rebasing, the ops will end up in the same batch queue and are now safe to be sent
+			this.flushInternal(batchManager);
 			return;
 		}
 
@@ -253,8 +255,6 @@ export class Outbox {
 				message.metadata,
 			);
 		}
-
-		this.flush();
 
 		if (this.batchRebasesToReport > 0) {
 			this.mc.logger.sendTelemetryEvent(
