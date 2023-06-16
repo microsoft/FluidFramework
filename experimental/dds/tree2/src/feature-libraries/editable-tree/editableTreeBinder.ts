@@ -356,16 +356,16 @@ abstract class AbstractPathVisitor implements PathVisitor {
 			callTree.listeners.add(listener);
 		} else {
 			tree.children.forEach((childTree, fieldKey) => {
-				let childCallTree: CallTree | undefined = callTree.children.get(fieldKey);
-				if (childCallTree === undefined) {
-					childCallTree = {
+				const childCallTree = getOrCreate(callTree.children, fieldKey, () => {
+					const newChildCallTree: CallTree = {
 						field: fieldKey,
 						index: childTree.index,
 						listeners: new Set(),
 						children: new Map(),
 					};
-					callTree.children.set(fieldKey, childCallTree);
-				}
+					callTree.children.set(fieldKey, newChildCallTree);
+					return newChildCallTree;
+				});
 				this.bindTree(contextType, childTree, listener, childCallTree);
 			});
 		}
@@ -381,18 +381,15 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		listener: Listener,
 		callTree?: CallTree,
 	) {
-		let foundTree = callTree;
-		if (foundTree === undefined) {
-			foundTree = this.findRoot(contextType, tree.field);
-		}
+		const foundTree = callTree ?? this.findRoot(contextType, tree.field);
 		if (foundTree !== undefined) {
 			if (tree.children.size === 0) {
 				foundTree.listeners.delete(listener);
 			} else {
 				tree.children.forEach((childTree, fieldKey) => {
-					assert(foundTree !== undefined, "foundTree is not undefined");
+					assert(foundTree !== undefined, "expected foundTree to be defined");
 					const childCallTree = foundTree.children.get(fieldKey);
-					if (childCallTree) {
+					if (childCallTree !== undefined) {
 						this.unregisterListener(contextType, childTree, listener, childCallTree);
 					}
 				});
@@ -419,7 +416,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					treeNode.field !== step.field ||
 					(treeNode.index !== undefined && step.index !== treeNode.index)
 				) {
-					return;
+					return undefined;
 				}
 				for (const child of treeNode.children.values()) {
 					accumulateMatching(child, index + 1, onMatch);
@@ -428,21 +425,18 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				onMatch(index, treeNode);
 			};
 			const matchedNodes: Set<Listener> = new Set();
-			const onMatchPath = (index: number, treeNode: CallTree): void => {
-				if (index === downPath.length - 1) {
-					treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
-				}
-			};
-			const onMatchSubtree = (index: number, treeNode: CallTree): void => {
-				treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
-			};
 
 			if (this.options.matchPolicy === "subtree") {
-				accumulateMatching(foundRoot, 0, onMatchSubtree);
+				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
+					treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
+				});
 			} else {
-				accumulateMatching(foundRoot, 0, onMatchPath);
+				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
+					if (index === downPath.length - 1) {
+						treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
+					}
+				});
 			}
-
 			return matchedNodes.size > 0 ? matchedNodes : undefined;
 		}
 	}
@@ -460,10 +454,6 @@ abstract class AbstractPathVisitor implements PathVisitor {
  * A visitor that invokes listeners immediately when a path is traversed.
  */
 class DirectPathVisitor extends AbstractPathVisitor {
-	public constructor(options: BinderOptions) {
-		super(options);
-	}
-
 	private processListeners(path: UpPath, listeners: Set<Listener>, otherArgs: object): void {
 		for (const listener of listeners) {
 			listener({
@@ -516,10 +506,6 @@ class InvalidatingPathVisitor
 {
 	private readonly listeners: Set<Listener> = new Set();
 
-	public constructor(options: BinderOptions) {
-		super(options);
-	}
-
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath<BindPath>(path);
 		const listeners = this.getListeners(BindingType.Invalidation, current);
@@ -569,9 +555,6 @@ type CallableBindingContext = VisitorBindingContext & {
 class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
 	private readonly eventQueue: CallableBindingContext[] = [];
 
-	public constructor(options: BinderOptions) {
-		super(options);
-	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
 		const listeners = this.getListeners(BindingType.Delete, current);
@@ -633,13 +616,11 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				}
 			}
 		}
-		if (batchEvents.length > 0) {
-			for (const listener of collected) {
-				listener({
-					type: BindingType.Batch,
-					events: batchEvents,
-				});
-			}
+		for (const listener of collected) {
+			listener({
+				type: BindingType.Batch,
+				events: batchEvents,
+			});
 		}
 		for (let i = 0; i < sortedQueue.length; i++) {
 			if (batchEventIndices.has(i)) {
