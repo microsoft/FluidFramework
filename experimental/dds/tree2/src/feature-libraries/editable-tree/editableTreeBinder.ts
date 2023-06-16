@@ -551,6 +551,11 @@ class InvalidatingPathVisitor
 		this.listeners.clear();
 		return this;
 	}
+
+	public override dispose(): void {
+		this.flush();
+		super.dispose();
+	}
 }
 
 type CallableBindingContext = VisitorBindingContext & {
