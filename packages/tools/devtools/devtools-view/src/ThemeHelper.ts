@@ -14,7 +14,6 @@ teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
 teamsHighContrastTheme.colorCompoundBrandStroke = "#000";
 teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
-teamsHighContrastTheme.colorNeutralStrokeAccessible = "#000";
 
 /**
  * Utility function to get the current Fluent UI theme to use.
@@ -55,6 +54,9 @@ type ThemeContextValue = {
 
 /**
  * Context for accessing a shared theme for communicating with the webpage.
+ * @remarks setTheme is initially defined with a no-operation function as a placeholder
+ * because we don't currently have a setter. The placeholder fills ThemeContext
+ * until The React setter is truly defined in DevToolsView.
  */
 export const ThemeContext = React.createContext<ThemeContextValue>({
 	themeInfo: getFluentUIThemeToUse(),

@@ -72,7 +72,11 @@ export function SettingsView(): React.ReactElement {
 			<label style={{ fontSize: "12px" }}>Select theme</label>
 			<Dropdown
 				placeholder="Theme"
-				style={{ minWidth: "150px", fontWeight: "bold" }}
+				style={{
+					minWidth: "150px",
+					fontWeight: "bold",
+				}}
+				appearance="filled-darker"
 				onOptionSelect={handleThemeChange}
 			>
 				<Option value={ThemeOption.Light}>Light</Option>
