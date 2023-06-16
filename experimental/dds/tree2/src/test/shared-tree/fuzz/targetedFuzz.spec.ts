@@ -6,7 +6,6 @@ import { strict as assert } from "assert";
 import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
-	Client,
 	DDSFuzzHarnessEvents,
 	defaultDDSFuzzSuiteOptions,
 	runTestForSeed,
@@ -15,41 +14,32 @@ import {
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
-import { toJsonableTree, validateTree } from "../../utils";
-import { SharedTreeFactory } from "../../../shared-tree";
-import { singleTextCursor } from "../../../feature-libraries";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { onCreate, initialTreeState, runFuzzBatch } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActionsAbort(
-	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+): Promise<DDSFuzzTestState<SharedTreeTestFactory>> {
 	const baseModel: DDSFuzzModel<
-		SharedTreeFactory,
+		SharedTreeTestFactory,
 		Operation,
-		DDSFuzzTestState<SharedTreeFactory>
+		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "SharedTree",
-		factory: new SharedTreeFactory(),
+		factory: new SharedTreeTestFactory(onCreate),
 		generatorFactory: () => generator,
 		reducer: fuzzReducer,
 		validateConsistency: () => {},
 	};
+
 	let firstAnchor;
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
-		client.channel.storedSchema.update(testSchema);
-		const field = client.channel.editor.sequenceField({
-			parent: undefined,
-			field: rootFieldKeySymbol,
-		});
-		field.insert(0, singleTextCursor(initialTreeState));
-	});
-	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeFactory>) => {
+	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeTestFactory>) => {
 		// building the anchor for anchor stability test
 		const cursor = initialState.clients[0].channel.forest.allocateCursor();
 		moveToDetachedField(initialState.clients[0].channel.forest, cursor);
@@ -96,31 +86,23 @@ export async function performFuzzActionsAbort(
 }
 
 export async function performFuzzActionsComposeVsIndividual(
-	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+): Promise<DDSFuzzTestState<SharedTreeTestFactory>> {
 	const baseModel: DDSFuzzModel<
-		SharedTreeFactory,
+		SharedTreeTestFactory,
 		Operation,
-		DDSFuzzTestState<SharedTreeFactory>
+		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "SharedTree",
-		factory: new SharedTreeFactory(),
+		factory: new SharedTreeTestFactory(onCreate),
 		generatorFactory: () => generator,
 		reducer: fuzzReducer,
 		validateConsistency: () => {},
 	};
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
-		client.channel.storedSchema.update(testSchema);
-		const field = client.channel.editor.sequenceField({
-			parent: undefined,
-			field: rootFieldKeySymbol,
-		});
-		field.insert(0, singleTextCursor(initialTreeState));
-	});
-	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeFactory>) => {
+	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeTestFactory>) => {
 		initialState.clients[0].channel.transaction.start();
 	});
 	const options = {

@@ -90,3 +90,9 @@ export function makeTree(initialState: JsonableTree): ISharedTree {
 	field.insert(0, singleTextCursor(initialState));
 	return tree;
 }
+
+export const onCreate = (tree: ISharedTree) => {
+	tree.storedSchema.update(testSchema);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	field.insert(0, singleTextCursor(initialTreeState));
+};

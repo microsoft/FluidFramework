@@ -6,7 +6,6 @@ import path from "path";
 import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, defaultDDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
 import {
-	Client,
 	DDSFuzzHarnessEvents,
 	DDSFuzzTestState,
 	mixinSynchronization,
@@ -14,44 +13,33 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { SharedTreeFactory } from "../../../shared-tree";
-import { rootFieldKeySymbol } from "../../../core";
-import { singleTextCursor } from "../../../feature-libraries";
-import { validateTreeConsistency } from "../../utils";
+import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import {
 	makeOpGenerator,
 	makeOpGeneratorFromFilePath,
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { onCreate, runFuzzBatch } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>,
+	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<SharedTreeFactory>> {
+): Promise<DDSFuzzTestState<SharedTreeTestFactory>> {
 	const baseModel: DDSFuzzModel<
-		SharedTreeFactory,
+		SharedTreeTestFactory,
 		Operation,
-		DDSFuzzTestState<SharedTreeFactory>
+		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "SharedTree",
-		factory: new SharedTreeFactory(),
+		factory: new SharedTreeTestFactory(onCreate),
 		generatorFactory: () => generator,
 		reducer: fuzzReducer,
 		validateConsistency: validateTreeConsistency,
 	};
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-	emitter.on("clientCreate", (client: Client<SharedTreeFactory>) => {
-		client.channel.storedSchema.update(testSchema);
-		const field = client.channel.editor.sequenceField({
-			parent: undefined,
-			field: rootFieldKeySymbol,
-		});
-		field.insert(0, singleTextCursor(initialTreeState));
-	});
 	const options = {
 		...defaultDDSFuzzSuiteOptions,
 		numberOfClients: 3,
