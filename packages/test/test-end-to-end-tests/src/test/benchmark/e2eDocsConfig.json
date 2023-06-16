@@ -1,13 +1,13 @@
 {
 	"documents": [
 		{
-			"testTitle": "10Mb Map",
+			"testTitle": "7Mb Map",
 			"documentType": "DocumentMap",
 			"documentTypeInfo": {
 				"numberOfItems": "2",
-				"itemSizeMb": "5"
+				"itemSizeMb": "3.5"
 			},
-			"minSampleCount": "2",
+			"minSampleCount": "1",
 			"supportedEndpoints": ["local", "odsp"]
 		},
 		{
@@ -17,7 +17,7 @@
 				"numberOfItems": "1",
 				"itemSizeMb": "5"
 			},
-			"minSampleCount": 2,
+			"minSampleCount": "1",
 			"supportedEndpoints": ["local", "odsp"]
 		},
 		{
@@ -35,6 +35,26 @@
 			"documentTypeInfo": {
 				"numberDataStores": "500",
 				"numberDataStoresPerIteration": "250"
+			},
+			"minSampleCount": "1"
+		},
+		{
+			"testTitle": "Matrix 10x10 with SharedStrings",
+			"documentType": "DocumentMatrix",
+			"documentTypeInfo": {
+				"rowSize": "10",
+				"columnSize": "10",
+				"stringSize": "100"
+			},
+			"minSampleCount": "1"
+		},
+		{
+			"testTitle": "Matrix 30x30 with SharedStrings",
+			"documentType": "DocumentMatrix",
+			"documentTypeInfo": {
+				"rowSize": "30",
+				"columnSize": "30",
+				"stringSize": "100"
 			},
 			"minSampleCount": "1"
 		}

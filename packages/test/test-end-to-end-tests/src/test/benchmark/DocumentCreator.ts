@@ -22,6 +22,7 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
 import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
+import { DocumentMatrix } from "./DocumentMatrix";
 
 export interface IDocumentCreatorProps {
 	testName: string;
@@ -63,7 +64,7 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			benchmarkType: props.benchmarkType,
 			testDocument: props.testName,
 			testDocumentType: props.documentType,
-			details: JSON.stringify(props.documentTypeInfo),
+			testDetails: JSON.stringify(props.documentTypeInfo),
 		},
 	});
 	const documentProps: IDocumentProps = { ...props, logger };
@@ -73,6 +74,8 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			return new DocumentMap(documentProps);
 		case "DocumentMultipleDataStores":
 			return new DocumentMultipleDds(documentProps);
+		case "DocumentMatrix":
+			return new DocumentMatrix(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}
