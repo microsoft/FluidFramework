@@ -520,8 +520,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 					// happened before and so, the server won't delete it.
 					this.setRedirection(localId, response.id);
-					const blobHandle = this.getBlobHandle(localId);
-					entry.handleP.resolve(blobHandle);
+					entry.handleP.resolve(this.getBlobHandle(localId));
+					this.deletePendingBlobMaybe(localId);
 				} else {
 					// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 					// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
