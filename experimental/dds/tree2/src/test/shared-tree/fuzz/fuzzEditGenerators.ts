@@ -66,7 +66,6 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 
 export const makeNodeEditGenerator = (): Generator<NodeEdit, EditState> => {
 	function setPayloadGenerator(state: EditState): FuzzNodeEditChange {
-		const trees = state.clients;
 		const tree = state.channel;
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
