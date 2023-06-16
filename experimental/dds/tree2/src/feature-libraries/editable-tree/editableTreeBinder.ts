@@ -706,13 +706,9 @@ class AbstractDataBinder<
 		);
 	}
 	public unregisterAll(): void {
-		for (const unregisterHandle of this.unregisterHandles) {
-			unregisterHandle();
-		}
+		this.unregisterHandles.forEach((h) => h());
 		this.unregisterHandles.clear();
-		for (const visitor of this.visitors.values()) {
-			visitor.dispose();
-		}
+		this.visitors.forEach((v) => v.dispose());
 		this.visitors.clear();
 	}
 
