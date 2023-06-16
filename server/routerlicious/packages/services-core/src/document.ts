@@ -42,6 +42,7 @@ export interface IDocumentStorage {
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<IDocumentDetails>;
 }
 

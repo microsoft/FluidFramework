@@ -81,6 +81,7 @@ export class createGitServiceArgs {
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
+	isEphemeralContainer?: boolean = false;
 }
 
 export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
@@ -95,6 +96,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
+		isEphemeralContainer,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
 	const decoded = decode(token) as ITokenClaims;
@@ -120,6 +122,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
+		isEphemeralContainer,
 	);
 	return service;
 }

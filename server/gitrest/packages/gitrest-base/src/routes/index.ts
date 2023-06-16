@@ -36,22 +36,23 @@ export interface IRoutes {
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
+	durablefileSystemManagerFactory: IFileSystemManagerFactory,
+	ephemeralfileSystemManagerFactory: IFileSystemManagerFactory,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
-			commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
+			blobs: blobs.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
+			commits: commits.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
+			refs: refs.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
 			repos: repos.create(store, repoManagerFactory),
-			tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
-			trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
+			tags: tags.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
+			trees: trees.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
 		},
 		repository: {
-			commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
+			commits: repositoryCommits.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
+			contents: contents.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
 		},
-		summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
+		summaries: summaries.create(store, durablefileSystemManagerFactory, ephemeralfileSystemManagerFactory, repoManagerFactory),
 	};
 }

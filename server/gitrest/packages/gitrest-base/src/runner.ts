@@ -19,7 +19,8 @@ export class GitrestRunner implements IRunner {
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
-		private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly durableFileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly ephemeralFileSystemManagerFactory: IFileSystemManagerFactory,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {}
@@ -29,7 +30,8 @@ export class GitrestRunner implements IRunner {
 		// Create the gitrest app
 		const gitrest = app.create(
 			this.config,
-			this.fileSystemManagerFactory,
+			this.durableFileSystemManagerFactory,
+			this.ephemeralFileSystemManagerFactory,
 			this.repositoryManagerFactory,
 			this.asyncLocalStorage,
 		);

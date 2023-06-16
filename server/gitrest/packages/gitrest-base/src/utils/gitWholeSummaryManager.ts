@@ -605,6 +605,7 @@ export class GitWholeSummaryManager {
 				useRepoOwner: true,
 			},
 			inMemoryFsManagerFactory,
+			inMemoryFsManagerFactory,
 			new NullExternalStorageManager(),
 			true /* repoPerDocEnabled */,
 			false /* enableRepositoryManagerMetrics */,

@@ -380,6 +380,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 	constructor(
 		storageDirectoryConfig: IStorageDirectoryConfig,
 		fileSystemManagerFactory: IFileSystemManagerFactory,
+		ephemeralFileSystemManagerFactory: IFileSystemManagerFactory,
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
@@ -389,6 +390,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		super(
 			storageDirectoryConfig,
 			fileSystemManagerFactory,
+			ephemeralFileSystemManagerFactory,
 			externalStorageManager,
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,

@@ -63,7 +63,9 @@ export class RestGitService {
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly storageName?: string,
 		private readonly storageUrl?: string,
+		private readonly isEphemeralContainer?: boolean,
 	) {
+		const defaultQueryString: Record<string, unknown> = {};
 		const defaultHeaders: AxiosRequestHeaders =
 			storageName !== undefined
 				? {
@@ -87,6 +89,7 @@ export class RestGitService {
 		};
 
 		const baseUrl = this.storageUrl || storage.url;
+		defaultQueryString.isEphemeralContainer = this.isEphemeralContainer;
 
 		winston.info(
 			`Created RestGitService: ${JSON.stringify({
@@ -107,7 +110,7 @@ export class RestGitService {
 
 		this.restWrapper = new BasicRestWrapper(
 			baseUrl,
-			undefined,
+			defaultQueryString,
 			undefined,
 			undefined,
 			defaultHeaders,

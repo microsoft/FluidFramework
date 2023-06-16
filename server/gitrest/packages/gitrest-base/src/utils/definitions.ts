@@ -9,6 +9,7 @@ import * as git from "@fluidframework/gitresources";
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
+	isEphemeralDocument = "isEphemeralDocument",
 }
 
 export interface IStorageDirectoryConfig {
@@ -95,6 +96,7 @@ export interface IRepoManagerParams {
 	storageRoutingId?: IStorageRoutingId;
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
+	isEphemeralDocument?: boolean;
 }
 
 export interface IRepositoryManagerFactory {

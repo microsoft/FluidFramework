@@ -59,6 +59,7 @@ export function getExternalWriterParams(
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
 	const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+	const isEphemeralDocument: boolean | undefined = request.query.isEphemeralContainer;
 	const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(
 		request.get(Constants.StorageRoutingIdHeader),
 	);
@@ -69,6 +70,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		fileSystemManagerParams: {
 			storageName,
 		},
+		isEphemeralDocument,
 	};
 }
 

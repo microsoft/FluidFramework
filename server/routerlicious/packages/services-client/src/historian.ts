@@ -39,6 +39,7 @@ export class Historian implements IHistorian {
 		private readonly historianApi: boolean,
 		disableCache: boolean,
 		private readonly restWrapper?: RestWrapper,
+		private readonly isEphemeralContainer?: boolean,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
@@ -49,6 +50,10 @@ export class Historian implements IHistorian {
 
 		if (this.restWrapper === undefined) {
 			this.restWrapper = new BasicRestWrapper(this.endpoint);
+		}
+
+		if (this.isEphemeralContainer) {
+			this.defaultQueryString.isEphemeralContainer = this.isEphemeralContainer;
 		}
 	}
 

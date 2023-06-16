@@ -164,6 +164,8 @@ export function create(
 
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
 
+			const isEphemeralContainer: boolean = request.body.isEphemeralContainer ?? false;
+
 			const createP = storage.createDocument(
 				tenantId,
 				id,
@@ -175,6 +177,7 @@ export function create(
 				externalDeltaStreamUrl,
 				values,
 				enableDiscovery,
+				isEphemeralContainer,
 			);
 
 			// Handle backwards compatibility for older driver versions.

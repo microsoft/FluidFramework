@@ -128,12 +128,14 @@ export class DocumentStorage implements IDocumentStorage {
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
+		isEphemeralContainer: boolean = false,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
 		const gitManager = await this.tenantManager.getTenantGitManager(
 			tenantId,
 			documentId,
 			storageName,
+			isEphemeralContainer,
 		);
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;

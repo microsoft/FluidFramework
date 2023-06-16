@@ -75,6 +75,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		documentId: string,
 		storageName?: string,
 		includeDisabledTenant = false,
+		isEphemeralContainer = false,
 	): Promise<IGitManager> {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		const key = await core.requestWithRetry(
@@ -117,6 +118,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			true,
 			false,
 			tenantRestWrapper,
+			isEphemeralContainer,
 		);
 		const gitManager = new GitManager(historian);
 

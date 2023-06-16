@@ -387,6 +387,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 	constructor(
 		storageDirectoryConfig: IStorageDirectoryConfig,
 		fileSystemManagerFactory: IFileSystemManagerFactory,
+		ephemeralfileSystemManagerFactory: IFileSystemManagerFactory,
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
@@ -395,6 +396,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		super(
 			storageDirectoryConfig,
 			fileSystemManagerFactory,
+			ephemeralfileSystemManagerFactory,
 			externalStorageManager,
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,

@@ -18,6 +18,7 @@ import {
 	NodeFsManagerFactory,
 	IStorageDirectoryConfig,
 } from "./utils";
+import { RedisFsManagerFactory } from "./utils/filesystems";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -25,7 +26,8 @@ export class GitrestResources implements core.IResources {
 	constructor(
 		public readonly config: Provider,
 		public readonly port: string | number,
-		public readonly fileSystemManagerFactory: IFileSystemManagerFactory,
+		public readonly durableFileSystemManagerFactory: IFileSystemManagerFactory,
+		public readonly ephemeralFileSystemManagerFactory: IFileSystemManagerFactory,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public readonly enableOptimizedInitialSummary?: boolean,
@@ -41,7 +43,8 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
 	public async create(config: Provider): Promise<GitrestResources> {
 		const port = normalizePort(process.env.PORT || "3000");
-		const fileSystemManagerFactory = new NodeFsManagerFactory();
+		const durableFileSystemManagerFactory = new NodeFsManagerFactory();
+		const ephemeralFileSystemManagerFactory = new RedisFsManagerFactory();
 		const externalStorageManager = new ExternalStorageManager(config);
 		const storageDirectoryConfig: IStorageDirectoryConfig = config.get(
 			"storageDir",
@@ -58,7 +61,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			if (!gitLibrary || gitLibrary === "nodegit") {
 				return new NodegitRepositoryManagerFactory(
 					storageDirectoryConfig,
-					fileSystemManagerFactory,
+					durableFileSystemManagerFactory,
+					ephemeralFileSystemManagerFactory,
 					externalStorageManager,
 					repoPerDocEnabled,
 					enableRepositoryManagerMetrics,
@@ -67,7 +71,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			} else if (gitLibrary === "isomorphic-git") {
 				return new IsomorphicGitManagerFactory(
 					storageDirectoryConfig,
-					fileSystemManagerFactory,
+					durableFileSystemManagerFactory,
+					ephemeralFileSystemManagerFactory,
 					externalStorageManager,
 					repoPerDocEnabled,
 					enableRepositoryManagerMetrics,
@@ -83,7 +88,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		return new GitrestResources(
 			config,
 			port,
-			fileSystemManagerFactory,
+			durableFileSystemManagerFactory,
+			ephemeralFileSystemManagerFactory,
 			repositoryManagerFactory,
 			asyncLocalStorage,
 		);
@@ -96,7 +102,8 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.webServerFactory,
 			resources.config,
 			resources.port,
-			resources.fileSystemManagerFactory,
+			resources.durableFileSystemManagerFactory,
+			resources.ephemeralFileSystemManagerFactory,
 			resources.repositoryManagerFactory,
 			resources.asyncLocalStorage,
 		);

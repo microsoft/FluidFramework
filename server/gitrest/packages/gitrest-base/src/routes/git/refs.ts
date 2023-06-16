@@ -29,7 +29,8 @@ function getRefId(id): string {
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
+	durableFileSystemManagerFactory: IFileSystemManagerFactory,
+	ephemeralFileSystemManagerFactory: IFileSystemManagerFactory,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
@@ -40,6 +41,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
@@ -61,6 +63,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
@@ -85,6 +88,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
 		const createRefParams = request.body as ICreateRefParamsExternal;
 		const resultP = getRepoManagerFromWriteAPI(
 			repoManagerFactory,
@@ -110,6 +114,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
 		const patchRefParams = request.body as IPatchRefParamsExternal;
 		const resultP = getRepoManagerFromWriteAPI(
 			repoManagerFactory,
@@ -139,6 +144,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {

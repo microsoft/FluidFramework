@@ -45,6 +45,7 @@ export function create(
 		tenantId: string,
 		authorization: string,
 		body: git.ICreateBlobParams,
+		isEphemeralContainer: boolean,
 	): Promise<git.ICreateBlobResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.createBlob(body);
 	}
@@ -100,6 +102,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
+				request.params.isEphemeralContainer,
 			);
 			utils.handleResponse(blobP, response, false, 201);
 		},

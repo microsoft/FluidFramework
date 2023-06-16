@@ -23,3 +23,10 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 		return this.volume as unknown as IFileSystemManager;
 	}
 }
+
+export class RedisFsManagerFactory implements IFileSystemManagerFactory {
+	public readonly volume = new Volume();
+	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		return this.volume as unknown as IFileSystemManager;
+	}
+}
