@@ -4,10 +4,13 @@
 		"declaration": false,
 		"declarationMap": false,
 		"rootDir": "../",
+		// Note: despite being esnext, this publishes to "dist" over "lib" to keep root project settings' debug launch targets
+		// reasonable. If we convert the remaining group of client packages to use esnext modules only, we likely want to
+		// standardize the esnext build directory.
 		"outDir": "../../dist",
 		"types": ["mocha", "@fluidframework/test-driver-definitions"],
 		"noUnusedLocals": false, // Needed for memory tests to be able to declare local variables just for the purpose of keeping stuff in memory
-		"module": "ESNext",
+		"module": "esnext",
 	},
 	"include": ["./**/*"],
 }
