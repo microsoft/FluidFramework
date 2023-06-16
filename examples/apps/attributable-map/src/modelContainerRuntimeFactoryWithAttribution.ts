@@ -46,7 +46,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const fromExisting = existing ?? context.existing ?? false;
+		const fromExisting = existing ?? false;
 		const attributor = createRuntimeAttributor();
 		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
 

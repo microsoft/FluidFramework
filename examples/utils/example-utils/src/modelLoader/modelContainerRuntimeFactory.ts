@@ -36,7 +36,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const fromExisting = existing ?? context.existing ?? false;
+		const fromExisting = existing ?? false;
 		const runtime = await ContainerRuntime.load(
 			context,
 			this.registryEntries,
