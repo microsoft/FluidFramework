@@ -27,12 +27,19 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+import { IFluidInternalReferenceInfo } from "@fluidframework/aqueduct";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -190,6 +197,15 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		const dataStoreRuntime: IFluidDataStoreChannel = await dataStoreContext.realize();
 		return (await dataStoreRuntime.entryPoint?.get()) as ITestDataObject;
 	};
+
+	function manufactureHandle<T>(handleContext: IFluidHandleContext, unreferencedId: string) {
+		const serializer = new FluidSerializer(handleContext, () => {});
+		const handle: IFluidHandle<T> = parseHandles(
+			{ type: "__fluid_handle__", url: unreferencedId },
+			serializer,
+		);
+		return handle;
+	}
 
 	const setupContainerCloseErrorValidation = (container: IContainer, expectedCall: string) => {
 		container.on("closed", (error) => {
@@ -600,13 +616,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					unreferencedId,
 				);
 
-				const serializer = new FluidSerializer(
+				const handle: IFluidHandle = manufactureHandle(
 					dataObject._context.IFluidHandleContext,
-					() => {},
-				);
-				const handle: IFluidHandle = parseHandles(
-					{ type: "__fluid_handle__", url: unreferencedId },
-					serializer,
+					unreferencedId,
 				);
 
 				// This fails because the DataStore is tombstoned
@@ -757,57 +769,105 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects(
-		"Loading/Using tombstone allowed when configured",
-		[
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-				clientType: "interactive",
-			},
-			{
-				eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-				callSite: "submitMessage",
-				clientType: "interactive",
-			},
-			{
-				eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-				callSite: "process",
-				clientType: "noninteractive/summarizer",
-			},
-			{
-				eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-				callSite: "process",
-				clientType: "interactive",
-			},
-		],
-		async () => {
+	describe("Accessing tombstoned object is allowed when configured", () => {
+		beforeEach(() => {
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
-			const { unreferencedId, summarizingContainer, summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+		});
 
-			// The datastore should be tombstoned now
-			const { summaryVersion } = await summarize(summarizer);
-			const container = await loadContainer(summaryVersion);
-			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
-			// Logs a tombstone and sweep ready error
-			let dataObject: ITestDataObject;
-			await assert.doesNotReject(async () => {
-				dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
-			}, `Should be able to request a tombstoned datastore.`);
-			// Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled.
-			// Logs a submitMessage error
-			assert.doesNotThrow(
-				() => dataObject._root.set("send", "op"),
-				`Should be able to send ops for a tombstoned datastore.`,
-			);
+		itExpects(
+			"Load via Request and Modify",
+			[
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+				},
+				{
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "submitMessage",
+					clientType: "interactive",
+				},
+				{
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "process",
+					clientType: "noninteractive/summarizer",
+				},
+				{
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "process",
+					clientType: "interactive",
+				},
+			],
+			async () => {
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
-			// Wait for the above op to be process. That will result in another error logged during process.
-			// Both the summarizing container and the submitting container log a process error
-			await provider.ensureSynchronized();
-		},
-	);
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(summaryVersion);
+				// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
+				// Logs a tombstone and sweep ready error
+				let dataObject: ITestDataObject;
+				await assert.doesNotReject(async () => {
+					dataObject = await requestFluidObject<ITestDataObject>(
+						container,
+						unreferencedId,
+					);
+				}, `Should be able to request a tombstoned datastore.`);
+				// Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled.
+				// Logs a submitMessage error
+				assert.doesNotThrow(
+					() => dataObject._root.set("send", "op"),
+					`Should be able to send ops for a tombstoned datastore.`,
+				);
+
+				// Wait for the above op to be process. That will result in another error logged during process.
+				// Both the summarizing container and the submitting container log a process error
+				await provider.ensureSynchronized();
+			},
+		);
+
+		//* ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY
+		itExpects.only(
+			"Load via handle.get()",
+			[
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+				},
+			],
+			async () => {
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
+				const dataObject1 = await getTombstonedDataObjectFromSummary(
+					summaryVersion,
+					unreferencedId,
+				);
+
+				const handle = manufactureHandle<FluidObject<IFluidInternalReferenceInfo>>(
+					dataObject1._context.IFluidHandleContext,
+					unreferencedId,
+				);
+
+				// handle.get for the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
+				// Logs a tombstone and sweep ready error
+				const dataObject: FluidObject<IFluidInternalReferenceInfo> = await handle.get();
+				assert.equal(
+					dataObject.IFluidInternalReferenceInfo?.state ?? "",
+					"Tombstoned",
+					"Expected the reference info to report Tombstoned",
+				);
+			},
+		);
+	});
 
 	describe("Tombstone information in summary", () => {
 		/**
