@@ -1297,7 +1297,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
 			assert(
 				typeof helpers.compareStarts === "function",
-				"compareStarts does not exist in the helpers",
+				0x6d1 /* compareStarts does not exist in the helpers */,
 			);
 
 			const compareStartsResult = helpers.compareStarts(a, b);
