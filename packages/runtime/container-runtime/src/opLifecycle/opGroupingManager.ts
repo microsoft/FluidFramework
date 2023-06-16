@@ -27,7 +27,7 @@ export class OpGroupingManager {
 		if (batch.hasReentrantOps === true) {
 			// Batches with reentrant ops cannot be grouped as grouping would hide
 			// the sequence numbers of the individual ops and reentrant ops may have
-			// been based on the remote (original) op reference sequence number. T
+			// been based on the remote (original) op reference sequence number.
 			// This can cause conflicts in the data model, as there will be no way to
 			// establish an order between op within the same batch when they are processed
 			// by a remote client.

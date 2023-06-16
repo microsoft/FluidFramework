@@ -155,37 +155,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		});
 	});
 
-	it("Eventual consistency broken with op reentry, grouped batches and batch rebasing disabled", async () => {
-		await setupContainers(
-			{
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching: true,
-				},
-			},
-			{ "Fluid.ContainerRuntime.DisableBatchRebasing": true },
-		);
-
-		sharedString1.insertText(0, "ad");
-		await provider.ensureSynchronized();
-
-		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-				sharedString2.insertText(3, "x");
-			}
-		});
-
-		sharedString1.insertText(1, "b");
-		sharedString1.insertText(2, "c");
-		await provider.ensureSynchronized();
-
-		assert.notStrictEqual(
-			sharedString1.getText(),
-			sharedString2.getText(),
-			"Unexpected eventual consistency",
-		);
-	});
-
 	describe("Reentry safeguards", () => {
 		it("Deep recursion is not supported", async () => {
 			await setupContainers(testContainerConfig);
