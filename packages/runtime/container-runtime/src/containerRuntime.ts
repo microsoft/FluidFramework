@@ -925,7 +925,9 @@ export class ContainerRuntime
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		if (++this.ensureNoDataModelChangesCalls === 100) {
-			const error = new UsageError("Op reentrancy detected with a recursion depth of 100");
+			const error = new UsageError(
+				"Deep event handler recursion detected (100 recursive calls), possible infinite loop",
+			);
 			this.closeFn(error);
 			throw error;
 		}

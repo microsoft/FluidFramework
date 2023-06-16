@@ -192,7 +192,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Op reentrancy detected with a recursion depth of 100",
+					error: "Deep event handler recursion detected (100 recursive calls), possible infinite loop",
 				},
 			],
 			async () => {
@@ -211,7 +211,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Op reentrancy detected with a recursion depth of 100",
+					error: "Deep event handler recursion detected (100 recursive calls), possible infinite loop",
 				},
 			],
 			async () => {
