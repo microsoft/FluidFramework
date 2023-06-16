@@ -8,6 +8,7 @@ import { DDSFuzzModel, defaultDDSFuzzSuiteOptions } from "@fluid-internal/test-d
 import {
 	DDSFuzzHarnessEvents,
 	DDSFuzzTestState,
+	mixinClientSelection,
 	mixinSynchronization,
 	runTestForSeed,
 	// eslint-disable-next-line import/no-internal-modules
@@ -45,11 +46,14 @@ export async function performFuzzActions(
 		numberOfClients: 3,
 		emitter,
 	};
-	const model = mixinSynchronization(
-		{
-			...baseModel,
-			generatorFactory: () => generator,
-		},
+	const model = mixinClientSelection(
+		mixinSynchronization(
+			{
+				...baseModel,
+				generatorFactory: () => generator,
+			},
+			options,
+		),
 		options,
 	);
 
@@ -67,7 +71,7 @@ export async function performFuzzActions(
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe.only("Fuzz - Top-Level", () => {
+describe("Fuzz - Top-Level", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;

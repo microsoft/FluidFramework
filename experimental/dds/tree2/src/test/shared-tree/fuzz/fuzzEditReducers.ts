@@ -25,15 +25,13 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
-				const index = operation.index;
-				const tree = state.clients[index].channel;
+				const tree = state.channel;
 				applyFieldEdit(tree, contents);
 				break;
 			}
 			case "nodeEdit": {
 				const change = operation.contents as NodeEdit;
-				const index = operation.index;
-				const tree = state.clients[index].channel;
+				const tree = state.channel;
 				applyNodeEdit(tree, change.edit);
 				break;
 			}
@@ -43,8 +41,8 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		return state;
 	},
 	transaction: async (state, operation) => {
-		const { contents, treeIndex } = operation;
-		const tree = state.clients[treeIndex].channel;
+		const { contents } = operation;
+		const tree = state.channel;
 		applyTransactionEdit(tree, contents);
 		return state;
 	},

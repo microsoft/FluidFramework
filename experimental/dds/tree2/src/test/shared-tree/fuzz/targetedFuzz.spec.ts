@@ -8,6 +8,7 @@ import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
 	DDSFuzzHarnessEvents,
 	defaultDDSFuzzSuiteOptions,
+	mixinClientSelection,
 	runTestForSeed,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
@@ -57,10 +58,14 @@ export async function performFuzzActionsAbort(
 		numberOfClients: 1,
 		emitter,
 	};
-	const model = {
-		...baseModel,
-		generatorFactory: () => generator,
-	};
+
+	const model = mixinClientSelection(
+		{
+			...baseModel,
+			generatorFactory: () => generator,
+		},
+		options,
+	);
 
 	const finalState = await runTestForSeed(model, options, seed, saveInfo);
 
@@ -110,10 +115,13 @@ export async function performFuzzActionsComposeVsIndividual(
 		numberOfClients: 1,
 		emitter,
 	};
-	const model = {
-		...baseModel,
-		generatorFactory: () => generator,
-	};
+	const model = mixinClientSelection(
+		{
+			...baseModel,
+			generatorFactory: () => generator,
+		},
+		options,
+	);
 
 	const finalState = await runTestForSeed(model, options, seed, saveInfo);
 	const treeViewBeforeCommit = toJsonableTree(finalState.clients[0].channel);
@@ -131,7 +139,7 @@ export async function performFuzzActionsComposeVsIndividual(
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe.only("Fuzz - Targeted", () => {
+describe("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;

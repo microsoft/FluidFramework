@@ -45,25 +45,7 @@ import {
 	ValueFieldEdit,
 } from "./operationTypes";
 
-/**
- * Context for a 'selected tree'. This is useful at op generation time: most fuzz test operation generators
- * work by picking a tree to perform an operation on, and afterward deciding the operation to perform.
- *
- * Since generators are typically written hierarchically, it's important that this selection only happens once.
- * This type is useful to pass down as additional context to a generator's state.
- */
-export interface TreeSelectionContext {
-	/**
-	 * Selected tree index.
-	 */
-	treeIndex: number;
-	/**
-	 * Selected tree.
-	 */
-	tree: ISharedTree;
-}
-
-export type EditState = DDSFuzzTestState<SharedTreeFactory> & TreeSelectionContext;
+export type EditState = DDSFuzzTestState<SharedTreeFactory>;
 
 export interface EditGeneratorOpWeights {
 	insert: number;
@@ -85,14 +67,13 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 export const makeNodeEditGenerator = (): Generator<NodeEdit, EditState> => {
 	function setPayloadGenerator(state: EditState): FuzzNodeEditChange {
 		const trees = state.clients;
-		const tree = trees[state.treeIndex].channel;
+		const tree = state.channel;
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
 		const setPayload: FuzzSetPayload = {
 			nodeEditType: "setPayload",
 			path,
 			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			treeIndex: state.treeIndex,
 		};
 		switch (path.parentField) {
 			case sequenceFieldKey:
@@ -128,8 +109,7 @@ export const makeFieldEditGenerator = (
 		...opWeights,
 	};
 	function fieldEditGenerator(state: EditState): FieldEditTypes {
-		const trees = state.clients;
-		const tree = trees[state.treeIndex].channel;
+		const tree = state.channel;
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
 		assert(fieldPath.parent !== undefined);
@@ -146,21 +126,15 @@ export const makeFieldEditGenerator = (
 							fieldKey,
 							state.random.integer(0, count),
 							state.random,
-							state.treeIndex,
 						);
 					case "delete":
-						return generateSequenceFieldDeleteOp(
-							fieldPath,
-							state.random,
-							count,
-							state.treeIndex,
-						);
+						return generateSequenceFieldDeleteOp(fieldPath, state.random, count);
 					default:
 						break;
 				}
 			}
 			case valueFieldKey: {
-				return generateValueFieldDeleteOp(fieldPath, state.treeIndex);
+				return generateValueFieldDeleteOp(fieldPath);
 			}
 			case optionalFieldKey: {
 				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
@@ -173,10 +147,9 @@ export const makeFieldEditGenerator = (
 							fieldKey,
 							state.random.integer(0, count),
 							state.random,
-							state.treeIndex,
 						);
 					case "delete":
-						return generateOptionaFieldDeleteOp(fieldPath, state.treeIndex);
+						return generateOptionaFieldDeleteOp(fieldPath);
 					default:
 						break;
 				}
@@ -188,7 +161,6 @@ export const makeFieldEditGenerator = (
 					fieldKey,
 					state.random.integer(0, count),
 					state.random,
-					state.treeIndex,
 				);
 		}
 	}
@@ -196,7 +168,6 @@ export const makeFieldEditGenerator = (
 	function generateDeleteEdit(
 		fieldPath: FieldUpPath,
 		count: number,
-		treeIndex: number,
 		nodeIndex: number,
 	): FuzzDelete {
 		const firstNode: UpPath = {
@@ -208,7 +179,6 @@ export const makeFieldEditGenerator = (
 			type: "delete",
 			firstNode,
 			count,
-			treeIndex,
 		};
 	}
 
@@ -216,24 +186,20 @@ export const makeFieldEditGenerator = (
 		fieldPath: FieldUpPath,
 		random: IRandom,
 		count: number,
-		treeIndex: number,
 	): SequenceFieldEdit {
 		const nodeIndex = random.integer(0, count - 1);
 		const rangeSize = random.integer(1, count - nodeIndex);
-		const contents = generateDeleteEdit(fieldPath, rangeSize, treeIndex, nodeIndex);
+		const contents = generateDeleteEdit(fieldPath, rangeSize, nodeIndex);
 		return { type: "sequence", edit: contents };
 	}
 
-	function generateValueFieldDeleteOp(fieldPath: FieldUpPath, treeIndex: number): ValueFieldEdit {
-		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
+	function generateValueFieldDeleteOp(fieldPath: FieldUpPath): ValueFieldEdit {
+		const contents = generateDeleteEdit(fieldPath, 1, 0);
 		return { type: "value", edit: contents };
 	}
 
-	function generateOptionaFieldDeleteOp(
-		fieldPath: FieldUpPath,
-		treeIndex: number,
-	): OptionalFieldEdit {
-		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
+	function generateOptionaFieldDeleteOp(fieldPath: FieldUpPath): OptionalFieldEdit {
+		const contents = generateDeleteEdit(fieldPath, 1, 0);
 		return { type: "optional", edit: contents };
 	}
 
@@ -242,7 +208,6 @@ export const makeFieldEditGenerator = (
 		fieldKey: FieldKey,
 		fieldIndex: number,
 		random: IRandom,
-		treeIndex: number,
 	): SequenceFieldEdit {
 		const contents: FuzzInsert = {
 			type: "insert",
@@ -250,7 +215,6 @@ export const makeFieldEditGenerator = (
 			field: fieldKey,
 			index: fieldIndex,
 			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			treeIndex,
 		};
 		return {
 			type: "sequence",
@@ -278,12 +242,12 @@ export const makeEditGenerator = (
 				delete: passedOpWeights.delete,
 			}),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-			({ clients, treeIndex }) => containsAtLeastOneNode(clients[treeIndex].channel),
+			({ channel }) => containsAtLeastOneNode(channel),
 		],
 		[
 			makeNodeEditGenerator(),
 			passedOpWeights.setPayload,
-			({ clients, treeIndex }) => containsAtLeastOneNode(clients[treeIndex].channel),
+			({ channel }) => containsAtLeastOneNode(channel),
 		],
 	]);
 
@@ -294,7 +258,6 @@ export const makeEditGenerator = (
 			: {
 					type: "edit",
 					contents,
-					index: state.treeIndex,
 			  };
 	};
 };
@@ -312,16 +275,8 @@ export const makeTransactionEditGenerator = (
 
 	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, EditState>([
 		[start, passedOpWeights.start],
-		[
-			commit,
-			passedOpWeights.commit,
-			({ clients, treeIndex }) => transactionsInProgress(clients[treeIndex].channel),
-		],
-		[
-			abort,
-			passedOpWeights.abort,
-			({ clients, treeIndex }) => transactionsInProgress(clients[treeIndex].channel),
-		],
+		[commit, passedOpWeights.commit, ({ channel }) => transactionsInProgress(channel)],
+		[abort, passedOpWeights.abort, ({ channel }) => transactionsInProgress(channel)],
 	]);
 
 	return (state) => {
@@ -332,7 +287,6 @@ export const makeTransactionEditGenerator = (
 			: {
 					type: "transaction",
 					contents,
-					treeIndex: state.treeIndex,
 			  };
 	};
 };
@@ -363,18 +317,7 @@ export function makeOpGenerator(
 		generatorWeights,
 	);
 	return async (state) => {
-		// Even though not all ops require a client (e.g. synchronize), selecting one won't hurt.
-		// Centralizing this choice reduces boilerplate across nested generators and ensures all
-		// generators agree which client to perform the operation on.
-		// This selection doesn't include the last tree when there's mroe than one client, as having
-		// a passive client to compare against is convenient.
-		// TODO: If clients can join & leave mid-test, 'the last client' isn't stable with the natural
-		// array operations.
-
-		const treeIndex =
-			state.clients.length === 1 ? 0 : state.random.integer(0, state.clients.length - 2);
-		const tree = state.clients[treeIndex].channel;
-		return generatorAssumingTreeIsSelected({ ...state, treeIndex, tree });
+		return generatorAssumingTreeIsSelected({ ...state });
 	};
 }
 
