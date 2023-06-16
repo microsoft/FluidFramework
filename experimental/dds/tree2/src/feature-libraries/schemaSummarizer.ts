@@ -170,7 +170,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
 		const op: JsonCompatibleReadOnly = message.contents;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(typeof op.data === "string", "SchemaOps should have string data");
+			assert(typeof op.data === "string", 0x6ca /* SchemaOps should have string data */);
 			const data = this.codec.decode(op.data);
 			// TODO: This does not correctly handle concurrency of schema edits.
 			this.inner.update(data);

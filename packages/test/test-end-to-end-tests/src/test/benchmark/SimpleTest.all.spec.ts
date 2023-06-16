@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
 describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

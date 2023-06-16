@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.19.0",
+	"version": "0.20.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,6 +38,10 @@
 		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
 		"prettier": "prettier --check . --ignore-path ../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../.prettierignore",
+		"syncpack:deps": "syncpack lint-semver-ranges --config syncpack.config.cjs",
+		"syncpack:deps:fix": "syncpack set-semver-ranges --config syncpack.config.cjs",
+		"syncpack:versions": "syncpack list-mismatches --config syncpack.config.cjs",
+		"syncpack:versions:fix": "syncpack fix-mismatches --config syncpack.config.cjs",
 		"test": "npm run test:mocha && npm run test:jest && npm run test:realsvc",
 		"test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
@@ -95,6 +99,7 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
+		"syncpack": "^9.8.4",
 		"typescript": "~4.5.5"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
@@ -108,8 +113,8 @@
 			}
 		},
 		"overrides": {
-			"json5@<1.0.2": ">=1.0.2",
-			"json5@>=2.0.0 <2.2.2": ">=2.2.2",
+			"json5@<1.0.2": "^1.0.2",
+			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0"
 		}
 	}

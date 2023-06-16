@@ -18,7 +18,7 @@ import {
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage";
+import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
 const directoryId = "directoryKey";

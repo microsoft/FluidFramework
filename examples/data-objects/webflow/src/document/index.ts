@@ -41,11 +41,11 @@ import {
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IEvent } from "@fluidframework/common-definitions";
-import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
-import { IHTMLAttributes } from "../util/attr";
-import { documentType } from "../package";
-import { debug } from "./debug";
-import { SegmentSpan } from "./segmentspan";
+import { clamp, emptyArray, randomId, TagName, TokenList } from "../util/index.js";
+import { IHTMLAttributes } from "../util/attr.js";
+import { documentType } from "../package.js";
+import { debug } from "./debug.js";
+import { SegmentSpan } from "./segmentspan.js";
 
 export const enum DocSegmentKind {
 	text = "text",
