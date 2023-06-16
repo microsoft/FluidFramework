@@ -72,6 +72,7 @@ export class TenantManager {
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
 		private readonly secretManager: ISecretManager,
+		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
@@ -81,7 +82,7 @@ export class TenantManager {
 			}
 			Lumberjack.info("Fetch tenant key api counters", this.apiCounter.getCounters());
 			this.apiCounter.resetAllCounters();
-		}, 60 * 1000);
+		}, this.fetchTenantKeyMetricInterval);
 	}
 
 	/**

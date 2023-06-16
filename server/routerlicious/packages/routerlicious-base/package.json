@@ -124,6 +124,9 @@
 		"broken": {
 			"ClassDeclaration_AlfredResources": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_RiddlerResources": {
+				"forwardCompat": false
 			}
 		}
 	}

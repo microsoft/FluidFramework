@@ -64,7 +64,10 @@ data:
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
-            },
+        },
+        "apiCounters": {
+            "fetchTenantKeyMetricMs": 60000
+        },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
