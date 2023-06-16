@@ -31,7 +31,6 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
-	readonly disableBatchRebasing: boolean;
 }
 
 export interface IOutboxParameters {
@@ -44,11 +43,6 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (
-		content: string,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -71,7 +65,6 @@ export class Outbox {
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
-	private batchRebasesToReport = 5;
 
 	/**
 	 * Track the number of ops which were detected to have a mismatched
@@ -224,49 +217,10 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch();
-		if (rawBatch.hasReentrantOps === true && !this.params.config.disableBatchRebasing) {
-			// If a batch contains reentrant ops (ops created as a result from processing another op)
-			// it needs to be rebased so that we can ensure consistent reference sequence numbers
-			// and eventual consistency at the DDS level.
-			this.rebase(rawBatch);
-			// After rebasing, the ops will end up in the same batch queue and are now safe to be sent
-			this.flushInternal(batchManager);
-			return;
-		}
-
 		const processedBatch = this.compressBatch(rawBatch);
 		this.sendBatch(processedBatch);
 
 		this.persistBatch(rawBatch.content);
-	}
-
-	/**
-	 * Rebases a batch. All the ops in the batch are resubmitted to the runtime and
-	 * they will eventually end up in the batch manager and subsequently flushed.
-	 *
-	 * @param rawBatch - the batch to be rebased
-	 */
-	private rebase(rawBatch: IBatch) {
-		for (const message of rawBatch.content) {
-			this.params.reSubmit(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.localOpMetadata,
-				message.metadata,
-			);
-		}
-
-		if (this.batchRebasesToReport > 0) {
-			this.mc.logger.sendTelemetryEvent(
-				{
-					eventName: "BatchRebase",
-					length: rawBatch.content.length,
-					referenceSequenceNumber: rawBatch.referenceSequenceNumber,
-				},
-				new UsageError("BatchRebase"),
-			);
-			this.batchRebasesToReport--;
-		}
 	}
 
 	private compressBatch(batch: IBatch): IBatch {

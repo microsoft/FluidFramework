@@ -24,6 +24,16 @@ export class OpGroupingManager {
 			return batch;
 		}
 
+		if (batch.hasReentrantOps === true) {
+			// Batches with reentrant ops cannot be grouped as grouping would hide
+			// the sequence numbers of the individual ops and reentrant ops may have
+			// been based on the remote (original) op reference sequence number. T
+			// This can cause conflicts in the data model, as there will be no way to
+			// establish an order between op within the same batch when they are processed
+			// by a remote client.
+			return batch;
+		}
+
 		for (const message of batch.content) {
 			// Blob attaches cannot be grouped (grouped batching would hide metadata)
 			if (message.type === ContainerMessageType.BlobAttach) {

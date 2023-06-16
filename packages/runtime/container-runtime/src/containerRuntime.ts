@@ -1318,9 +1318,6 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
-		const disableBatchRebasing = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableBatchRebasing",
-		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1331,7 +1328,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				disableBatchRebasing: disableBatchRebasing === true,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1339,7 +1335,6 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
-			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
 		});
@@ -1499,7 +1494,6 @@ export class ContainerRuntime
 				idCompressorEnabled: this.idCompressorEnabled,
 				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
-				disableBatchRebasing,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
