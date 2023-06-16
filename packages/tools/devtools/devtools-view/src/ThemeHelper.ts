@@ -12,7 +12,6 @@ import {
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
-teamsHighContrastTheme.colorCompoundBrandStroke = "#000";
 teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
 
 /**

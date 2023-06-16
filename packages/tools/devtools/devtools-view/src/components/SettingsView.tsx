@@ -76,7 +76,6 @@ export function SettingsView(): React.ReactElement {
 					minWidth: "150px",
 					fontWeight: "bold",
 				}}
-				appearance="filled-darker"
 				onOptionSelect={handleThemeChange}
 			>
 				<Option value={ThemeOption.Light}>Light</Option>
