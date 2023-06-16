@@ -654,7 +654,7 @@ export class TenantManager {
 	}
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
-		const cachedKey = this.cache?.get(`tenantKeys:${tenantId}`);
+		const cachedKey = await this.cache?.get(`tenantKeys:${tenantId}`);
 		if (cachedKey == null) {
 			this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
 		} else {
