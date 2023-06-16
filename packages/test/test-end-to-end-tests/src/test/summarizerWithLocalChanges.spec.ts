@@ -125,71 +125,74 @@ async function createSummarizer(
 	return createSummarizerCore(container, loader, summaryVersion);
 }
 
-/**
- * Validates the scenario in which, during summarization, a data store is loaded out of order.
- */
-describeNoCompat("Summary where data store is loaded out of order", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
+describeNoCompat(
+	"Data store realized between startSummary and summarize",
+	(getTestObjectProvider) => {
+		let provider: ITestObjectProvider;
 
-	const createContainer = async (): Promise<IContainer> => {
-		return provider.createContainer(runtimeFactory);
-	};
+		const createContainer = async (): Promise<IContainer> => {
+			return provider.createContainer(runtimeFactory);
+		};
 
-	async function waitForSummary(summarizer: ISummarizer, refreshLatestAck?: boolean) {
-		// Wait for all pending ops to be processed by all clients.
-		await provider.ensureSynchronized();
-		const summaryResult = await summarizeNow(summarizer, "test", refreshLatestAck);
-		return summaryResult;
-	}
+		async function waitForSummary(summarizer: ISummarizer, refreshLatestAck?: boolean) {
+			// Wait for all pending ops to be processed by all clients.
+			await provider.ensureSynchronized();
+			const summaryResult = await summarizeNow(summarizer, "test", refreshLatestAck);
+			return summaryResult;
+		}
 
-	beforeEach(async () => {
-		provider = getTestObjectProvider({ syncSummarizer: true });
-	});
+		beforeEach(async () => {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+		});
 
-	itExpects(
-		"No Summary Upload Error when DS gets realized between summarize and completeSummary",
-		[
-			{ eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC" },
-			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
-			{ eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
-		],
-		async () => {
-			const container = await createContainer();
-			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
-			const dataObject = await dataStoreFactory1.createInstance(
-				rootDataObject.containerRuntime,
-			);
-			rootDataObject._root.set("store", dataObject.handle);
-			const { summarizer } = await createSummarizer(provider, container);
+		itExpects(
+			"NodeDidNotRunGC error",
+			[
+				{ eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC" },
+				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+				{ eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
+			],
+			async () => {
+				const container = await createContainer();
+				await waitForContainerConnection(container);
+				const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+				const dataObject = await dataStoreFactory1.createInstance(
+					rootDataObject.containerRuntime,
+				);
+				rootDataObject._root.set("store", dataObject.handle);
+				const { summarizer } = await createSummarizer(provider, container);
 
-			// This should not fail
-			await assert.rejects(
-				waitForSummary(summarizer),
-				(error) => {
-					return error.message === "NodeDidNotRunGC";
-				},
-				"expected NodeDidNotRunGC",
-			);
+				// This should not fail
+				await assert.rejects(
+					waitForSummary(summarizer),
+					(error) => {
+						return error.message === "NodeDidNotRunGC";
+					},
+					"expected NodeDidNotRunGC",
+				);
 
-			const secondSummary = await waitForSummary(summarizer, true /* refreshLatestAck */);
-			const tree = secondSummary.summaryTree;
-			const runtimeSummary = tree.tree[".channels"];
-			assert(runtimeSummary.type === SummaryType.Tree, "DataStores summary should be a tree");
-			assert(
-				dataObject.createdDataStoreId !== undefined,
-				"expected a datastore to be created!",
-			);
-			const datastoreSummary = runtimeSummary.tree[dataObject.createdDataStoreId];
-			assert(
-				datastoreSummary.type === SummaryType.Tree,
-				"DataStore summary should be a tree",
-			);
-			// The datastore should be referenced instead of unreferenced
-			assert(
-				datastoreSummary.unreferenced !== undefined,
-				"Data store should be unreferenced",
-			);
-		},
-	);
-});
+				const secondSummary = await waitForSummary(summarizer, true /* refreshLatestAck */);
+				const tree = secondSummary.summaryTree;
+				const runtimeSummary = tree.tree[".channels"];
+				assert(
+					runtimeSummary.type === SummaryType.Tree,
+					"DataStores summary should be a tree",
+				);
+				assert(
+					dataObject.createdDataStoreId !== undefined,
+					"expected a datastore to be created!",
+				);
+				const datastoreSummary = runtimeSummary.tree[dataObject.createdDataStoreId];
+				assert(
+					datastoreSummary.type === SummaryType.Tree,
+					"DataStore summary should be a tree",
+				);
+				// The datastore should be referenced instead of unreferenced
+				assert(
+					datastoreSummary.unreferenced !== undefined,
+					"Data store should be unreferenced",
+				);
+			},
+		);
+	},
+);
