@@ -7,6 +7,14 @@ import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+	HttpProperties,
+	LumberEventName,
+	Lumberjack,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import * as socketIo from "./socketIoServer";
 
 export type RequestListener = (
@@ -53,10 +61,12 @@ export interface IHttpServerConfig {
 	 * Default: 0 (disabled)
 	 */
 	connectionTimeoutMs: number;
+	enableSocketIoRequestTelemetry: boolean;
 }
 
 const defaultHttpServerConfig: IHttpServerConfig = {
 	connectionTimeoutMs: 0,
+	enableSocketIoRequestTelemetry: false,
 };
 const createAndConfigureHttpServer = (
 	requestListener: RequestListener,
@@ -65,6 +75,44 @@ const createAndConfigureHttpServer = (
 	const server = http.createServer(requestListener);
 	server.timeout =
 		httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
+	const enableSocketIoRequestTelemetry =
+		httpServerConfig?.enableSocketIoRequestTelemetry ??
+		defaultHttpServerConfig.enableSocketIoRequestTelemetry;
+	if (enableSocketIoRequestTelemetry) {
+		server.on("request", (request, response) => {
+			if (!request.url) return;
+			const url = new URL(request.url);
+			const socketIoPath = "/socket.io/";
+			if (url.pathname !== socketIoPath) return;
+
+			const httpMetric = Lumberjack.newLumberMetric(LumberEventName.SocketIoRequest);
+			const additionalProperties = {
+				protocolVersion: url.searchParams.get("EIO"), // '2', '3', or '4'
+				transport: url.searchParams.get("transport"), // 'websocket' or 'polling'
+				[BaseTelemetryProperties.tenantId]: url.searchParams.get("tenantId") ?? "",
+				[BaseTelemetryProperties.documentId]: url.searchParams.get("documentId") ?? "",
+			};
+			response.once("close", () => {
+				const properties = {
+					[HttpProperties.method]: request.method ?? "METHOD_UNAVAILABLE",
+					[HttpProperties.pathCategory]: socketIoPath,
+					[HttpProperties.url]: url,
+					[HttpProperties.status]: `${response.statusCode}` || "STATUS_UNAVAILABLE",
+					[HttpProperties.requestContentLength]: request.headers["content-length"],
+					[HttpProperties.responseContentLength]: response.getHeader("content-length"),
+					[HttpProperties.responseTime]: response.getHeader("response-time"),
+					[CommonProperties.telemetryGroupName]: "http_requests",
+					...additionalProperties,
+				};
+				httpMetric.setProperties(properties);
+				if (properties.status?.startsWith("2")) {
+					httpMetric.success("Socket.io request successful");
+				} else {
+					httpMetric.error("Socket.io request failed");
+				}
+			});
+		});
+	}
 	return server;
 };
 

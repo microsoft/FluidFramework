@@ -30,7 +30,7 @@ export class Throttler implements IThrottler {
 
 	constructor(
 		private readonly throttlerHelper: IThrottlerHelper,
-		private readonly minThrottleIntervalInMs: number = 1000000,
+		private readonly minThrottleSyncIntervalInMs: number = 1000000,
 		private readonly logger?: ILogger,
 		/**
 		 * Maximum number of keys that should be internally tracked at a given time.
@@ -51,6 +51,14 @@ export class Throttler implements IThrottler {
 		 * Default: false
 		 */
 		private readonly enableEnhancedTelemetry: boolean = false,
+		/**
+		 * When only computing throttle-limits every `minThrottleSyncIntervalInMs`, increasing throttling accuracy means
+		 * increasing cache load (e.g. Redis). We can increase accuracy without increasing load by performing more frequent, not-synchronized
+		 * throttle computations.
+		 * Note: This flag is experimental and could cause increased CPU usage.
+		 * Default: false
+		 */
+		private readonly enableEnhancedAccuracy: boolean = false,
 	) {
 		const cacheOptions: LRUCache.Options<string, any> = {
 			max: maxCacheSize,
@@ -171,7 +179,7 @@ export class Throttler implements IThrottler {
 		}
 
 		const lastThrottleUpdateTime = this.lastThrottleUpdateAtMap.get(id);
-		if (now - lastThrottleUpdateTime > this.minThrottleIntervalInMs) {
+		if (now - lastThrottleUpdateTime > this.minThrottleSyncIntervalInMs) {
 			const countDelta = this.countDeltaMap.get(id);
 			this.lastThrottleUpdateAtMap.set(id, now);
 			this.countDeltaMap.set(id, 0);

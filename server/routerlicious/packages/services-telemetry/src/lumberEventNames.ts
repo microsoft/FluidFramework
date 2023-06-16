@@ -44,6 +44,7 @@ export enum LumberEventName {
 	DisconnectDocument = "DisconnectDocument",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
+	SocketIoRequest = "SocketIoRequest",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
