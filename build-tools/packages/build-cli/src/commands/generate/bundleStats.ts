@@ -14,7 +14,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 	static flags = {
 		packageMetadataPath: Flags.file({
 			description:
-				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna@5.6.2 list --all --json` is used.",
+				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna@5.1.8 list --all --json` is used.",
 			required: false,
 			hidden: true,
 		}),
