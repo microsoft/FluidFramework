@@ -26,6 +26,17 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Workaround for breaking change in transitive dependency through Lerna (https://github.com/octokit/rest.js/issues/318).
+		// @octokit/rest is fixed now but @octokit/request-error is still broken.
+		// See https://github.com/microsoft/FluidFramework/pull/16036 for what to revert when this is fixed.
+		{
+			label: "Temporary workaround.",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["@octokit/request-error"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		// Workaround for compatibility issues.
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
@@ -179,12 +190,7 @@ module.exports = {
 		// Items should be removed from here when possible.
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: [
-				"react-virtualized-auto-sizer",
-				"@types/react",
-				"@types/react-dom",
-				"@octokit/rest",
-			],
+			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
 			packages: ["**"],
 			isIgnored: true,
 		},

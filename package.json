@@ -180,7 +180,7 @@
 			"@types/react": "17.0.52",
 			"@types/react-dom": "17.0.18",
 			"@oclif/core": "~2.4.0",
-			"@octokit/rest": "<19.0.12"
+			"@octokit/request-error": "<4.0.2"
 		},
 		"peerDependencyRules": {
 			"allowedVersions": {
