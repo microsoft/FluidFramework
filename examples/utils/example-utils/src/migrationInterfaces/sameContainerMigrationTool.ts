@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
 
 /**
  * The collaboration session may be in one of these states:
@@ -81,5 +82,14 @@ export interface ISameContainerMigrationTool
 	 * Propose a new version to use.
 	 * @param newVersion - the version string
 	 */
-	proposeVersion: (newVersion: string) => void;
+	readonly proposeVersion: (newVersion: string) => void;
+
+	/**
+	 * Give a container reference to the migration tool.  The migration tool must have this reference in order to
+	 * complete the migration flow, otherwise it won't be able to progress past proposingV2Code state.
+	 * TODO: Later consider whether we can reduce the scope of what's provided to the tool.  Does it need the whole IContainer,
+	 * or could we just give it a callback to proposeCodeDetails()?
+	 * @param container - the reference to the IContainer associated with this migration tool
+	 */
+	readonly setContainerRef: (container: IContainer) => void;
 }
