@@ -392,13 +392,15 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
 		// test with and without offline load enabled
 		const offlineCfg = configProvider({ "Fluid.Container.enableOfflineLoad": true });
-		for (const cfg of [undefined,  offlineCfg]) {
+		for (const cfg of [undefined, offlineCfg]) {
 			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
 				...testContainerConfig,
 				loaderProps: { detachedBlobStorage, configProvider: cfg },
 			});
-			const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const detachedContainer = await loader.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
 
 			const text = "this is some example text";
 			const detachedDataStore = await requestFluidObject<ITestDataObject>(
