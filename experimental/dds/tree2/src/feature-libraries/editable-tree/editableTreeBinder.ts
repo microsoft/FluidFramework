@@ -797,7 +797,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	implements FlushableDataBinder<InvalidationBinderEvents>
 {
 	protected readonly view: ISubscribable<E>;
-	protected readonly autoFlushPolicy;
+	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
 		super(options, (anchor: EditableTree) => new InvalidatingPathVisitor(options));
 		this.view = view;
