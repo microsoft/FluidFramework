@@ -527,7 +527,7 @@ export const clientSeqComparer: Comparer<ClientSeq> = {
  * @internal
  */
 export interface LRUSegment {
-	segment?: IMergeLeaf;
+	segment?: ISegmentLeaf;
 	maxSeq: number;
 }
 
