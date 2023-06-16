@@ -351,6 +351,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 //* TODO: Find final home for these
 
 export interface IProvideFluidInternalReferenceInfo {
+	//* Make required here?
 	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
