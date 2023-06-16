@@ -663,7 +663,7 @@ class AbstractDataBinder<
 {
 	protected readonly visitors = new Map<EditableTree, V>();
 	protected readonly visitorLocations = new Map<V, UpPath>();
-	protected readonly unregisterHandles: Set<() => void> = new Set();
+	protected readonly unregisterHandles = new Set<() => void>();
 	public constructor(
 		protected readonly options: O,
 		protected readonly visitorFactory: (anchor: EditableTree) => V,
