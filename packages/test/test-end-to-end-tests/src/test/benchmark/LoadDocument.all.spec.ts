@@ -11,7 +11,7 @@ import {
 	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoader,
-} from "./DocumentCreator";
+} from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;

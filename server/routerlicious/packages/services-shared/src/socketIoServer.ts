@@ -9,7 +9,7 @@ import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -67,7 +67,9 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
@@ -91,8 +93,8 @@ export function create(
 		};
 	}
 
-	const pub = new Redis(clone(options));
-	const sub = new Redis(clone(options));
+	const pub = new Redis.default(clone(options));
+	const sub = new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);

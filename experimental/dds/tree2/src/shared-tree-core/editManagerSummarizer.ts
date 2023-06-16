@@ -15,7 +15,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { IJsonCodec } from "../codec";
+import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
 	ChangeFamily,
@@ -57,9 +57,10 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
+		options: ICodecOptions,
 	) {
 		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
-		this.codec = makeEditManagerCodec(changesetCodec);
+		this.codec = makeEditManagerCodec(changesetCodec, options);
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);
 			const encodedSummary = this.codec.encode(this.editManager.getSummaryData());

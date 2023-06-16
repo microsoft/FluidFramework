@@ -593,6 +593,18 @@ describe("Map", () => {
 					assert.equal(map1.size, 0);
 				});
 
+				// TODO:AB#4609: Enable this test.
+				it.skip("Shouldn't clear value set before and after a clear", () => {
+					map1.set("1", "first result");
+					map1.clear();
+					map1.set("1", "second result");
+
+					containerRuntimeFactory.processAllMessages();
+
+					assert.equal(map1.get("1"), "second result");
+					assert.equal(map2.get("1"), "second result");
+				});
+
 				it("Shouldn't overwrite value if there is pending set", () => {
 					const value1 = "value1";
 					const pending1 = "pending1";
@@ -768,6 +780,17 @@ describe("Map", () => {
 					}
 
 					assert.equal(set.size, 0);
+				});
+			});
+
+			describe(".size", () => {
+				// TODO:AB#4612: Enable this test
+				it.skip("shouldn't count keys deleted concurrent to a clear op", () => {
+					map1.clear();
+					map2.delete("dummy");
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(map1.size, 0);
+					assert.equal(map2.size, 0);
 				});
 			});
 		});
