@@ -161,7 +161,7 @@ function operationGenerator(
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(0, state.channel.revertibles.length),
+			editsToRevert: state.random.integer(1, state.channel.revertibles.length),
 		};
 	}
 
