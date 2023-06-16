@@ -1125,7 +1125,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getLength() {
-		return this._mergeTree.length;
+		return this._mergeTree.length ?? 0;
 	}
 
 	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {
