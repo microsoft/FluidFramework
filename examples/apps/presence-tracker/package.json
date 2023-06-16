@@ -11,9 +11,9 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
+	"main": "lib/index.js",
 	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
