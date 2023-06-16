@@ -25,6 +25,8 @@ import { UndoRedoStackManager } from "@fluidframework/undo-redo";
  * the "unreferenced" property.
  */
 describeFullCompat("GC reference updates in local summary", (getTestObjectProvider, apis) => {
+	const { SharedMatrix, SharedString } = apis.dds;
+
 	class TestDataObject extends apis.dataRuntime.DataObject {
 		public get _root() {
 			return this.root;
@@ -68,7 +70,6 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 	}
 
 	let provider: ITestObjectProvider;
-	const { SharedMatrix, SharedString } = apis.dds;
 	const factory = new apis.dataRuntime.DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
