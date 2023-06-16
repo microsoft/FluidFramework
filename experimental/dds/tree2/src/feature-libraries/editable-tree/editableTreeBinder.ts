@@ -468,7 +468,7 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		type: BindingContextType,
 		otherArgs: object,
 	): void {
-		const current = toDownPath<BindPath>(path);
+		const current = toDownPath(path);
 		const listeners = this.getListeners(type, current);
 		if (listeners !== undefined) {
 			this.processListeners(path, listeners, otherArgs);
@@ -507,7 +507,7 @@ class InvalidatingPathVisitor
 	private readonly listeners: Set<Listener> = new Set();
 
 	private processRegisteredPaths(path: UpPath): void {
-		const current = toDownPath<BindPath>(path);
+		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Invalidation, current);
 		if (listeners !== undefined) {
 			for (const listener of listeners) {
@@ -556,7 +556,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	private readonly eventQueue: CallableBindingContext[] = [];
 
 	public onDelete(path: UpPath, count: number): void {
-		const current = toDownPath<BindPath>(path);
+		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Delete, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
@@ -569,7 +569,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toDownPath<BindPath>(path);
+		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Insert, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
@@ -582,7 +582,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toDownPath<BindPath>(path);
+		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.SetValue, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
@@ -605,7 +605,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			for (let i = 0; i < sortedQueue.length; i++) {
 				const event = sortedQueue[i];
-				const current = toDownPath<BindPath>(event.path);
+				const current = toDownPath(event.path);
 				const listeners = this.getListeners(BindingType.Batch, current);
 				if (listeners !== undefined && listeners.size > 0) {
 					for (const listener of listeners) {
@@ -798,13 +798,13 @@ class InvalidateDataBinder<E extends Events<E>>
  *
  * @alpha
  */
-export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T {
+export function toDownPath(upPath: UpPath): DownPath {
 	const downPath: UpPath[] = topDownPath(upPath);
 	const stepDownPath: PathStep[] = downPath.map((u) => {
 		return { field: u.parentField, index: u.parentIndex };
 	});
 	stepDownPath.shift(); // remove last step to the root node
-	return stepDownPath as T;
+	return stepDownPath;
 }
 
 /**

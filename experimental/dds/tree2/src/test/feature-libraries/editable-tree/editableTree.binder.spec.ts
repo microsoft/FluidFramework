@@ -1171,7 +1171,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[bindTree],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					log.push(downPath);
 				},
 			);
@@ -1203,7 +1203,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[compileSyntaxTree({ address: true })],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					addrLog.push(downPath);
 				},
 			);
@@ -1212,7 +1212,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[compileSyntaxTree({ address: { phones: true } })],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					phonesLog.push(downPath);
 				},
 			);
@@ -1261,7 +1261,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[compileSyntaxTree({ address: true })],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					addrLog.push(downPath);
 				},
 			);
@@ -1270,7 +1270,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[compileSyntaxTree({ address: { phones: true } })],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					phonesLog.push(downPath);
 				},
 			);
@@ -1279,7 +1279,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				[compileSyntaxTree({ address: { zip: true } })],
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
+					const downPath: BindPath = toDownPath(insertContext.path);
 					zipLog.push(downPath);
 				},
 			);
