@@ -85,7 +85,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		insert: 1,
+		setPayload: 1,
 	};
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
