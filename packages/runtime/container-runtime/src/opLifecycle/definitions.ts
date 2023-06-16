@@ -38,7 +38,7 @@ export interface IBatch {
 	 * Wether or not the batch contains at least one op which was produced as the result
 	 * of processing another op. This means that the batch must be rebased before
 	 * submitted, to ensure that all ops have the same sequence numbers and a
-	 * consistent view of the data model before being applied.
+	 * consistent view of the data model.
 	 */
 	readonly hasReentrantOps?: boolean;
 }
