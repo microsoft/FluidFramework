@@ -34,9 +34,6 @@ export function SettingsView(): React.ReactElement {
 			selectedOptions: string[];
 		},
 	): void {
-		if (!setTheme) {
-			return;
-		}
 		switch (option.optionValue) {
 			case ThemeOption.Light:
 				setTheme({

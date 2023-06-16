@@ -56,4 +56,7 @@ type ThemeContextValue = {
 /**
  * Context for accessing a shared theme for communicating with the webpage.
  */
-export const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
+export const ThemeContext = React.createContext<ThemeContextValue>({
+	themeInfo: getFluentUIThemeToUse(),
+	setTheme: () => {},
+});
