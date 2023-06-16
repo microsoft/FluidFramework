@@ -21,7 +21,7 @@ export interface TaskExec {
 }
 
 export abstract class Task {
-	private dependentTasks?: Task[];
+	public dependentTasks?: Task[];
 	private _transitiveDependentLeafTasks?: LeafTask[];
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {

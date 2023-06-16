@@ -161,7 +161,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	} else {
 		// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
 		throw new Error(
-			"Unexpected back compat scenario! Expecting package versiosn to just be 2.0.0-internal.x.y.z",
+			`Unexpected back compat scenario! Expecting package versions to just be 2.0.0-internal.x.y.z, but got ${pkgVersion}.`,
 		);
 	}
 

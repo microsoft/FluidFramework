@@ -5,7 +5,7 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
-		"module": "ESNext",
+		"module": "esnext",
 	},
 	"include": ["src/**/*"],
 }
