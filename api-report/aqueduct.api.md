@@ -24,11 +24,13 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
+import { IProvideFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
@@ -107,19 +109,6 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
-}
-
-// @public
-export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
-    state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
-    // (undocumented)
-    unreferencedTime?: number;
-}
-
-// @public (undocumented)
-export interface IProvideFluidInternalReferenceInfo {
-    // (undocumented)
-    IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
 // @public (undocumented)

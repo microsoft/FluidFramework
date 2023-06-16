@@ -36,10 +36,12 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreChannel,
+	IFluidInternalReferenceInfo,
+} from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { IFluidInternalReferenceInfo } from "@fluidframework/aqueduct";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**

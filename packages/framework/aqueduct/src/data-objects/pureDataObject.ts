@@ -14,28 +14,14 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreContext,
+	IFluidInternalReferenceInfo,
+	IProvideFluidInternalReferenceInfo,
+} from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, IDataObjectProps } from "./types";
-
-export interface IProvideFluidInternalReferenceInfo {
-	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
-}
-
-//* TODO: Move these interface definitions somewhere else
-
-/**
- * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
- * objects within this container.
- */
-export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
-	//* This probably doesn't hold water. Maybe just for logging. TBD.
-	unreferencedTime?: number;
-
-	/** Describes varying states regarding whether the object is referenced or not, if known */
-	state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
-}
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -95,8 +81,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined {
-		//* TODO: Remove 'as' once type is put in the right spot
-		return this.context.IFluidInternalReferenceInfo as IFluidInternalReferenceInfo;
+		return this.context.IFluidInternalReferenceInfo;
 	}
 
 	/**
