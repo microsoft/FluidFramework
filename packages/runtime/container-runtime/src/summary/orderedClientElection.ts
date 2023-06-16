@@ -372,7 +372,7 @@ export class OrderedClientElection
 			// Override the initially elected client with the initial state.
 			if (initialClient?.clientId !== initialState.electedClientId) {
 				// Cannot find initially elected client, so elect undefined.
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientNotFound",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -382,7 +382,7 @@ export class OrderedClientElection
 			} else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
 				// Initially elected client is ineligible, so elect next eligible client.
 				initialClient = initialParent = this.findFirstEligibleParent(initialParent);
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientIneligible",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
