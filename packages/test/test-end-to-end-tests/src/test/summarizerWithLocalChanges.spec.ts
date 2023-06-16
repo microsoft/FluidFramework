@@ -10,7 +10,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import {
+	IContainerRuntimeOptions,
+	ISummarizer,
+	Summarizer,
+} from "@fluidframework/container-runtime";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
@@ -23,7 +27,8 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { MessageType, SummaryType } from "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/common-utils";
 
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
@@ -135,8 +140,6 @@ describeNoCompat(
 		};
 
 		async function waitForSummary(summarizer: ISummarizer, refreshLatestAck?: boolean) {
-			// Wait for all pending ops to be processed by all clients.
-			await provider.ensureSynchronized();
 			const summaryResult = await summarizeNow(summarizer, "test", refreshLatestAck);
 			return summaryResult;
 		}
@@ -160,17 +163,32 @@ describeNoCompat(
 					rootDataObject.containerRuntime,
 				);
 				rootDataObject._root.set("store", dataObject.handle);
-				const { summarizer } = await createSummarizer(provider, container);
+				const { container: summarizingContainer, summarizer } = await createSummarizer(
+					provider,
+					container,
+				);
 
 				// This should not fail
 				await assert.rejects(
-					waitForSummary(summarizer),
+					async () => {
+						await provider.ensureSynchronized();
+						await waitForSummary(summarizer);
+					},
 					(error) => {
 						return error.message === "NodeDidNotRunGC";
 					},
 					"expected NodeDidNotRunGC",
 				);
 
+				const deferredAck = new Deferred();
+				summarizingContainer.on("op", (op) => {
+					if (op.type === MessageType.SummaryAck) {
+						deferredAck.resolve(op);
+					}
+				});
+				await provider.ensureSynchronized();
+				await deferredAck.promise;
+				await (summarizer as Summarizer).refreshAndSummarizeLock;
 				const secondSummary = await waitForSummary(summarizer, true /* refreshLatestAck */);
 				const tree = secondSummary.summaryTree;
 				const runtimeSummary = tree.tree[".channels"];

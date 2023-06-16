@@ -133,6 +133,9 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
+	public get refreshAndSummarizeLock(): Promise<void> | undefined {
+		return this.summarizingLock;
+	}
 
 	private enqueuedSummary:
 		| {
@@ -518,12 +521,13 @@ export class RunningSummarizer implements IDisposable {
 
 		const summarizingLock = new Deferred<void>();
 		this.summarizingLock = summarizingLock.promise;
-
+		console.log("locked");
 		before();
 
 		return action().finally(() => {
 			summarizingLock.resolve();
 			this.summarizingLock = undefined;
+			console.log("freed lock");
 			after();
 		});
 	}
