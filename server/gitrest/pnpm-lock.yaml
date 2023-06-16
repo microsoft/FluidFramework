@@ -12,8 +12,8 @@ importers:
         specifier: ^0.19.0-165129
         version: 0.19.0-165129(@types/node@16.18.16)
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fluidframework/build-tools':
         specifier: ^0.19.0-165129
         version: 0.19.0-165129(@types/node@16.18.16)
@@ -145,8 +145,8 @@ importers:
         version: 3.8.2
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -302,8 +302,8 @@ importers:
         version: 3.8.2
     devDependencies:
       '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -701,8 +701,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common@1.2.0:
-    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
+  /@fluidframework/build-common@2.0.0:
+    resolution: {integrity: sha512-oJsAczo32UpnM+/8LeE2KKOhr1KBxA48Y4umq/t9QfIFRiX0YtgyrLHRAtnGV6l/+4LX/Urmv6bbckeTFaPw7g==}
     hasBin: true
     dev: true
 
