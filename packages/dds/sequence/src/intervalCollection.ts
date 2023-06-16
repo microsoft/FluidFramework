@@ -987,6 +987,23 @@ class OverlappingSequenceIntervalsIndex implements IOverlappingIntervalsIndex<Se
 		if (this.intervalTree.intervals.isEmpty()) {
 			return [];
 		}
+
+		const startRefPos = createPositionReferenceFromSegoff(
+			this.client,
+			{ segment: startSegment, offset: startOffset },
+			ReferenceType.Transient,
+		);
+
+		const endRefPos = createPositionReferenceFromSegoff(
+			this.client,
+			{ segment: endSegment, offset: endOffset },
+			ReferenceType.Transient,
+		);
+
+		if (compareReferencePositions(startRefPos, endRefPos) > 0) {
+			return [];
+		}
+
 		// initialize a default transient interval
 		const transientInterval = this.helpers.create(
 			"transient",
@@ -996,16 +1013,9 @@ class OverlappingSequenceIntervalsIndex implements IOverlappingIntervalsIndex<Se
 			IntervalType.Transient,
 		);
 		// reset the start/end for the transient interval
-		transientInterval.start = createPositionReferenceFromSegoff(
-			this.client,
-			{ segment: startSegment, offset: startOffset },
-			transientInterval.start.refType,
-		);
-		transientInterval.end = createPositionReferenceFromSegoff(
-			this.client,
-			{ segment: endSegment, offset: endOffset },
-			transientInterval.end.refType,
-		);
+		transientInterval.start = startRefPos;
+		transientInterval.end = endRefPos;
+
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
