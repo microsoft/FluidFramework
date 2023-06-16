@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { FieldKey, PathVisitor, ProtoNodes, TreeValue, UpPath, topDownPath } from "../../core";
 import { Events, ISubscribable } from "../../events";
-import { brand } from "../../util";
+import { brand, getOrCreate } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
@@ -324,11 +324,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		trees: BindTree[],
 		listener: Listener,
 	): () => void {
-		let contextRoots = this.registeredListeners.get(contextType);
-		if (contextRoots === undefined) {
-			contextRoots = new Map();
-			this.registeredListeners.set(contextType, contextRoots);
-		}
+		const contextRoots = getOrCreate(this.registeredListeners, contextType, () => new Map());
 		trees.forEach((tree) => {
 			const currentRoot = this.findRoot(contextType, tree.field);
 			if (currentRoot === undefined) {
@@ -680,20 +676,19 @@ class AbstractDataBinder<
 		listener: B[K],
 	): void {
 		// TODO: validate BindPath semantics against the schema
-		let visitor = this.visitors.get(anchor);
-		if (visitor === undefined) {
-			visitor = this.visitorFactory(anchor);
-			this.visitors.set(anchor, visitor);
+		const visitor = getOrCreate(this.visitors, anchor, () => {
+			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
 				anchor[on]("subtreeChanging", (upPath: UpPath) => {
-					assert(visitor !== undefined, "visitor expected to be defined");
-					if (!this.visitorLocations.has(visitor)) {
-						this.visitorLocations.set(visitor, upPath);
+					assert(newVisitor !== undefined, "visitor expected to be defined");
+					if (!this.visitorLocations.has(newVisitor)) {
+						this.visitorLocations.set(newVisitor, upPath);
 					}
-					return visitor;
+					return newVisitor;
 				}),
 			);
-		}
+			return newVisitor;
+		});
 		const contextType: BindingContextType = eventType as BindingContextType;
 		this.unregisterHandles.add(
 			visitor.registerListener(contextType, eventTrees, listener as unknown as Listener),
