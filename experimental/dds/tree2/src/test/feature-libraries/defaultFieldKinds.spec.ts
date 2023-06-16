@@ -303,7 +303,7 @@ describe("Optional field changesets", () => {
 	const change1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
-				id: { localId: brand(1) },
+				id: brand(1),
 				newContent: { set: tree1, changes: nodeChange1 },
 				wasEmpty: true,
 			},
@@ -319,7 +319,7 @@ describe("Optional field changesets", () => {
 	const revertChange2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
-				id: { localId: brand(2) },
+				id: brand(2),
 				newContent: {
 					revert: singleTextCursor(tree1),
 					changeId: { revision: change2.revision, localId: brand(2) },
@@ -343,7 +343,8 @@ describe("Optional field changesets", () => {
 	 */
 	const change1And2: TaggedChange<FieldKindsTypes.OptionalChangeset> = makeAnonChange({
 		fieldChange: {
-			id: { revision: change2.revision, localId: brand(2) },
+			id: brand(2),
+			revision: change2.revision,
 			newContent: { set: tree2 },
 			wasEmpty: true,
 		},
@@ -361,7 +362,7 @@ describe("Optional field changesets", () => {
 			brand(42),
 		);
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { id: { localId: brand(42) }, newContent: { set: tree1 }, wasEmpty: true },
+			fieldChange: { id: brand(42), newContent: { set: tree1 }, wasEmpty: true },
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -382,7 +383,8 @@ describe("Optional field changesets", () => {
 	it("can compose child changes", () => {
 		const expected: FieldKindsTypes.OptionalChangeset = {
 			fieldChange: {
-				id: { revision: change1.revision, localId: brand(1) },
+				id: brand(1),
+				revision: change1.revision,
 				wasEmpty: true,
 				newContent: { set: tree1, changes: nodeChange3 },
 			},
@@ -407,7 +409,7 @@ describe("Optional field changesets", () => {
 		};
 
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { id: { localId: brand(1) }, wasEmpty: false },
+			fieldChange: { id: brand(1), wasEmpty: false },
 			childChange: nodeChange2,
 		};
 

@@ -369,17 +369,15 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			if (change.fieldChange !== undefined) {
-				const fullId = {
-					revision: change.fieldChange.id.revision ?? revision,
-					localId: change.fieldChange.id.localId,
-				};
 				if (fieldChange === undefined) {
 					fieldChange = {
-						id: fullId,
+						id: change.fieldChange.id,
+						revision: change.fieldChange.revision ?? revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
-					fieldChange.id = fullId;
+					fieldChange.id = change.fieldChange.id;
+					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
@@ -442,7 +440,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = {
 					revert: reviver(revision, 0, 1)[0],
-					changeId: { revision, localId: fieldChange.id.localId },
+					changeId: { revision, localId: fieldChange.id },
 				};
 				if (change.childChange !== undefined) {
 					if (change.deletedBy === undefined) {
@@ -504,7 +502,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
 				const overIntention = getIntention(
-					over.fieldChange.id.revision ?? overTagged.revision,
+					over.fieldChange.revision ?? overTagged.revision,
 					revisionMetadata,
 				);
 				if (change.deletedBy === undefined) {
@@ -517,14 +515,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						),
 						deletedBy: {
 							revision: overIntention,
-							localId: over.fieldChange.id.localId,
+							localId: over.fieldChange.id,
 						},
 					};
 				} else if (over.fieldChange.newContent !== undefined) {
 					const overContent = over.fieldChange.newContent;
 					const rebasingOverRollback =
 						overIntention === change.deletedBy.revision &&
-						over.fieldChange.id.localId === change.deletedBy.localId;
+						over.fieldChange.id === change.deletedBy.localId;
 					const rebasingOverUndo =
 						"revert" in overContent &&
 						overContent.changeId.revision === change.deletedBy.revision &&
@@ -601,7 +599,7 @@ const optionalFieldEditor: OptionalFieldEditor = {
 		id: ChangesetLocalId,
 	): OptionalChangeset => ({
 		fieldChange: {
-			id: { localId: id },
+			id,
 			newContent:
 				newContent === undefined
 					? undefined
