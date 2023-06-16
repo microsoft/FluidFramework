@@ -925,6 +925,8 @@ export class ContainerRuntime
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		this.ensureNoDataModelChangesCalls++;
+		this.flush();
+
 		try {
 			return callback();
 		} finally {
