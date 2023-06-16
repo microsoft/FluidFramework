@@ -179,7 +179,12 @@ module.exports = {
 		// Items should be removed from here when possible.
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom", "@octokit/rest"],
+			dependencies: [
+				"react-virtualized-auto-sizer",
+				"@types/react",
+				"@types/react-dom",
+				"@octokit/rest",
+			],
 			packages: ["**"],
 			isIgnored: true,
 		},
