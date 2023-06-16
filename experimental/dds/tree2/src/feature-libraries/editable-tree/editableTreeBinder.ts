@@ -334,7 +334,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					listeners: new Set(),
 					children: new Map(),
 				};
-				assert(contextRoots !== undefined, "contextRoots are defined");
+				assert(contextRoots !== undefined, "expected contextRoots to be defined");
 				contextRoots.set(tree.field, newRoot);
 				this.bindTree(contextType, tree, listener, newRoot);
 			} else {
@@ -372,7 +372,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	}
 
 	private findRoot(contextType: BindingContextType, field: FieldKey): CallTree | undefined {
-		return this.registeredListeners.get(contextType)?.get(field) ?? undefined;
+		return this.registeredListeners.get(contextType)?.get(field);
 	}
 
 	private unregisterListener(
