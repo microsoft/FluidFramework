@@ -54,8 +54,9 @@ export interface ITenantDocument {
 }
 
 enum FetchTenantKeyMetric {
-	RetrievedFromCache = "retreivedFromCache",
+	RetrieveFromCacheSucess = "retrieveFromCacheSuccess",
 	NotFoundInCache = "notFoundInCache",
+	RetrieveFromCacheError = "retrieveFromCacheError",
 	SetKeyInCacheSuccess = "settingKeyInCacheSucceeded",
 	SetKeyInCacheFailure = "settingKeyInCacheFailed",
 }
@@ -353,12 +354,8 @@ export class TenantManager {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
 				const cachedKey = await this.getKeyFromCache(tenantId);
-
 				if (cachedKey) {
-					this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrievedFromCache);
 					return this.decryptCachedKeys(cachedKey);
-				} else {
-					this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
 				}
 			}
 
@@ -405,13 +402,7 @@ export class TenantManager {
 					key1: encryptedTenantKey1,
 					key2: encryptedTenantKey2,
 				};
-				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-
-				if (setKeyInCacheSucceeded) {
-					this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheSuccess);
-				} else {
-					this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheFailure);
-				}
+				await this.setKeyInCache(tenantId, cacheKeys);
 			}
 
 			return {
@@ -420,6 +411,7 @@ export class TenantManager {
 			};
 		} catch (error) {
 			Lumberjack.error(`Error trying to retrieve tenant keys.`, error);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheError);
 			throw error;
 		}
 	}
@@ -521,7 +513,6 @@ export class TenantManager {
 					key2: "",
 				};
 				await this.setKeyInCache(tenantId, cacheKey1);
-				Lumberjack.info(`Added new key to cache.`, lumberProperties);
 			}
 
 			return {
@@ -663,7 +654,13 @@ export class TenantManager {
 	}
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
-		return this.cache?.get(`tenantKeys:${tenantId}`);
+		const cachedKey = this.cache?.get(`tenantKeys:${tenantId}`);
+		if (cachedKey == null) {
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
+		} else {
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheSucess);
+		}
+		return cachedKey;
 	}
 
 	private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
@@ -674,9 +671,11 @@ export class TenantManager {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		try {
 			await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheSuccess);
 			return true;
 		} catch (error) {
 			Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheFailure);
 			return false;
 		}
 	}
