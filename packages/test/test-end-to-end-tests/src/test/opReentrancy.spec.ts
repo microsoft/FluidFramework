@@ -187,47 +187,29 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	});
 
 	describe("Reentry safeguards", () => {
-		itExpects(
-			"Deep recursion is not supported",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Deep event handler recursion detected (100 recursive calls), possible infinite loop",
-				},
-			],
-			async () => {
-				await setupContainers(testContainerConfig);
+		it("Deep recursion is not supported", async () => {
+			await setupContainers(testContainerConfig);
 
-				sharedString1.on("sequenceDelta", () => {
-					sharedString1.insertText(0, "x");
-				});
-				assert.throws(() => sharedString1.insertText(0, "ad"));
-				await provider.ensureSynchronized();
-			},
-		);
+			sharedString1.on("sequenceDelta", () => {
+				sharedString1.insertText(0, "x");
+			});
+			assert.throws(() => sharedString1.insertText(0, "ad"));
+			await provider.ensureSynchronized();
+		});
 
-		itExpects(
-			"Deep recursion is not supported, two clients, two data structures",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Deep event handler recursion detected (100 recursive calls), possible infinite loop",
-				},
-			],
-			async () => {
-				await setupContainers(testContainerConfig);
+		it("Deep recursion is not supported, two clients, two data structures", async () => {
+			await setupContainers(testContainerConfig);
 
-				sharedString1.on("sequenceDelta", () => {
-					sharedMap2.set("0", 1);
-				});
-				sharedMap2.on("valueChanged", () => {
-					sharedString1.insertText(0, "x");
-				});
+			sharedString1.on("sequenceDelta", () => {
+				sharedMap2.set("0", 1);
+			});
+			sharedMap2.on("valueChanged", () => {
+				sharedString1.insertText(0, "x");
+			});
 
-				assert.throws(() => sharedString1.insertText(0, "ad"));
-				await provider.ensureSynchronized();
-			},
-		);
+			assert.throws(() => sharedString1.insertText(0, "ad"));
+			await provider.ensureSynchronized();
+		});
 
 		itExpects(
 			"Flushing is not supported",

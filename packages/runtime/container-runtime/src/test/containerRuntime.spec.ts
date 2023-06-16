@@ -386,7 +386,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("Can't call ensureNoDataModelChanges recursively deeper than 100", async () => {
+			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
 				containerRuntime = await ContainerRuntime.load(
 					getMockContext() as IContainerContext,
 					[],
