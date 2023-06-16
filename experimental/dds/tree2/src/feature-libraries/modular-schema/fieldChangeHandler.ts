@@ -297,6 +297,16 @@ export interface RevisionMetadataSource {
 /**
  * @alpha
  */
+export function getIntention(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+}
+
+/**
+ * @alpha
+ */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
 	/**
