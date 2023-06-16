@@ -129,7 +129,8 @@ export function create(
 		// Indicates whether a connection should use compression
 		perMessageDeflate: socketIoConfig?.perMessageDeflate ?? true,
 		// Enable long-polling as a fallback
-		transports: ["websocket", "polling"],
+		transports:
+			socketIoConfig?.enableLongPolling ?? true ? ["websocket", "polling"] : ["websocket"],
 		cors: {
 			// Explicitly allow all origins by reflecting request origin.
 			// As a service that has potential to host countless different client apps,

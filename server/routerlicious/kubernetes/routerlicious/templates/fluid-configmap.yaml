@@ -107,7 +107,8 @@ data:
             },
             "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
             "socketIo" : {
-                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
+                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}},
+                "enableLongPolling": {{ .Values.alfred.socketIo.enableLongPolling }}
             }
         },
         "client": {

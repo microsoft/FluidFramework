@@ -48,6 +48,7 @@ alfred:
   enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
+    enableLongPolling: true
 
 storage:
   enableWholeSummaryUpload: false
