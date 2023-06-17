@@ -355,12 +355,13 @@ export interface IProvideFluidInternalReferenceInfo {
 	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
 }
 
+//* TODO: Consider converging this type with UnreferencedStateTracker (e.g. have UnreferencedStateTracker implement this interface)
 /**
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.
  */
 export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
-	//* This probably doesn't hold water. Maybe just for logging. TBD.
+	/** Server timestamp in Unix Epoch format of the point in time (in the op stream) this was detected as unreferenced */
 	unreferencedTime?: number;
 
 	/** Describes varying states regarding whether the object is referenced or not, if known */

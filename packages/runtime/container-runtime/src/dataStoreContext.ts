@@ -216,8 +216,8 @@ export abstract class FluidDataStoreContext
 	private deleted: boolean = false;
 
 	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo {
-		//* TODO: Fully implement
-		return this._tombstoned ? { state: "Tombstoned" } : {};
+		//* TODO: How to properly compute nodePath?
+		return this._containerRuntime.getInternalReferenceInfo(`/${this.id}`);
 	}
 
 	public get attachState(): AttachState {

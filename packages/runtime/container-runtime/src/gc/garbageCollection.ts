@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, Timer } from "@fluidframework/common-utils";
+import { LazyPromise, Timer, assert, unreachableCase } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
+	IFluidInternalReferenceInfo,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -933,7 +934,48 @@ export class GarbageCollector implements IGarbageCollector {
 	 * cases where objects are used after they are deleted and throw / log errors accordingly.
 	 */
 	public isNodeDeleted(nodePath: string): boolean {
+		//* TODO: Replace usages with getInternalReferenceInfo?
 		return this.deletedNodes.has(nodePath);
+	}
+
+	/**
+	 * Get this client's estimation of the reference state of the give node
+	 * It may be inaccurate in some cases, e.g. if an interactive client sees an object as unreferenced on load,
+	 * some time later it will transition to Inactive even if it is revived in the meantime.
+	 * @param nodePath - Container-relative path to the node
+	 */
+	public getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo {
+		//* Is this a fair requirement?
+		//* PS - It's assert not UsageError because this class isn't exported, so callers are internal and should know better
+		assert(
+			!this.deletedNodes.has("nodePath"),
+			"Getting internal reference info for a deleted node is not supported",
+		);
+
+		const trackedState = this.unreferencedNodesState.get(nodePath);
+		if (trackedState === undefined) {
+			return { state: "Referenced" };
+		}
+
+		//* Finalize state values and logic here
+		let state: IFluidInternalReferenceInfo["state"];
+		switch (trackedState.state) {
+			case "Active":
+				state = "Referenced";
+				break;
+			case "Inactive":
+			case "SweepReady":
+				state = "Inactive";
+				break;
+			default:
+				unreachableCase(trackedState.state, "All known states covered above");
+		}
+		if (this.tombstones.includes(nodePath)) {
+			state = "Tombstoned";
+		}
+
+		//* Probably rename unreferencedTime prop
+		return { state, unreferencedTime: trackedState.unreferencedTimestampMs };
 	}
 
 	public dispose(): void {

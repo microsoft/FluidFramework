@@ -7,6 +7,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
+	IFluidInternalReferenceInfo,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -245,6 +246,8 @@ export interface IGarbageCollector {
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
+	/** Returns some info about whether the node is referenced or not, including additional info for unreferenced nodes */
+	getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo;
 	setConnectionState(connected: boolean, clientId?: string): void;
 	dispose(): void;
 }
