@@ -153,7 +153,7 @@ export class List<T>
 				removedNode._prev = newList.headNode._prev;
 				newList.headNode._prev._next = removedNode;
 				newList.headNode._prev = removedNode;
-				this._len++;
+				newList._len++;
 				if (node === countOrEnd || newList.length === countOrEnd) {
 					return false;
 				}

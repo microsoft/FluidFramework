@@ -711,7 +711,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
-			0x034 /* "Segment group not at head of merge tree pending queue" */,
+			0x034 /* "Segment group not at head of pending rebase queue" */,
 		);
 		if (this.pendingRebase?.empty) {
 			this.pendingRebase = undefined;
