@@ -236,6 +236,27 @@ export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
 	}
 }
 
+export class NoOpChangeRebaser extends TestChangeRebaser {
+	public nbRebased = 0;
+	public nbInverted = 0;
+	public nbComposed = 0;
+
+	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+		this.nbRebased += 1;
+		return change;
+	}
+
+	public invert(change: TaggedChange<TestChange>): TestChange {
+		this.nbInverted += 1;
+		return change.change;
+	}
+
+	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+		this.nbComposed += changes.length;
+		return changes.length === 0 ? emptyChange : changes[0].change;
+	}
+}
+
 export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 	public constructor(
 		private readonly constraint: (

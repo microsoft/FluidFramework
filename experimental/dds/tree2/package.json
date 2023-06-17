@@ -35,6 +35,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
+		"test:inspect": "npm run test:mocha -- --inspect-brk",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha",

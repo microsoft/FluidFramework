@@ -17,36 +17,19 @@ import {
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	TestAnchorSet,
-	TestChangeFamily,
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
-	testChangeFamilyFactory,
 	asDelta,
+	NoOpChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
-
-type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
-
-function editManagerFactory(options: {
-	rebaser?: ChangeRebaser<TestChange>;
-	sessionId?: SessionId;
-}): {
-	manager: TestEditManager;
-	anchors: TestAnchorSet;
-	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
-} {
-	const family = testChangeFamilyFactory(options.rebaser);
-	const anchors = new TestAnchorSet();
-	const manager = new EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? localSessionId, new MockRepairDataStoreProvider(), anchors);
-	return { manager, anchors, family };
-}
+import {
+	TestEditManager,
+	editManagerFactory,
+	rebaseLocalEditsOverTrunkEdits,
+	rebasePeerEditsOverTrunkEdits,
+} from "./editManagerTestUtils";
 
 const localSessionId: SessionId = "0";
 const peer1: SessionId = "1";
@@ -488,6 +471,52 @@ describe("EditManager", () => {
 			// console.debug(title);
 			runUnitTestScenario(undefined, scenario);
 		}
+	});
+
+	describe("Asymptotic Complexity", () => {
+		interface Scenario {
+			readonly nbRebased: number;
+			readonly nbTrunk: number;
+		}
+
+		const scenarios: Scenario[] = [
+			{ nbRebased: 1000, nbTrunk: 1 },
+			// { nbRebased: 1, nbTrunk: 1 },
+			// { nbRebased: 10, nbTrunk: 1 },
+			// { nbRebased: 1, nbTrunk: 10 },
+			// { nbRebased: 7, nbTrunk: 3 },
+		];
+
+		describe("Local commit rebasing", () => {
+			for (const scenario of scenarios) {
+				it(`Rebase ${scenario.nbRebased} local commits over ${scenario.nbTrunk} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebaseLocalEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
+					assert.equal(rebaser.nbRebased, scenario.nbTrunk * scenario.nbRebased ** 2);
+					assert.equal(rebaser.nbInverted, scenario.nbTrunk * scenario.nbRebased);
+					assert.equal(
+						rebaser.nbComposed,
+						scenario.nbTrunk * (scenario.nbRebased * 2 + 1),
+					);
+				});
+			}
+		});
+		describe.only("Peer commit rebasing", () => {
+			for (const scenario of scenarios) {
+				it(`Rebase ${scenario.nbRebased} peer commits over ${scenario.nbTrunk} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebasePeerEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
+					assert.equal(
+						rebaser.nbRebased,
+						scenario.nbTrunk * scenario.nbRebased +
+							scenario.nbRebased * (scenario.nbRebased - 1),
+					);
+					// TODO: Prevent quadratic number of inversions by caching inverses
+					// assert.equal(rebaser.nbInverted, scenario.nbRebased - 1);
+					assert.equal(rebaser.nbComposed, scenario.nbTrunk + scenario.nbRebased);
+				});
+			}
+		});
 	});
 });
 
