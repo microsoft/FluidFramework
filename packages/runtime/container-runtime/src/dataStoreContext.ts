@@ -216,7 +216,11 @@ export abstract class FluidDataStoreContext
 	private deleted: boolean = false;
 
 	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo {
-		//* TODO: How to properly compute nodePath?
+		//* GC class maybe should cover this case?
+		if (this.tombstoned) {
+			return { state: "Tombstoned" };
+		}
+
 		return this._containerRuntime.getInternalReferenceInfo(`/${this.id}`);
 	}
 
