@@ -13,7 +13,11 @@ import {
 	forEachNode,
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
-import { BufferFormat, Shape, handleShapesAndIdentifiers } from "./chunkEncodingGeneric";
+import {
+	BufferFormat as BufferFormatGeneric,
+	Shape as ShapeGeneric,
+	handleShapesAndIdentifiers,
+} from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import { EncodedChunk, version, EncodedChunkShape, EncodedValueShape } from "./format";
 
@@ -28,12 +32,15 @@ export function compressedEncode(
 	cursor: ITreeCursorSynchronous,
 	cache: EncoderCache,
 ): EncodedChunk {
-	const buffer: BufferFormat<EncodedChunkShape> = [];
+	const buffer: BufferFormat = [];
 
 	// Populate buffer, including shape and identifier references
 	anyFieldEncoder.encodeField(cursor, cache, buffer);
 	return handleShapesAndIdentifiers(version, buffer);
 }
+
+export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
+export type Shape = ShapeGeneric<EncodedChunkShape>;
 
 export interface FieldShape<TKey> {
 	readonly key: TKey;
@@ -47,10 +54,10 @@ export interface NodeEncoderShape {
 	encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void;
 
-	readonly shape: Shape<EncodedChunkShape>;
+	readonly shape: Shape;
 }
 
 export interface FieldEncoderShape {
@@ -60,14 +67,14 @@ export interface FieldEncoderShape {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void;
 
-	readonly shape: Shape<EncodedChunkShape>;
+	readonly shape: Shape;
 }
 
 // Encodes a chunk polymorphically.
-class AnyShape extends Shape<EncodedChunkShape> {
+class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	private constructor() {
 		super();
 	}
@@ -75,20 +82,17 @@ class AnyShape extends Shape<EncodedChunkShape> {
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return { d: 0 };
 	}
 
-	public count(
-		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
-	): void {}
+	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {}
 
 	public static encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 		shape: FieldEncoderShape,
 	) {
 		outputBuffer.push(shape.shape);
@@ -98,7 +102,7 @@ class AnyShape extends Shape<EncodedChunkShape> {
 	public static encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 		shape: NodeEncoderShape,
 	) {
 		outputBuffer.push(shape.shape);
@@ -111,7 +115,7 @@ export const anyNodeEncoder: NodeEncoderShape = {
 	encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
 		const shape = cache.shapeFromTree(cursor.type);
@@ -126,7 +130,7 @@ export const anyFieldEncoder: FieldEncoderShape = {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunks.
 
@@ -151,7 +155,7 @@ export const anyFieldEncoder: FieldEncoderShape = {
 };
 
 export class InlineArrayShape
-	extends Shape<EncodedChunkShape>
+	extends ShapeGeneric<EncodedChunkShape>
 	implements NodeEncoderShape, FieldEncoderShape
 {
 	public static readonly empty: InlineArrayShape = new InlineArrayShape(0, {
@@ -161,7 +165,7 @@ export class InlineArrayShape
 		encodeNodes(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
-			outputBuffer: BufferFormat<EncodedChunkShape>,
+			outputBuffer: BufferFormat,
 		): void {
 			InlineArrayShape.empty.encodeNodes(cursor, shapes, outputBuffer);
 		},
@@ -174,7 +178,7 @@ export class InlineArrayShape
 	public encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		shapes: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void {
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
@@ -186,7 +190,7 @@ export class InlineArrayShape
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		shapes: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void {
 		assert(cursor.getFieldLength() === this.length, "unexpected length for fixed length array");
 		cursor.firstNode();
@@ -199,7 +203,7 @@ export class InlineArrayShape
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return {
 			b: {
@@ -209,10 +213,7 @@ export class InlineArrayShape
 		};
 	}
 
-	public count(
-		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
-	): void {
+	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
 		shapes(this.inner.shape);
 	}
 
@@ -221,8 +222,8 @@ export class InlineArrayShape
 	}
 }
 
-class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderShape {
-	public readonly shape: Shape<EncodedChunkShape>;
+class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldEncoderShape {
+	public readonly shape: Shape;
 
 	public constructor(public readonly inner: NodeEncoderShape) {
 		super();
@@ -232,9 +233,9 @@ class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderS
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormat,
 	): void {
-		const buffer: BufferFormat<EncodedChunkShape> = [];
+		const buffer: BufferFormat = [];
 		forEachNode(cursor, () => {
 			this.inner.encodeNodes(cursor, cache, buffer);
 		});
@@ -243,17 +244,14 @@ class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderS
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return {
 			a: shapes.valueToIndex.get(this.inner.shape) ?? fail(""),
 		};
 	}
 
-	public count(
-		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
-	): void {
+	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
 		shapes(this.inner.shape);
 	}
 }
@@ -261,7 +259,7 @@ class NestedArrayShape extends Shape<EncodedChunkShape> implements FieldEncoderS
 export function encodeValue(
 	value: Value,
 	shape: EncodedValueShape,
-	outputBuffer: BufferFormat<EncodedChunkShape>,
+	outputBuffer: BufferFormat,
 ): void {
 	if (shape === undefined) {
 		if (value !== undefined) {
@@ -335,7 +333,7 @@ class LazyFieldEncoder implements FieldEncoderShape {
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<NodeEncoderShape>,
+		outputBuffer: BufferFormat,
 	): void {
 		this.encoder.encodeField(cursor, cache, outputBuffer);
 	}
@@ -347,7 +345,7 @@ class LazyFieldEncoder implements FieldEncoderShape {
 		return this.encoderLazy;
 	}
 
-	public get shape(): Shape<EncodedChunkShape> {
+	public get shape(): Shape {
 		return this.encoder.shape;
 	}
 }
