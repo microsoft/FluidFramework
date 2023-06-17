@@ -6,7 +6,12 @@
 import { TreeValue } from "../../../core";
 import { fail } from "../../../util";
 import { EncodedChunkGeneric } from "./formatGeneric";
-import { Counter, DeduplicationTable, jsonMinimizingFilter } from "./chunkCodecUtilities";
+import {
+	Counter,
+	CounterFilter,
+	DeduplicationTable,
+	jsonMinimizingFilter,
+} from "./chunkCodecUtilities";
 
 export class IdentifierToken {
 	public constructor(public readonly identifier: string) {}
@@ -24,6 +29,7 @@ export type BufferFormat<TEncodedShape> = (TreeValue | Shape<TEncodedShape> | Id
 export function handleShapesAndIdentifiers<TEncodedShape>(
 	version: string,
 	buffer: BufferFormat<TEncodedShape>,
+	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
 ): EncodedChunkGeneric<TEncodedShape> {
 	const identifiers = new Counter<string>();
 	const shapes = new Counter<Shape<TEncodedShape>>();
@@ -63,7 +69,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 	}
 
 	// Determine substitutions for identifiers and shapes:
-	const identifierTable = identifiers.buildTable(jsonMinimizingFilter);
+	const identifierTable = identifiers.buildTable(identifierFilter);
 	const shapeTable = shapes.buildTable();
 
 	for (const array of arrays) {

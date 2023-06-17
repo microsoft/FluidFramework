@@ -30,9 +30,7 @@ export class Counter<T> {
 	 *
 	 * @param filter - determines which items should be included in the table.
 	 */
-	public buildTable(
-		filter: (t: T, value: number, count: number) => boolean = () => true,
-	): DeduplicationTable<T> {
+	public buildTable(filter: CounterFilter<T> = () => true): DeduplicationTable<T> {
 		const data: T[] = [...this.counts.keys()];
 		// Sort in descending order by count, giving priority (smaller indexes) to more commonly used values.
 		data.sort((a, b) => (this.counts.get(b) ?? 0) - (this.counts.get(a) ?? 0));
@@ -50,6 +48,8 @@ export class Counter<T> {
 		};
 	}
 }
+
+export type CounterFilter<T> = (t: T, value: number, count: number) => boolean;
 
 export interface DeduplicationTable<T> {
 	/**
