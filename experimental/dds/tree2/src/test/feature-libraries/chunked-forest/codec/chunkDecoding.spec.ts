@@ -21,10 +21,11 @@ import {
 	emptyChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/emptyChunk";
-
-// eslint-disable-next-line import/no-internal-modules
-import { version } from "../../../../feature-libraries/chunked-forest/codec/format";
-
+import {
+	EncodedChunkShape,
+	version,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format";
 import {
 	ChunkDecoder,
 	StreamCursor,
@@ -262,7 +263,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderCache(["l2", "g2"], []);
+			const cache = new DecoderCache(["b", "d"], []);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const globalChunk = new BasicChunk(brand("global"), new Map());
@@ -280,7 +281,13 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = {
-				data: ["type", true, "value", ["a", "l1", "b", 0], ["c", "g1", "d", 1, "e", "g3"]],
+				data: [
+					"type",
+					true,
+					"value",
+					["a", "l1", 0, "l2"],
+					["c", "g1", 1, "g2", "e", "g3"],
+				],
 				offset: 0,
 			};
 			const result = decoder.decode(decoders, stream);
@@ -303,7 +310,11 @@ describe("chunkDecoding", () => {
 		});
 
 		it("fixed fields", () => {
-			const cache = new DecoderCache(["key"], []);
+			const cache = new DecoderCache(
+				["key"],
+				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
+				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
+			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const globalChunk = new BasicChunk(brand("global"), new Map());
@@ -327,7 +338,6 @@ describe("chunkDecoding", () => {
 			assertChunkCursorEquals(result, [
 				{
 					type: brand("type"),
-					value: "value",
 					fields: {
 						key: [{ type: brand("local") }],
 					},

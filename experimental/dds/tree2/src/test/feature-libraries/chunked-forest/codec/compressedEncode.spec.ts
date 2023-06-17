@@ -76,10 +76,10 @@ describe("compressedEncode", () => {
 			BufferFormat<EncodedChunkShape>,
 		][] = [
 			["none", undefined, false, []],
-			["none-optional", undefined, undefined, [false]],
-			["false-optional", false, undefined, [false]],
-			["object-optional", { foo: 0 }, undefined, [true, { foo: 0 }]],
-			["required-boolean", false, true, [false]],
+			["optional none", undefined, undefined, [false]],
+			["optional some", 5, undefined, [true, 5]],
+			["optional object", { foo: 0 }, undefined, [true, { foo: 0 }]],
+			["required", false, true, [false]],
 			["constant", 5, [5], []],
 		];
 		for (const [name, value, shape, encoded] of testValues) {

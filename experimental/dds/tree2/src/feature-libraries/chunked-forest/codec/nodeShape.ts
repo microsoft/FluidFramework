@@ -73,14 +73,14 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderSh
 						this.extraGlobal !== undefined,
 						"had extra global fields when shape does not support them",
 					);
-					globalBuffer.push(keyFromSymbol(key));
+					globalBuffer.push(new IdentifierToken(keyFromSymbol(key)));
 					this.extraGlobal.encodeField(cursor, cache, globalBuffer);
 				} else {
 					assert(
 						this.extraLocal !== undefined,
 						"had extra local fields when shape does not support them",
 					);
-					localBuffer.push(key);
+					localBuffer.push(new IdentifierToken(key));
 					this.extraLocal.encodeField(cursor, cache, localBuffer);
 				}
 			}
@@ -151,14 +151,14 @@ function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<st
 	return identifiers.valueToIndex.get(identifier) ?? identifier;
 }
 
-export function encodeOptionalIdentifier(
+function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
 ) {
 	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
 }
 
-export function encodeOptionalFieldShape(
+function encodeOptionalFieldShape(
 	shape: FieldEncoderShape | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ) {
