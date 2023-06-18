@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Package } from "@fluidframework/build-tools";
-import { ux, Command } from "@oclif/core";
+import { ux, Command, Flags } from "@oclif/core";
 import async from "async";
 
 import { BaseCommand } from "./base";
@@ -32,6 +32,10 @@ export abstract class PackageCommand<
 	T extends typeof Command & { flags: typeof PackageCommand.flags },
 > extends BaseCommand<T> {
 	static flags = {
+		concurrency: Flags.integer({
+			description: "The number of tasks to execute concurrently.",
+			default: 25,
+		}),
 		...selectionFlags,
 		...filterFlags,
 		...BaseCommand.flags,
@@ -82,17 +86,21 @@ export abstract class PackageCommand<
 		}
 
 		try {
-			await async.mapLimit(packages, 25, async (details: PackageDetails) => {
-				started += 1;
-				updateStatus();
-				try {
-					await this.processPackage(details.package, details.kind);
-					succeeded += 1;
-				} finally {
-					finished += 1;
+			await async.mapLimit(
+				packages,
+				this.flags.concurrency,
+				async (details: PackageDetails) => {
+					started += 1;
 					updateStatus();
-				}
-			});
+					try {
+						await this.processPackage(details.package, details.kind);
+						succeeded += 1;
+					} finally {
+						finished += 1;
+						updateStatus();
+					}
+				},
+			);
 		} finally {
 			// Stop the spinner if needed.
 			if (!verbose) {
@@ -116,13 +124,11 @@ export abstract class PackageCommand<
 			this.filterOptions,
 		);
 
-		if (this.flags.verbose) {
-			this.info(
-				`Filtered ${selected.length} packages to ${listNames(
-					filtered.map(([pkg]) => pkg.directory),
-				)}`,
-			);
-		}
+		this.info(
+			`Filtered ${selected.length} packages to ${listNames(
+				filtered.map(([pkg]) => pkg.directory),
+			)}`,
+		);
 
 		const packagesToRunOn: PackageDetails[] = filtered.map(([pkg, kind]) => {
 			return {

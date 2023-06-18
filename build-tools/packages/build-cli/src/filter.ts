@@ -8,37 +8,76 @@ import path from "node:path";
 import { ReleaseGroup } from "./releaseGroups";
 
 export interface PackageSelectionCriteria {
-	independentPackages?: boolean;
-	releaseGroups?: (ReleaseGroup | "all")[];
-	releaseGroupRoots?: (ReleaseGroup | "all")[];
+	/**
+	 * True if independent packages are selected; false otherwise.
+	 */
+	independentPackages: boolean;
+
+	/**
+	 * An array of release groups whose packages are selected.
+	 */
+	releaseGroups: ReleaseGroup[];
+
+	/**
+	 * An array of release groups whose root packages are selected.
+	 */
+	releaseGroupRoots: ReleaseGroup[];
 }
 
 export interface PackageFilterOptions {
-	// all?: boolean;
+	/**
+	 * If set, filters IN packages whose scope matches the strings provided.
+	 */
 	scope?: string[];
+	/**
+	 * If set, filters OUT packages whose scope matches the strings provided.
+	 */
 	skipScope?: string[];
+
+	/**
+	 * If set, filters private packages in/out.
+	 */
 	private: boolean | undefined;
 }
 
+/**
+ * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
+ *
+ * @param flags - The parsed command flags.
+ */
 export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria => {
-	const options: PackageSelectionCriteria = {};
-	// options.all = flags.all ?? false;
-	options.independentPackages = flags.packages ?? false;
-	options.releaseGroups = flags.releaseGroups ?? [];
-	options.releaseGroupRoots = flags.releaseGroupRoots ?? [];
+	const options: PackageSelectionCriteria = {
+		independentPackages: flags.packages ?? false,
+		releaseGroups: flags.releaseGroup ?? [],
+		releaseGroupRoots: flags.releaseGroupRoot ?? [],
+	};
 	return options;
 };
 
+/**
+ * Parses {@link filterFlags} into a typed object that is more ergonomic than working with the flag values directly.
+ *
+ * @param flags - The parsed command flags.
+ */
 export const parsePackageFilterFlags = (flags: any): PackageFilterOptions => {
 	const options: PackageFilterOptions = {
-		private: flags.private === undefined ? "" : flags.private,
-		scope: flags.scope ?? [],
-		skipScope: flags.skipScope ?? [],
+		private: flags.private,
+		scope: flags.scope,
+		skipScope: flags.skipScope,
 	};
 
 	return options;
 };
 
+/**
+ * Selects packages from the context based on the selection. The selected packages will be filtered by the filter
+ * criteria if provided.
+ *
+ * @param context - The context.
+ * @param selection - The selection criteria to use to select packages.
+ * @param filter - An optional filter criteria to filter selected packages by.
+ * @returns An object containing the selected packages and the filtered packages.
+ */
 export const selectAndFilterPackages = (
 	context: Context,
 	selection: PackageSelectionCriteria,
@@ -53,7 +92,7 @@ export const selectAndFilterPackages = (
 		}
 	}
 
-	for (const rg of selection.releaseGroups ?? []) {
+	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
 			selected.push([pkg, "releaseGroupChildPackage"]);
 		}
@@ -66,6 +105,10 @@ export const selectAndFilterPackages = (
 	}
 
 	const filtered = selected.filter((details) => {
+		if (filter === undefined) {
+			return true;
+		}
+
 		const [pkg] = details;
 		const isPrivate: boolean = pkg.packageJson.private ?? false;
 		if (filter?.private !== undefined && filter?.private !== isPrivate) {

@@ -33,6 +33,7 @@ export const rootPathFlag = Flags.custom({
 export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 	char: "g",
 	description: "Name of a release group.",
+	aliases: ["releaseGroups"],
 	options: [...supportedMonoRepoValues()],
 	parse: async (str: string) => {
 		const group = str.toLowerCase();
@@ -50,6 +51,7 @@ export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 export const releaseGroupWithAllFlag = Flags.custom({
 	char: "g",
 	description: "Name of a release group.",
+	aliases: ["releaseGroups"],
 	options: [...supportedMonoRepoValues(), "all"],
 	parse: async (str: string) => {
 		const group = str.toLowerCase();
@@ -242,13 +244,14 @@ export const selectionFlags = {
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 	}),
-	releaseGroupRoots: releaseGroupWithAllFlag({
-		char: undefined,
+	releaseGroupRoot: releaseGroupWithAllFlag({
 		description:
 			"Run on the root package of the specified release groups. Cannot be used with --all, --dir, or --packages.",
 		exclusive: ["all", "dir", "packages"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
+		char: undefined,
+		aliases: ["releaseGroupRoots", "gg"],
 	}),
 };
 
@@ -269,6 +272,7 @@ export const filterFlags = {
 		helpGroup: "PACKAGE FILTER",
 	}),
 	skipScope: releaseGroupFlag({
+		char: undefined,
 		description: "Package scopes to filter out. Cannot be used with --scope.",
 		exclusive: ["scope"],
 		aliases: ["no-scope"],

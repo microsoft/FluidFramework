@@ -13,7 +13,7 @@ Run a shell command in the context of a package or release group.
 USAGE
   $ flub exec CMD [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a |
     -d <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope
-    <value> | -g client|server|azure|build-tools|gitrest|historian]
+    <value> | --skipScope client|server|azure|build-tools|gitrest|historian]
 
 ARGUMENTS
   CMD  The shell command to execute.
@@ -33,14 +33,14 @@ PACKAGE SELECTION FLAGS
                                    --dir, or --packages.
                                    <options: client|server|azure|build-tools|gitrest|historian|all>
 
-PACKAGE FILTER FLAGS
-  -g, --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --[no-]private               Only include private packages. Use --no-private to exclude private packages instead.
-  --scope=<value>...           Package scopes to filter to. Cannot be used with --skipScope.
-
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...       Package scopes to filter to. Cannot be used with --skipScope.
+  --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
+                           <options: client|server|azure|build-tools|gitrest|historian>
 
 DESCRIPTION
   Run a shell command in the context of a package or release group.

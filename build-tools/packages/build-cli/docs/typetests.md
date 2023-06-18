@@ -17,8 +17,8 @@ Updates configuration for type tests in package.json files. If the previous vers
 USAGE
   $ flub typetests [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a | -d
     <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value>
-    | -g client|server|azure|build-tools|gitrest|historian] [--reset] [-p | --exact <value> | -r | --disable] [-n |
-    --enable]
+    | --skipScope client|server|azure|build-tools|gitrest|historian] [--reset] [-p | --exact <value> | -r | --disable]
+    [-n | --enable]
 
 FLAGS
   -n, --normalize
@@ -71,14 +71,14 @@ PACKAGE SELECTION FLAGS
                                    --dir, or --packages.
                                    <options: client|server|azure|build-tools|gitrest|historian|all>
 
-PACKAGE FILTER FLAGS
-  -g, --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --[no-]private               Only include private packages. Use --no-private to exclude private packages instead.
-  --scope=<value>...           Package scopes to filter to. Cannot be used with --skipScope.
-
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...       Package scopes to filter to. Cannot be used with --skipScope.
+  --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
+                           <options: client|server|azure|build-tools|gitrest|historian>
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,

@@ -16,7 +16,7 @@ Checks that all packages have the same version set in package.json. The packages
 USAGE
   $ flub check buildVersion [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a | -d
     <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value>
-    | -g client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
+    | --skipScope client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
 
 FLAGS
   --fix              Fix invalid versions in the package.json file.
@@ -39,14 +39,14 @@ PACKAGE SELECTION FLAGS
                                    --dir, or --packages.
                                    <options: client|server|azure|build-tools|gitrest|historian|all>
 
-PACKAGE FILTER FLAGS
-  -g, --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --[no-]private               Only include private packages. Use --no-private to exclude private packages instead.
-  --scope=<value>...           Package scopes to filter to. Cannot be used with --skipScope.
-
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...       Package scopes to filter to. Cannot be used with --skipScope.
+  --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
+                           <options: client|server|azure|build-tools|gitrest|historian>
 
 DESCRIPTION
   Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard
