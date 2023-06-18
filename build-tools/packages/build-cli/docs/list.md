@@ -12,12 +12,11 @@ List packages in a release group in topological order.
 ```
 USAGE
   $ flub list -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--private]
-    [--tarball]
+    [--scope <value> | --skipScope client|server|azure|build-tools|gitrest|historian] [--tarball]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of the release group
+  -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  --[no-]private               Only include private packages (or non-private packages for --no-private)
   --tarball                    Return packed tarball names (without extension) instead of package names. @-signs will be
                                removed from the name, and slashes are replaced with dashes.
 
@@ -27,6 +26,12 @@ LOGGING FLAGS
 
 GLOBAL FLAGS
   --json  Format output as json.
+
+PACKAGE FILTER FLAGS
+  --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...       Package scopes to filter to. Cannot be used with --skipScope.
+  --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
+                           <options: client|server|azure|build-tools|gitrest|historian>
 
 DESCRIPTION
   List packages in a release group in topological order.

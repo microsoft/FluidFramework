@@ -11,30 +11,35 @@ Run a shell command in the context of a package or release group.
 
 ```
 USAGE
-  $ flub exec CMD [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a |
-    -d <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope
-    <value> | --skipScope client|server|azure|build-tools|gitrest|historian]
+  $ flub exec CMD [-v | --quiet] [--concurrency <value>] [--releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all | [-a | -d <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value> | --skipScope
+    client|server|azure|build-tools|gitrest|historian]
 
 ARGUMENTS
   CMD  The shell command to execute.
 
-PACKAGE SELECTION FLAGS
-  -a, --all                        Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                                   --releaseGroup.
-  -d, --dir=<value>                Run on the package in this directory. Cannot be used with --all, --packages, or
-                                   --releaseGroup.
-  -g, --releaseGroup=<option>...   Run on all packages within the release group. Cannot be used with --all, --dir, or
-                                   --packages. This does not include release group root packages; to include those as
-                                   well, use the --releaseGroupRoots argument.
-                                   <options: client|server|azure|build-tools|gitrest|historian|all>
-  --packages                       Run on all independent packages in the repo. Cannot be used with --all, --dir, or
-                                   --releaseGroup.
-  --releaseGroupRoots=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
-                                   --dir, or --packages.
-                                   <options: client|server|azure|build-tools|gitrest|historian|all>
+FLAGS
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+PACKAGE SELECTION FLAGS
+  -a, --all                       Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                                  --releaseGroup.
+  -d, --dir=<value>               Run on the package in this directory. Cannot be used with --all, --packages, or
+                                  --releaseGroup.
+  -g, --releaseGroup=<option>...  Run on all packages within the release group. Cannot be used with --all, --dir, or
+                                  --packages. This does not include release group root packages; to include those as
+                                  well, use the --releaseGroupRoots argument.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir, or
+                                  --releaseGroup.
+  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
+                                  --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 PACKAGE FILTER FLAGS
   --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.

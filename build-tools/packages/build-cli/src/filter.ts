@@ -82,8 +82,10 @@ export const selectAndFilterPackages = (
 	context: Context,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
+	// packages?: { name: string }[],
 ): { selected: [Package, PackageKind][]; filtered: [Package, PackageKind][] } => {
 	const selected: [Package, PackageKind][] = [];
+	// const pkgList = packages?.map((p) => p.name);
 
 	// Select packages
 	if (selection.independentPackages === true) {
@@ -139,6 +141,45 @@ export const selectAndFilterPackages = (
 
 	return { selected, filtered };
 };
+
+export function filterPackages<T extends { name: string; private?: boolean }>(
+	packages: T[],
+	filters: PackageFilterOptions,
+): T[] {
+	const filtered = packages.filter((pkg) => {
+		if (filters === undefined) {
+			return true;
+		}
+
+		const isPrivate: boolean = pkg.private ?? false;
+		if (pkg.private !== undefined && filters.private !== isPrivate) {
+			return false;
+		}
+
+		const scopeIn = scopesToPrefix(filters?.scope);
+		const scopeOut = scopesToPrefix(filters?.skipScope);
+
+		if (scopeIn !== undefined) {
+			let found = false;
+			for (const scope of scopeIn) {
+				found ||= pkg.name.startsWith(scope);
+			}
+			if (!found) {
+				return false;
+			}
+		}
+		if (scopeOut !== undefined) {
+			for (const scope of scopeOut) {
+				if (pkg.name.startsWith(scope) ?? false) {
+					return false;
+				}
+			}
+		}
+		return true;
+	});
+
+	return filtered;
+}
 
 function scopesToPrefix(scopes: string[] | undefined): string[] | undefined {
 	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);

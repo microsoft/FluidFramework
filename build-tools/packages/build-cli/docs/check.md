@@ -14,33 +14,36 @@ Checks that all packages have the same version set in package.json. The packages
 
 ```
 USAGE
-  $ flub check buildVersion [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a | -d
-    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value>
-    | --skipScope client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
+  $ flub check buildVersion [-v | --quiet] [--concurrency <value>] [--releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all | [-a | -d <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value> | --skipScope
+    client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
 
 FLAGS
-  --fix              Fix invalid versions in the package.json file.
-  --path=<value>     Path to a directory containing a package. The version will be loaded from the package.json in this
-                     directory.
-  --version=<value>  The version against which to check all the packages.
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --fix                  Fix invalid versions in the package.json file.
+  --path=<value>         Path to a directory containing a package. The version will be loaded from the package.json in
+                         this directory.
+  --version=<value>      The version against which to check all the packages.
 
 PACKAGE SELECTION FLAGS
-  -a, --all                        Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                                   --releaseGroup.
-  -d, --dir=<value>                Run on the package in this directory. Cannot be used with --all, --packages, or
-                                   --releaseGroup.
-  -g, --releaseGroup=<option>...   Run on all packages within the release group. Cannot be used with --all, --dir, or
-                                   --packages. This does not include release group root packages; to include those as
-                                   well, use the --releaseGroupRoots argument.
-                                   <options: client|server|azure|build-tools|gitrest|historian|all>
-  --packages                       Run on all independent packages in the repo. Cannot be used with --all, --dir, or
-                                   --releaseGroup.
-  --releaseGroupRoots=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
-                                   --dir, or --packages.
-                                   <options: client|server|azure|build-tools|gitrest|historian|all>
+  -a, --all                       Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                                  --releaseGroup.
+  -d, --dir=<value>               Run on the package in this directory. Cannot be used with --all, --packages, or
+                                  --releaseGroup.
+  -g, --releaseGroup=<option>...  Run on all packages within the release group. Cannot be used with --all, --dir, or
+                                  --packages. This does not include release group root packages; to include those as
+                                  well, use the --releaseGroupRoots argument.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir, or
+                                  --releaseGroup.
+  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
+                                  --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 PACKAGE FILTER FLAGS
   --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
@@ -59,14 +62,17 @@ Checks if a changeset was added when compared against a branch. This is used in 
 
 ```
 USAGE
-  $ flub check changeset -b <value> [-v] [--json]
+  $ flub check changeset -b <value> [-v | --quiet] [--json]
 
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 EXAMPLES
   Check if a changeset was added when compared to the 'main' branch.
@@ -84,7 +90,7 @@ Checks that the dependencies between Fluid Framework packages are properly layer
 
 ```
 USAGE
-  $ flub check layers --info <value> [-v] [--md <value>] [--dot <value>] [--logtime]
+  $ flub check layers --info <value> [-v | --quiet] [--md <value>] [--dot <value>] [--logtime]
 
 FLAGS
   --dot=<value>   Generate *.dot for GraphViz
@@ -92,8 +98,9 @@ FLAGS
   --logtime       Display the current time on every status message for logging
   --md=<value>    Generate PACKAGES.md file at this path relative to repo root
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
@@ -105,7 +112,8 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy [-v] [-D <value> | -d <value>] [-e <value>] [--listHandlers | --stdin | -p <value> | -f | ]
+  $ flub check policy [-v | --quiet] [-D <value> | -d <value>] [-e <value>] [--listHandlers | --stdin | -p <value>
+    | -f | ]
 
 FLAGS
   -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple
@@ -117,8 +125,9 @@ FLAGS
   --listHandlers                   List all policy handlers by name.
   --stdin                          Read list of files from stdin.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,

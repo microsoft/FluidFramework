@@ -44,26 +44,45 @@ export abstract class PackageCommand<
 	private filterOptions: PackageFilterOptions | undefined;
 	private selectionOptions: PackageSelectionCriteria | undefined;
 
+	/**
+	 * Called for each package that is selected/filtered based on the filter flags passed in to the command.
+	 *
+	 * @param pkg - The package being processed.
+	 * @param kind - The kind of the package.
+	 */
 	protected abstract processPackage(pkg: Package, kind: PackageKind): Promise<void>;
 
-	// /**
-	//  * Called for each package that is selected/filtered based on the filter flags passed in to the command.
-	//  *
-	//  * @param directory - The package directory.
-	//  * @param kind - The kind of the package.
-	//  */
-	// private async processPackageFromDirectory(directory: string, kind: PackageKind): Promise<void>;
+	public async run(): Promise<void> {
+		this.selectionOptions = parsePackageSelectionFlags(this.flags);
+		this.filterOptions = parsePackageFilterFlags(this.flags);
 
-	// private async processPackageFromDetails(packageDetails: PackageDetails) {
-	// 	return this.processPackage(packageDetails.package, packageDetails.kind);
-	// }
+		if (this.selectionOptions === undefined) {
+			throw new Error(`No packages selected.`);
+		}
+
+		const ctx = await this.getContext();
+		const { selected, filtered } = selectAndFilterPackages(
+			ctx,
+			this.selectionOptions,
+			this.filterOptions,
+		);
+
+		this.info(
+			`Filtered ${selected.length} packages to ${listNames(
+				filtered.map(([pkg]) => pkg.directory),
+			)}`,
+		);
+
+		const packagesToRunOn: PackageDetails[] = filtered.map(([pkg, kind]) => {
+			return {
+				package: pkg,
+				kind,
+			};
+		});
+		return this.processPackages(packagesToRunOn);
+	}
 
 	private async processPackages(packages: PackageDetails[]): Promise<void> {
-		// const directories = packages.map((pd) => pd.package.directory);
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		// const {selected, filtered} = selectAndFilterPackages(context, this.selectionOptions!, this.filterOptions)
-
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
@@ -107,36 +126,6 @@ export abstract class PackageCommand<
 				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
 			}
 		}
-	}
-
-	public async run(): Promise<void> {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags);
-		this.filterOptions = parsePackageFilterFlags(this.flags);
-
-		if (this.selectionOptions === undefined) {
-			throw new Error(`No packages selected.`);
-		}
-
-		const ctx = await this.getContext();
-		const { selected, filtered } = selectAndFilterPackages(
-			ctx,
-			this.selectionOptions,
-			this.filterOptions,
-		);
-
-		this.info(
-			`Filtered ${selected.length} packages to ${listNames(
-				filtered.map(([pkg]) => pkg.directory),
-			)}`,
-		);
-
-		const packagesToRunOn: PackageDetails[] = filtered.map(([pkg, kind]) => {
-			return {
-				package: pkg,
-				kind,
-			};
-		});
-		return this.processPackages(packagesToRunOn);
 	}
 }
 
