@@ -7,9 +7,9 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -48,6 +48,24 @@ class SocketIoSocket implements core.IWebSocket {
 	}
 }
 
+/**
+ * From https://socket.io/docs/v4/server-api/#event-connection_error
+ */
+interface ISocketIoConnectionError extends Error {
+	code: number;
+	message: string;
+	req: http.IncomingMessage;
+	context: any;
+}
+function isSocketIoConnectionError(error: unknown): error is ISocketIoConnectionError {
+	return (
+		error !== undefined &&
+		typeof (error as ISocketIoConnectionError).code == "number" &&
+		typeof (error as ISocketIoConnectionError).message == "string" &&
+		typeof (error as ISocketIoConnectionError).req == "object"
+	);
+}
+
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
 
@@ -60,6 +78,19 @@ class SocketIoServer implements core.IWebSocketServer {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 		});
+		this.io.engine.on("connection_error", (error) => {
+			if (isSocketIoConnectionError(error) && error.req.url !== undefined) {
+				const url = new URL(error.req.url);
+				const telemetryProperties = {
+					protocolVersion: url.searchParams.get("EIO"), // '2', '3', or '4'
+					transport: url.searchParams.get("transport"), // 'websocket' or 'polling'
+					reason: JSON.stringify({ code: error.code, message: error.message }), // e.g. { code: 1, message: "Session ID unknown" }
+					[BaseTelemetryProperties.tenantId]: url.searchParams.get("tenantId") ?? "",
+					[BaseTelemetryProperties.documentId]: url.searchParams.get("documentId") ?? "",
+				};
+				Lumberjack.error("Socket.io Connection Error", telemetryProperties, error);
+			}
+		});
 	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
@@ -67,7 +98,9 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
@@ -91,8 +124,8 @@ export function create(
 		};
 	}
 
-	const pub = new Redis(clone(options));
-	const sub = new Redis(clone(options));
+	const pub = new Redis.default(clone(options));
+	const sub = new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);

@@ -19,7 +19,7 @@ import {
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
@@ -67,7 +67,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			const redisClient = new Redis(redisOptions);
+			const redisClient = new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);
 		}

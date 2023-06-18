@@ -27,6 +27,8 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
+
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
@@ -99,7 +101,7 @@ describe("Summary benchmarks", () => {
 			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
 		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
 				title: `a ${shape} tree with ${numberOfNodes} node${
 					numberOfNodes !== 1 ? "s" : ""

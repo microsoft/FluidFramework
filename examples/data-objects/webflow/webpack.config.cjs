@@ -17,6 +17,12 @@ module.exports = (env) => {
 			entry: "./src/index.ts",
 			resolve: {
 				extensions: [".mjs", ".ts", ".tsx", ".js"],
+				// This ensures that webpack understands fully-specified relative module imports.
+				// See https://github.com/webpack/webpack/issues/13252 for more discussion.
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+					".mjs": [".mts", ".mtsx", ".mjs"],
+				},
 				fallback: {
 					dgram: false,
 					fs: false,
@@ -64,7 +70,7 @@ module.exports = (env) => {
 				ignored: "**/node_modules/**",
 			},
 		},
-		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),
 	);
 };
