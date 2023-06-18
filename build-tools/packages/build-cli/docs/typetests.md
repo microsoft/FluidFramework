@@ -15,8 +15,8 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all |  | [-d
-    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | ] | ] [--private] [--scope <value>
+  $ flub typetests [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a | -d
+    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value>
     | -g client|server|azure|build-tools|gitrest|historian] [--reset] [-p | --exact <value> | -r | --disable] [-n |
     --enable]
 
@@ -57,6 +57,8 @@ FLAGS
       Resets the broken type test settings in package.json.
 
 PACKAGE SELECTION FLAGS
+  -a, --all                        Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                                   --releaseGroup.
   -d, --dir=<value>                Run on the package in this directory. Cannot be used with --all, --packages, or
                                    --releaseGroup.
   -g, --releaseGroup=<option>...   Run on all packages within the release group. Cannot be used with --all, --dir, or

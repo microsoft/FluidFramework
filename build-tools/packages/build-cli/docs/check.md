@@ -14,8 +14,8 @@ Checks that all packages have the same version set in package.json. The packages
 
 ```
 USAGE
-  $ flub check buildVersion [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all |  | [-d
-    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | ] | ] [--private] [--scope <value>
+  $ flub check buildVersion [-v] [--releaseGroupRoots client|server|azure|build-tools|gitrest|historian|all | [-a | -d
+    <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value>
     | -g client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
 
 FLAGS
@@ -25,6 +25,8 @@ FLAGS
   --version=<value>  The version against which to check all the packages.
 
 PACKAGE SELECTION FLAGS
+  -a, --all                        Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                                   --releaseGroup.
   -d, --dir=<value>                Run on the package in this directory. Cannot be used with --all, --packages, or
                                    --releaseGroup.
   -g, --releaseGroup=<option>...   Run on all packages within the release group. Cannot be used with --all, --dir, or
