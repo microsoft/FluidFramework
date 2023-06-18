@@ -13,10 +13,8 @@ const smallestAssetSize = 100;
 // location to upload as build artifacts for later consumption
 function main() {
 	// Get all the package locations
-	const lernaOutput = JSON.parse(
-		child_process.execSync("npx lerna@5.6.2 list --all --json").toString(),
-	);
-	if (!Array.isArray(lernaOutput)) {
+	const pkgList = JSON.parse(child_process.execSync("pnpm -r list --depth -1 --json").toString());
+	if (!Array.isArray(pkgList)) {
 		throw new Error("failed to get package information");
 	}
 
@@ -24,7 +22,7 @@ function main() {
 	// and copy it to a central location
 	let hasSmallAssetError = false;
 	const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
-	lernaOutput.forEach((pkg: { name: string; location: string }) => {
+	pkgList.forEach((pkg: { name: string; location: string }) => {
 		if (pkg.location === undefined) {
 			console.error("missing location in lerna package entry");
 			process.exit(-1);
