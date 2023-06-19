@@ -19,6 +19,7 @@ import {
 	DropdownProps,
 	makeStyles,
 	Option,
+	shorthands,
 	TableColumnDefinition,
 	tokens,
 } from "@fluentui/react-components";
@@ -45,6 +46,7 @@ const DEFAULT_PAGE_SIZE = 100;
 
 const useTelemetryViewStyles = makeStyles({
 	root: {
+		...shorthands.gap("10px"),
 		alignItems: "start",
 		display: "flex",
 		flexDirection: "column",
@@ -171,16 +173,18 @@ export function TelemetryView(): React.ReactElement {
 			/>
 			<div className={styles.menu}>
 				<div>
-					{bufferedEvents.length > 0 ? (
-						<div style={{ marginLeft: "6px" }}>
-							<CounterBadge size="large" color="brand">
-								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
-							</CounterBadge>
-							&nbsp; Newer telemetry events received.
-						</div>
-					) : (
-						<> {`You're up to date!`} </>
-					)}
+					<div style={{ marginLeft: "6px" }}>
+						{bufferedEvents.length > 0 ? (
+							<>
+								<CounterBadge size="large" color="brand">
+									{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
+								</CounterBadge>
+								<> {` Newer telemetry events received.`}</>
+							</>
+						) : (
+							<> {`You're up to date!`} </>
+						)}
+					</div>
 				</div>
 				<div>
 					<Button onClick={handleLoadMore}>Refresh</Button>
