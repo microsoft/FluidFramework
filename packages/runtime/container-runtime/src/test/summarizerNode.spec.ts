@@ -18,11 +18,13 @@ import {
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } from "../summary";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
+// eslint-disable-next-line import/no-internal-modules
+import { ValidateSummaryResult } from "../summary/summarizerNode/summarizerNodeUtils";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -266,22 +268,29 @@ describe("Runtime", () => {
 				});
 			});
 
-			describe("Complete Summary", () => {
-				it("Should fail completeSummary if summarize not called on root node", () => {
+			describe("Validate Summary", () => {
+				it("Should fail validateSummary if summarize not called on root node", () => {
 					createRoot();
 					rootNode.startSummary(11, logger);
-					assert.throws(
-						() => rootNode.completeSummary("test-handle"),
-						(error) => {
-							const correctErrorMessage = error.message === "NodeNotSummarized";
-							const correctErrorId = error.id.value === "";
-							return correctErrorMessage && correctErrorId;
+
+					const expectedResult: ValidateSummaryResult = {
+						success: false,
+						reason: "NodeDidNotSummarize",
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: "",
 						},
-						"Complete summary should have failed at the root node",
+						retryAfterSeconds: 1,
+					};
+					const result = rootNode.validateSummary();
+					assert.deepStrictEqual(
+						result,
+						expectedResult,
+						"validate summary should have failed at the root node",
 					);
 				});
 
-				it("Should fail completeSummary if summarize not called on child node", async () => {
+				it("Should fail validateSummary if summarize not called on child node", async () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -289,18 +298,25 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					await leafNode?.summarize(false);
 					const midNodeId = `/${ids[1]}`;
-					assert.throws(
-						() => rootNode.completeSummary("test-handle"),
-						(error) => {
-							const correctErrorMessage = error.message === "NodeNotSummarized";
-							const correctErrorId = error.id.value === midNodeId;
-							return correctErrorMessage && correctErrorId;
+
+					const expectedResult: ValidateSummaryResult = {
+						success: false,
+						reason: "NodeDidNotSummarize",
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: midNodeId,
 						},
-						"Complete summary should have failed at the mid node",
+						retryAfterSeconds: 1,
+					};
+					const result = rootNode.validateSummary();
+					assert.deepStrictEqual(
+						result,
+						expectedResult,
+						"validate summary should have failed at the mid node",
 					);
 				});
 
-				it("Should fail completeSummary if summarize not called on leaf node", async () => {
+				it("Should fail validateSummary if summarize not called on leaf node", async () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -308,14 +324,21 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					await midNode?.summarize(false);
 					const leafNodeId = `/${ids[1]}/${ids[2]}`;
-					assert.throws(
-						() => rootNode.completeSummary("test-handle"),
-						(error) => {
-							const correctErrorMessage = error.message === "NodeNotSummarized";
-							const correctErrorId = error.id.value === leafNodeId;
-							return correctErrorMessage && correctErrorId;
+
+					const expectedResult: ValidateSummaryResult = {
+						success: false,
+						reason: "NodeDidNotSummarize",
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: leafNodeId,
 						},
-						"Complete summary should have failed at the leaf node",
+						retryAfterSeconds: 1,
+					};
+					const result = rootNode.validateSummary();
+					assert.deepStrictEqual(
+						result,
+						expectedResult,
+						"validate summary should have failed at the leaf node",
 					);
 				});
 			});

@@ -16,7 +16,7 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { IFetchSnapshotResult } from "../summary/summarizerNode";
 import {
@@ -27,6 +27,8 @@ import {
 } from "../summary/summarizerNode/summarizerNodeWithGc";
 // eslint-disable-next-line import/no-internal-modules
 import { cloneGCData } from "../gc";
+// eslint-disable-next-line import/no-internal-modules
+import { ValidateSummaryResult } from "../summary/summarizerNode/summarizerNodeUtils";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
@@ -239,7 +241,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 	});
 
-	describe("Complete Summary", () => {
+	describe("Validate Summary", () => {
 		const ids = ["rootId", "midId", "leafId"] as const;
 		let rootNode: IRootSummarizerNodeWithGC;
 		let midNode: ISummarizerNodeWithGC | undefined;
@@ -282,21 +284,28 @@ describe("SummarizerNodeWithGC Tests", () => {
 			leafNode = midNode?.createChild(getSummarizeInternalFn(2), ids[2], createParam);
 		}
 
-		it("Should fail completeSummary if GC not run on root node", () => {
+		it("Should fail validateSummary if GC not run on root node", () => {
 			createRoot();
 			rootNode.startSummary(11, logger);
-			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
-					const correctErrorMessage = error.message === "NodeDidNotRunGC";
-					const correctErrorId = error.id.value === "";
-					return correctErrorMessage && correctErrorId;
+
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "",
 				},
-				"Complete summary should have failed at the root node",
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the root node",
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on child node", async () => {
+		it("Should fail validateSummary if GC not run on child node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -310,18 +319,25 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await leafNode?.summarize(false);
 			const midNodeId = `/${ids[1]}`;
-			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
-					const correctErrorMessage = error.message === "NodeDidNotRunGC";
-					const correctErrorId = error.id.value === midNodeId;
-					return correctErrorMessage && correctErrorId;
+
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: midNodeId,
 				},
-				"Complete summary should have failed at the mid node",
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the mid node",
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on leaf node", async () => {
+		it("Should fail validateSummary if GC not run on leaf node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -334,14 +350,21 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
 			const leafNodeId = `/${ids[1]}/${ids[2]}`;
-			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
-					const correctErrorMessage = error.message === "NodeDidNotRunGC";
-					const correctErrorId = error.id.value === leafNodeId;
-					return correctErrorMessage && correctErrorId;
+
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: leafNodeId,
 				},
-				"Complete summary should have failed at the leaf node",
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the leaf node",
 			);
 		});
 
