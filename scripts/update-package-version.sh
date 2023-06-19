@@ -17,11 +17,11 @@ if [ -f "lerna.json" ]; then
     # dev/test builds may accidentally bring in different versions.
     echo "release group non-release build"
 	if [[ -z "$SETVERSION_CODEVERSION" ]]; then
-		echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType=\"\" -xv"
-		flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType="" -xv
-	else
 		echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
 		flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="" -xv
+	else
+		echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType=\"\" -xv"
+		flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType="" -xv
 	fi
   fi
 else
