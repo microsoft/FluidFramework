@@ -610,8 +610,6 @@ export class RunningSummarizer implements IDisposable {
 					throw new UsageError("Invalid number of attempts.");
 				}
 
-				let lastResult: { message: string; error: any } | undefined;
-
 				for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts; ) {
 					if (this.cancellationToken.cancelled) {
 						return;
@@ -655,8 +653,6 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptPhase++;
 						summaryAttemptsPerPhase = 0;
 					}
-
-					lastResult = result;
 
 					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
