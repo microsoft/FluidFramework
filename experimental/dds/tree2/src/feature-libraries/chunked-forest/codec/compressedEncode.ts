@@ -86,6 +86,33 @@ export interface FieldEncoderShape {
 	readonly shape: Shape;
 }
 
+export function asFieldEncoder(encoder: NodeEncoderShape): FieldEncoderShape {
+	return {
+		encodeField(
+			cursor: ITreeCursorSynchronous,
+			shapes: EncoderCache,
+			outputBuffer: BufferFormat,
+		): void {
+			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, outputBuffer));
+		},
+		shape: encoder.shape,
+	};
+}
+
+export function asNodesEncoder(encoder: NodeEncoderShape): NodesEncoderShape {
+	return {
+		encodeNodes(
+			cursor: ITreeCursorSynchronous,
+			shapes: EncoderCache,
+			outputBuffer: BufferFormat,
+		): void {
+			encoder.encodeNode(cursor, shapes, outputBuffer);
+			cursor.nextNode();
+		},
+		shape: encoder.shape,
+	};
+}
+
 // Encodes a chunk polymorphically.
 class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	private constructor() {
@@ -186,16 +213,19 @@ export class InlineArrayShape
 			// Not actually used, makes count work without adding an additional dep.
 			return InlineArrayShape.empty;
 		},
-		encodeNode(
+		encodeNodes(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
 			outputBuffer: BufferFormat,
 		): void {
-			fail("Empty array should not encode a node");
+			fail("Empty array should not encode any nodes");
 		},
 	});
 
-	public constructor(public readonly length: number, public readonly inner: NodeEncoderShape) {
+	/**
+	 * @param length - number of invocations of `inner`.
+	 */
+	public constructor(public readonly length: number, public readonly inner: NodesEncoderShape) {
 		super();
 	}
 
@@ -207,8 +237,7 @@ export class InlineArrayShape
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let index = 0; index < this.length; index++) {
-			this.inner.encodeNode(cursor, shapes, outputBuffer);
-			cursor.nextNode();
+			this.inner.encodeNodes(cursor, shapes, outputBuffer);
 		}
 	}
 
@@ -217,7 +246,8 @@ export class InlineArrayShape
 		shapes: EncoderCache,
 		outputBuffer: BufferFormat,
 	): void {
-		assert(cursor.getFieldLength() === this.length, "unexpected length for fixed length array");
+		// Its possible individual items from this array encode multiple nodes, so don't assume === here.
+		assert(cursor.getFieldLength() >= this.length, "unexpected length for fixed length array");
 		cursor.firstNode();
 		this.encodeNodes(cursor, shapes, outputBuffer);
 		assert(
@@ -247,7 +277,7 @@ export class InlineArrayShape
 	}
 }
 
-class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldEncoderShape {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldEncoderShape {
 	public readonly shape: Shape;
 
 	public constructor(public readonly inner: NodeEncoderShape) {
@@ -261,10 +291,24 @@ class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldE
 		outputBuffer: BufferFormat,
 	): void {
 		const buffer: BufferFormat = [];
+		let allNonZeroSize = true;
+		const length = cursor.getFieldLength();
 		forEachNode(cursor, () => {
+			const before = buffer.length;
 			this.inner.encodeNode(cursor, cache, buffer);
+			allNonZeroSize &&= buffer.length - before !== 0;
 		});
-		outputBuffer.push(buffer);
+		if (buffer.length === 0) {
+			// This relies on the number of inner chunks being the same as the number of nodes.
+			// If making inner a `NodesEncoderShape`, this code will have to be adjusted accordingly.
+			outputBuffer.push(length);
+		} else {
+			assert(
+				allNonZeroSize,
+				"either all or none of the members of a nested array must be 0 sized, or there is no way the decoder could process the content correctly.",
+			);
+			outputBuffer.push(buffer);
+		}
 	}
 
 	public encodeShape(

@@ -56,6 +56,10 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 				// In JS it is legal to push items to an array which is being iterated,
 				// and they will be visited in order.
 				arrays.push(item);
+			} else if (typeof item === "object" && (item as any).shape instanceof Shape) {
+				// because "serializable" is allowed in buffer and it has type `any`, its very easy to mess up including of shapes in the buffer.
+				// This catches the easiest way to get it wrong.
+				fail("encoder interface instead of shape written to stream");
 			}
 		}
 	}

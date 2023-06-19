@@ -131,12 +131,25 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const decoder = decoders[this.shape];
-		const inner = readStreamStream(stream);
+
 		// TODO: uniform chunk fast path
 		const chunks: TreeChunk[] = [];
-		while (inner.offset !== inner.data.length) {
-			chunks.push(decoder.decode(decoders, inner));
+
+		const data = readStream(stream);
+		if (typeof data === "number") {
+			// This case means that the array contained 0 sized items, and was thus encoded as the length instead of the array.
+			const inner = { data: [], offset: 0 };
+			for (let index = 0; index < data; index++) {
+				chunks.push(decoder.decode(decoders, inner));
+			}
+		} else {
+			assert(Array.isArray(data), "expected number of array for encoding of nested array");
+			const inner = { data, offset: 0 };
+			while (inner.offset !== inner.data.length) {
+				chunks.push(decoder.decode(decoders, inner));
+			}
 		}
+
 		return aggregateChunks(chunks);
 	}
 }

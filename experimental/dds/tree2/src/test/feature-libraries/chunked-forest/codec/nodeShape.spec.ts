@@ -7,77 +7,25 @@ import { strict as assert, fail } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 import {
-	BufferFormat,
 	EncoderCache,
 	FieldEncoderShape,
+	asFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import {
 	Counter,
-	CounterFilter,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
 import {
 	IdentifierToken,
-	handleShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import {
-	EncodedChunk,
-	version,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format";
 import { JsonableTree } from "../../../../core";
 import { brand } from "../../../../util";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
-import { singleTextCursor } from "../../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-// eslint-disable-next-line import/no-internal-modules
-import { asFieldEncoder } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
+import { checkNodeEncode } from "./checkEncode";
 
 describe("nodeShape", () => {
 	describe("NodeShape", () => {
-		// const cases: [string, NodeShape, JsonableTree];
-
-		function checkEncode(
-			shape: NodeShape,
-			cache: EncoderCache,
-			tree: JsonableTree,
-		): BufferFormat {
-			const buffer: BufferFormat = [shape];
-			const cursor = singleTextCursor(tree);
-			shape.encodeNode(cursor, cache, buffer);
-
-			// Check round-trips with identifiers inline and out of line
-			checkDecode(buffer, tree, () => false);
-			checkDecode(buffer, tree, () => true);
-
-			return buffer.slice(1);
-		}
-
-		// Clones anything handleShapesAndIdentifiers might modify in-place.
-		function cloneArrays<T>(data: readonly T[]): T[] {
-			return data.map((item) => (Array.isArray(item) ? cloneArrays(item) : item)) as T[];
-		}
-
-		function checkDecode(
-			buffer: BufferFormat,
-			tree: JsonableTree,
-			identifierFilter: CounterFilter<string>,
-		): EncodedChunk {
-			const chunk = handleShapesAndIdentifiers(
-				version,
-				cloneArrays(buffer),
-				identifierFilter,
-			);
-
-			// Check decode
-			const result = decode(chunk);
-			assertChunkCursorEquals(result, [tree]);
-			return chunk;
-		}
-
 		it("empty node", () => {
 			const shape = new NodeShape(undefined, false, [], [], undefined, undefined);
 			const identifierCounter = new Counter<string>();
@@ -89,7 +37,7 @@ describe("nodeShape", () => {
 				() => fail(),
 			);
 
-			const buffer = checkEncode(shape, cache, {
+			const buffer = checkNodeEncode(shape, cache, {
 				type: brand("foo"),
 			});
 			assert.deepEqual(buffer, [new IdentifierToken("foo")]);
@@ -105,7 +53,7 @@ describe("nodeShape", () => {
 				() => fail(),
 			);
 
-			const encodedChunk = checkEncode(shape, cache, {
+			const encodedChunk = checkNodeEncode(shape, cache, {
 				type: brand("foo"),
 				value: 5,
 			});
@@ -147,7 +95,7 @@ describe("nodeShape", () => {
 				},
 			};
 
-			const encodedChunk = checkEncode(shape, cache, tree);
+			const encodedChunk = checkNodeEncode(shape, cache, tree);
 			assert.deepEqual(encodedChunk, [
 				new IdentifierToken("type"),
 				true,
@@ -208,7 +156,7 @@ describe("nodeShape", () => {
 				},
 			};
 
-			const encodedChunk = checkEncode(shape, cache, tree);
+			const encodedChunk = checkNodeEncode(shape, cache, tree);
 			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
 		});
 	});

@@ -12,24 +12,22 @@ import {
 	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	ValueSchema,
-	forEachNode,
 	lookupGlobalFieldSchema,
 } from "../../../core";
 import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
 import { FieldKinds } from "../../defaultFieldKinds";
 import { getFieldKind } from "../../contextuallyTyped";
-import { BufferFormat } from "./chunkEncodingGeneric";
-import { EncodedChunk, EncodedChunkShape, EncodedValueShape } from "./format";
+import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
 	FieldEncoderShape,
 	FieldShape,
 	FieldShaper,
-	NodeEncoderShape,
 	TreeShaper,
 	anyFieldEncoder,
 	anyNodeEncoder,
+	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode";
 import { NodeShape } from "./nodeShape";
@@ -126,17 +124,4 @@ function valueShapeFromSchema(schema: ValueSchema): undefined | EncodedValueShap
 		default:
 			unreachableCase(schema);
 	}
-}
-
-export function asFieldEncoder(encoder: NodeEncoderShape): FieldEncoderShape {
-	return {
-		encodeField(
-			cursor: ITreeCursorSynchronous,
-			shapes: EncoderCache,
-			outputBuffer: BufferFormat<EncodedChunkShape>,
-		): void {
-			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, outputBuffer));
-		},
-		shape: encoder.shape,
-	};
 }

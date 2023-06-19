@@ -60,12 +60,12 @@ function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): vo
 }
 
 /**
- * Appends a message to the log read from the stream when decoding, and returns a ref to the provided chunk.
+ * Appends a message to the log read from the stream when decoding (if not provided as `message`), and returns a ref to the provided chunk.
  */
-function makeLoggingDecoder(log: string[], chunk: TreeChunk): ChunkDecoder {
+function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): ChunkDecoder {
 	return {
 		decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-			log.push(readStream(stream) as string);
+			log.push(message ?? (readStream(stream) as string));
 			chunk.referenceAdded();
 			return chunk;
 		},
@@ -175,6 +175,18 @@ describe("chunkDecoding", () => {
 			assertRefCount(basic, 1);
 		});
 
+		it("empty-zero sized", () => {
+			const decoder = new NestedArrayDecoder(0);
+			const log: string[] = [];
+			const basic = new BasicChunk(brand("foo"), new Map());
+			const decoders = [makeLoggingDecoder(log, basic)];
+			const stream = { data: [0], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+			assert.deepEqual(log, []);
+			assert.equal(result, emptyChunk);
+			assertRefCount(basic, 1);
+		});
+
 		it("non-empty", () => {
 			const decoder = new NestedArrayDecoder(0);
 			const log: string[] = [];
@@ -183,6 +195,19 @@ describe("chunkDecoding", () => {
 			const stream = { data: [["a", "b"]], offset: 0 };
 			const result = decoder.decode(decoders, stream);
 			assert.deepEqual(log, ["a", "b"]);
+			assert(result instanceof SequenceChunk);
+			assert(compareArrays(result.subChunks, [basic, basic]));
+			assertRefCount(basic, "shared");
+		});
+
+		it("non-empty zero sized", () => {
+			const decoder = new NestedArrayDecoder(0);
+			const log: string[] = [];
+			const basic = new BasicChunk(brand("foo"), new Map());
+			const decoders = [makeLoggingDecoder(log, basic, "X")];
+			const stream = { data: [2], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+			assert.deepEqual(log, ["X", "X"]);
 			assert(result instanceof SequenceChunk);
 			assert(compareArrays(result.subChunks, [basic, basic]));
 			assertRefCount(basic, "shared");
