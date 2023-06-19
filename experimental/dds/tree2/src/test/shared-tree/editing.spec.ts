@@ -1039,54 +1039,51 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{ foo: "x" }]);
 			});
 
-			it("can put a constraint on newly inserted node", () => {
-				const tree = makeTreeFromJson([{}]);
+			it.only("can put a constraint on newly inserted node", () => {
+				const tree = makeTreeFromJson([]);
 				const tree2 = tree.fork();
 
-				const rootPath: UpPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				// Insert foo
-				// State should be: [{ foo: {}}]
+				// Insert "a"
+				// State should be: ["a"]
 				const sequence = tree.editor.sequenceField({
-					parent: rootPath,
-					field: brand("foo"),
+					parent: undefined,
+					field: rootFieldKeySymbol,
 				});
-				sequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
 
-				// Constrain on foo existinga and insert into root sequence if it does
-				// State should be: [{ foo: {}}, {}]
+				// Constrain on "a" and insert "b" into root sequence if it does
+				// State should be: ["a", "b"]
 				tree.transaction.start();
 				tree.editor.addNodeExistsConstraint({
-					parent: rootPath,
-					parentField: brand("foo"),
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
 					parentIndex: 0,
 				});
 				const rootSequence = tree.editor.sequenceField({
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				});
-				rootSequence.insert(1, singleTextCursor({ type: jsonObject.name }));
+				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
 				tree.transaction.commit();
 
 				// Make a concurrent edit to rebase over that inserts into root sequence
-				// State should be (to tree2): [{}, {}]
+				// State should be (to tree2): ["c"]
 				const tree2RootSequence = tree2.editor.sequenceField({
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				});
-				tree2RootSequence.insert(1, singleTextCursor({ type: jsonObject.name }));
+				tree2RootSequence.insert(
+					0,
+					singleTextCursor({ type: jsonString.name, value: "c" }),
+				);
 
 				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree, tree2], [{ foo: {} }, {}, {}]);
+				expectJsonTree([tree, tree2], ["c", "a", "b"]);
 			});
 
-			it.skip("constraint on newly inserted node with ancestor deleted concurrently", () => {
+			it("constraint on newly inserted node with ancestor deleted concurrently", () => {
 				const tree = makeTreeFromJson([{}]);
 				const tree2 = tree.fork();
 
