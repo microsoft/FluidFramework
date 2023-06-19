@@ -147,9 +147,6 @@ importers:
       minimatch:
         specifier: ^7.4.6
         version: 7.4.6
-      npe:
-        specifier: ^1.2.0
-        version: 1.2.0
       npm-check-updates:
         specifier: ^16.10.12
         version: 16.10.12
@@ -8790,6 +8787,7 @@ packages:
 
   /merge@2.1.1:
     resolution: {integrity: sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==}
+    dev: true
 
   /micromatch@4.0.5:
     resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
@@ -9300,15 +9298,6 @@ packages:
   /normalize-url@8.0.0:
     resolution: {integrity: sha512-uVFpKhj5MheNBJRTiMZ9pE/7hD1QTeEvugSJW/OmLzAp78PB5O6adfMNTvmfKhXBkvCzC+rqifWcVYpGFwTjnw==}
     engines: {node: '>=14.16'}
-    dev: false
-
-  /npe@1.2.0:
-    resolution: {integrity: sha512-sVbC5+7ljSI/039fvfKKnlH9kYQKskrsq81k6cwScvZ3CIpSDCrFIKVPpbb8VetVk6z/2mH4oDRlsiTWHUetyQ==}
-    hasBin: true
-    dependencies:
-      merge: 2.1.1
-      minimist: 1.2.8
-      steeltoe: 1.0.1
     dev: false
 
   /npm-bundled@1.1.2:
@@ -11359,10 +11348,6 @@ packages:
       strip-ansi: 6.0.1
     transitivePeerDependencies:
       - supports-color
-
-  /steeltoe@1.0.1:
-    resolution: {integrity: sha512-beMo5ArN5bRczhwUkaFlJJ39oGNLYotLTHTUgzAK02HwkE2gGLOPPsUHL6qTAfQoyt4lpkLVohhNY+PkdZRa3Q==}
-    dev: false
 
   /strict-uri-encode@2.0.0:
     resolution: {integrity: sha512-QwiXZgpRcKkhTj2Scnn++4PKtWsH0kpzZ62L2R6c/LUVYv7hVnZqcg2+sMuT6R7Jusu1vviK/MFsu6kNJfWlEQ==}
