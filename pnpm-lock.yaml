@@ -15812,15 +15812,9 @@ importers:
 
   packages/tools/devtools/devtools-view:
     dependencies:
-      '@fluentui/react':
-        specifier: ^8.109.3
-        version: 8.109.4(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)
       '@fluentui/react-components':
         specifier: ~9.19.1
         version: 9.19.1(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)(scheduler@0.20.2)
-      '@fluentui/react-hooks':
-        specifier: ^8.6.24
-        version: 8.6.24(@types/react@17.0.52)(react@17.0.2)
       '@fluentui/react-icons':
         specifier: ^2.0.201
         version: 2.0.201(react@17.0.2)
@@ -19169,7 +19163,7 @@ packages:
       '@fluentui/utilities': 8.13.13(@types/react@17.0.52)(react@17.0.2)
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.3.1
+      tslib: 2.5.0
     dev: false
 
   /@fluentui/react-icons@2.0.201(react@17.0.2):

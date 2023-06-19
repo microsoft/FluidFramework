@@ -4,8 +4,15 @@
  */
 import React from "react";
 
-import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
+import {
+	Button,
+	FluentProvider,
+	makeStyles,
+	tokens,
+	Tooltip,
+	Theme,
+	Divider,
+} from "@fluentui/react-components";
 import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
@@ -24,20 +31,16 @@ import {
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
-	MenuItem,
-	MenuSection,
 	LandingView,
 	SettingsView,
 	Waiting,
+	MenuSection,
+	MenuItem,
 } from "./components";
-import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
 import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
-
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
 
 /**
  * Message sent to the webpage to query for the supported set of Devtools features.
@@ -90,70 +93,53 @@ interface SettingsMenuSelection {
  */
 type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
 
-// #region Styles definitions
-
-const stackStyles: IStackStyles = {
+// TODO: split these
+const useStyles = makeStyles({
 	root: {
 		"display": "flex",
 		"flexDirection": "row",
-		"flexWrap": "nowrap",
-		"width": "auto",
+		"width": "100%",
 		"height": "100%",
 		"overflowY": "auto",
-		"boxSizing": "border-box",
 		"> *": {
 			textOverflow: "ellipsis",
 		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
 	},
-};
 
-const contentViewStyles: IStackItemStyles = {
-	root: {
-		"alignItems": "center",
+	menu: {
 		"display": "flex",
-		"justifyContent": "center",
 		"flexDirection": "column",
-		"flexWrap": "nowrap",
-		"width": "auto",
 		"height": "100%",
 		"overflowY": "auto",
-		"boxSizing": "border-box",
-		"> *": {
-			textOverflow: "ellipsis",
-		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
-	},
-};
-
-const menuStyles: IStackItemStyles = {
-	root: {
-		...contentViewStyles,
-		"display": "flex",
-		"flexDirection": "column",
-		"borderRight": `2px solid`,
 		"minWidth": "150px",
-		// "maxHeight": "350px",
-		"height": "100%",
-		"overflowY": "auto",
+
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
 		},
 	},
-};
 
-// #endregion
+	// TODO: dedupe with MenuItem
+	settingsButton: {
+		"alignItems": "center",
+		"display": "flex",
+		"flexDirection": "row",
+		"cursor": "pointer",
+		"&:hover": {
+			backgroundImage: tokens.colorNeutralBackground1Hover,
+		},
+	},
+
+	view: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "column",
+		height: "100%",
+		minWidth: "200px",
+		overflowY: "auto",
+		boxSizing: "border-box",
+	},
+});
 
 /**
  * Primary Fluid Framework Devtools view.
@@ -300,16 +286,19 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		};
 	}, [messageRelay, setContainers]);
 
+	const styles = useStyles();
+
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+		<div className={styles.root}>
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
+			<Divider vertical appearance="strong" />
 			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
-		</Stack>
+		</div>
 	);
 }
 
@@ -341,6 +330,8 @@ interface ViewProps {
 function View(props: ViewProps): React.ReactElement {
 	const { menuSelection, containers, setTheme } = props;
 
+	const styles = useStyles();
+
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
@@ -366,16 +357,7 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 	}
 
-	return (
-		<Stack.Item grow={5} styles={contentViewStyles}>
-			<div
-				id="devtools-view-content"
-				style={{ width: "100%", height: "100%", overflowY: "auto" }}
-			>
-				{view}
-			</div>
-		</Stack.Item>
-	);
+	return <div className={styles.view}>{view}</div>;
 }
 
 /**
@@ -411,6 +393,8 @@ interface MenuProps {
  */
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+
+	const styles = useStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
@@ -452,20 +436,13 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 	return (
-		<Stack.Item styles={menuStyles}>
+		<div className={styles.menu}>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div
-				style={{
-					minWidth: "250px",
-					display: "flex",
-					cursor: "pointer",
-				}}
-				onClick={onSettingsClicked}
-			>
+			<div className={styles.settingsButton} onClick={onSettingsClicked}>
 				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
 				<Settings20Regular />
 			</div>
-		</Stack.Item>
+		</div>
 	);
 }
 
