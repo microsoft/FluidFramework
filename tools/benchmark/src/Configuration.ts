@@ -427,7 +427,7 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
 	const testTypeTag = TestType[TestType.ExecutionTime];
 	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
 
-	if (args.category !== "" && args.category !== undefined) {
+	if (args.category !== "") {
 		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
 	}
 	return qualifiedTitle;
