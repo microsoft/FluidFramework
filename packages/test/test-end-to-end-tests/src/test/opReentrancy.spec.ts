@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -114,44 +113,59 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		it(`Eventual consistency with op reentry - ${
-			enableGroupedBatching ? "Grouped" : "Regular"
-		} batches`, async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching,
-				},
+		[false, true].forEach((useLargePayloads) => {
+			const generateStringOfSize = (sizeInBytes: number): string =>
+				new Array(sizeInBytes + 1).join("0");
+			const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+				a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
+			it(`Eventual consistency with op reentry - ${
+				enableGroupedBatching ? "grouped" : "regular"
+			} batches and ${useLargePayloads ? "large" : "small"} payloads`, async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
+
+				sharedString1.insertText(0, "ad");
+				sharedString1.insertText(1, "c");
+				const mapValueSize = useLargePayloads ? 1024 * 1024 : 10;
+				const mapContents1 = generateStringOfSize(mapValueSize);
+				const mapContents2 = generateStringOfSize(mapValueSize);
+				sharedMap1.set("1", mapContents1);
+				await provider.ensureSynchronized();
+
+				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+						sharedString2.insertText(3, "x");
+						sharedMap2.set("2", mapContents2);
+					}
+				});
+
+				sharedString1.insertText(1, "b");
+				sharedString2.insertText(0, "y");
+				await provider.ensureSynchronized();
+
+				// The offending container is still alive
+				sharedString2.insertText(0, "z");
+				await provider.ensureSynchronized();
+
+				assert.strictEqual(sharedString1.getText(), "zyabxcd");
+				assert.strictEqual(
+					sharedString1.getText(),
+					sharedString2.getText(),
+					"Eventual consistency broken",
+				);
+
+				assert.strictEqual(sharedMap1.get("1"), mapContents1);
+				assert.strictEqual(sharedMap1.get("2"), mapContents2);
+				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+
+				// Both containers are alive at the end
+				assert.ok(!container1.closed, "Local container is closed");
+				assert.ok(!container2.closed, "Remote container is closed");
 			});
-
-			sharedString1.insertText(0, "ad");
-			sharedString1.insertText(1, "c");
-			await provider.ensureSynchronized();
-
-			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(3, "x");
-				}
-			});
-
-			sharedString1.insertText(1, "b");
-			sharedString2.insertText(0, "y");
-			await provider.ensureSynchronized();
-
-			// The offending container is still alive
-			sharedString2.insertText(0, "z");
-			await provider.ensureSynchronized();
-
-			assert.strictEqual(sharedString1.getText(), "zyabxcd");
-			assert.strictEqual(
-				sharedString1.getText(),
-				sharedString2.getText(),
-				"Eventual consistency broken",
-			);
-
-			// Both containers are alive at the end
-			assert.ok(!container1.closed, "Local container is closed");
-			assert.ok(!container2.closed, "Remote container is closed");
 		});
 	});
 
