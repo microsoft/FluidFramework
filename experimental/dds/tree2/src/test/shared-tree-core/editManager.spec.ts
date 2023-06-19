@@ -442,43 +442,50 @@ describe("EditManager", () => {
 		});
 
 		interface Scenario {
-			readonly nbRebased: number;
-			readonly nbTrunk: number;
+			readonly rebasedEditCount: number;
+			readonly trunkEditCount: number;
 		}
 
 		const scenarios: Scenario[] = [
-			{ nbRebased: 1, nbTrunk: 1 },
-			{ nbRebased: 10, nbTrunk: 1 },
-			{ nbRebased: 1, nbTrunk: 10 },
-			{ nbRebased: 7, nbTrunk: 3 },
+			{ rebasedEditCount: 1, trunkEditCount: 1 },
+			{ rebasedEditCount: 10, trunkEditCount: 1 },
+			{ rebasedEditCount: 1, trunkEditCount: 10 },
+			{ rebasedEditCount: 7, trunkEditCount: 3 },
 		];
 
 		describe("Local commit rebasing", () => {
-			for (const { nbRebased, nbTrunk } of scenarios) {
-				it(`Rebase ${nbRebased} local commits over ${nbTrunk} trunk commits`, () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
-					assert.equal(rebaser.nbRebased, nbTrunk * nbRebased ** 2);
-					assert.equal(rebaser.nbInverted, nbTrunk * nbRebased);
-					assert.equal(rebaser.nbComposed, nbTrunk * (nbRebased * 2 + 1));
-					assert.equal(rebaser.nbRebaseAnchorCalls, nbTrunk + nbRebased);
+					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
+					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
+					assert.equal(
+						rebaser.composedCount,
+						trunkEditCount * (rebasedEditCount * 2 + 1),
+					);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});
 		describe("Peer commit rebasing", () => {
-			for (const { nbRebased, nbTrunk } of scenarios) {
-				it(`Rebase ${nbRebased} peer commits over ${nbTrunk} trunk commits`, () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
+					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
 					assert.equal(
-						rebaser.nbRebased,
-						nbTrunk * nbRebased + nbRebased * (nbRebased - 1),
+						rebaser.rebasedCount,
+						trunkEditCount * rebasedEditCount +
+							rebasedEditCount * (rebasedEditCount - 1),
 					);
 					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
 					// assert.equal(nbInverted, nbRebased - 1);
-					assert.equal(rebaser.nbInverted, ((nbRebased - 1) * nbRebased) / 2);
-					assert.equal(rebaser.nbComposed, nbTrunk + nbRebased);
-					assert.equal(rebaser.nbRebaseAnchorCalls, nbTrunk + nbRebased);
+					assert.equal(
+						rebaser.invertedCount,
+						((rebasedEditCount - 1) * rebasedEditCount) / 2,
+					);
+					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});

@@ -42,15 +42,15 @@ export function editManagerFactory(options: {
 }
 
 export function rebaseLocalEditsOverTrunkEdits(
-	nbLocal: number,
-	nbTrunk: number,
+	localEditCount: number,
+	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
 ): void {
 	const manager = editManagerFactory({ rebaser }).manager;
-	for (let iChange = 0; iChange < nbLocal; iChange++) {
+	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
-	for (let iChange = 0; iChange < nbTrunk; iChange++) {
+	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
 				change: TestChange.emptyChange,
@@ -64,12 +64,12 @@ export function rebaseLocalEditsOverTrunkEdits(
 }
 
 export function rebasePeerEditsOverTrunkEdits(
-	nbPeer: number,
-	nbTrunk: number,
+	peerEditCount: number,
+	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
 ): void {
 	const manager = editManagerFactory({ rebaser }).manager;
-	for (let iChange = 0; iChange < nbTrunk; iChange++) {
+	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
 				change: TestChange.emptyChange,
@@ -80,14 +80,14 @@ export function rebasePeerEditsOverTrunkEdits(
 			brand(iChange),
 		);
 	}
-	for (let iChange = 0; iChange < nbPeer; iChange++) {
+	for (let iChange = 0; iChange < peerEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
 				change: TestChange.emptyChange,
 				revision: mintRevisionTag(),
 				sessionId: "peer",
 			},
-			brand(iChange + nbTrunk + 1),
+			brand(iChange + trunkEditCount + 1),
 			brand(0),
 		);
 	}
