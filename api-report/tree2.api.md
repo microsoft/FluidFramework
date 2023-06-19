@@ -54,9 +54,6 @@ export interface AnchorEvents {
     valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
-// @alpha (undocumented)
-export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
-
 // @alpha
 export interface AnchorLocator {
     locate(anchor: Anchor): AnchorNode | undefined;
@@ -90,7 +87,7 @@ export interface AnchorSetRootEvents {
 }
 
 // @alpha
-export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
+export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
 // @alpha
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
@@ -144,11 +141,11 @@ export type BrandedFieldKind<TName extends string, TMultiplicity extends Multipl
     identifier: TName & FieldKindIdentifier;
 };
 
-// @alpha (undocumented)
+// @alpha
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
 // @alpha (undocumented)
-export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
+type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
 
 // @alpha
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
@@ -858,7 +855,8 @@ declare namespace InternalTypes {
         FlattenKeys,
         AllowOptionalNotFlattened,
         isAny,
-        RestrictiveReadonlyRecord
+        RestrictiveReadonlyRecord,
+        BrandedKeyContent
     }
 }
 export { InternalTypes }

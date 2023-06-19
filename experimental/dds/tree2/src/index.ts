@@ -75,11 +75,7 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	UpPathDefault,
@@ -108,6 +104,8 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
+	BrandedKey,
+	BrandedMapSubset,
 } from "./util";
 
 export {
