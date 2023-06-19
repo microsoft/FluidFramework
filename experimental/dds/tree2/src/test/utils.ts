@@ -28,6 +28,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -691,10 +692,12 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
 export function makeEncodingTestSuite<TDecoded>(
 	family: ICodecFamily<TDecoded>,
 	encodingTestData: [name: string, data: TDecoded][],
+	dummyFamilyForExcetions?: ICodecFamily<TDecoded>,
 ): void {
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
+			const dummyCodec = dummyFamilyForExcetions?.resolve(version);
 			for (const [name, data] of encodingTestData) {
 				describe(name, () => {
 					it("json roundtrip", () => {
@@ -714,6 +717,33 @@ export function makeEncodingTestSuite<TDecoded>(
 						const decoded = codec.binary.decode(encoded);
 						assert.deepEqual(decoded, data);
 					});
+
+					if (dummyCodec) {
+						it("json roundtrip throws exception when encoding", () => {
+							assert.throws(
+								() => dummyCodec.json.encode(data),
+								(e) =>
+									validateAssertionError(
+										e,
+										"Encoded change didn't pass schema validation.",
+									),
+								"Expected exception was not thrown",
+							);
+						});
+
+						it("json roundtrip throws exception when decoding", () => {
+							const encoded = codec.json.encode(data);
+							assert.throws(
+								() => dummyCodec.json.decode(encoded),
+								(e) =>
+									validateAssertionError(
+										e,
+										"Encoded change didn't pass schema validation.",
+									),
+								"Expected exception was not thrown",
+							);
+						});
+					}
 				});
 			}
 		});

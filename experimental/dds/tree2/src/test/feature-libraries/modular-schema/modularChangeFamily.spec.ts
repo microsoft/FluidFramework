@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TUnsafe, Type } from "@sinclair/typebox";
+import { TUnsafe, Type, Static, TSchema } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -32,6 +32,7 @@ import {
 	UpPath,
 	mintRevisionTag,
 	tagRollbackInverse,
+	assertIsRevisionTag,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
@@ -169,6 +170,27 @@ const nodeChange3: NodeChangeset = {
 	},
 };
 
+const nodeChange4: NodeChangeset = {
+	fieldChanges: new Map([
+		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+	]),
+	valueChange: {
+		value: "b",
+	},
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
+const nodeChangeWithoutFieldChanges: NodeChangeset = {
+	valueChange: {
+		value: "b",
+	},
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
 const rootChange1a: ModularChangeset = {
 	fieldChanges: new Map([
 		[
@@ -268,6 +290,36 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
+			},
+		],
+	]),
+};
+
+const dummyMaxId = 10;
+const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const rootChange4: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChange4),
+			},
+		],
+	]),
+};
+
+const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChangeWithoutFieldChanges),
 			},
 		],
 	]),
@@ -664,13 +716,25 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
+	const jsonValidatorFail = {
+		compile: <Schema extends TSchema>(schema: Schema) => {
+			return {
+				check: (data: unknown): data is Static<Schema> => false,
+			};
+		},
+	};
+	const dummyFamilyForExcetions = new ModularChangeFamily(fieldKinds, {
+		jsonValidator: jsonValidatorFail,
+	});
 	describe("Encoding", () => {
 		const encodingTestData: [string, ModularChangeset][] = [
 			["without constrain", rootChange1a],
-			["with constrain", rootChange3],
+			["with value constrain", rootChange3],
+			["with node existence constrain", rootChange4],
+			["without node field changes", rootChangeWithoutNodeFieldChanges],
 		];
 
-		makeEncodingTestSuite(family.codecs, encodingTestData);
+		makeEncodingTestSuite(family.codecs, encodingTestData, dummyFamilyForExcetions.codecs);
 	});
 
 	it("build child change", () => {
