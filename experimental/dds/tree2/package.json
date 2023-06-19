@@ -37,6 +37,7 @@
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:inspect": "npm run test:mocha -- --inspect-brk",
 		"test:mocha": "mocha",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
