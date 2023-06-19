@@ -18,7 +18,7 @@ import {
 	TestChangeRebaser,
 } from "../testChange";
 import { MockRepairDataStoreProvider } from "../utils";
-import { EditManager } from "../../shared-tree-core";
+import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
@@ -45,6 +45,17 @@ export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
+): void;
+export function rebaseLocalEditsOverTrunkEdits(
+	localEditCount: number,
+	trunkEditCount: number,
+	rebaser: TestChangeRebaser,
+	defer: true,
+): () => void;
+export function rebaseLocalEditsOverTrunkEdits(
+	localEditCount: number,
+	trunkEditCount: number,
+	rebaser: TestChangeRebaser,
 	defer: boolean = false,
 ): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
@@ -64,6 +75,17 @@ export function rebaseLocalEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
+export function rebasePeerEditsOverTrunkEdits(
+	peerEditCount: number,
+	trunkEditCount: number,
+	rebaser: TestChangeRebaser,
+): void;
+export function rebasePeerEditsOverTrunkEdits(
+	peerEditCount: number,
+	trunkEditCount: number,
+	rebaser: TestChangeRebaser,
+	defer: true,
+): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
@@ -94,6 +116,43 @@ export function rebasePeerEditsOverTrunkEdits(
 				brand(iChange + trunkEditCount + 1),
 				brand(0),
 			);
+		}
+	};
+	return defer ? run : run();
+}
+
+export function rebaseConcurrentPeerEdits(
+	peerCount: number,
+	editsPerPeerCount: number,
+	rebaser: TestChangeRebaser,
+	defer: true,
+): () => void;
+export function rebaseConcurrentPeerEdits(
+	peerCount: number,
+	editsPerPeerCount: number,
+	rebaser: TestChangeRebaser,
+): void;
+export function rebaseConcurrentPeerEdits(
+	peerCount: number,
+	editsPerPeerCount: number,
+	rebaser: TestChangeRebaser,
+	defer: boolean = false,
+): void | (() => void) {
+	const manager = editManagerFactory({ rebaser }).manager;
+	const peerEdits: Commit<TestChange>[] = [];
+	for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+		const sessionId = `p${iPeer}`;
+		for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
+			peerEdits.push({
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId,
+			});
+		}
+	}
+	const run = () => {
+		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
+			manager.addSequencedChange(peerEdits[iChange], brand(iChange + 1), brand(0));
 		}
 	};
 	return defer ? run : run();
