@@ -124,8 +124,8 @@ describeNoCompat(
 			return provider.createContainer(runtimeFactory);
 		};
 
-		async function waitForSummary(summarizer: ISummarizer, refreshLatestAck?: boolean) {
-			const summaryResult = await summarizeNow(summarizer, "test", refreshLatestAck);
+		async function waitForSummary(summarizer: ISummarizer) {
+			const summaryResult = await summarizeNow(summarizer);
 			return summaryResult;
 		}
 
