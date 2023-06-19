@@ -36,6 +36,7 @@ export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enableDiscovery?: boolean;
     enableInternalSummaryCaching: boolean;
+    enableLongPollingDowngrade: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
