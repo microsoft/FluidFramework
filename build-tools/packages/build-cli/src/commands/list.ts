@@ -60,9 +60,10 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				item.path = context.repo.relativeToRepo(item.path);
 
 				// Calculate and set the tarball name if the tarball flag is set
-				item.name = this.flags.tarball === true
-					? item.name.replaceAll("@", "").replaceAll("/", "-")
-					: item.name;
+				item.name =
+					this.flags.tarball === true
+						? item.name.replaceAll("@", "").replaceAll("/", "-")
+						: item.name;
 				return item;
 			});
 
