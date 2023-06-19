@@ -461,7 +461,6 @@ function Menu(props: MenuProps): React.ReactElement {
 		<div className={styles.root}>
 			<div className={styles.button} onClick={onHomeClicked}>
 				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
-				<Settings20Regular />
 			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 			<div className={styles.button} onClick={onSettingsClicked}>
