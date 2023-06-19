@@ -23,7 +23,9 @@ export type DocumentType =
 	/** Document with a SharedMap */
 	| "DocumentMap"
 	/** Document with Multiple DataStores */
-	| "DocumentMultipleDataStores";
+	| "DocumentMultipleDataStores"
+	/** Document with a SharedMatrix */
+	| "DocumentMatrix";
 
 export interface DocumentMapInfo {
 	numberOfItems: number;
@@ -35,7 +37,16 @@ export interface DocumentMultipleDataStoresInfo {
 	numberDataStoresPerIteration: number;
 }
 
-export type DocumentTypeInfo = DocumentMapInfo | DocumentMultipleDataStoresInfo;
+export interface DocumentMatrixInfo {
+	rowSize: number;
+	columnSize: number;
+	stringSize: number;
+}
+
+export type DocumentTypeInfo =
+	| DocumentMapInfo
+	| DocumentMultipleDataStoresInfo
+	| DocumentMatrixInfo;
 
 export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
@@ -80,6 +91,26 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		},
 		minSampleCount: 1,
 	},
+	{
+		testTitle: "Matrix 10x10 with SharedStrings",
+		documentType: "DocumentMatrix",
+		documentTypeInfo: {
+			rowSize: 10,
+			columnSize: 10,
+			stringSize: 100,
+		},
+		minSampleCount: 2,
+	},
+	{
+		testTitle: "Matrix 100x100 with SharedStrings",
+		documentType: "DocumentMatrix",
+		documentTypeInfo: {
+			rowSize: 100,
+			columnSize: 100,
+			stringSize: 100,
+		},
+		minSampleCount: 2,
+	},
 ];
 
 export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
@@ -106,22 +137,34 @@ export function isDocumentMultipleDataStoresInfo(
 	return (info as DocumentMultipleDataStoresInfo).numberDataStores !== undefined;
 }
 
+export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMatrixInfo {
+	return (info as DocumentMatrixInfo).rowSize !== undefined;
+}
+
 export function assertDocumentTypeInfo(
 	info: DocumentTypeInfo,
 	type: DocumentType,
 ): asserts info is DocumentMapInfo | DocumentMultipleDataStoresInfo {
-	if (type === "DocumentMap") {
-		if (!isDocumentMapInfo(info)) {
-			throw new Error(`Expected DocumentMapInfo but got ${JSON.stringify(info)}`);
-		}
-	} else if (type === "DocumentMultipleDataStores") {
-		if (!isDocumentMultipleDataStoresInfo(info)) {
-			throw new Error(
-				`Expected DocumentMultipleDataStoresInfo but got ${JSON.stringify(info)}`,
-			);
-		}
-	} else {
-		throw new Error(`Unexpected DocumentType: ${type}`);
+	switch (type) {
+		case "DocumentMap":
+			if (!isDocumentMapInfo(info)) {
+				throw new Error(`Expected DocumentMapInfo but got ${JSON.stringify(info)}`);
+			}
+			break;
+		case "DocumentMultipleDataStores":
+			if (!isDocumentMultipleDataStoresInfo(info)) {
+				throw new Error(
+					`Expected DocumentMultipleDataStoresInfo but got ${JSON.stringify(info)}`,
+				);
+			}
+			break;
+		case "DocumentMatrix":
+			if (!isDocumentMatrixInfo(info)) {
+				throw new Error(`Expected DocumentMatrixInfo but got ${JSON.stringify(info)}`);
+			}
+			break;
+		default:
+			throw new Error(`Unexpected DocumentType: ${type}`);
 	}
 }
 
