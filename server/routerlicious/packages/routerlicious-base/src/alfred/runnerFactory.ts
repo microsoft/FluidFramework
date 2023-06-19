@@ -17,7 +17,7 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -172,7 +172,20 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			host: redisConfig2.host,
 			port: redisConfig2.port,
 			password: redisConfig2.pass,
+			connectTimeout: redisConfig2.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfig2.enableOfflineQueue,
 		};
+		if (redisConfig2.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptions2.enableAutoPipelining = true;
+			redisOptions2.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfig2.tls) {
 			redisOptions2.tls = {
 				servername: redisConfig2.host,
@@ -183,10 +196,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis(redisOptions2);
+		const redisClient = new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache = new Redis(redisOptions2);
+		const redisClientForJwtCache = new Redis.default(redisOptions2);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -261,7 +274,20 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			host: redisConfigForThrottling.host,
 			port: redisConfigForThrottling.port,
 			password: redisConfigForThrottling.pass,
+			connectTimeout: redisConfigForThrottling.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
 		};
+		if (redisConfigForThrottling.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptionsForThrottling.enableAutoPipelining = true;
+			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfigForThrottling.tls) {
 			redisOptionsForThrottling.tls = {
 				servername: redisConfigForThrottling.host,
@@ -273,7 +299,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -443,13 +469,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				host: redisConfig.host,
 				port: redisConfig.port,
 				password: redisConfig.pass,
+				connectTimeout: redisConfig.connectTimeout,
+				enableReadyCheck: true,
+				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+				enableOfflineQueue: redisConfig.enableOfflineQueue,
 			};
+			if (redisConfig.enableAutoPipelining) {
+				/**
+				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+				 * More info: https://github.com/luin/ioredis#autopipelining
+				 */
+				redisOptions.enableAutoPipelining = true;
+				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
+			}
 			if (redisConfig.tls) {
 				redisOptions.tls = {
 					servername: redisConfig.host,
 				};
 			}
-			const redisClientForLogging = new Redis(redisOptions);
+			const redisClientForLogging = new Redis.default(redisOptions);
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

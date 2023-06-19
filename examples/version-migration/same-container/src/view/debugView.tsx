@@ -9,18 +9,16 @@ import type {
 	ISameContainerMigratableModel,
 	SameContainerMigrationState,
 } from "@fluid-example/example-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import type { IInventoryListAppModel } from "../modelInterfaces";
 
 export interface IDebugViewProps {
 	readonly model: IInventoryListAppModel;
-	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
 	readonly summarizeOnDemand: () => void;
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-	const { model, proposeCodeDetails, summarizeOnDemand, getUrlForContainerId } = props;
+	const { model, summarizeOnDemand, getUrlForContainerId } = props;
 
 	return (
 		<div>
@@ -28,7 +26,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<MigrationStatusView model={model} getUrlForContainerId={getUrlForContainerId} />
 			<ControlsView
 				proposeVersion={model.migrationTool.proposeVersion}
-				proposeCodeDetails={proposeCodeDetails}
 				summarizeOnDemand={summarizeOnDemand}
 				addItem={model.inventoryList.addItem}
 			/>
@@ -118,13 +115,12 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 
 interface IControlsViewProps {
 	readonly proposeVersion: (version: string) => void;
-	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
 	readonly summarizeOnDemand: () => void;
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
-	const { proposeVersion, proposeCodeDetails, summarizeOnDemand, addItem } = props;
+	const { proposeVersion, summarizeOnDemand, addItem } = props;
 
 	const addSampleItems = () => {
 		addItem("Alpha", 1);
@@ -151,27 +147,6 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					}}
 				>
 					&quot;two&quot;
-				</button>
-			</div>
-			<div style={{ margin: "10px 0" }}>
-				The demo in its current state can't make a real code proposal to the Quorum. Use
-				these debug buttons to simulate that step.
-				<br />
-				Propose QuorumProposals code details:
-				<br />
-				<button
-					onClick={() => {
-						proposeCodeDetails({ package: "one" }).catch(console.error);
-					}}
-				>
-					{`{ package: "one" }`}
-				</button>
-				<button
-					onClick={() => {
-						proposeCodeDetails({ package: "two" }).catch(console.error);
-					}}
-				>
-					{`{ package: "two" }`}
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>
