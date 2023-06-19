@@ -107,8 +107,7 @@ type MenuSelection =
 	| SettingsMenuSelection
 	| HomeMenuSelection;
 
-// TODO: split these
-const useStyles = makeStyles({
+const useDevtoolsStyles = makeStyles({
 	root: {
 		"display": "flex",
 		"flexDirection": "row",
@@ -118,39 +117,6 @@ const useStyles = makeStyles({
 		"> *": {
 			textOverflow: "ellipsis",
 		},
-	},
-
-	menu: {
-		"display": "flex",
-		"flexDirection": "column",
-		"height": "100%",
-		"overflowY": "auto",
-		"minWidth": "150px",
-		// Ensures the last div/component is anchored to the bottom.
-		"> :last-child": {
-			marginTop: "auto",
-		},
-	},
-
-	// TODO: dedupe with MenuItem
-	menuButton: {
-		"alignItems": "center",
-		"display": "flex",
-		"flexDirection": "row",
-		"cursor": "pointer",
-		"&:hover": {
-			backgroundImage: tokens.colorNeutralBackground1Hover,
-		},
-	},
-
-	view: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "column",
-		height: "100%",
-		minWidth: "200px",
-		overflowY: "auto",
-		boxSizing: "border-box",
 	},
 });
 
@@ -302,7 +268,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		};
 	}, [messageRelay, setContainers]);
 
-	const styles = useStyles();
+	const styles = useDevtoolsStyles();
 
 	return (
 		<div className={styles.root}>
@@ -317,6 +283,18 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		</div>
 	);
 }
+
+const useViewStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "column",
+		height: "100%",
+		minWidth: "200px",
+		overflowY: "auto",
+		boxSizing: "border-box",
+	},
+});
 
 /**
  * {@link View} input props.
@@ -341,7 +319,7 @@ interface ViewProps {
 function View(props: ViewProps): React.ReactElement {
 	const { menuSelection, containers } = props;
 
-	const styles = useStyles();
+	const styles = useViewStyles();
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
@@ -371,8 +349,33 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 	}
 
-	return <div className={styles.view}>{view}</div>;
+	return <div className={styles.root}>{view}</div>;
 }
+
+const useMenuStyles = makeStyles({
+	root: {
+		"display": "flex",
+		"flexDirection": "column",
+		"height": "100%",
+		"overflowY": "auto",
+		"minWidth": "150px",
+		// Ensures the last div/component is anchored to the bottom.
+		"> :last-child": {
+			marginTop: "auto",
+		},
+	},
+
+	// TODO: dedupe with MenuItem
+	button: {
+		"alignItems": "center",
+		"display": "flex",
+		"flexDirection": "row",
+		"cursor": "pointer",
+		"&:hover": {
+			backgroundImage: tokens.colorNeutralBackground1Hover,
+		},
+	},
+});
 
 /**
  * {@link Menu} input props.
@@ -408,7 +411,7 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
-	const styles = useStyles();
+	const styles = useMenuStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
@@ -455,13 +458,13 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	return (
-		<div className={styles.menu}>
-			<div className={styles.menuButton} onClick={onHomeClicked}>
+		<div className={styles.root}>
+			<div className={styles.button} onClick={onHomeClicked}>
 				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
 				<Settings20Regular />
 			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div className={styles.menuButton} onClick={onSettingsClicked}>
+			<div className={styles.button} onClick={onSettingsClicked}>
 				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
 				<Settings20Regular />
 			</div>
