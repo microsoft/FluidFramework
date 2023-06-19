@@ -22,6 +22,11 @@ export interface PackageSelectionCriteria {
 	 * An array of release groups whose root packages are selected.
 	 */
 	releaseGroupRoots: ReleaseGroup[];
+
+	/**
+	 * If set, only selects the single package in this directory.
+	 */
+	directory?: string;
 }
 
 export interface PackageFilterOptions {
@@ -46,11 +51,21 @@ export interface PackageFilterOptions {
  * @param flags - The parsed command flags.
  */
 export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria => {
-	const options: PackageSelectionCriteria = {
-		independentPackages: flags.packages ?? false,
-		releaseGroups: flags.releaseGroup ?? [],
-		releaseGroupRoots: flags.releaseGroupRoot ?? [],
-	};
+	const options: PackageSelectionCriteria =
+		flags.all === true
+			? {
+					independentPackages: true,
+					releaseGroups: ["all"],
+					releaseGroupRoots: ["all"],
+					directory: undefined,
+			  }
+			: {
+					independentPackages: flags.packages ?? false,
+					releaseGroups: flags.releaseGroup ?? [],
+					releaseGroupRoots: flags.releaseGroupRoot ?? [],
+					directory: flags.directory,
+			  };
+
 	return options;
 };
 
@@ -85,7 +100,13 @@ export const selectAndFilterPackages = (
 	// packages?: { name: string }[],
 ): { selected: PackageDetails[]; filtered: PackageDetails[] } => {
 	const selected: PackageDetails[] = [];
-	// const pkgList = packages?.map((p) => p.name);
+
+	if (selection.directory !== undefined) {
+		selected.push({
+			package: new Package(path.join(selection.directory, "package.json"), "none", undefined),
+			kind: "packageFromDirectory",
+		});
+	}
 
 	// Select packages
 	if (selection.independentPackages === true) {
