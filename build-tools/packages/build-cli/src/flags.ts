@@ -217,14 +217,12 @@ export const skipCheckFlag = Flags.boolean({
  */
 export const selectionFlags = {
 	all: Flags.boolean({
-		char: "a",
 		description:
 			"Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.",
 		exclusive: ["dir", "packages", "releaseGroup"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
-		char: "d",
 		description:
 			"Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.",
 		exclusive: ["packages", "releaseGroup", "all"],
@@ -251,7 +249,7 @@ export const selectionFlags = {
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 		char: undefined,
-		aliases: ["releaseGroupRoots", "gg"],
+		aliases: ["releaseGroupRoots"],
 	}),
 };
 
@@ -271,8 +269,7 @@ export const filterFlags = {
 		multiple: true,
 		helpGroup: "PACKAGE FILTER",
 	}),
-	skipScope: releaseGroupFlag({
-		char: undefined,
+	skipScope: Flags.string({
 		description: "Package scopes to filter out. Cannot be used with --scope.",
 		exclusive: ["scope"],
 		aliases: ["no-scope"],

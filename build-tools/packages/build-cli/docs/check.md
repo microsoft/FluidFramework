@@ -15,9 +15,9 @@ Checks that all packages have the same version set in package.json. The packages
 ```
 USAGE
   $ flub check buildVersion [-v | --quiet] [--concurrency <value>] [--releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all | [-a | -d <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value> | --skipScope
-    client|server|azure|build-tools|gitrest|historian] [--version <value> | --path <value>] [--fix]
+    client|server|azure|build-tools|gitrest|historian|all | [--all | --dir <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all] |  | ] [--private] [--scope <value> | --skipScope <value>]
+    [--version <value> | --path <value>] [--fix]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -27,14 +27,14 @@ FLAGS
   --version=<value>      The version against which to check all the packages.
 
 PACKAGE SELECTION FLAGS
-  -a, --all                       Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                                  --releaseGroup.
-  -d, --dir=<value>               Run on the package in this directory. Cannot be used with --all, --packages, or
-                                  --releaseGroup.
   -g, --releaseGroup=<option>...  Run on all packages within the release group. Cannot be used with --all, --dir, or
                                   --packages. This does not include release group root packages; to include those as
                                   well, use the --releaseGroupRoots argument.
                                   <options: client|server|azure|build-tools|gitrest|historian|all>
+  --all                           Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                                  --releaseGroup.
+  --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages, or
+                                  --releaseGroup.
   --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir, or
                                   --releaseGroup.
   --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
@@ -46,10 +46,9 @@ LOGGING FLAGS
   --quiet        Disable all logging.
 
 PACKAGE FILTER FLAGS
-  --[no-]private           Only include private packages. Use --no-private to exclude private packages instead.
-  --scope=<value>...       Package scopes to filter to. Cannot be used with --skipScope.
-  --skipScope=<option>...  Package scopes to filter out. Cannot be used with --scope.
-                           <options: client|server|azure|build-tools|gitrest|historian>
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. Cannot be used with --scope.
 
 DESCRIPTION
   Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard
