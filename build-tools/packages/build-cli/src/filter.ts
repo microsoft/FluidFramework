@@ -193,7 +193,7 @@ export type PackageKind =
 	/**
 	 * Package is an independent package.
 	 */
-	| "independentPackage"
+	"independentPackage"
 
 	/**
 	 * Package is part of a release group, but is _not_ the root.
@@ -207,6 +207,6 @@ export type PackageKind =
 
 	/**
 	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
-	 * when running on a package diurectly using its directory.
+	 * when running on a package directly using its directory.
 	 */
 	| "packageFromDirectory";

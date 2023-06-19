@@ -48,7 +48,7 @@ export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 /**
  * A re-usable CLI flag to parse release groups along with the value "all" to indicate all release groups.
  */
-export const releaseGroupWithAllFlag = Flags.custom({
+export const releaseGroupWithAllFlag = Flags.custom<ReleaseGroup | "all">({
 	char: "g",
 	description: "Name of a release group.",
 	aliases: ["releaseGroups"],
