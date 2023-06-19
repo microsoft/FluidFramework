@@ -10,10 +10,11 @@ import {
 	compareReferencePositions,
 } from "@fluidframework/merge-tree";
 import {
-	IIntervalHelpers,
+	sequenceIntervalHelpers,
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
+	IIntervalHelpers,
 } from "../intervalCollection";
 import { IntervalTree } from "../intervalTree";
 import { SequenceIntervalIndexes } from "./SequenceIntervalIndexes";
@@ -61,23 +62,17 @@ class OverlappingSequenceIntervalsIndex implements SequenceIntervalIndexes.Overl
 		// initialize a default transient interval
 		const transientInterval = this.helpers.create(
 			"transient",
-			0,
-			0,
+			startRefPos,
+			endRefPos,
 			this.client,
 			IntervalType.Transient,
 		);
-		// reset the start/end for the transient interval
-		transientInterval.start = startRefPos;
-		transientInterval.end = endRefPos;
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
 }
 
-export function createOverlapping(
-	helpers: IIntervalHelpers<SequenceInterval>,
-	client: Client,
-): SequenceIntervalIndexes.Overlapping {
-	return new OverlappingSequenceIntervalsIndex(helpers, client);
+export function createOverlapping(client: Client): SequenceIntervalIndexes.Overlapping {
+	return new OverlappingSequenceIntervalsIndex(sequenceIntervalHelpers, client);
 }

@@ -227,8 +227,8 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 */
 	create(
 		label: string,
-		start: number | undefined,
-		end: number | undefined,
+		start: number | LocalReferencePosition | undefined,
+		end: number | LocalReferencePosition | undefined,
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
@@ -850,8 +850,8 @@ function createPositionReference(
 
 export function createSequenceInterval(
 	label: string,
-	start: number,
-	end: number,
+	start: number | LocalReferencePosition,
+	end: number | LocalReferencePosition,
 	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
@@ -880,24 +880,32 @@ export function createSequenceInterval(
 		}
 	}
 
-	const startLref = createPositionReference(
-		client,
-		start,
-		beginRefType,
-		op,
-		fromSnapshot,
-		undefined,
-		startReferenceSlidingPreference(stickiness),
-	);
-	const endLref = createPositionReference(
-		client,
-		end,
-		endRefType,
-		op,
-		fromSnapshot,
-		undefined,
-		endReferenceSlidingPreference(stickiness),
-	);
+	const startLref =
+		typeof start === "number"
+			? createPositionReference(
+					client,
+					start,
+					beginRefType,
+					op,
+					fromSnapshot,
+					undefined,
+					startReferenceSlidingPreference(stickiness),
+			  )
+			: start;
+
+	const endLref =
+		typeof end === "number"
+			? createPositionReference(
+					client,
+					end,
+					endRefType,
+					op,
+					fromSnapshot,
+					undefined,
+					endReferenceSlidingPreference(stickiness),
+			  )
+			: end;
+
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
 	};

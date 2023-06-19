@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
-import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { sequenceIntervalHelpers, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -51,21 +51,6 @@ function assertSequenceIntervalsEqual(
 	}
 }
 
-/**
- * Generates a random string of length 2 or 1, where each character is chosen from the range 'a' to 'z'.
- */
-function genreateRandomText(random: IRandom) {
-	const length = random.bool(0.5) ? 2 : 1;
-	let result = "";
-	const characters = "abcdefghijklmnopqrstuvwxyz";
-
-	for (let i = 0; i < length; i++) {
-		result += characters[random.integer(0, 25)];
-	}
-
-	return result;
-}
-
 describe("findOverlappingIntervalsBySegoff", () => {
 	const helpers = sequenceIntervalHelpers;
 	// sort the query results by the local reference position of interval endpoints
@@ -103,7 +88,6 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			SharedStringFactory.Attributes,
 		);
 		overlappingIntervalsIndex = sequenceIntervalIndexFactory.createOverlapping(
-			helpers,
 			testSharedString.client,
 		);
 	});
@@ -124,6 +108,10 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			interval3 = collection.add(5, 6, IntervalType.SlideOnRemove);
 		});
 
+		/**
+		 * The overlappingIntervalsIndex is not attached to the interval collection, and initially,
+		 * no intervals are added to the index. As a result, the index starts off empty within this suite.
+		 */
 		it("when the index is empty", () => {
 			results = queryIntervalsByPositions(0, 2);
 			assert.equal(results.length, 0);
@@ -310,8 +298,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			/**
 			 * Visualization of intervals within the string after the last insertion:
 			 *
-			 * interval2's endpoint slides backwards
-			 * interval3 and interval4 shift backwards
+			 * interval2's endpoint slides forwards
+			 * interval3 and interval4 shift forwards
 			 *
 			 *                  0 1 2 3 4 5 6 7 8 9 10 11 12
 			 *                  a b c x x d e f g h i  j  k
@@ -339,7 +327,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 
 			/**
 			 * Visualization of intervals within the string after the last insertion:
-			 * All intervals shift backwards
+			 * All intervals shift forwards
 			 *
 			 *                  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 			 *                  y y a b c x x d e f g  h  i  j  k
@@ -365,8 +353,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			/**
 			 * Visualization of intervals within the string after the last deletion:
 			 *
-			 * interval2's startpoint slides backwards but the remains in the original segment
-			 * interval3 shifts backwards
+			 * interval2's startpoint slides forwards but the remains in the original segment
+			 * interval3 shifts forwards
 			 *
 			 *                  0 1 2 3 4
 			 *                  a b e f g
@@ -422,7 +410,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 				for (let i = 0; i < count / 2; ++i) {
 					testSharedString.insertText(
 						random.integer(0, Math.max(testSharedString.getLength() - 1, 0)),
-						genreateRandomText(random),
+						random.string(random.bool() ? 2 : 1),
 					);
 				}
 				const max = testSharedString.getLength() - 1;

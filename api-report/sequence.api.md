@@ -69,7 +69,7 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlapping(helpers: IIntervalHelpers<SequenceInterval>, client: Client): SequenceIntervalIndexes.Overlapping;
+export function createOverlapping(client: Client): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
@@ -155,7 +155,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
+    create(label: string, start: number | LocalReferencePosition | undefined, end: number | LocalReferencePosition | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
 
 // @public (undocumented)
