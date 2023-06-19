@@ -1051,7 +1051,7 @@ describe("Editing", () => {
 				});
 				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
 
-				// Constrain on "a" and insert "b" into root sequence if it does
+				// Insert "b" after "a" with constraint that "a" exists.
 				// State should be: ["a", "b"]
 				tree.transaction.start();
 				tree.editor.addNodeExistsConstraint({
@@ -1125,7 +1125,54 @@ describe("Editing", () => {
 				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree], [{ foo: "a" }, "c", "b"]);
+				expectJsonTree([tree, tree2], [{ foo: "a" }, "c", "b"]);
+			});
+
+			// TODO: This doesn't update the constraint properly yet because
+			// rebaseChild isn't called inside of handleCurrAttach
+			it.skip("transaction dropped when node can't be inserted", () => {
+				const tree = makeTreeFromJson([{}]);
+				const tree2 = tree.fork();
+
+				const rootPath: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				// Delete node from root sequence 
+				const tree1RootSequence = tree.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol
+				});
+				tree1RootSequence.delete(0, 1);
+
+				// Constrain on "a" existing and insert "b" if it does
+				// This insert should be dropped since the node "a" is inserted under is 
+				// concurrently deleted
+				tree2.transaction.start();
+				const sequence = tree2.editor.sequenceField({
+					parent: rootPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+
+				tree2.editor.addNodeExistsConstraint({
+					parent: rootPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const rootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
+				tree2.transaction.commit();
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], []);
 			});
 
 			it("cross-field move test", () => {
@@ -1143,6 +1190,7 @@ describe("Editing", () => {
 					parentIndex: 1,
 				};
 
+				tree.transaction.start();
 				tree.editor.move(
 					{ field: brand("foo"), parent: firstPath },
 					0,
@@ -1159,6 +1207,7 @@ describe("Editing", () => {
 					field: rootFieldKeySymbol,
 				});
 				rootSequence.delete(0, 1);
+				tree.transaction.commit();
 
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint({
