@@ -9,7 +9,7 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureTokenProvider } from "./AzureTokenFactory";

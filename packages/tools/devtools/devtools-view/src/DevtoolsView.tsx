@@ -5,7 +5,7 @@
 import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
+import { Button, FluentProvider, Tooltip } from "@fluentui/react-components";
 import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
@@ -32,7 +32,7 @@ import {
 } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -156,7 +156,7 @@ const menuStyles: IStackItemStyles = {
 		"flexDirection": "column",
 		"borderRight": `2px solid`,
 		"minWidth": "150px",
-		"maxHeight": "350px",
+		"height": "350px",
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
@@ -234,34 +234,34 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
-			{supportedFeatures === undefined ? (
-				queryTimedOut ? (
-					<>
-						<div>Devtools not found. Timeout exceeded.</div>
-						<Tooltip content="Retry searching for Devtools" relationship="description">
-							<Button onClick={retryQuery}>Search again</Button>
-						</Tooltip>
-					</>
+		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+				{supportedFeatures === undefined ? (
+					queryTimedOut ? (
+						<>
+							<div>Devtools not found. Timeout exceeded.</div>
+							<Tooltip
+								content="Retry searching for Devtools"
+								relationship="description"
+							>
+								<Button onClick={retryQuery}>Search again</Button>
+							</Tooltip>
+						</>
+					) : (
+						<>
+							<Waiting />
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					)
 				) : (
-					<>
-						<Waiting />
-						<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={{}} />
-					</>
-				)
-			) : (
-				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
-			)}
-		</FluentProvider>
+					<_DevtoolsView supportedFeatures={supportedFeatures} />
+				)}
+			</FluentProvider>
+		</ThemeContext.Provider>
 	);
 }
 
 interface _DevtoolsViewProps {
-	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
-
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -272,7 +272,7 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures, setTheme } = props;
+	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
@@ -317,7 +317,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
+			<View menuSelection={menuSelection} containers={containers} />
 		</Stack>
 	);
 }
@@ -337,18 +337,13 @@ interface ViewProps {
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
 	containers?: ContainerKey[];
-
-	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers, setTheme } = props;
+	const { menuSelection, containers } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
@@ -368,7 +363,7 @@ function View(props: ViewProps): React.ReactElement {
 				);
 			break;
 		case "settingsMenuSelection":
-			view = <SettingsView setTheme={setTheme} />;
+			view = <SettingsView />;
 			break;
 		case "homeMenuSelection":
 			view = <LandingView />;

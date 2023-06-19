@@ -42,7 +42,6 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/test-client-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~"
 	},
 	"devDependencies": {

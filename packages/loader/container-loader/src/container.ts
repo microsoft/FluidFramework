@@ -927,7 +927,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError) {
-		this._deltaManager.close(error, true /* doDispose */);
+		this._deltaManager.dispose(error);
 		this.verifyClosed();
 	}
 

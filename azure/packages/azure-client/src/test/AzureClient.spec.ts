@@ -8,15 +8,24 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
+
+import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient";
 import { AzureLocalConnectionConfig } from "../interfaces";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
 	const connectionProps: AzureLocalConnectionConfig = {
-		tokenProvider: new InsecureTokenProvider("fooBar", generateTestUser(), scopes),
+		tokenProvider: new InsecureTokenProvider(
+			"fooBar",
+			{
+				id: uuid(),
+				name: uuid(),
+			},
+			scopes,
+		),
 		endpoint: "http://localhost:7070",
 		type: "local",
 	};
