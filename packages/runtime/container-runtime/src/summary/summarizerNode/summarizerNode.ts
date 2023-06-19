@@ -45,6 +45,7 @@ import {
 	parseSummaryTreeForSubtrees,
 	RefreshSummaryResult,
 	SummaryNode,
+	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
@@ -193,24 +194,91 @@ export class SummarizerNode implements IRootSummarizerNode {
 	}
 
 	/**
-	 * Complete the WIP summary for the given proposalHandle
+	 * Validates that the in-progress summary is correct, i.e., summarize should have run for all non-skipped
+	 * nodes. This will only be called for the root summarizer node and is called by it recursively on all child nodes.
+	 *
+	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
+	 * In case of failure, additional information is returned indicating type of failure and where it was.
+	 */
+	public validateSummary(): ValidateSummaryResult {
+		return this.validateSummaryCore(false /* parentSkipRecursion */);
+	}
+
+	/**
+	 * Validates that the in-progress summary is correct for all nodes, i.e., summarize should have run for all
+	 * non-skipped nodes.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
+	 * In that case, the children will not have work-in-progress state.
+	 *
+	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
+	 * In case of failure, additional information is returned indicating type of failure and where it was.
+	 */
+	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
+		assert(
+			this.wipSummaryLogger !== undefined,
+			"wipSummaryLogger should have been set in startSummary or ctor",
+		);
+		assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
+
+		// If the parentSkipRecursion is true, the parent node did not call summarize on this node. Return success.
+		if (parentSkipRecursion) {
+			return { success: true };
+		}
+
+		/**
+		 * The absence of wip local path indicates that summarize was not called for this node. Return failure.
+		 * This can happen if:
+		 * 1. A child node was created after summarize was already called on the parent. For example, a data store
+		 * is realized (loaded) after summarize was called on it creating summarizer nodes for its DDSes. In this case,
+		 * parentSkipRecursion will be true and the if block above would handle it.
+		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
+		 * generated may not have the data from this node. We should not continue, log and throw an error. This
+		 * will help us identify these cases and take appropriate action.
+		 */
+		if (this.wipLocalPaths === undefined) {
+			return {
+				success: false,
+				reason: "NodeDidNotSummarize",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: this.telemetryNodeId,
+				},
+				retryAfterSeconds: 1,
+			};
+		}
+
+		for (const child of this.children.values()) {
+			const result = child.validateSummaryCore(this.wipSkipRecursion || parentSkipRecursion);
+			// If any child fails, return the failure.
+			if (!result.success) {
+				return result;
+			}
+		}
+
+		return { success: true };
+	}
+
+	/**
+	 * Called after summary has been uploaded to the server. Add the work-in-progress state to the pending summary
+	 * queue. We track this until we get an ack from the server for this summary.
+	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
 	public completeSummary(proposalHandle: string) {
 		this.completeSummaryCore(proposalHandle, undefined, false);
 	}
 
 	/**
-	 * Recursive implementation for completeSummary, with additional internal-only parameters
+	 * Recursive implementation for completeSummary, with additional internal-only parameters.
+	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
+	 * @param parentPath - The path of the parent node which is used to build the path of this node.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
+	 * In that case, the children will not have work-in-progress state.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
 	) {
-		assert(
-			this.wipSummaryLogger !== undefined,
-			0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
-		);
 		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
 		let localPathsToUse = this.wipLocalPaths;
 
@@ -239,22 +307,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		/**
-		 * The absence of wip local path indicates that summarize was not called for this node. This can happen if:
-		 * 1. A child node was created after summarize was already called on the parent. For example, a data store
-		 * is realized (loaded) after summarize was called on it creating summarizer nodes for its DDSes. In this case,
-		 * parentSkipRecursion will be true and the if block above would handle it.
-		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
-		 * generated may not have the data from this node. We should not continue, log and throw an error. This
-		 * will help us identify these cases and take appropriate action.
-		 */
-		if (localPathsToUse === undefined) {
-			this.throwUnexpectedError({
-				eventName: "NodeNotSummarized",
-				proposalHandle,
-			});
-		}
-
+		assert(localPathsToUse !== undefined, "local paths should be present");
 		const summary = new SummaryNode({
 			...localPathsToUse,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
@@ -731,6 +784,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 				tag: TelemetryDataTag.CodeArtifact,
 				value: this.telemetryNodeId,
 			},
+			// Add retry after because failures in summarizer node during summarize may be transient and may
+			// get fixed on a summarize retry.
+			retryAfterSeconds: 1,
 		});
 		this.logger.sendErrorEvent(eventProps, error);
 		throw error;
