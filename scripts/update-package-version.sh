@@ -16,8 +16,13 @@ if [ -f "lerna.json" ]; then
     # this is a non-release build of a release group, so always use exact interdependencies, otherwise
     # dev/test builds may accidentally bring in different versions.
     echo "release group non-release build"
-    echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType=\"\" -xv"
-    flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType="" -xv
+	if [[ -z "$SETVERSION_CODEVERSION" ]]; then
+		echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType=\"\" -xv"
+		flub bump $RELEASE_GROUP --exact $SETVERSION_CODEVERSION --exactDepType="" -xv
+	else
+		echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
+		flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="" -xv
+	fi
   fi
 else
   echo "independent package"
