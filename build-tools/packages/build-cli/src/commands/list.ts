@@ -64,7 +64,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				// pnpm returns absolute paths, but repo relative is more useful
 				item.path = context.repo.relativeToRepo(item.path);
 
-				// Calculate and set the tarball name
+				// Calculate and set the tarball name if the tarball flag is set
 				item.name = this.flags.tarball
 					? item.name.replaceAll("@", "").replaceAll("/", "-")
 					: item.name;
