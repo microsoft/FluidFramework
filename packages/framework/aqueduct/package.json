@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/aqueduct",
-	"version": "2.0.0-internal.5.1.0",
+	"version": "2.0.0-internal.5.2.0",
 	"description": "A set of implementations for Fluid Framework interfaces.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -83,10 +83,10 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluid-tools/build-cli": "^0.19.0",
 		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-internal.5.0.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0-166151",
+		"@fluidframework/build-tools": "^0.19.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",

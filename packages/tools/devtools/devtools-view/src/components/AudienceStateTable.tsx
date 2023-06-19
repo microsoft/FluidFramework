@@ -101,7 +101,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							key={itemIndex}
 							style={{
 								backgroundColor: isCurrentUser
-									? tokens.colorPaletteGreenBorder1
+									? tokens.colorPaletteGreenBackground2
 									: "",
 							}}
 						>
