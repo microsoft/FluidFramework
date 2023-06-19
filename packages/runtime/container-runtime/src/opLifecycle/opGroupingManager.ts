@@ -31,6 +31,8 @@ export class OpGroupingManager {
 			// This can cause conflicts in the data model, as there will be no way to
 			// establish an order between op within the same batch when they are processed
 			// by a remote client.
+			// Eventually, all batches must be grouped. This exclusion is to be removed
+			// after ADO:2322 is fixed.
 			return batch;
 		}
 
