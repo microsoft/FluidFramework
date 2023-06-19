@@ -11,7 +11,7 @@ export const defaultTimeoutDurationMs = 250;
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
 // TestTimeout class that manages tracking of test timeout. It creates a timer when timeout is in effect,
-// and provides a promise that will be rejected before the test timeout happens with a `timeBuffer` of 15 ms.
+// and provides a promise that will be rejected some time (as defined by `timeBuffer`) before the test timeout happens.
 // This will ensure that async awaits in tests do not end up timing out the tests but resolve / reject
 // before that happens.
 // Once rejected, a new TestTimeout object will be create for the timeout.
@@ -127,9 +127,9 @@ export type PromiseExecutor<T = void> = (
 ) => void;
 
 /**
- * Wraps the given promise around another promise that will complete after a specific timeout if the original
- * promise does not resolve by then. By default, it will use the mocha test timeout and complete the promise
- * just before that so that tests don't time out because of unpredictable awaits.
+ * Wraps the given promise around with promise that will complete after a specific timeout if the original promise does
+ * not resolve by then. By default, it uses the mocha test timeout and complete the promise just before that so that
+ * tests don't time out because of unpredictable awaits.
  * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
  * @param promise - The promise to be awaited.
  * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior
@@ -145,15 +145,13 @@ export async function timeoutAwait<T = void>(
 }
 
 /**
- * Creates a promise from the given executor that will complete after a specific timeout if the original
- * promise does not resolve by then. By default, it will use the mocha test timeout and complete the promise
- * just before that so that tests don't time out because of unpredictable awaits.
+ * Creates a promise from the given executor that will complete after a specific timeout. By default, it uses the mocha
+ * test timeout and complete the promise just before that so that tests don't time out because of unpredictable awaits.
  * The timeout can be overridden via timeoutOptions but it's recommended to use the default value.
- * @param promise - The promise to be awaited.
- * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior
- * when the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a
- * specific value.
- * @returns A new promise that will complete when the given promise resolves or the timeout expires.
+ * @param executor - The executor for the promise.
+ * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior when
+ * the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a specific value.
+ * @returns A new promise that will complete when the given executor resolves or the timeout expires.
  */
 export async function timeoutPromise<T = void>(
 	executor: (
