@@ -547,11 +547,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				resizableColumns
 				selectionMode="single"
 				subtleSelection
-				onSelectionChange={(e, data): void => {
-					// Set the index to the appropriate row index in the table.
-					setIndex(Number([...data.selectedItems][0]));
-				}}
-				selectedItems={[index !== undefined && index > 0 ? index : 0]}
+				selectedItems={index !== undefined && index >= 0 ? [index] : []}
 				columnSizingOptions={{
 					category: {
 						minWidth: 110,
@@ -563,49 +559,29 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					},
 				}}
 			>
-				<DataGrid
-					items={items}
-					columns={columns}
-					size="extra-small"
-					resizableColumns
-					selectionMode="single"
-					subtleSelection
-					selectedItems={index !== undefined && index >= 0 ? [index] : []}
-					columnSizingOptions={{
-						category: {
-							minWidth: 110,
-							idealWidth: 110,
-						},
-						eventName: {
-							minWidth: 330,
-							idealWidth: 330,
-						},
-					}}
-				>
-					<DataGridHeader>
-						<DataGridRow style={{ whiteSpace: "normal" }}>
-							{({ renderHeaderCell }): JSX.Element => (
-								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+				<DataGridHeader>
+					<DataGridRow style={{ whiteSpace: "normal" }}>
+						{({ renderHeaderCell }): JSX.Element => (
+							<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+						)}
+					</DataGridRow>
+				</DataGridHeader>
+				<DataGridBody<Item>>
+					{({ item, rowId }): JSX.Element => (
+						<DataGridRow<Item>
+							key={rowId}
+							style={{ cursor: "pointer" }}
+							onClick={(): void => {
+								setIndex(Number(rowId));
+								setSelectedEvent(item);
+							}}
+						>
+							{({ renderCell }): JSX.Element => (
+								<DataGridCell>{renderCell(item)}</DataGridCell>
 							)}
 						</DataGridRow>
-					</DataGridHeader>
-					<DataGridBody<Item>>
-						{({ item, rowId }): JSX.Element => (
-							<DataGridRow<Item>
-								key={rowId}
-								style={{ cursor: "pointer" }}
-								onClick={(): void => {
-									setIndex(Number(rowId));
-									setSelectedEvent(item);
-								}}
-							>
-								{({ renderCell }): JSX.Element => (
-									<DataGridCell>{renderCell(item)}</DataGridCell>
-								)}
-							</DataGridRow>
-						)}
-					</DataGridBody>
-				</DataGrid>
+					)}
+				</DataGridBody>
 			</DataGrid>
 			<div
 				style={{
