@@ -35,7 +35,6 @@ import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimizati
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
-	weights: any,
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
@@ -179,22 +178,22 @@ export function makeOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-
+	const usableWeights = optionsParam?.weights ?? defaultOptions.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, weights.addText, isShorterThanMaxLength],
-		[removeRange, weights.removeRange, hasNonzeroLength],
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[removeRange, usableWeights.removeRange, hasNonzeroLength],
 		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[addInterval, weights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[deleteInterval, weights.deleteInterval, hasAnInterval],
-		[changeInterval, weights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, weights.changeProperties, hasAnInterval],
+		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
+		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+		[changeProperties, usableWeights.changeProperties, hasAnInterval],
 	]);
 }
 
-describe("IntervalCollection fuzz testing", () => {
+describe.only("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions.weights)),
+		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
