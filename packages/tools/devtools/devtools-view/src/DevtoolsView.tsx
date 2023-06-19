@@ -368,9 +368,10 @@ const useMenuStyles = makeStyles({
 	// TODO: dedupe with MenuItem
 	button: {
 		"alignItems": "center",
+		"cursor": "pointer",
 		"display": "flex",
 		"flexDirection": "row",
-		"cursor": "pointer",
+		"paddingLeft": "5px",
 		"&:hover": {
 			backgroundImage: tokens.colorNeutralBackground1Hover,
 		},

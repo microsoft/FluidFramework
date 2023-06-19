@@ -32,7 +32,7 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "row",
 		fontWeight: "bold",
-		paddingLeft: "2px",
+		paddingLeft: "5px",
 	},
 });
 
