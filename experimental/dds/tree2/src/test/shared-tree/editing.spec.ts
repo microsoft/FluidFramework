@@ -1227,6 +1227,65 @@ describe("Editing", () => {
 
 				expectJsonTree([tree, tree2], [{ foo2: ["a"] }, {}]);
 			});
+
+			// TODO: Constraint state isn't updated properly because
+			// rebaseChild isn't called when currMark is undefined in rebaseMarkList
+			it.skip("cross-field move delete violates constraint", () => {
+				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+				const tree2 = tree.fork();
+
+				const firstPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+
+				const secondPath = {
+					...firstPath,
+					parentIndex: 1,
+				};
+
+				// Move "a" from foo to foo2 in the second node in the root sequence and then delete
+				// the second node in the root sequence
+				tree.transaction.start();
+				tree.editor.move(
+					{ field: brand("foo"), parent: firstPath },
+					0,
+					1,
+					{
+						field: brand("foo2"),
+						parent: secondPath,
+					},
+					0,
+				);
+
+				const rootSequence = tree.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				rootSequence.delete(1, 1);
+				tree.transaction.commit();
+
+				// Put a constraint on "a" existing and insert "b" if it does
+				// a's ancestor will be deleted so this insert should be dropped
+				tree2.transaction.start();
+				tree2.editor.addNodeExistsConstraint({
+					parent: firstPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const tree2RootSequence = tree2.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				tree2RootSequence.insert(2, singleTextCursor({ type: jsonString.name, value: "b" }));
+				tree2.transaction.commit();
+
+				tree.merge(tree2);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], [{}] );
+			});
 		});
 
 		describe("Value changed constraint", () => {
