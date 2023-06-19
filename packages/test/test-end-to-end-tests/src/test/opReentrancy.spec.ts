@@ -15,12 +15,18 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
-	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const sharedStringId = "sharedStringKey";
+	const registry: ChannelFactoryRegistry = [
+		[mapId, SharedMap.getFactory()],
+		[sharedStringId, SharedString.getFactory()],
+	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -32,6 +38,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	let dataObject2: ITestFluidObject;
 	let sharedMap1: SharedMap;
 	let sharedMap2: SharedMap;
+	let sharedString1: SharedString;
+	let sharedString2: SharedString;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -59,6 +67,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+
+		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
+		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
 		await provider.ensureSynchronized();
 	};
