@@ -83,76 +83,54 @@ export const selectAndFilterPackages = (
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
 	// packages?: { name: string }[],
-): { selected: [Package, PackageKind][]; filtered: [Package, PackageKind][] } => {
-	const selected: [Package, PackageKind][] = [];
+): { selected: PackageDetails[]; filtered: PackageDetails[] } => {
+	const selected: PackageDetails[] = [];
 	// const pkgList = packages?.map((p) => p.name);
 
 	// Select packages
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
-			selected.push([pkg, "independentPackage"]);
+			selected.push({ package: pkg, kind: "independentPackage" });
 		}
 	}
 
 	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
-			selected.push([pkg, "releaseGroupChildPackage"]);
+			selected.push({ package: pkg, kind: "releaseGroupChildPackage" });
 		}
 	}
 
 	for (const rg of selection.releaseGroupRoots ?? []) {
 		const dir = context.packagesInReleaseGroup(rg)[0].directory;
 		const pkg = new Package(path.join(dir, "package.json"), rg);
-		selected.push([pkg, "releaseGroupRootPackage"]);
+		selected.push({ package: pkg, kind: "releaseGroupRootPackage" });
 	}
 
-	const filtered = selected.filter((details) => {
-		if (filter === undefined) {
-			return true;
-		}
-
-		const [pkg] = details;
-		const isPrivate: boolean = pkg.packageJson.private ?? false;
-		if (filter?.private !== undefined && filter?.private !== isPrivate) {
-			return false;
-		}
-
-		const scopeIn = scopesToPrefix(filter?.scope);
-		const scopeOut = scopesToPrefix(filter?.skipScope);
-
-		if (scopeIn !== undefined) {
-			let found = false;
-			for (const scope of scopeIn) {
-				found ||= pkg.name.startsWith(scope);
-			}
-			if (!found) {
-				return false;
-			}
-		}
-		if (scopeOut !== undefined) {
-			for (const scope of scopeOut) {
-				if (pkg.name.startsWith(scope) ?? false) {
-					return false;
-				}
-			}
-		}
-		return true;
-	});
+	const filtered = filter === undefined ? selected : filterPackages(selected, filter);
 
 	return { selected, filtered };
 };
 
-export function filterPackages<T extends { name: string; private?: boolean }>(
-	packages: T[],
+/**
+ * Filters a list of packages by the filter criteria.
+ *
+ * @param packages - An array of packages to be filtered.
+ * @param filters - The filter criteria to filter the packages by.
+ * @returns An array containing only the filtered items.
+ */
+export function filterPackages(
+	packages: PackageDetails[],
 	filters: PackageFilterOptions,
-): T[] {
-	const filtered = packages.filter((pkg) => {
+): PackageDetails[] {
+	const filtered = packages.filter((details) => {
 		if (filters === undefined) {
 			return true;
 		}
 
-		const isPrivate: boolean = pkg.private ?? false;
-		if (pkg.private !== undefined && filters.private !== isPrivate) {
+		const { package: pkg } = details;
+
+		const isPrivate: boolean = pkg.packageJson.private ?? false;
+		if (pkg.packageJson.private !== undefined && filters.private !== isPrivate) {
 			return false;
 		}
 
@@ -170,7 +148,7 @@ export function filterPackages<T extends { name: string; private?: boolean }>(
 		}
 		if (scopeOut !== undefined) {
 			for (const scope of scopeOut) {
-				if (pkg.name.startsWith(scope) ?? false) {
+				if (pkg.name.startsWith(scope) === true) {
 					return false;
 				}
 			}
@@ -193,7 +171,7 @@ export type PackageKind =
 	/**
 	 * Package is an independent package.
 	 */
-	"independentPackage"
+	| "independentPackage"
 
 	/**
 	 * Package is part of a release group, but is _not_ the root.
@@ -210,3 +188,11 @@ export type PackageKind =
 	 * when running on a package directly using its directory.
 	 */
 	| "packageFromDirectory";
+
+/**
+ * A convenience type mapping a directory containing a package to its PackageKind.
+ */
+export interface PackageDetails {
+	package: Package;
+	kind: PackageKind;
+}

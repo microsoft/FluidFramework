@@ -8,6 +8,7 @@ import async from "async";
 
 import { BaseCommand } from "./base";
 import {
+	PackageDetails,
 	PackageFilterOptions,
 	PackageKind,
 	PackageSelectionCriteria,
@@ -16,14 +17,6 @@ import {
 	selectAndFilterPackages,
 } from "./filter";
 import { filterFlags, selectionFlags } from "./flags";
-
-/**
- * A convenience type mapping a directory containing a package to its PackageKind.
- */
-interface PackageDetails {
-	package: Package;
-	kind: PackageKind;
-}
 
 /**
  * Commands that run operations per project.
@@ -69,17 +62,11 @@ export abstract class PackageCommand<
 
 		this.info(
 			`Filtered ${selected.length} packages to ${listNames(
-				filtered.map(([pkg]) => pkg.directory),
+				filtered.map(({ package: pkg }) => pkg.directory),
 			)}`,
 		);
 
-		const packagesToRunOn: PackageDetails[] = filtered.map(([pkg, kind]) => {
-			return {
-				package: pkg,
-				kind,
-			};
-		});
-		return this.processPackages(packagesToRunOn);
+		return this.processPackages(filtered);
 	}
 
 	private async processPackages(packages: PackageDetails[]): Promise<void> {
