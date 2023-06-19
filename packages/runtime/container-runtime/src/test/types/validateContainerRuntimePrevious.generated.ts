@@ -1367,7 +1367,6 @@ declare function get_old_ClassDeclaration_Summarizer():
 declare function use_current_ClassDeclaration_Summarizer(
     use: TypeOnly<current.Summarizer>);
 use_current_ClassDeclaration_Summarizer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Summarizer());
 
 /*

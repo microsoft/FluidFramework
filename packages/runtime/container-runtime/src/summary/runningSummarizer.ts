@@ -133,9 +133,6 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
-	public get refreshAndSummarizeLock(): Promise<void> | undefined {
-		return this.summarizingLock;
-	}
 
 	private enqueuedSummary:
 		| {

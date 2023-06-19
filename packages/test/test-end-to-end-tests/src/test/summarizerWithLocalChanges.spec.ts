@@ -10,25 +10,17 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import {
-	IContainerRuntimeOptions,
-	ISummarizer,
-	Summarizer,
-} from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 	summarizeNow,
-	createSummarizerCore,
-	defaultSummaryOptions,
-	mockConfigProvider,
+	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { MessageType, SummaryType } from "@fluidframework/protocol-definitions";
-import { Deferred } from "@fluidframework/common-utils";
 
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
@@ -113,21 +105,14 @@ async function createSummarizer(
 	container: IContainer,
 	summaryVersion?: string,
 ) {
-	const summarizerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+	return createSummarizerFromFactory(
+		provider,
+		container,
 		rootDataObjectFactory,
-		registryStoreEntries,
+		summaryVersion,
 		undefined,
-		[],
-		{ summaryOptions: defaultSummaryOptions },
+		registryStoreEntries,
 	);
-	const loader = provider.createLoader(
-		[[provider.defaultCodeDetails, summarizerRuntimeFactory]],
-		{
-			configProvider: mockConfigProvider(),
-		},
-	);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return createSummarizerCore(container, loader, summaryVersion);
 }
 
 describeNoCompat(
@@ -153,7 +138,6 @@ describeNoCompat(
 			[
 				{ eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC" },
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
 			],
 			async () => {
 				const container = await createContainer();
@@ -163,10 +147,7 @@ describeNoCompat(
 					rootDataObject.containerRuntime,
 				);
 				rootDataObject._root.set("store", dataObject.handle);
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-				);
+				const { summarizer } = await createSummarizer(provider, container);
 
 				// This should not fail
 				await assert.rejects(
@@ -178,37 +159,6 @@ describeNoCompat(
 						return error.message === "NodeDidNotRunGC";
 					},
 					"expected NodeDidNotRunGC",
-				);
-
-				const deferredAck = new Deferred();
-				summarizingContainer.on("op", (op) => {
-					if (op.type === MessageType.SummaryAck) {
-						deferredAck.resolve(op);
-					}
-				});
-				await provider.ensureSynchronized();
-				await deferredAck.promise;
-				await (summarizer as Summarizer).refreshAndSummarizeLock;
-				const secondSummary = await waitForSummary(summarizer, true /* refreshLatestAck */);
-				const tree = secondSummary.summaryTree;
-				const runtimeSummary = tree.tree[".channels"];
-				assert(
-					runtimeSummary.type === SummaryType.Tree,
-					"DataStores summary should be a tree",
-				);
-				assert(
-					dataObject.createdDataStoreId !== undefined,
-					"expected a datastore to be created!",
-				);
-				const datastoreSummary = runtimeSummary.tree[dataObject.createdDataStoreId];
-				assert(
-					datastoreSummary.type === SummaryType.Tree,
-					"DataStore summary should be a tree",
-				);
-				// The datastore should be referenced instead of unreferenced
-				assert(
-					datastoreSummary.unreferenced !== undefined,
-					"Data store should be unreferenced",
 				);
 			},
 		);

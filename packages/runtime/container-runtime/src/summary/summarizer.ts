@@ -299,10 +299,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 	}
 
-	public get refreshAndSummarizeLock(): Promise<void> | undefined {
-		return this.runningSummarizer?.refreshAndSummarizeLock;
-	}
-
 	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
 		try {
 			if (this._disposed || this.runningSummarizer?.disposed) {
