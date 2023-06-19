@@ -4,18 +4,64 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedMatrix } from "@fluidframework/matrix";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import type { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+
+class TestDataObject extends DataObject {
+	public get _root() {
+		return this.root;
+	}
+
+	public get _context() {
+		return this.context;
+	}
+
+	private readonly matrixKey = "matrix";
+	public matrix!: SharedMatrix;
+	public undoRedoStackManager!: UndoRedoStackManager;
+
+	private readonly sharedStringKey = "sharedString";
+	public sharedString!: SharedString;
+
+	protected async initializingFirstTime() {
+		const sharedMatrix = SharedMatrix.create(this.runtime);
+		this.root.set(this.matrixKey, sharedMatrix.handle);
+
+		const sharedString = SharedString.create(this.runtime);
+		this.root.set(this.sharedStringKey, sharedString.handle);
+	}
+
+	protected async hasInitialized() {
+		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+		assert(matrixHandle !== undefined, "SharedMatrix not found");
+		this.matrix = await matrixHandle.get();
+
+		this.undoRedoStackManager = new UndoRedoStackManager();
+		this.matrix.insertRows(0, 3);
+		this.matrix.insertCols(0, 3);
+		this.matrix.openUndo(this.undoRedoStackManager);
+
+		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
+		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+		this.sharedString = await sharedStringHandle.get();
+	}
+}
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
@@ -24,53 +70,9 @@ import { UndoRedoStackManager } from "@fluidframework/undo-redo";
  * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
  * the "unreferenced" property.
  */
-describeFullCompat("GC reference updates in local summary", (getTestObjectProvider, apis) => {
-	const { SharedMatrix, SharedString } = apis.dds;
-
-	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get _root() {
-			return this.root;
-		}
-
-		public get _context() {
-			return this.context;
-		}
-
-		private readonly matrixKey = "matrix";
-		public matrix!: SharedMatrix;
-		public undoRedoStackManager!: UndoRedoStackManager;
-
-		private readonly sharedStringKey = "sharedString";
-		public sharedString!: SharedString;
-
-		protected async initializingFirstTime() {
-			const sharedMatrix = SharedMatrix.create(this.runtime);
-			this.root.set(this.matrixKey, sharedMatrix.handle);
-
-			const sharedString = SharedString.create(this.runtime);
-			this.root.set(this.sharedStringKey, sharedString.handle);
-		}
-
-		protected async hasInitialized() {
-			const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-			assert(matrixHandle !== undefined, "SharedMatrix not found");
-			this.matrix = await matrixHandle.get();
-
-			this.undoRedoStackManager = new UndoRedoStackManager();
-			this.matrix.insertRows(0, 3);
-			this.matrix.insertCols(0, 3);
-			this.matrix.openUndo(this.undoRedoStackManager);
-
-			const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(
-				this.sharedStringKey,
-			);
-			assert(sharedStringHandle !== undefined, "SharedMatrix not found");
-			this.sharedString = await sharedStringHandle.get();
-		}
-	}
-
+describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const factory = new apis.dataRuntime.DataObjectFactory(
+	const factory = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
 		[SharedMatrix.getFactory(), SharedString.getFactory()],
@@ -85,7 +87,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 		},
 		gcOptions: { gcAllowed: true },
 	};
-	const runtimeFactory = new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		factory,
 		[[factory.type, Promise.resolve(factory)]],
 		undefined,

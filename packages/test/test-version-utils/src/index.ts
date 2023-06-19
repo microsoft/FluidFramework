@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export { mochaGlobalSetup } from "./compatConfig.js";
+export { mochaGlobalSetup } from "./compatConfig";
 export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
-	getVersionedTestObjectProviderFromApis,
 	ITestDataObject,
 	TestDataObjectType,
-} from "./compatUtils.js";
-export { describeInstallVersions } from "./describeWithVersions.js";
+} from "./compatUtils";
+export { describeInstallVersions } from "./describeWithVersions";
 export {
 	DescribeCompat,
 	DescribeCompatSuite,
@@ -18,7 +17,7 @@ export {
 	describeLoaderCompat,
 	describeNoCompat,
 	ITestObjectProviderOptions,
-} from "./describeCompat.js";
+} from "./describeCompat";
 export {
 	describeE2EDocs,
 	DocumentType,
@@ -32,16 +31,17 @@ export {
 	isMemoryTest,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
+	DocumentMatrixInfo,
 	assertDocumentTypeInfo,
 	isDocumentMapInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "./describeE2eDocs.js";
-export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
+	isDocumentMatrixInfo,
+} from "./describeE2eDocs";
+export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {
-	CompatApis,
 	ensurePackageInstalled,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
 	getLoaderApi,
-} from "./testApi.js";
+} from "./testApi";
