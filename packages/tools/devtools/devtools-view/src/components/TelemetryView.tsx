@@ -48,9 +48,7 @@ const useTelemetryViewStyles = makeStyles({
 		alignItems: "start",
 		display: "flex",
 		flexDirection: "column",
-		// justifyItems: "start",
 		height: "100%",
-		// overflowY: "auto",
 		width: "100%",
 	},
 	menu: {
