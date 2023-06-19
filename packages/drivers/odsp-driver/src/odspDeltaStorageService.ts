@@ -194,8 +194,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				validateMessages("cached", messagesFromCache, from, this.logger);
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
-					// Set the firstCacheMiss at seq number 1 greater than the fetched ops in case we didn't get all
-					// the ops. This will save an extra cache read.
+					// Set the firstCacheMiss at seq number = (fetched ops last seq number + 1) in case we didn't get
+					// all the ops. This will save an extra cache read.
 					if (from + messagesFromCache.length < to) {
 						this.firstCacheMiss = Math.min(
 							this.firstCacheMiss,
