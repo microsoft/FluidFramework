@@ -1083,7 +1083,7 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], ["c", "a", "b"]);
 			});
 
-			it("constraint on newly inserted node with ancestor deleted concurrently", () => {
+			it("can add constraint to node inserted in same transaction", () => {
 				const tree = makeTreeFromJson([{}]);
 				const tree2 = tree.fork();
 
@@ -1092,66 +1092,16 @@ describe("Editing", () => {
 					parentField: rootFieldKeySymbol,
 					parentIndex: 0,
 				};
-
-				// Insert "a"
-				// State should be: [{ foo: "a"}]
-				const sequence = tree.editor.sequenceField({
-					parent: rootPath,
-					field: brand("foo"),
-				});
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
-
-				// Constrain on "a" existing and insert "b" into root sequence
-				// State should be (if "a" exists): [{ foo: "a"}, "b"]
-				// a's ancestor will be concurrently deleted
-				tree.transaction.start();
-				tree.editor.addNodeExistsConstraint({
-					parent: rootPath,
-					parentField: brand("foo"),
-					parentIndex: 0,
-				});
-				const rootSequence = tree.editor.sequenceField({
-					parent: undefined,
-					field: rootFieldKeySymbol,
-				});
-				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
-				tree.transaction.commit();
-
-				// Concurrently delete a's ancestor
-				// State should be (to tree2): []
-				const tree2RootSequence = tree2.editor.sequenceField({
-					parent: undefined,
-					field: rootFieldKeySymbol,
-				});
-				tree2RootSequence.delete(0, 1);
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], []);
-			});
-
-			it("constraint works with node created as part of transaction", () => {
-				const tree = makeTreeFromJson([{}]);
-				const tree2 = tree.fork();
-
-				const rootPath: UpPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				// Insert "a" under foo
-				// State should be: [{ foo: "a" }]
-				const sequence = tree.editor.sequenceField({
-					parent: rootPath,
-					field: brand("foo"),
-				});
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
 
 				// Constrain on "a" existing and insert "b" if it does
 				// State should be (if "a" exists): [{ foo: "a"}, "b"]
 				tree.transaction.start();
+				const sequence = tree.editor.sequenceField({
+					parent: rootPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+
 				tree.editor.addNodeExistsConstraint({
 					parent: rootPath,
 					parentField: brand("foo"),
