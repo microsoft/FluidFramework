@@ -69,7 +69,7 @@ enum PanelView {
 
 const useStyles = makeStyles({
 	root: {
-		...shorthands.gap("25px"), // TODO: verify this
+		...shorthands.gap("15px"),
 		display: "flex",
 		flexDirection: "column",
 	},
