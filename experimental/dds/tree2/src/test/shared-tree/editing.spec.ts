@@ -1140,15 +1140,15 @@ describe("Editing", () => {
 					parentIndex: 0,
 				};
 
-				// Delete node from root sequence 
+				// Delete node from root sequence
 				const tree1RootSequence = tree.editor.sequenceField({
 					parent: undefined,
-					field: rootFieldKeySymbol
+					field: rootFieldKeySymbol,
 				});
 				tree1RootSequence.delete(0, 1);
 
 				// Constrain on "a" existing and insert "b" if it does
-				// This insert should be dropped since the node "a" is inserted under is 
+				// This insert should be dropped since the node "a" is inserted under is
 				// concurrently deleted
 				tree2.transaction.start();
 				const sequence = tree2.editor.sequenceField({
@@ -1278,13 +1278,16 @@ describe("Editing", () => {
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				});
-				tree2RootSequence.insert(2, singleTextCursor({ type: jsonString.name, value: "b" }));
+				tree2RootSequence.insert(
+					2,
+					singleTextCursor({ type: jsonString.name, value: "b" }),
+				);
 				tree2.transaction.commit();
 
 				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree, tree2], [{}] );
+				expectJsonTree([tree, tree2], [{}]);
 			});
 		});
 
