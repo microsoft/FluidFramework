@@ -21,11 +21,13 @@ export type ValueViewProps = DataVisualizationTreeProps<ValueNodeBase>;
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
+	const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			inlineValue={String(node.value)}
+			metadata={metadata}
 		/>
 	);
 	return <TreeItem header={header} />;
