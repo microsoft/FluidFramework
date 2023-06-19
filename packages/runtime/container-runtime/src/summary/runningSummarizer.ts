@@ -518,12 +518,12 @@ export class RunningSummarizer implements IDisposable {
 
 		const summarizingLock = new Deferred<void>();
 		this.summarizingLock = summarizingLock.promise;
+
 		before();
 
 		return action().finally(() => {
 			summarizingLock.resolve();
 			this.summarizingLock = undefined;
-
 			after();
 		});
 	}
