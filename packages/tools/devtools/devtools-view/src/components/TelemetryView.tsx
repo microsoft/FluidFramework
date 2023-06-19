@@ -269,6 +269,7 @@ interface FilteredTelemetryViewProps {
 	 * A setter use to update the selected row when filtering or refreshing event data.
 	 */
 	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+
 	/**
 	 * The selected index/row in the table. Undefined means no row is selected.
 	 */
