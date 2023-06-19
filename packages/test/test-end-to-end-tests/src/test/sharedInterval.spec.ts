@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection";
+import { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,

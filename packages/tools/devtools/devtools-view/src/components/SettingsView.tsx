@@ -8,11 +8,10 @@ import {
 	Dropdown,
 	Option,
 	teamsHighContrastTheme,
-	Theme,
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
-
+import { ThemeContext } from "../ThemeHelper";
 /**
  * An enum with options for the DevTools themes.
  */
@@ -21,17 +20,12 @@ export enum ThemeOption {
 	Dark = "Dark",
 	HighContrast = "High Contrast",
 }
-interface SettingsProps {
-	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
-}
+
 /**
  * Settings page for the debugger
  */
-export function SettingsView(props: SettingsProps): React.ReactElement {
-	const { setTheme } = props;
+export function SettingsView(): React.ReactElement {
+	const { setTheme } = React.useContext(ThemeContext) ?? {};
 	function handleThemeChange(
 		event,
 		option: {
@@ -42,16 +36,28 @@ export function SettingsView(props: SettingsProps): React.ReactElement {
 	): void {
 		switch (option.optionValue) {
 			case ThemeOption.Light:
-				setTheme(webLightTheme);
+				setTheme({
+					name: "light",
+					theme: webLightTheme,
+				});
 				break;
 			case ThemeOption.Dark:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme,
+				});
 				break;
 			case ThemeOption.HighContrast:
-				setTheme(teamsHighContrastTheme);
+				setTheme({
+					name: "highContrast",
+					theme: teamsHighContrastTheme,
+				});
 				break;
 			default:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme,
+				});
 				break;
 		}
 	}
@@ -66,7 +72,10 @@ export function SettingsView(props: SettingsProps): React.ReactElement {
 			<label style={{ fontSize: "12px" }}>Select theme</label>
 			<Dropdown
 				placeholder="Theme"
-				style={{ minWidth: "150px", fontWeight: "bold" }}
+				style={{
+					minWidth: "150px",
+					fontWeight: "bold",
+				}}
 				onOptionSelect={handleThemeChange}
 			>
 				<Option value={ThemeOption.Light}>Light</Option>
