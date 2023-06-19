@@ -772,7 +772,7 @@ export class SequenceInterval implements ISerializableInterval {
 	}
 }
 
-function createPositionReferenceFromSegoff(
+export function createPositionReferenceFromSegoff(
 	client: Client,
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	refType: ReferenceType,
@@ -947,90 +947,6 @@ export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
 	remove(interval: TInterval): void;
-}
-
-/**
- * Collection of intervals.
- *
- * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
- */
-export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
-	extends IntervalIndex<TInterval> {
-	/**
-	 * @returns an array of all intervals that overlap with the specified SegOff range (includes both ends)
-	 */
-	findOverlappingIntervalsBySegoff(
-		startSegment: ISegment,
-		startOffset: number,
-		endSegment: ISegment,
-		endOffset: number,
-	): Iterable<TInterval>;
-}
-
-class OverlappingSequenceIntervalsIndex implements IOverlappingIntervalsIndex<SequenceInterval> {
-	private readonly intervalTree = new IntervalTree<SequenceInterval>();
-
-	constructor(
-		private readonly helpers: IIntervalHelpers<SequenceInterval>,
-		private readonly client: Client,
-	) {}
-
-	public remove(interval: SequenceInterval) {
-		this.intervalTree.removeExisting(interval);
-	}
-
-	public add(interval: SequenceInterval) {
-		this.intervalTree.put(interval);
-	}
-
-	public findOverlappingIntervalsBySegoff(
-		startSegment: ISegment,
-		startOffset: number,
-		endSegment: ISegment,
-		endOffset: number,
-	): Iterable<SequenceInterval> {
-		if (this.intervalTree.intervals.isEmpty()) {
-			return [];
-		}
-
-		const startRefPos = createPositionReferenceFromSegoff(
-			this.client,
-			{ segment: startSegment, offset: startOffset },
-			ReferenceType.Transient,
-		);
-
-		const endRefPos = createPositionReferenceFromSegoff(
-			this.client,
-			{ segment: endSegment, offset: endOffset },
-			ReferenceType.Transient,
-		);
-
-		if (compareReferencePositions(startRefPos, endRefPos) > 0) {
-			return [];
-		}
-
-		// initialize a default transient interval
-		const transientInterval = this.helpers.create(
-			"transient",
-			0,
-			0,
-			this.client,
-			IntervalType.Transient,
-		);
-		// reset the start/end for the transient interval
-		transientInterval.start = startRefPos;
-		transientInterval.end = endRefPos;
-
-		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
-		return overlappingIntervalNodes.map((node) => node.key);
-	}
-}
-
-export function createOverlappingSequenceIntervalsIndex(
-	helpers: IIntervalHelpers<SequenceInterval>,
-	client: Client,
-): IOverlappingIntervalsIndex<SequenceInterval> {
-	return new OverlappingSequenceIntervalsIndex(helpers, client);
 }
 
 class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>

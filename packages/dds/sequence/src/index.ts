@@ -37,10 +37,13 @@ export {
 	IStartpointInRangeIndex,
 	createEndpointInRangeIndex,
 	createStartpointInRangeIndex,
-	IOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+	sequenceIntervalIndexFactory,
+	SequenceIntervalIndexes,
+	createOverlapping,
+} from "./intervalIndex";
 export {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,

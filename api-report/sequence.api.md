@@ -69,7 +69,7 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlappingSequenceIntervalsIndex(helpers: IIntervalHelpers<SequenceInterval>, client: Client): IOverlappingIntervalsIndex<SequenceInterval>;
+export function createOverlapping(helpers: IIntervalHelpers<SequenceInterval>, client: Client): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
@@ -289,12 +289,6 @@ export enum IntervalType {
 }
 
 // @public
-export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
-    // (undocumented)
-    findOverlappingIntervalsBySegoff(startSegment: ISegment, startOffset: number, endSegment: ISegment, endOffset: number): Iterable<TInterval>;
-}
-
-// @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
     position: number;
@@ -423,6 +417,24 @@ export class SequenceInterval implements ISerializableInterval {
 
 // @public (undocumented)
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
+
+// @public
+export namespace SequenceIntervalIndexes {
+    export interface Overlapping extends IntervalIndex<SequenceInterval> {
+        findOverlappingIntervals(startSegoff: {
+            segment: ISegment | undefined;
+            offset: number | undefined;
+        }, endSegoff: {
+            segment: ISegment | undefined;
+            offset: number | undefined;
+        }): any;
+    }
+}
+
+// @public
+export const sequenceIntervalIndexFactory: {
+    createOverlapping: typeof createOverlapping;
+};
 
 // @public
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {

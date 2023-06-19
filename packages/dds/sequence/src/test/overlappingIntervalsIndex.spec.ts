@@ -9,14 +9,10 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
-import {
-	createOverlappingSequenceIntervalsIndex,
-	sequenceIntervalHelpers,
-	IntervalType,
-	SequenceInterval,
-} from "../intervalCollection";
+import { sequenceIntervalHelpers, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { sequenceIntervalIndexFactory } from "../intervalIndex";
 import { RandomIntervalOptions } from "./intervalIndexUtils";
 
 class TestSharedString extends SharedString {
@@ -89,11 +85,9 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		const startSegOff = testSharedString.client.getContainingSegment(start);
 		const endSegOff = testSharedString.client.getContainingSegment(end);
 
-		const intervals = overlappingIntervalsIndex.findOverlappingIntervalsBySegoff(
-			startSegOff.segment,
-			startSegOff.offset,
-			endSegOff.segment,
-			endSegOff.offset,
+		const intervals = overlappingIntervalsIndex.findOverlappingIntervals(
+			startSegOff,
+			endSegOff,
 		);
 		intervals.sort(compareFn);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -108,7 +102,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			"test-shared-string",
 			SharedStringFactory.Attributes,
 		);
-		overlappingIntervalsIndex = createOverlappingSequenceIntervalsIndex(
+		overlappingIntervalsIndex = sequenceIntervalIndexFactory.createOverlapping(
 			helpers,
 			testSharedString.client,
 		);
@@ -316,8 +310,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			/**
 			 * Visualization of intervals within the string after the last insertion:
 			 *
-			 * interval2's endpoint slides afterwards
-			 * interval3 and interval4 shift afterwards
+			 * interval2's endpoint slides backwards
+			 * interval3 and interval4 shift backwards
 			 *
 			 *                  0 1 2 3 4 5 6 7 8 9 10 11 12
 			 *                  a b c x x d e f g h i  j  k
@@ -345,7 +339,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 
 			/**
 			 * Visualization of intervals within the string after the last insertion:
-			 * All intervals shift afterwards
+			 * All intervals shift backwards
 			 *
 			 *                  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 			 *                  y y a b c x x d e f g  h  i  j  k
@@ -371,8 +365,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			/**
 			 * Visualization of intervals within the string after the last deletion:
 			 *
-			 * interval2's startpoint slides afterwards but the remains in the original segment
-			 * interval3 shifts afterwards
+			 * interval2's startpoint slides backwards but the remains in the original segment
+			 * interval3 shifts backwards
 			 *
 			 *                  0 1 2 3 4
 			 *                  a b e f g
