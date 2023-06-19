@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import {
-	CursorLocationType,
 	FieldStoredSchema,
 	GlobalFieldKey,
 	ITreeCursorSynchronous,
@@ -13,6 +12,7 @@ import {
 	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	ValueSchema,
+	forEachNode,
 	lookupGlobalFieldSchema,
 } from "../../../core";
 import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
@@ -128,17 +128,14 @@ function valueShapeFromSchema(schema: ValueSchema): undefined | EncodedValueShap
 	}
 }
 
-function asFieldEncoder(encoder: NodeEncoderShape): FieldEncoderShape {
+export function asFieldEncoder(encoder: NodeEncoderShape): FieldEncoderShape {
 	return {
 		encodeField(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
 			outputBuffer: BufferFormat<EncodedChunkShape>,
 		): void {
-			assert(cursor.mode === CursorLocationType.Fields, "unexpected mode");
-			cursor.firstNode();
-			encoder.encodeNodes(cursor, shapes, outputBuffer);
-			assert(cursor.mode === CursorLocationType.Fields, "unexpected mode");
+			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, outputBuffer));
 		},
 		shape: encoder.shape,
 	};

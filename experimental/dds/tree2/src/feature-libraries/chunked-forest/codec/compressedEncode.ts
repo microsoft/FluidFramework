@@ -49,6 +49,19 @@ export interface FieldShape<TKey> {
 
 export interface NodeEncoderShape {
 	/**
+	 * @param cursor - in Nodes mode. Does not move cursor.
+	 */
+	encodeNode(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat,
+	): void;
+
+	readonly shape: Shape;
+}
+
+export interface NodesEncoderShape {
+	/**
 	 * @param cursor - in Nodes mode. Moves cursor however many nodes it encodes.
 	 */
 	encodeNodes(
@@ -99,11 +112,21 @@ class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		shape.encodeField(cursor, cache, outputBuffer);
 	}
 
-	public static encodeNodes(
+	public static encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: NodeEncoderShape,
+	) {
+		outputBuffer.push(shape.shape);
+		shape.encodeNode(cursor, cache, outputBuffer);
+	}
+
+	public static encodeNodes(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat,
+		shape: NodesEncoderShape,
 	) {
 		outputBuffer.push(shape.shape);
 		shape.encodeNodes(cursor, cache, outputBuffer);
@@ -112,14 +135,14 @@ class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 
 // Encodes a single node polymorphically.
 export const anyNodeEncoder: NodeEncoderShape = {
-	encodeNodes(
+	encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
 		const shape = cache.shapeFromTree(cursor.type);
-		AnyShape.encodeNodes(cursor, cache, outputBuffer, shape);
+		AnyShape.encodeNode(cursor, cache, outputBuffer, shape);
 	},
 
 	shape: AnyShape.instance,
@@ -140,7 +163,7 @@ export const anyFieldEncoder: FieldEncoderShape = {
 		} else if (cursor.getFieldLength() === 1) {
 			// Fast path chunk of size one size one at least: skip nested array.
 			cursor.enterNode(0);
-			anyNodeEncoder.encodeNodes(cursor, cache, outputBuffer);
+			anyNodeEncoder.encodeNode(cursor, cache, outputBuffer);
 			cursor.exitNode();
 		} else {
 			// TODO: more efficient encoding for common cases.
@@ -156,18 +179,19 @@ export const anyFieldEncoder: FieldEncoderShape = {
 
 export class InlineArrayShape
 	extends ShapeGeneric<EncodedChunkShape>
-	implements NodeEncoderShape, FieldEncoderShape
+	implements NodesEncoderShape, FieldEncoderShape
 {
 	public static readonly empty: InlineArrayShape = new InlineArrayShape(0, {
 		get shape() {
+			// Not actually used, makes count work without adding an additional dep.
 			return InlineArrayShape.empty;
 		},
-		encodeNodes(
+		encodeNode(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
 			outputBuffer: BufferFormat,
 		): void {
-			InlineArrayShape.empty.encodeNodes(cursor, shapes, outputBuffer);
+			fail("Empty array should not encode a node");
 		},
 	});
 
@@ -183,7 +207,8 @@ export class InlineArrayShape
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let index = 0; index < this.length; index++) {
-			this.inner.encodeNodes(cursor, shapes, outputBuffer);
+			this.inner.encodeNode(cursor, shapes, outputBuffer);
+			cursor.nextNode();
 		}
 	}
 
@@ -237,7 +262,7 @@ class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldE
 	): void {
 		const buffer: BufferFormat = [];
 		forEachNode(cursor, () => {
-			this.inner.encodeNodes(cursor, cache, buffer);
+			this.inner.encodeNode(cursor, cache, buffer);
 		});
 		outputBuffer.push(buffer);
 	}

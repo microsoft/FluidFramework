@@ -99,7 +99,11 @@ describe("compressedEncode", () => {
 	// TODO: populate these tests
 	describe("anyFieldEncoder", () => {});
 	describe("InlineArrayShape", () => {});
-	describe("NestedArrayShape", () => {});
+	describe("NestedArrayShape", () => {
+		// TODO:
+		// Design and tests for case where child items have 0 encoded size: length can't be inferred correctly.
+		// Maybe encode this case as just the length (instead of an array)?
+	});
 	// TODO: be sure to test recursive case to test laziness
 	describe("EncoderCache", () => {});
 });

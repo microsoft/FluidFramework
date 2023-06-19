@@ -43,7 +43,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderSh
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
-	public encodeNodes(
+	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
 		outputBuffer: BufferFormat<EncodedChunkShape>,

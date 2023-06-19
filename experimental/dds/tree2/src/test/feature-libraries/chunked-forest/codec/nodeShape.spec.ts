@@ -9,6 +9,7 @@ import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/no
 import {
 	BufferFormat,
 	EncoderCache,
+	FieldEncoderShape,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import {
@@ -32,6 +33,8 @@ import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
 import { singleTextCursor } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+// eslint-disable-next-line import/no-internal-modules
+import { asFieldEncoder } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
 
 describe("nodeShape", () => {
 	describe("NodeShape", () => {
@@ -44,7 +47,7 @@ describe("nodeShape", () => {
 		): BufferFormat {
 			const buffer: BufferFormat = [shape];
 			const cursor = singleTextCursor(tree);
-			shape.encodeNodes(cursor, cache, buffer);
+			shape.encodeNode(cursor, cache, buffer);
 
 			// Check round-trips with identifiers inline and out of line
 			checkDecode(buffer, tree, () => false);
@@ -74,15 +77,6 @@ describe("nodeShape", () => {
 			assertChunkCursorEquals(result, [tree]);
 			return chunk;
 		}
-
-		// const childShape: FieldEncoderShape = InlineArrayShape.empty;
-
-		const emptyChunk: EncodedChunk = {
-			version: "unstable-development",
-			identifiers: [],
-			shapes: [],
-			data: [],
-		};
 
 		it("empty node", () => {
 			const shape = new NodeShape(undefined, false, [], [], undefined, undefined);
@@ -173,41 +167,49 @@ describe("nodeShape", () => {
 			]);
 		});
 
-		// it("fixed fields", () => {
-		// 	const cache = new DecoderCache(["key"], []);
-		// 	const log: string[] = [];
-		// 	const localChunk = new BasicChunk(brand("local"), new Map());
-		// 	const globalChunk = new BasicChunk(brand("global"), new Map());
-		// 	const decoders = [
-		// 		makeLoggingDecoder(log, localChunk),
-		// 		makeLoggingDecoder(log, globalChunk),
-		// 	];
-		// 	const decoder = new TreeDecoder(
-		// 		{
-		// 			local: [{ shape: 0, key: 0 }],
-		// 			global: [{ shape: 1, key: 0 }],
-		// 			value: false,
-		// 		},
-		// 		cache,
-		// 	);
-		// 	const stream = {
-		// 		data: ["type", "l1", "g1"],
-		// 		offset: 0,
-		// 	};
-		// 	const result = decoder.decode(decoders, stream);
-		// 	assertChunkCursorEquals(result, [
-		// 		{
-		// 			type: brand("type"),
-		// 			value: "value",
-		// 			fields: {
-		// 				key: [{ type: brand("local") }],
-		// 			},
-		// 			globalFields: {
-		// 				key: [{ type: brand("global") }],
-		// 			},
-		// 		},
-		// 	]);
-		// 	assert.deepEqual(log, ["l1", "g1"]);
-		// });
+		it("fixed fields", () => {
+			const cache = new EncoderCache(
+				() => fail(),
+				() => fail(),
+			);
+
+			// Shape which encodes to nothing.
+			const fieldShape1: FieldEncoderShape = asFieldEncoder(
+				new NodeShape(brand("1"), false, [], [], undefined, undefined),
+			);
+			// Shape which encodes to just the value.
+			const shapeValueOnly = new NodeShape(brand("2"), true, [], [], undefined, undefined);
+
+			// Shape which encodes to nested array of values.
+			const shapeValues = cache.nestedArray(shapeValueOnly);
+
+			// Shape which encodes to nested array of values.
+			const shape = new NodeShape(
+				brand("type"),
+				true,
+				[
+					{ key: brand("nothing"), shape: fieldShape1 },
+					{ key: brand("shapeValueOnly"), shape: asFieldEncoder(shapeValueOnly) },
+				],
+				[{ key: brand("shapeValues"), shape: shapeValues }],
+				undefined,
+				undefined,
+			);
+
+			const tree: JsonableTree = {
+				type: brand("type"),
+				value: "value",
+				fields: {
+					nothing: [{ type: brand("1") }],
+					shapeValueOnly: [{ type: brand("2"), value: "v" }],
+				},
+				globalFields: {
+					shapeValues: [{ type: brand("2"), value: 6 }],
+				},
+			};
+
+			const encodedChunk = checkEncode(shape, cache, tree);
+			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
+		});
 	});
 });
