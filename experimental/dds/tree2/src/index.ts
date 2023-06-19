@@ -75,11 +75,7 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	UpPathDefault,
@@ -91,6 +87,7 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
+	MapTree,
 } from "./core";
 
 export {
@@ -107,6 +104,8 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
+	BrandedKey,
+	BrandedMapSubset,
 } from "./util";
 
 export {
@@ -240,6 +239,8 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	FieldGenerator,
+	TreeDataContext,
 	NodeExistenceState,
 } from "./feature-libraries";
 
@@ -248,6 +249,7 @@ export {
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeOptions,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
@@ -256,11 +258,16 @@ export {
 export type {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
+	SchemaValidationFunction,
 } from "./codec";
+export { noopValidator } from "./codec";
+export { typeboxValidator } from "./external-utilities";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

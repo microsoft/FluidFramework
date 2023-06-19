@@ -422,6 +422,7 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "Insert":
 		case "MoveIn":
 		case "ReturnTo":
+		case "Placeholder":
 			return false;
 		default:
 			unreachableCase(type);

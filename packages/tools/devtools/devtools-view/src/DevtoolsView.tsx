@@ -10,7 +10,6 @@ import {
 	makeStyles,
 	tokens,
 	Tooltip,
-	Theme,
 	Divider,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
@@ -38,7 +37,7 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -86,12 +85,27 @@ interface SettingsMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Home view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface HomeMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "homeMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
+type MenuSelection =
+	| TelemetryMenuSelection
+	| ContainerMenuSelection
+	| SettingsMenuSelection
+	| HomeMenuSelection;
 
 // TODO: split these
 const useStyles = makeStyles({
@@ -112,7 +126,6 @@ const useStyles = makeStyles({
 		"height": "100%",
 		"overflowY": "auto",
 		"minWidth": "150px",
-
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
@@ -120,7 +133,7 @@ const useStyles = makeStyles({
 	},
 
 	// TODO: dedupe with MenuItem
-	settingsButton: {
+	menuButton: {
 		"alignItems": "center",
 		"display": "flex",
 		"flexDirection": "row",
@@ -214,31 +227,34 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
-			{supportedFeatures === undefined ? (
-				queryTimedOut ? (
-					<>
-						<div>Devtools not found. Timeout exceeded.</div>
-						<Tooltip content="Retry searching for Devtools" relationship="description">
-							<Button onClick={retryQuery}>Search again</Button>
-						</Tooltip>
-					</>
+		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+				{supportedFeatures === undefined ? (
+					queryTimedOut ? (
+						<>
+							<div>Devtools not found. Timeout exceeded.</div>
+							<Tooltip
+								content="Retry searching for Devtools"
+								relationship="description"
+							>
+								<Button onClick={retryQuery}>Search again</Button>
+							</Tooltip>
+						</>
+					) : (
+						<>
+							<Waiting />
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					)
 				) : (
-					<Waiting />
-				)
-			) : (
-				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
-			)}
-		</FluentProvider>
+					<_DevtoolsView supportedFeatures={supportedFeatures} />
+				)}
+			</FluentProvider>
+		</ThemeContext.Provider>
 	);
 }
 
 interface _DevtoolsViewProps {
-	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
-
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -249,7 +265,7 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures, setTheme } = props;
+	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
@@ -297,7 +313,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				supportedFeatures={supportedFeatures}
 			/>
 			<Divider vertical appearance="strong" />
-			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
+			<View menuSelection={menuSelection} containers={containers} />
 		</div>
 	);
 }
@@ -317,18 +333,13 @@ interface ViewProps {
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
 	containers?: ContainerKey[];
-
-	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers, setTheme } = props;
+	const { menuSelection, containers } = props;
 
 	const styles = useStyles();
 
@@ -350,7 +361,10 @@ function View(props: ViewProps): React.ReactElement {
 				);
 			break;
 		case "settingsMenuSelection":
-			view = <SettingsView setTheme={setTheme} />;
+			view = <SettingsView />;
+			break;
+		case "homeMenuSelection":
+			view = <LandingView />;
 			break;
 		default:
 			view = <LandingView />;
@@ -408,6 +422,10 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "settingsMenuSelection" });
 	}
 
+	function onHomeClicked(): void {
+		setSelection({ type: "homeMenuSelection" });
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -435,11 +453,16 @@ function Menu(props: MenuProps): React.ReactElement {
 			</MenuSection>,
 		);
 	}
+
 	return (
 		<div className={styles.menu}>
+			<div className={styles.menuButton} onClick={onHomeClicked}>
+				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
+				<Settings20Regular />
+			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div className={styles.settingsButton} onClick={onSettingsClicked}>
-				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
+			<div className={styles.menuButton} onClick={onSettingsClicked}>
+				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
 				<Settings20Regular />
 			</div>
 		</div>

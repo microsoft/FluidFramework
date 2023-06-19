@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { WebFlow } from "./webFlow";
-export { WebflowView } from "./webflowView";
+export { WebFlow } from "./webFlow.js";
+export { WebflowView } from "./webflowView.js";

@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { makeStyles, tokens } from "@fluentui/react-components";
+import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 
 /**
  * Props for {@link MenuSection}
@@ -77,10 +77,20 @@ const useMenuItemStyles = makeStyles({
 		"flexDirection": "row",
 		"paddingLeft": "20px",
 		"&:hover": {
+			color: tokens.colorNeutralForeground1Hover,
 			backgroundImage: tokens.colorNeutralBackground1Hover,
 		},
 	},
+	active: {
+		color: tokens.colorNeutralForeground1Selected,
+		backgroundImage: tokens.colorNeutralBackground1Selected,
+	},
+	inactive: {
+		color: tokens.colorNeutralForeground1,
+		backgroundImage: tokens.colorNeutralBackground1,
+	},
 });
+
 /**
  * Generic component for a menu item (under a section).
  */
@@ -88,17 +98,10 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	const { icon, isActive, onClick, text } = props;
 
 	const styles = useMenuItemStyles();
+	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
 	return (
-		<div
-			className={styles.root}
-			style={{
-				background: isActive
-					? tokens.colorNeutralBackground1Selected
-					: tokens.colorNeutralBackground1,
-			}}
-			onClick={onClick}
-		>
+		<div className={style} onClick={onClick}>
 			{text}
 			{icon}
 		</div>
