@@ -373,7 +373,8 @@ const useMenuStyles = makeStyles({
 		"flexDirection": "row",
 		"paddingLeft": "5px",
 		"&:hover": {
-			backgroundImage: tokens.colorNeutralBackground1Hover,
+			color: tokens.colorNeutralForeground1,
+			backgroundColor: tokens.colorNeutralBackground1,
 		},
 	},
 });

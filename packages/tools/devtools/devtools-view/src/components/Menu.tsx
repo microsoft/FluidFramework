@@ -73,16 +73,16 @@ const useMenuItemStyles = makeStyles({
 		"paddingLeft": "20px",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
-			backgroundImage: tokens.colorNeutralBackground1Hover,
+			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
 	},
 	active: {
 		color: tokens.colorNeutralForeground1Selected,
-		backgroundImage: tokens.colorNeutralBackground1Selected,
+		backgroundColor: tokens.colorNeutralBackground1Selected,
 	},
 	inactive: {
 		color: tokens.colorNeutralForeground1,
-		backgroundImage: tokens.colorNeutralBackground1,
+		backgroundColor: tokens.colorNeutralBackground1,
 	},
 });
 
