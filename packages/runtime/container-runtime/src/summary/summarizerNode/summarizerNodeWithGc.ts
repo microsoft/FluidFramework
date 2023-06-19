@@ -272,6 +272,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * case, the used routes of the parent should be passed on the child nodes and it should be fine.
 		 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
 		 * during summarize is incomplete.
+		 *
+		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
+		 * summarize is attempted again.
 		 */
 		if (!this.gcDisabled && this.wipSerializedUsedRoutes === undefined) {
 			return {
@@ -281,6 +284,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 					tag: TelemetryDataTag.CodeArtifact,
 					value: this.telemetryNodeId,
 				},
+				// These errors are usually transient and should go away when summarize / GC is retried.
 				retryAfterSeconds: 1,
 			};
 		}

@@ -234,6 +234,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
 		 * generated may not have the data from this node. We should not continue, log and throw an error. This
 		 * will help us identify these cases and take appropriate action.
+		 *
+		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
+		 * summarize is attempted again.
 		 */
 		if (this.wipLocalPaths === undefined) {
 			return {
@@ -243,6 +246,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 					tag: TelemetryDataTag.CodeArtifact,
 					value: this.telemetryNodeId,
 				},
+				// These errors are usually transient and should go away when summarize is retried.
 				retryAfterSeconds: 1,
 			};
 		}
