@@ -113,10 +113,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		const generateStringOfSize = (sizeInBytes: number): string =>
-			new Array(sizeInBytes + 1).join("0");
-		const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
-			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 		it(`Eventual consistency with op reentry - ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batches`, async () => {
