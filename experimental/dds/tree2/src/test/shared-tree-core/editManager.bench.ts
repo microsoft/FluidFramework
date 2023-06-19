@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { NoOpChangeRebaser } from "../testChange";
 import {
+	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils";
@@ -48,7 +49,6 @@ describe("EditManager - Bench", () => {
 							rebaser,
 							true,
 						);
-						assert(typeof rebasing === "function");
 
 						// Measure
 						const before = state.timer.now();
@@ -82,7 +82,51 @@ describe("EditManager - Bench", () => {
 							rebaser,
 							true,
 						);
-						assert(typeof rebasing === "function");
+
+						// Measure
+						const before = state.timer.now();
+						rebasing();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+	describe("Multi-peer commit rebasing", () => {
+		interface MultiPeerScenario {
+			readonly type: BenchmarkType;
+			readonly peerCount: number;
+			readonly editsPerPeerCount: number;
+		}
+
+		const multiPeerScenarios: MultiPeerScenario[] = [
+			{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 10 },
+			{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 20 },
+			{ type: BenchmarkType.Perspective, peerCount: 20, editsPerPeerCount: 10 },
+			{ type: BenchmarkType.Measurement, peerCount: 20, editsPerPeerCount: 20 },
+		];
+		for (const { type, peerCount, editsPerPeerCount } of multiPeerScenarios) {
+			benchmark({
+				type,
+				title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const rebaser = new NoOpChangeRebaser();
+						const rebasing = rebaseConcurrentPeerEdits(
+							peerCount,
+							editsPerPeerCount,
+							rebaser,
+							true,
+						);
 
 						// Measure
 						const before = state.timer.now();
