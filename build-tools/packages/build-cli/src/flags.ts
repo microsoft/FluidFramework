@@ -237,14 +237,14 @@ export const selectionFlags = {
 	}),
 	releaseGroup: releaseGroupWithAllFlag({
 		description:
-			"Run on all packages within the release group. Cannot be used with --all, --dir, or --packages. This does not include release group root packages; to include those as well, use the --releaseGroupRoots argument.",
+			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoots argument. Cannot be used with --all, --dir, or --packages.",
 		exclusive: ["all", "dir", "packages"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 	}),
 	releaseGroupRoot: releaseGroupWithAllFlag({
 		description:
-			"Run on the root package of the specified release groups. Cannot be used with --all, --dir, or --packages.",
+			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all, --dir, or --packages.",
 		exclusive: ["all", "dir", "packages"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
@@ -254,7 +254,7 @@ export const selectionFlags = {
 };
 
 /**
- * A set of flags that can be used to filter selected packages in the repo. These flags provide a common set of
+ * A set of flags that can be used to filter selected packages in the repo.
  */
 export const filterFlags = {
 	private: Flags.boolean({
@@ -264,13 +264,15 @@ export const filterFlags = {
 		helpGroup: "PACKAGE FILTER",
 	}),
 	scope: Flags.string({
-		description: "Package scopes to filter to. Cannot be used with --skipScope.",
+		description:
+			"Package scopes to filter to. If provided, only packages whose scope matches the flag will be included. Cannot be used with --skipScope.",
 		exclusive: ["skipScope"],
 		multiple: true,
 		helpGroup: "PACKAGE FILTER",
 	}),
 	skipScope: Flags.string({
-		description: "Package scopes to filter out. Cannot be used with --scope.",
+		description:
+			"Package scopes to filter out. If provided, packages whose scope matches the flag will be excluded. Cannot be used with --scope.",
 		exclusive: ["scope"],
 		aliases: ["no-scope"],
 		multiple: true,

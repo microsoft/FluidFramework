@@ -40,9 +40,6 @@ export abstract class BaseCommand<T extends typeof Command>
 		root: rootPathFlag({
 			helpGroup: "GLOBAL",
 		}),
-		/**
-		 * The verbose flag enables the verbos
-		 */
 		verbose: Flags.boolean({
 			char: "v",
 			description: "Enable verbose logging.",

@@ -60,9 +60,9 @@ FLAGS
       Resets the broken type test settings in package.json.
 
 PACKAGE SELECTION FLAGS
-  -g, --releaseGroup=<option>...  Run on all packages within the release group. Cannot be used with --all, --dir, or
-                                  --packages. This does not include release group root packages; to include those as
-                                  well, use the --releaseGroupRoots argument.
+  -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
+                                  release group root packages. To include those, use the --releaseGroupRoots argument.
+                                  Cannot be used with --all, --dir, or --packages.
                                   <options: client|server|azure|build-tools|gitrest|historian|all>
   --all                           Run on all packages and release groups. Cannot be used with --dir, --packages, or
                                   --releaseGroup.
@@ -70,8 +70,9 @@ PACKAGE SELECTION FLAGS
                                   --releaseGroup.
   --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir, or
                                   --releaseGroup.
-  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. Cannot be used with --all,
-                                  --dir, or --packages.
+  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                  child packages within the release group. To include those, use the --releaseGroup
+                                  argument. Cannot be used with --all, --dir, or --packages.
                                   <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
@@ -80,8 +81,10 @@ LOGGING FLAGS
 
 PACKAGE FILTER FLAGS
   --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
-  --scope=<value>...      Package scopes to filter to. Cannot be used with --skipScope.
-  --skipScope=<value>...  Package scopes to filter out. Cannot be used with --scope.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,
