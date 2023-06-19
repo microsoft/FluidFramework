@@ -140,13 +140,12 @@ export function rebaseConcurrentPeerEdits(
 ): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
 	const peerEdits: Commit<TestChange>[] = [];
-	for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-		const sessionId = `p${iPeer}`;
-		for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
+	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
+		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 			peerEdits.push({
 				change: TestChange.emptyChange,
 				revision: mintRevisionTag(),
-				sessionId,
+				sessionId: `p${iPeer}`,
 			});
 		}
 	}
