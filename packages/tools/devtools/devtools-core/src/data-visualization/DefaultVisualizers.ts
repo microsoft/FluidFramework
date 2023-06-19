@@ -16,8 +16,6 @@ import { SharedString } from "@fluidframework/sequence";
 import {
 	SharedTreeFactory,
 	ISharedTree,
-	getField,
-	brand,
 	UntypedTree,
 	UntypedField,
 } from "@fluid-experimental/tree2";
@@ -210,16 +208,15 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const children: Record<string, VisualChildNode> = {};
 
 	const iterateNodes = async (field: UntypedField): Promise<void> => {
-		for (let i = 0; i < field.length; i++) {
-			const node = field.getNode(i);
-			await iterateFields(node);
+		for (const child of field) {
+			await iterateFields(child as unknown as UntypedTree);
 		}
 	};
 
 	const iterateFields = async (node: UntypedTree): Promise<void> => {
-		for (const fieldName of Object.getOwnPropertyNames(node)) {
-			const field = node[getField](brand(fieldName));
+		for (const field of node) {
 			const renderedChild = await visualizeChildData(field);
+
 			children[field.fieldKey as string] = renderedChild;
 		}
 	};
