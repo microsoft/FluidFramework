@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { strict as assert } from "assert";
+import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { NoOpChangeRebaser } from "../testChange";
 import {
 	rebaseLocalEditsOverTrunkEdits,
@@ -33,10 +34,32 @@ describe("EditManager - Bench", () => {
 			benchmark({
 				type,
 				title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
-				benchmarkFn: () => {
-					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const rebaser = new NoOpChangeRebaser();
+						const rebasing = rebaseLocalEditsOverTrunkEdits(
+							rebasedEditCount,
+							trunkEditCount,
+							rebaser,
+							true,
+						);
+						assert(typeof rebasing === "function");
+
+						// Measure
+						const before = state.timer.now();
+						rebasing();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 	});
@@ -45,10 +68,32 @@ describe("EditManager - Bench", () => {
 			benchmark({
 				type,
 				title: `Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`,
-				benchmarkFn: () => {
-					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const rebaser = new NoOpChangeRebaser();
+						const rebasing = rebasePeerEditsOverTrunkEdits(
+							rebasedEditCount,
+							trunkEditCount,
+							rebaser,
+							true,
+						);
+						assert(typeof rebasing === "function");
+
+						// Measure
+						const before = state.timer.now();
+						rebasing();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 	});

@@ -19,7 +19,7 @@ import {
 } from "../testChange";
 import { MockRepairDataStoreProvider } from "../utils";
 import { EditManager } from "../../shared-tree-core";
-import { brand } from "../../util";
+import { brand, makeArray } from "../../util";
 
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
@@ -45,29 +45,31 @@ export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
-): void {
+	defer: boolean = false,
+): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
-	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
-		manager.addSequencedChange(
-			{
-				change: TestChange.emptyChange,
-				revision: mintRevisionTag(),
-				sessionId: "trunk",
-			},
-			brand(iChange + 1),
-			brand(iChange),
-		);
-	}
+	const trunkEdits = makeArray(trunkEditCount, () => ({
+		change: TestChange.emptyChange,
+		revision: mintRevisionTag(),
+		sessionId: "trunk",
+	}));
+	const run = () => {
+		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
+			manager.addSequencedChange(trunkEdits[iChange], brand(iChange + 1), brand(iChange));
+		}
+	};
+	return defer ? run : run();
 }
 
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
-): void {
+	defer: boolean = false,
+): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
@@ -80,15 +82,19 @@ export function rebasePeerEditsOverTrunkEdits(
 			brand(iChange),
 		);
 	}
-	for (let iChange = 0; iChange < peerEditCount; iChange++) {
-		manager.addSequencedChange(
-			{
-				change: TestChange.emptyChange,
-				revision: mintRevisionTag(),
-				sessionId: "peer",
-			},
-			brand(iChange + trunkEditCount + 1),
-			brand(0),
-		);
-	}
+	const peerEdits = makeArray(peerEditCount, () => ({
+		change: TestChange.emptyChange,
+		revision: mintRevisionTag(),
+		sessionId: "peer",
+	}));
+	const run = () => {
+		for (let iChange = 0; iChange < peerEditCount; iChange++) {
+			manager.addSequencedChange(
+				peerEdits[iChange],
+				brand(iChange + trunkEditCount + 1),
+				brand(0),
+			);
+		}
+	};
+	return defer ? run : run();
 }
