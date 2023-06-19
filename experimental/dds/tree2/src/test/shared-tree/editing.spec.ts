@@ -808,7 +808,7 @@ describe("Editing", () => {
 		});
 	});
 
-	describe.only("Constraints", () => {
+	describe("Constraints", () => {
 		describe("Node existence constraint", () => {
 			it("handles ancestor revive", () => {
 				const tree = makeTreeFromJson([]);
