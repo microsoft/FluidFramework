@@ -62,11 +62,6 @@ export interface MenuItemProps {
 	onClick: (event: unknown) => void;
 	text: string;
 	isActive: boolean;
-
-	/**
-	 * The icon to display in the header of the menu section.
-	 */
-	icon?: React.ReactElement;
 }
 
 const useMenuItemStyles = makeStyles({
@@ -95,7 +90,7 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { icon, isActive, onClick, text } = props;
+	const { isActive, onClick, text } = props;
 
 	const styles = useMenuItemStyles();
 	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
@@ -103,7 +98,6 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	return (
 		<div className={style} onClick={onClick}>
 			{text}
-			{icon}
 		</div>
 	);
 }
