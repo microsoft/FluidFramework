@@ -523,6 +523,7 @@ export class RunningSummarizer implements IDisposable {
 		return action().finally(() => {
 			summarizingLock.resolve();
 			this.summarizingLock = undefined;
+
 			after();
 		});
 	}

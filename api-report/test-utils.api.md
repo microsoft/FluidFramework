@@ -44,7 +44,6 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { ISharedMap } from '@fluidframework/map';
 import { ISummarizer } from '@fluidframework/container-runtime';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
-import { ISummaryRuntimeOptions } from '@fluidframework/container-runtime';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
@@ -109,9 +108,6 @@ export enum DataObjectFactoryType {
     // (undocumented)
     Test = 1
 }
-
-// @public (undocumented)
-export const defaultSummaryOptions: ISummaryRuntimeOptions;
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
@@ -243,7 +239,7 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public
-export function summarizeNow(summarizer: ISummarizer, reason?: string, refreshLatestAck?: boolean): Promise<{
+export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
     summaryRefSeq: number;
