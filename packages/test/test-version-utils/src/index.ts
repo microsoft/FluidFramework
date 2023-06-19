@@ -34,8 +34,8 @@ export {
 	assertDocumentTypeInfo,
 	isDocumentMapInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "./describeE2eDocs.js";
-export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
+} from "./describeE2eDocs";
+export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {
 	ensurePackageInstalled,
 	getContainerRuntimeApi,
