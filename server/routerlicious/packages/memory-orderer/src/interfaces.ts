@@ -8,12 +8,15 @@ import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions"
 import {
 	ICollection,
 	IContext,
-	IDocument,
 	IDocumentDetails,
 	IOrderer,
 	ISequencedOperationMessage,
 	IQueuedMessage,
 	IServiceConfiguration,
+	IDocumentRepository,
+	CheckpointService,
+	IDocument,
+	ICheckpointRepository,
 } from "@fluidframework/server-services-core";
 
 export interface IConcreteNode extends EventEmitter {
@@ -65,8 +68,15 @@ export interface INodeMessage {
 }
 
 export interface ILocalOrdererSetup {
-	documentP(): Promise<IDocumentDetails>;
+	/**
+	 * @deprecated - use documentRepositoryP() instead
+	 */
 	documentCollectionP(): Promise<ICollection<IDocument>>;
+	documentP(): Promise<IDocumentDetails>;
+	documentRepositoryP(): Promise<IDocumentRepository>;
+	deliCheckpointRepositoryP(): Promise<ICheckpointRepository>;
+	scribeCheckpointRepositoryP(): Promise<ICheckpointRepository>;
+	checkpointServiceP(service: string): Promise<CheckpointService>;
 	deltaCollectionP(): Promise<ICollection<any>>;
 	scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>>;
 	protocolHeadP(): Promise<number>;

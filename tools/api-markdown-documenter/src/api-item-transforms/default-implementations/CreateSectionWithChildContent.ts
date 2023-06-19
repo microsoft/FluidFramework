@@ -4,9 +4,9 @@
  */
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../../utilities";
+import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import {
 	betaAlert,
 	createDeprecationNoticeSection,
@@ -41,7 +41,7 @@ import {
 export function createSectionWithChildContent(
 	apiItem: ApiItem,
 	childContent: SectionNode[] | undefined,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 

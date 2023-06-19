@@ -5,12 +5,12 @@
 
 import * as crypto from "crypto";
 import {
-	IDocument,
 	IDocumentStorage,
 	IThrottler,
 	ITenantManager,
 	ICache,
-	ICollection,
+	IDocumentRepository,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -18,26 +18,36 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	validateTokenRevocationClaims,
+	validateTokenScopeClaims,
+	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
+import {
+	IAlfredTenant,
+	ISession,
+	NetworkError,
+	DocDeleteScopeType,
+	TokenRevokeScopeType,
+} from "@fluidframework/server-services-client";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
+import { IDocumentDeleteService } from "../../services";
 
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	config: Provider,
 	tenantManager: ITenantManager,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -51,22 +61,51 @@ export function create(
 	const enforceServerGeneratedDocumentId: boolean =
 		config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
+	// Throttling logic for per-tenant rate-limiting at the HTTP route level
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
-	// Throttling logic for creating documents to provide per-cluster rate-limiting at the HTTP route level
-	const createDocThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const createDocTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+		throttleIdSuffix: Constants.createDocThrottleIdPrefix,
+	};
+	const getSessionTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+		throttleIdSuffix: Constants.getSessionThrottleIdPrefix,
+	};
+
+	// Throttling logic for per-cluster rate-limiting at the HTTP route level
+	const createDocClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.createDocThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+	};
+	const getSessionClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.getSessionThrottleIdPrefix,
+		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+	};
+
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
+
+	const defaultTokenValidationOptions = {
+		requireDocumentId: true,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: enableJwtTokenCache,
+		tokenCache: singleUseTokenCache,
 	};
 
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -92,17 +131,23 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		verifyStorageToken(tenantManager, config, {
-			requireDocumentId: false,
-			ensureSingleUseToken: true,
-			singleUseTokenCache,
-		}),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
-			createDocThrottleOptions,
+			createDocClusterThrottleOptions,
 		),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(
+			tenantThrottlers.get(Constants.createDocThrottleIdPrefix),
+			winston,
+			createDocTenantThrottleOptions,
+		),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: false,
+			ensureSingleUseToken: true,
+			singleUseTokenCache,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -124,7 +169,6 @@ export function create(
 				id,
 				summary,
 				sequenceNumber,
-				1,
 				crypto.randomBytes(4).toString("hex"),
 				externalOrdererUrl,
 				externalHistorianUrl,
@@ -183,8 +227,17 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(
+			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
+			winston,
+			getSessionClusterThrottleOptions,
+		),
+		throttle(
+			tenantThrottlers.get(Constants.getSessionThrottleIdPrefix),
+			winston,
+			getSessionTenantThrottleOptions,
+		),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -194,10 +247,29 @@ export function create(
 				externalDeltaStreamUrl,
 				tenantId,
 				documentId,
-				documentsCollection,
+				documentRepository,
 				sessionStickinessDurationMs,
 			);
 			handleResponse(session, response, false);
+		},
+	);
+
+	/**
+	 * Delete a document
+	 */
+	router.delete(
+		"/:tenantId/document/:id",
+		validateRequestParams("tenantId", "id"),
+		validateTokenScopeClaims(DocDeleteScopeType),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		async (request, response, next) => {
+			const documentId = getParam(request.params, "id");
+			const tenantId = getParam(request.params, "tenantId");
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
+
+			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
+			handleResponse(deleteP, response, undefined, undefined, 204);
 		},
 	);
 
@@ -207,16 +279,40 @@ export function create(
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
-		validateTokenRevocationClaims(),
-		verifyStorageToken(tenantManager, config),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		validateTokenScopeClaims(TokenRevokeScopeType),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received token revocation request.`, lumberjackProperties);
-			// TODO: add implementation here.
-			response.status(501).json("Token revocation is not supported for now");
+
+			const tokenId = request.body.jti;
+			if (!tokenId || typeof tokenId !== "string") {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(400, `Missing or invalid jti in request body.`),
+					),
+					response,
+				);
+			}
+			if (tokenManager) {
+				const resultP = tokenManager.revokeToken(tenantId, documentId, tokenId);
+				return handleResponse(resultP, response);
+			} else {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							501,
+							"Token revocation is not supported for now",
+							false /* canRetry */,
+							true /* isFatal */,
+						),
+					),
+					response,
+				);
+			}
 		},
 	);
 	return router;

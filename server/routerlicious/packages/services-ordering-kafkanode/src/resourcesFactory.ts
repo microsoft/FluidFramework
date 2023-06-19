@@ -47,7 +47,9 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
 				? // eslint-disable-next-line @typescript-eslint/no-require-imports
 				  require(this.lambdaModule)
 				: this.lambdaModule;
-		const lambdaFactory = await plugin.create(config);
+
+		const customizations = await (plugin.customize ? plugin.customize(config) : undefined);
+		const lambdaFactory = await plugin.create(config, customizations);
 
 		// Inbound Kafka configuration
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");

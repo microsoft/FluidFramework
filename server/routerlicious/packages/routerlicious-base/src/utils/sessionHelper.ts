@@ -4,7 +4,7 @@
  */
 
 import { ISession, NetworkError } from "@fluidframework/server-services-client";
-import { IDocument, ICollection, runWithRetry } from "@fluidframework/server-services-core";
+import { IDocument, runWithRetry, IDocumentRepository } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -19,7 +19,7 @@ async function createNewSession(
 	deltaStreamUrl: string,
 	tenantId,
 	documentId,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	lumberjackProperties: Record<string, any>,
 ): Promise<ISession> {
 	const newSession: ISession = {
@@ -30,7 +30,7 @@ async function createNewSession(
 		isSessionActive: false,
 	};
 	try {
-		await documentsCollection.upsert(
+		await documentRepository.updateOne(
 			{
 				tenantId,
 				documentId,
@@ -38,7 +38,9 @@ async function createNewSession(
 			{
 				session: newSession,
 			},
-			null,
+			{
+				upsert: true,
+			},
 		);
 	} catch (error) {
 		Lumberjack.error(
@@ -68,7 +70,7 @@ async function updateExistingSession(
 	existingSession: ISession,
 	documentId: string,
 	tenantId: string,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	sessionStickinessDurationMs: number,
 	lumberjackProperties: Record<string, any>,
 ): Promise<ISession> {
@@ -149,7 +151,7 @@ async function updateExistingSession(
 		isSessionActive: false,
 	};
 	try {
-		const result = await documentsCollection.findAndUpdate(
+		const result = await documentRepository.findOneAndUpdate(
 			{
 				tenantId,
 				documentId,
@@ -179,7 +181,7 @@ async function updateExistingSession(
 			);
 			const doc: IDocument = await runWithRetry(
 				async () =>
-					documentsCollection.findOne({
+					documentRepository.readOne({
 						tenantId,
 						documentId,
 						"session.isSessionAlive": true,
@@ -247,12 +249,12 @@ export async function getSession(
 	deltaStreamUrl: string,
 	tenantId: string,
 	documentId: string,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
 ): Promise<ISession> {
 	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document: IDocument = await documentsCollection.findOne({ tenantId, documentId });
+	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
@@ -271,7 +273,7 @@ export async function getSession(
 			deltaStreamUrl,
 			tenantId,
 			documentId,
-			documentsCollection,
+			documentRepository,
 			lumberjackProperties,
 		);
 		return convertSessionToFreshSession(newSession, lumberjackProperties);
@@ -291,7 +293,7 @@ export async function getSession(
 		existingSession,
 		documentId,
 		tenantId,
-		documentsCollection,
+		documentRepository,
 		sessionStickinessDurationMs,
 		lumberjackProperties,
 	);

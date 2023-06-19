@@ -11,7 +11,7 @@ import {
 	IFluidCodeDetails,
 	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import {
 	LocalCodeLoader,
 	TestFluidObjectFactory,
@@ -37,11 +37,11 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/dist/utils";
+} from "@fluidframework/container-loader/dist/utils.js";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
@@ -513,10 +513,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			const { container } = await createDetachedContainerAndGetRootDataStore();
 
 			const snapshotTree = container.serialize();
-			assert(
-				(container as Container).storage !== undefined,
-				"Storage should be present in detached container",
-			);
 			const response = await container.request({ url: "/" });
 			const defaultDataStore = response.value as TestFluidObject;
 			assert(
@@ -534,10 +530,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			const container2: IContainer = await loader.rehydrateDetachedContainerFromSnapshot(
 				snapshotTree,
-			);
-			assert(
-				(container2 as Container).storage !== undefined,
-				"Storage should be present in rehydrated container",
 			);
 			const response2 = await container2.request({ url: "/" });
 			const defaultDataStore2 = response2.value as TestFluidObject;

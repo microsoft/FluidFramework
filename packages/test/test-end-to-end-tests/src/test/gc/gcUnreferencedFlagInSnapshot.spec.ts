@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -20,8 +20,9 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
+} from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present
@@ -30,9 +31,8 @@ import { defaultGCConfig } from "./gcTestConfigs";
  */
 describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let mainContainer: Container;
+	let mainContainer: IContainer;
 	let mainDataStore: ITestDataObject;
-	let documentStorage: IDocumentStorageService;
 
 	/**
 	 * Validates that the unreferenced flag for data stores is correct in the summary that is uploaded to the server.
@@ -68,7 +68,12 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 				}
 			}
 		}
-
+		const documentSerivce = await provider.documentServiceFactory.createDocumentService(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			mainContainer.resolvedUrl!,
+			provider.logger,
+		);
+		const documentStorage: IDocumentStorageService = await documentSerivce.connectToStorage();
 		// Validate the snapshot downloaded from the server.
 		// Download the snapshot corresponding to the above summary from the server.
 		const versions = await documentStorage.getVersions(summaryResult.summaryVersion, 1);
@@ -98,9 +103,7 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 			this.skip();
 		}
 
-		mainContainer = (await provider.makeTestContainer(defaultGCConfig)) as Container;
-		assert(mainContainer.storage !== undefined, "Container does not have storage service");
-		documentStorage = mainContainer.storage;
+		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 	});

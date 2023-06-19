@@ -15,17 +15,420 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.5.0.0
+
+## 2.0.0-internal.5.0.0 Upcoming changes
+
+-   [IFluidResolvedUrl Deprecated](#IFluidResolvedUrl-Deprecated)
+
+### IFluidResolvedUrl Deprecated
+
+IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the preceding change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+
+## 2.0.0-internal.5.0.0 Breaking changes
+
+-   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+-   [@fluidframework/garbage-collector removed](#@fluidframework/garbage-collector-removed)
+-   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+-   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
+-   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
+-   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
+-   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
+-   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
+-   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
+-   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
+-   [IntervalCollection removed](#IntervalCollection-removed)
+-   [Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt](#internal-itelemetrylogger-interface-upgraded-to-itelemetryloggerext)
+
+### IResolvedUrl equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
+
+This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl have been removed due to this.
+
+### @fluidframework/garbage-collector removed
+
+The `@fluidframework/garbage-collector` package was deprecated in 2.0.0-internal.4.1.0. It has now been removed with the following functions, interfaces, and types in it.
+
+-   `runGarbageCollection`
+-   `trimLeadingAndTrailingSlashes`
+-   `trimLeadingSlashes`
+-   `trimTrailingSlashes`
+-   `cloneGCData`
+-   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
+-   `removeRouteFromAllNodes`
+-   `concatGarbageCollectionStates`
+-   `concatGarbageCollectionData`
+-   `GCDataBuilder`
+-   `getGCDataFromSnapshot`
+-   `IGCResult`
+
+### GC interfaces removed from runtime-definitions
+
+The following interfaces available in `@fluidframework/runtime-definitions` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
+
+-   `IGarbageCollectionNodeData`
+-   `IGarbageCollectionState`
+-   `IGarbageCollectionSnapshotData`
+-   `IGarbageCollectionSummaryDetailsLegacy`
+
+### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Configure the timeout for the test instead.
+
+### Container-loader deprecation removals
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so have been removed from export in this release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
+
+### Closing Container no longer disposes
+
+Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call (this should be the most common case). Using `IContainer.dispose(...)` will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+If you intend to pass your own critical error to the container, use `IContainer.close(...)`. Once you are done using the container, call `IContainer.dispose(...)`.
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### `IContainer.dispose` is now required
+
+`IContainer.dispose` is now a required method. This method should dispose any resources and switch the container to a permanently disconnected state.
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### ISummarizerRuntime on/off op required
+
+The `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics.
+
+### Driver param removed from appendToMergeTreeDeltaRevertibles
+
+The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles has been removed. Additionally, the interface MergeTreeRevertibleDriver has been simplified, and no longer requires:
+
+-   createLocalReferencePosition
+-   localReferencePositionToPosition
+-   getPosition
+-   getContainingSegment
+
+### PureDataObject.getFluidObjectFromDirectory removed
+
+`PureDataObject.getFluidObjectFromDirectory` was deprecated in a previous release and has been removed.
+
+### IProvideContainerRuntime and IContainerRuntime member removed
+
+`IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+
+### IntervalCollection removed
+
+The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt
+
+`ITelemetryLoggerExt` is a replacement for `ITelemetryLogger`, which adds additional types that can be logged as property values.
+This interface is not expected to be used outside the codebase, and all Logger implementations already use the new interface.
+In this release, the new type is used throughout the codebase to allow richer instrumentation.
+
+# 2.0.0-internal.4.4.0
+
+## 2.0.0-internal.4.4.0 Upcoming changes
+
+-   [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated)
+
+### IntervalCollection public export deprecated
+
+`IntervalCollection` has been deprecated in favor of an interface (`IIntervalCollection`) containing its public API.
+Several types transitively referenced by `IntervalCollection` implementation details have also been deprecated: `CompressedSerializedInterval`, `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`.
+
+# 2.0.0-internal.4.3.0
+
+## 2.0.0-internal.4.3.0 Breaking changes
+
+-   [bigBlobs request handling removed from DataObject](#bigBlobs-request-handling-removed-from-DataObject)
+
+### bigBlobs request handling removed from DataObject
+
+Previously, `DataObject` would perform undocumented special handling for requests to it starting with `bigBlobs/` to pull objects out of its `root` directory. This special handling has been removed.
+
+## 2.0.0-internal.4.3.0 Upcoming changes
+
+-   [PureDataObject.getFluidObjectFromDirectory deprecated](#PureDataObject.getFluidObjectFromDirectory-deprecated)
+
+### PureDataObject.getFluidObjectFromDirectory deprecated
+
+`PureDataObject.getFluidObjectFromDirectory` has been deprecated and will be removed in an upcoming release. Instead prefer to interface directly with the directory and handles.
+
+# 2.0.0-internal.4.1.0
+
+## 2.0.0-internal.4.1.0 Breaking changes
+
+-   [Ability to enable grouped batching](#Ability-to-enable-grouped-batching)
+-   [Testing support for LTS is moved from 0.45 to 1.3.4](#Testing-support-for-LTS-is-moved-from-0.45-to-1.3.4)
+
+### Ability to enable grouped batching
+
+The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is off by default. This option will group all batch messages
+under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given
+the sequence number of the parent "grouped" message.
+
+Upon enabling this option, if any issues arise, use the `Fluid.ContainerRuntime.DisableGroupedBatching` feature flag to disable at runtime. This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (version "2.0.0-internal.4.1.0" or later). This option is experimental and should not be enabled yet in production. Containers created with this option may not open in future versions of the framework.
+
+This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
+and verifying that the following expectation changes won't have any effects:
+
+-   batch messages observed at the runtime layer will not match messages seen at the loader layer
+-   messages within the same batch will have the same sequence number
+-   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
+-   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
+
+### Testing support for LTS is moved from 0.45.0 to 1.3.4
+
+Internal end-to-end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4. For customers using azure packages, the loader-runtime are bundled together.
+
+## 2.0.0-internal.4.1.0 Upcoming changes
+
+-   [@fluidframework/garbage-collector deprecated](#@fluidframework/garbage-collector-deprecated)
+-   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
+-   [Container-loader deprecations](#Container-loader-deprecations)
+-   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
+-   [IntervalConflictResolver deprecation](#intervalconflictresolver-deprecation)
+
+### @fluidframework/garbage-collector deprecated
+
+The `@fluidframework/garbage-collector` package is deprecated with the following functions, interfaces, and types in it. These are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `runGarbageCollection`
+-   `trimLeadingAndTrailingSlashes`
+-   `trimLeadingSlashes`
+-   `trimTrailingSlashes`
+-   `cloneGCData`
+-   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
+-   `removeRouteFromAllNodes`
+-   `concatGarbageCollectionStates`
+-   `concatGarbageCollectionData`
+-   `GCDataBuilder`
+-   `getGCDataFromSnapshot`
+-   `IGCResult`
+
+### GC interfaces removed from runtime-definitions
+
+The following interfaces available in `@fluidframework/runtime-definitions` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `IGarbageCollectionNodeData`
+-   `IGarbageCollectionState`
+-   `IGarbageCollectionSnapshotData`
+-   `IGarbageCollectionSummaryDetailsLegacy`
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-end-to-end-tests`
+
+### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` is deprecated as it is equivalent to `LoaderContainerTracker.ensureSynchronized` and will be removed in an upcoming release. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Please configure the timeout for the test instead.
+
+### Container-loader deprecations
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so will be removed from export in the next major release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
+
+### Op compression is enabled by default
+
+If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To open a document which contains this type of op, the client's runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` ("Runtime message of unknown type") and will not be able to open the documents until they upgrade. To minimize the risk, it is recommended to audit existing session and ensure that at least 99.9% of them are using a runtime version equal or greater than `client_v2.0.0-internal.2.3.0`, before upgrading to `2.0.0-internal.4.1.0`.
+
+More information about op compression can be found [here](./packages/runtime/container-runtime/src/opLifecycle/README.md).
+
+### IntervalConflictResolver deprecation
+
+In SharedString, interval conflict resolvers have been unused since [this change](https://github.com/microsoft/FluidFramework/pull/6407), which added support for multiple intervals at the same position.
+As such, any existing usages can be removed.
+Related APIs have been deprecated and will be removed in an upcoming release.
+
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+-   [bindToContext deprecated in IFluidDataStoreContext](#bindToContext-deprecated-in-IFluidDataStoreContext)
+-   [getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn](#getBaseGCDetails-deprecated-in-IFluidDataStoreContext-and-CreateChildSummarizerNodeFn)
+
+### bindToContext deprecated in IFluidDataStoreContext
+
+`bindToContext` in IFluidDataStoreContext was deprecated in 2.0.0-internal.2.0.0. This is a heads up that it will be removed in 2.0.0-internal.5.0.0. Its usage in FluidDataStoreRuntime was removed in this release.
+
+### getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn
+
+getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn. The functionality to update the base GC details of nodes has been moved to summarizer nodes. These will be removed in 2.0.0-internal.5.0.0.
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [Remove `ensureContainerConnected()` in `@fluidframework/test-utils`](#remove-ensurecontainerconnected-in-fluidframeworktest-utils)
+-   [New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
+-   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
+-   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
+-   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
+-   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
+-   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [Aqueduct members removed](#Aqueduct-members-removed)
+-   [driver-utils members removed](#driver-utils-members-removed)
+-   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
+-   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
+-   [Changes to Summarizer's public API](#changes-to-summarizers-public-api)
+
+### Container and RelativeLoader no longer exported
+
+Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### Remove `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+This function was [deprecated in a previous release](#200-internal240-upcoming-changes) and has now been removed.
+Use `waitForContainerConnection()` from the same package instead.
+See [the note](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils) about breaking
+changes in that function in this release.
+
+### New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`
+
+The default value for the `failOnContainerClose` parameter has changed from `false` to `true` for function
+`waitForContainerConnection()` exported by `@fluidframework/test-utils`.
+
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+
+Most use cases should prefer `true`; explicit passing of `false` should only be necessary when the caller expects the
+Container to connect _or_ close for some reason.
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
+
+These have been moved to the `@fluid-internal` scope and are no longer published.
+
+### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
+
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### IFluidTokenProvider removed
+
+The IFluidTokenProvider interface was deprecated in 2.0.0-internal.3.2.0, and is now removed.
+
+### Summarizer node and related items removed
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` were deprecated in 2.0.0-internal.3.0.0 and are now removed.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
+
+### web-code-loader and ICodeAllowList removed
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### Container and IContainer no longer raise events when a new listener is registered
+
+`Container` and `IContainer` had previously raised the `connected`, `disconnected`, `dirty`, and `saved` events when a new listener was registered and the corresponding state was true. This behavior has been removed. To avoid issues, add checks to the state of the container before registering listeners.
+
+```diff
+	// Ensure client is connected
++	if (container.connectionState !== ConnectionState.Connected) {
+		await new Promise<void>((resolve) => {
+			container.once("connected", resolve);
+		});
++   }
+```
+
+### Remove deprecated PendingStateManager interfaces
+
+The following interfaces used by the `PendingStateManager` are no longer exported:
+
+-   `IPendingMessage`
+-   `IPendingFlush`
+-   `IPendingState`
+-   `IPendingLocalState`
+
+### Aqueduct members removed
+
+`ContainerServices` in `@fluidframework/aqueduct` and `waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### driver-utils members removed
+
+The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0 or earlier, and are now removed:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
+-   `BlobAggregationStorage`
+-   `SnapshotExtractor`
+-   `isUnpackedRuntimeMessage`
+-   `IAnyDriverError`
+
+### Remove IConnectableRuntime.deltaManager
+
+Note: `IConnectableRuntime` is only to be implemented internally, so removing this should not be impactful.
+
+## IDocumentServiceFactory.protocolName removed
+
+`IDocumentServiceFactory.protocolName` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### Changes to Summarizer's public API
+
+The following interfaces and exports in `@fluidframework/container-runtime` [deprecated since 0.14.0](https://github.com/microsoft/FluidFramework/pull/8299)
+have been removed and have no replacement:
+
+-   `IProvideSummarizer` interface
+-   `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
+
+Additionally, the `ISummarizer` interface no longer extends `IFluidLoadable` nor `Partial<IProvideSummarizer>`.
+This means it no longer has readonly properties `IFluidLoadable` and `handle`.
+
 # 2.0.0-internal.3.4.0
 
 ## 2.0.0-internal.3.4.0 Upcoming changes
 
-[IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+-   [IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+-   [LoaderHeader.cache deprecated](#LoaderHeadercache-deprecated)
 
 ## IResolvedUrl will be equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
 This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls will now be FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
 ensureFluidResolvedUrl will be deprecated and removed due to this.
+
+## LoaderHeader.cache deprecated
+
+In `@fluidframework/container-definitions`, the `cache` value from the `LoaderHeader` enum has been deprecated.
+Therefore, the `[LoaderHeader.cache]` property from `ILoaderHeader` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
 
 # 2.0.0-internal.3.3.0
 
@@ -258,6 +661,14 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 ### Remove Deprecated IFluidObject Interface
 
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove internal connection details from `IConnectionDetails`
+
+Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. Reasons for removing each of them:
+
+-   `existing` : this will always be true, which no longer provides useful information
+-   `mode` : this is implementation detail of connection
+-   `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 ### Remove deprecated experimental get-container package
 

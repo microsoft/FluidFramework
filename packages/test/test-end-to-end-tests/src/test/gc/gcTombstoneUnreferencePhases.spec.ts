@@ -17,12 +17,12 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC phases without overlapping.

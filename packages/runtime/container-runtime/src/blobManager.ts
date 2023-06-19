@@ -28,7 +28,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -40,6 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
@@ -60,7 +61,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	}
 
 	public get isAttached(): boolean {
-		return this.attached;
+		return this.routeContext.isAttached && this.attached;
 	}
 
 	public readonly absolutePath: string;
@@ -132,14 +133,13 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
-	uploadP: Promise<ICreateBlobResponse>;
-	localUploadTime?: number;
-	serverUploadTime?: number;
+	uploadP?: Promise<ICreateBlobResponse>;
+	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string };
+	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds?: number };
 }
 
 export interface IBlobManagerEvents {
@@ -191,6 +191,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
+	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
 		snapshot: IBlobManagerLoadInfo,
@@ -205,20 +207,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 * knowledge of which they cannot request the blob from storage. It's important that this op is sequenced
 		 * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
 		 */
-		private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void,
+		sendBlobAttachOp: (localId: string, storageId?: string) => void,
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
 		private readonly blobRequested: (blobPath: string) => void,
-		// Called when a reference is added to a blob. For instance, when creating a localId / storageId to storageId
-		// mapping in the redirect table.
-		// Node path formats - `/<BlobManager.basePath>/<blobId>`.
-		private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
 		// Called to check if a blob has been deleted by GC.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
 		private readonly isBlobDeleted: (blobPath: string) => boolean,
 		private readonly runtime: IBlobManagerRuntime,
 		stashedBlobs: IPendingBlobs = {},
-		private readonly getCurrentReferenceTimestampMs: () => number | undefined,
+		private readonly closeContainer: (error?: ICriticalContainerError) => void,
 	) {
 		super();
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
@@ -234,6 +232,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
+			if (entry.minTTLInSeconds && entry.uploadTime) {
+				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
+				// stashed entries with more than half-life in storage will not be reuploaded
+				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
+					this.pendingBlobs.set(localId, {
+						blob,
+						status: PendingBlobStatus.OfflinePendingOp,
+						handleP: new Deferred(),
+						uploadP: undefined,
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+					});
+					return;
+				}
+			}
 			this.pendingBlobs.set(localId, {
 				blob,
 				status: PendingBlobStatus.OfflinePendingUpload,
@@ -241,6 +254,37 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				uploadP: this.uploadBlob(localId, blob),
 			});
 		});
+
+		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
+			const pendingEntry = this.pendingBlobs.get(localId);
+			if (pendingEntry?.uploadTime && pendingEntry?.minTTLInSeconds) {
+				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;
+				const expired = pendingEntry.minTTLInSeconds - secondsSinceUpload < 0;
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "sendBlobAttach",
+					entryStatus: pendingEntry.status,
+					secondsSinceUpload,
+					minTTLInSeconds: pendingEntry.minTTLInSeconds,
+					expired,
+				});
+				if (expired) {
+					// we want to avoid submitting ops with broken handles
+					this.closeContainer(
+						new GenericError(
+							"Trying to submit a BlobAttach for expired blob",
+							undefined,
+							{
+								localId,
+								blobId,
+								entryStatus: pendingEntry.status,
+								secondsSinceUpload,
+							},
+						),
+					);
+				}
+			}
+			return sendBlobAttachOp(localId, blobId);
+		};
 	}
 
 	private get pendingOfflineUploads() {
@@ -292,15 +336,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`
-	 * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
-	 * referenced by storing these handles in a referenced DDS.
-	 */
-	private getBlobGCNodePath(blobId: string) {
-		return `/${BlobManager.basePath}/${blobId}`;
-	}
-
-	/**
 	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
 	 * detached or there are no (non-pending) attachment blobs in the document
 	 */
@@ -344,7 +379,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 
 		// Let runtime know that the corresponding GC node was requested.
-		this.blobRequested(this.getBlobGCNodePath(blobId));
+		this.blobRequested(getGCNodePathFromBlobId(blobId));
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -422,11 +457,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private setRedirection(fromId: string, toId: string | undefined) {
 		this.redirectTable.set(fromId, toId);
-		// Notify runtime of a reference added if toId is not undefined. It can be undefined when a blob is uploaded in
-		// detached mode. In this case, the entry will be updated when the blob is updated.
-		if (toId !== undefined) {
-			this.addedBlobReference(this.getBlobGCNodePath(fromId), this.getBlobGCNodePath(toId));
-		}
 	}
 
 	private deleteAndEmitsIfEmpty(id: string) {
@@ -440,15 +470,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
+		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		assert(
-			entry?.status === PendingBlobStatus.OnlinePendingUpload ||
-				entry?.status === PendingBlobStatus.OfflinePendingUpload,
+			entry.status === PendingBlobStatus.OnlinePendingUpload ||
+				entry.status === PendingBlobStatus.OfflinePendingUpload,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
 		entry.storageId = response.id;
-		entry.localUploadTime = Date.now();
+		entry.uploadTime = Date.now();
 		entry.minTTLInSeconds = response.minTTLInSeconds;
-		entry.serverUploadTime = this.getCurrentReferenceTimestampMs();
 		if (this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				// Send a blob attach op. This serves two purposes:
@@ -456,7 +486,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				//    until its storage ID is added to the next summary.
 				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 				//    blob from the server via the storage ID.
-				this.logTimeInfo(entry, "sendBlobAttachResolveTTL");
 				this.sendBlobAttachOp(localId, response.id);
 				if (this.storageIds.has(response.id)) {
 					// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
@@ -530,7 +559,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 * is called on reconnection.
 		 */
 		if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
-			this.logTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL");
 			this.sendBlobAttachOp(localId, entry.storageId);
 		}
 
@@ -552,9 +580,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
 		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
 		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry) {
-			this.logTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL");
-		}
+
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
@@ -565,32 +591,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return this.sendBlobAttachOp(localId, pendingEntry.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
-	}
-
-	private logTimeInfo(pendingEntry: PendingBlob, eventName: string) {
-		let timeLapseSinceLocalUpload: number = 0;
-		let timeLapseSinceServerUpload: number = 0;
-		let expiredUsingLocalTime;
-		let expiredUsingServerTime;
-		if (pendingEntry.localUploadTime) {
-			timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
-			expiredUsingLocalTime =
-				(pendingEntry.minTTLInSeconds ?? 0) - timeLapseSinceLocalUpload < 0 ? true : false;
-		}
-		if (pendingEntry.serverUploadTime) {
-			timeLapseSinceServerUpload = (Date.now() - pendingEntry.serverUploadTime) / 1000;
-			expiredUsingServerTime =
-				(pendingEntry.minTTLInSeconds ?? 0) - timeLapseSinceServerUpload < 0 ? true : false;
-		}
-		this.mc.logger.sendTelemetryEvent({
-			eventName,
-			entryStatus: pendingEntry.status,
-			timeLapseSinceLocalUpload,
-			timeLapseSinceServerUpload,
-			minTTLInSeconds: pendingEntry.minTTLInSeconds,
-			expiredUsingLocalTime,
-			expiredUsingServerTime,
-		});
 	}
 
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
@@ -679,6 +679,33 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return table;
 	}
 
+	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
+		const blobIds =
+			this.storageIds.size > 0
+				? Array.from(this.storageIds)
+				: Array.from(this.redirectTable.keys());
+		const builder = new SummaryTreeBuilder();
+		blobIds.forEach((blobId) => {
+			builder.addAttachment(blobId);
+		});
+
+		// Any non-identity entries in the table need to be saved in the summary
+		if (this.redirectTable.size > blobIds.length) {
+			builder.addBlob(
+				BlobManager.redirectTableBlobName,
+				// filter out identity entries
+				JSON.stringify(
+					Array.from(this.redirectTable.entries()).filter(
+						([localId, storageId]) => localId !== storageId,
+					),
+				),
+			);
+		}
+
+		return builder.getSummaryTree();
+	}
+
 	/**
 	 * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
 	 * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
@@ -689,32 +716,29 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const gcData: IGarbageCollectionData = { gcNodes: {} };
 		for (const [localId, storageId] of this.redirectTable) {
 			assert(!!storageId, 0x390 /* Must be attached to get GC data */);
-			gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
+			// Only return local ids as GC nodes because a blob can only be referenced via its local id. The storage
+			// id entries have the same key and value, ignore them.
+			// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
+			// by adding its handle to a referenced DDS.
+			if (localId !== storageId) {
+				gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
+			}
 		}
 		return gcData;
 	}
 
 	/**
 	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused.
+	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
 	public updateUnusedRoutes(unusedRoutes: string[]): void {
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of unusedRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x2d5 /* "Invalid blob node id in unused routes." */,
-			);
-			const blobId = pathParts[2];
-			this.redirectTable.delete(blobId);
-		}
+		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
 	/**
 	 * Delete attachment blobs that are sweep ready.
-	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
+	 * be based off of local ids.
 	 * @returns - The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
@@ -723,24 +747,59 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return [];
 		}
 
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of sweepReadyBlobRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x586 /* Invalid blob node id in deleted routes. */,
-			);
-			const blobId = pathParts[2];
+		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
+		return Array.from(sweepReadyBlobRoutes);
+	}
+
+	/**
+	 * Delete blobs with the given routes from the redirect table.
+	 * The routes are GC nodes paths of format -`/<BlobManager.basePath>/<blobId>`. The blob ids are all local ids.
+	 * Deleting the blobs involves 2 steps:
+	 * 1. The redirect table entry for the local ids are deleted.
+	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
+	 * for the storage ids are deleted as well.
+	 *
+	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
+	 * will remove them the next summary. The service would them delete them some time in the future.
+	 */
+	private deleteBlobsFromRedirectTable(blobRoutes: string[]) {
+		if (blobRoutes.length === 0) {
+			return;
+		}
+
+		// This tracks the storage ids of local ids that are deleted. After the local ids have been deleted, if any of
+		// these storage ids are unused, they will be deleted as well.
+		const maybeUnusedStorageIds: Set<string> = new Set();
+		for (const route of blobRoutes) {
+			const blobId = getBlobIdFromGCNodePath(route);
 			if (!this.redirectTable.has(blobId)) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedAttachmentBlobNotFound",
 					blobId,
 				});
+				continue;
 			}
+			const storageId = this.redirectTable.get(blobId);
+			assert(!!storageId, 0x5bb /* Must be attached to run GC */);
+			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
 		}
-		return Array.from(sweepReadyBlobRoutes);
+
+		// Find out storage ids that are in-use and remove them from maybeUnusedStorageIds. A storage id is in-use if
+		// the redirect table has a local id -> storage id entry for it.
+		for (const [localId, storageId] of this.redirectTable.entries()) {
+			assert(!!storageId, 0x5bc /* Must be attached to run GC */);
+			// For every storage id, the redirect table has a id -> id entry. These do not make the storage id in-use.
+			if (maybeUnusedStorageIds.has(storageId) && localId !== storageId) {
+				maybeUnusedStorageIds.delete(storageId);
+			}
+		}
+
+		// For unused storage ids, delete their id -> id entries from the redirect table.
+		// This way they'll be absent from the next summary, and the service is free to delete them from storage.
+		for (const storageId of maybeUnusedStorageIds) {
+			this.redirectTable.delete(storageId);
+		}
 	}
 
 	/**
@@ -753,12 +812,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// The routes or blob node paths are in the same format as returned in getGCData -
 		// `/<BlobManager.basePath>/<blobId>`.
 		for (const route of tombstonedRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x50f /* Invalid blob node id in tombstoned routes. */,
-			);
-			tombstonedBlobsSet.add(pathParts[2]);
+			const blobId = getBlobIdFromGCNodePath(route);
+			tombstonedBlobsSet.add(blobId);
 		}
 
 		// Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
@@ -786,7 +841,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 * 3. "valid" - It has not been deleted or tombstoned.
 		 */
 		let state: "valid" | "tombstoned" | "deleted" = "valid";
-		if (this.isBlobDeleted(this.getBlobGCNodePath(blobId))) {
+		if (this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
 			state = "deleted";
 		} else if (this.tombstonedBlobs.has(blobId)) {
 			state = "tombstoned";
@@ -827,33 +882,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
-		const blobIds =
-			this.storageIds.size > 0
-				? Array.from(this.storageIds)
-				: Array.from(this.redirectTable.keys());
-		const builder = new SummaryTreeBuilder();
-		blobIds.forEach((blobId) => {
-			builder.addAttachment(blobId);
-		});
-
-		// Any non-identity entries in the table need to be saved in the summary
-		if (this.redirectTable.size > blobIds.length) {
-			builder.addBlob(
-				BlobManager.redirectTableBlobName,
-				// filter out identity entries
-				JSON.stringify(
-					Array.from(this.redirectTable.entries()).filter(
-						([localId, storageId]) => localId !== storageId,
-					),
-				),
-			);
-		}
-
-		return builder.getSummaryTree();
-	}
-
 	public setRedirectTable(table: Map<string, string>) {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
@@ -877,8 +905,35 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+			blobs[key] = entry.minTTLInSeconds
+				? {
+						blob: bufferToString(entry.blob, "base64"),
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+				  }
+				: { blob: bufferToString(entry.blob, "base64") };
 		}
 		return blobs;
 	}
+}
+
+/**
+ * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
+ * referenced by storing these handles in a referenced DDS.
+ */
+function getGCNodePathFromBlobId(blobId: string) {
+	return `/${BlobManager.basePath}/${blobId}`;
+}
+
+/**
+ * For a given GC node path, return the blobId. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ */
+function getBlobIdFromGCNodePath(nodePath: string) {
+	const pathParts = nodePath.split("/");
+	assert(
+		pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+		0x5bd /* Invalid blob node path */,
+	);
+	return pathParts[2];
 }

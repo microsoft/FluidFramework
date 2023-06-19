@@ -6,6 +6,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -22,6 +23,11 @@ export interface AzureClientProps {
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
 	readonly logger?: ITelemetryBaseLogger;
+
+	/**
+	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
+	 */
+	readonly configProvider?: IConfigProviderBase;
 }
 
 /**

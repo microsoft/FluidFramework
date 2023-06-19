@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IConnect,
+	IDocumentMessage,
 	INack,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -58,7 +63,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLogger) {
+	public static find(key: string, logger: ITelemetryLoggerExt) {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -238,7 +243,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLogger,
+		telemetryLogger: ITelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
@@ -266,7 +271,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-
+		const connectionId = uuid();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
@@ -275,7 +280,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
 			driverVersion: pkgVersion,
-			nonce: uuid(),
+			nonce: connectionId,
 			epoch: epochTracker.fluidEpoch,
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
@@ -292,6 +297,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			socketReference,
 			telemetryLogger,
 			enableMultiplexing,
+			connectionId,
 		);
 
 		try {
@@ -330,6 +336,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -353,7 +360,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): SocketReference {
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
@@ -384,10 +391,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
+		connectionId?: string,
 	) {
-		super(socket, documentId, logger, false, uuid());
+		super(socket, documentId, logger, false, connectionId);
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -492,9 +500,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "ServerDisconnect",
-					clientId: this.hasDetails ? this.clientId : undefined,
+					driverVersion: pkgVersion,
 					details: JSON.stringify({
-						connection: this.connectionId,
+						...this.getConnectionDetailsProps(),
 					}),
 				},
 				error,
@@ -590,7 +598,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout);
+		await super.initialize(connectMessage, timeout).finally(() => {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptInfo",
+				...this.getConnectionDetailsProps(),
+			});
+		});
 	}
 
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
@@ -649,6 +662,59 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(event, listener);
 				break;
 		}
+	}
+
+	public get disposed() {
+		if (!(this._disposed || this.socket.connected)) {
+			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendErrorEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 15000);
+			}
+		}
+		return this._disposed;
+	}
+
+	/**
+	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
+	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
+	 * while we are connecting, as connection object is not exposed to Loader layer until connection is established.
+	 */
+	private get connected(): boolean {
+		return !this.disposed && this.socket.connected;
+	}
+
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		// Only submit the op/signals if we are connected.
+		if (this.connected) {
+			this.socket.emit(type, this.clientId, messages);
+		}
+	}
+
+	/**
+	 * Submits a new delta operation to the server
+	 * @param message - delta operation to submit
+	 */
+	public submit(messages: IDocumentMessage[]): void {
+		this.emitMessages("submitOp", [messages]);
+	}
+
+	/**
+	 * Submits a new signal to the server
+	 *
+	 * @param message - signal to submit
+	 */
+	public submitSignal(message: IDocumentMessage): void {
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

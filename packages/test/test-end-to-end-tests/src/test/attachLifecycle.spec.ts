@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+
+import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createLoader, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-
-import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@fluidframework/sequence";

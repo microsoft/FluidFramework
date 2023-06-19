@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -20,7 +20,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -114,8 +113,14 @@ export class MockContainerRuntime {
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
+		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
+		const msn = overrides?.minimumSequenceNumber;
+		if (msn !== undefined) {
+			this.deltaManager.lastSequenceNumber = msn;
+			this.deltaManager.minimumSequenceNumber = msn;
+		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
@@ -421,7 +426,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLogger = DebugLogger.create(
+	public readonly logger: ITelemetryLoggerExt = DebugLogger.create(
 		"fluid:MockFluidDataStoreRuntime",
 	);
 	public quorum = new MockQuorumClients();

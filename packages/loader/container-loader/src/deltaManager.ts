@@ -6,7 +6,6 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLogger,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
@@ -18,14 +17,21 @@ import {
 	IDeltaQueue,
 	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+	normalizeError,
+	logIfFalse,
+	safeRaiseEvent,
+	isFluidError,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -40,9 +46,11 @@ import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 	DataProcessingError,
+	UsageError,
 } from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
 import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+import { DeltaQueue } from "./deltaQueue";
+import { OnlyValidTermValue } from "./protocol";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -57,6 +65,9 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
+	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
+	(event: "establishingConnection", listener: (reason: string) => void);
+	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
 }
 
 /**
@@ -122,7 +133,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private baseTerm: number = 0;
 
 	/** count number of noops sent by the client which may not be acked */
 	private noOpCount: number = 0;
@@ -184,10 +194,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public get lastKnownSeqNumber() {
 		return this.lastObservedSeqNumber;
-	}
-
-	public get referenceTerm(): number {
-		return this.baseTerm;
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -342,7 +348,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
@@ -360,11 +366,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
-			connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
+			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
+				this.disconnectHandler(reason, error),
+			connectHandler: (connection: IConnectionDetailsInternal) =>
+				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
+			establishConnectionHandler: (reason: string) => this.establishingConnection(reason),
+			cancelConnectionHandler: (reason: string) => this.cancelEstablishingConnection(reason),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -404,7 +414,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private connectHandler(connection: IConnectionDetails) {
+	private cancelEstablishingConnection(reason: string) {
+		this.emit("cancelEstablishingConnection", reason);
+	}
+
+	private establishingConnection(reason: string) {
+		this.emit("establishingConnection", reason);
+	}
+
+	private connectHandler(connection: IConnectionDetailsInternal) {
 		this.refreshDelayInfo(this.deltaStreamDelayId);
 
 		const props = this.connectionManager.connectionVerboseProps;
@@ -453,23 +471,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	public dispose() {
-		throw new Error("Not implemented.");
-	}
-
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
 		sequenceNumber: number,
-		term: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "cached" | "all" | "none" = "none",
 	) {
 		this.initSequenceNumber = sequenceNumber;
 		this.lastProcessedSequenceNumber = sequenceNumber;
-		this.baseTerm = term;
 		this.minSequenceNumber = minSequenceNumber;
 		this.lastQueuedSequenceNumber = sequenceNumber;
 		this.lastObservedSeqNumber = sequenceNumber;
@@ -543,7 +555,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchMissingDeltas(args.reason);
 		}
 
-		this.connectionManager.connect(args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(
@@ -646,23 +658,51 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	/**
 	 * Closes the connection and clears inbound & outbound queues.
 	 *
-	 * @param doDispose - should the DeltaManager treat this close call as a dispose?
-	 * Differences between close and dispose:
-	 * - dispose will emit "disposed" event while close emits "closed"
-	 * - dispose will remove all listeners
-	 * - dispose can be called after closure, but not vis versa
+	 * Differences from dispose:
+	 * - close will trigger readonly notification
+	 * - close emits "closed"
+	 * - close cannot be called after dispose
 	 */
-	public close(error?: ICriticalContainerError, doDispose?: boolean): void {
+	public close(error?: ICriticalContainerError): void {
 		if (this._closed) {
-			if (doDispose === true) {
-				this.disposeInternal(error);
-			}
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(error, doDispose !== true);
+		this.connectionManager.dispose(error, true /* switchToReadonly */);
+		this.clearQueues();
+		this.emit("closed", error);
+	}
 
+	/**
+	 * Disposes the connection and clears the inbound & outbound queues.
+	 *
+	 * Differences from close:
+	 * - dispose will emit "disposed"
+	 * - dispose will remove all listeners
+	 * - dispose can be called after closure
+	 */
+	public dispose(error?: Error | ICriticalContainerError): void {
+		if (this._disposed) {
+			return;
+		}
+		if (error !== undefined && !isFluidError(error)) {
+			throw new UsageError("Error must be a Fluid error");
+		}
+
+		this._disposed = true;
+		this._closed = true; // We consider "disposed" as a further state than "closed"
+
+		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.clearQueues();
+
+		// This needs to be the last thing we do (before removing listeners), as it causes
+		// Container to dispose context and break ability of data stores / runtime to "hear" from delta manager.
+		this.emit("disposed", error);
+		this.removeAllListeners();
+	}
+
+	private clearQueues() {
 		this.closeAbortController.abort();
 
 		this._inbound.clear();
@@ -675,26 +715,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Drop pending messages - this will ensure catchUp() does not go into infinite loop
 		this.pending = [];
-
-		if (doDispose === true) {
-			this.disposeInternal(error);
-		} else {
-			this.emit("closed", error);
-			this.disposeInternal(error); // ! TODO: remove this call when Container close no longer disposes
-		}
-	}
-
-	private disposeInternal(error?: ICriticalContainerError): void {
-		if (this._disposed) {
-			return;
-		}
-		this._disposed = true;
-
-		// This needs to be the last thing we do (before removing listeners), as it causes
-		// Container to dispose context and break ability of data stores / runtime to "hear"
-		// from delta manager, including notification (above) about readonly state.
-		this.emit("disposed", error);
-		this.removeAllListeners();
 	}
 
 	public refreshDelayInfo(id: string) {
@@ -704,9 +724,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string) {
+	private disconnectHandler(reason: string, error?: IAnyDriverError) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason, error);
 	}
 
 	/**
@@ -735,7 +755,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// for example, it's not clear if serverMetadata or timestamp property is a property of message or server state.
 	// We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
 	// reuse.
-	// Also payload goes to telemetry, so no PII, including content!!
+	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage) {
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
@@ -984,9 +1004,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Back-compat for older server with no term
 		if (message.term === undefined) {
-			message.term = 1;
+			message.term = OnlyValidTermValue;
 		}
-		this.baseTerm = message.term;
 
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");

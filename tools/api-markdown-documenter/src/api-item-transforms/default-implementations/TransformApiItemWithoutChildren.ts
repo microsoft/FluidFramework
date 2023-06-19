@@ -4,15 +4,15 @@
  */
 import { ApiItem } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
+import { ApiItemTransformationConfiguration } from "../configuration";
 
 /**
  * Default transformation helper for rendering item kinds that do not have children.
  */
 export function transformApiItemWithoutChildren(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.

@@ -33,7 +33,7 @@
 			// A type signature should not reference another types whose release tag is less visible.
 			"ae-incompatible-release-tags": {
 				"logLevel": "error",
-				"addToApiReportFile": true
+				"addToApiReportFile": false
 			},
 			// Disabled. We don't require that internal members be prefixed with an underscore.
 			"ae-internal-missing-underscore": {

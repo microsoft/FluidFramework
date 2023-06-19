@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import {
 	IConsumer,
 	IQueuedMessage,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	ILogger,
@@ -16,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -33,15 +33,12 @@ export class Partition extends EventEmitter {
 
 	constructor(
 		private readonly id: number,
-		leaderEpoch: number,
-		factory: IPartitionLambdaFactory<IPartitionConfig>,
+		factory: IPartitionLambdaFactory,
 		consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 	) {
 		super();
-
-		// Should we pass epoch with the context?
-		const partitionConfig: IPartitionConfig = { leaderEpoch };
 
 		this.checkpointManager = new CheckpointManager(id, consumer);
 		this.context = new Context(this.checkpointManager, this.logger);
@@ -66,7 +63,7 @@ export class Partition extends EventEmitter {
 		}, 1);
 		this.q.pause();
 
-		this.lambdaP = factory.create(partitionConfig, this.context);
+		this.lambdaP = factory.create(undefined, this.context);
 		this.lambdaP.then(
 			(lambda) => {
 				this.lambda = lambda;
@@ -162,6 +159,19 @@ export class Partition extends EventEmitter {
 		await drainedP;
 
 		// Checkpoint at the latest offset
-		await this.checkpointManager.flush();
+		try {
+			await this.checkpointManager.flush();
+		} catch (err) {
+			Lumberjack.error(
+				"Error during checkpointManager.flush call",
+				{
+					partition: this.id,
+				},
+				err,
+			);
+			if (!this.config?.get("checkpoints:ignoreCheckpointFlushException")) {
+				throw err;
+			} // else, dont throw the error so that the service continues to shut down gracefully
+		}
 	}
 }

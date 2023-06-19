@@ -17,8 +17,8 @@ module.exports = function handler(fileData, logger) {
 			benchmarkType: "MemoryUsage",
 			suiteName: fileData.suiteName,
 			testName: testData.testName,
-			heapUsedAvg: testData.testData.stats.mean,
-			heapUsedStdDev: testData.testData.stats.deviation,
+			heapUsedAvg: testData.testData.stats.arithmeticMean,
+			heapUsedStdDev: testData.testData.stats.standardDeviation,
 			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	});

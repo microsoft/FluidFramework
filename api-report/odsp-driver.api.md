@@ -23,7 +23,7 @@ import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
@@ -126,8 +126,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-odsp:";
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -175,7 +173,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 // Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithProps" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContentsWithProps;
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLoggerExt): ISnapshotContentsWithProps;
 
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //

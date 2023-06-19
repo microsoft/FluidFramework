@@ -7,6 +7,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
@@ -19,6 +20,9 @@ export interface IChannel extends IFluidLoadable {
 	 */
 	readonly id: string;
 
+	/**
+	 * @deprecated 2.0.0-internal.5.1.0 - The owner property does nothing and is not recommended for use.
+	 */
 	readonly owner?: string;
 
 	readonly attributes: IChannelAttributes;
@@ -91,6 +95,7 @@ export interface IChannel extends IFluidLoadable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
@@ -236,7 +241,7 @@ export interface IChannelServices {
  * appropriate in-memory object.
  *
  * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
- * the collaborating clients will need to have access to a factory that can produce the `SharedMap` obect.
+ * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
  *
  * @remarks Factories follow a common model but enable custom behavior.
  */

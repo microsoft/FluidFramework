@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	isFluidError,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -46,6 +47,7 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
+
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -55,13 +57,12 @@ const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
  */
 export class RunningSummarizer implements IDisposable {
 	public static async start(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
-		raiseSummarizingError: (errorMessage: string) => void,
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -74,7 +75,6 @@ export class RunningSummarizer implements IDisposable {
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
 			heuristicData,
-			raiseSummarizingError,
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
@@ -146,8 +146,11 @@ export class RunningSummarizer implements IDisposable {
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
+	private readonly deltaManagerListener;
+	private readonly runtimeListener;
+
 	private constructor(
-		baseLogger: ITelemetryLogger,
+		baseLogger: ITelemetryLoggerExt,
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
@@ -157,7 +160,6 @@ export class RunningSummarizer implements IDisposable {
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
-		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -198,13 +200,12 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// pre-0.58 error message: summaryAckWaitTimeout
-			this.raiseSummarizingError("Pending summary ack not received in time");
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
+				message: "Pending summary ack not received in time",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 				summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -227,7 +228,6 @@ export class RunningSummarizer implements IDisposable {
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			this.raiseSummarizingError,
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
@@ -235,10 +235,25 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
-		// Listen for ops
-		this.runtime.deltaManager.on("op", (op) => {
-			this.handleOp(op);
-		});
+		// Listen to deltaManager for non-runtime ops
+		this.deltaManagerListener = (op) => {
+			if (!isRuntimeMessage(op)) {
+				this.handleOp(op, false);
+			}
+		};
+
+		// Listen to runtime for runtime ops
+		this.runtimeListener = (op, runtimeMessage) => {
+			if (runtimeMessage) {
+				this.handleOp(op, true);
+			}
+		};
+
+		// Purpose of listening to deltaManager is for back-compat
+		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
+		// Tracked by AB#3883
+		this.runtime.deltaManager.on("op", this.deltaManagerListener);
+		this.runtime.on("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -248,67 +263,54 @@ export class RunningSummarizer implements IDisposable {
 		if (lastAck !== undefined) {
 			refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
 			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-			try {
-				const summaryOpHandle = lastAck.summaryOp.contents.handle;
-				const summaryAckHandle = lastAck.summaryAck.contents.handle;
-				while (this.summarizingLock !== undefined) {
-					summaryLogger.sendTelemetryEvent({
-						eventName: "RefreshAttemptWithSummarizerRunning",
-						referenceSequenceNumber: refSequenceNumber,
+			const summaryOpHandle = lastAck.summaryOp.contents.handle;
+			const summaryAckHandle = lastAck.summaryAck.contents.handle;
+			while (this.summarizingLock !== undefined) {
+				summaryLogger.sendTelemetryEvent({
+					eventName: "RefreshAttemptWithSummarizerRunning",
+					referenceSequenceNumber: refSequenceNumber,
+					proposalHandle: summaryOpHandle,
+					ackHandle: summaryAckHandle,
+				});
+				await this.summarizingLock;
+			}
+
+			// Make sure we block any summarizer from being executed/enqueued while
+			// executing the refreshLatestSummaryAck.
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+			await this.lockedSummaryAction(
+				() => {},
+				async () =>
+					this.refreshLatestSummaryAckCallback({
 						proposalHandle: summaryOpHandle,
 						ackHandle: summaryAckHandle,
-					});
-					await this.summarizingLock;
-				}
+						summaryRefSeq: refSequenceNumber,
+						summaryLogger,
+					}).catch(async (error) => {
+						// If the error is 404, so maybe the fetched version no longer exists on server. We just
+						// ignore this error in that case, as that means we will have another summaryAck for the
+						// latest version with which we will refresh the state. However in case of single commit
+						// summary, we might me missing a summary ack, so in that case we are still fine as the
+						// code in `submitSummary` function in container runtime, will refresh the latest state
+						// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
+						const isIgnoredError =
+							isFluidError(error) &&
+							error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError;
 
-				// Make sure we block any summarizer from being executed/enqueued while
-				// executing the refreshLatestSummaryAck.
-				// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
-				await this.lockedSummaryAction(
-					() => {},
-					async () =>
-						this.refreshLatestSummaryAckCallback({
-							proposalHandle: summaryOpHandle,
-							ackHandle: summaryAckHandle,
-							summaryRefSeq: refSequenceNumber,
-							summaryLogger,
-						}).catch(async (error) => {
-							// If the error is 404, so maybe the fetched version no longer exists on server. We just
-							// ignore this error in that case, as that means we will have another summaryAck for the
-							// latest version with which we will refresh the state. However in case of single commit
-							// summary, we might me missing a summary ack, so in that case we are still fine as the
-							// code in `submitSummary` function in container runtime, will refresh the latest state
-							// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
-							if (
-								isFluidError(error) &&
-								error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
-							) {
-								summaryLogger.sendTelemetryEvent(
-									{
-										eventName: "HandleSummaryAckErrorIgnored",
-										referenceSequenceNumber: refSequenceNumber,
-										proposalHandle: summaryOpHandle,
-										ackHandle: summaryAckHandle,
-									},
-									error,
-								);
-							} else {
-								throw error;
-							}
-						}),
-					() => {},
-				);
-			} catch (error) {
-				summaryLogger.sendErrorEvent(
-					{
-						eventName: "HandleLastSummaryAckError",
-						referenceSequenceNumber: refSequenceNumber,
-						handle: lastAck?.summaryOp?.contents?.handle,
-						ackHandle: lastAck?.summaryAck?.contents?.handle,
-					},
-					error,
-				);
-			}
+						summaryLogger.sendTelemetryEvent(
+							{
+								eventName: isIgnoredError
+									? "HandleSummaryAckErrorIgnored"
+									: "HandleLastSummaryAckError",
+								referenceSequenceNumber: refSequenceNumber,
+								proposalHandle: summaryOpHandle,
+								ackHandle: summaryAckHandle,
+							},
+							error,
+						);
+					}),
+				() => {},
+			);
 			refSequenceNumber++;
 		}
 		return refSequenceNumber;
@@ -345,9 +347,8 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.runtime.deltaManager.off("op", (op) => {
-			this.handleOp(op);
-		});
+		this.runtime.deltaManager.off("op", this.deltaManagerListener);
+		this.runtime.off("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -372,10 +373,10 @@ export class RunningSummarizer implements IDisposable {
 	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-		if (isRuntimeMessage(op)) {
+		if (runtimeMessage) {
 			this.heuristicData.numRuntimeOps++;
 		} else {
 			this.heuristicData.numNonRuntimeOps++;
@@ -386,7 +387,7 @@ export class RunningSummarizer implements IDisposable {
 		// Check for enqueued on-demand summaries; Intentionally do nothing otherwise
 		if (
 			this.initialized &&
-			this.opCanTriggerSummary(op) &&
+			this.opCanTriggerSummary(op, runtimeMessage) &&
 			!this.tryRunEnqueuedSummary() &&
 			!this.heuristicRunnerMicroTaskExists
 		) {
@@ -407,14 +408,14 @@ export class RunningSummarizer implements IDisposable {
 	 * @param op - op to check
 	 * @returns true if this op can trigger a summary
 	 */
-	private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
+	private opCanTriggerSummary(op: ISequencedDocumentMessage, runtimeMessage: boolean): boolean {
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
 				return false;
 			default:
-				return isRuntimeMessage(op) || this.nonRuntimeOpCanTriggerSummary();
+				return runtimeMessage || this.nonRuntimeOpCanTriggerSummary();
 		}
 	}
 
@@ -646,6 +647,7 @@ export class RunningSummarizer implements IDisposable {
 					if (result.success) {
 						return;
 					}
+
 					// Check for retryDelay that can come from summaryNack or upload summary flow.
 					// Retry the same step only once per retryAfter response.
 					overrideDelaySeconds = result.retryAfterSeconds;

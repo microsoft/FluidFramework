@@ -9,8 +9,11 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createContainerAndExecute, exportFile } from "../exportFile";
 import { getSnapshotFileContent } from "../utils";
-// eslint-disable-next-line import/no-internal-modules
+/* eslint-disable import/no-internal-modules */
 import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
+import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";
+import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
+/* eslint-enable import/no-internal-modules */
 
 describe("exportFile", () => {
 	const folderRoot = path.join(__dirname, "../../src/test");
@@ -21,6 +24,9 @@ describe("exportFile", () => {
 
 	beforeEach(() => {
 		fs.mkdirSync(outputFolder);
+		global.fetch = (async () => {
+			return undefined;
+		}) as any;
 	});
 
 	afterEach(() => {
@@ -60,6 +66,58 @@ describe("exportFile", () => {
 		});
 	});
 
+	it("fails on timeout", async () => {
+		const result = await exportFile(
+			timeoutFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			1,
+		);
+
+		assert(!result.success, "result should not be successful");
+		assert(
+			result.error?.message.toLowerCase().includes("timed out"),
+			`error message does not contain "timed out" [${result.error?.message}]`,
+		);
+	});
+
+	it("fails on disallowed network fetch", async () => {
+		const result = await exportFile(
+			networkFetchFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			true,
+		);
+
+		assert(!result.success, "result should not be successful");
+		assert(
+			result.error?.message.toLowerCase().includes("network fetch"),
+			`error message does not contain "network fetch" [${result.error?.message}]`,
+		);
+	});
+
+	it("succeeds when allowed network fetch occurs", async () => {
+		const result = await exportFile(
+			networkFetchFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			false,
+		);
+
+		assert(result.success, "result should be successful");
+	});
+
 	describe("Validate arguments", () => {
 		const snapshotFilePath = path.join(snapshotFolder, "odspSnapshot1.json");
 
@@ -90,6 +148,24 @@ describe("exportFile", () => {
 			assert(
 				result.errorMessage.toLowerCase().includes("output file"),
 				`error message does not contain "output file" [${result.errorMessage}]`,
+			);
+		});
+
+		it("timeout", async () => {
+			const result = await exportFile(
+				fluidExport,
+				snapshotFilePath,
+				outputFilePath,
+				telemetryFile,
+				undefined,
+				undefined,
+				-1,
+			);
+
+			assert(!result.success, "result should not be successful");
+			assert(
+				result.errorMessage.toLowerCase().includes("timeout"),
+				`error message does not contain "timeout" [${result.errorMessage}]`,
 			);
 		});
 	});

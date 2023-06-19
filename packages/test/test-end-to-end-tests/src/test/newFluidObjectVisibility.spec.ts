@@ -14,7 +14,7 @@ import {
 	describeFullCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 
 async function requestTestObjectWithoutWait(
 	router: IFluidRouter,
@@ -103,7 +103,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
 			} else {
 				container1 = await provider.makeTestContainer();
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			dataObject1 = await requestTestObjectWithoutWait(container1, "default");
@@ -129,7 +129,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				await container1.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			// Load a second container and validate that the non-root data store is visible in it.
@@ -183,7 +183,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				await container1.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			// Load a second container and validate that both the non-root data stores are visible in it.
@@ -238,7 +238,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				await container1.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			// Load a second container and validate that the non-root data store is visible in it.
@@ -285,7 +285,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				await container1.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			// Create a DDS after data store is globally visible and store its handle.
@@ -353,7 +353,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 				await container1.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				await waitForContainerConnection(container1, true);
+				await waitForContainerConnection(container1);
 			}
 
 			// Create a DDS after data store is globally visible and store its handle.

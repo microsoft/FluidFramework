@@ -50,6 +50,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		// Performance tests benefit from having access to GC, and memory tests require it.
+		// Exposing it here avoids all packages which do perf testing from having to expose it.
+		"v8-expose-gc": true,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
@@ -71,6 +74,12 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 				`suiteName=${packageJson.name}`,
 			];
 		}
+	}
+
+	if (process.env.FLUID_TEST_MULTIREPORT === "1") {
+		config["reporter"] = `mocha-multi-reporters`;
+		config["reporter-options"] = [`configFile=${path.join(__dirname, "test-config.json")}`];
+		console.log(`configFile=${path.join(__dirname, "test-config.json")}`);
 	}
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {

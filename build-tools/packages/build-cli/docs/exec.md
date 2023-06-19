@@ -11,8 +11,9 @@ Run a shell command in the context of a package or release group.
 
 ```
 USAGE
-  $ flub exec CMD [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
-    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools]
+  $ flub exec CMD [-v] [-a | -d <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian] [--releaseGroupRoots] [--private] [--scope <value> | -g
+    client|server|azure|build-tools|gitrest|historian]
 
 ARGUMENTS
   CMD  The shell command to execute.
@@ -24,16 +25,18 @@ FLAGS
                                --releaseGroup.
   -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --all, --dir, or
                                --packages.
-                               <options: client|server|azure|build-tools>
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -g, --skipScope=<option>...  Package scopes to filter out.
-                               <options: client|server|azure|build-tools>
-  -v, --verbose                Verbose logging.
+                               <options: client|server|azure|build-tools|gitrest|historian>
   --packages                   Run on all independent packages in the repo. Cannot be used with --all, --dir, or
                                --releaseGroup.
   --[no-]private               Only include private packages (or non-private packages for --no-private)
   --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
                                --releaseGroup.
   --scope=<value>...           Package scopes to filter to.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Run a shell command in the context of a package or release group.

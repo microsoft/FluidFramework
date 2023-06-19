@@ -40,30 +40,6 @@ use_old_ClassDeclaration_FileDeltaStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_FileDocumentService": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_FileDocumentService():
-    TypeOnly<old.FileDocumentService>;
-declare function use_current_ClassDeclaration_FileDocumentService(
-    use: TypeOnly<current.FileDocumentService>);
-use_current_ClassDeclaration_FileDocumentService(
-    get_old_ClassDeclaration_FileDocumentService());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_FileDocumentService": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_FileDocumentService():
-    TypeOnly<current.FileDocumentService>;
-declare function use_old_ClassDeclaration_FileDocumentService(
-    use: TypeOnly<old.FileDocumentService>);
-use_old_ClassDeclaration_FileDocumentService(
-    get_current_ClassDeclaration_FileDocumentService());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FileDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FileDocumentServiceFactory():

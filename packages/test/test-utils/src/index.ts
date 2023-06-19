@@ -29,7 +29,12 @@ export {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "./testObjectProvider";
-export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
+export {
+	createSummarizer,
+	createSummarizerFromFactory,
+	summarizeNow,
+	createSummarizerWithTestConfig,
+} from "./TestSummaryUtils";
 export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,
@@ -37,4 +42,4 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { ensureContainerConnected, waitForContainerConnection } from "./containerUtils";
+export { waitForContainerConnection } from "./containerUtils";

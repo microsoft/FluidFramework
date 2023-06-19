@@ -18,7 +18,7 @@ describe("BatchManager", () => {
 	const smallMessage = (): BatchMessage =>
 		({
 			contents: generateStringOfSize(smallMessageSize),
-			deserializedContent: { type: ContainerMessageType.FluidDataStoreOp },
+			type: ContainerMessageType.FluidDataStoreOp,
 		} as any as BatchMessage);
 
 	it("BatchManager's soft limit: a bunch of small messages", () => {
@@ -174,7 +174,7 @@ describe("BatchManager", () => {
 		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
 		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
 
-		assert.equal(batchManager.referenceSequenceNumber, 2);
+		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
 	});
 
 	it("Batch size estimates", () => {
@@ -194,7 +194,7 @@ describe("BatchManager", () => {
 		for (let i = 0; i < 9; i++) {
 			batchManager.push({
 				contents: undefined,
-				deserializedContent: { type: ContainerMessageType.FluidDataStoreOp },
+				type: ContainerMessageType.FluidDataStoreOp,
 			} as any as BatchMessage); // empty op
 		}
 

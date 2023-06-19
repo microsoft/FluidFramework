@@ -4,17 +4,17 @@
  */
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocumentationNode, SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
+import { filterByKind } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createMemberTables, wrapInSection } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Enum` items.
+ * Default documentation transform for `Enum` items.
  */
 export function transformApiEnum(
 	apiEnum: ApiEnum,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];

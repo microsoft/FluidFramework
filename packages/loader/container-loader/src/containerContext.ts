@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
@@ -21,12 +21,10 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	ICodeDetailsLoader,
 	IFluidModuleWithDetails,
-	ISnapshotTreeWithBlobContents,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -41,7 +39,6 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
@@ -102,7 +99,7 @@ export class ContainerContext implements IContainerContext {
 		return context;
 	}
 
-	public readonly taggedLogger: ITelemetryLogger;
+	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {
@@ -113,11 +110,7 @@ export class ContainerContext implements IContainerContext {
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		const resolvedUrl = this.container.resolvedUrl;
-		if (isFluidResolvedUrl(resolvedUrl)) {
-			return resolvedUrl.id;
-		}
-		return "";
+		return this.container.resolvedUrl?.id ?? "";
 	}
 
 	public get clientDetails(): IClientDetails {
@@ -221,7 +214,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly scope: FluidObject,
 		private readonly codeLoader: ICodeDetailsLoader,
 		private readonly _codeDetails: IFluidCodeDetails,
-		private _baseSnapshot: ISnapshotTree | undefined,
+		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
 		public readonly loader: ILoader,
@@ -375,10 +368,8 @@ export class ContainerContext implements IContainerContext {
 		return true;
 	}
 
-	public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {
-		this._baseSnapshot = snapshot;
-		this.runtime.notifyAttaching?.(snapshot);
-		this.runtime.setAttachState(AttachState.Attaching);
+	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
+		return this.runtime.notifyOpReplay?.(message);
 	}
 
 	// #region private
@@ -406,6 +397,9 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	private attachListener() {
+		this.container.once("attaching", () => {
+			this.runtime.setAttachState(AttachState.Attaching);
+		});
 		this.container.once("attached", () => {
 			this.runtime.setAttachState(AttachState.Attached);
 		});

@@ -5,11 +5,16 @@
 
 import crypto from "crypto";
 import fs from "fs";
+import {
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	OdspTestDriver,
+} from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,17 +25,13 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import {
-	createFluidTestDriver,
-	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
+	getOptionOverride,
 } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
@@ -157,25 +158,18 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	profileName: string,
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = random.pick(
-		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
-	);
-	const containerOptions = random.pick(
-		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
-	);
+	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+
+	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
+	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
 	const configurations = random.pick(
-		generateConfigurations(
-			seed,
-			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-		),
+		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
 	const logger = await createLogger({
@@ -201,11 +195,6 @@ export async function initialize(
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
-	(container as Container).on("error", (error) => {
-		console.log(error);
-		process.exit(-1);
-	});
-
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
@@ -218,15 +207,13 @@ export async function initialize(
 		);
 	}
 
-	// Currently odsp binary snapshot format only works for special file names. This won't affect any other test
-	// since we have a unique dateId as prefix. So we can just add the required suffix.
-	const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+	const testId = testIdn ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.close();
+	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

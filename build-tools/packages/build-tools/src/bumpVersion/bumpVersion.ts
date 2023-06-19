@@ -13,11 +13,11 @@ import {
 	isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
 
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { Context } from "./context";
 import { getPackageShortName } from "./releaseVersion";
-import { exec, fatal } from "./utils";
+import { exec, fatal, MonoRepoKind, isMonoRepoKind } from "./utils";
 import { VersionBag, getRepoStateChange } from "./versionBag";
 
 export async function bumpVersionCommand(
@@ -70,7 +70,7 @@ export async function bumpVersion(
 	for (const name of packagesToBump) {
 		if (isMonoRepoKind(name)) {
 			monoRepoNeedsBump.add(name);
-			const repo = context.repo.monoRepos.get(name);
+			const repo = context.repo.releaseGroups.get(name);
 			assert(
 				repo !== undefined,
 				`Attempted to bump ${name} version on a Fluid repo with no ${name} release group defined`,
@@ -140,7 +140,7 @@ export async function bumpRepo(
 			ver = versionBag.get(key);
 		} else if (isMonoRepoKind(key)) {
 			// console.log(`getting version from repo`)
-			const repo = context.repo.monoRepos.get(key);
+			const repo = context.repo.releaseGroups.get(key);
 			if (repo === undefined) {
 				fatal(`repo not found: ${key}`);
 			}
@@ -156,7 +156,7 @@ export async function bumpRepo(
 		monoRepo: MonoRepo,
 	) => {
 		return exec(
-			`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`,
+			`npx lerna@5.6.2 version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`,
 			monoRepo.repoPath,
 			"bump mono repo",
 		);
@@ -172,7 +172,7 @@ export async function bumpRepo(
 		assert(ver, "ver is missing");
 		assert(isVersionBumpTypeExtended(versionBump), `${versionBump} is not a valid bump type.`);
 		const adjVer = bumpVersionScheme(ver, versionBump, scheme);
-		const toBump = context.repo.monoRepos.get(monoRepo);
+		const toBump = context.repo.releaseGroups.get(monoRepo);
 		assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
 		if (toBump !== undefined) {
 			await bumpLegacyDependencies(context, adjVer);
@@ -202,7 +202,7 @@ async function bumpLegacyDependencies(context: Context, versionBump: VersionChan
 	if (versionBump !== "patch") {
 		// Assumes that we want N/N-1 testing
 		const pkg =
-			context.fullPackageMap.get("@fluidframework/test-end-to-end-tests") ||
+			context.fullPackageMap.get("@fluid-internal/test-end-to-end-tests") ||
 			context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
 		if (!pkg) {
 			fatal("Unable to find package @fluid-internal/end-to-end-tests");

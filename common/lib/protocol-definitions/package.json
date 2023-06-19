@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "1.2.0",
+	"version": "2.0.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,8 +19,6 @@
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
@@ -35,8 +33,6 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
-		"tsfmt": "tsfmt --verify",
-		"tsfmt:fix": "tsfmt --replace",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
@@ -44,9 +40,9 @@
 		"@fluidframework/common-definitions": "^0.20.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.19.0-165129",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-165129",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@1.1.0",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -60,6 +56,7 @@
 		"typescript": "~4.5.5",
 		"typescript-formatter": "7.1.0"
 	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
@@ -67,6 +64,33 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDocumentAttributes": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConnected": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentAugmentedMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentSystemMessage": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IHelpMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IQueueMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_MessageType": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

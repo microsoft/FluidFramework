@@ -7,6 +7,7 @@
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -110,15 +111,19 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
-    existing: boolean;
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // @deprecated (undocumented)
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    // (undocumented)
+    initialClients: ISignalClient[];
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
+    reason: string;
+    // (undocumented)
     version: string;
 }
 
@@ -135,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
-    dispose?(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -216,6 +221,7 @@ export interface IContainerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
+    (event: "attaching", listener: () => void): any;
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
@@ -277,7 +283,7 @@ export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    (event: "disconnect", listener: (reason: string) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 
@@ -389,17 +395,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -421,7 +416,7 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 
 // @public
 export interface ILoaderHeader {
-    // (undocumented)
+    // @deprecated (undocumented)
     [LoaderHeader.cache]: boolean;
     // (undocumented)
     [LoaderHeader.clientDetails]: IClientDetails;
@@ -456,12 +451,6 @@ export interface IPendingLocalState {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)
@@ -542,6 +531,7 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
+    // @deprecated (undocumented)
     cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",
@@ -561,6 +551,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

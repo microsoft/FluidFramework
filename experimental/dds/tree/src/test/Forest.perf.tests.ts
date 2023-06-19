@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
-import { assert } from '../Common';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { Forest, ForestNode } from '../Forest';
 import { RevisionView } from '../RevisionView';

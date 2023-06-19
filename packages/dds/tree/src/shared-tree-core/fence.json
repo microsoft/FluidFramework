@@ -1,5 +1,0 @@
-{
-	"tags": ["shared-tree-core"],
-	"exports": ["index"],
-	"imports": ["core", "events", "util", "rebase"]
-}

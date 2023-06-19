@@ -1,0 +1,41 @@
+{
+	"name": "@fluid-tools/markdown-magic",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "tools/markdown-magic"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"bin": {
+		"markdown-magic": "bin/markdown-magic"
+	},
+	"scripts": {
+		"build": "npm run build:docs",
+		"build:docs": "node src/index.cjs --files README.md",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check .",
+		"prettier:fix": "prettier --write .",
+		"test": "node src/index.cjs --files test/**/*.md !test/README.md"
+	},
+	"dependencies": {
+		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
+		"chalk": "^2.4.2",
+		"markdown-magic-package-scripts": "^1.2.1",
+		"markdown-magic-template": "^1.0.0",
+		"yargs": "^17.6.2"
+	},
+	"devDependencies": {
+		"prettier": "~2.6.2"
+	},
+	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2"
+}

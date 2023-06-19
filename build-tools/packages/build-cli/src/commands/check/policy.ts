@@ -5,15 +5,11 @@
 import { Flags } from "@oclif/core";
 import * as childProcess from "child_process";
 import * as fs from "fs";
+import { readJson } from "fs-extra";
 import { EOL as newline } from "os";
 import path from "path";
 
-import {
-	getFluidBuildConfig,
-	Handler,
-	policyHandlers,
-	readJsonAsync,
-} from "@fluidframework/build-tools";
+import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 
@@ -146,7 +142,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		const rawExclusions: string[] =
 			this.flags.exclusions === undefined
 				? manifest.policy?.exclusions
-				: await readJsonAsync(this.flags.exclusions);
+				: await readJson(this.flags.exclusions);
 
 		const exclusions: RegExp[] = rawExclusions.map((e: string) => new RegExp(e, "i"));
 

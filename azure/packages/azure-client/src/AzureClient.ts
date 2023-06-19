@@ -9,7 +9,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -21,6 +20,7 @@ import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
@@ -51,6 +51,7 @@ const MAX_VERSION_COUNT = 5;
 export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
+	private readonly configProvider: IConfigProviderBase | undefined;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
@@ -67,6 +68,7 @@ export class AzureClient {
 			this.props.connection.tokenProvider,
 			{ enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
 		);
+		this.configProvider = props.configProvider;
 	}
 
 	/**
@@ -226,6 +228,7 @@ export class AzureClient {
 			codeLoader,
 			logger: this.props.logger,
 			options: { client },
+			configProvider: this.configProvider,
 		});
 	}
 
@@ -248,9 +251,11 @@ export class AzureClient {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
 			await container.attach(createNewRequest);
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return container.resolvedUrl.id;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;

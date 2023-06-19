@@ -14,13 +14,13 @@ import {
 	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../../utilities";
+import { ApiModuleLike, filterByKind } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for module-like API items (packages, namespaces).
+ * Default documentation transform for module-like API items (packages, namespaces).
  *
  * @remarks Format:
  *
@@ -40,7 +40,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * - namespaces
  *
- * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
  *
  * - interfaces
  *
@@ -59,12 +59,12 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
 export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
 	childItems: readonly ApiItem[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const children: SectionNode[] = [];
 
-	const hasAnyChildren = apiItem.members.length > 0;
+	const hasAnyChildren = childItems.length > 0;
 
 	if (hasAnyChildren) {
 		// Accumulate child items

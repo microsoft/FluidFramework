@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MapWithExpiration } from "@fluidframework/driver-utils";
+import { MapWithExpiration } from "./mapWithExpiration";
 
 export interface ICache<T> {
 	get(key: string): Promise<T | undefined>;

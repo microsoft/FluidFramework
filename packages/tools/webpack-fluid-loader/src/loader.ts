@@ -23,23 +23,22 @@ import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
-import {
-	extractPackageIdentifierDetails,
-	resolveFluidPackageEnvironment,
-	WebCodeLoader,
-} from "@fluidframework/web-code-loader";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
+import {
+	extractPackageIdentifierDetails,
+	resolveFluidPackageEnvironment,
+	WebCodeLoader,
+} from "./webCodeLoader";
 
 export interface IDevServerUser extends IUser {
 	name: string;
@@ -392,20 +391,11 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 	// We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
 	// remove it from the DOM if needed.
 	const mountableView = fluidObject.IFluidMountableView;
-	if (mountableView !== undefined) {
-		mountableView.mount(div);
-		return;
+	if (mountableView === undefined) {
+		throw new Error("Could not mount the view");
 	}
 
-	// If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-	// if the response is a React-based Fluid object using hooks) and is not the preferred path, but sometimes it
-	// can work.
-	console.warn(
-		`Container returned a non-IFluidMountableView.  This can cause errors when mounting Fluid objects ` +
-			`with React hooks across bundle boundaries.  URL: ${url}`,
-	);
-	const view = new HTMLViewAdapter(fluidObject);
-	view.render(div, { display: "block" });
+	mountableView.mount(div);
 }
 
 /**
@@ -435,7 +425,9 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			ensureFluidResolvedUrl(resolvedUrl);
+			if (resolvedUrl === undefined) {
+				throw new Error("resolvedUrl must be defined");
+			}
 			docUrl = url.replace(documentId, resolvedUrl.id);
 			title = resolvedUrl.id;
 		}

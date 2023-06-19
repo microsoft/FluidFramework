@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { unreachableCase } from "@fluidframework/common-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -54,7 +55,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	return (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -149,19 +150,31 @@ export function chainIterables<T, TState>(
 }
 
 /**
+ * Controls exit behavior for {@link interleave}.
+ */
+export enum ExitBehavior {
+	OnBothExhausted,
+	OnEitherExhausted,
+}
+
+/**
  * Interleaves outputs from `generator1` and `generator2`.
  * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
  * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a
  * defined interval.
  *
- * Exhausts both input generators before terminating.
+ * Exhausts both input generators before terminating by default. If {@link ExitBehavior.OnEitherExhausted} is
+ * provided, instead exits as soon as the next element it would produce is `done`.
  *
  * @example
  * ```typescript
  * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
  * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
  * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
- * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
+ * interleave(take(2, gen1), gen2, 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b
+ * interleave(gen1, take(2, gen2), 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b, 3
+ * interleave(gen1, take(3, gen2), 2, 3) // 1, 2, a, b, c, 3, 4
+ * interleave(gen1, take(2, gen2), 2, 3) // 1, 2, a, b
  * ```
  */
 export function interleave<T, TState>(
@@ -169,6 +182,7 @@ export function interleave<T, TState>(
 	generator2: Generator<T, TState>,
 	numOps1 = 1,
 	numOps2 = 1,
+	exitBehavior = ExitBehavior.OnBothExhausted,
 ): Generator<T, TState> {
 	// The implementation strategy here is to use `chainIterables` to alternate which of the two input generators
 	// we feed to the output. This has one small problem: once both generators are exhausted, `chainIterables` needs
@@ -203,9 +217,20 @@ export function interleave<T, TState>(
 		return result;
 	};
 
+	let isDone: () => boolean;
+	switch (exitBehavior) {
+		case ExitBehavior.OnBothExhausted:
+			isDone = () => generator1Exhausted && generator2Exhausted;
+			break;
+		case ExitBehavior.OnEitherExhausted:
+			isDone = () => generator1Exhausted || generator2Exhausted;
+			break;
+		default:
+			unreachableCase(exitBehavior);
+	}
 	let generatorIndex = 0;
 	return chainIterables(() => {
-		if (generator1Exhausted && generator2Exhausted) {
+		if (isDone()) {
 			return done;
 		}
 
@@ -267,7 +292,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	return async (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -363,26 +388,14 @@ export function chainAsyncIterables<T, TState>(
 }
 
 /**
- * Interleaves outputs from `generator1` and `generator2`.
- * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
- * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a
- * defined interval.
- *
- * Exhausts both input generators before terminating.
- *
- * @example
- * ```typescript
- * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
- * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
- * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
- * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
- * ```
+ * AsyncGenerator variant of {@link interleave}.
  */
 export function interleaveAsync<T, TState>(
 	generator1: AsyncGenerator<T, TState>,
 	generator2: AsyncGenerator<T, TState>,
 	numOps1 = 1,
 	numOps2 = 1,
+	exitBehavior = ExitBehavior.OnBothExhausted,
 ): AsyncGenerator<T, TState> {
 	let generator1Exhausted = false;
 	let generator2Exhausted = false;
@@ -399,9 +412,20 @@ export function interleaveAsync<T, TState>(
 		return result;
 	};
 
+	let isDone: () => boolean;
+	switch (exitBehavior) {
+		case ExitBehavior.OnBothExhausted:
+			isDone = () => generator1Exhausted && generator2Exhausted;
+			break;
+		case ExitBehavior.OnEitherExhausted:
+			isDone = () => generator1Exhausted || generator2Exhausted;
+			break;
+		default:
+			unreachableCase(exitBehavior);
+	}
 	let generatorIndex = 0;
 	return chainAsyncIterables(async () => {
-		if (generator1Exhausted && generator2Exhausted) {
+		if (isDone()) {
 			return done;
 		}
 

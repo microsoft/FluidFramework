@@ -20,7 +20,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { SharedString } from "@fluidframework/sequence";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 class TestDataObject extends DataObject {

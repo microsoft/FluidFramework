@@ -8,6 +8,7 @@ import { ApiCallSignature } from '@microsoft/api-extractor-model';
 import { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
+import { ApiEntryPoint } from '@microsoft/api-extractor-model';
 import { ApiEnum } from '@microsoft/api-extractor-model';
 import { ApiEnumMember } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
@@ -58,11 +59,18 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, ConfigurationBase {
+    apiModel: ApiModel;
+    readonly uriRoot: string;
+}
+
+// @public
+export interface ApiItemTransformationOptions {
     createChildContentSections?: CreateChildContentSections;
     transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
     transformApiClass?: TransformApiItemWithChildren<ApiClass>;
     transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
     transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
     transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
     transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
@@ -71,7 +79,6 @@ export interface ApiItemTransformationConfiguration {
     transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
     transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
     transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
     transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
     transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
     transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
@@ -92,7 +99,7 @@ export enum ApiModifier {
 }
 
 // @public
-export type ApiModuleLike = ApiPackage | ApiNamespace;
+export type ApiModuleLike = ApiEntryPoint | ApiNamespace;
 
 export { ApiPackage }
 
@@ -118,31 +125,30 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
 }
 
 // @public
-export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
+export interface ConfigurationBase {
+    readonly logger?: Logger;
+}
+
+// @public
+export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
 
 // @public
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
-export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
-
-// @public
 export const defaultConsoleLogger: Logger;
 
 // @public
-export namespace DefaultPolicies {
+export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
-    export function defaultFileNamePolicy(apiItem: ApiItem): string;
-    export function defaultFrontMatterPolicy(): undefined;
-    export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
-    export function defaultLinkTextPolicy(apiItem: ApiItem): string;
-    export function defaultPackageFilterPolicy(): boolean;
-    export function defaultUriBaseOverridePolicy(): string | undefined;
+    export function defaultGenerateFrontMatter(): undefined;
+    export function defaultGetFileNameForItem(apiItem: ApiItem): string;
+    export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
+    export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
+    export function defaultGetUriBaseOverrideForItem(): string | undefined;
+    export function defaultSkipPackage(): boolean;
 }
-
-// @public
-export const defaultPolicyOptions: Required<PolicyOptions>;
 
 // @public
 export interface DocumentationLiteralNode<T = unknown> extends Literal<T>, DocumentationNode {
@@ -194,6 +200,20 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
+export interface DocumentationSuiteOptions {
+    documentBoundaries?: DocumentBoundaries;
+    generateFrontMatter?: (documentItem: ApiItem) => string | undefined;
+    getFileNameForItem?: (apiItem: ApiItem) => string;
+    getHeadingTextForItem?: (apiItem: ApiItem) => string;
+    getLinkTextForItem?: (apiItem: ApiItem) => string;
+    getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+    hierarchyBoundaries?: HierarchyBoundaries;
+    includeBreadcrumb?: boolean;
+    includeTopLevelDocumentHeading?: boolean;
+    skipPackage?: (apiPackage: ApiPackage) => boolean;
+}
+
+// @public
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
@@ -224,13 +244,10 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 }
 
 // @public
-export type FileNamePolicy = (apiItem: ApiItem) => string;
+export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
-export type FrontMatterPolicy = (documentItem: ApiItem) => string | undefined;
-
-// @public
-export function getDefaultValueBlock(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
 
 // @public
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
@@ -239,16 +256,13 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
+export function getFilePathForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): string;
 
 // @public
-export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
+export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
 
 // @public
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
-
-// @public
-export function getMarkdownRenderContextWithDefaults(partialContext: Partial<MarkdownRenderContext> | undefined): MarkdownRenderContext;
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
 
 // @public
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -284,9 +298,6 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
     get singleLine(): false;
     readonly type = DocumentationNodeType.Heading;
 }
-
-// @public
-export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 // @public
 export type HierarchyBoundaries = ApiMemberKind[];
@@ -336,9 +347,6 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 }
 
 // @public
-export type LinkTextPolicy = (apiItem: ApiItem) => string;
-
-// @public
 export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
 
 // @public
@@ -354,15 +362,10 @@ export interface Logger {
 export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
 
 // @public
-export interface MarkdownDocumenterConfiguration extends PolicyOptions, ApiItemTransformationConfiguration {
-    apiModel: ApiModel;
-    readonly logger?: Logger;
+export interface MarkdownRenderConfiguration extends ConfigurationBase {
     readonly newlineKind?: NewlineKind;
-    readonly uriRoot: string;
+    readonly renderers?: MarkdownRenderers;
 }
-
-// @public
-export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
 
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
@@ -393,9 +396,6 @@ export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocum
 }
 
 // @public
-export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
-
-// @public
 export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
     static combine(...nodes: ParagraphNode[]): ParagraphNode;
@@ -416,27 +416,16 @@ export class PlainTextNode implements DocumentationLiteralNode<string>, SingleLi
 }
 
 // @public
-export interface PolicyOptions {
-    documentBoundaries?: DocumentBoundaries;
-    fileNamePolicy?: FileNamePolicy;
-    frontMatterPolicy?: FrontMatterPolicy;
-    headingTitlePolicy?: HeadingTitlePolicy;
-    hierarchyBoundaries?: HierarchyBoundaries;
-    includeBreadcrumb?: boolean;
-    includeTopLevelDocumentHeading?: boolean;
-    linkTextPolicy?: LinkTextPolicy;
-    packageFilterPolicy?: PackageFilterPolicy;
-    uriBaseOverridePolicy?: UriBaseOverridePolicy;
-}
+export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
-export function renderApiModelAsMarkdown(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
-
-// @public
-export function renderDocumentAsMarkdown(document: DocumentNode, context?: Partial<MarkdownRenderContext>): string;
+export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+
+// @public
+export function renderDocumentsAsMarkdown(documents: DocumentNode[], config: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
@@ -544,16 +533,16 @@ export interface TextFormatting {
 }
 
 // @public
-export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
+export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
 
 // @public
-export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
+export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
 
 // @public
-export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
+export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
 
 // @public
-export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocumentationNode | undefined;
+export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
@@ -563,9 +552,6 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
     get singleLine(): false;
     readonly type = DocumentationNodeType.UnorderedList;
 }
-
-// @public
-export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 
 // @public
 export type UrlTarget = string;

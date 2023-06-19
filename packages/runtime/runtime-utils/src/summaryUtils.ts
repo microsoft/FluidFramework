@@ -11,7 +11,7 @@ import {
 	Uint8ArrayToString,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ITree,
 	SummaryType,
@@ -27,6 +27,7 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 
 /**
@@ -386,5 +387,84 @@ export class TelemetryContext implements ITelemetryContext {
 			jsonObject[key] = value;
 		});
 		return JSON.stringify(jsonObject);
+	}
+}
+
+/**
+ * Trims the leading slashes from the given string.
+ * @param str - A string that may contain leading slashes.
+ * @returns A new string without leading slashes.
+ */
+function trimLeadingSlashes(str: string) {
+	return str.replace(/^\/+/g, "");
+}
+
+/**
+ * Trims the trailing slashes from the given string.
+ * @param str - A string that may contain trailing slashes.
+ * @returns A new string without trailing slashes.
+ */
+function trimTrailingSlashes(str: string) {
+	return str.replace(/\/+$/g, "");
+}
+
+/**
+ * Helper class to build the garbage collection data of a node by combining the data from multiple nodes.
+ * @internal
+ */
+export class GCDataBuilder implements IGarbageCollectionData {
+	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
+	public get gcNodes(): { [id: string]: string[] } {
+		const gcNodes = {};
+		for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
+			gcNodes[nodeId] = [...outboundRoutes];
+		}
+		return gcNodes;
+	}
+
+	public addNode(id: string, outboundRoutes: string[]) {
+		this.gcNodesSet[id] = new Set(outboundRoutes);
+	}
+
+	/**
+	 * Adds the given GC nodes. It does the following:
+	 * - Normalizes the ids of the given nodes.
+	 * - Prefixes the given `prefixId` to the given nodes' ids.
+	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
+	 */
+	public prefixAndAddNodes(prefixId: string, gcNodes: { [id: string]: string[] }) {
+		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+			// Remove any leading slashes from the id.
+			let normalizedId = trimLeadingSlashes(id);
+			// Prefix the given id to the normalized id.
+			normalizedId = `/${prefixId}/${normalizedId}`;
+			// Remove any trailing slashes from the normalized id. Note that the trailing slashes are removed after
+			// adding the prefix for handling the special case where id is "/".
+			normalizedId = trimTrailingSlashes(normalizedId);
+
+			// Add the outbound routes against the normalized and prefixed id without duplicates.
+			this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
+		}
+	}
+
+	public addNodes(gcNodes: { [id: string]: string[] }) {
+		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+			this.gcNodesSet[id] = new Set(outboundRoutes);
+		}
+	}
+
+	/**
+	 * Adds the given outbound route to the outbound routes of all GC nodes.
+	 */
+	public addRouteToAllNodes(outboundRoute: string) {
+		for (const outboundRoutes of Object.values(this.gcNodesSet)) {
+			outboundRoutes.add(outboundRoute);
+		}
+	}
+
+	public getGCData(): IGarbageCollectionData {
+		return {
+			gcNodes: this.gcNodes,
+		};
 	}
 }

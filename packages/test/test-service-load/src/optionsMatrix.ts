@@ -4,19 +4,21 @@
  */
 
 import {
+	booleanCases,
+	generatePairwiseOptions,
+	OptionsMatrix,
+	numberCases,
+} from "@fluid-internal/test-pairwise-generator";
+import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	booleanCases,
-	generatePairwiseOptions,
-	OptionsMatrix,
-	numberCases,
-} from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
@@ -88,7 +90,6 @@ export function generateRuntimeOptions(
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
-		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
 		compressionOptions: [
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
@@ -97,6 +98,8 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
+		enableRuntimeIdCompressor: [undefined, true],
+		enableGroupedBatching: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(
@@ -117,4 +120,25 @@ export function generateConfigurations(
 		return [{}];
 	}
 	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
+}
+
+/**
+ *
+ * @param testConfig - the ILoadTestConfig to extract the Option Override from
+ * @param driverType - the DriverType being used in the test, used to determine which option override to pick
+ * @param endpoint - the Endpoint being used in the test, used to determine which option override to pick
+ * @returns an option override
+ */
+export function getOptionOverride(
+	testConfig: ILoadTestConfig | undefined,
+	driverType: TestDriverTypes,
+	endpoint: string | undefined,
+): OptionOverride | undefined {
+	// Specifically using an all or nothing strategy as that's how our current test config options are written today
+	// We first search for the key driverType-endpoint, if that doesn't exist then we just key on the driverType
+	const driverEndpointOverride = `${driverType}-${endpoint}`;
+	return (
+		testConfig?.optionOverrides?.[driverEndpointOverride] ??
+		testConfig?.optionOverrides?.[driverType]
+	);
 }

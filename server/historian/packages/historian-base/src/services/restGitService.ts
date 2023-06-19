@@ -17,6 +17,7 @@ import {
 	RestWrapper,
 	IWholeFlatSummary,
 	IWholeSummaryPayloadType,
+	LatestSummaryId,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
@@ -31,7 +32,7 @@ import { ICache } from "./definitions";
 const packageDetails = require("../../package.json");
 const userAgent = `Historian/${packageDetails.version}`;
 
-const latestSummarySha = "latest";
+const LatestSummaryShaKey = `${LatestSummaryId}-sha`;
 
 export interface IDocument {
 	existing: boolean;
@@ -246,6 +247,12 @@ export class RestGitService {
 				this.getSummaryCacheKey(summaryParams.type),
 				summaryResponse as IWholeFlatSummary,
 			);
+			// Important: separately cache latest summary's sha for efficiently checking if a
+			// summary read for a specific sha is actually looking for latest summary.
+			this.setCache<string>(
+				this.getSummaryCacheKey(summaryParams.type, LatestSummaryShaKey),
+				summaryResponse.id,
+			);
 		} else {
 			// Delete previous summary from cache so next summary retrieval is forced to go to the service.
 			this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
@@ -265,37 +272,51 @@ export class RestGitService {
 		return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
 	}
 
+	/**
+	 * Retrieve a summary from cache or storage.
+	 * @param sha - version id for the requested summary. When using Git, this is the commit sha for the summary.
+	 * @param _useCache - Ignored. See [#14623](https://github.com/microsoft/FluidFramework/issues/14623) for more details.
+	 */
 	public async getSummary(sha: string, _useCache: boolean): Promise<IWholeFlatSummary> {
-		const summaryFetch = async () =>
+		// Fetch a summary requested by sha
+		const summaryFetch = async (): Promise<IWholeFlatSummary> =>
 			this.get<IWholeFlatSummary>(
 				`/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`,
 			);
-
-		if (sha !== latestSummarySha) {
-			// Never cache specific summary versions.
-			return summaryFetch();
-		}
 
 		// Currently, only "container" type summaries are retrieved from storage.
 		// In the future, we might want to also retrieve "channels". When that happens,
 		// our APIs will change so we specify what type we want to retrieve during
 		// the request.
-		const summaryCacheKey = this.getSummaryCacheKey("container");
+		const latestSummaryCacheKey = this.getSummaryCacheKey("container");
 
-		// To do: Right now, we enable the cache anytime. We will choose either one of the following options:
-		// 1. Always using the cache but clearing the cache at session end from the server.
-		// 2. The driver fix to disable cache only on session start or cluster change if we can detect it.
-		// if (!useCache) {
-		//     // We set the useCache flag as false when we fetch the initial latest summary for a document.
-		//     // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
-		//     // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
-		//     // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
-		//     // the cache can read the correct value.
-		//     return this.fetchAndCache(summaryCacheKey, summaryFetch);
-		// }
-
-		// If we get to this point, we want to obtain the latest summary, and we want to try reading it from the cache.
-		return this.resolve(summaryCacheKey, summaryFetch, true);
+		if (sha === LatestSummaryId) {
+			// Attempt to retrieve the latest summary from cache or storage, using specific `LatestSummaryCacheKey`.
+			// If retrieved from storage, this operation will also cache the retrieved value.
+			return this.resolve(latestSummaryCacheKey, summaryFetch, true);
+		}
+		// It is possible that the client will request the latest summary via specific sha instead of special "latest" sha.
+		// If we already have latest cached, we want to avoid hitting storage, so first check if the sha is the latest summary's sha.
+		// Important: we first check _only_ the sha in order to avoid unnecessarily reading an entire summary into memory from the cache.
+		const latestSummaryShaCacheKey = this.getSummaryCacheKey("container", LatestSummaryShaKey);
+		const cachedLatestSummarySha = await this.getCache<string | undefined>(
+			latestSummaryShaCacheKey,
+		);
+		if (cachedLatestSummarySha === sha) {
+			// If the requested sha is the same as the cached latest summary's sha, we should retrieve it
+			// from cache.
+			const cachedLatestSummary = await this.getCache<IWholeFlatSummary>(
+				latestSummaryCacheKey,
+			);
+			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
+			// by specific version as normal and do not cache it.
+			if (cachedLatestSummary) {
+				return cachedLatestSummary;
+			}
+		}
+		// We only cache the latest summary for each document, so if the requested summary is not latest,
+		// retrieve it without caching.
+		return summaryFetch();
 	}
 
 	public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -497,16 +518,35 @@ export class RestGitService {
 		if (this.cache) {
 			// Attempt to cache to Redis - log any errors but don't fail
 			runWithRetry(
-				async () => this.cache.set(key, value),
-				"RestGitService.setCache",
-				3,
-				1000,
-				winston,
+				async () => this.cache.set(key, value) /* api */,
+				"RestGitService.setCache" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				this.lumberProperties /* telemetryProperties */,
 			).catch((error) => {
 				winston.error(`Error caching ${key} to redis`, error);
 				Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
 			});
 		}
+	}
+
+	private async getCache<T>(key: string): Promise<T | undefined> {
+		if (this.cache) {
+			// Attempt to cache to Redis - log any errors but don't fail
+			const cachedValue: T | undefined = await runWithRetry(
+				async () => this.cache.get<T | undefined>(key) /* api */,
+				"RestGitService.getCache" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				this.lumberProperties /* telemetryProperties */,
+			).catch((error) => {
+				winston.error(`Error fetching ${key} from cache`, error);
+				Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
+				return undefined;
+			});
+			return cachedValue;
+		}
+		return undefined;
 	}
 
 	/**
@@ -540,13 +580,9 @@ export class RestGitService {
 	}
 
 	private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
-		if (this.cache && useCache) {
+		if (useCache) {
 			// Attempt to grab the value from the cache. Log any errors but don't fail the request
-			const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
-				winston.error(`Error fetching ${key} from cache`, error);
-				Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
-				return undefined;
-			});
+			const cachedValue: T | undefined = await this.getCache<T>(key);
 
 			if (cachedValue) {
 				winston.info(`Resolving ${key} from cache`);
@@ -561,7 +597,11 @@ export class RestGitService {
 		return fetch();
 	}
 
-	private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {
-		return `${this.tenantId}:${this.documentId}:summary:${type}`;
+	private getSummaryCacheKey(type: IWholeSummaryPayloadType, extraIdentifier?: string): string {
+		const key: string[] = [this.tenantId, this.documentId, "summary", type];
+		if (extraIdentifier) {
+			key.push(extraIdentifier);
+		}
+		return key.join(":");
 	}
 }
