@@ -270,7 +270,7 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 
 // @public
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, collectMemory?: boolean);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
     // (undocumented)
     cancel(props?: ITelemetryProperties, error?: any): void;
     // (undocumented)
@@ -281,11 +281,11 @@ export class PerformanceEvent {
     // (undocumented)
     reportProgress(props?: ITelemetryProperties, eventNameSuffix?: string): void;
     // (undocumented)
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers): PerformanceEvent;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean): PerformanceEvent;
     // (undocumented)
     static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers): T;
     // (undocumented)
-    static timedExecAsync<T>(logger: ITelemetryLogger, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, collectMemory?: boolean): Promise<T>;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean): Promise<T>;
 }
 
 // @public

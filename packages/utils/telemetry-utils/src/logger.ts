@@ -422,9 +422,9 @@ export class PerformanceEvent {
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
-		collectMemory: boolean = false,
+		recordHeapSize: boolean = false,
 	) {
-		return new PerformanceEvent(logger, event, markers, collectMemory);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize);
 	}
 
 	public static timedExec<T>(
@@ -449,9 +449,9 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
-		collectMemory?: boolean,
+		recordHeapSize?: boolean,
 	) {
-		const perfEvent = PerformanceEvent.start(logger, event, markers, collectMemory);
+		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -469,13 +469,13 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEvent;
 	private readonly startTime = performance.now();
 	private startMark?: string;
-	private startMemory: number | undefined = 0;
+	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
-		private readonly collectMemory: boolean = false,
+		private readonly recordHeapSize: boolean = false,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -538,16 +538,20 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
-			if (this.startMemory) {
+			if (this.startMemoryCollection) {
 				const currentMemory = (performance as PerformanceWithMemory)?.memory
 					?.usedJSHeapSize;
-				const differenceInKBytes = Math.floor((currentMemory - this.startMemory) / 1024);
+				const differenceInKBytes = Math.floor(
+					(currentMemory - this.startMemoryCollection) / 1024,
+				);
 				if (differenceInKBytes > 0) {
 					event.usedJSHeapSize = differenceInKBytes;
 				}
 			}
-		} else if (this.collectMemory) {
-			this.startMemory = (performance as PerformanceWithMemory)?.memory?.usedJSHeapSize;
+		} else if (this.recordHeapSize) {
+			this.startMemoryCollection = (
+				performance as PerformanceWithMemory
+			)?.memory?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);

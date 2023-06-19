@@ -51,6 +51,6 @@ describe("PerformanceEvent", () => {
 			{ start: true, end: true, cancel: "generic" },
 			true,
 		);
-		assert(logger.errorsLogged === 0, "Shouldn't have logged any errors");
+		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 });
