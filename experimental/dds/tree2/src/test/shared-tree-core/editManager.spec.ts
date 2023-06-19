@@ -387,57 +387,99 @@ describe("EditManager", () => {
 		});
 	});
 
-	describe("Avoids unnecessary rebases", () => {
-		runUnitTestScenario(
-			"Sequenced changes that are based on the trunk should not be rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 4, type: "Pull", ref: 3, from: peer2 },
-				{ seq: 5, type: "Pull", ref: 4, from: peer2 },
-				{ seq: 6, type: "Pull", ref: 5, from: peer1 },
-				{ seq: 7, type: "Pull", ref: 5, from: peer1 },
-			],
-			new UnrebasableTestChangeRebaser(),
-		);
-		runUnitTestScenario(
-			"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Push" },
-				{ seq: 2, type: "Push" },
-				{ seq: 4, type: "Push" },
-				{ seq: 1, type: "Ack" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Ack" },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
-		runUnitTestScenario(
-			"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Pull", ref: 0, from: peer1 },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
+	describe("Perf", () => {
+		describe("Avoids unnecessary rebases", () => {
+			runUnitTestScenario(
+				"Sequenced changes that are based on the trunk should not be rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 4, type: "Pull", ref: 3, from: peer2 },
+					{ seq: 5, type: "Pull", ref: 4, from: peer2 },
+					{ seq: 6, type: "Pull", ref: 5, from: peer1 },
+					{ seq: 7, type: "Pull", ref: 5, from: peer1 },
+				],
+				new UnrebasableTestChangeRebaser(),
+			);
+			runUnitTestScenario(
+				"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Push" },
+					{ seq: 2, type: "Push" },
+					{ seq: 4, type: "Push" },
+					{ seq: 1, type: "Ack" },
+					{ seq: 2, type: "Ack" },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Ack" },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+			runUnitTestScenario(
+				"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+		});
+
+		interface Scenario {
+			readonly nbRebased: number;
+			readonly nbTrunk: number;
+		}
+
+		const scenarios: Scenario[] = [
+			{ nbRebased: 1, nbTrunk: 1 },
+			{ nbRebased: 10, nbTrunk: 1 },
+			{ nbRebased: 1, nbTrunk: 10 },
+			{ nbRebased: 7, nbTrunk: 3 },
+		];
+
+		describe("Local commit rebasing", () => {
+			for (const { nbRebased, nbTrunk } of scenarios) {
+				it(`Rebase ${nbRebased} local commits over ${nbTrunk} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebaseLocalEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
+					assert.equal(rebaser.nbRebased, nbTrunk * nbRebased ** 2);
+					assert.equal(rebaser.nbInverted, nbTrunk * nbRebased);
+					assert.equal(rebaser.nbComposed, nbTrunk * (nbRebased * 2 + 1));
+				});
+			}
+		});
+		describe("Peer commit rebasing", () => {
+			for (const { nbRebased, nbTrunk } of scenarios) {
+				it(`Rebase ${nbRebased} peer commits over ${nbTrunk} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebasePeerEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
+					assert.equal(
+						rebaser.nbRebased,
+						nbTrunk * nbRebased + nbRebased * (nbRebased - 1),
+					);
+					// TODO: Prevent quadratic number of inversions by caching inverses
+					// assert.equal(nbInverted, nbRebased - 1);
+					assert.equal(rebaser.nbInverted, ((nbRebased - 1) * nbRebased) / 2);
+					assert.equal(rebaser.nbComposed, nbTrunk + nbRebased);
+				});
+			}
+		});
 	});
 
 	/**
@@ -471,52 +513,6 @@ describe("EditManager", () => {
 			// console.debug(title);
 			runUnitTestScenario(undefined, scenario);
 		}
-	});
-
-	describe("Asymptotic Complexity", () => {
-		interface Scenario {
-			readonly nbRebased: number;
-			readonly nbTrunk: number;
-		}
-
-		const scenarios: Scenario[] = [
-			{ nbRebased: 1000, nbTrunk: 1 },
-			// { nbRebased: 1, nbTrunk: 1 },
-			// { nbRebased: 10, nbTrunk: 1 },
-			// { nbRebased: 1, nbTrunk: 10 },
-			// { nbRebased: 7, nbTrunk: 3 },
-		];
-
-		describe("Local commit rebasing", () => {
-			for (const scenario of scenarios) {
-				it(`Rebase ${scenario.nbRebased} local commits over ${scenario.nbTrunk} trunk commits`, () => {
-					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
-					assert.equal(rebaser.nbRebased, scenario.nbTrunk * scenario.nbRebased ** 2);
-					assert.equal(rebaser.nbInverted, scenario.nbTrunk * scenario.nbRebased);
-					assert.equal(
-						rebaser.nbComposed,
-						scenario.nbTrunk * (scenario.nbRebased * 2 + 1),
-					);
-				});
-			}
-		});
-		describe.only("Peer commit rebasing", () => {
-			for (const scenario of scenarios) {
-				it(`Rebase ${scenario.nbRebased} peer commits over ${scenario.nbTrunk} trunk commits`, () => {
-					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
-					assert.equal(
-						rebaser.nbRebased,
-						scenario.nbTrunk * scenario.nbRebased +
-							scenario.nbRebased * (scenario.nbRebased - 1),
-					);
-					// TODO: Prevent quadratic number of inversions by caching inverses
-					// assert.equal(rebaser.nbInverted, scenario.nbRebased - 1);
-					assert.equal(rebaser.nbComposed, scenario.nbTrunk + scenario.nbRebased);
-				});
-			}
-		});
 	});
 });
 

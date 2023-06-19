@@ -18,36 +18,36 @@ describe("EditManager - Bench", () => {
 	}
 
 	const scenarios: Scenario[] = [
-		// { type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 1 },
-		// { type: BenchmarkType.Perspective, nbRebased: 10, nbTrunk: 1 },
-		// { type: BenchmarkType.Perspective, nbRebased: 100, nbTrunk: 1 },
+		{ type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 1 },
+		{ type: BenchmarkType.Perspective, nbRebased: 10, nbTrunk: 1 },
+		{ type: BenchmarkType.Perspective, nbRebased: 100, nbTrunk: 1 },
 		{ type: BenchmarkType.Perspective, nbRebased: 1000, nbTrunk: 1 },
-		// { type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 10 },
-		// { type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 100 },
-		// { type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 1000 },
-		// { type: BenchmarkType.Perspective, nbRebased: 100, nbTrunk: 100 },
+		{ type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 10 },
+		{ type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 100 },
+		{ type: BenchmarkType.Perspective, nbRebased: 1, nbTrunk: 1000 },
+		{ type: BenchmarkType.Measurement, nbRebased: 100, nbTrunk: 100 },
 	];
 
 	describe("Local commit rebasing", () => {
-		for (const scenario of scenarios) {
+		for (const { type, nbRebased, nbTrunk } of scenarios) {
 			benchmark({
-				type: BenchmarkType.Measurement,
-				title: `Rebase ${scenario.nbRebased} local commits over ${scenario.nbTrunk} trunk commits`,
+				type,
+				title: `Rebase ${nbRebased} local commits over ${nbTrunk} trunk commits`,
 				benchmarkFn: () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
+					rebaseLocalEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
 				},
 			});
 		}
 	});
 	describe("Peer commit rebasing", () => {
-		for (const scenario of scenarios) {
+		for (const { type, nbRebased, nbTrunk } of scenarios) {
 			benchmark({
-				type: BenchmarkType.Measurement,
-				title: `Rebase ${scenario.nbRebased} peer commits over ${scenario.nbTrunk} trunk commits`,
+				type,
+				title: `Rebase ${nbRebased} peer commits over ${nbTrunk} trunk commits`,
 				benchmarkFn: () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(scenario.nbRebased, scenario.nbTrunk, rebaser);
+					rebasePeerEditsOverTrunkEdits(nbRebased, nbTrunk, rebaser);
 				},
 			});
 		}
