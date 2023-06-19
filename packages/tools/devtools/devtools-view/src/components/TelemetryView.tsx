@@ -34,20 +34,8 @@ import {
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
+import { ThemeContext } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
-
-function mapEventCategoryToBackgroundColor(eventCategory: string): string {
-	switch (eventCategory) {
-		case "generic":
-			return tokens.colorPaletteGreenForeground1;
-		case "performance":
-			return tokens.colorPaletteBlueForeground2;
-		case "error":
-			return tokens.colorPaletteRedBackground3;
-		default:
-			return tokens.colorNeutralBackground1;
-	}
-}
 
 /**
  * Set the default displayed size to 100.
@@ -259,7 +247,6 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 interface FilteredTelemetryViewProps {
 	/**
 	 * A list of all telemetry events received.
-	 *
 	 */
 	telemetryEvents: ITimestampedTelemetryEvent[];
 	/**
@@ -267,7 +254,7 @@ interface FilteredTelemetryViewProps {
 	 */
 	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
 	/**
-	 * The selected index/row in the table. Undefined means no row is selected.
+	 * The selected index/row in the table. Undefined means no row selected.
 	 */
 	index: number | undefined;
 }
@@ -295,6 +282,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
 
 	const [selectedEvent, setSelectedEvent] = React.useState<Item>();
+	const { themeInfo } = React.useContext(ThemeContext) ?? {};
 	const eventNameOptionsRef = useRef<string[]>([]);
 	React.useEffect(() => {
 		eventNameOptionsRef.current = eventNameOptions;
@@ -378,6 +366,26 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			setCustomSearch(value);
 		} else {
 			setCustomSearch("");
+		}
+	};
+
+	/**
+	 * Sets the color of the event category text.
+	 * @param eventCategory - a string representing
+	 * @returns string representing the appropriate color
+	 */
+	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
+		if (themeInfo?.name !== "highContrast") {
+			switch (eventCategory) {
+				case "generic":
+					return tokens.colorPaletteGreenForeground1;
+				case "performance":
+					return tokens.colorPaletteBlueForeground2;
+				case "error":
+					return tokens.colorPaletteRedBackground3;
+				default:
+					return tokens.colorNeutralBackground1;
+			}
 		}
 	};
 
@@ -524,11 +532,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					resizableColumns
 					selectionMode="single"
 					subtleSelection
-					onSelectionChange={(e, data): void => {
-						// Set the index to the appropriate row index in the table.
-						setIndex(Number([...data.selectedItems][0]));
-					}}
-					selectedItems={[index !== undefined && index > 0 ? index : 0]}
+					selectedItems={index !== undefined && index >= 0 ? [index] : []}
 					columnSizingOptions={{
 						category: {
 							minWidth: 110,
@@ -553,6 +557,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 								key={rowId}
 								style={{ cursor: "pointer" }}
 								onClick={(): void => {
+									setIndex(Number(rowId));
 									setSelectedEvent(item);
 								}}
 							>
