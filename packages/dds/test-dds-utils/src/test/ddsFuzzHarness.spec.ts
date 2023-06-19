@@ -467,6 +467,64 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(log, ["A", "B", "C", "D"]);
 			});
 		});
+		describe("testStart", () => {
+			it("is raised before performing the fuzzActions, but after creating the clients", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				emitter.on("testStart", (initialState) => {
+					log.push("testStart");
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					emitter,
+				};
+
+				const model: typeof baseModel = {
+					...baseModel,
+					generatorFactory: () =>
+						takeAsync(1, async (): Promise<Operation> => {
+							log.push("generated an operation");
+							return { type: "noop" };
+						}),
+				};
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.equal(finalState.clients.length, 3);
+				assert.deepEqual(log, ["A", "B", "C", "testStart", "generated an operation"]);
+			});
+		});
+		describe("testEnd", () => {
+			it("is raised after performing the fuzzActions", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				emitter.on("testEnd", (state) => {
+					log.push("testEnd");
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					emitter,
+				};
+
+				const model: typeof baseModel = {
+					...baseModel,
+					generatorFactory: () =>
+						takeAsync(1, async (): Promise<Operation> => {
+							log.push("generated an operation");
+							return { type: "noop" };
+						}),
+				};
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.equal(finalState.clients.length, 3);
+				assert.deepEqual(log, ["A", "B", "C", "generated an operation", "testEnd"]);
+			});
+		});
 	});
 
 	describe("suite creation", () => {

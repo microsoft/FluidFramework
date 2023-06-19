@@ -35,6 +35,7 @@ import {
 	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -267,7 +268,12 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 		}
 		if (change.value !== undefined) {
 			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
-			inverse.value = { revert: reviver(revision, 0, 1)[0], revision };
+			inverse.value = {
+				revert: reviver(revision, 0, 1)[0],
+				// KLUDGE: Value field changes don't have local IDs so we use an arbitrary value.
+				// TODO: Either delete the value field implementation or give its changes some local IDs.
+				changeId: { revision, localId: brand(42) },
+			};
 		}
 		return inverse;
 	},
@@ -349,7 +355,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
-		let fieldChange: OptionalFieldChange | undefined;
+		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
 		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
@@ -364,7 +370,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (change.fieldChange !== undefined) {
 				if (fieldChange === undefined) {
-					fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+					fieldChange = {
+						id: change.fieldChange.id,
+						revision: change.fieldChange.revision ?? revision,
+						wasEmpty: change.fieldChange.wasEmpty,
+					};
+				} else {
+					fieldChange.id = change.fieldChange.id;
+					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
@@ -413,7 +426,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const fieldChange = change.fieldChange;
 		if (fieldChange !== undefined) {
-			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+			inverse.fieldChange = {
+				id: fieldChange.id,
+				wasEmpty: fieldChange.newContent === undefined,
+			};
 			if (fieldChange.newContent?.changes !== undefined) {
 				// The node inserted by change will be the node deleted by inverse
 				// Move the inverted changes to the child change field
@@ -422,7 +438,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
-				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0], revision };
+				inverse.fieldChange.newContent = {
+					revert: reviver(revision, 0, 1)[0],
+					changeId: { revision, localId: fieldChange.id },
+				};
 				if (change.childChange !== undefined) {
 					if (change.deletedBy === undefined) {
 						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
@@ -482,7 +501,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
-				const overIntention = getIntention(overTagged.revision, revisionMetadata);
+				const overIntention = getIntention(
+					over.fieldChange.revision ?? overTagged.revision,
+					revisionMetadata,
+				);
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
@@ -491,13 +513,20 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							over.deletedBy === undefined ? undefined : over.childChange,
 							NodeExistenceState.Dead,
 						),
-						deletedBy: overIntention,
+						deletedBy: {
+							revision: overIntention,
+							localId: over.fieldChange.id,
+						},
 					};
 				} else if (over.fieldChange.newContent !== undefined) {
-					const rebasingOverRollback = overIntention === change.deletedBy;
+					const overContent = over.fieldChange.newContent;
+					const rebasingOverRollback =
+						overIntention === change.deletedBy.revision &&
+						over.fieldChange.id === change.deletedBy.localId;
 					const rebasingOverUndo =
-						"revert" in over.fieldChange.newContent &&
-						over.fieldChange.newContent.revision === change.deletedBy;
+						"revert" in overContent &&
+						overContent.changeId.revision === change.deletedBy.revision &&
+						overContent.changeId.localId === change.deletedBy.localId;
 					if (rebasingOverRollback || rebasingOverUndo) {
 						// Over is reviving the node that change.childChange is referring to.
 						// Rebase change.childChange and remove deletedBy
@@ -505,7 +534,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						return {
 							childChange: rebaseChild(
 								change.childChange,
-								over.fieldChange.newContent.changes,
+								overContent.changes,
 								NodeExistenceState.Alive,
 							),
 						};
@@ -554,13 +583,23 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param id - the ID associated with the change.
 	 */
-	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+	set(
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalFieldEditor: OptionalFieldEditor = {
-	set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
+	set: (
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset => ({
 		fieldChange: {
+			id,
 			newContent:
 				newContent === undefined
 					? undefined

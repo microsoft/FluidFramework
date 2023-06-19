@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { withDefaultBinaryEncoding } from "../../codec";
+import { typeboxValidator } from "../../external-utilities";
 import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
@@ -60,7 +61,9 @@ describe("EditManagerSummarizer", () => {
 				],
 			]),
 		};
-		const codec = makeEditManagerCodec(withDefaultBinaryEncoding(TestChange.codec));
+		const codec = makeEditManagerCodec(withDefaultBinaryEncoding(TestChange.codec), {
+			jsonValidator: typeboxValidator,
+		});
 		const s1 = codec.encode(input);
 		const output = codec.decode(s1);
 		assert.deepEqual(output, input);

@@ -5,13 +5,17 @@
 export {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
 	makeCodecFamily,
 	makeValueCodec,
+	SchemaValidationFunction,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
 } from "./codec";
+export { noopValidator } from "./noopValidator";

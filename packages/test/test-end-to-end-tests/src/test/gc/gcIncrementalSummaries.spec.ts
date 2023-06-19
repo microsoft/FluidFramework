@@ -22,7 +22,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates that unchanged Fluid objects are not summarized again. Basically, only objects that have changed since

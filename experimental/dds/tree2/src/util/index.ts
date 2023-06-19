@@ -81,4 +81,13 @@ export {
 	_RecursiveTrick,
 	FlattenKeys,
 	AllowOptionalNotFlattened,
+	RestrictiveReadonlyRecord,
 } from "./typeUtils";
+
+export {
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	getOrCreateSlotContent,
+	brandedSlot,
+} from "./brandedMap";
