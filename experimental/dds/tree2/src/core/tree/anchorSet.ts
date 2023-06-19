@@ -5,7 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
-import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
+import {
+	brand,
+	Brand,
+	fail,
+	Opaque,
+	ReferenceCountedBase,
+	BrandedKey,
+	BrandedMapSubset,
+	brandedSlot,
+} from "../../util";
 import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
@@ -41,47 +50,12 @@ export interface AnchorLocator {
 }
 
 /**
- * @alpha
- */
-export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
-
-/**
- * @alpha
- */
-export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
-
-/**
- * @alpha
- */
-export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
-	unknown,
-	infer TContent
->
-	? TContent
-	: never;
-
-/**
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
  * @alpha
  */
-export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
-
-/**
- * A Map where the keys carry the types of values which they correspond to.
- *
- * @remarks
- * These APIs are designed so that a Map can be used to implement this type.
- *
- * @alpha
- */
-export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
-	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
-	has(key: K): boolean;
-	set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
-	delete(key: K): boolean;
-}
+export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
 /**
  * Events for {@link AnchorNode}.
@@ -199,14 +173,8 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
  * @alpha
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
-	return brand(slotCounter++);
+	return brandedSlot<AnchorSlot<TContent>>();
 }
-
-/**
- * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
- * This allows the keys to be small integers, which are efficient to use as keys in maps.
- */
-let slotCounter = 0;
 
 /**
  * Collection of Anchors at a specific revision.
