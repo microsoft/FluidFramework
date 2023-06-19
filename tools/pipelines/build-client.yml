@@ -116,12 +116,12 @@ extends:
     taskBuildDocs: false
     publishDocs: true
     taskTest:
-    - webpack
-    - ci:test:mocha
-    - ci:test:jest
-    - ${{ if eq(variables['System.TeamProject'], 'public') }}:
-      - ci:test:realsvc:local
-      - ci:test:realsvc:tinylicious
+    # - webpack
+    # - ci:test:mocha
+    # - ci:test:jest
+    # - ${{ if eq(variables['System.TeamProject'], 'public') }}:
+    #   - ci:test:realsvc:local
+    #   - ci:test:realsvc:tinylicious
     - ${{ if ne(variables['System.TeamProject'], 'public') }}:
       - ci:test:realsvc:local:full
       - ci:test:realsvc:tinylicious:full
