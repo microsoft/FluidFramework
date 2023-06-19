@@ -102,6 +102,10 @@
 		"broken": {
 			"ClassDeclaration_DeltaStreamConnectionForbiddenError": {
 				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_combineAppAndProtocolSummary": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
