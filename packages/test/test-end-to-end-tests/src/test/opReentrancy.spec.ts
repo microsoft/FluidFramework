@@ -252,26 +252,24 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		assert.ok(!container1.closed);
 	});
 
-	const allowReentry = [
-		{
-			options: testContainerConfig,
-			featureGates: {},
-			name: "Default config and feature gates",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
-			},
-			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-			name: "Enabled by options, disabled by feature gate",
-		},
-	];
-
 	describe("Allow reentry", () =>
-		allowReentry.forEach((testConfig) => {
+		[
+			{
+				options: testContainerConfig,
+				featureGates: {},
+				name: "Default config and feature gates",
+			},
+			{
+				options: {
+					...testContainerConfig,
+					runtimeOptions: {
+						enableOpReentryCheck: true,
+					},
+				},
+				featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+				name: "Enabled by options, disabled by feature gate",
+			},
+		].forEach((testConfig) => {
 			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
 				await setupContainers(testConfig.options, testConfig.featureGates);
 
