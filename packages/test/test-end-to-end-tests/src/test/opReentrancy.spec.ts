@@ -17,7 +17,6 @@ import {
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
