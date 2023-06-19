@@ -117,7 +117,20 @@ export function create(
 		host: redisConfig.host,
 		port: redisConfig.port,
 		password: redisConfig.pass,
+		connectTimeout: redisConfig.connectTimeout,
+		enableReadyCheck: true,
+		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+		enableOfflineQueue: redisConfig.enableOfflineQueue,
 	};
+	if (redisConfig.enableAutoPipelining) {
+		/**
+		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+		 * More info: https://github.com/luin/ioredis#autopipelining
+		 */
+		options.enableAutoPipelining = true;
+		options.autoPipeliningIgnoredCommands = ["ping"];
+	}
 	if (redisConfig.tls) {
 		options.tls = {
 			servername: redisConfig.host,
