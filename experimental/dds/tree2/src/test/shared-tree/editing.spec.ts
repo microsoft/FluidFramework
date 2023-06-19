@@ -1039,7 +1039,7 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{ foo: "x" }]);
 			});
 
-			it.only("can put a constraint on newly inserted node", () => {
+			it("existence constraint on node inserted in prior transaction", () => {
 				const tree = makeTreeFromJson([]);
 				const tree2 = tree.fork();
 
