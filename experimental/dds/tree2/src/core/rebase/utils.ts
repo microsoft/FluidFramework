@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
 import { fail } from "../../util";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
+import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -336,19 +336,11 @@ function rebaseChangeOverChanges<TChange>(
 	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
 }
 
-const m = new Set<RevisionTag>();
-
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	repairData?: ReadonlyRepairDataStore,
 ): TaggedChange<TChange> {
-	// if (m.has(commit.revision)) {
-	// 	return commit;
-	// } else {
-	// 	m.add(commit.revision);
-	// }
-
 	return tagRollbackInverse(
 		changeRebaser.invert(commit, true, repairData),
 		mintRevisionTag(),
