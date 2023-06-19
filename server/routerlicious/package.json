@@ -80,7 +80,9 @@
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"lerna": "^5.1.8",
+		"mocha": "^10.2.0",
 		"nyc": "^15.1.0",
+		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.5",
 		"typescript": "~4.5.5"

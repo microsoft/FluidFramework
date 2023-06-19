@@ -6134,6 +6134,9 @@ importers:
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       css-loader:
         specifier: ^1.0.0
         version: 1.0.1(webpack@5.83.0)
@@ -6333,6 +6336,9 @@ importers:
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       css-loader:
         specifier: ^1.0.0
         version: 1.0.1(webpack@5.83.0)

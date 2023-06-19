@@ -35,6 +35,8 @@ const readStdin: () => Promise<string | undefined> = async () => {
 
 type policyAction = "handle" | "resolve" | "final";
 
+type HandlerExclusions = { [rule: string]: RegExp[] };
+
 /**
  * This tool enforces policies across the code base via a series of handlers.
  *
@@ -102,7 +104,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			}
 			const shouldRun = this.flags.excludeHandler?.includes(h.name) === false;
 			if (!shouldRun) {
-				this.info(`Excluding handler: ${h.name}`);
+				this.info(`Disabled handler: ${h.name}`);
 			}
 			return shouldRun;
 		});
@@ -144,7 +146,16 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				? manifest.policy?.exclusions
 				: await readJson(this.flags.exclusions);
 
-		const exclusions: RegExp[] = rawExclusions.map((e: string) => new RegExp(e, "i"));
+		const exclusions: RegExp[] = rawExclusions.map((e) => new RegExp(e, "i"));
+
+		const rawHandlerExclusions = manifest?.policy?.handlerExclusions;
+
+		const handlerExclusions: HandlerExclusions = {};
+		if (rawHandlerExclusions) {
+			for (const rule of Object.keys(rawHandlerExclusions)) {
+				handlerExclusions[rule] = rawHandlerExclusions[rule].map((e) => new RegExp(e, "i"));
+			}
+		}
 
 		if (this.flags.stdin) {
 			const pipeString = await readStdin();
@@ -154,7 +165,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					pipeString
 						.split("\n")
 						.map((line: string) =>
-							this.handleLine(line, pathRegex, exclusions, handlersToRun),
+							this.handleLine(
+								line,
+								pathRegex,
+								exclusions,
+								handlersToRun,
+								handlerExclusions,
+							),
 						);
 				} finally {
 					try {
@@ -188,7 +205,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				scriptOutput
 					.split("\n")
 					.map((line: string) =>
-						this.handleLine(line, pathRegex, exclusions, handlersToRun),
+						this.handleLine(
+							line,
+							pathRegex,
+							exclusions,
+							handlersToRun,
+							handlerExclusions,
+						),
 					);
 			} finally {
 				try {
@@ -202,11 +225,20 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	// route files to their handlers by regex testing their full paths
 	// synchronize output, exit code, and resolve decision for all handlers
-	routeToHandlers(file: string, handlers: Handler[]): void {
+	routeToHandlers(file: string, handlers: Handler[], handlerExclusions: HandlerExclusions): void {
 		handlers
 			.filter((handler) => handler.match.test(file))
 			// eslint-disable-next-line unicorn/no-array-for-each
 			.forEach((handler) => {
+				// doing exclusion per handler
+				const exclusions = handlerExclusions[handler.name];
+				if (exclusions) {
+					if (!exclusions.every((value) => !value.test(file))) {
+						this.verbose(`Excluded ${handler.name} handler: ${file}`);
+						return;
+					}
+				}
+
 				const result = runWithPerf(handler.name, "handle", () =>
 					handler.handler(file, CheckPolicy.pathToGitRoot),
 				);
@@ -253,7 +285,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	handleLine(line: string, pathRegex: RegExp, exclusions: RegExp[], handlers: Handler[]) {
+	handleLine(
+		line: string,
+		pathRegex: RegExp,
+		exclusions: RegExp[],
+		handlers: Handler[],
+		handlerExclusions: HandlerExclusions,
+	) {
 		const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -262,12 +300,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		CheckPolicy.count++;
 		if (!exclusions.every((value) => !value.test(line))) {
-			this.verbose(`Excluded: ${line}`);
+			this.verbose(`Excluded all handlers: ${line}`);
 			return;
 		}
 
 		try {
-			this.routeToHandlers(filePath, handlers);
+			this.routeToHandlers(filePath, handlers, handlerExclusions);
 		} catch (error: any) {
 			throw new Error(`Line error: ${error}`);
 		}
