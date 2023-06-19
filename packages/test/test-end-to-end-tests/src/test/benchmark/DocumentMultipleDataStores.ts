@@ -61,7 +61,7 @@ class TestDataObject extends DataObject {
 		this.map = await mapHandle.get();
 
 		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+		assert(sharedStringHandle !== undefined, "SharedString not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
 }

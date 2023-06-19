@@ -74,6 +74,7 @@ export {
 	getDescendant,
 	compareUpPaths,
 	clonePath,
+	topDownPath,
 	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
