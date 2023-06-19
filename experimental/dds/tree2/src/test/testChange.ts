@@ -240,6 +240,7 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public nbRebased = 0;
 	public nbInverted = 0;
 	public nbComposed = 0;
+	public nbRebaseAnchorCalls = 0;
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		this.nbRebased += 1;
@@ -254,6 +255,10 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public compose(changes: TaggedChange<TestChange>[]): TestChange {
 		this.nbComposed += changes.length;
 		return changes.length === 0 ? emptyChange : changes[0].change;
+	}
+
+	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
+		this.nbRebaseAnchorCalls += 1;
 	}
 }
 

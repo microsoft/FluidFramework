@@ -461,6 +461,7 @@ describe("EditManager", () => {
 					assert.equal(rebaser.nbRebased, nbTrunk * nbRebased ** 2);
 					assert.equal(rebaser.nbInverted, nbTrunk * nbRebased);
 					assert.equal(rebaser.nbComposed, nbTrunk * (nbRebased * 2 + 1));
+					assert.equal(rebaser.nbRebaseAnchorCalls, nbTrunk + nbRebased);
 				});
 			}
 		});
@@ -473,10 +474,11 @@ describe("EditManager", () => {
 						rebaser.nbRebased,
 						nbTrunk * nbRebased + nbRebased * (nbRebased - 1),
 					);
-					// TODO: Prevent quadratic number of inversions by caching inverses
+					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
 					// assert.equal(nbInverted, nbRebased - 1);
 					assert.equal(rebaser.nbInverted, ((nbRebased - 1) * nbRebased) / 2);
 					assert.equal(rebaser.nbComposed, nbTrunk + nbRebased);
+					assert.equal(rebaser.nbRebaseAnchorCalls, nbTrunk + nbRebased);
 				});
 			}
 		});
