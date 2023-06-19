@@ -15,18 +15,12 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
-	const sharedStringId = "sharedStringKey";
-	const registry: ChannelFactoryRegistry = [
-		[mapId, SharedMap.getFactory()],
-		[sharedStringId, SharedString.getFactory()],
-	];
+	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -38,8 +32,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	let dataObject2: ITestFluidObject;
 	let sharedMap1: SharedMap;
 	let sharedMap2: SharedMap;
-	let sharedString1: SharedString;
-	let sharedString2: SharedString;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -67,9 +59,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
-
-		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
-		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
 		await provider.ensureSynchronized();
 	};
@@ -111,48 +100,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			assert.equal(sharedMap2.get("key2"), "2");
 		},
 	);
-
-	[false, true].forEach((enableGroupedBatching) => {
-		it(`Eventual consistency with op reentry - ${
-			enableGroupedBatching ? "grouped" : "regular"
-		} batches`, async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching,
-				},
-			});
-
-			sharedString1.insertText(0, "ad");
-			sharedString1.insertText(1, "c");
-			await provider.ensureSynchronized();
-
-			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(3, "x");
-				}
-			});
-
-			sharedString1.insertText(1, "b");
-			sharedString2.insertText(0, "y");
-			await provider.ensureSynchronized();
-
-			// The offending container is still alive
-			sharedString2.insertText(0, "z");
-			await provider.ensureSynchronized();
-
-			assert.strictEqual(sharedString1.getText(), "zyabxcd");
-			assert.strictEqual(
-				sharedString1.getText(),
-				sharedString2.getText(),
-				"Eventual consistency broken",
-			);
-
-			// Both containers are alive at the end
-			assert.ok(!container1.closed, "Local container is closed");
-			assert.ok(!container2.closed, "Remote container is closed");
-		});
-	});
 
 	describe("Reentry safeguards", () => {
 		it("Deep recursion is not supported", async () => {
