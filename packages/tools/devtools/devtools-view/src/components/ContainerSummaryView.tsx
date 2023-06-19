@@ -367,7 +367,7 @@ export interface IContainerActions {
 
 const useActionBarStyles = makeStyles({
 	root: {
-		...shorthands.margin("5px"), // TODO: verify this
+		...shorthands.padding("5px"),
 		display: "flex",
 		flexDirection: "row",
 	},
