@@ -32,7 +32,6 @@ export {
 export {
 	createSummarizer,
 	createSummarizerFromFactory,
-	defaultSummaryOptions,
 	summarizeNow,
 	createSummarizerWithTestConfig,
 } from "./TestSummaryUtils";
