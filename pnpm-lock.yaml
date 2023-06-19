@@ -67,6 +67,9 @@ importers:
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
+      npe:
+        specifier: ^1.2.0
+        version: 1.2.0
       prettier:
         specifier: ~2.6.2
         version: 2.6.2
@@ -39507,6 +39510,10 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
+  /merge@2.1.1:
+    resolution: {integrity: sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==}
+    dev: true
+
   /meros@1.1.4:
     resolution: {integrity: sha512-E9ZXfK9iQfG9s73ars9qvvvbSIkJZF5yOo9j4tcwM5tN8mUKfj/EKN5PzOr3ZH0y5wL7dLAHw3RVEfpQV9Q7VQ==}
     engines: {node: '>=12'}
@@ -40555,6 +40562,15 @@ packages:
 
   /notepack.io@2.3.0:
     resolution: {integrity: sha512-9RiFDxeydHsWOqdthRUck2Kd4UW2NzVd2xxOulZiQ9mvge6ElsHXLpwD3HEJyql6sFEnEn/eMO7HSdS0M5mWkA==}
+
+  /npe@1.2.0:
+    resolution: {integrity: sha512-sVbC5+7ljSI/039fvfKKnlH9kYQKskrsq81k6cwScvZ3CIpSDCrFIKVPpbb8VetVk6z/2mH4oDRlsiTWHUetyQ==}
+    hasBin: true
+    dependencies:
+      merge: 2.1.1
+      minimist: 1.2.8
+      steeltoe: 1.0.1
+    dev: true
 
   /npm-bundled@1.1.2:
     resolution: {integrity: sha512-x5DHup0SuyQcmL3s7Rx/YQ8sbw/Hzg0rj48eN0dV7hf5cmQq5PXIeioroH3raV1QC1yh3uTYuMThvEQF3iKgGQ==}
@@ -45116,6 +45132,10 @@ packages:
   /stealthy-require@1.1.1:
     resolution: {integrity: sha512-ZnWpYnYugiOVEY5GkcuJK1io5V8QmNYChG62gSit9pQVGErXtrKuPC55ITaVSukmMta5qpMU7vqLt2Lnni4f/g==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /steeltoe@1.0.1:
+    resolution: {integrity: sha512-beMo5ArN5bRczhwUkaFlJJ39oGNLYotLTHTUgzAK02HwkE2gGLOPPsUHL6qTAfQoyt4lpkLVohhNY+PkdZRa3Q==}
     dev: true
 
   /stop-iteration-iterator@1.0.0:
