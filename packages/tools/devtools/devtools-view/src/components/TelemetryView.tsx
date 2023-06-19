@@ -54,6 +54,7 @@ const useTelemetryViewStyles = makeStyles({
 		width: "100%",
 	},
 	menu: {
+		...shorthands.gap("5px"),
 		display: "flex",
 		flexDirection: "row",
 	},
@@ -187,7 +188,9 @@ export function TelemetryView(): React.ReactElement {
 					</div>
 				</div>
 				<div>
-					<Button onClick={handleLoadMore}>Refresh</Button>
+					<Button onClick={handleLoadMore} size="small">
+						Refresh
+					</Button>
 				</div>
 			</div>
 			{telemetryEvents !== undefined ? (
