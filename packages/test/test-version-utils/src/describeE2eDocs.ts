@@ -11,10 +11,10 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { configList } from "./compatConfig.js";
-import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
-import { getVersionedTestObjectProvider } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { configList } from "./compatConfig";
+import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions";
+import { getVersionedTestObjectProvider } from "./compatUtils";
+import { ITestObjectProviderOptions } from "./describeCompat";
 
 /*
  * Types of documents to be used during the performance runs.
