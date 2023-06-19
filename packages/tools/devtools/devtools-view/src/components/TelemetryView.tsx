@@ -214,20 +214,11 @@ interface ListLengthSelectionProps {
 	onChangeSelection(newLimit: number): void;
 }
 
-const useListLengthSelectionStyles = makeStyles({
-	root: {
-		// Inject 20px gap between each item
-		// ...shorthands.gap("20px"),
-	},
-});
-
 /**
  * A dropdown menu for selecting how many logs to display on the page.
  */
 function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
-
-	const styles = useListLengthSelectionStyles();
 
 	// Options formatted for the Fluent Dropdown component
 	const dropdownOptions: { key: number; text: string }[] = [
@@ -242,7 +233,7 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 	};
 
 	return (
-		<div className={styles.root}>
+		<div>
 			<div style={{ marginLeft: "6px" }}>
 				Show &nbsp;
 				<Dropdown
