@@ -190,7 +190,7 @@ export function makeOperationGenerator(
 	]);
 }
 
-describe.only("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
 		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
