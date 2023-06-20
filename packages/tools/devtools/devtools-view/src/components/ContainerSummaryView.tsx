@@ -185,7 +185,7 @@ const useContainerSummaryViewStyles = makeStyles({
 });
 
 /**
- * Debugger view displaying basic Container stats.
+ * View displaying a simple summary of the Container state.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerKey } = props;
@@ -340,7 +340,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 }
 
 /**
- * Container actions supported by the debugger view.
+ * Container actions supported by the devtools view.
  */
 export interface IContainerActions {
 	/**
