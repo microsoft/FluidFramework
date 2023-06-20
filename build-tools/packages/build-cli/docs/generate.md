@@ -62,7 +62,7 @@ DESCRIPTION
 
 ## `flub generate changelog`
 
-Generate a changelog for a new version
+Generate a changelog for packages based on changesets.
 
 ```
 USAGE
@@ -86,18 +86,19 @@ FLAGS
   --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
                                --releaseGroup.
   --scope=<value>...           Package scopes to filter to.
-  --version=<value>            The version for which to generate the changelog
+  --version=<value>            The version for which to generate the changelog. If this is not provided, the version of
+                               the package according to package.json will be used.
 
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
 
 DESCRIPTION
-  Generate a changelog for a new version
+  Generate a changelog for packages based on changesets.
 
 EXAMPLES
-  Create an changelog using the --version flag.
+  Generate changelogs for the client release group.
 
-    $ flub generate changelog --version 1.0.0
+    $ flub generate changelog --releaseGroup client
 ```
 
 ## `flub generate changeset`
