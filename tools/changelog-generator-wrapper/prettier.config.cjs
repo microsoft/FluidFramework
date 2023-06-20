@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { nodeIdentifierKey, nodeIdentifierSchema } from "./nodeIdentifierSchema";
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};

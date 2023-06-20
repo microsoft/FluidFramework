@@ -27,7 +27,7 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "./mockDetachedBlobStorage";
+} from "./mockDetachedBlobStorage.js";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {

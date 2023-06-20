@@ -5,7 +5,7 @@
 
 import { ICache } from "@fluidframework/server-services-core";
 import { IRedisParameters } from "@fluidframework/server-services-utils";
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
@@ -15,7 +15,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
-	constructor(private readonly client: Redis, parameters?: IRedisParameters) {
+	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}

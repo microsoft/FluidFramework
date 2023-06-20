@@ -5,12 +5,21 @@
 
 import React from "react";
 
+import { makeStyles } from "@fluentui/react-components";
+
+const useStyles = makeStyles({
+	root: {
+		marginLeft: "5px",
+	},
+});
+
 /**
  * Landing page for the debugger
  */
 export function LandingView(): React.ReactElement {
+	const styles = useStyles();
 	return (
-		<div style={{ marginLeft: "5px" }}>
+		<div className={styles.root}>
 			<h3>Welcome to the Fluid Framework Developer Tools!</h3>
 			<p>To start, select an option from the menu on the left.</p>
 			<p>
