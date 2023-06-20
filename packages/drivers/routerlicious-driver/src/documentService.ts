@@ -247,6 +247,8 @@ export class DocumentService implements api.IDocumentService {
 						client,
 						this.deltaStreamUrl,
 						this.logger,
+						undefined /* timeoutMs */,
+						this.driverPolicies.enableLongPollingDowngrade,
 					);
 				},
 			);
