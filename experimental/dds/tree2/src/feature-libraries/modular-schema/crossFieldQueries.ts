@@ -5,10 +5,105 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { brand, brandedNumberType, Brand, NestedSet } from "../../util";
+import { brand, brandedNumberType, Brand, getOrAddInMap } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
 
-export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
+export type CrossFieldMap<T> = Map<RevisionTag | undefined, IdRangeMap<T>>;
+export type CrossFieldQuerySet = CrossFieldMap<boolean>;
+
+export function addCrossFieldQuery(
+	set: CrossFieldQuerySet,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+): void {
+	const rangeMap = getOrAddInMap(set, revision, []);
+	setInRangeMap(rangeMap, id, count, true);
+}
+
+export function getFirstFromRangeMap<T>(
+	map: IdRangeMap<T>,
+	id: ChangesetLocalId,
+	count: number,
+): CrossFieldRange<T> | undefined {
+	for (const range of map) {
+		if (range.id >= (id as number) + count) {
+			break;
+		}
+
+		if ((range.id as number) + range.length > id) {
+			return range;
+		}
+	}
+
+	return undefined;
+}
+
+export function setInCrossFieldMap<T>(
+	map: CrossFieldMap<T>,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+	value: T,
+): void {
+	setInRangeMap(getOrAddInMap(map, revision, []), id, count, value);
+}
+
+export function getFirstFromCrossFieldMap<T>(
+	map: CrossFieldMap<T>,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+): CrossFieldRange<T> | undefined {
+	return getFirstFromRangeMap(map.get(revision) ?? [], id, count);
+}
+
+export function setInRangeMap<T>(
+	map: IdRangeMap<T>,
+	id: ChangesetLocalId,
+	count: number,
+	value: T,
+): void {
+	const newEntry: CrossFieldRange<T> = { id, length: count, data: value };
+	for (const [i, range] of map.entries()) {
+		const lastRangeId = (range.id as number) + range.length - 1;
+		const lastTargetId = (id as number) + count - 1;
+
+		if (range.id > lastTargetId) {
+			break;
+		}
+
+		if (lastRangeId < id) {
+			continue;
+		}
+
+		if (range.id < id && lastRangeId > lastTargetId) {
+			// range has excess portions both before and after target range
+			// We replace the existing range with a range before and a range after and insert the new range
+			range.length = (id as number) + count - range.id;
+			map.splice(i + 1, 0, newEntry);
+			map.splice(i + 2, 0, {
+				id: brand((id as number) + 1),
+				length: lastRangeId - id,
+				data: range.data,
+			});
+			return;
+		}
+
+		if (range.id < id) {
+			range.length = id - range.id;
+		} else if (lastRangeId > lastTargetId) {
+			range.id = brand((id as number) + 1);
+			range.length = lastRangeId - range.id + 1;
+			map.splice(i, 0, newEntry);
+			return;
+		} else {
+			map.splice(i, 1);
+		}
+	}
+
+	map.push(newEntry);
+}
 
 /**
  * @alpha
@@ -25,31 +120,42 @@ export enum CrossFieldTarget {
  */
 export interface CrossFieldManager<T = unknown> {
 	/**
-	 * Returns the data associated with triplet key of `target`, `revision`, and `id`.
+	 * Returns the first data range associated with the key of `target`, `revision`, between `id` and `id + count`.
 	 * Calling this records a dependency for the current field on this key if `addDependency` is true.
 	 */
 	get(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
+		count: number,
 		addDependency: boolean,
-	): T | undefined;
+	): CrossFieldRange<T> | undefined;
 
 	/**
-	 * If there is no data for this key, sets the value to `newValue`.
-	 * Then returns the data for this key.
+	 * If there is no data for this key, sets the value to `newValue`, then returns the data for this key.
 	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
-	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose`,
-	 * as appropriate.
+	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose` as appropriate.
 	 */
-	getOrCreate(
+	set(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
+		count: number,
 		newValue: T,
-		invalidateDependents: boolean,
-	): T;
+		invalidateDependents: boolean, // TODO: Is this still needed?
+	): void;
 }
+
+/**
+ * @alpha
+ */
+export interface CrossFieldRange<T> {
+	id: ChangesetLocalId;
+	length: number;
+	data: T;
+}
+
+export type IdRangeMap<T> = CrossFieldRange<T>[];
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

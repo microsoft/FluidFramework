@@ -188,7 +188,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId();
+		const moveId = this.modularBuilder.generateId(count);
 		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
@@ -234,7 +234,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId();
+				const moveId = this.modularBuilder.generateId(count);
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,

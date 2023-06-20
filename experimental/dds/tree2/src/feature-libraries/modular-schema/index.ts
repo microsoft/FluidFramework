@@ -12,12 +12,18 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
+	addCrossFieldQuery,
 	ChangesetLocalId,
 	ChangesetLocalIdSchema,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
+	CrossFieldRange,
 	CrossFieldTarget,
+	getFirstFromRangeMap,
 	idAllocatorFromMaxId,
+	IdRangeMap,
+	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {

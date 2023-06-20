@@ -422,8 +422,6 @@ describe("Editing", () => {
 
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
-
-			expectJsonTree(tree1, expectedState);
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 

@@ -244,8 +244,18 @@ export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCall
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
-    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): CrossFieldRange<T> | undefined;
+    set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
+}
+
+// @alpha (undocumented)
+export interface CrossFieldRange<T> {
+    // (undocumented)
+    data: T;
+    // (undocumented)
+    id: ChangesetLocalId;
+    // (undocumented)
+    length: number;
 }
 
 // @alpha (undocumented)

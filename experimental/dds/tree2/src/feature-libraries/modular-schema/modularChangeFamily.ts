@@ -24,13 +24,9 @@ import {
 	FieldUpPath,
 } from "../../core";
 import {
-	addToNestedSet,
 	brand,
 	getOrAddEmptyToMap,
-	getOrAddInNestedMap,
 	Mutable,
-	NestedMap,
-	nestedSetContains,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
@@ -38,11 +34,16 @@ import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
 	ChangesetLocalId,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	IdAllocationState,
+	addCrossFieldQuery,
+	getFirstFromCrossFieldMap,
+	getFirstFromRangeMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	setInCrossFieldMap,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -875,10 +876,10 @@ export function getChangeHandler(
 }
 
 interface CrossFieldTable<TFieldData> {
-	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
-	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
-	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
-	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	srcTable: CrossFieldMap<unknown>;
+	dstTable: CrossFieldMap<unknown>;
+	srcDependents: CrossFieldMap<TFieldData>;
+	dstDependents: CrossFieldMap<TFieldData>;
 	invalidatedFields: Set<TFieldData>;
 }
 
@@ -935,8 +936,8 @@ interface CrossFieldManagerI<T> extends CrossFieldManager {
 }
 
 function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFieldManagerI<T> {
-	const srcQueries = new Map();
-	const dstQueries = new Map();
+	const srcQueries: CrossFieldQuerySet = new Map();
+	const dstQueries: CrossFieldQuerySet = new Map();
 	const getMap = (target: CrossFieldTarget) =>
 		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
 
@@ -948,10 +949,11 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 		srcQueries,
 		dstQueries,
 		fieldInvalidated: false,
-		getOrCreate: (
+		set: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
+			count: number,
 			newValue: unknown,
 			invalidateDependents: boolean,
 		) => {
@@ -960,27 +962,35 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
-				const dependent = tryGetFromNestedMap(dependentsMap, revision, id);
+				const dependent = getFirstFromCrossFieldMap(
+					dependentsMap,
+					revision,
+					id,
+					count,
+				)?.data;
 				if (dependent !== undefined) {
 					crossFieldTable.invalidatedFields.add(dependent);
 				}
 
-				if (nestedSetContains(getQueries(target), revision, id)) {
+				if (
+					getFirstFromCrossFieldMap(getQueries(target), revision, id, count) !== undefined
+				) {
 					manager.fieldInvalidated = true;
 				}
 			}
-			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
+			return setInCrossFieldMap(getMap(target), revision, id, count, newValue);
 		},
 		get: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
+			count: number,
 			addDependency: boolean,
 		) => {
 			if (addDependency) {
-				addToNestedSet(getQueries(target), revision, id);
+				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return tryGetFromNestedMap(getMap(target), revision, id);
+			return getFirstFromCrossFieldMap(getMap(target), revision, id, count);
 		},
 	};
 
@@ -988,19 +998,31 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 }
 
 function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
-	for (const [revision, ids] of manager.srcQueries) {
-		for (const id of ids.keys()) {
+	for (const [revision, rangeMap] of manager.srcQueries) {
+		for (const range of rangeMap) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.
 			// In this case we only want to amend the latest version, so we overwrite the dependency.
-			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
+			setInCrossFieldMap(
+				manager.table.srcDependents,
+				revision,
+				range.id,
+				range.length,
+				fieldData,
+			);
 		}
 	}
 
-	for (const [revision, ids] of manager.dstQueries) {
-		for (const id of ids.keys()) {
+	for (const [revision, rangeMap] of manager.dstQueries) {
+		for (const range of rangeMap) {
 			// See above comment
-			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
+			setInCrossFieldMap(
+				manager.table.dstDependents,
+				revision,
+				range.id,
+				range.length,
+				fieldData,
+			);
 		}
 	}
 

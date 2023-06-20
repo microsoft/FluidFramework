@@ -97,6 +97,7 @@ export {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	CrossFieldManager,
+	CrossFieldRange,
 	CrossFieldTarget,
 	FieldKind,
 	Multiplicity,

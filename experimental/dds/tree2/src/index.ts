@@ -155,6 +155,7 @@ export {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	CrossFieldManager,
+	CrossFieldRange,
 	CrossFieldTarget,
 	RevisionIndexer,
 	RevisionMetadataSource,
