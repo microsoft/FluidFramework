@@ -48,16 +48,21 @@ export interface IOutboxParameters {
 	readonly opReentrancy: () => boolean;
 }
 
-function getLongStack(action: () => Error): Error {
-	// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+/**
+ * Temporarily increase the stack limit to 50 frames.
+ * ADO:4663 - add this to the common packages.
+ *
+ * @param action - action which returns an error
+ * @returns the result of the action provided
+ */
+export function getLongStack(action: () => Error): Error {
+	const originalStackTraceLimit = (Error as any).stackTraceLimit;
+
 	try {
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
 		(Error as any).stackTraceLimit = 50;
-		const result = action();
-		(Error as any).stackTraceLimit = originalStackTraceLimit;
-		return result;
-	} catch (error) {
 		return action();
+	} finally {
+		(Error as any).stackTraceLimit = originalStackTraceLimit;
 	}
 }
 

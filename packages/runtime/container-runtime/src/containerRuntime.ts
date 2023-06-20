@@ -173,6 +173,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 	OpGroupingManager,
+	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
@@ -3172,7 +3173,7 @@ export class ContainerRuntime
 				this.mc.logger.sendTelemetryEvent(
 					{ eventName: "OpReentry" },
 					// We need to capture the call stack in order to inspect the source of this usage pattern
-					new UsageError(errorMessage),
+					getLongStack(() => new UsageError(errorMessage)),
 				);
 				this.opReentryCallsToReport--;
 			}

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	IBatchMessage,
 	IContainerContext,
-	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
