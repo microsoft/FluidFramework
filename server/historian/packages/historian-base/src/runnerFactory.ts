@@ -206,6 +206,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const port = normalizePort(process.env.PORT || "3000");
 
+		// Token revocation
+		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
+
 		return new HistorianResources(
 			config,
 			port,
@@ -215,6 +219,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restClusterThrottlers,
 			gitCache,
 			asyncLocalStorage,
+			revokedTokenChecker,
 		);
 	}
 }
