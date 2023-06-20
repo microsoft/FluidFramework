@@ -17,6 +17,7 @@ import {
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
@@ -111,6 +112,63 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		},
 	);
 
+	[false, true].forEach((enableGroupedBatching) => {
+		[false, true].forEach((useLargePayloads) => {
+			const generateStringOfSize = (sizeInBytes: number): string =>
+				new Array(sizeInBytes + 1).join("0");
+			const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+				a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
+			it(`Eventual consistency with op reentry - ${
+				enableGroupedBatching ? "grouped" : "regular"
+			} batches and ${useLargePayloads ? "large" : "small"} payloads`, async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
+
+				sharedString1.insertText(0, "ad");
+				sharedString1.insertText(1, "c");
+				const mapValueSize = useLargePayloads ? 1024 * 1024 : 10;
+				const mapContents1 = generateStringOfSize(mapValueSize);
+				const mapContents2 = generateStringOfSize(mapValueSize);
+				sharedMap1.set("1", mapContents1);
+				await provider.ensureSynchronized();
+
+				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+						sharedString2.insertText(3, "x");
+						sharedMap2.set("2", mapContents2);
+					}
+				});
+
+				sharedString1.insertText(1, "b");
+				sharedString2.insertText(0, "y");
+				await provider.ensureSynchronized();
+
+				// The offending container is still alive
+				sharedString2.insertText(0, "z");
+				await provider.ensureSynchronized();
+
+				assert.strictEqual(sharedString1.getText(), "zyabxcd");
+				assert.strictEqual(
+					sharedString1.getText(),
+					sharedString2.getText(),
+					"Eventual consistency broken",
+				);
+
+				assert.strictEqual(sharedMap1.get("1"), mapContents1);
+				assert.strictEqual(sharedMap1.get("2"), mapContents2);
+				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+
+				// Both containers are alive at the end
+				assert.ok(!container1.closed, "Local container is closed");
+				assert.ok(!container2.closed, "Remote container is closed");
+			});
+		});
+	});
+
 	describe("Reentry safeguards", () => {
 		it("Deep recursion is not supported", async () => {
 			await setupContainers(testContainerConfig);
@@ -194,24 +252,26 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		assert.ok(!container1.closed);
 	});
 
-	describe("Allow reentry", () =>
-		[
-			{
-				options: testContainerConfig,
-				featureGates: {},
-				name: "Default config and feature gates",
-			},
-			{
-				options: {
-					...testContainerConfig,
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
+	const allowReentry = [
+		{
+			options: testContainerConfig,
+			featureGates: {},
+			name: "Default config and feature gates",
+		},
+		{
+			options: {
+				...testContainerConfig,
+				runtimeOptions: {
+					enableOpReentryCheck: true,
 				},
-				featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-				name: "Enabled by options, disabled by feature gate",
 			},
-		].forEach((testConfig) => {
+			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+			name: "Enabled by options, disabled by feature gate",
+		},
+	];
+
+	describe("Allow reentry", () =>
+		allowReentry.forEach((testConfig) => {
 			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
 				await setupContainers(testConfig.options, testConfig.featureGates);
 
