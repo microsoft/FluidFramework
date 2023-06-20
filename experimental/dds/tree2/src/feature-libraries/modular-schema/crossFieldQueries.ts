@@ -5,8 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { brand, brandedNumberType, Brand, getOrAddInMap } from "../../util";
+import { brand, getOrAddInMap } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
+import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, IdRangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
@@ -156,15 +157,6 @@ export interface CrossFieldRange<T> {
 }
 
 export type IdRangeMap<T> = CrossFieldRange<T>[];
-
-/**
- * An ID which is unique within a revision of a `ModularChangeset`.
- * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
- * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
- */
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
 export interface IdAllocationState {
 	maxId: ChangesetLocalId;

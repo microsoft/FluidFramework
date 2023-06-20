@@ -6,13 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import {
-	CrossFieldManager,
-	CrossFieldTarget,
-	IdAllocator,
-	NodeReviver,
-	revisionMetadataSourceFromInfo,
-} from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
 import {
 	Changeset,
 	DetachEvent,
