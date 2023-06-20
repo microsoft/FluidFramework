@@ -11,7 +11,6 @@ export {
 	Client,
 	ClientSpec,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
