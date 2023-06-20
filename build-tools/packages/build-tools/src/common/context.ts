@@ -60,7 +60,7 @@ export class Context {
 	 *
 	 * @param reloadPackageJson - If true, the package.json for each package will be reloaded. Otherwise the cached
 	 * in-memory values will be used.
-	 * 
+	 *
 	 * @deprecated
 	 */
 	public collectVersions(reloadPackageJson = false): VersionBag {
@@ -184,7 +184,7 @@ export class Context {
 	/**
 	 * Given a release group to bump, this function determines whether any of its dependencies should be bumped to new
 	 * versions based on the latest published versions on npm.
-	 * 
+	 *
 	 * @deprecated
 	 */
 	public async collectBumpInfo(releaseGroup: string) {
@@ -265,7 +265,7 @@ export class Context {
 	 * package. Otherwise, the value is assumed to be a release group, so the context is searched.
 	 *
 	 * @returns A version string.
-	 * 
+	 *
 	 * @deprecated
 	 */
 	public getVersion(key: string, versionBag?: VersionBag): string {
@@ -345,7 +345,7 @@ export class Context {
 	 * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
 	 *
 	 * @internal
-	 * 
+	 *
 	 * @deprecated
 	 */
 	public async getAllVersions(
