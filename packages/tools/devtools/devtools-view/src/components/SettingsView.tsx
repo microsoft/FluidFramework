@@ -7,11 +7,15 @@ import React from "react";
 import {
 	Dropdown,
 	Option,
+	makeStyles,
+	shorthands,
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
+
 import { ThemeContext } from "../ThemeHelper";
+
 /**
  * An enum with options for the DevTools themes.
  */
@@ -21,11 +25,47 @@ export enum ThemeOption {
 	HighContrast = "High Contrast",
 }
 
+const useStyles = makeStyles({
+	root: {
+		...shorthands.gap("10px"),
+		alignItems: "start",
+		display: "grid",
+		justifyItems: "start",
+		height: "100%",
+		width: "100%",
+	},
+
+	/**
+	 * Styles to apply to option entries
+	 * (container around label and value)
+	 */
+	option: {
+		display: "flex",
+		flexDirection: "column",
+	},
+
+	/**
+	 * Styles to apply to settings option labels
+	 */
+	label: { fontSize: "12px" },
+
+	/**
+	 * Styles to apply to settings option drop-downs
+	 */
+	dropdown: {
+		minWidth: "150px",
+		fontWeight: "bold",
+	},
+});
+
 /**
  * Settings page for the debugger
  */
 export function SettingsView(): React.ReactElement {
 	const { setTheme } = React.useContext(ThemeContext) ?? {};
+
+	const styles = useStyles();
+
 	function handleThemeChange(
 		event,
 		option: {
@@ -61,27 +101,21 @@ export function SettingsView(): React.ReactElement {
 				break;
 		}
 	}
+
 	return (
-		<div
-			style={{
-				marginLeft: "10px",
-				display: "grid",
-				justifyItems: "start",
-			}}
-		>
-			<label style={{ fontSize: "12px" }}>Select theme</label>
-			<Dropdown
-				placeholder="Theme"
-				style={{
-					minWidth: "150px",
-					fontWeight: "bold",
-				}}
-				onOptionSelect={handleThemeChange}
-			>
-				<Option value={ThemeOption.Light}>Light</Option>
-				<Option value={ThemeOption.Dark}>Dark</Option>
-				<Option value={ThemeOption.HighContrast}>High Contrast</Option>
-			</Dropdown>
+		<div className={styles.root}>
+			<div className={styles.option}>
+				<label className={styles.label}>Select theme</label>
+				<Dropdown
+					placeholder="Theme"
+					className={styles.dropdown}
+					onOptionSelect={handleThemeChange}
+				>
+					<Option value={ThemeOption.Light}>Light</Option>
+					<Option value={ThemeOption.Dark}>Dark</Option>
+					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
+				</Dropdown>
+			</div>
 		</div>
 	);
 }
