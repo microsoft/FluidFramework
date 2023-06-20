@@ -218,26 +218,26 @@ export const skipCheckFlag = Flags.boolean({
 export const selectionFlags = {
 	all: Flags.boolean({
 		description:
-			"Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.",
-		exclusive: ["dir", "packages", "releaseGroup"],
+			"Run on all packages and release groups. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		exclusive: ["dir", "packages", "releaseGroup", "releaseGroupRoot"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
 		description:
-			"Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.",
-		exclusive: ["packages", "releaseGroup", "all"],
+			"Run on the package in this directory. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	packages: Flags.boolean({
 		description:
-			"Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.",
+			"Run on all independent packages in the repo. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
 		default: false,
-		exclusive: ["dir", "releaseGroup", "all"],
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	releaseGroup: releaseGroupWithAllFlag({
 		description:
-			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoots argument. Cannot be used with --all, --dir, or --packages.",
+			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all, --dir, or --packages.",
 		exclusive: ["all", "dir", "packages"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,

@@ -97,7 +97,6 @@ export const selectAndFilterPackages = (
 	context: Context,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
-	// packages?: { name: string }[],
 ): { selected: PackageDetails[]; filtered: PackageDetails[] } => {
 	const selected: PackageDetails[] = [];
 
