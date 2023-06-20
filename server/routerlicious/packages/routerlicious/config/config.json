@@ -233,22 +233,38 @@
 	"redis": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -316,6 +332,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }

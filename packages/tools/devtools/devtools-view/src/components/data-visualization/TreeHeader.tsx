@@ -22,19 +22,29 @@ export interface TreeHeaderProps extends HasLabel {
 	inlineValue?: React.ReactElement | string;
 
 	// TODO: metadata
+	metadata?: string | undefined;
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue } = props;
+	const { label, nodeTypeMetadata, inlineValue, metadata } = props;
 
 	return (
 		<div style={{ width: "auto" }}>
 			{`${label}`}
 			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
 				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
+			</span>
+			<span
+				style={{
+					color: tokens.colorPalettePlatinumBorderActive,
+					fontStyle: "oblique",
+					fontSize: "10px",
+				}}
+			>
+				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
 			{inlineValue === undefined ? "" : ": "}
 			{inlineValue}

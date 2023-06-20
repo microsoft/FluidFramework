@@ -292,7 +292,10 @@ let deterministicStableIdCount: number | undefined;
  * ```
  */
 export function useDeterministicStableId<T>(f: () => T): T {
-	assert(deterministicStableIdCount === undefined, "useDeterministicStableId cannot be nested");
+	assert(
+		deterministicStableIdCount === undefined,
+		0x6ce /* useDeterministicStableId cannot be nested */,
+	);
 	deterministicStableIdCount = 1;
 	const result = f();
 	deterministicStableIdCount = undefined;
@@ -303,7 +306,7 @@ export function generateStableId(): StableId {
 	if (deterministicStableIdCount !== undefined) {
 		assert(
 			deterministicStableIdCount < 281_474_976_710_656,
-			"The maximum valid value for deterministicStableIdCount is 16^12",
+			0x6cf /* The maximum valid value for deterministicStableIdCount is 16^12 */,
 		);
 		// Tried to generate a unique id prefixing it with the word 'beef'
 		return assertIsStableId(

@@ -133,7 +133,10 @@ describe("Value field changesets", () => {
 	const change2 = tagChange(fieldHandler.editor.set(singleTextCursor(tree2)), mintRevisionTag());
 
 	const revertChange2: FieldKindsTypes.ValueChangeset = {
-		value: { revert: singleTextCursor(tree1), revision: change2.revision },
+		value: {
+			revert: singleTextCursor(tree1),
+			changeId: { revision: change2.revision, localId: brand(42) },
+		},
 	};
 
 	const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
@@ -317,7 +320,10 @@ describe("Optional field changesets", () => {
 		{
 			fieldChange: {
 				id: brand(2),
-				newContent: { revert: singleTextCursor(tree1), revision: change2.revision },
+				newContent: {
+					revert: singleTextCursor(tree1),
+					changeId: { revision: change2.revision, localId: brand(2) },
+				},
 				wasEmpty: false,
 			},
 		},
