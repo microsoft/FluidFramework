@@ -922,7 +922,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
-			const firstGroup = Array.isArray(segmentGroup) ? segmentGroup[0] : segmentGroup;
+			let firstGroup: SegmentGroup;
+			if (Array.isArray(segmentGroup)) {
+				if (segmentGroup.length === 0) {
+					// sometimes we rebase to an empty op
+					return createGroupOp();
+				}
+				firstGroup = segmentGroup[0];
+			} else {
+				firstGroup = segmentGroup;
+			}
 			const firstGroupNode = this._mergeTree.pendingSegments.find(
 				(node) => node.data === firstGroup,
 			);
