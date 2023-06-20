@@ -75,11 +75,7 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	UpPathDefault,
@@ -91,6 +87,7 @@ export {
 	Adapters,
 	FieldAdapter,
 	TreeAdapter,
+	MapTree,
 } from "./core";
 
 export {
@@ -107,6 +104,8 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
+	BrandedKey,
+	BrandedMapSubset,
 } from "./util";
 
 export {
@@ -129,8 +128,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeIdentifierKey,
-	nodeIdentifierSchema,
+	nodeKeyFieldKey,
+	nodeKeySchema,
 } from "./domains";
 
 export {
@@ -187,7 +186,10 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	NodeIdentifier,
+	StableNodeKey,
+	LocalNodeKey,
+	compareLocalNodeKeys,
+	localNodeKeySymbol,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -228,7 +230,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -240,7 +242,44 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	FieldGenerator,
+	TreeDataContext,
 	NodeExistenceState,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	SetValueBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./feature-libraries";
 
 export {
@@ -248,6 +287,7 @@ export {
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeOptions,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
@@ -256,11 +296,16 @@ export {
 export type {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
+	SchemaValidationFunction,
 } from "./codec";
+export { noopValidator } from "./codec";
+export { typeboxValidator } from "./external-utilities";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

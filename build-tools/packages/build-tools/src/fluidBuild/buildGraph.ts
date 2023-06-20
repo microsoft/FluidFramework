@@ -350,17 +350,6 @@ export class BuildGraph {
 		}
 	}
 
-	public async clean() {
-		const cleanPackages: Package[] = [];
-		this.buildPackages.forEach((node) => {
-			if (options.matchedOnly === true && !node.pkg.matched) {
-				return;
-			}
-			cleanPackages.push(node.pkg);
-		});
-		return Packages.clean(cleanPackages, true);
-	}
-
 	public get numSkippedTasks(): number {
 		return this.buildContext.taskStats.leafUpToDateCount;
 	}
