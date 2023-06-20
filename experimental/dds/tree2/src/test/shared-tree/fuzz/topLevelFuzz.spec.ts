@@ -3,55 +3,27 @@
  * Licensed under the MIT License.
  */
 import path from "path";
-import { AsyncGenerator, SaveInfo, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { takeAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel } from "@fluid-internal/test-dds-utils";
 import {
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 	DDSFuzzTestState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
-import {
-	makeOpGenerator,
-	makeOpGeneratorFromFilePath,
-	EditGeneratorOpWeights,
-} from "./fuzzEditGenerators";
+import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-export function performFuzzActions(
-	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
-	testCount: number,
-	saveInfo?: SaveInfo,
-): void {
-	const baseModel: DDSFuzzModel<
-		SharedTreeTestFactory,
-		Operation,
-		DDSFuzzTestState<SharedTreeTestFactory>
-	> = {
-		workloadName: "SharedTree",
-		factory: new SharedTreeTestFactory(onCreate),
-		generatorFactory: () => generator,
-		reducer: fuzzReducer,
-		validateConsistency: validateTreeConsistency,
-	};
-	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-
-	createDDSFuzzSuite(baseModel, {
-		defaultTestCount: testCount,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
-		},
-		reconnectProbability: 0.5,
-		emitter,
-		saveFailures: saveInfo ? { directory: saveInfo.filepath } : false,
-	});
-}
+const baseOptions = {
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	reconnectProbability: 0.5,
+};
 
 /**
  * Fuzz tests in this suite are meant to exercise as much of the SharedTree code as possible and do so in the most
@@ -63,7 +35,7 @@ export function performFuzzActions(
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe.only("Fuzz - Top-Level", () => {
+describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
@@ -75,7 +47,22 @@ describe.only("Fuzz - Top-Level", () => {
 	 * operations (such as summarization and stashed ops).
 	 */
 	describe("Everything", () => {
-		performFuzzActions(generatorFactory(), runsPerBatch);
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: validateTreeConsistency,
+		};
+		const options = {
+			...baseOptions,
+			defaultTestCount: runsPerBatch,
+		};
+		createDDSFuzzSuite(model, options);
 	});
 });
 
@@ -83,7 +70,25 @@ describe.skip("Re-run form ops saved on file", () => {
 	// For using saved operations set the value of the runSeed used to saved the ops in the file.
 	const runSeed = 0;
 	const filepath = path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`);
+	const generatorFactory = () => makeOpGenerator();
+	const model: DDSFuzzModel<
+		SharedTreeTestFactory,
+		Operation,
+		DDSFuzzTestState<SharedTreeTestFactory>
+	> = {
+		workloadName: "SharedTree",
+		factory: new SharedTreeTestFactory(onCreate),
+		generatorFactory,
+		reducer: fuzzReducer,
+		validateConsistency: validateTreeConsistency,
+	};
+	const options = {
+		...baseOptions,
+		defaultTestCount: 1,
+		replay: runSeed,
+		saveFailures: { directory: filepath },
+	};
 	it(`with seed ${runSeed}`, async () => {
-		performFuzzActions(await makeOpGeneratorFromFilePath(filepath), runSeed);
+		createDDSFuzzSuite(model, options);
 	}).timeout(20000);
 });
