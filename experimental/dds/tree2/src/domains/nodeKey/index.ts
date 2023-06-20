@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { nodeIdentifierKey, nodeIdentifierSchema } from "./nodeIdentifierSchema";
+export { nodeKeyFieldKey, nodeKeySchema } from "./nodeKeySchema";
