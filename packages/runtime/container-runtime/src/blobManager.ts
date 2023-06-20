@@ -73,7 +73,6 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 		private readonly onAttachGraph: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
-		this.onAttachGraph = onAttachGraph;
 	}
 
 	public attachGraph() {

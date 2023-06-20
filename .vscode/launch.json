@@ -298,7 +298,7 @@
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
 				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
-				"FLUID_TEST_VERBOSE": "1"
+				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
