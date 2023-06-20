@@ -104,6 +104,9 @@ export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
     value: T;
 }>;
 
+// @public (undocumented)
+export function validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number, logger: ITelemetryLoggerExt): void;
+
 // (No @packageDocumentation comment for this package)
 
 ```

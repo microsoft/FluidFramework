@@ -316,6 +316,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 					trees,
 					blobs: numBlobs,
 					encodedBlobsSize,
+					sequenceNumber: snapshot.sequenceNumber,
 					...response.propsToLog,
 					snapshotConversionTime,
 					...getW3CData(response.requestUrl, "xmlhttprequest"),

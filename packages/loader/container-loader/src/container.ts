@@ -342,17 +342,6 @@ export class Container
 {
 	public static version = "^0.1.0";
 
-	public static async clone(
-		container: Container,
-		loadProps: IContainerLoadProps,
-		createParamOverrides: Partial<IContainerCreateProps>,
-	) {
-		return this.load(loadProps, {
-			...container.createProps,
-			...createParamOverrides,
-		});
-	}
-
 	/**
 	 * Load an existing container.
 	 * @internal
@@ -364,6 +353,10 @@ export class Container
 		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
 		const container = new Container(createProps, loadProps);
+
+		const disableRecordHeapSize = container.mc.config.getBoolean(
+			"Fluid.Loader.DisableRecordHeapSize",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -406,6 +399,7 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
+			disableRecordHeapSize !== true /* recordHeapSize */,
 		);
 	}
 
@@ -451,13 +445,29 @@ export class Container
 		);
 	}
 
-	public subLogger: TelemetryLogger;
-
 	// Tells if container can reconnect on losing fist connection
 	// If false, container gets closed on loss of connection.
-	private readonly _canReconnect: boolean = true;
+	private readonly _canReconnect: boolean;
+	private readonly clientDetailsOverride: IClientDetails | undefined;
+	private readonly urlResolver: IUrlResolver;
+	private readonly serviceFactory: IDocumentServiceFactory;
+	private readonly codeLoader: ICodeDetailsLoader;
+	public readonly options: ILoaderOptions;
+	private readonly scope: FluidObject;
+	public subLogger: TelemetryLogger;
+	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
+	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
 	private readonly mc: MonitoringContext;
+
+	/**
+	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
+	 * @internal
+	 */
+	public readonly clone: (
+		loadProps: IContainerLoadProps,
+		createParamOverrides: Partial<IContainerCreateProps>,
+	) => Promise<Container>;
 
 	/**
 	 * Lifecycle state of the container, used mainly to prevent re-entrancy and telemetry
@@ -508,7 +518,6 @@ export class Container
 		return this.storageAdapter;
 	}
 
-	private readonly clientDetailsOverride: IClientDetails | undefined;
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
@@ -672,20 +681,6 @@ export class Container
 		return this._dirtyContainer;
 	}
 
-	private get serviceFactory() {
-		return this.createProps.documentServiceFactory;
-	}
-	private get urlResolver() {
-		return this.createProps.urlResolver;
-	}
-	public readonly options: ILoaderOptions;
-	private get scope() {
-		return this.createProps.scope;
-	}
-	private get codeLoader() {
-		return this.createProps.codeLoader;
-	}
-
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
@@ -725,8 +720,8 @@ export class Container
 	 * @internal
 	 */
 	constructor(
-		private readonly createProps: IContainerCreateProps,
-		loadProps?: IContainerLoadProps,
+		createProps: IContainerCreateProps,
+		loadProps?: Pick<IContainerLoadProps, "pendingLocalState">,
 	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
@@ -738,10 +733,46 @@ export class Container
 			);
 		});
 
-		this.clientDetailsOverride = createProps.clientDetailsOverride;
-		if (createProps.canReconnect !== undefined) {
-			this._canReconnect = createProps.canReconnect;
-		}
+		const {
+			canReconnect,
+			clientDetailsOverride,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			subLogger,
+			detachedBlobStorage,
+			protocolHandlerBuilder,
+		} = createProps;
+
+		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
+		const pendingLocalState = loadProps?.pendingLocalState;
+
+		this._canReconnect = canReconnect ?? true;
+		this.clientDetailsOverride = clientDetailsOverride;
+		this.urlResolver = urlResolver;
+		this.serviceFactory = documentServiceFactory;
+		this.codeLoader = codeLoader;
+		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
+		// Tracking alternative ways to handle this in AB#4129.
+		this.options = { ...options };
+		this.scope = scope;
+		this.detachedBlobStorage = detachedBlobStorage;
+		this.protocolHandlerBuilder =
+			protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
+
+		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
+		this.clone = async (
+			_loadProps: IContainerLoadProps,
+			createParamOverrides: Partial<IContainerCreateProps>,
+		) => {
+			return Container.load(_loadProps, {
+				...createProps,
+				...createParamOverrides,
+			});
+		};
 
 		// Create logger for data stores to use
 		const type = this.client.details.type;
@@ -751,7 +782,7 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(createProps.subLogger, undefined, {
+		this.subLogger = ChildLogger.create(subLogger, undefined, {
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
@@ -759,7 +790,7 @@ export class Container
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: loadProps?.pendingLocalState !== undefined,
+				serializedContainer: pendingLocalState !== undefined,
 			},
 			// we need to be judicious with our logging here to avoid generating too much data
 			// all data logged here should be broadly applicable, and not specific to a
@@ -785,13 +816,6 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
-		// all clients that were loaded from the same loader (including summarizer clients).
-		// Tracking alternative ways to handle this in AB#4129.
-		this.options = {
-			...this.createProps.options,
-		};
-
 		this._deltaManager = this.createDeltaManager();
 
 		this.connectionStateHandler = createConnectionStateHandler(
@@ -812,7 +836,7 @@ export class Container
 					}
 				},
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-				maxClientLeaveWaitTime: this.createProps.options.maxClientLeaveWaitTime,
+				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
@@ -849,7 +873,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			loadProps?.pendingLocalState?.clientId,
+			pendingLocalState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -868,12 +892,12 @@ export class Container
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
 		const forceEnableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.createProps.options.summarizeProtocolTree;
+			options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
-			this.createProps.detachedBlobStorage,
+			detachedBlobStorage,
 			this.mc.logger,
-			loadProps?.pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -908,7 +932,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError) {
-		this._deltaManager.close(error, true /* doDispose */);
+		this._deltaManager.dispose(error);
 		this.verifyClosed();
 	}
 
@@ -1078,7 +1102,7 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		if (this.createProps.detachedBlobStorage && this.createProps.detachedBlobStorage.size > 0) {
+		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
 			combinedSummary.tree[".hasAttachmentBlobs"] = {
 				type: SummaryType.Blob,
 				content: "true",
@@ -1108,8 +1132,7 @@ export class Container
 
 				// If attachment blobs were uploaded in detached state we will go through a different attach flow
 				const hasAttachmentBlobs =
-					this.createProps.detachedBlobStorage !== undefined &&
-					this.createProps.detachedBlobStorage.size > 0;
+					this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0;
 
 				try {
 					assert(
@@ -1167,7 +1190,7 @@ export class Container
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
 						assert(
-							!!this.createProps.detachedBlobStorage,
+							!!this.detachedBlobStorage,
 							0x24e /* "assertion for type narrowing" */,
 						);
 
@@ -1175,14 +1198,12 @@ export class Container
 						// support blob handles that only know about the local IDs
 						const redirectTable = new Map<string, string>();
 						// if new blobs are added while uploading, upload them too
-						while (redirectTable.size < this.createProps.detachedBlobStorage.size) {
-							const newIds = this.createProps.detachedBlobStorage
+						while (redirectTable.size < this.detachedBlobStorage.size) {
+							const newIds = this.detachedBlobStorage
 								.getBlobIds()
 								.filter((id) => !redirectTable.has(id));
 							for (const id of newIds) {
-								const blob = await this.createProps.detachedBlobStorage.readBlob(
-									id,
-								);
+								const blob = await this.detachedBlobStorage.readBlob(id);
 								const response = await this.storageAdapter.createBlob(blob);
 								redirectTable.set(id, response.id);
 							}
@@ -1376,15 +1397,7 @@ export class Container
 		return versions[0];
 	}
 
-	private recordConnectStartTime() {
-		if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-			this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
-		}
-	}
-
 	private connectToDeltaStream(args: IConnectionArgs) {
-		this.recordConnectStartTime();
-
 		// All agents need "write" access, including summarizer.
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
 			args.mode = "write";
@@ -1619,8 +1632,7 @@ export class Container
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
 		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
 			assert(
-				!!this.createProps.detachedBlobStorage &&
-					this.createProps.detachedBlobStorage.size > 0,
+				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
@@ -1717,10 +1729,7 @@ export class Container
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
 	): void {
-		const protocolHandlerBuilder =
-			this.createProps.protocolHandlerBuilder ??
-			((...args) => new ProtocolHandler(...args, new Audience()));
-		const protocol = protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
+		const protocol = this.protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
 			this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
 		);
 
@@ -1859,6 +1868,14 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
+		deltaManager.on("establishingConnection", (reason: string) => {
+			this.connectionStateHandler.establishingConnection(reason);
+		});
+
+		deltaManager.on("cancelEstablishingConnection", (reason: string) => {
+			this.connectionStateHandler.cancelEstablishingConnection(reason);
+		});
+
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {
 			this.collabWindowTracker?.stopSequenceNumberUpdate();
 			if (!this.closed) {
@@ -1935,8 +1952,8 @@ export class Container
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-			} else {
-				// This info is of most interest on establishing connection only.
+			} else if (value === ConnectionState.CatchingUp) {
+				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
 				if (this.deltaManager.hasCheckpointSequenceNumber) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
