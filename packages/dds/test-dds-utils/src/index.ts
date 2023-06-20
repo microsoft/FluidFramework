@@ -11,11 +11,11 @@ export {
 	Client,
 	ClientSpec,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	defaultDDSFuzzSuiteOptions,
+	DDSFuzzHarnessEvents,
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";

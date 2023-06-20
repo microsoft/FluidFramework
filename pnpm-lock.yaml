@@ -5601,6 +5601,7 @@ importers:
   experimental/dds/tree2:
     specifiers:
       '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-internal/test-dds-utils': workspace:~
       '@fluid-internal/test-drivers': workspace:~
       '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.20.0-169245
@@ -5668,6 +5669,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-internal/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.20.0-169245_@types+node@14.18.47
