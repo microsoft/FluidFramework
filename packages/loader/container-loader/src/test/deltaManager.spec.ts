@@ -172,14 +172,14 @@ describe("Loader", () => {
 				}
 
 				it("Infinite frequency parameters disables periodic noops completely", async () => {
-					const tracker = new NoopHeuristic(Infinity, Infinity);
+					const noopHeuristic = new NoopHeuristic(Infinity, Infinity);
 
-					tracker.on("wantsNoop", () => {
+					noopHeuristic.on("wantsNoop", () => {
 						assert.fail("Heuristic shouldn't request noops with Infinite thresholds");
 					});
 
 					for (let num = 0; num < 1000; ++num) {
-						tracker.notifyMessageProcessed(generateOp());
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 
 					await tickClock(1000 * 1000);
@@ -187,30 +187,30 @@ describe("Loader", () => {
 
 				it("Infinite time frequency will not generate noops at time intervals", async () => {
 					let counter = 0;
-					const tracker = new NoopHeuristic(Infinity, 100);
-					tracker.on("wantsNoop", () => {
+					const noopHeuristic = new NoopHeuristic(Infinity, 100);
+					noopHeuristic.on("wantsNoop", () => {
 						counter++;
-						tracker.notifyMessageSent();
+						noopHeuristic.notifyMessageSent();
 					});
 					for (let num = 0; num < 99; ++num) {
-						tracker.notifyMessageProcessed(generateOp());
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 					await tickClock(1000 * 1000);
 					assert.equal(counter, 0, "No noops requested after 99 ops");
-					tracker.notifyMessageProcessed(generateOp());
+					noopHeuristic.notifyMessageProcessed(generateOp());
 					await tickClock(1);
 					assert.equal(counter, 1, "One noop should be requested");
 				});
 
 				it("Infinite op frequency will not generate noops at op intervals", async () => {
 					let counter = 0;
-					const tracker = new NoopHeuristic(100, Infinity);
-					tracker.on("wantsNoop", () => {
+					const noopHeuristic = new NoopHeuristic(100, Infinity);
+					noopHeuristic.on("wantsNoop", () => {
 						counter++;
-						tracker.notifyMessageSent();
+						noopHeuristic.notifyMessageSent();
 					});
 					for (let num = 0; num < 1000; ++num) {
-						tracker.notifyMessageProcessed(generateOp());
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 					assert.equal(counter, 0, "No noops requested after 99 ops");
 					await tickClock(100);
@@ -219,13 +219,13 @@ describe("Loader", () => {
 
 				it("1k op frequency will generate noop at op intervals", async () => {
 					let counter = 0;
-					const tracker = new NoopHeuristic(Infinity, 1000);
-					tracker.on("wantsNoop", () => {
+					const noopHeuristic = new NoopHeuristic(Infinity, 1000);
+					noopHeuristic.on("wantsNoop", () => {
 						counter++;
-						tracker.notifyMessageSent();
+						noopHeuristic.notifyMessageSent();
 					});
 					for (let num = 0; num < 1000; ++num) {
-						tracker.notifyMessageProcessed(generateOp());
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 					assert.equal(counter, 0, "No noops requested after 999 ops");
 					await tickClock(1);

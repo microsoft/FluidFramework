@@ -45,7 +45,8 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 		super();
 		if (NoopTimeFrequency !== Infinity) {
 			this.timer = new Timer(NoopTimeFrequency, () => {
-				// We allow the timer to expire even if an op is sent or we disconnect - this guards against trying to send a noop anyway.
+				// We allow the timer to expire even if an op is sent or we disconnect.
+				// This condition is to guard against trying to send a noop anyway in that case.
 				if (this.opsProcessedSinceOpSent !== 0) {
 					this.emit("wantsNoop");
 				}
