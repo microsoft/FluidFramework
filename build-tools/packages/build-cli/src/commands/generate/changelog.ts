@@ -32,7 +32,7 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 	static examples = [
 		{
-			description: "Create an changelog using the --version flag.",
+			description: "Generate changelogs for version 1.0.0.",
 			command: "<%= config.bin %> <%= command.id %> --version 1.0.0",
 		},
 	];
