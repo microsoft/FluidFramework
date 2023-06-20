@@ -88,6 +88,7 @@ pr:
     - package.json
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
+    - fluidBuild.config.cjs
     - tools/pipelines/build-client.yml
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -113,6 +114,7 @@ extends:
     taskBundleAnalysis: true
     taskLint: false
     taskBuildDocs: false
+    publishDocs: true
     taskTest:
     - webpack
     - ci:test:mocha

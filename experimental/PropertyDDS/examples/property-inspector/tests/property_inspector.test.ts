@@ -14,7 +14,7 @@ describe("Property Inspector", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it("Inspector at root1 is rendered", async () => {

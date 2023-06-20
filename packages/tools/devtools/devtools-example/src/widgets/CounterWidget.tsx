@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-import { IStackItemStyles, IStackStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { Button } from "@fluentui/react-components";
+import { Button, makeStyles, shorthands, Text, Tooltip } from "@fluentui/react-components";
 import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
 
 import { SharedCounter } from "@fluidframework/counter";
@@ -15,14 +14,22 @@ import { SharedCounter } from "@fluidframework/counter";
 //   Common, simple widget for interacting with SharedCounter_s.
 
 /**
- * Tooltip element ID used by the widget's decrement button.
+ * Styles for the widget.
  */
-const decrementButtonTooltipId = "decrement-counter-button";
+const useStyles = makeStyles({
+	/**
+	 * Root of the app (both internal app views + embedded devtools panel)
+	 */
+	root: {
+		display: "flex",
+		flexDirection: "row",
+		alignItems: "center",
+	},
 
-/**
- * Tooltip element ID used by the widget's increment button.
- */
-const incrementButtonTooltipId = "increment-counter-button";
+	counterText: {
+		...shorthands.padding("10px"),
+	},
+});
 
 /**
  * {@link CounterWidget} input props.
@@ -67,47 +74,26 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 		counter.increment(1);
 	}
 
-	const stackStyles: IStackStyles = {
-		root: {
-			alignItems: "center",
-		},
-	};
-
-	const stackItemStyles: IStackItemStyles = {
-		root: {
-			padding: "5px",
-		},
-	};
+	const styles = useStyles();
 
 	return (
-		<Stack horizontal styles={stackStyles}>
-			<StackItem styles={stackItemStyles}>
-				<TooltipHost
-					content="Decrement counter by 1 (min 0)."
-					id={decrementButtonTooltipId}
-				>
-					<Button
-						// size="small"
-						icon={<SubtractSquare24Regular />}
-						onClick={decrementCounter}
-						disabled={counterValue === 0}
-						aria-describedby={decrementButtonTooltipId}
-					/>
-				</TooltipHost>
-			</StackItem>
-			<StackItem styles={stackItemStyles}>
-				<div>{counterValue}</div>
-			</StackItem>
-			<StackItem styles={stackItemStyles}>
-				<TooltipHost content="Increment counter by 1." id={incrementButtonTooltipId}>
-					<Button
-						// size="small"
-						icon={<AddSquare24Regular />}
-						onClick={incrementCounter}
-						aria-describedby={incrementButtonTooltipId}
-					/>
-				</TooltipHost>
-			</StackItem>
-		</Stack>
+		<div className={styles.root}>
+			<Tooltip content="Decrement counter by 1 (min 0)." relationship="description">
+				<Button
+					// size="small"
+					icon={<SubtractSquare24Regular />}
+					onClick={decrementCounter}
+					disabled={counterValue === 0}
+				/>
+			</Tooltip>
+			<Text className={styles.counterText}>{counterValue}</Text>
+			<Tooltip content="Increment counter by 1." relationship="description">
+				<Button
+					// size="small"
+					icon={<AddSquare24Regular />}
+					onClick={incrementCounter}
+				/>
+			</Tooltip>
+		</div>
 	);
 }

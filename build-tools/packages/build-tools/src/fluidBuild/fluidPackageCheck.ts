@@ -6,9 +6,7 @@ import chalk from "chalk";
 import fs from "fs";
 import isEqual from "lodash.isequal";
 import path from "path";
-import sortPackageJson from "sort-package-json";
 
-import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { existsSync, readFileAsync, resolveNodeModule, writeFileAsync } from "../common/utils";
 import * as TscUtils from "../common/tscUtils";
@@ -82,8 +80,7 @@ export class FluidPackageCheck {
 		const testScript = testMochaScript ?? pkg.getScript(testScriptName);
 		if (testScript && /(ts-)?mocha/.test(testScript)) {
 			const shouldHaveConfig =
-				pkg.monoRepo?.kind === MonoRepoKind.Client ||
-				pkg.monoRepo?.kind === MonoRepoKind.Azure;
+				pkg.monoRepo?.kind === "client" || pkg.monoRepo?.kind === "azure";
 			const hasConfig = testScript.includes(" --config ");
 			if (shouldHaveConfig) {
 				const pkgstring = "@fluidframework/mocha-test-setup";
@@ -175,11 +172,7 @@ export class FluidPackageCheck {
 			expectedTestScript = `nyc ${expectedTestScript}`;
 		}
 
-		if (
-			pkg.monoRepo?.kind === MonoRepoKind.Client &&
-			testScript &&
-			/^(ts-)?mocha/.test(testScript)
-		) {
+		if (pkg.monoRepo?.kind === "client" && testScript && /^(ts-)?mocha/.test(testScript)) {
 			this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix);
 			if (fix) {
 				if (!testMochaScript) {

@@ -372,7 +372,7 @@ export class OrderedClientElection
 			// Override the initially elected client with the initial state.
 			if (initialClient?.clientId !== initialState.electedClientId) {
 				// Cannot find initially elected client, so elect undefined.
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientNotFound",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -382,7 +382,7 @@ export class OrderedClientElection
 			} else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
 				// Initially elected client is ineligible, so elect next eligible client.
 				initialClient = initialParent = this.findFirstEligibleParent(initialParent);
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientIneligible",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -416,13 +416,6 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
-			this.logger.sendTelemetryEvent({
-				eventName: "SummarizerClientElected",
-				electedClientId: this._electedClient?.clientId,
-				electedParentId: this._electedParent?.clientId,
-				electionSequenceNumber: sequenceNumber,
-				isSummarizerClient,
-			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
@@ -430,12 +423,6 @@ export class OrderedClientElection
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
 		if (this._electedParent !== client) {
 			this._electedParent = client;
-			this.logger.sendTelemetryEvent({
-				eventName: "SummarizerParentElected",
-				electedClientId: this._electedClient?.clientId,
-				electedParentId: this._electedParent?.clientId,
-				electionSequenceNumber: sequenceNumber,
-			});
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
 	}

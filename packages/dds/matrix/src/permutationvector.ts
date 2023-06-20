@@ -141,7 +141,6 @@ export class PermutationVector extends Client {
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
-				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
