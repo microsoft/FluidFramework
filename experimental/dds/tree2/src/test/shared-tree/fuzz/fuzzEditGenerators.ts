@@ -45,7 +45,7 @@ import {
 	ValueFieldEdit,
 } from "./operationTypes";
 
-export type EditState = DDSFuzzTestState<SharedTreeFactory>;
+export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
 
 export interface EditGeneratorOpWeights {
 	insert: number;
@@ -64,8 +64,8 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	abort: 0,
 };
 
-export const makeNodeEditGenerator = (): Generator<NodeEdit, EditState> => {
-	function setPayloadGenerator(state: EditState): FuzzNodeEditChange {
+export const makeNodeEditGenerator = (): Generator<NodeEdit, FuzzTestState> => {
+	function setPayloadGenerator(state: FuzzTestState): FuzzNodeEditChange {
 		const tree = state.channel;
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
@@ -102,12 +102,12 @@ export const makeNodeEditGenerator = (): Generator<NodeEdit, EditState> => {
 
 export const makeFieldEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<FieldEdit, EditState> => {
+): Generator<FieldEdit, FuzzTestState> => {
 	const passedOpWeights = {
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	function fieldEditGenerator(state: EditState): FieldEditTypes {
+	function fieldEditGenerator(state: FuzzTestState): FieldEditTypes {
 		const tree = state.channel;
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
@@ -136,7 +136,8 @@ export const makeFieldEditGenerator = (
 				return generateValueFieldDeleteOp(fieldPath);
 			}
 			case optionalFieldKey: {
-				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
+				const opWeightRatio =
+					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
 				const opType =
 					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
@@ -229,12 +230,12 @@ export const makeFieldEditGenerator = (
 
 export const makeEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<TreeEdit, EditState> => {
+): Generator<TreeEdit, FuzzTestState> => {
 	const passedOpWeights = {
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const fieldOrNodeEdit = createWeightedGenerator<FieldEdit | NodeEdit, EditState>([
+	const fieldOrNodeEdit = createWeightedGenerator<FieldEdit | NodeEdit, FuzzTestState>([
 		[
 			makeFieldEditGenerator({
 				insert: passedOpWeights.insert,
@@ -263,7 +264,7 @@ export const makeEditGenerator = (
 
 export const makeTransactionEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<TransactionBoundary, EditState> => {
+): Generator<TransactionBoundary, FuzzTestState> => {
 	const passedOpWeights = {
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
@@ -272,7 +273,7 @@ export const makeTransactionEditGenerator = (
 	const commit: TransactionCommitOp = { fuzzType: "transactionCommit" };
 	const abort: TransactionAbortOp = { fuzzType: "transactionAbort" };
 
-	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, EditState>([
+	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, FuzzTestState>([
 		[start, passedOpWeights.start],
 		[commit, passedOpWeights.commit, ({ channel }) => transactionsInProgress(channel)],
 		[abort, passedOpWeights.abort, ({ channel }) => transactionsInProgress(channel)],
@@ -297,7 +298,7 @@ export function makeOpGenerator(
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const generatorWeights: Weights<Operation, EditState> = [
+	const generatorWeights: Weights<Operation, FuzzTestState> = [
 		[
 			makeEditGenerator(passedOpWeights),
 			sumWeights([
@@ -312,11 +313,11 @@ export function makeOpGenerator(
 		],
 	];
 
-	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, EditState>(
+	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, FuzzTestState>(
 		generatorWeights,
 	);
 	return async (state) => {
-		return generatorAssumingTreeIsSelected({ ...state });
+		return generatorAssumingTreeIsSelected(state);
 	};
 }
 

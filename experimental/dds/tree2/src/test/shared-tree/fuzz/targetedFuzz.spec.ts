@@ -3,29 +3,39 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncGenerator, makeRandom, SaveInfo } from "@fluid-internal/stochastic-test-utils";
+import {
+	AsyncGenerator,
+	makeRandom,
+	SaveInfo,
+	takeAsync,
+} from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
+	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 	defaultDDSFuzzSuiteOptions,
-	mixinClientSelection,
-	runTestForSeed,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
+import {
+	moveToDetachedField,
+	compareUpPaths,
+	rootFieldKeySymbol,
+	UpPath,
+	Anchor,
+} from "../../../core";
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate, initialTreeState, runFuzzBatch } from "./fuzzUtils";
+import { onCreate, initialTreeState } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-export async function performFuzzActionsAbort(
+export function performFuzzActionsAbort(
 	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
-	seed: number,
+	testCount: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<SharedTreeTestFactory>> {
+): void {
 	const baseModel: DDSFuzzModel<
 		SharedTreeTestFactory,
 		Operation,
@@ -38,7 +48,7 @@ export async function performFuzzActionsAbort(
 		validateConsistency: () => {},
 	};
 
-	let firstAnchor;
+	let firstAnchor: Anchor | undefined;
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeTestFactory>) => {
 		// building the anchor for anchor stability test
@@ -53,48 +63,39 @@ export async function performFuzzActionsAbort(
 		cursor.free();
 		initialState.clients[0].channel.transaction.start();
 	});
-	const options = {
-		...defaultDDSFuzzSuiteOptions,
+
+	emitter.on("testEnd", (finalState: DDSFuzzTestState<SharedTreeTestFactory>) => {
+		// aborts any transactions that may still be in progress
+		finalState.clients[0].channel.transaction.abort();
+		validateTree(finalState.clients[0].channel, [initialTreeState]);
+		// validate anchor
+		const expectedPath: UpPath = {
+			parent: {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			},
+			parentField: brand("foo"),
+			parentIndex: 1,
+		};
+		assert(firstAnchor !== undefined);
+		const anchorPath = finalState.clients[0].channel.locate(firstAnchor);
+		assert(compareUpPaths(expectedPath, anchorPath));
+	});
+
+	createDDSFuzzSuite(baseModel, {
+		defaultTestCount: testCount,
 		numberOfClients: 1,
 		emitter,
-	};
-
-	const model = mixinClientSelection(
-		{
-			...baseModel,
-			generatorFactory: () => generator,
-		},
-		options,
-	);
-
-	const finalState = await runTestForSeed(model, options, seed, saveInfo);
-
-	// aborts any transactions that may still be in progress
-	finalState.clients[0].channel.transaction.abort();
-	validateTree(finalState.clients[0].channel, [initialTreeState]);
-
-	// validate anchor
-	const expectedPath: UpPath = {
-		parent: {
-			parent: undefined,
-			parentIndex: 0,
-			parentField: rootFieldKeySymbol,
-		},
-		parentField: brand("foo"),
-		parentIndex: 1,
-	};
-	assert(firstAnchor !== undefined);
-	const anchorPath = finalState.clients[0].channel.locate(firstAnchor);
-
-	assert(compareUpPaths(expectedPath, anchorPath));
-	return finalState;
+		saveFailures: saveInfo ? { directory: saveInfo.filepath } : false,
+	});
 }
 
-export async function performFuzzActionsComposeVsIndividual(
+export function performFuzzActionsComposeVsIndividual(
 	generator: AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeTestFactory>>,
-	seed: number,
+	testCount: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<SharedTreeTestFactory>> {
+): void {
 	const baseModel: DDSFuzzModel<
 		SharedTreeTestFactory,
 		Operation,
@@ -110,26 +111,23 @@ export async function performFuzzActionsComposeVsIndividual(
 	emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeTestFactory>) => {
 		initialState.clients[0].channel.transaction.start();
 	});
+	emitter.on("testEnd", (finalState: DDSFuzzTestState<SharedTreeTestFactory>) => {
+		const treeViewBeforeCommit = toJsonableTree(finalState.clients[0].channel);
+		finalState.clients[0].channel.transaction.commit();
+		assert(treeViewBeforeCommit !== undefined);
+		validateTree(finalState.clients[0].channel, treeViewBeforeCommit);
+	});
 	const options = {
 		...defaultDDSFuzzSuiteOptions,
 		numberOfClients: 1,
 		emitter,
 	};
-	const model = mixinClientSelection(
-		{
-			...baseModel,
-			generatorFactory: () => generator,
-		},
-		options,
-	);
-
-	const finalState = await runTestForSeed(model, options, seed, saveInfo);
-	const treeViewBeforeCommit = toJsonableTree(finalState.clients[0].channel);
-	finalState.clients[0].channel.transaction.commit();
-	assert(treeViewBeforeCommit !== undefined);
-	validateTree(finalState.clients[0].channel, treeViewBeforeCommit);
-
-	return finalState;
+	createDDSFuzzSuite(baseModel, {
+		defaultTestCount: testCount,
+		numberOfClients: 1,
+		emitter,
+		saveFailures: saveInfo ? { directory: saveInfo.filepath } : false,
+	});
 }
 
 /**
@@ -139,7 +137,7 @@ export async function performFuzzActionsComposeVsIndividual(
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe("Fuzz - Targeted", () => {
+describe.only("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
@@ -147,14 +145,9 @@ describe("Fuzz - Targeted", () => {
 		setPayload: 1,
 	};
 	describe("Anchors are unaffected by aborted transaction", () => {
-		runFuzzBatch(
-			makeOpGenerator,
-			performFuzzActionsAbort,
-			opsPerRun,
-			runsPerBatch,
-			random,
-			editGeneratorOpWeights,
-		);
+		const generatorFactory = () =>
+			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
+		performFuzzActionsAbort(generatorFactory(), opsPerRun);
 	});
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
@@ -162,13 +155,8 @@ describe("Fuzz - Targeted", () => {
 		delete: 1,
 	};
 	describe("Composed vs individual changes converge to the same tree", () => {
-		runFuzzBatch(
-			makeOpGenerator,
-			performFuzzActionsComposeVsIndividual,
-			opsPerRun,
-			runsPerBatch,
-			random,
-			composeVsIndividualWeights,
-		);
+		const generatorFactory = () =>
+			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
+		performFuzzActionsComposeVsIndividual(generatorFactory(), opsPerRun);
 	});
 });
