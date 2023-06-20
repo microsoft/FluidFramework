@@ -196,7 +196,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
- * {@link VisualizeSharedObject} for {@link SharedTree}.
+ * {@link VisualizeSharedObject} for {@link ISharedTree}.
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
@@ -221,9 +221,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 		}
 	};
 
-	if (sharedTree.root !== undefined) {
-		await iterateNodes(contextRoot);
-	}
+	await iterateNodes(contextRoot);
 
 	return {
 		fluidObjectId: sharedTree.id,
