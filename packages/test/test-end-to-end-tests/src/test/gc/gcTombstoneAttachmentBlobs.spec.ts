@@ -22,8 +22,8 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
-import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
+} from "../mockDetachedBlobStorage.js";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added

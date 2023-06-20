@@ -21,11 +21,13 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
+	const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			inlineValue={String(node.value)}
+			metadata={metadata}
 		/>
 	);
 

@@ -20,6 +20,7 @@ import {
 import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
+import { typeboxValidator } from "../../../external-utilities";
 import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { Operation } from "./operationTypes";
 
@@ -80,7 +81,7 @@ export const testSchema: SchemaData = {
 };
 
 export function makeTree(initialState: JsonableTree): ISharedTree {
-	const factory = new SharedTreeFactory();
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const runtime = new MockFluidDataStoreRuntime();
 	const tree = factory.create(runtime, "TestSharedTree");
 	tree.storedSchema.update(testSchema);

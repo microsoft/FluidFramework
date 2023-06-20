@@ -654,7 +654,10 @@ export class SharedDirectory
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
 						newSubDir = new SubDirectory(
-							createInfo !== undefined ? createInfo.csn : 0,
+							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							// sub directory. This could be done at serialization time too, but we need to maintain
+							// back compat too and also we will actually know the state when it was serialized.
+							createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
 								: new Set(),

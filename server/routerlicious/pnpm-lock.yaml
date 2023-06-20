@@ -33,9 +33,15 @@ importers:
       lerna:
         specifier: ^5.1.8
         version: 5.6.2
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
       nyc:
         specifier: ^15.1.0
         version: 15.1.0
+      prettier:
+        specifier: ~2.6.2
+        version: 2.6.2
       rimraf:
         specifier: ^4.4.0
         version: 4.4.0
@@ -563,6 +569,9 @@ importers:
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
+      webpack:
+        specifier: ^5.82.0
+        version: 5.82.1
 
   packages/protocol-base:
     dependencies:
@@ -682,8 +691,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       nconf:
         specifier: ^0.12.0
         version: 0.12.0
@@ -712,9 +721,6 @@ importers:
       '@fluidframework/server-test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/nconf':
         specifier: ^0.10.2
         version: 0.10.3
@@ -803,8 +809,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -872,9 +878,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.32
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/json-stringify-safe':
         specifier: ^5.0.0
         version: 5.0.0
@@ -981,8 +984,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       lru-cache:
         specifier: ^6.0.0
         version: 6.0.0
@@ -1029,9 +1032,9 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
+      '@types/ioredis-mock':
+        specifier: ^8.2.1
+        version: 8.2.2
       '@types/lru-cache':
         specifier: ^5.1.0
         version: 5.1.1
@@ -1057,8 +1060,8 @@ importers:
         specifier: ~8.27.0
         version: 8.27.0
       ioredis-mock:
-        specifier: ^5.2.5
-        version: 5.9.1(ioredis@4.28.5)(redis-commands@1.7.0)
+        specifier: ^8.2.3
+        version: 8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.2.3)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -1518,8 +1521,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -1572,9 +1575,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.14.184
@@ -1712,8 +1712,8 @@ importers:
         specifier: ^4.17.3
         version: 4.18.2
       ioredis:
-        specifier: ^4.24.2
-        version: 4.28.5
+        specifier: ^5.2.3
+        version: 5.2.3
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1772,9 +1772,6 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.32
-      '@types/ioredis':
-        specifier: ^4.22.0
-        version: 4.28.10
       '@types/json-stringify-safe':
         specifier: ^5.0.0
         version: 5.0.0
@@ -3821,6 +3818,13 @@ packages:
     resolution: {integrity: sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==}
     engines: {node: '>=6.9.0'}
     dev: true
+
+  /@ioredis/as-callback@3.0.0:
+    resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
+    dev: true
+
+  /@ioredis/commands@1.2.0:
+    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
   /@isaacs/string-locale-compare@1.1.0:
     resolution: {integrity: sha512-SQ7Kzhh9+D+ZW9MA0zkYv3VXhIDNx+LzM6EJ+/65I3QY+enU6Itte7E5XX7EWrqLW2FN4n06GWzBnPoC3th2aQ==}
@@ -5917,10 +5921,12 @@ packages:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
     dev: true
 
-  /@types/ioredis@4.28.10:
-    resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
+  /@types/ioredis-mock@8.2.2:
+    resolution: {integrity: sha512-bnbPHOjxy4TUDjRh61MMoK2QvDNZqrMDXJYrEDZP/HPFvBubR24CQ0DBi5lgWhLxG4lvVsXPRDXtZ03+JgonoQ==}
     dependencies:
-      '@types/node': 16.18.34
+      ioredis: 5.2.3
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@types/json-schema@7.0.11:
@@ -8433,6 +8439,10 @@ packages:
     resolution: {integrity: sha512-XwE+iZ4D6ZUB7mfYRMb5wByE8L74HCn30FBN7sWnXksWc1LO1bPDl67pBR9o/kC4z/xSNAwkMYcGgqDV3BE3Hw==}
     engines: {node: '>=0.10'}
 
+  /denque@2.1.0:
+    resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
+    engines: {node: '>=0.10'}
+
   /depd@1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
     engines: {node: '>= 0.6'}
@@ -10545,19 +10555,20 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /ioredis-mock@5.9.1(ioredis@4.28.5)(redis-commands@1.7.0):
-    resolution: {integrity: sha512-ZirdGJFOqH5nP8FYXuHUJmexvtZ6r2Ybc5alaGMzt38QA0kse5/rYnBQcb4ofxkyqzhXHuaCsXiwLlfG6NyhhQ==}
-    engines: {node: '>=10'}
+  /ioredis-mock@8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.2.3):
+    resolution: {integrity: sha512-BJcSjkR3sIMKbH93fpFzwlWi/jl1kd5I3vLvGQxnJ/W/6bD2ksrxnyQN186ljAp3Foz4p1ivViDE3rZeKEAluA==}
+    engines: {node: '>=12.22'}
     peerDependencies:
-      ioredis: 4.x
-      redis-commands: 1.x
+      '@types/ioredis-mock': ^8
+      ioredis: ^5
     dependencies:
+      '@ioredis/as-callback': 3.0.0
+      '@ioredis/commands': 1.2.0
+      '@types/ioredis-mock': 8.2.2
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
-      ioredis: 4.28.5
-      lodash: 4.17.21
-      redis-commands: 1.7.0
-      standard-as-callback: 2.1.0
+      ioredis: 5.2.3
+      semver: 7.3.8
     dev: true
 
   /ioredis@4.28.5:
@@ -10572,6 +10583,23 @@ packages:
       lodash.isarguments: 3.1.0
       p-map: 2.1.0
       redis-commands: 1.7.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /ioredis@5.2.3:
+    resolution: {integrity: sha512-gQNcMF23/NpvjCaa1b5YycUyQJ9rBNH2xP94LWinNpodMWVUPP5Ai/xXANn/SM7gfIvI62B5CCvZxhg5pOgyMw==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
       redis-errors: 1.2.0
       redis-parser: 3.0.0
       standard-as-callback: 2.1.0
@@ -11520,6 +11548,7 @@ packages:
 
   /lodash.flatten@4.4.0:
     resolution: {integrity: sha512-C5N2Z3DgnnKr0LOpv/hKCgKdb7ZZwafIrsesve6lmzvZIRZRGaZ/l6Q8+2W7NaT+ZwO3fFlSCzCzrDCFdJfZ4g==}
+    dev: true
 
   /lodash.flattendeep@4.4.0:
     resolution: {integrity: sha512-uHaJFihxmJcEX3kT4I23ABqKKalJ/zDrDg0lsFtc1h+3uw49SIJ5beyhx5ExVRti3AvKoOJngIj7xz3oylPdWQ==}
@@ -13118,6 +13147,7 @@ packages:
   /p-map@2.1.0:
     resolution: {integrity: sha512-y3b8Kpd8OAN444hxfBbFfj1FY/RjtTd8tzYwhUqNYXx0fXx2iX4maP4Qr6qhIKbQXI02wTLAda4fYUbDagTUFw==}
     engines: {node: '>=6'}
+    dev: true
 
   /p-map@3.0.0:
     resolution: {integrity: sha512-d3qXVTF/s+W+CdJ5A29wywV2n8CQQYahlgz2bFiA+4eVNJbHJodPZ+/gXwPGh0bOqA+j8S+6+ckmvLGPk1QpxQ==}
@@ -14019,6 +14049,7 @@ packages:
 
   /redis-commands@1.7.0:
     resolution: {integrity: sha512-nJWqw3bTFy21hX/CPKHth6sfhZbdiHP6bTawSgQBlKOVRG7EZkfHbbHwQJnrE4vsQf0CMNE+3gJ4Fmm16vdVlQ==}
+    dev: true
 
   /redis-errors@1.2.0:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
