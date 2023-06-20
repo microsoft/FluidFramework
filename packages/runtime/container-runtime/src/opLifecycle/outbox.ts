@@ -218,19 +218,20 @@ export class Outbox {
 		this.flushInternal(this.mainBatch);
 	}
 
-	private flushInternal(batchManager: BatchManager) {
+	private flushInternal(batchManager: BatchManager, retry: boolean = false) {
 		if (batchManager.empty) {
 			return;
 		}
 
 		const rawBatch = batchManager.popBatch();
 		if (rawBatch.hasReentrantOps === true && !this.params.config.disableBatchRebasing) {
+			assert(!retry, "A rebased batch should never have reentrant ops");
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			this.rebase(rawBatch);
 			// After rebasing, the ops will end up in the same batch queue and are now safe to be sent
-			this.flushInternal(batchManager);
+			this.flushInternal(batchManager, /* retry */ true);
 			return;
 		}
 
