@@ -10,7 +10,7 @@ import {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
@@ -44,13 +44,8 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (
-		content: string,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void;
+	readonly rebase: (messages: BatchMessage[]) => void;
 	readonly opReentrancy: () => boolean;
-	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
 function getLongStack(action: () => Error): Error {
@@ -208,12 +203,6 @@ export class Outbox {
 	}
 
 	public flush() {
-		if (this.params.opReentrancy()) {
-			const error = new UsageError("Flushing is not supported inside DDS event handlers");
-			this.params.closeContainer(error);
-			throw error;
-		}
-
 		this.flushInternal(this.attachFlowBatch);
 		this.flushInternal(this.mainBatch);
 	}
@@ -248,14 +237,7 @@ export class Outbox {
 	 * @param rawBatch - the batch to be rebased
 	 */
 	private rebase(rawBatch: IBatch) {
-		for (const message of rawBatch.content) {
-			this.params.reSubmit(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.localOpMetadata,
-				message.metadata,
-			);
-		}
+		this.params.rebase(rawBatch.content);
 
 		if (this.batchRebasesToReport > 0) {
 			this.mc.logger.sendTelemetryEvent(

@@ -204,13 +204,8 @@ describe("Outbox", () => {
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (
-				content: string,
-				localOpMetadata: unknown,
-				opMetadata: Record<string, unknown> | undefined,
-			) => {},
+			rebase: (messages: BatchMessage[]) => {},
 			opReentrancy: () => false,
-			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 
 	beforeEach(() => {

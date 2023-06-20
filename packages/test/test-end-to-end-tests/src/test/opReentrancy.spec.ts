@@ -46,6 +46,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
+	const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+		a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
+
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 	});
@@ -110,6 +113,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			// The other container is fine
 			assert.equal(sharedMap2.get("key1"), undefined);
 			assert.equal(sharedMap2.get("key2"), "2");
+			assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
 		},
 	);
 
@@ -133,6 +137,13 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					sharedString2.insertText(3, "x");
 				}
 			});
+			sharedMap2.on("valueChanged", (changed) => {
+				if (changed.key !== "key2") {
+					sharedMap2.set("key2", `${sharedMap1.get("key1")} updated`);
+				}
+			});
+
+			sharedMap1.set("key1", "1");
 
 			sharedString1.insertText(1, "b");
 			sharedString2.insertText(0, "y");
@@ -146,7 +157,14 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			assert.strictEqual(
 				sharedString1.getText(),
 				sharedString2.getText(),
-				"Eventual consistency broken",
+				"SharedString eventual consistency broken",
+			);
+
+			assert.strictEqual(sharedMap1.get("key1"), "1");
+			assert.strictEqual(sharedMap1.get("key2"), "1 updated");
+			assert.ok(
+				mapsAreEqual(sharedMap1, sharedMap2),
+				"SharedMap eventual consistency broken",
 			);
 
 			// Both containers are alive at the end
@@ -230,7 +248,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				sharedString1.on("sequenceDelta", () =>
 					assert.throws(() =>
 						dataObject1.context.containerRuntime.orderSequentially(() =>
-							sharedMap1.set("0", 1),
+							sharedMap1.set("0", 0),
 						),
 					),
 				);
@@ -239,6 +257,27 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				await provider.ensureSynchronized();
 			},
 		);
+
+		it("Flushing is supported if it happens in the next batch", async () => {
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					flushMode: FlushMode.Immediate,
+				},
+			});
+
+			sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
+				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
+					void Promise.resolve().then(() => {
+						sharedString1.insertText(0, "bc");
+					});
+				}
+			});
+
+			sharedString1.insertText(0, "ad");
+			await provider.ensureSynchronized();
+			assert.strictEqual(sharedString1.getText(), "bcad");
+		});
 	});
 
 	it("Should throw when submitting an op while handling an event - offline", async () => {
@@ -265,30 +304,31 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		container1.deltaManager.inbound.resume();
 		container1.deltaManager.outbound.resume();
 
+		await provider.ensureSynchronized();
+
 		// The offending container is not closed
 		assert.ok(!container1.closed);
+		assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
 	});
 
-	const allowReentry = [
-		{
-			options: testContainerConfig,
-			featureGates: {},
-			name: "Default config and feature gates",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
-			},
-			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-			name: "Enabled by options, disabled by feature gate",
-		},
-	];
-
 	describe("Allow reentry", () =>
-		allowReentry.forEach((testConfig) => {
+		[
+			{
+				options: testContainerConfig,
+				featureGates: {},
+				name: "Default config and feature gates",
+			},
+			{
+				options: {
+					...testContainerConfig,
+					runtimeOptions: {
+						enableOpReentryCheck: true,
+					},
+				},
+				featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
+				name: "Enabled by options, disabled by feature gate",
+			},
+		].forEach((testConfig) => {
 			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
 				await setupContainers(testConfig.options, testConfig.featureGates);
 
@@ -317,6 +357,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				// The second event handler didn't receive the events in the actual order of changes
 				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 			});
 
 			it(`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`, async () => {
@@ -348,12 +389,14 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				container1.deltaManager.inbound.resume();
 				container1.deltaManager.outbound.resume();
+				await provider.ensureSynchronized();
 
 				// The offending container is not closed
 				assert.ok(!container1.closed);
 
 				// The second event handler didn't receive the events in the actual order of changes
 				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 			});
 		}));
 });

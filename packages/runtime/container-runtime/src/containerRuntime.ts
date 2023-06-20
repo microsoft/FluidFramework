@@ -907,6 +907,8 @@ export class ContainerRuntime
 
 	private ensureNoDataModelChangesCalls = 0;
 
+	private rebaseInProgress = false;
+
 	/**
 	 * Tracks the number of detected reentrant ops to report,
 	 * in order to self-throttle the telemetry events.
@@ -1339,9 +1341,8 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
-			reSubmit: this.reSubmit.bind(this),
-			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
-			closeContainer: this.closeFn,
+			rebase: this.rebaseOps.bind(this),
+			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0 && !this.rebaseInProgress,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -2153,6 +2154,12 @@ export class ContainerRuntime
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
+
+		if (this.ensureNoDataModelChangesCalls > 0) {
+			const error = new UsageError("Flushing is not supported inside DDS event handlers");
+			this.closeFn(error);
+			throw error;
+		}
 
 		this.outbox.flush();
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
@@ -3587,6 +3594,20 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.DisableGroupedBatching",
 		);
 		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
+	}
+
+	private rebaseOps(messages: BatchMessage[]): void {
+		this.rebaseInProgress = true;
+		for (const message of messages) {
+			this.reSubmit(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
+				message.localOpMetadata,
+				message.metadata,
+			);
+		}
+
+		this.rebaseInProgress = false;
 	}
 }
 
