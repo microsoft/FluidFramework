@@ -16,7 +16,14 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, SchemaBuilder, SharedTreeFactory } from "@fluid-experimental/tree2";
+import {
+	AllowedUpdateType,
+	FieldKinds,
+	SchemaBuilder,
+	ValueSchema,
+	SharedTreeFactory,
+	valueSymbol,
+} from "@fluid-experimental/tree2";
 
 import { FluidObjectId } from "../CommonInterfaces";
 import {
@@ -370,41 +377,136 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedTree", async () => {
-		const Any = "Any" as const;
-
 		const factory = new SharedTreeFactory();
-		const builder = new SchemaBuilder("Devtools_Example_SharedTree");
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const builder = new SchemaBuilder("DefaultVisualizer_SharedTree_Test");
 
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		sharedTree.schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: {
-				childrenOne: 10,
-				childrenTwo: "hello world",
-			},
-			schema,
+		const stringSchema = builder.primitive("string-property", ValueSchema.String);
+		const numberSchema = builder.primitive("number-property", ValueSchema.Number);
+		const booleanSchema = builder.primitive("boolean-property", ValueSchema.Boolean);
+
+		const serializableSchema = builder.object("serializable-property", {
+			value: ValueSchema.Serializable,
 		});
 
-		const result = await visualizeSharedTree(sharedTree, visualizeChildData);
+		const leafSchema = builder.object("leaf-item", {
+			local: {
+				leafField: SchemaBuilder.fieldValue(serializableSchema),
+			},
+		});
+
+		const childSchema = builder.object("child-item", {
+			local: {
+				childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+				childData: SchemaBuilder.fieldOptional(leafSchema),
+			},
+		});
+
+		const rootNodeSchema = builder.object("root-item", {
+			local: {
+				childrenOne: SchemaBuilder.fieldSequence(childSchema),
+				childrenTwo: SchemaBuilder.fieldValue(numberSchema),
+			},
+		});
+
+		const schema = builder.intoDocumentSchema(
+			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
+		);
+
+		sharedTree.schematize({
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {
+				childrenOne: [
+					{
+						childField: "Hello world!",
+						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+					},
+					{
+						childField: true,
+						childData: {
+							leafField: {
+								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+							},
+						},
+					},
+				],
+				childrenTwo: 32,
+			},
+		});
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
 
 		const expected: FluidObjectTreeNode = {
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
 			fluidObjectId: "test",
 			children: {
 				childrenOne: {
-					value: 10,
-					nodeKind: VisualNodeKind.ValueNode,
-					typeMetadata: "number",
+					nodeKind: VisualNodeKind.TreeNode,
+					typeMetadata: "object",
+					children: {
+						"0": {
+							nodeKind: VisualNodeKind.TreeNode,
+							typeMetadata: "object",
+							children: {
+								childField: {
+									nodeKind: VisualNodeKind.ValueNode,
+									typeMetadata: "string",
+									value: "Hello world!",
+								},
+								childData: {
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+									children: {
+										leafField: {
+											nodeKind: VisualNodeKind.ValueNode,
+											typeMetadata: "string",
+											value: "Hello world again!",
+										},
+									},
+								},
+							},
+						},
+						"1": {
+							nodeKind: VisualNodeKind.TreeNode,
+							typeMetadata: "object",
+							children: {
+								childField: {
+									nodeKind: VisualNodeKind.ValueNode,
+									typeMetadata: "boolean",
+									value: true,
+								},
+								childData: {
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+									children: {
+										leafField: {
+											nodeKind: VisualNodeKind.ValueNode,
+											typeMetadata: "boolean",
+											value: false,
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				childrenTwo: {
-					value: "hello world",
-					nodeKind: VisualNodeKind.ValueNode,
-					typeMetadata: "string",
+					nodeKind: VisualNodeKind.TreeNode,
+					typeMetadata: "object",
+					children: {
+						"0": {
+							nodeKind: VisualNodeKind.ValueNode,
+							typeMetadata: "number",
+							value: 32,
+						},
+					},
 				},
 			},
-			typeMetadata: "SharedTree",
-			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
