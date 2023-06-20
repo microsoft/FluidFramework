@@ -95,6 +95,7 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
+			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 			"server/tinylicious",
@@ -118,26 +119,37 @@ module.exports = {
 			"tools/markdown-magic/test",
 			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 		],
+		// Exclusion per handler
+		handlerExclusions: {
+			"npm-package-json-script-clean": [
+				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
+				"common/build/eslint-config-fluid/package.json",
+				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
+				"tools/markdown-magic/package.json",
+			],
+		},
 		dependencies: {
-			// Packages require tilde dependencies
-			requireTilde: [
-				"@typescript-eslint/eslint-plugin",
-				"@typescript-eslint/parser",
-				"eslint-config-prettier",
-				"eslint-plugin-eslint-comments",
-				"eslint-plugin-import",
-				"eslint-plugin-unicorn",
-				"eslint-plugin-unused-imports",
-				"eslint",
-				"prettier",
-				"typescript",
-				"webpack-dev-server",
+			// use by npm-package-json-script-dep policy
+			// A list of script commands and the package that contains the command
+			commandPackages: [
+				["api-extractor", "@microsoft/api-extractor"],
+				["mocha", "mocha"],
+				["rimraf", "rimraf"],
+				["tsc", "typescript"],
+				["eslint", "eslint"],
+				["prettier", "prettier"],
+				["webpack", "webpack"],
+				["nyc", "nyc"],
+				["gf", "good-fences"],
+				["cross-env", "cross-env"],
+				["flub", "@fluid-tools/build-cli"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
+			"@fluid-internal/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

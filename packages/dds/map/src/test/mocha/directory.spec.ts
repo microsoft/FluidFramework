@@ -730,6 +730,55 @@ describe("Directory", () => {
 				);
 			});
 
+			it("Should populate with csn as 0 and then process the create op", async () => {
+				directory.createSubDirectory("nested");
+				const serialized = serialize(directory);
+
+				// Now populate a new directory with contents of above to simulate processing of attach op
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+				const containerRuntime2 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				const services2 = MockSharedObjectServices.createFromSummary(
+					directory.getAttachSummary().summary,
+				);
+				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+
+				const directory2 = new SharedDirectory(
+					"directory2",
+					dataStoreRuntime2,
+					DirectoryFactory.Attributes,
+				);
+				await directory2.load(services2);
+
+				// Now load another directory to send op from that.
+				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+				const containerRuntime3 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+				const services3 = MockSharedObjectServices.createFromSummary(
+					directory.getAttachSummary().summary,
+				);
+				services3.deltaConnection = containerRuntime3.createDeltaConnection();
+
+				const directory3 = new SharedDirectory(
+					"directory3",
+					dataStoreRuntime3,
+					DirectoryFactory.Attributes,
+				);
+				await directory3.load(services3);
+				containerRuntimeFactory.processAllMessages();
+
+				// Now send create op
+				directory3.getSubDirectory("nested")?.createSubDirectory("nested2");
+				containerRuntimeFactory.processAllMessages();
+
+				// Other directory should process the create op.
+				assert(
+					directory2.getSubDirectory("nested")?.getSubDirectory("nested2") !== undefined,
+					"/nested/nested2 should be present",
+				);
+			});
+
 			/**
 			 * These tests test the scenario found in the following bug:
 			 * {@link https://github.com/microsoft/FluidFramework/issues/2400}.

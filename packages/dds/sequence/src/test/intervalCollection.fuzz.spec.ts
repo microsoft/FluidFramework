@@ -28,40 +28,13 @@ import {
 	ChangeProperties,
 	FuzzTestState,
 	makeReducer,
+	OperationGenerationConfig,
+	defaultOptions,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
-// Note: none of these options are currently exercised, since the fuzz test fails with pretty much
-// any configuration due to known bugs. Once shared interval collections are in a better state these
-// should be revisited.
-interface OperationGenerationConfig {
-	/**
-	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
-	 * Note due to concurency, during test execution the actual length of the string may exceed this.
-	 */
-	maxStringLength?: number;
-	/**
-	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
-	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
-	 */
-	maxIntervals?: number;
-	maxInsertLength?: number;
-	intervalCollectionNamePool?: string[];
-	propertyNamePool?: string[];
-	validateInterval?: number;
-}
-
-const defaultOptions: Required<OperationGenerationConfig> = {
-	maxStringLength: 1000,
-	maxIntervals: 100,
-	maxInsertLength: 10,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-};
-
 type ClientOpState = FuzzTestState;
-function makeOperationGenerator(
+export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
@@ -205,22 +178,22 @@ function makeOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-
+	const usableWeights = optionsParam?.weights ?? defaultOptions.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, 2, isShorterThanMaxLength],
-		[removeRange, 1, hasNonzeroLength],
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[removeRange, usableWeights.removeRange, hasNonzeroLength],
 		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[deleteInterval, 2, hasAnInterval],
-		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, 2, hasAnInterval],
+		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
+		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+		[changeProperties, usableWeights.changeProperties, hasAnInterval],
 	]);
 }
 
 describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator()),
+		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
 		reducer:
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }

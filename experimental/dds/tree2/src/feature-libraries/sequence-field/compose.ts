@@ -746,7 +746,7 @@ function areInverseMovesAtIntermediateLocation(
 	assert(
 		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
 			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
-		"baseMark should be an attach and newMark should be a detach",
+		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {

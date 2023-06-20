@@ -19,7 +19,7 @@ import {
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
@@ -58,7 +58,20 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				host: redisConfig.host,
 				port: redisConfig.port,
 				password: redisConfig.pass,
+				connectTimeout: redisConfig.connectTimeout,
+				enableReadyCheck: true,
+				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+				enableOfflineQueue: redisConfig.enableOfflineQueue,
 			};
+			if (redisConfig.enableAutoPipelining) {
+				/**
+				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+				 * More info: https://github.com/luin/ioredis#autopipelining
+				 */
+				redisOptions.enableAutoPipelining = true;
+				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
+			}
 			if (redisConfig.tls) {
 				redisOptions.tls = {
 					servername: redisConfig.host,
@@ -67,7 +80,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			const redisClient = new Redis(redisOptions);
+			const redisClient = new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);
 		}

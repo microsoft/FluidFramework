@@ -22,7 +22,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
 	AnchorSet,
@@ -142,6 +142,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+		options: ICodecOptions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -195,7 +196,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		this.summarizables = [
-			new EditManagerSummarizer(runtime, this.editManager),
+			new EditManagerSummarizer(runtime, this.editManager, options),
 			...summarizables,
 		];
 		assert(

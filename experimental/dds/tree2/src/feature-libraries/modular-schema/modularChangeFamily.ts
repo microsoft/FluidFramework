@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ICodecFamily } from "../../codec";
+import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -23,16 +23,9 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 } from "../../core";
-import {
-	brand,
-	getOrAddEmptyToMap,
-	Mutable,
-	setInNestedMap,
-	tryGetFromNestedMap,
-} from "../../util";
+import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldMap,
 	CrossFieldQuerySet,
@@ -40,31 +33,33 @@ import {
 	IdAllocationState,
 	addCrossFieldQuery,
 	getFirstFromCrossFieldMap,
-	getFirstFromRangeMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	FieldChangeMap,
-	FieldChange,
-	FieldChangeset,
-	NodeChangeset,
-	ValueChange,
-	ModularChangeset,
 	IdAllocator,
-	HasFieldChanges,
-	RevisionInfo,
 	RevisionMetadataSource,
-	NodeExistsConstraint,
-	ValueConstraint,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
+import {
+	ChangesetLocalId,
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	NodeExistsConstraint,
+	RevisionInfo,
+	ValueChange,
+	ValueConstraint,
+} from "./modularChangeTypes";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -75,8 +70,11 @@ export class ModularChangeFamily
 {
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
-	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		this.codecs = makeModularChangeCodecFamily(this.fieldKinds);
+	public constructor(
+		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+		codecOptions: ICodecOptions,
+	) {
+		this.codecs = makeModularChangeCodecFamily(this.fieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {

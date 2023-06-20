@@ -8,7 +8,6 @@ import { brand, fail } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	NodeChangeset,
 	ToDelta,
 	NodeChangeComposer,
 	NodeChangeInverter,
@@ -19,6 +18,7 @@ import {
 import { FieldKind, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { NodeChangeset } from "./modularChangeTypes";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
