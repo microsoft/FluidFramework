@@ -112,7 +112,8 @@ export const makeFieldEditGenerator = (
 
 		switch (fieldKey) {
 			case sequenceFieldKey: {
-				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
+				const opWeightRatio =
+					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
 				const opType =
 					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {

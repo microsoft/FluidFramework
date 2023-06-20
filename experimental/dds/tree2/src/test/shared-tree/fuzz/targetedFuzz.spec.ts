@@ -4,12 +4,12 @@
  */
 import { strict as assert } from "assert";
 import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
+} from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	moveToDetachedField,

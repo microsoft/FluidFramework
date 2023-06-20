@@ -2,14 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel } from "@fluid-internal/test-dds-utils";
-import {
-	createDDSFuzzSuite,
-	DDSFuzzTestState,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
+import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
@@ -64,31 +58,4 @@ describe("Fuzz - Top-Level", () => {
 		};
 		createDDSFuzzSuite(model, options);
 	});
-});
-
-describe.skip("Re-run form ops saved on file", () => {
-	// For using saved operations set the value of the runSeed used to saved the ops in the file.
-	const runSeed = 0;
-	const filepath = path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`);
-	const generatorFactory = () => makeOpGenerator();
-	const model: DDSFuzzModel<
-		SharedTreeTestFactory,
-		Operation,
-		DDSFuzzTestState<SharedTreeTestFactory>
-	> = {
-		workloadName: "SharedTree",
-		factory: new SharedTreeTestFactory(onCreate),
-		generatorFactory,
-		reducer: fuzzReducer,
-		validateConsistency: validateTreeConsistency,
-	};
-	const options = {
-		...baseOptions,
-		defaultTestCount: 1,
-		replay: runSeed,
-		saveFailures: { directory: filepath },
-	};
-	it(`with seed ${runSeed}`, async () => {
-		createDDSFuzzSuite(model, options);
-	}).timeout(20000);
 });
