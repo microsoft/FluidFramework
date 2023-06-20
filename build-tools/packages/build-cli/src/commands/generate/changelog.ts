@@ -21,19 +21,19 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 export default class GenerateChangeLogCommand extends PackageCommand<
 	typeof GenerateChangeLogCommand
 > {
-	static description = "Generate a changelog for a new version";
+	static description = "Generate a changelog for packages based on changesets.";
 
 	static flags = {
 		version: Flags.string({
-			description: "The version for which to generate the changelog",
+			description: "The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
 		...PackageCommand.flags,
 	};
 
 	static examples = [
 		{
-			description: "Generate changelogs for version 1.0.0.",
-			command: "<%= config.bin %> <%= command.id %> --version 1.0.0",
+			description: "Generate changelogs for the client release group.",
+			command: "<%= config.bin %> <%= command.id %> --releaseGroup client",
 		},
 	];
 
