@@ -122,7 +122,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"npm-package-json-script-clean": [
+				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
+				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
 				"tools/markdown-magic/package.json",
 			],
 		},
