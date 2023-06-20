@@ -25,7 +25,7 @@ The Devtools' API surface is designed to fit nicely into most application flows.
 
 ### Initialization
 
-To initialize a debugger session for your container, call `initializeDevtools`.
+To initialize a devtools session for your container, call `initializeDevtools`.
 This function accepts a `DevtoolsLogger` for recording and communicating telemetry data, a list of initial Fluid `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing `Container` data.
 
 TODO: link to API docs once API shape has settled.
