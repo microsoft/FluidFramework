@@ -78,4 +78,23 @@ describe("Collections.List", () => {
 			);
 		});
 	});
+
+	describe(".splice", () => {
+		for (const splicePos of [-1, 0, 1, Math.floor(listCount / 2), listCount, listCount - 1]) {
+			it(`splice at position ${splicePos}`, () => {
+				const nodesArray = [...list];
+				// negative numbers for the start move back from the end
+				// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice#syntax
+				const spliceIndex = splicePos < 0 ? nodesArray.length + splicePos : splicePos;
+				// capture the node for the list splice
+				const spliceNode = nodesArray[spliceIndex];
+				const arraySplice = nodesArray.splice(spliceIndex);
+
+				const listSplice = spliceNode === undefined ? new List() : list.splice(spliceNode);
+
+				assert.equal(list.length, nodesArray.length, "remaining lengths don't match");
+				assert.equal(listSplice.length, arraySplice.length, "spliced lengths don't match");
+			});
+		}
+	});
 });

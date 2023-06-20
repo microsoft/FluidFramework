@@ -236,12 +236,15 @@ export function walkList<T>(
 	} else {
 		current = forward ? list.first : list.last;
 	}
-
+	// cache the next node, incase the visitor mutates the list
+	// need this to support splice
+	let next = forward ? current?.next : current?.prev;
 	while (current !== undefined) {
 		if (visitor(current) === false) {
 			return false;
 		}
-		current = forward ? current.next : current.prev;
+		current = next;
+		next = forward ? next?.next : next?.prev;
 	}
 	return true;
 }
