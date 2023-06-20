@@ -130,7 +130,7 @@ module.exports = {
 		},
 		dependencies: {
 			// use by npm-package-json-script-dep policy
-			// A list of script command and the packages it comes from
+			// A list of script commands and the package that contains the command
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
 				["mocha", "mocha"],
