@@ -123,8 +123,11 @@ describe("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
+	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
+		start: 0,
+		commit: 0,
 	};
 	describe("Anchors are unaffected by aborted transaction", () => {
 		runFuzzBatch(
