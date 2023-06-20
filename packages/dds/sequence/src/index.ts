@@ -23,8 +23,6 @@ export {
 	Interval,
 	IntervalIndex,
 	IIntervalCollection,
-	IntervalCollection,
-	IntervalCollectionIterator,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 	IntervalOpType,
@@ -32,10 +30,13 @@ export {
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
+	sequenceIntervalHelpers,
+	IEndpointInRangeIndex,
+	IStartpointInRangeIndex,
+	createEndpointInRangeIndex,
+	createStartpointInRangeIndex,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export {

@@ -1,0 +1,51 @@
+{
+	"name": "@fluid-internal/changelog-generator-wrapper",
+	"version": "1.0.0",
+	"private": true,
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "tools/changelog-generator-wrapper"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "./src/index.js",
+	"files": [
+		"dist/",
+		"LICENSE",
+		"*.md",
+		"*.cjs",
+		"*.json"
+	],
+	"scripts": {
+		"build": "concurrently npm:build:compile npm:lint",
+		"build:commonjs": "npm run tsc",
+		"build:compile": "npm run build:commonjs",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"tsc": "echo \"No build required.\""
+	},
+	"dependencies": {
+		"@changesets/cli": "^2.26.1",
+		"@changesets/types": "^5.2.1",
+		"changesets-format-with-issue-links": "^0.3.0",
+		"typescript": "~4.5.5"
+	},
+	"devDependencies": {
+		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"concurrently": "^7.6.0",
+		"copyfiles": "^2.4.1",
+		"eslint": "~8.6.0",
+		"jest": "^26.6.3",
+		"prettier": "~2.6.2",
+		"rimraf": "^4.4.0"
+	}
+}

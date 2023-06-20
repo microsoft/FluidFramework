@@ -17,7 +17,7 @@ import {
 	take,
 	BaseFuzzTestState,
 } from '@fluid-internal/stochastic-test-utils';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
@@ -79,7 +79,7 @@ export function createCompressor(
 	client: Client,
 	clusterCapacity = 5,
 	attributionId?: AttributionId,
-	logger?: ITelemetryLogger
+	logger?: ITelemetryLoggerExt
 ): IdCompressor {
 	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId, logger);
 	compressor.clusterCapacity = clusterCapacity;

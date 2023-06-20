@@ -67,6 +67,8 @@ export {
 	Assume,
 	assertValidIndex,
 	assertNonNegativeSafeInteger,
+	generateStableId,
+	useDeterministicStableId,
 	objectToMap,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
@@ -79,4 +81,13 @@ export {
 	_RecursiveTrick,
 	FlattenKeys,
 	AllowOptionalNotFlattened,
+	RestrictiveReadonlyRecord,
 } from "./typeUtils";
+
+export {
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	getOrCreateSlotContent,
+	brandedSlot,
+} from "./brandedMap";

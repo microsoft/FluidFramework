@@ -18,7 +18,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -30,7 +29,7 @@ import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -116,13 +115,15 @@ export const createWriteError: (message: string, props: DriverErrorTelemetryProp
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-    constructor(message: string, props: DriverErrorTelemetryProps);
+    constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
     readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    // (undocumented)
+    readonly storageOnlyReason: string | undefined;
 }
 
 // @public (undocumented)
@@ -156,9 +157,6 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
 
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
-
-// @public @deprecated (undocumented)
-export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
@@ -210,9 +208,6 @@ export interface IProgress {
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
-// @public @deprecated (undocumented)
-export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
-
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
@@ -233,7 +228,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 }
 
 // @public (undocumented)
-export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
+export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEvent, error?: any): void;
 
 // @public (undocumented)
 export enum MessageType2 {
@@ -269,7 +264,7 @@ export enum OnlineStatus {
 
 // @public
 export class ParallelRequests<T> {
-    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLogger, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
+    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
         partial: boolean;
         cancel: boolean;
         payload: T[];
@@ -329,7 +324,7 @@ export class RateLimiter {
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
 // @public
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
@@ -339,7 +334,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
-export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
+export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLoggerExt, progress: IProgress): Promise<T>;
 
 // @public (undocumented)
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>): IStream<ISequencedDocumentMessage[]>;

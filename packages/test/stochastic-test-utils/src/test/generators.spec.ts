@@ -381,6 +381,33 @@ describe("generators", () => {
 			["c", 1],
 			["d", 1],
 		],
+		[
+			["a", 0],
+			["b", 1],
+			["d", 1],
+		],
+		[
+			["a", 1],
+			["b", 0],
+			["d", 1],
+		],
+		[
+			["a", 1],
+			["b", 1],
+			["c", 0],
+		],
+		[
+			["a", 0],
+			["b", 1],
+			["c", 0],
+			["d", 1],
+			["e", 0],
+		],
+		[
+			["a", 0.5],
+			["b", 0.3],
+			["c", 1.4],
+		],
 	];
 
 	// The distribution produced by createWeightedGenerator is a multinomial distribution. See:

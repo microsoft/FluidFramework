@@ -27,7 +27,7 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "./mockDetachedBlobStorage";
+} from "./mockDetachedBlobStorage.js";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -53,7 +53,6 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
-	{ eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
 ];
 const ContainerCloseUsageError: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,

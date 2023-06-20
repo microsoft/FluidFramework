@@ -6,16 +6,13 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IContainerLoadMode } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
@@ -25,11 +22,9 @@ import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -45,29 +40,9 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @internal @deprecated (undocumented)
-export interface IContainerConfig {
-    // (undocumented)
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    resolvedUrl?: IFluidResolvedUrl;
-    serializedContainerState?: IPendingContainerState;
-}
-
 // @internal
 export interface IContainerExperimental extends IContainer {
     getPendingLocalState(): string;
-}
-
-// @internal @deprecated (undocumented)
-export interface IContainerLoadOptions {
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    loadMode?: IContainerLoadMode;
-    // (undocumented)
-    resolvedUrl: IFluidResolvedUrl;
-    version: string | undefined;
 }
 
 // @public
@@ -107,24 +82,10 @@ export interface ILoaderServices {
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope: FluidObject;
-    readonly subLogger: ITelemetryLogger;
+    readonly subLogger: ITelemetryLoggerExt;
     readonly urlResolver: IUrlResolver;
-}
-
-// @internal @deprecated
-export interface IPendingContainerState {
-    baseSnapshot: ISnapshotTree;
-    // (undocumented)
-    clientId?: string;
-    // (undocumented)
-    pendingRuntimeState: unknown;
-    savedOps: ISequencedDocumentMessage[];
-    snapshotBlobs: ISerializableBlobContents;
-    // (undocumented)
-    term: number;
-    // (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -133,12 +94,6 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
-}
-
-// @internal @deprecated
-export interface ISerializableBlobContents {
-    // (undocumented)
-    [id: string]: string;
 }
 
 // @public

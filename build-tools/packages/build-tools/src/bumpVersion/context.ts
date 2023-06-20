@@ -9,12 +9,12 @@ import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { Logger, defaultLogger } from "../common/logging";
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
-import { fatal, prereleaseSatisfies } from "./utils";
+import { fatal, prereleaseSatisfies, MonoRepoKind, isMonoRepoKind } from "./utils";
 import { ReferenceVersionBag, VersionBag } from "./versionBag";
 
 /**
@@ -38,7 +38,7 @@ export class Context {
 		this.timer = new Timer(commonOptions.timer);
 
 		// Load the package
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, false, logger);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, logger);
 		this.timer.time("Package scan completed");
 
 		this.fullPackageMap = this.repo.createPackageMap();
@@ -71,9 +71,7 @@ export class Context {
 		return versions;
 	}
 
-	public async collectVersionInfo(
-		releaseGroup: MonoRepoKind | string,
-	): Promise<ReferenceVersionBag> {
+	public async collectVersionInfo(releaseGroup: string): Promise<ReferenceVersionBag> {
 		this.logger.info("  Resolving published dependencies");
 
 		const depVersions = new ReferenceVersionBag(
@@ -93,7 +91,7 @@ export class Context {
 			const repoKind = releaseGroup;
 			if (repoKind === MonoRepoKind.Server) {
 				assert(
-					this.repo.serverMonoRepo,
+					this.repo.releaseGroups.get(MonoRepoKind.Server),
 					"Attempted to collect server info on a Fluid repo with no server directory",
 				);
 			}
@@ -176,7 +174,7 @@ export class Context {
 	 * Given a release group to bump, this function determines whether any of its dependencies should be bumped to new
 	 * versions based on the latest published versions on npm.
 	 */
-	public async collectBumpInfo(releaseGroup: MonoRepoKind | string) {
+	public async collectBumpInfo(releaseGroup: string) {
 		const depVersions = await this.collectVersionInfo(releaseGroup);
 		depVersions.printRelease();
 		return depVersions;
@@ -206,7 +204,7 @@ export class Context {
 	 * @param releaseGroup - The release group to filter by
 	 * @returns An array of packages that belong to the release group
 	 */
-	public packagesInReleaseGroup(releaseGroup: MonoRepoKind): Package[] {
+	public packagesInReleaseGroup(releaseGroup: string): Package[] {
 		const packages = this.packages.filter((pkg) => pkg.monoRepo?.kind === releaseGroup);
 		return packages;
 	}
@@ -217,7 +215,7 @@ export class Context {
 	 * @param releaseGroup - The release group or package to filter by.
 	 * @returns An array of packages that do not belong to the release group.
 	 */
-	public packagesNotInReleaseGroup(releaseGroup: MonoRepoKind | Package): Package[] {
+	public packagesNotInReleaseGroup(releaseGroup: string | Package): Package[] {
 		let packages: Package[];
 		if (releaseGroup instanceof Package) {
 			packages = this.packages.filter((p) => p.name !== releaseGroup.name);
@@ -249,7 +247,7 @@ export class Context {
 	 *
 	 * @returns A version string.
 	 */
-	public getVersion(key: MonoRepoKind | string, versionBag?: VersionBag): string {
+	public getVersion(key: string, versionBag?: VersionBag): string {
 		let ver = "";
 		if (versionBag !== undefined && !versionBag.isEmpty()) {
 			ver = versionBag.get(key);
@@ -271,7 +269,7 @@ export class Context {
 		return ver;
 	}
 
-	private _tags: Map<MonoRepoKind | string, string[]> = new Map();
+	private _tags: Map<string, string[]> = new Map();
 
 	/**
 	 * Returns an array of all the git tags associated with a release group.
@@ -281,9 +279,7 @@ export class Context {
 	 *
 	 * @internal
 	 */
-	public async getTagsForReleaseGroup(
-		releaseGroupOrPackage: MonoRepoKind | string,
-	): Promise<string[]> {
+	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
 		const prefix = isMonoRepoKind(releaseGroupOrPackage)
 			? releaseGroupOrPackage.toLowerCase()
 			: PackageName.getUnscopedName(releaseGroupOrPackage);
@@ -318,7 +314,7 @@ export class Context {
 		this._loaded = true;
 	}
 
-	private _versions: Map<MonoRepoKind | string, VersionDetails[]> = new Map();
+	private _versions: Map<string, VersionDetails[]> = new Map();
 
 	/**
 	 * Gets all the versions for a release group or independent package. This function only considers the tags in the
@@ -330,7 +326,7 @@ export class Context {
 	 * @internal
 	 */
 	public async getAllVersions(
-		releaseGroupOrPackage: MonoRepoKind | string,
+		releaseGroupOrPackage: string,
 	): Promise<VersionDetails[] | undefined> {
 		const cacheEntry = this._versions.get(releaseGroupOrPackage);
 		if (cacheEntry !== undefined) {

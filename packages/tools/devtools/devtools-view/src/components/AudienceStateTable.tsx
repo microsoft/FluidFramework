@@ -14,7 +14,12 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
-import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
+import {
+	clientIdTooltipText,
+	userIdTooltipText,
+	clientModeTooltipText,
+	clientScopesTooltipText,
+} from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
 
@@ -66,12 +71,18 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "mode" && (
-								<LabelCellLayout icon={<EditRegular />}>
+								<LabelCellLayout
+									icon={<EditRegular />}
+									infoTooltipContent={clientModeTooltipText}
+								>
 									{column.label}
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "scopes" && (
-								<LabelCellLayout icon={<Search12Regular />}>
+								<LabelCellLayout
+									icon={<Search12Regular />}
+									infoTooltipContent={clientScopesTooltipText}
+								>
 									{column.label}
 								</LabelCellLayout>
 							)}
@@ -90,7 +101,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							key={itemIndex}
 							style={{
 								backgroundColor: isCurrentUser
-									? tokens.colorPaletteGreenBorder1
+									? tokens.colorPaletteGreenBackground2
 									: "",
 							}}
 						>
@@ -104,7 +115,11 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							</TableCell>
 							<TableCell>{item.mode}</TableCell>
 							<TableCell>
-								<span>{item.scopes.join("\n")}</span>
+								<ul>
+									{item.scopes.map((each_scope, index) => (
+										<li key={index}>{each_scope}</li>
+									))}
+								</ul>
 							</TableCell>
 						</TableRow>
 					);

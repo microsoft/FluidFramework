@@ -25,6 +25,7 @@ data:
             "globalDbEnabled": {{ .Values.mongodb.globalDbEnabled }},
             "expireAfterSeconds": {{ .Values.mongodb.expireAfterSeconds }},
             "createCosmosDBIndexes": {{ .Values.mongodb.createCosmosDBIndexes }},
+            "directConnection": {{ .Values.mongodb.directConnection }},
             "softDeletionRetentionPeriodMs": {{ .Values.mongodb.softDeletionRetentionPeriodMs }},
             "offlineWindowMs": {{ .Values.mongodb.offlineWindowMs }},
             "softDeletionEnabled": {{ .Values.mongodb.softDeletionEnabled }},
@@ -52,7 +53,8 @@ data:
                 "rdkafkaAutomaticConsume": true,
                 "rdkafkaConsumeTimeout": 5,
                 "rdkafkaMaxConsumerCommitRetries": 10
-            }
+            },
+            "customRestartOnKafkaErrorCodes": {{ .Values.kafka.customRestartOnKafkaErrorCodes }}
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -139,7 +141,8 @@ data:
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
-            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
         },
         "system": {
             "httpServer": {

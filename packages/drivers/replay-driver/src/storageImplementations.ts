@@ -20,7 +20,7 @@ import {
 	IVersion,
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -148,14 +148,12 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 }
 
 export class StaticStorageDocumentService implements IDocumentService {
-	constructor(private readonly storage: IDocumentStorageService) {}
+	constructor(
+		public readonly resolvedUrl: IResolvedUrl,
+		private readonly storage: IDocumentStorageService,
+	) {}
 
 	public dispose() {}
-
-	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
-	public get resolvedUrl(): IResolvedUrl {
-		throw new Error("Not implemented");
-	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
@@ -176,17 +174,17 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
 	public async createDocumentService(
 		fileURL: IResolvedUrl,
-		logger?: ITelemetryLogger,
+		logger?: ITelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		return new StaticStorageDocumentService(this.storage);
+		return new StaticStorageDocumentService(fileURL, this.storage);
 	}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
 	public async createContainer(
 		createNewSummary: ISummaryTree,
 		resolvedUrl: IResolvedUrl,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		throw new Error("Not implemented");

@@ -284,8 +284,11 @@ export function appendSharedStringDeltaToRevertibles(
 
 		if (startIntervals.length > 0 || endIntervals.length > 0 || revertibleRefs.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
-			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
-			assert(removeRevertibles.length === 1, "Remove revertible should be a single delta");
+			appendToMergeTreeDeltaRevertibles(delta.deltaArgs, removeRevertibles);
+			assert(
+				removeRevertibles.length === 1,
+				0x6c4 /* Remove revertible should be a single delta */,
+			);
 
 			const revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE> = {
 				event: IntervalOpType.POSITION_REMOVE,
@@ -334,7 +337,7 @@ export function appendSharedStringDeltaToRevertibles(
 	if (revertibles.length > 0 && isMergeTreeDeltaRevertible(revertibles[revertibles.length - 1])) {
 		mergeTreeRevertibles.push(revertibles.pop() as MergeTreeDeltaRevertible);
 	}
-	appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
+	appendToMergeTreeDeltaRevertibles(delta.deltaArgs, mergeTreeRevertibles);
 	revertibles.push(...mergeTreeRevertibles);
 }
 
@@ -499,7 +502,7 @@ function revertLocalSequenceRemove(
 		assert(
 			revertibleRef.revertible.event === IntervalOpType.CHANGE ||
 				revertibleRef.revertible.event === IntervalOpType.DELETE,
-			"revertible is not delete or change",
+			0x6c5 /* revertible is not delete or change */,
 		);
 		const pos = newPosition(revertibleRef.offset, restoredRanges);
 		if (pos !== undefined) {

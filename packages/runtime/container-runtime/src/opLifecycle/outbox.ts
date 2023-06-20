@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IContainerContext } from "@fluidframework/container-definitions";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import {
@@ -40,7 +40,7 @@ export interface IOutboxParameters {
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 }
@@ -279,7 +279,8 @@ export class Outbox {
 			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
-					message.deserializedContent,
+					// For back-compat (submitFn only works on deserialized content)
+					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
 				);
@@ -308,9 +309,9 @@ export class Outbox {
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
-				message.deserializedContent.type,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
 				message.referenceSequenceNumber,
-				message.deserializedContent.contents,
 				message.localOpMetadata,
 				message.metadata,
 			);

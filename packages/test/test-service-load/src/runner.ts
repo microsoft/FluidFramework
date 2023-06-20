@@ -14,9 +14,9 @@ import { Loader, ConnectionState } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -250,6 +250,9 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
+			// Retain old behavior of runtime being disposed on container close
+			container.once("closed", () => container?.dispose());
+
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -356,10 +359,7 @@ function scheduleFaultInjection(
 						case 4:
 						default: {
 							printStatus(runConfig, `nack injected canRetry:${canRetry}`);
-							deltaConn.injectNack(
-								(container.resolvedUrl as IFluidResolvedUrl).id,
-								canRetry,
-							);
+							deltaConn.injectNack(container.resolvedUrl.id, canRetry);
 							break;
 						}
 					}
@@ -505,7 +505,7 @@ async function scheduleOffline(
 
 async function setupOpsMetrics(
 	container: IContainer,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
 ) {

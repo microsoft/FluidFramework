@@ -4,14 +4,7 @@
  */
 
 export { ConnectionState } from "./connectionState";
-export {
-	IContainerConfig,
-	IContainerExperimental,
-	IContainerLoadOptions,
-	IPendingContainerState,
-	waitContainerToCatchUp,
-} from "./container";
-export { ISerializableBlobContents } from "./containerStorageAdapter";
+export { IContainerExperimental, waitContainerToCatchUp } from "./container";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,

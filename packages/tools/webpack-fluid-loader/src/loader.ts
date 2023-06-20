@@ -28,7 +28,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
@@ -425,7 +425,9 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			ensureFluidResolvedUrl(resolvedUrl);
+			if (resolvedUrl === undefined) {
+				throw new Error("resolvedUrl must be defined");
+			}
 			docUrl = url.replace(documentId, resolvedUrl.id);
 			title = resolvedUrl.id;
 		}

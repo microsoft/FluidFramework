@@ -13,7 +13,13 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { DoorArrowLeftRegular, Clock12Regular, Person12Regular } from "@fluentui/react-icons";
+import {
+	DoorArrowLeftRegular,
+	Clock12Regular,
+	Person12Regular,
+	ArrowJoinRegular,
+	ArrowExitRegular,
+} from "@fluentui/react-icons";
 
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
@@ -80,10 +86,22 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							backgroundColor:
 								item.changeKind === "joined"
 									? tokens.colorPaletteRoyalBlueBackground2
-									: tokens.colorPaletteRedBorder1,
+									: tokens.colorPaletteRedBackground2,
 						}}
 					>
-						<TableCell>{item.changeKind}</TableCell>
+						<TableCell>
+							<LabelCellLayout
+								icon={
+									item.changeKind === "joined" ? (
+										<ArrowJoinRegular />
+									) : (
+										<ArrowExitRegular />
+									)
+								}
+							>
+								{item.changeKind}
+							</LabelCellLayout>
+						</TableCell>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
 					</TableRow>

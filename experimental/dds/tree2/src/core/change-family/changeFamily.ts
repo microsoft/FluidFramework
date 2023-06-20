@@ -7,9 +7,6 @@ import { ICodecFamily } from "../../codec";
 import { ChangeRebaser } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 
-/**
- * @alpha
- */
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
 
@@ -22,9 +19,6 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	readonly codecs: ICodecFamily<TChange>;
 }
 
-/**
- * @alpha
- */
 export interface ChangeFamilyEditor {
 	/**
 	 * Must be called when a new transaction starts.

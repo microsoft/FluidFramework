@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	isFluidError,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -56,7 +57,7 @@ const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
  */
 export class RunningSummarizer implements IDisposable {
 	public static async start(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
@@ -149,7 +150,7 @@ export class RunningSummarizer implements IDisposable {
 	private readonly runtimeListener;
 
 	private constructor(
-		baseLogger: ITelemetryLogger,
+		baseLogger: ITelemetryLoggerExt,
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
@@ -252,7 +253,7 @@ export class RunningSummarizer implements IDisposable {
 		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Tracked by AB#3883
 		this.runtime.deltaManager.on("op", this.deltaManagerListener);
-		this.runtime.on?.("op", this.runtimeListener);
+		this.runtime.on("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -347,7 +348,7 @@ export class RunningSummarizer implements IDisposable {
 
 	public dispose(): void {
 		this.runtime.deltaManager.off("op", this.deltaManagerListener);
-		this.runtime.off?.("op", this.runtimeListener);
+		this.runtime.off("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;

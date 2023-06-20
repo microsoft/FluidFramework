@@ -4,14 +4,13 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DocumentType,
 	BenchmarkType,
 	isMemoryTest,
 	DocumentTypeInfo,
 } from "@fluid-internal/test-version-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	benchmark,
@@ -21,9 +20,9 @@ import {
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
-
+import { DocumentMap } from "./DocumentMap.js";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
+import { DocumentMatrix } from "./DocumentMatrix.js";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
@@ -33,7 +32,7 @@ export interface IDocumentCreatorProps {
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
-	logger: ITelemetryLogger | undefined;
+	logger: ITelemetryLoggerExt | undefined;
 }
 
 export interface ISummarizeResult {
@@ -44,7 +43,7 @@ export interface ISummarizeResult {
 
 export interface IDocumentLoader {
 	mainContainer: IContainer | undefined;
-	logger: ITelemetryLogger | undefined;
+	logger: ITelemetryLoggerExt | undefined;
 	initializeDocument(): Promise<void>;
 	loadDocument(): Promise<IContainer>;
 }
@@ -74,6 +73,8 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			return new DocumentMap(documentProps);
 		case "DocumentMultipleDataStores":
 			return new DocumentMultipleDds(documentProps);
+		case "DocumentMatrix":
+			return new DocumentMatrix(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}

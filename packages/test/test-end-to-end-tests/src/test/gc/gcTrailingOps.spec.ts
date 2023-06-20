@@ -22,8 +22,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 	const tests = (tombstoneEnabled: boolean = false) => {

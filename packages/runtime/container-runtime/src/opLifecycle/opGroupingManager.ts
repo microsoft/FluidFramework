@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { ContainerMessageType } from "..";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
@@ -26,7 +26,7 @@ export class OpGroupingManager {
 
 		for (const message of batch.content) {
 			// Blob attaches cannot be grouped (grouped batching would hide metadata)
-			if (message.deserializedContent.type === ContainerMessageType.BlobAttach) {
+			if (message.type === ContainerMessageType.BlobAttach) {
 				return batch;
 			}
 			if (message.metadata) {
@@ -39,14 +39,14 @@ export class OpGroupingManager {
 			}
 		}
 
-		const deserializedContent = {
+		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.content.map<IGroupedMessage>((message) => ({
 				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),
-		};
+		});
 
 		const groupedBatch: IBatch = {
 			...batch,
@@ -55,9 +55,8 @@ export class OpGroupingManager {
 					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
-					// Need deserializedContent for back-compat
-					deserializedContent: deserializedContent as ContainerRuntimeMessage,
-					contents: JSON.stringify(deserializedContent),
+					contents: serializedContent,
+					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};

@@ -28,10 +28,8 @@ describe("OpCompressor", () => {
 	const createMessage = (contents: string) => ({
 		metadata: { flag: true },
 		localOpMetadata: undefined,
-		deserializedContent: {
-			contents,
-			type: ContainerMessageType.FluidDataStoreOp,
-		},
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents,
 		referenceSequenceNumber: 0,
 	});
 	const generateStringOfSize = (sizeInBytes: number): string =>
@@ -59,10 +57,7 @@ describe("OpCompressor", () => {
 				if (compressedBatch.content.length > 1) {
 					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
-					assert.strictEqual(
-						compressedBatch.content[1].deserializedContent.contents,
-						undefined,
-					);
+					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 				}
 			});
 		}));
