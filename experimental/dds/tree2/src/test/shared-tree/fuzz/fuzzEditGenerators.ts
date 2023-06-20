@@ -2,18 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { promises as fs } from "fs";
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
 	Generator,
 	done,
 	IRandom,
-	asyncGeneratorFromArray,
 	createWeightedGenerator,
 	Weights,
 } from "@fluid-internal/stochastic-test-utils";
-import { safelyParseJSON } from "@fluidframework/common-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
@@ -329,14 +326,6 @@ function sumWeights(values: (number | undefined)[]): number {
 		}
 	}
 	return sum;
-}
-
-export async function makeOpGeneratorFromFilePath(
-	filepath: string,
-): Promise<AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>>> {
-	const savedOperationsStr = await fs.readFile(filepath, "utf-8");
-	const operations: Operation[] = safelyParseJSON(savedOperationsStr) ?? [];
-	return asyncGeneratorFromArray(operations);
 }
 
 const moves = {
