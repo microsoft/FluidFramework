@@ -194,12 +194,13 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				validateMessages("cached", messagesFromCache, from, this.logger);
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
-					// Set the firstCacheMiss at seq number = (fetched ops last seq number + 1) in case we didn't get
-					// all the ops. This will save an extra cache read.
+					// Set the firstCacheMiss at seq number = (fetched ops last seq number) in case we didn't get
+					// all the ops. This will save an extra cache read on "DocumentOpen" and 1 cache read on
+					// "PostDocumentOpen".
 					if (from + messagesFromCache.length < to) {
 						this.firstCacheMiss = Math.min(
 							this.firstCacheMiss,
-							from + messagesFromCache.length,
+							from + messagesFromCache.length - 1,
 						);
 					}
 					return {
@@ -207,7 +208,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 						partialResult: true,
 					};
 				}
-				this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
+				// Set at from - 1 to avoid an extra cache read on "PostDocumentOpen".
+				this.firstCacheMiss = Math.min(this.firstCacheMiss, from - 1);
 			}
 
 			if (cachedOnly) {
