@@ -56,7 +56,7 @@
 		"@fluidframework/server-services-utils": "workspace:*",
 		"commander": "^2.17.1",
 		"express": "^4.17.3",
-		"ioredis": "^4.24.2",
+		"ioredis": "^5.2.3",
 		"nconf": "^0.12.0",
 		"winston": "^3.6.0"
 	},
@@ -68,7 +68,6 @@
 		"@fluidframework/server-local-server": "workspace:*",
 		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@0.1040.1000",
 		"@fluidframework/server-test-utils": "workspace:*",
-		"@types/ioredis": "^4.22.0",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^16.18.16",
 		"concurrently": "^7.6.0",
