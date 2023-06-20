@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-views",
-	"version": "2.0.0-internal.5.1.0",
+	"version": "2.0.0-internal.5.2.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -46,7 +46,7 @@
 		"style-loader": "^1.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0",
+		"@fluid-tools/build-cli": "^0.20.0-169245",
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.158186",
