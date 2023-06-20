@@ -16,6 +16,7 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { AllowedUpdateType, SchemaBuilder, SharedTreeFactory } from "@fluid-experimental/tree2";
 
 import { FluidObjectId } from "../CommonInterfaces";
 import {
@@ -30,6 +31,7 @@ import {
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
+	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 	VisualNodeKind,
 } from "../data-visualization";
@@ -362,6 +364,47 @@ describe("DefaultVisualizers unit tests", () => {
 			value: "Hello World!",
 			typeMetadata: "SharedString",
 			nodeKind: VisualNodeKind.FluidValueNode,
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedTree", async () => {
+		const Any = "Any" as const;
+
+		const factory = new SharedTreeFactory();
+		const builder = new SchemaBuilder("Devtools_Example_SharedTree");
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+
+		sharedTree.schematize({
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {
+				childrenOne: 10,
+				childrenTwo: "hello world",
+			},
+			schema,
+		});
+
+		const result = await visualizeSharedTree(sharedTree, visualizeChildData);
+
+		const expected: FluidObjectTreeNode = {
+			fluidObjectId: "test",
+			children: {
+				childrenOne: {
+					value: 10,
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "number",
+				},
+				childrenTwo: {
+					value: "hello world",
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "string",
+				},
+			},
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
