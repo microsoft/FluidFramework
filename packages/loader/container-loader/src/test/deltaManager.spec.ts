@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
-import { NoopHeuristic } from "../collabWindowTracker";
+import { NoopHeuristic } from "../noopHeuristic";
 import { IConnectionManagerFactoryArgs } from "../contracts";
 import { ConnectionManager } from "../connectionManager";
 

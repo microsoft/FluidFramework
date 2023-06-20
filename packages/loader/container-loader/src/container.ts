@@ -100,7 +100,7 @@ import {
 	getCodeDetailsFromQuorumValues,
 	QuorumProxy,
 } from "./quorum";
-import { NoopHeuristic } from "./collabWindowTracker";
+import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
