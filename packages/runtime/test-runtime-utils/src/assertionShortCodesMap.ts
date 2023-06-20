@@ -425,7 +425,7 @@ export const shortCodeMap = {
 	"0x23e": "pending is undefined",
 	"0x23f": "pending undefined",
 	"0x240": "Binary format snapshot only for odsp driver!!",
-	"0x241": "disconnect should result in stopSequenceNumberUpdate() call",
+	"0x241": "Trying to send noop without active connection",
 	"0x242": "has timer",
 	"0x243": "stopSequenceNumberUpdate should be called as result of sending any op!",
 	"0x244": "Socket is closed, but connection is not!",

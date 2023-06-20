@@ -2135,10 +2135,14 @@ export class Container
 					this.serviceConfiguration.noopCountFrequency,
 				);
 				this.noopHeuristic.on("wantsNoop", () => {
-					// The noop heuristic may issue its request after we've lost connection (particularly because it queues the request async).
-					if (this.activeConnection()) {
-						this.submitMessage(MessageType.NoOp);
-					}
+					// On disconnect we notify the heuristic which should prevent it from wanting a noop.
+					// Hitting this assert would imply we lost activeConnection between notifying the heuristic of a processed message and
+					// running the microtask that the heuristic queued in response.
+					assert(
+						this.activeConnection(),
+						0x241 /* "Trying to send noop without active connection" */,
+					);
+					this.submitMessage(MessageType.NoOp);
 				});
 			}
 			this.noopHeuristic.notifyMessageProcessed(message);
