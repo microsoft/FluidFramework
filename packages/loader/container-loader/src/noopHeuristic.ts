@@ -68,7 +68,9 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 
 		this.opsProcessedSinceOpSent++;
 		if (this.opsProcessedSinceOpSent === this.NoopCountFrequency) {
-			// Wait to send a noop if we are still synchronously processing ops - otherwise we may need to send more noops before the sync processing is done.
+			// Wait to send a noop if we are still synchronously processing ops.  This guards against two things:
+			// 1. If we're processing many ops, we may pass the frequency threshold many times.  We only need to send one noop at the very end in this case.
+			// 2. We may send another (non-noop) op in response to processing those ops, e.g. an Accept op.
 			queueMicrotask(() => {
 				if (this.opsProcessedSinceOpSent >= this.NoopCountFrequency) {
 					this.emit("wantsNoop");
@@ -82,8 +84,8 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 		}
 
 		if (this.timer !== undefined) {
-			// Start the timer if we newly have ops that want a noop.  If the timer was already running (e.g. we surpassed the op count and sent a noop) this will
-			// reset it to its full duration.
+			// Start the timer if we newly have ops that want a noop.
+			// If the timer was already running (e.g. we surpassed the op count and sent a noop) this will reset it to its full duration.
 			if (this.opsProcessedSinceOpSent === 1) {
 				this.timer.restart();
 			}
@@ -93,7 +95,7 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 	}
 
 	public notifyDisconnect(): void {
-		// No need to ack any ops processed prior to disconnect - we are already removed from MSN calculation.
+		// No need to noop for any ops processed prior to disconnect - we are already removed from MSN calculation.
 		this.opsProcessedSinceOpSent = 0;
 	}
 
