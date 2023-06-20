@@ -881,7 +881,7 @@ export function createSequenceInterval(
 	}
 
 	const startLref =
-		typeof start === "number"
+		!start || typeof start === "number"
 			? createPositionReference(
 					client,
 					start,
@@ -894,7 +894,7 @@ export function createSequenceInterval(
 			: start;
 
 	const endLref =
-		typeof end === "number"
+		!end || typeof end === "number"
 			? createPositionReference(
 					client,
 					end,
