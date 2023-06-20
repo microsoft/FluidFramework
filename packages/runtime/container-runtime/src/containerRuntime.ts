@@ -435,14 +435,6 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
- * The summary tree returned by the root node. It adds state relevant to the root of the tree.
- */
-export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
-	/** The garbage collection stats if GC ran, undefined otherwise. */
-	gcStats?: IGCStats;
-}
-
-/**
  * Accepted header keys for requests coming to the runtime.
  */
 export enum RuntimeHeaders {
@@ -2425,7 +2417,7 @@ export class ContainerRuntime
 		fullGC?: boolean;
 		/** True to run GC sweep phase after the mark phase */
 		runSweep?: boolean;
-	}): Promise<IRootSummaryTreeWithStats> {
+	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
 		const {
@@ -2448,9 +2440,8 @@ export class ContainerRuntime
 		});
 
 		try {
-			let gcStats: IGCStats | undefined;
 			if (runGC) {
-				gcStats = await this.collectGarbage(
+				await this.collectGarbage(
 					{ logger: summaryLogger, runSweep, fullGC },
 					telemetryContext,
 				);
@@ -2467,7 +2458,7 @@ export class ContainerRuntime
 				0x12f /* "Container Runtime's summarize should always return a tree" */,
 			);
 
-			return { stats, summary, gcStats };
+			return { stats, summary };
 		} finally {
 			this.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
@@ -2760,7 +2751,7 @@ export class ContainerRuntime
 			}
 
 			const trace = Trace.start();
-			let summarizeResult: IRootSummaryTreeWithStats;
+			let summarizeResult: ISummaryTreeWithStats;
 			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
 			// state of all the nodes.
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
