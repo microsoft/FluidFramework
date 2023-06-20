@@ -10,10 +10,7 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import {
-	IStorageNameRetriever,
-	ITokenRevocationManager,
-} from "@fluidframework/server-services-core";
+import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -170,11 +167,11 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 }
 
 export function verifyTokenNotRevoked(
-	tokenRevocationManager: ITokenRevocationManager | undefined,
+	revokedTokenChecker: IRevokedTokenChecker | undefined,
 ): RequestHandler {
 	return async (request, response, next) => {
 		try {
-			if (tokenRevocationManager) {
+			if (revokedTokenChecker) {
 				const tenantId = request.params.tenantId;
 				const authorization = request.get("Authorization");
 				const token = parseToken(tenantId, authorization);
@@ -182,7 +179,7 @@ export function verifyTokenNotRevoked(
 
 				let isTokenRevoked = false;
 				if (claims.jti) {
-					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(
+					isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 						tenantId,
 						claims.documentId,
 						claims.jti,
