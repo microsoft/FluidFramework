@@ -196,7 +196,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
- * {@link VisualizeSharedObject} for {@link SharedTree}.
+ * {@link VisualizeSharedObject} for {@link ISharedTree}.
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
