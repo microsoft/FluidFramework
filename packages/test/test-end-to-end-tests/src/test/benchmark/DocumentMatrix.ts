@@ -14,21 +14,14 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import {
-	assertDocumentTypeInfo,
-	isDocumentMultipleDataStoresInfo,
-} from "@fluid-internal/test-version-utils";
+import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-internal/test-version-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import {
-	IDocumentLoaderAndSummarizer,
-	IDocumentProps,
-	ISummarizeResult,
-} from "./DocumentCreator.js";
+import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -37,31 +30,35 @@ class TestDataObject extends DataObject {
 		return this.root;
 	}
 
+	public get _runtime() {
+		return this.runtime;
+	}
+
 	public get _context() {
 		return this.context;
 	}
 
-	private readonly mapKey = "map";
-	public map!: SharedMap;
+	private readonly matrixKey = "matrix1";
+	public matrix!: SharedMatrix;
 
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
 
 	protected async initializingFirstTime() {
-		const sharedMap = SharedMap.create(this.runtime);
-		this.root.set(this.mapKey, sharedMap.handle);
+		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
+		this.root.set(this.matrixKey, sharedMatrix.handle);
 
 		const sharedString = SharedString.create(this.runtime);
 		this.root.set(this.sharedStringKey, sharedString.handle);
 	}
 
 	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
-		assert(mapHandle !== undefined, "SharedMap not found");
-		this.map = await mapHandle.get();
+		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+		assert(matrixHandle !== undefined, "SharedMatrix not found");
+		this.matrix = await matrixHandle.get();
 
 		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-		assert(sharedStringHandle !== undefined, "SharedString not found");
+		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
 }
@@ -74,13 +71,13 @@ const runtimeOptions: IContainerRuntimeOptions = {
 	},
 };
 
-// implement IDocumentLoader methods
-export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
+export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly numberDataStoreCounts: number;
-	private readonly dsCountsPerIteration: number;
+	private readonly rowSize: number;
+	private readonly columnSize: number;
+	private readonly stringSize: number;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
@@ -111,6 +108,16 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
+	private generateRandomString(length: number): string {
+		let result = "";
+		const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
+	}
+
 	private async createDataStores() {
 		assert(
 			this._mainContainer !== undefined,
@@ -124,15 +131,20 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			this.mainDataStore !== undefined,
 			"mainDataStore should be initialized before creating data stores",
 		);
-		// Data stores are not created as to not generate too many ops, and hit the # of ops limit.
-		// This is a workaround to prevent that.
-		const totalIterations = this.numberDataStoreCounts / this.dsCountsPerIteration;
-		for (let i = 0; i < totalIterations; i++) {
-			for (let j = 0; j < this.dsCountsPerIteration; j++) {
-				const dataStore = await this.dataObjectFactory.createInstance(
-					this.containerRuntime,
-				);
-				this.mainDataStore._root.set(`dataStore${j}`, dataStore.handle);
+
+		const matrixHandle = this.mainDataStore._root.get("matrix1");
+		assert(matrixHandle !== undefined, "SharedMatrix not found");
+		const matrix = await matrixHandle.get();
+
+		matrix.insertRows(0, this.rowSize);
+		matrix.insertCols(0, this.columnSize);
+		const randomString = this.generateRandomString(this.stringSize);
+		for (let i = 0; i < this.rowSize; i++) {
+			for (let j = 0; j < this.columnSize; j++) {
+				const id = `${i.toString()}_${j.toString()}`;
+				const sharedString = SharedString.create(this.mainDataStore._runtime, id);
+				sharedString.insertText(0, randomString);
+				matrix.setCell(i, j, sharedString.getText());
 			}
 			await this.waitForContainerSave(this._mainContainer);
 		}
@@ -153,7 +165,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		this._dataObjectFactory = new DataObjectFactory(
 			"TestDataObject",
 			TestDataObject,
-			[SharedMap.getFactory(), SharedString.getFactory()],
+			[SharedMatrix.getFactory(), SharedString.getFactory()],
 			[],
 		);
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -167,13 +179,13 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
-		assert(isDocumentMultipleDataStoresInfo(this.props.documentTypeInfo));
+		assert(isDocumentMatrixInfo(this.props.documentTypeInfo));
 
 		switch (this.props.documentType) {
-			case "DocumentMultipleDataStores":
-				this.numberDataStoreCounts = this.props.documentTypeInfo.numberDataStores;
-				this.dsCountsPerIteration =
-					this.props.documentTypeInfo.numberDataStoresPerIteration;
+			case "DocumentMatrix":
+				this.rowSize = this.props.documentTypeInfo.rowSize;
+				this.columnSize = this.props.documentTypeInfo.columnSize;
+				this.stringSize = this.props.documentTypeInfo.stringSize;
 				break;
 			default:
 				throw new Error("Invalid document type");
