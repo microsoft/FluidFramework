@@ -134,6 +134,8 @@ export class CheckpointService implements ICheckpointService {
 			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
 				// If we cannot checkpoint locally, use document
 				lastCheckpoint = JSON.parse(document[service]);
+				globalLogOffset = lastCheckpoint.logOffset;
+				globalSequenceNumber = lastCheckpoint.sequenceNumber;
 			} else {
 				// Search checkpoints collection for checkpoint
 				checkpoint = await this.checkpointRepository
