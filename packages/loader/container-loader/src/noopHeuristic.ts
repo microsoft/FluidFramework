@@ -71,8 +71,10 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 			queueMicrotask(() => {
 				if (this.opsProcessedSinceOpSent >= this.NoopCountFrequency) {
 					this.emit("wantsNoop");
-					// reset count now that all ops are processed
-					this.opsProcessedSinceOpSent = 0;
+					assert(
+						this.opsProcessedSinceOpSent === 0,
+						0x243 /* "Expected a noop to be synchronously sent" */,
+					);
 				}
 				return;
 			});

@@ -73,6 +73,7 @@ describe("Loader", () => {
 
 				noopHeuristic.on("wantsNoop", () => {
 					deltaManager.submit(MessageType.NoOp);
+					noopHeuristic.notifyMessageSent();
 				});
 
 				await deltaManager.attachOpHandler(0, 0, {
@@ -189,6 +190,7 @@ describe("Loader", () => {
 					const tracker = new NoopHeuristic(Infinity, 100);
 					tracker.on("wantsNoop", () => {
 						counter++;
+						tracker.notifyMessageSent();
 					});
 					for (let num = 0; num < 99; ++num) {
 						tracker.notifyMessageProcessed(generateOp());
@@ -205,6 +207,7 @@ describe("Loader", () => {
 					const tracker = new NoopHeuristic(100, Infinity);
 					tracker.on("wantsNoop", () => {
 						counter++;
+						tracker.notifyMessageSent();
 					});
 					for (let num = 0; num < 1000; ++num) {
 						tracker.notifyMessageProcessed(generateOp());
@@ -219,6 +222,7 @@ describe("Loader", () => {
 					const tracker = new NoopHeuristic(Infinity, 1000);
 					tracker.on("wantsNoop", () => {
 						counter++;
+						tracker.notifyMessageSent();
 					});
 					for (let num = 0; num < 1000; ++num) {
 						tracker.notifyMessageProcessed(generateOp());
