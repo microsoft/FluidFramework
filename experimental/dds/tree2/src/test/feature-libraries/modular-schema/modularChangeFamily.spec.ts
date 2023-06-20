@@ -728,9 +728,9 @@ describe("ModularChangeFamily", () => {
 	});
 	describe("Encoding", () => {
 		const encodingTestData: [string, ModularChangeset][] = [
-			["without constrain", rootChange1a],
-			["with value constrain", rootChange3],
-			["with node existence constrain", rootChange4],
+			["without constraint", rootChange1a],
+			["with value constraint", rootChange3],
+			["with node existence constraint", rootChange4],
 			["without node field changes", rootChangeWithoutNodeFieldChanges],
 		];
 
