@@ -35,7 +35,9 @@ const readStdin: () => Promise<string | undefined> = async () => {
 
 type policyAction = "handle" | "resolve" | "final";
 
-type HandlerExclusions = { [rule: string]: RegExp[] };
+interface HandlerExclusions {
+	[rule: string]: RegExp[];
+}
 
 /**
  * This tool enforces policies across the code base via a series of handlers.
@@ -232,11 +234,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			.forEach((handler) => {
 				// doing exclusion per handler
 				const exclusions = handlerExclusions[handler.name];
-				if (exclusions) {
-					if (!exclusions.every((value) => !value.test(file))) {
-						this.verbose(`Excluded ${handler.name} handler: ${file}`);
-						return;
-					}
+				if (exclusions !== undefined && !exclusions.every((value) => !value.test(file))) {
+					this.verbose(`Excluded ${handler.name} handler: ${file}`);
+					return;
 				}
 
 				const result = runWithPerf(handler.name, "handle", () =>

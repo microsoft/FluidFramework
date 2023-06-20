@@ -15,7 +15,7 @@
 		"build:ci": "lerna run build:compile --stream",
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
-		"build:fast": "fluid-build --root .. --buildTools",
+		"build:fast": "fluid-build --root .. -g build-tools",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"ci:build": "lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
