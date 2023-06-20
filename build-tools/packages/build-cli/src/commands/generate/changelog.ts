@@ -68,6 +68,8 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 			this.error("ReleaseGroup is possibly 'undefined'");
 		}
 
+		await execCommand("pnpm exec changeset version", { cwd: gitRoot });
+
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -75,18 +77,17 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 		const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
 
-		await execCommand("pnpm exec changeset version", { cwd: gitRoot });
-
 		if (!installed) {
-			await execCommand(`pnpm i`, { cwd: gitRoot });
+			this.error(`Error installing dependencies for: ${releaseGroup}`);
 		}
 
 		this.repo = new Repository({ baseDir: gitRoot });
 
-    // git add the deleted changesets
+		// git add the deleted changesets
 		await this.repo.gitClient.add(".changeset");
-    // git restore the package.json files that were changed by changeset version
-    await this.repo.gitClient.raw("restore", "**package.json");
+
+		// git restore the package.json files that were changed by changeset version
+		await this.repo.gitClient.raw("restore", "**package.json");
 	}
 
 	public async run(): Promise<void> {
@@ -97,14 +98,15 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		// Calls processPackage on all packages.
 		await super.run();
 
-    // git add the changelog changes
+		// git add the changelog changes
 		await this.repo.gitClient.add("**CHANGELOG.md");
 
-    // Cleanup: git restore any edits that aren't staged
-    await this.repo.gitClient.raw("restore", ".");
-    // Cleanup: git clean any untracked files
+		// Cleanup: git restore any edits that aren't staged
+		await this.repo.gitClient.raw("restore", ".");
+
+		// Cleanup: git clean any untracked files
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
-	
+
 		this.log("Commit and open a PR!");
 	}
 }
