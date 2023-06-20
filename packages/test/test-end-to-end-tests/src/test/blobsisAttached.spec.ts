@@ -18,6 +18,7 @@ import {
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -37,6 +38,10 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
 		let container: IContainer;
+
+		const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
+		dataObject.context.containerRuntime as ContainerRuntime;
+		
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
@@ -52,12 +57,21 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+			let pendingState;
+			pendingState = runtimeOf(dataStore1).getPendingLocalState();
+			console.log(pendingState);
 			assert.strictEqual(blob.isAttached, false);
 			map.set(testKey, blob);
+			pendingState = runtimeOf(dataStore1).getPendingLocalState();
+			console.log(pendingState);
 			assert.strictEqual(blob.isAttached, true);
+			await provider.ensureSynchronized();
+			pendingState = runtimeOf(dataStore1).getPendingLocalState();
+			console.log(pendingState);
 		});
 
 		it("blob is attached after usage in directory", async function () {

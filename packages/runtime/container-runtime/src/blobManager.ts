@@ -417,7 +417,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			async () => this.getBlob(id),
 			() => {
 				if(entry){ // in detached container case, there is no pending entry
-					entry.acked = true;
+					entry.attached = true;
 					this.deletePendingBlobMaybe(id);
 				}
 			},
