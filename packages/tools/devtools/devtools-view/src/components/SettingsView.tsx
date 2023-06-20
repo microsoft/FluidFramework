@@ -7,11 +7,14 @@ import React from "react";
 import {
 	Dropdown,
 	Option,
+	makeStyles,
+	shorthands,
 	teamsHighContrastTheme,
-	Theme,
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
+
+import { ThemeContext } from "../ThemeHelper";
 
 /**
  * An enum with options for the DevTools themes.
@@ -21,17 +24,48 @@ export enum ThemeOption {
 	Dark = "Dark",
 	HighContrast = "High Contrast",
 }
-interface SettingsProps {
+
+const useStyles = makeStyles({
+	root: {
+		...shorthands.gap("10px"),
+		alignItems: "start",
+		display: "grid",
+		justifyItems: "start",
+		height: "100%",
+		width: "100%",
+	},
+
 	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 * Styles to apply to option entries
+	 * (container around label and value)
 	 */
-	setTheme(newTheme: Theme): void;
-}
+	option: {
+		display: "flex",
+		flexDirection: "column",
+	},
+
+	/**
+	 * Styles to apply to settings option labels
+	 */
+	label: { fontSize: "12px" },
+
+	/**
+	 * Styles to apply to settings option drop-downs
+	 */
+	dropdown: {
+		minWidth: "150px",
+		fontWeight: "bold",
+	},
+});
+
 /**
  * Settings page for the debugger
  */
-export function SettingsView(props: SettingsProps): React.ReactElement {
-	const { setTheme } = props;
+export function SettingsView(): React.ReactElement {
+	const { setTheme } = React.useContext(ThemeContext) ?? {};
+
+	const styles = useStyles();
+
 	function handleThemeChange(
 		event,
 		option: {
@@ -42,37 +76,46 @@ export function SettingsView(props: SettingsProps): React.ReactElement {
 	): void {
 		switch (option.optionValue) {
 			case ThemeOption.Light:
-				setTheme(webLightTheme);
+				setTheme({
+					name: "light",
+					theme: webLightTheme,
+				});
 				break;
 			case ThemeOption.Dark:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme,
+				});
 				break;
 			case ThemeOption.HighContrast:
-				setTheme(teamsHighContrastTheme);
+				setTheme({
+					name: "highContrast",
+					theme: teamsHighContrastTheme,
+				});
 				break;
 			default:
-				setTheme(webDarkTheme);
+				setTheme({
+					name: "dark",
+					theme: webDarkTheme,
+				});
 				break;
 		}
 	}
+
 	return (
-		<div
-			style={{
-				marginLeft: "10px",
-				display: "grid",
-				justifyItems: "start",
-			}}
-		>
-			<label style={{ fontSize: "12px" }}>Select theme</label>
-			<Dropdown
-				placeholder="Theme"
-				style={{ minWidth: "150px", fontWeight: "bold" }}
-				onOptionSelect={handleThemeChange}
-			>
-				<Option value={ThemeOption.Light}>Light</Option>
-				<Option value={ThemeOption.Dark}>Dark</Option>
-				<Option value={ThemeOption.HighContrast}>High Contrast</Option>
-			</Dropdown>
+		<div className={styles.root}>
+			<div className={styles.option}>
+				<label className={styles.label}>Select theme</label>
+				<Dropdown
+					placeholder="Theme"
+					className={styles.dropdown}
+					onOptionSelect={handleThemeChange}
+				>
+					<Option value={ThemeOption.Light}>Light</Option>
+					<Option value={ThemeOption.Dark}>Dark</Option>
+					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
+				</Dropdown>
+			</div>
 		</div>
 	);
 }
