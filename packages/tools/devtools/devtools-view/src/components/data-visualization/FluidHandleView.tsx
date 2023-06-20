@@ -91,19 +91,25 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}
 
 	const button = (
-		<TooltipHost content={`Click to copy handle ${fluidObjectId}`}>
+		<TooltipHost content={`Click to copy handle`}>
 			<Button
-				onClick={async (): Promise<void> => navigator.clipboard.writeText(fluidObjectId)}
+				onClick={async (e): Promise<void> => {
+					e.preventDefault();
+					return navigator.clipboard.writeText(fluidObjectId);
+				}}
 				icon={<ClipboardPaste16Regular />}
+				size="small"
 			></Button>
 		</TooltipHost>
 	);
 
-	const header2 = <TreeHeader label={label} inlineValue={button} />;
+	const header2 = (
+		<TreeHeader label={label} inlineValue={button} nodeTypeMetadata={"FluidHandle"} />
+	);
 
 	return (
 		<TreeItem header={header2}>
-			<TreeDataView containerKey={containerKey} label={label} node={visualTree} />{" "}
+			<TreeDataView containerKey={containerKey} label={label} node={visualTree} />
 		</TreeItem>
 	);
 }
