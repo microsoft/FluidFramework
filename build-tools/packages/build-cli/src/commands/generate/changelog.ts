@@ -47,10 +47,10 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		const pkg = new Package(`${directory}/package.json`, "none");
 		const version = this.flags.version ?? pkg.version;
 
-		await replaceInFile("## 2.0.0\\n", `## ${version}\\n`, `${directory}/CHANGELOG.md`);
+		await replaceInFile("## 2.0.0\n", `## ${version}\n`, `${directory}/CHANGELOG.md`);
 		await replaceInFile(
-			`## ${version}\\n\\n## `,
-			`## ${version}\\n\\nDependency updates only.\\n\\n## `,
+			`## ${version}\n\n## `,
+			`## ${version}\n\nDependency updates only.\n\n## `,
 			`${directory}/CHANGELOG.md`,
 		);
 	}
