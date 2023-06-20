@@ -97,10 +97,14 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		// Calls processPackage on all packages.
 		await super.run();
 
+    // git add the changelog changes
 		await this.repo.gitClient.add("**CHANGELOG.md");
 
+    // Cleanup: git restore any edits that aren't staged
+    await this.repo.gitClient.raw("restore", ".");
+    // Cleanup: git clean any untracked files
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
-
+	
 		this.log("Commit and open a PR!");
 	}
 }
