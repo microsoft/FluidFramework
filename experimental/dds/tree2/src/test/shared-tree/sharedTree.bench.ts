@@ -424,6 +424,46 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 	});
+
+	// Note that the times reported by this benchmark represent the computation of several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported should be
+	// divided by the number of peers.
+	describe.only("rebasing commits", () => {
+		// const commitCounts = [1, 10, 20, 30, 40];
+		const commitCounts = [40];
+		const nbPeers = 5;
+		for (const nbCommits of commitCounts) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${nbCommits} commits per peer x ${nbPeers} peers`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite(nbPeers);
+						for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+							const peer = provider.trees[iPeer];
+							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+								insert(peer, 0, `p${iPeer}c${iCommit}`);
+							}
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
 });
 
 function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
