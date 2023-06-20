@@ -215,7 +215,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
-    }): Promise<IRootSummaryTreeWithStats>;
+    }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
@@ -434,11 +434,6 @@ export interface IRefreshSummaryAckOptions {
     readonly proposalHandle: string | undefined;
     readonly summaryLogger: ITelemetryLoggerExt;
     readonly summaryRefSeq: number;
-}
-
-// @public
-export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
-    gcStats?: IGCStats;
 }
 
 // @public @deprecated (undocumented)
