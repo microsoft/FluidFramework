@@ -263,7 +263,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (pos === DetachedReferencePosition) {
 			return undefined;
 		}
-		return this.insertSegmentLocal(pos, segment);
+		const op = createInsertSegmentOp(pos, segment);
+
+		const opArgs = { op };
+		this._mergeTree.insertAtReferencePosition(refPos, segment, opArgs);
+		return op;
 	}
 
 	public walkSegments<TClientData>(
