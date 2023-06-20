@@ -19,6 +19,20 @@ import { ChangesetLocalId } from "./modularChangeTypes";
 
 export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
+export const EncodedChangeAtomId = Type.Object(
+	{
+		/**
+		 * Uniquely identifies the changeset within which the change was made.
+		 */
+		revision: Type.Union([RevisionTagSchema, Type.Undefined()]),
+		/**
+		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+		 */
+		localId: ChangesetLocalIdSchema,
+	},
+	{ additionalProperties: false },
+);
+
 const EncodedValueChange = Type.Object(
 	{
 		revision: Type.Optional(RevisionTagSchema),
