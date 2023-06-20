@@ -58,13 +58,17 @@ const sharedTreeKey = "shared-tree";
 const emojiMatrixKey = "emoji-matrix";
 
 /**
- * TODO
+ * Function to create an instance which contains getFactory method returning SharedTreeFactory.
+ * The example application calls container.create() to create a new DDS, and the method requires:
+ * #1. static factory method
+ * #2. class object with a constructor returning a type with a handle field
+ *
+ * The function below satisfies the requirements to populate the SharedTree within the application.
  */
 function castSharedTreeType(): SharedObjectClass<ISharedTree> {
 	/**
 	 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
 	 */
-
 	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 	class SharedTree {
 		public static getFactory(): SharedTreeFactory {
@@ -146,7 +150,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 		value: ValueSchema.Serializable,
 	});
 
-	const leafSchema = builder.object("nested-item", {
+	const leafSchema = builder.object("leaf-item", {
 		local: {
 			leafField: SchemaBuilder.fieldValue(serializableSchema),
 		},
@@ -162,7 +166,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	const rootNodeSchema = builder.object("root-item", {
 		local: {
 			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldSequence(numberSchema),
+			childrenTwo: SchemaBuilder.fieldValue(numberSchema),
 		},
 	});
 
@@ -183,12 +187,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 					childField: true,
 					childData: {
 						leafField: {
-							[valueSymbol]: { todo: "Make sharedText.handle work here" }, // TODO: SharedTree should encode the handle.
+							[valueSymbol]: false, // TODO: SharedTree should encode the handle.
 						},
 					},
 				},
 			],
-			childrenTwo: [32],
+			childrenTwo: 32,
 		},
 	});
 
