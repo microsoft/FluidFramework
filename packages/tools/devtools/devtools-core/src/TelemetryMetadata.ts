@@ -6,7 +6,7 @@
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
 /**
- * Interface for telemetry events with a timestamp. Specific to the Fluid Debugger.
+ * Interface for telemetry events with a timestamp. Specific to the Fluid Devtools.
  *
  * @internal
  */
