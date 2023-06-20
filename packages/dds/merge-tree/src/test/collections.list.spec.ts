@@ -94,6 +94,24 @@ describe("Collections.List", () => {
 
 				assert.equal(list.length, nodesArray.length, "remaining lengths don't match");
 				assert.equal(listSplice.length, arraySplice.length, "spliced lengths don't match");
+
+				const listNodes = [...list];
+				for (let i = 0; i < listNodes.length; i++) {
+					assert.equal(
+						listNodes[i],
+						nodesArray[i],
+						`remaining node mismatch at pos ${i}`,
+					);
+				}
+
+				const listSpliceNodes = [...listSplice];
+				for (let i = 0; i < listSpliceNodes.length; i++) {
+					assert.equal(
+						listSpliceNodes[i],
+						arraySplice[i],
+						`splice node mismatch at pos ${i}`,
+					);
+				}
 			});
 		}
 	});
