@@ -128,8 +128,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeIdentifierKey,
-	nodeIdentifierSchema,
+	nodeKeyFieldKey,
+	nodeKeySchema,
 } from "./domains";
 
 export {
@@ -186,7 +186,10 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	NodeIdentifier,
+	StableNodeKey,
+	LocalNodeKey,
+	compareLocalNodeKeys,
+	localNodeKeySymbol,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -227,7 +230,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
