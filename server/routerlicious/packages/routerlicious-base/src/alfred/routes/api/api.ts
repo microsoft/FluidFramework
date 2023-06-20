@@ -254,7 +254,7 @@ async function verifyTokenWrapper(
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
 
-	if (revokedTokenChecker && claims.jti) {
+	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
 		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
 			tenantId,
 			documentId,
@@ -272,7 +272,7 @@ async function verifyTokenWrapper(
 			maxTokenLifetimeSec,
 			ensureSingleUseToken: false,
 			singleUseTokenCache: undefined,
-			enableTokenCache: true,
+			enableTokenCache: tokenCacheEnabled,
 			tokenCache,
 			revokedTokenChecker,
 		};
