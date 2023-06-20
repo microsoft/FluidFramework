@@ -352,7 +352,7 @@ const useStyles = makeStyles({
  * Initializes the Fluid Container and displays app view once it is ready.
  */
 export function App(): React.ReactElement {
-	// Initialize the Fluid Debugger logger
+	// Initialize the Devtools logger
 	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
 	// Initialize Devtools
