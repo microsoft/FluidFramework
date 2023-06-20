@@ -25,7 +25,8 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 	static flags = {
 		version: Flags.string({
-			description: "The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
+			description:
+				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
 		...PackageCommand.flags,
 	};
