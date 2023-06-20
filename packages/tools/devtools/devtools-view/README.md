@@ -51,20 +51,6 @@ To run the app, navigate to the root of this package and run `npm run start:test
 
 -   This will launch a local [Tinylicious](https://fluidframework.com/docs/testing/tinylicious/) service and serve the app at <http://localhost:8080/>.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
-
-## API Documentation
-
-API documentation for **@fluid-tools/client-debugger-view** is available at <https://fluidframework.com/docs/apis/client-debugger-view>.
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -131,4 +117,4 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
-[@fluid-internal/devtools-browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/devtools-browser-extension
+[@fluid-internal/devtools-browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension
