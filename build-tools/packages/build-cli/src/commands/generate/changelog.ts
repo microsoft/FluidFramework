@@ -83,7 +83,10 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 		this.repo = new Repository({ baseDir: gitRoot });
 
+    // git add the deleted changesets
 		await this.repo.gitClient.add(".changeset");
+    // git restore the package.json files that were changed by changeset version
+    await this.repo.gitClient.raw("restore", "**package.json");
 	}
 
 	public async run(): Promise<void> {
