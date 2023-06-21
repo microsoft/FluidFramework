@@ -3,7 +3,8 @@
 This library contains developer tools for use alongside the Fluid Framework.
 It is used to power our associated browser extensions.
 
-TODO: link to extensions once they are published.
+-   Chrome: <https://aka.ms/fluid/devtool/chrome>
+-   Edge: <https://aka.ms/fluid/devtool/edge>
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
@@ -28,10 +29,10 @@ The Devtools' API surface is designed to fit nicely into most application flows.
 
 ### Initialization
 
-To initialize a debugger session for your container, call `initializeDevtools`.
+To initialize a devtools session for your container, call `initializeDevtools`.
 This function accepts a `DevtoolsLogger` for recording and communicating telemetry data, a list of initial Fluid `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing `Container` data.
 
-TODO: link to API docs once API shape has settled.
+See [here](https://fluidframework.com/docs/apis/devtools-core#initializedevtools-function) for associated API documentation.
 
 ### Clean-up
 
@@ -39,13 +40,6 @@ The Devtools object is managed as a global singleton.
 That singleton is automatically cleaned up prior to the Window's "unload" event.
 So typical application flows likely won't need to worry about cleanup.
 That said, if you wish to have tighter control over when the Devtools are torn down, you can simply call the `dispose` method on the handle returned by [initialization](#initialization).
-
-## Related Tooling
-
-This library is designed to work alongside our Chromium browser extension.
-
-TODO: link to code on github once package names have been finalized.
-TODO: link to the various browsers' webstore pages for our extension once it has been publiched.
 
 ## Working in the package
 
