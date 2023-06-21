@@ -56,6 +56,7 @@ describe("ContainerContext Tests", () => {
 			sandbox.stub() as unknown as FluidObject,
 			codeLoader,
 			quorumCodeDetails,
+			mockRuntimeFactory,
 			undefined,
 			sandbox.stub() as any,
 			sandbox.stub() as unknown as IQuorum,

@@ -15,7 +15,6 @@ import {
 	AttachState,
 	ILoaderOptions,
 	IRuntimeFactory,
-	IProvideRuntimeFactory,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
@@ -42,8 +41,6 @@ import {
 import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
-const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
-
 /**
  * Events that {@link ContainerContext} can emit through its lifecycle.
  *
@@ -60,6 +57,7 @@ export class ContainerContext implements IContainerContext {
 		scope: FluidObject,
 		codeLoader: ICodeDetailsLoader,
 		specifiedCodeDetails: IFluidCodeDetails,
+		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -91,8 +89,8 @@ export class ContainerContext implements IContainerContext {
 			container,
 			scope,
 			codeLoader,
-			specifiedCodeDetails,
 			loadedModule,
+			runtimeFactory,
 			baseSnapshot,
 			deltaManager,
 			quorum,
@@ -177,10 +175,6 @@ export class ContainerContext implements IContainerContext {
 		return this._disposed;
 	}
 
-	public get loadedCodeDetails() {
-		return this._loadedCodeDetails;
-	}
-
 	private readonly _quorum: IQuorum;
 	public get quorum(): IQuorumClients {
 		return this._quorum;
@@ -224,8 +218,8 @@ export class ContainerContext implements IContainerContext {
 		private readonly container: Container,
 		public readonly scope: FluidObject,
 		private readonly codeLoader: ICodeDetailsLoader,
-		private readonly _loadedCodeDetails: IFluidCodeDetails,
 		private readonly _loadedModule: IFluidModuleWithDetails,
+		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -382,23 +376,11 @@ export class ContainerContext implements IContainerContext {
 
 	// #region private
 
-	private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
-			this._loadedModule.module.fluidExport;
-		const runtimeFactory = fluidExport?.IRuntimeFactory;
-		if (runtimeFactory === undefined) {
-			throw new Error(PackageNotFactoryError);
-		}
-
-		return runtimeFactory;
-	}
-
 	private async instantiateRuntime(existing: boolean) {
-		const runtimeFactory = await this.getRuntimeFactory();
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.taggedLogger,
 			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(this, existing),
+			async () => this._runtimeFactory.instantiateRuntime(this, existing),
 		);
 		this.lifecycleEvents.emit("runtimeInstantiated");
 	}

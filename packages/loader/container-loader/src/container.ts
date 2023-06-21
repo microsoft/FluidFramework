@@ -27,6 +27,8 @@ import {
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IHostLoader,
+	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -113,6 +115,8 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
+
+const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
  * @internal
@@ -656,13 +660,14 @@ export class Container
 		return this.getCodeDetailsFromQuorum();
 	}
 
+	private _loadedCodeDetails: IFluidCodeDetails | undefined;
 	/**
 	 * Get the code details that were used to load the container.
 	 * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
 	 * loaded.
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
-		return this._context?.loadedCodeDetails;
+		return this._loadedCodeDetails;
 	}
 
 	/**
@@ -1348,7 +1353,7 @@ export class Container
 		return this.urlResolver.getAbsoluteUrl(
 			this.resolvedUrl,
 			relativeUrl,
-			getPackageName(this._context?.loadedCodeDetails),
+			getPackageName(this._loadedCodeDetails),
 		);
 	}
 
@@ -2216,11 +2221,32 @@ export class Container
 		// are set. Global requests will still go directly to the loader
 		const maybeLoader: FluidObject<IHostLoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
+
+		const taggedLogger = this.subLogger;
+		const loadCodeResult = await PerformanceEvent.timedExecAsync(
+			taggedLogger,
+			{ eventName: "CodeLoad" },
+			async () => this.codeLoader.load(codeDetails),
+		);
+
+		const loadedModule: IFluidModuleWithDetails = {
+			module: loadCodeResult.module,
+			details: loadCodeResult.details ?? codeDetails,
+		};
+
+		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+			loadedModule.module.fluidExport;
+		const runtimeFactory = fluidExport?.IRuntimeFactory;
+		if (runtimeFactory === undefined) {
+			throw new Error(PackageNotFactoryError);
+		}
+
 		this._context = await ContainerContext.createOrLoad(
 			this,
 			this.scope,
 			this.codeLoader,
 			codeDetails,
+			runtimeFactory,
 			snapshot,
 			new DeltaManagerProxy(this._deltaManager),
 			new QuorumProxy(this.protocolHandler.quorum),
@@ -2239,6 +2265,8 @@ export class Container
 			existing,
 			pendingLocalState,
 		);
+
+		this._loadedCodeDetails = codeDetails;
 
 		this.emit("contextChanged", codeDetails);
 	}
