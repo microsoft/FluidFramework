@@ -100,6 +100,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: [undefined, true],
 		enableGroupedBatching: [true, false],
+		enableBatchRebasing: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

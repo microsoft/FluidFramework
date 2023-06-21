@@ -125,6 +125,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				...testContainerConfig,
 				runtimeOptions: {
 					enableGroupedBatching,
+					enableBatchRebasing: true,
 				},
 			});
 
@@ -186,6 +187,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				...testContainerConfig,
 				runtimeOptions: {
 					enableGroupedBatching: true,
+					enableBatchRebasing: true,
 				},
 			},
 			{ "Fluid.ContainerRuntime.DisableBatchRebasing": true },
