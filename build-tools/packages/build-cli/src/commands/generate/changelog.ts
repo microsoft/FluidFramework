@@ -5,12 +5,16 @@
 
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { PackageCommand, PackageKind } from "../../BasePackageCommand";
-import { Repository } from "../../lib";
 import { readFile, writeFile } from "fs/promises";
 import { CleanOptions } from "simple-git";
 import { Package, FluidRepo } from "@fluidframework/build-tools";
+
+import { PackageCommand } from "../../BasePackageCommand";
+import { BaseCommand } from "../../base";
+import { Repository } from "../../lib";
 import { isReleaseGroup } from "../../releaseGroups";
+import { PackageKind } from "../../filter";
+import { releaseGroupFlag } from "../../flags";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
 	const content = await readFile(path, "utf8");
@@ -18,17 +22,18 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 	await writeFile(path, newContent, "utf8");
 }
 
-export default class GenerateChangeLogCommand extends PackageCommand<
-	typeof GenerateChangeLogCommand
-> {
+export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
 	static description = "Generate a changelog for packages based on changesets.";
 
 	static flags = {
+		releaseGroup: releaseGroupFlag({
+			required: true,
+		}),
 		version: Flags.string({
 			description:
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
-		...PackageCommand.flags,
+		...BaseCommand.flags,
 	};
 
 	static examples = [
@@ -40,12 +45,8 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 	private repo?: Repository;
 
-	protected async processPackage(directory: string, kind: PackageKind): Promise<void> {
-		if (kind === "packageFromDirectory") {
-			return;
-		}
-
-		const pkg = new Package(`${directory}/package.json`, "none");
+	private async processPackage(pkg: Package): Promise<void> {
+		const {directory} = pkg;
 		const version = this.flags.version ?? pkg.version;
 
 		await replaceInFile("## 2.0.0\n", `## ${version}\n`, `${directory}/CHANGELOG.md`);
@@ -56,9 +57,7 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 		);
 	}
 
-	public async init(): Promise<void> {
-		await super.init();
-
+	public async run(): Promise<void> {
 		const context = await this.getContext();
 
 		const gitRoot = context.gitRepo.resolvedRoot;
@@ -89,15 +88,18 @@ export default class GenerateChangeLogCommand extends PackageCommand<
 
 		// git restore the package.json files that were changed by changeset version
 		await this.repo.gitClient.raw("restore", "**package.json");
-	}
-
-	public async run(): Promise<void> {
-		if (this.repo === undefined) {
-			this.error("Repository is possibly 'undefined'");
-		}
 
 		// Calls processPackage on all packages.
-		await super.run();
+		const processPromises: Promise<void>[] = [];
+		for(const pkg of packagesToCheck) {
+			// eslint-disable-next-line no-await-in-loop
+			// await this.processPackage(pkg);
+			processPromises.push(this.processPackage(pkg))
+		}
+		const results = await Promise.allSettled(processPromises);
+		if(results.some(p=>p.status === "rejected")) {
+			this.error(`Error processing packages.`,{exit:1});
+		}
 
 		// git add the changelog changes
 		await this.repo.gitClient.add("**CHANGELOG.md");
