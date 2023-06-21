@@ -188,13 +188,6 @@ export type Skip = number;
  */
 export interface HasModifications<TTree = ProtoNode> {
 	readonly fields?: FieldMarks<TTree>;
-	/**
-	 * When set, indicates the new value that should be assigned to the node.
-	 * Can be set to `undefined` to convey that the node's value should be cleared.
-	 * Readers of this field should use the following check to distinguish the above cases:
-	 * `Object.prototype.hasOwnProperty.call(mark, "setValue")`
-	 */
-	readonly setValue?: Value;
 }
 
 /**
@@ -212,7 +205,7 @@ export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
 export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Delete;
 	/**
-	 * Must be 1 when either `setValue` or `fields` is populated.
+	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
 }

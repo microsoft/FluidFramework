@@ -148,7 +148,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * Set the value using the simple assignment operator (`=`).
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
-	[valueSymbol]: Value;
+	readonly [valueSymbol]: Value;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this node.

@@ -723,9 +723,6 @@ export class ModularChangeFamily
 		);
 
 		const rebasedChange: NodeChangeset = {};
-		if (change?.valueChange !== undefined) {
-			rebasedChange.valueChange = change.valueChange;
-		}
 
 		if (fieldChanges.size > 0) {
 			rebasedChange.fieldChanges = fieldChanges;
@@ -814,11 +811,6 @@ export class ModularChangeFamily
 			type: Delta.MarkType.Modify,
 		};
 
-		const valueChange = change.valueChange;
-		if (valueChange !== undefined) {
-			modify.setValue = valueChange.value;
-		}
-
 		if (change.fieldChanges !== undefined) {
 			modify.fields = this.intoDeltaImpl(change.fieldChanges);
 		}
@@ -854,7 +846,6 @@ export function revisionMetadataSourceFromInfo(
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
-		change.valueChange === undefined &&
 		change.valueConstraint === undefined &&
 		change.nodeExistsConstraint === undefined
 	);
@@ -1125,20 +1116,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		return fieldChangeMap;
-	}
-
-	public setValue(path: UpPath, value: Value): void {
-		const valueChange: ValueChange = value === undefined ? {} : { value };
-		const nodeChange: NodeChangeset = { valueChange };
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-			path.parentIndex,
-			nodeChange,
-		);
-		this.submitChange(
-			{ parent: path.parent, field: path.parentField },
-			genericFieldKind.identifier,
-			brand(fieldChange),
-		);
 	}
 
 	public addValueConstraint(path: UpPath, currentValue: Value): void {

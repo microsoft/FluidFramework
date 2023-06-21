@@ -138,14 +138,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return this.cursor.value;
 	}
 
-	public set value(value: Value) {
-		assert(
-			allowsValue(this.type.value, value),
-			0x5b2 /* Out of schema value can not be set on tree */,
-		);
-		this.context.editor.setValue(this.anchorNode, value);
-	}
-
 	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
@@ -300,8 +292,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 
 			return true;
 		} else if (key === valueSymbol) {
-			target.value = value;
-			return true;
+			fail("Cannot set value of a node");
 		}
 		return false;
 	},

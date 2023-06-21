@@ -73,7 +73,6 @@ export interface NodeExistsConstraint {
  * @alpha
  */
 export interface NodeChangeset extends HasFieldChanges {
-	valueChange?: ValueChange;
 	valueConstraint?: ValueConstraint;
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
@@ -84,22 +83,6 @@ export interface NodeChangeset extends HasFieldChanges {
 export interface ValueConstraint {
 	value: Value;
 	violated: boolean;
-}
-
-/**
- * @alpha
- */
-export interface ValueChange {
-	/**
-	 * The revision in which this change occurred.
-	 * Undefined when it can be inferred from context.
-	 */
-	revision?: RevisionTag;
-
-	/**
-	 * Can be left unset to represent the value being cleared.
-	 */
-	value?: Value;
 }
 
 /**

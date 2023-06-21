@@ -492,7 +492,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     readonly [proxyTargetSymbol]: object;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: NamedTreeSchema;
-    [valueSymbol]: Value;
+    readonly [valueSymbol]: Value;
     [key: FieldKey]: UnwrappedEditableField;
 }
 
