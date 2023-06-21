@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
 	IContainerContext,
@@ -59,7 +59,7 @@ export class ContainerContext implements IContainerContext {
 		container: Container,
 		scope: FluidObject,
 		codeLoader: ICodeDetailsLoader,
-		codeDetails: IFluidCodeDetails,
+		specifiedCodeDetails: IFluidCodeDetails,
 		baseSnapshot: ISnapshotTree | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -75,11 +75,24 @@ export class ContainerContext implements IContainerContext {
 		existing: boolean,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
+		const taggedLogger = container.subLogger;
+		const loadCodeResult = await PerformanceEvent.timedExecAsync(
+			taggedLogger,
+			{ eventName: "CodeLoad" },
+			async () => codeLoader.load(specifiedCodeDetails),
+		);
+
+		const loadedModule: IFluidModuleWithDetails = {
+			module: loadCodeResult.module,
+			details: loadCodeResult.details ?? specifiedCodeDetails,
+		};
+
 		const context = new ContainerContext(
 			container,
 			scope,
 			codeLoader,
-			codeDetails,
+			specifiedCodeDetails,
+			loadedModule,
 			baseSnapshot,
 			deltaManager,
 			quorum,
@@ -164,16 +177,14 @@ export class ContainerContext implements IContainerContext {
 		return this._disposed;
 	}
 
-	public get codeDetails() {
-		return this._codeDetails;
+	public get loadedCodeDetails() {
+		return this._loadedCodeDetails;
 	}
 
 	private readonly _quorum: IQuorum;
 	public get quorum(): IQuorumClients {
 		return this._quorum;
 	}
-
-	private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
@@ -213,7 +224,8 @@ export class ContainerContext implements IContainerContext {
 		private readonly container: Container,
 		public readonly scope: FluidObject,
 		private readonly codeLoader: ICodeDetailsLoader,
-		private readonly _codeDetails: IFluidCodeDetails,
+		private readonly _loadedCodeDetails: IFluidCodeDetails,
+		private readonly _loadedModule: IFluidModuleWithDetails,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -244,9 +256,6 @@ export class ContainerContext implements IContainerContext {
 		this._connected = this.container.connected;
 		this._quorum = quorum;
 		this.taggedLogger = container.subLogger;
-		this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () =>
-			this.loadCodeModule(_codeDetails),
-		);
 
 		this.supportedFeatures = new Map([
 			/**
@@ -340,9 +349,8 @@ export class ContainerContext implements IContainerContext {
 			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
 		}
 
-		const moduleWithDetails = await this._fluidModuleP;
 		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
-			moduleWithDetails.module?.fluidExport;
+			this._loadedModule.module.fluidExport;
 		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
 			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
 		}
@@ -358,7 +366,7 @@ export class ContainerContext implements IContainerContext {
 
 		for (const comparer of comparers) {
 			const satisfies = await comparer.satisfies(
-				moduleWithDetails.details,
+				this._loadedModule.details,
 				constraintCodeDetails,
 			);
 			if (satisfies === false) {
@@ -375,9 +383,8 @@ export class ContainerContext implements IContainerContext {
 	// #region private
 
 	private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined = (
-			await this._fluidModuleP
-		).module?.fluidExport;
+		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+			this._loadedModule.module.fluidExport;
 		const runtimeFactory = fluidExport?.IRuntimeFactory;
 		if (runtimeFactory === undefined) {
 			throw new Error(PackageNotFactoryError);
@@ -403,27 +410,6 @@ export class ContainerContext implements IContainerContext {
 		this.container.once("attached", () => {
 			this.runtime.setAttachState(AttachState.Attached);
 		});
-	}
-
-	private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			this.taggedLogger,
-			{ eventName: "CodeLoad" },
-			async () => this.codeLoader.load(codeDetails),
-		);
-
-		if ("module" in loadCodeResult) {
-			const { module, details } = loadCodeResult;
-			return {
-				module,
-				details: details ?? codeDetails,
-			};
-		} else {
-			// If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
-			// Once usage drops to 0 we can remove this compat path.
-			this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
-			return loadCodeResult;
-		}
 	}
 	// #endregion
 }

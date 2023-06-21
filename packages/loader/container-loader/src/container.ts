@@ -662,7 +662,7 @@ export class Container
 	 * loaded.
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
-		return this._context?.codeDetails;
+		return this._context?.loadedCodeDetails;
 	}
 
 	/**
@@ -1348,7 +1348,7 @@ export class Container
 		return this.urlResolver.getAbsoluteUrl(
 			this.resolvedUrl,
 			relativeUrl,
-			getPackageName(this._context?.codeDetails),
+			getPackageName(this._context?.loadedCodeDetails),
 		);
 	}
 
