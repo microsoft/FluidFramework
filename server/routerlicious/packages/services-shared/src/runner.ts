@@ -43,7 +43,7 @@ export async function run<T extends IResources>(
 
 	process.on("SIGTERM", () => {
 		Lumberjack.info(`Received SIGTERM request to stop the service.`);
-		runner.stop("sigterm").catch((error) => {
+		runner.stop().catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
 		});

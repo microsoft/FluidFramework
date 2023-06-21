@@ -128,7 +128,6 @@ export class KafkaRunner implements IRunner {
 			// Mark ourselves done once the partition manager has stopped
 			if (caller === "uncaughtException") {
 				this.deferred?.reject({
-					caller,
 					uncaughtException: serializeError(uncaughtException),
 				}); // reject the promise so that the runService exits the process with exit(1)
 			} else {
@@ -142,12 +141,15 @@ export class KafkaRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
-			this.deferred?.reject({
-				forceKill: true,
-				caller,
-				uncaughtException: serializeError(uncaughtException),
-				runnerStopException: serializeError(error),
-			});
+			if (caller === "uncaughtException") {
+				this.deferred?.reject({
+					forceKill: true,
+					uncaughtException: serializeError(uncaughtException),
+					runnerStopException: serializeError(error),
+				});
+			} else {
+				this.deferred?.resolve();
+			}
 			this.deferred = undefined;
 			throw error;
 		}
