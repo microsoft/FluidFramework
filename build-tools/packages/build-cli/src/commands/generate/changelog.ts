@@ -46,7 +46,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 	private repo?: Repository;
 
 	private async processPackage(pkg: Package): Promise<void> {
-		const {directory} = pkg;
+		const { directory } = pkg;
 		const version = this.flags.version ?? pkg.version;
 
 		await replaceInFile("## 2.0.0\n", `## ${version}\n`, `${directory}/CHANGELOG.md`);
@@ -91,14 +91,12 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 
 		// Calls processPackage on all packages.
 		const processPromises: Promise<void>[] = [];
-		for(const pkg of packagesToCheck) {
-			// eslint-disable-next-line no-await-in-loop
-			// await this.processPackage(pkg);
-			processPromises.push(this.processPackage(pkg))
+		for (const pkg of packagesToCheck) {
+			processPromises.push(this.processPackage(pkg));
 		}
 		const results = await Promise.allSettled(processPromises);
-		if(results.some(p=>p.status === "rejected")) {
-			this.error(`Error processing packages.`,{exit:1});
+		if (results.some((p) => p.status === "rejected")) {
+			this.error(`Error processing packages.`, { exit: 1 });
 		}
 
 		// git add the changelog changes
