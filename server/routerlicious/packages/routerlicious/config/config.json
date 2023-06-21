@@ -332,6 +332,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }
