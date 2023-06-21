@@ -50,11 +50,19 @@ class TestDataObject1 extends DataObject {
 		this.initSync().catch((error) => {});
 	}
 
+	/**
+	 * This function is called during initialization. It creates a data store in summarizer client only if one doesn't
+	 * already exists. The idea behind this is to have data store created during summarization and validate that it
+	 * is handled correctly.
+	 */
 	protected async initSync() {
+		// For non-summarizer (interactive) clients, don't do anything.
 		if (this.context.clientDetails.capabilities.interactive === true) {
 			return;
 		}
 
+		// If the second data store already exists, don't create another one. This ensures that we create data stores
+		// endlessly during summarization.
 		let dataObject2: RootTestDataObject | undefined;
 		const dataObject2Handle = this.root.get<IFluidHandle<RootTestDataObject>>(
 			this.datastoreKey,
@@ -69,6 +77,9 @@ class TestDataObject1 extends DataObject {
 		const newDataObject = await rootDataObjectFactory.createInstance(
 			this.context.containerRuntime,
 		);
+		// Store the handle asynchronously to add some delay between data store creation and attaching it. Basically,
+		// the validation during summarization behave differently when data store is in detached, attaching and attached
+		//
 		return Promise.resolve()
 			.then(() => {
 				this.root.set(this.datastoreKey, newDataObject.handle);
@@ -169,11 +180,11 @@ async function createSummarizer(
 	);
 }
 
-async function waitForSummaryOp(container: IContainer) {
-	await new Promise<void>((resolve) => {
+async function waitForSummaryOp(container: IContainer): Promise<boolean> {
+	return new Promise<boolean>((resolve) => {
 		container.deltaManager.on("op", (op: ISequencedDocumentMessage) => {
 			if (op.type === MessageType.Summarize) {
-				resolve();
+				resolve(true);
 			}
 		});
 	});
@@ -206,11 +217,11 @@ describeNoCompat(
 				);
 				rootDataObject._root.set("store", dataObject.handle);
 				const { summarizer } = await createSummarizer(provider, container);
+				await provider.ensureSynchronized();
 
-				// This should not fail
+				// Summarization should fail because of a data store created during summarization which does not run GC.
 				await assert.rejects(
 					async () => {
-						await provider.ensureSynchronized();
 						await summarizeNow(summarizer);
 					},
 					(error) => {
@@ -222,7 +233,7 @@ describeNoCompat(
 		);
 
 		itExpects(
-			"Heuristic summaries should pass on second attempt when NodeDidNotRunGC is hit",
+			"Heuristic based summaries should pass on second attempt when NodeDidNotRunGC is hit",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -251,14 +262,10 @@ describeNoCompat(
 				rootDataObject._root.set("store", dataObject.handle);
 				await waitForContainerConnection(mainContainer);
 
-				await timeoutAwait(waitForSummaryOp(mainContainer), {
+				const summarySucceeded = await timeoutAwait(waitForSummaryOp(mainContainer), {
 					errorMsg: "Timeout on waiting for summary op",
 				});
-
-				const summaryEvents = logger.events.filter((event) => {
-					return event.eventName.includes("summar") === true;
-				});
-				assert(summaryEvents !== undefined);
+				assert(summarySucceeded === true, "Summary should have been successful");
 
 				// The sequence of events that should happen:
 				// 1. First summarize attempt starts for the first phase, i.e., summarizeAttemptPerPhase = 1.
