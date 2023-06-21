@@ -8,6 +8,7 @@ import {
 	ISegment,
 	ReferenceType,
 	compareReferencePositions,
+	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import {
 	sequenceIntervalHelpers,
@@ -34,29 +35,28 @@ class OverlappingSequenceIntervalsIndex
 			return [];
 		}
 
-		const startRefPos = createPositionReferenceFromSegoff(
+		const startLref = createPositionReferenceFromSegoff(
 			this.client,
 			startSegoff,
 			ReferenceType.Transient,
 		);
 
-		const endRefPos = createPositionReferenceFromSegoff(
+		const endLref = createPositionReferenceFromSegoff(
 			this.client,
 			endSegoff,
 			ReferenceType.Transient,
 		);
 
-		if (compareReferencePositions(startRefPos, endRefPos) > 0) {
+		if (compareReferencePositions(startLref, endLref) > 0) {
 			return [];
 		}
 
-		// initialize a default transient interval
-		const transientInterval = this.helpers.create(
-			"transient",
-			startRefPos,
-			endRefPos,
+		const transientInterval = new SequenceInterval(
 			this.client,
+			startLref,
+			endLref,
 			IntervalType.Transient,
+			{ [reservedRangeLabelsKey]: ["transient"] },
 		);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
