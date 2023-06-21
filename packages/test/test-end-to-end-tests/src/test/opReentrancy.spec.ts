@@ -137,9 +137,15 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					sharedString2.insertText(3, "x");
 				}
 			});
-			sharedMap2.on("valueChanged", (changed) => {
-				if (changed.key !== "key2") {
-					sharedMap2.set("key2", `${sharedMap1.get("key1")} updated`);
+			sharedMap2.on("valueChanged", (changed1) => {
+				if (changed1.key !== "key2" && changed1.key !== "key3") {
+					sharedMap2.on("valueChanged", (changed2) => {
+						if (changed2.key !== "key3") {
+							sharedMap2.set("key3", `${sharedMap1.get("key1")} updated`);
+						}
+					});
+
+					sharedMap2.set("key2", "3");
 				}
 			});
 
@@ -161,7 +167,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			);
 
 			assert.strictEqual(sharedMap1.get("key1"), "1");
-			assert.strictEqual(sharedMap1.get("key2"), "1 updated");
+			assert.strictEqual(sharedMap1.get("key2"), "3");
+			assert.strictEqual(sharedMap1.get("key3"), "1 updated");
 			assert.ok(
 				mapsAreEqual(sharedMap1, sharedMap2),
 				"SharedMap eventual consistency broken",

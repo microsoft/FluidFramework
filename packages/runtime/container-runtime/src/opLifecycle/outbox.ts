@@ -10,7 +10,7 @@ import {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
@@ -44,8 +44,13 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly rebase: (messages: BatchMessage[]) => void;
+	readonly reSubmit: (
+		content: string,
+		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
+	) => void;
 	readonly opReentrancy: () => boolean;
+	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
 /**
@@ -72,6 +77,7 @@ export class Outbox {
 	private readonly mainBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 	private batchRebasesToReport = 5;
+	private rebasing = false;
 
 	/**
 	 * Track the number of ops which were detected to have a mismatched
@@ -141,7 +147,7 @@ export class Outbox {
 		}
 
 		if (!this.params.config.disablePartialFlush) {
-			this.flush();
+			this.flushAll();
 		}
 	}
 
@@ -152,7 +158,7 @@ export class Outbox {
 			!this.mainBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				this.params.opReentrancy(),
+				this.isContextReentrant(),
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -171,7 +177,7 @@ export class Outbox {
 			!this.attachFlowBatch.push(
 				message,
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				this.params.opReentrancy(),
+				this.isContextReentrant(),
 			)
 		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
@@ -182,7 +188,7 @@ export class Outbox {
 				!this.attachFlowBatch.push(
 					message,
 					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-					this.params.opReentrancy(),
+					this.isContextReentrant(),
 				)
 			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -208,24 +214,32 @@ export class Outbox {
 	}
 
 	public flush() {
+		if (this.isContextReentrant()) {
+			const error = new UsageError("Flushing is not supported inside DDS event handlers");
+			this.params.closeContainer(error);
+			throw error;
+		}
+
+		this.flushAll();
+	}
+
+	private flushAll() {
 		this.flushInternal(this.attachFlowBatch);
 		this.flushInternal(this.mainBatch);
 	}
 
-	private flushInternal(batchManager: BatchManager, retry: boolean = false) {
+	private flushInternal(batchManager: BatchManager) {
 		if (batchManager.empty) {
 			return;
 		}
 
 		const rawBatch = batchManager.popBatch();
 		if (rawBatch.hasReentrantOps === true && !this.params.config.disableBatchRebasing) {
-			assert(!retry, "A rebased batch should never have reentrant ops");
+			assert(!this.rebasing, "A rebased batch should never have reentrant ops");
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
-			this.rebase(rawBatch);
-			// After rebasing, the ops will end up in the same batch queue and are now safe to be sent
-			this.flushInternal(batchManager, /* retry */ true);
+			this.rebase(rawBatch, batchManager);
 			return;
 		}
 
@@ -241,8 +255,18 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: IBatch) {
-		this.params.rebase(rawBatch.content);
+	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
+		assert(!this.rebasing, "");
+
+		this.rebasing = true;
+		for (const message of rawBatch.content) {
+			this.params.reSubmit(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
+				message.localOpMetadata,
+				message.metadata,
+			);
+		}
 
 		if (this.batchRebasesToReport > 0) {
 			this.mc.logger.sendTelemetryEvent(
@@ -255,6 +279,13 @@ export class Outbox {
 			);
 			this.batchRebasesToReport--;
 		}
+
+		this.flushInternal(batchManager);
+		this.rebasing = false;
+	}
+
+	private isContextReentrant(): boolean {
+		return this.params.opReentrancy() && !this.rebasing;
 	}
 
 	private compressBatch(batch: IBatch): IBatch {

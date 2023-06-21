@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	IBatchMessage,
 	IContainerContext,
+	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
@@ -203,8 +204,13 @@ describe("Outbox", () => {
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			rebase: (messages: BatchMessage[]) => {},
+			reSubmit: (
+				content: string,
+				localOpMetadata: unknown,
+				opMetadata: Record<string, unknown> | undefined,
+			) => {},
 			opReentrancy: () => false,
+			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 
 	beforeEach(() => {
