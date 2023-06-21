@@ -223,6 +223,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
+					enableRuntimeIdCompressor: true,
 				},
 			);
 
@@ -511,6 +512,10 @@ export const fakeTaggedRepair = createFakeRepair(
 export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
+}
+
+export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
 }
 
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
