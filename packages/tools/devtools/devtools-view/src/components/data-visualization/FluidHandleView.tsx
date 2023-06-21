@@ -88,6 +88,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <TreeItem header={header} />;
 	}
 
+	//Button to inlcude in header to copy fluid handle
 	const button = (
 		<Tooltip content={`Click to copy handle`} relationship={"label"}>
 			<Button
