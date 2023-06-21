@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldKindIdentifier, RevisionTag, Value } from "../../core";
+import { FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
 import { Brand } from "../../util";
 
 /**
@@ -73,16 +73,7 @@ export interface NodeExistsConstraint {
  * @alpha
  */
 export interface NodeChangeset extends HasFieldChanges {
-	valueConstraint?: ValueConstraint;
 	nodeExistsConstraint?: NodeExistsConstraint;
-}
-
-/**
- * @alpha
- */
-export interface ValueConstraint {
-	value: Value;
-	violated: boolean;
 }
 
 /**

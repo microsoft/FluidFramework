@@ -44,8 +44,6 @@ export {
 	ModularChangeset,
 	NodeChangeset,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";

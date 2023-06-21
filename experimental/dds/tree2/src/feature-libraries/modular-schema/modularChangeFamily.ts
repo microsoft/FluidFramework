@@ -63,7 +63,6 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 	RevisionInfo,
-	ValueConstraint,
 } from "./modularChangeTypes";
 
 /**
@@ -247,18 +246,8 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
-		let valueConstraint: ValueConstraint | undefined;
 		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
-			// Use the first defined value constraint before any value changes.
-			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
-			if (
-				change.change.valueConstraint !== undefined &&
-				valueConstraint === undefined
-			) {
-				valueConstraint = { ...change.change.valueConstraint };
-			}
-
 			// Composition is part of two codepaths:
 			//   1. Combining multiple changesets into a transaction
 			//   2. Generating a state update after rebasing a branch that has
@@ -286,10 +275,6 @@ export class ModularChangeFamily
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
-		}
-
-		if (valueConstraint !== undefined) {
-			composedNodeChange.valueConstraint = valueConstraint;
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -704,10 +689,6 @@ export class ModularChangeFamily
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
-		if (change?.valueConstraint !== undefined) {
-			rebasedChange.valueConstraint = change.valueConstraint;
-		}
-
 		if (change?.nodeExistsConstraint !== undefined) {
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
@@ -805,11 +786,7 @@ export function revisionMetadataSourceFromInfo(
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
-	return (
-		change.fieldChanges === undefined &&
-		change.valueConstraint === undefined &&
-		change.nodeExistsConstraint === undefined
-	);
+	return change.fieldChanges === undefined && change.nodeExistsConstraint === undefined;
 }
 
 export function getFieldKind(
@@ -1077,21 +1054,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		return fieldChangeMap;
-	}
-
-	public addValueConstraint(path: UpPath, currentValue: Value): void {
-		const nodeChange: NodeChangeset = {
-			valueConstraint: { value: currentValue, violated: false },
-		};
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-			path.parentIndex,
-			nodeChange,
-		);
-		this.submitChange(
-			{ parent: path.parent, field: path.parentField },
-			genericFieldKind.identifier,
-			brand(fieldChange),
-		);
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {
