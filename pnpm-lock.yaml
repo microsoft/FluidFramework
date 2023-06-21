@@ -5601,6 +5601,7 @@ importers:
   experimental/dds/tree2:
     specifiers:
       '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-internal/test-dds-utils': workspace:~
       '@fluid-internal/test-drivers': workspace:~
       '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.20.0-169245
@@ -5668,6 +5669,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-internal/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.20.0-169245_@types+node@14.18.47
@@ -10704,6 +10706,7 @@ importers:
 
   packages/tools/devtools/devtools-core:
     specifiers:
+      '@fluid-experimental/tree2': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/cell': workspace:~
@@ -10745,6 +10748,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
+      '@fluid-experimental/tree2': link:../../../../experimental/dds/tree2
       '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10795,6 +10799,7 @@ importers:
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
+      '@fluid-experimental/tree2': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/cell': workspace:~
@@ -10854,6 +10859,7 @@ importers:
       '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluid-experimental/devtools-view': link:../devtools-view
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
+      '@fluid-experimental/tree2': link:../../../../experimental/dds/tree2
       '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
