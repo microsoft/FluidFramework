@@ -37,7 +37,6 @@ export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId,
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
-	console.log(label);
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
 
@@ -103,12 +102,12 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		</Tooltip>
 	);
 
-	const header = (
+	const header2 = (
 		<TreeHeader label={label} inlineValue={button} nodeTypeMetadata={"FluidHandle"} />
 	);
 
 	return (
-		<TreeItem header={header}>
+		<TreeItem header={header2}>
 			<TreeDataView containerKey={containerKey} label={"FluidObject"} node={visualTree} />
 		</TreeItem>
 	);
