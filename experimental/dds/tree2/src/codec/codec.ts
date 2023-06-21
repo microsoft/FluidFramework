@@ -4,16 +4,7 @@
  */
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
-// TODO:
-// It is unclear if we would want to use the TypeBox compiler
-// (which generates code at runtime for maximum validation perf).
-// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
-// We could disable validation or pull in a different validator (like ajv).
-// Only using its validation when testing is another option.
-// typebox documents using this internal module, so it should be ok to access.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
@@ -34,6 +25,46 @@ export interface IDecoder<TDecoded, TEncoded> {
 	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
 	 */
 	decode(obj: TEncoded): TDecoded;
+}
+
+/**
+ * Validates data complies with some particular schema.
+ * Implementations are typically created by a {@link JsonValidator}.
+ * @alpha
+ */
+export interface SchemaValidationFunction<Schema extends TSchema> {
+	/**
+	 * @returns - Whether the data matches a schema.
+	 */
+	check(data: unknown): data is Static<Schema>;
+}
+
+/**
+ * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
+ * @alpha
+ */
+export interface JsonValidator {
+	/**
+	 * Compiles the provided JSON schema into a validator for that schema.
+	 * @param schema - A valid draft 6 JSON schema
+	 */
+	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
+
+/**
+ * Options relating to handling of persisted data.
+ * @alpha
+ */
+export interface ICodecOptions {
+	/**
+	 * JSON Validator which should be used to validated persisted data SharedTree handles.
+	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
+	 *
+	 * SharedTree users are encouraged to use a non-trivial validator (i.e. not `noopValidator`) whenever
+	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found, which reduces
+	 * the risk of further data corruption.
+	 */
+	readonly jsonValidator: JsonValidator;
 }
 
 /**
@@ -244,11 +275,18 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * });
  * ```
  */
-export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCodec<Static<Schema>> {
-	return withSchemaValidation(schema, {
-		encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
-		decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
-	});
+export function makeValueCodec<Schema extends TSchema>(
+	schema: Schema,
+	validator?: JsonValidator,
+): IJsonCodec<Static<Schema>> {
+	return withSchemaValidation(
+		schema,
+		{
+			encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
+			decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+		},
+		validator,
+	);
 }
 
 /**
@@ -258,18 +296,22 @@ export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCod
 export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat>,
+	validator?: JsonValidator,
 ): IJsonCodec<TInMemoryFormat> {
-	const CompiledFormat = TypeCompiler.Compile(schema);
+	if (!validator) {
+		return codec;
+	}
+	const compiledFormat = validator.compile(schema);
 	return {
 		encode: (obj: TInMemoryFormat) => {
 			const encoded = codec.encode(obj);
-			if (!CompiledFormat.Check(encoded)) {
+			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
 		decode: (encoded: JsonCompatibleReadOnly) => {
-			if (!CompiledFormat.Check(encoded)) {
+			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return codec.decode(encoded) as unknown as TInMemoryFormat;

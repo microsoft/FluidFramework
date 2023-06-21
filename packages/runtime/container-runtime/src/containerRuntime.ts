@@ -1819,9 +1819,9 @@ export class ContainerRuntime
 		type: ContainerMessageType;
 		contents: unknown;
 	} {
-		assert(serializedContent !== undefined, "content must be defined");
+		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
 		const parsed = JSON.parse(serializedContent);
-		assert(parsed.type !== undefined, "incorrect op content format");
+		assert(parsed.type !== undefined, 0x6d6 /* incorrect op content format */);
 		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
 	}
 

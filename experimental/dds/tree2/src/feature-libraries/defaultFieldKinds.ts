@@ -30,7 +30,12 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
-	NodeExistenceStateChange,
+	IdAllocator,
+	CrossFieldManager,
+	RevisionMetadataSource,
+	getIntention,
+	NodeExistenceState,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -263,7 +268,12 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 		}
 		if (change.value !== undefined) {
 			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
-			inverse.value = { revert: reviver(revision, 0, 1)[0], revision };
+			inverse.value = {
+				revert: reviver(revision, 0, 1)[0],
+				// KLUDGE: Value field changes don't have local IDs so we use an arbitrary value.
+				// TODO: Either delete the value field implementation or give its changes some local IDs.
+				changeId: { revision, localId: brand(42) },
+			};
 		}
 		return inverse;
 	},
@@ -335,7 +345,7 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === value.identifier ||
 				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeIdentifier.identifier) &&
+				other.kind.identifier === nodeKey.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -345,7 +355,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
-		let fieldChange: OptionalFieldChange | undefined;
+		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
 		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
@@ -360,7 +370,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (change.fieldChange !== undefined) {
 				if (fieldChange === undefined) {
-					fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+					fieldChange = {
+						id: change.fieldChange.id,
+						revision: change.fieldChange.revision ?? revision,
+						wasEmpty: change.fieldChange.wasEmpty,
+					};
+				} else {
+					fieldChange.id = change.fieldChange.id;
+					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
@@ -409,7 +426,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const fieldChange = change.fieldChange;
 		if (fieldChange !== undefined) {
-			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+			inverse.fieldChange = {
+				id: fieldChange.id,
+				wasEmpty: fieldChange.newContent === undefined,
+			};
 			if (fieldChange.newContent?.changes !== undefined) {
 				// The node inserted by change will be the node deleted by inverse
 				// Move the inverted changes to the child change field
@@ -418,7 +438,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
-				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0], revision };
+				inverse.fieldChange.newContent = {
+					revert: reviver(revision, 0, 1)[0],
+					changeId: { revision, localId: fieldChange.id },
+				};
 				if (change.childChange !== undefined) {
 					if (change.deletedBy === undefined) {
 						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
@@ -447,6 +470,9 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
@@ -475,31 +501,44 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
+				const overIntention = getIntention(
+					over.fieldChange.revision ?? overTagged.revision,
+					revisionMetadata,
+				);
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
-							NodeExistenceStateChange.Deleted,
+							NodeExistenceState.Dead,
 						),
-						deletedBy: overTagged.revision,
+						deletedBy: {
+							revision: overIntention,
+							localId: over.fieldChange.id,
+						},
 					};
-				} else if (
-					over.fieldChange.newContent !== undefined &&
-					"revert" in over.fieldChange.newContent &&
-					over.fieldChange.newContent.revision === change.deletedBy
-				) {
-					// Over is reviving the node that change.childChange is referring to.
-					// Rebase change.childChange and remove deletedBy
-					// because we revived the node that childChange refers to
-					return {
-						childChange: rebaseChild(
-							change.childChange,
-							over.fieldChange.newContent.changes,
-							NodeExistenceStateChange.Revived,
-						),
-					};
+				} else if (over.fieldChange.newContent !== undefined) {
+					const overContent = over.fieldChange.newContent;
+					const rebasingOverRollback =
+						overIntention === change.deletedBy.revision &&
+						over.fieldChange.id === change.deletedBy.localId;
+					const rebasingOverUndo =
+						"revert" in overContent &&
+						overContent.changeId.revision === change.deletedBy.revision &&
+						overContent.changeId.localId === change.deletedBy.localId;
+					if (rebasingOverRollback || rebasingOverUndo) {
+						// Over is reviving the node that change.childChange is referring to.
+						// Rebase change.childChange and remove deletedBy
+						// because we revived the node that childChange refers to
+						return {
+							childChange: rebaseChild(
+								change.childChange,
+								overContent.changes,
+								NodeExistenceState.Alive,
+							),
+						};
+					}
 				}
 			}
 		}
@@ -544,13 +583,23 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param id - the ID associated with the change.
 	 */
-	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+	set(
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalFieldEditor: OptionalFieldEditor = {
-	set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
+	set: (
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset => ({
 		fieldChange: {
+			id,
 			newContent:
 				newContent === undefined
 					? undefined
@@ -682,19 +731,19 @@ export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, Seque
 /**
  * Exactly one identifier.
  */
-export const nodeIdentifier: BrandedFieldKind<
-	"NodeIdentifier",
+export const nodeKey: BrandedFieldKind<
+	"NodeKey",
 	Multiplicity.Value,
 	FieldEditor<0>
 > = brandedFieldKind(
-	"NodeIdentifier",
+	"NodeKey",
 	Multiplicity.Value,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
 			other.kind.identifier === value.identifier ||
 			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeIdentifier.identifier) &&
+			other.kind.identifier === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -740,7 +789,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, nodeIdentifier, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeKey, forbidden, counter].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -766,8 +815,8 @@ export interface Sequence
 /**
  * @alpha
  */
-export interface NodeIdentifierFieldKind
-	extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {}
+export interface NodeKeyFieldKind
+	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
 /**
  * @alpha
  */
@@ -783,9 +832,9 @@ export const FieldKinds: {
 	readonly value: ValueFieldKind;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeIdentifier: NodeIdentifierFieldKind;
+	readonly nodeKey: NodeKeyFieldKind;
 	readonly forbidden: Forbidden;
-} = { value, optional, sequence, nodeIdentifier, forbidden };
+} = { value, optional, sequence, nodeKey, forbidden };
 
 /**
  * @alpha

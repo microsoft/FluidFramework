@@ -28,7 +28,10 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 		<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />
 	));
 
-	const header = <TreeHeader label={"FluidObject"} nodeTypeMetadata={node.typeMetadata} />;
+	const metadata = JSON.stringify(node.metadata);
+	const header = (
+		<TreeHeader label={"FluidObject"} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+	);
 
 	return <TreeItem header={header}>{childNodes}</TreeItem>;
 }
