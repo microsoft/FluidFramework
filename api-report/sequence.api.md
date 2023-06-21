@@ -295,7 +295,6 @@ export enum IntervalType {
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findOverlappingIntervals(start: number, end: number): TInterval[];
-    // (undocumented)
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
 }
 
