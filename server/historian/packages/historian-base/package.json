@@ -26,8 +26,8 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
 		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
-		"test:debug": "mocha inspect --recursive ./dist/test --unhandled-rejections=strict --grep 'Your test key word' --timeout 0",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:debug": "mocha inspect --recursive ./dist/test --unhandled-rejections=strict --grep 'Your test key word' --timeout 0",
 		"tsc": "tsc"
 	},
 	"dependencies": {
