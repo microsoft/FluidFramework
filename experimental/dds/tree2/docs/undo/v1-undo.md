@@ -55,7 +55,7 @@ interface UndoableCommit<TChange> {
 }
 ```
 
-That tree is a sparse copy of the commit tree maintained by `EditManager` and `SharedTreeBranch`es for branch management.
+That tree is a sparse copy of the commit tree maintained by `EditManager` and each view for branch management.
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
 Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.

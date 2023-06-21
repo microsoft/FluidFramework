@@ -143,7 +143,6 @@ declare function get_old_ClassDeclaration_ReplayDocumentService():
 declare function use_current_ClassDeclaration_ReplayDocumentService(
     use: TypeOnly<current.ReplayDocumentService>);
 use_current_ClassDeclaration_ReplayDocumentService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ReplayDocumentService());
 
 /*
@@ -205,18 +204,6 @@ declare function use_old_ClassDeclaration_SnapshotStorage(
     use: TypeOnly<old.SnapshotStorage>);
 use_old_ClassDeclaration_SnapshotStorage(
     get_current_ClassDeclaration_SnapshotStorage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_StaticStorageDocumentService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_StaticStorageDocumentService": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

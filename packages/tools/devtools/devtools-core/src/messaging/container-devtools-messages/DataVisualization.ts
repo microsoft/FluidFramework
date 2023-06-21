@@ -29,7 +29,7 @@ export namespace DataVisualization {
 		/**
 		 * A visual description tree for a particular DDS.
 		 *
-		 * Will be undefined only if the debugger has no data associated with the provided
+		 * Will be undefined only if the devtools has no data associated with the provided
 		 * {@link HasFluidObjectId.fluidObjectId | ID}.
 		 */
 		visualization: FluidObjectNode | undefined;

@@ -4,15 +4,6 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-// TODO:
-// It is unclear if we would want to use the TypeBox compiler
-// (which generates code at runtime for maximum validation perf).
-// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
-// We could disable validation or pull in a different validator (like ajv).
-// Only using its validation when testing is another option.
-// typebox documents using this internal module, so it should be ok to access.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifierSchema,
@@ -29,6 +20,7 @@ import {
 	ValueSchema,
 } from "../core";
 import { brand, fail } from "../util";
+import { ICodecOptions, IJsonCodec } from "../codec";
 
 const version = "1.0.0" as const;
 
@@ -96,13 +88,10 @@ type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
 type NamedLocalFieldSchemaFormat = Static<typeof NamedLocalFieldSchemaFormat>;
 type NamedGlobalFieldSchemaFormat = Static<typeof NamedGlobalFieldSchemaFormat>;
 
-const CompiledFormat = TypeCompiler.Compile(Format);
-
-const Versioned = TypeCompiler.Compile(
-	Type.Object({
-		version: Type.String(),
-	}),
-);
+const Versioned = Type.Object({
+	version: Type.String(),
+});
+type Versioned = Static<typeof Versioned>;
 
 function encodeRepo(repo: SchemaData): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
@@ -204,35 +193,40 @@ function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
 }
 
 /**
- * Synchronous monolithic summarization of schema content.
+ * Creates a codec which performs synchronous monolithic summarization of schema content.
  *
  * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
- *
- * @returns a snapshot of the schema as a string.
  */
-export function getSchemaString(data: SchemaData): string {
-	const encoded = encodeRepo(data);
-	assert(Versioned.Check(encoded), 0x5c6 /* Encoded schema should be versioned */);
-	assert(CompiledFormat.Check(encoded), 0x5c7 /* Encoded schema should validate */);
-	// Currently no Fluid handles are used, so just use JSON.stringify.
-	return JSON.stringify(encoded);
-}
-
-/**
- * Parses data, asserts format is the current one.
- */
-export function parseSchemaString(data: string): SchemaData {
-	// Currently no Fluid handles are used, so just use JSON.parse.
-	const parsed = JSON.parse(data);
-	if (!Versioned.Check(parsed)) {
-		fail("invalid serialized schema: did not have a version");
-	}
-	// When more versions exist, we can switch on the version here.
-	if (!CompiledFormat.Check(parsed)) {
-		if (parsed.version !== version) {
-			fail("Unexpected version for serialized schema");
-		}
-		fail("Serialized schema failed validation");
-	}
-	return decode(parsed);
+export function makeSchemaCodec({
+	jsonValidator: validator,
+}: ICodecOptions): IJsonCodec<SchemaData, string> {
+	const versionedValidator = validator.compile(Versioned);
+	const formatValidator = validator.compile(Format);
+	return {
+		encode: (data: SchemaData) => {
+			const encoded = encodeRepo(data);
+			assert(
+				versionedValidator.check(encoded),
+				0x5c6 /* Encoded schema should be versioned */,
+			);
+			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
+			// Currently no Fluid handles are used, so just use JSON.stringify.
+			return JSON.stringify(encoded);
+		},
+		decode: (data: string): SchemaData => {
+			// Currently no Fluid handles are used, so just use JSON.parse.
+			const parsed = JSON.parse(data);
+			if (!versionedValidator.check(parsed)) {
+				fail("invalid serialized schema: did not have a version");
+			}
+			// When more versions exist, we can switch on the version here.
+			if (!formatValidator.check(parsed)) {
+				if (parsed.version !== version) {
+					fail("Unexpected version for serialized schema");
+				}
+				fail("Serialized schema failed validation");
+			}
+			return decode(parsed);
+		},
+	};
 }

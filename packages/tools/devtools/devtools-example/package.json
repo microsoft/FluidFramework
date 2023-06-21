@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/devtools-example",
-	"version": "2.0.0-internal.5.0.0",
+	"version": "2.0.0-internal.5.2.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",
@@ -13,10 +13,8 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -40,13 +38,13 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.109.3",
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools": "workspace:~",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -69,8 +67,8 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.17.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@testing-library/dom": "^8.2.0",

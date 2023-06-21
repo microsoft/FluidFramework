@@ -1,132 +1,133 @@
 html {
-    background-color: #2c2c32;
-    overflow-y: scroll;
+	background-color: #2c2c32;
+	overflow-y: scroll;
 }
 
 footer {
-    background-color: #2c2c32;
+	background-color: #2c2c32;
 }
 
 .ctas {
-    font-size: 2rem;
-    text-align: center;
-    background-color: #404049;
+	font-size: 2rem;
+	text-align: center;
+	background-color: #404049;
 }
 
 .row-cta {
-    display: flex;
-    flex-wrap: wrap;
+	display: flex;
+	flex-wrap: wrap;
 }
 
 .row:after,
 .row:before {
-    display: none;
+	display: none;
 }
 
 .cta {
-    padding: 2rem 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-flow: column;
-    color: #f3f5f7;
-    transition: 0.1s ease-in;
-    background: #404049;
-    text-decoration: underline;
+	padding: 2rem 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-flow: column;
+	color: #f3f5f7;
+	transition: 0.1s ease-in;
+	background: #404049;
+	text-decoration: underline;
 }
 
 .cta svg {
-    fill: inherit;
+	fill: inherit;
 }
 
 .cta-subtext {
-    font-size: medium;
-    margin: 1em 1em 1em 1em;
-    text-align: center;
+	font-size: medium;
+	margin: 1em 1em 1em 1em;
+	text-align: center;
 }
 
 .filler {
-    display: flex;
-    flex-flow: column;
-    height: 100%;
+	display: flex;
+	flex-flow: column;
+	height: 100%;
 }
 
 .no-gutters {
-    padding-right: 0;
-    padding-left: 0;
+	padding-right: 0;
+	padding-left: 0;
 }
 
-.cta:hover, .cta:focus {
-    text-decoration: none;
-    transition: none;
-    background: #5a5a66;
-    color: #f3f5f7;
+.cta:hover,
+.cta:focus {
+	text-decoration: none;
+	transition: none;
+	background: #5a5a66;
+	color: #f3f5f7;
 }
 
 .cta-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 48px 48px;
-    width: 15rem;
-    height: 10rem;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 1rem;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 48px 48px;
+	width: 15rem;
+	height: 10rem;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 1rem;
 }
 
 .cta-icon.get-started {
-    background-image: url("/codicons/play-circle.svg");
-    background-size: 64px 64px;
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/play-circle.svg");
+	background-size: 64px 64px;
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.learn-more {
-    background-image: url("/codicons/book.svg");
-    background-size: 64px 64px;
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/book.svg");
+	background-size: 64px 64px;
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.play {
-    background-image: url("/codicons/beaker.svg");
-    background-size: 64px 64px;
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/beaker.svg");
+	background-size: 64px 64px;
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.issue {
-    background-image: url("/codicons/bug.svg");
-    background-size: 64px 64px;
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/bug.svg");
+	background-size: 64px 64px;
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.github {
-    background-image: url("/codicons/github.svg");
-    background-size: 64px 64px;
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/github.svg");
+	background-size: 64px 64px;
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.gh-discussions {
-    background-image: url("/codicons/comment-discussion.svg");
-    background-size: 64px 64px;
-    /* helpful codepen for recoloring SVGs: https://codepen.io/sosuke/pen/Pjoqqp */
-    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+	background-image: url("/codicons/comment-discussion.svg");
+	background-size: 64px 64px;
+	/* helpful codepen for recoloring SVGs: https://codepen.io/sosuke/pen/Pjoqqp */
+	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .omt {
-    font-size: 16px;
-    padding: 8em 4em;
-    background-color: #f5f5f5;
-    color: #444;
+	font-size: 16px;
+	padding: 8em 4em;
+	background-color: #f5f5f5;
+	color: #444;
 }
 
 .omt .container {
-    max-width: 48em;
+	max-width: 48em;
 }
 
 #github.swimlane .screenshot {
-    max-height: 150px;
+	max-height: 150px;
 }
 #stackoverflow.swimlane .screenshot {
-    max-height: 150px;
+	max-height: 150px;
 }
 
 .callout.danger,
@@ -134,106 +135,103 @@ footer {
 .callout.note,
 .callout.tip,
 .callout.warning {
-    padding: 0.1rem 1.5rem;
-    border-left-width: 1rem;
-    border-left-style: solid;
-    margin: 2rem 0;
+	padding: 0.1rem 1.5rem;
+	border-left-width: 1rem;
+	border-left-style: solid;
+	margin: 2rem 0;
 }
 
 .callout {
-    font-size: 1.6rem;
-    background-color: #f3f5f7;
+	font-size: 1.6rem;
+	background-color: #f3f5f7;
 }
 
 .callout .callout-title {
-    line-height: 1.7;
-    font-weight: 600;
-    margin: 1rem 0;
+	line-height: 1.7;
+	font-weight: 600;
+	margin: 1rem 0;
 }
 
 .callout.tip {
-    border-color: #42b983;
+	border-color: #42b983;
 }
 
 .callout.important {
-    border-color: #00bcf2;
+	border-color: #00bcf2;
 }
 
 .callout.tip {
-    border-color: #42b983;
+	border-color: #42b983;
 }
 
 .callout.note {
-    border-color: #2c3e50;
+	border-color: #2c3e50;
 }
 
 .callout.warning {
-    background-color: rgba(255, 229, 100, 0.3);
-    border-color: #e7c000;
-    color: #6b5900;
+	background-color: rgba(255, 229, 100, 0.3);
+	border-color: #e7c000;
+	color: #6b5900;
 }
 
 .callout.danger {
-    background-color: #ffe6e6;
-    border-color: #c00;
-    color: #4d0000;
+	background-color: #ffe6e6;
+	border-color: #c00;
+	color: #4d0000;
 }
 
 .callout.danger .callout-title {
-    color: #900;
+	color: #900;
 }
 
 .highlight {
-    position: relative;
+	position: relative;
 }
 
 .highlight-copy-btn {
-    position: absolute;
-    right: 7px;
-    border: 0;
-    border-radius: 4px;
-    margin: 0;
-    top: 50%;
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-    padding: 1px;
-    font-size: 0.7em;
-    line-height: 1.8;
-    color: #fff;
-    background-color: #666;
-    min-width: 55px;
-    text-align: center;
+	position: absolute;
+	right: 7px;
+	border: 0;
+	border-radius: 4px;
+	margin: 0;
+	top: 50%;
+	-ms-transform: translateY(-50%);
+	transform: translateY(-50%);
+	padding: 1px;
+	font-size: 0.7em;
+	line-height: 1.8;
+	color: #fff;
+	background-color: #666;
+	min-width: 55px;
+	text-align: center;
 }
 
 .highlight-copy-btn:hover {
-    background-color: #333;
+	background-color: #333;
 }
 
 .screen-reader-text {
-    border: 0;
-    clip: rect(1px, 1px, 1px, 1px);
-    clip-path: inset(50%);
-    height: 1px;
-    margin: -1px;
-    width: 1px;
-    overflow: hidden;
-    position: absolute !important;
-    word-wrap: normal !important;
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	width: 1px;
+	overflow: hidden;
+	position: absolute !important;
+	word-wrap: normal !important;
 }
-
 
 /* fixing https://github.com/microsoft/FluidFramework/issues/3821
 where bootstrap caption color is too light for white background */
 .table caption {
-    color: #767676
+	color: #767676;
 }
-
 
 /* fixing https://github.com/microsoft/FluidFramework/issues/3601
  Long words such as function names would not break in api docs causing layout overflow
 */
 
 .table td:nth-child(2) {
-    word-break: break-word
+	word-break: break-word;
 }
-

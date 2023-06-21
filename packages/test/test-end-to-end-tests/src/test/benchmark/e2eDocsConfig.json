@@ -1,40 +1,58 @@
 {
 	"documents": [
 		{
-			"testTitle": "10Mb Map",
+			"testTitle": "2Mb Map",
 			"documentType": "DocumentMap",
 			"documentTypeInfo": {
-				"numberOfItems": "2",
-				"itemSizeMb": "5"
+				"numberOfItems": "0.5",
+				"itemSizeMb": "4"
 			},
-			"minSampleCount": "2",
-			"supportedEndpoints": ["local", "odsp"]
+			"minSampleCount": "1"
 		},
 		{
 			"testTitle": "5Mb Map",
 			"documentType": "DocumentMap",
 			"documentTypeInfo": {
-				"numberOfItems": "1",
-				"itemSizeMb": "5"
-			},
-			"minSampleCount": 2,
-			"supportedEndpoints": ["local", "odsp"]
-		},
-		{
-			"testTitle": "250 DataStores - 750 DDSs",
-			"documentType": "DocumentMultipleDataStores",
-			"documentTypeInfo": {
-				"numberDataStores": "250",
-				"numberDataStoresPerIteration": "250"
+				"numberOfItems": "2",
+				"itemSizeMb": "2.5"
 			},
 			"minSampleCount": "1"
 		},
 		{
-			"testTitle": "500 DataStores - 1500 DDSs",
+			"testTitle": "100 DataStores - 300 DDSs",
 			"documentType": "DocumentMultipleDataStores",
 			"documentTypeInfo": {
-				"numberDataStores": "500",
-				"numberDataStoresPerIteration": "250"
+				"numberDataStores": "100",
+				"numberDataStoresPerIteration": "50"
+			},
+			"minSampleCount": "1"
+		},
+		{
+			"testTitle": "150 DataStores - 450 DDSs",
+			"documentType": "DocumentMultipleDataStores",
+			"documentTypeInfo": {
+				"numberDataStores": "150",
+				"numberDataStoresPerIteration": "50"
+			},
+			"minSampleCount": "1"
+		},
+		{
+			"testTitle": "Matrix 10x10 with SharedStrings",
+			"documentType": "DocumentMatrix",
+			"documentTypeInfo": {
+				"rowSize": "10",
+				"columnSize": "10",
+				"stringSize": "100"
+			},
+			"minSampleCount": "1"
+		},
+		{
+			"testTitle": "Matrix 20x20 with SharedStrings",
+			"documentType": "DocumentMatrix",
+			"documentTypeInfo": {
+				"rowSize": "20",
+				"columnSize": "20",
+				"stringSize": "100"
 			},
 			"minSampleCount": "1"
 		}

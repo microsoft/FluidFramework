@@ -4,7 +4,10 @@
  */
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
+import { MonoRepoKind } from "@fluidframework/build-tools";
+import chalk from "chalk";
 
+import { findPackageOrReleaseGroup } from "../args";
 import {
 	bumpTypeFlag,
 	checkFlags,
@@ -17,8 +20,6 @@ import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
-import { MonoRepoKind } from "@fluidframework/build-tools";
-import chalk from "chalk";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
@@ -68,7 +69,14 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
-		const releaseVersion = context.getVersion(releaseGroup);
+		const packageOrReleaseGroup = findPackageOrReleaseGroup(releaseGroup, context);
+		if (packageOrReleaseGroup === undefined) {
+			this.error(`Could not find release group or package: ${releaseGroup}`, {
+				exit: 1,
+			});
+		}
+
+		const releaseVersion = packageOrReleaseGroup.version;
 
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
