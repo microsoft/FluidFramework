@@ -63,7 +63,6 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 	RevisionInfo,
-	ValueChange,
 	ValueConstraint,
 } from "./modularChangeTypes";
 
@@ -248,7 +247,6 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
-		let valueChange: ValueChange | undefined;
 		let valueConstraint: ValueConstraint | undefined;
 		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
@@ -256,8 +254,7 @@ export class ModularChangeFamily
 			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
 			if (
 				change.change.valueConstraint !== undefined &&
-				valueConstraint === undefined &&
-				valueChange === undefined
+				valueConstraint === undefined
 			) {
 				valueConstraint = { ...change.change.valueConstraint };
 			}
@@ -274,10 +271,6 @@ export class ModularChangeFamily
 				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
 			}
 
-			if (change.change.valueChange !== undefined) {
-				valueChange = { ...change.change.valueChange };
-				valueChange.revision ??= change.revision;
-			}
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
 			}
@@ -290,9 +283,6 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 		const composedNodeChange: NodeChangeset = {};
-		if (valueChange !== undefined) {
-			composedNodeChange.valueChange = valueChange;
-		}
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
@@ -446,20 +436,6 @@ export class ModularChangeFamily
 		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
-
-		if (change.change.valueChange !== undefined) {
-			assert(
-				!("revert" in change.change.valueChange),
-				0x4a9 /* Inverting inverse changes is currently not supported */,
-			);
-			assert(
-				path !== undefined,
-				0x59d /* Only existing nodes can have their value restored */,
-			);
-			const revision = change.change.valueChange.revision ?? change.revision;
-			assert(revision !== undefined, 0x59e /* Unable to revert to undefined revision */);
-			inverse.valueChange = { value: repairStore.getValue(revision, path) };
-		}
 
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
@@ -734,21 +710,6 @@ export class ModularChangeFamily
 
 		if (change?.nodeExistsConstraint !== undefined) {
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
-		}
-
-		// We only care if a violated constraint is fixed or if a non-violated
-		// constraint becomes violated
-		if (rebasedChange.valueConstraint !== undefined && over.change?.valueChange !== undefined) {
-			const violatedAfter =
-				over.change.valueChange.value !== rebasedChange.valueConstraint.value;
-
-			if (rebasedChange.valueConstraint.violated !== violatedAfter) {
-				rebasedChange.valueConstraint = {
-					...rebasedChange.valueConstraint,
-					violated: violatedAfter,
-				};
-				constraintState.violationCount += violatedAfter ? 1 : -1;
-			}
 		}
 
 		// If there's a node exists constraint and we deleted or revived the node, update constraint state
