@@ -6,9 +6,9 @@
 import {
 	ICache,
 	IDeltaService,
+	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
-	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -32,7 +32,7 @@ export function create(
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
-	tokenManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -66,6 +66,7 @@ export function create(
 		singleUseTokenCache: undefined,
 		enableTokenCache: enableJwtTokenCache,
 		tokenCache: jwtTokenCache,
+		revokedTokenChecker,
 	};
 
 	function stringToSequenceNumber(value: any): number {
@@ -83,8 +84,8 @@ export function create(
 	router.get(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -109,8 +110,8 @@ export function create(
 	router.get(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
@@ -141,7 +142,7 @@ export function create(
 			winston,
 			getDeltasTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);

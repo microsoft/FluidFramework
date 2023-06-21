@@ -241,6 +241,24 @@ describe("convertToBasePropertyType", () => {
 			};
 			assert.deepStrictEqual(converted, expected);
 		});
+		it("tagged flat object", () => {
+			const value: TelemetryEventPropertyTypeExt = {
+				a: 1,
+				b: "two",
+				c: true,
+				d: [false, "okay"],
+			};
+			const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+				value,
+				tag: "tag",
+			};
+			const converted = convertToBasePropertyType(taggedProperty);
+			const expected: ITaggedTelemetryPropertyTypeExt = {
+				value: JSON.stringify(value),
+				tag: "tag",
+			};
+			assert.deepStrictEqual(converted, expected);
+		});
 	});
 	describe("untagged properties", () => {
 		it("number", () => {
@@ -261,10 +279,36 @@ describe("convertToBasePropertyType", () => {
 			const expected: TelemetryEventPropertyTypeExt = true;
 			assert.deepStrictEqual(converted, expected);
 		});
+		it("undefined", () => {
+			const property: TelemetryEventPropertyTypeExt = undefined;
+			const converted = convertToBasePropertyType(property);
+			const expected: TelemetryEventPropertyTypeExt = undefined;
+			assert.deepStrictEqual(converted, expected);
+		});
 		it("array", () => {
 			const property: TelemetryEventPropertyTypeExt = [true, "test"];
 			const converted = convertToBasePropertyType(property);
 			const expected: TelemetryEventPropertyTypeExt = JSON.stringify([true, "test"]);
+			assert.deepStrictEqual(converted, expected);
+		});
+		it("flat object", () => {
+			const property: TelemetryEventPropertyTypeExt = {
+				a: 1,
+				b: "two",
+				c: true,
+				d: [false, "okay"],
+				e: undefined,
+			};
+			const converted = convertToBasePropertyType(property);
+			const expected: TelemetryEventPropertyTypeExt = JSON.stringify(property);
+			assert.deepStrictEqual(converted, expected);
+		});
+		it("flat object with only undefined", () => {
+			const property: TelemetryEventPropertyTypeExt = {
+				e: undefined,
+			};
+			const converted = convertToBasePropertyType(property);
+			const expected: TelemetryEventPropertyTypeExt = "{}";
 			assert.deepStrictEqual(converted, expected);
 		});
 	});
@@ -286,12 +330,12 @@ describe("convertToBasePropertyType", () => {
 		});
 		it("nested non ITaggedTelemetryPropertyTypeExt", () => {
 			const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
-				value: { foo: 3 } as any,
+				value: { foo: 3, bar: { x: 5 } as any },
 				tag: "tag",
 			};
 			const converted = convertToBasePropertyType(taggedProperty);
 			const expected: ITaggedTelemetryPropertyTypeExt = {
-				value: '{"foo":3}' as any,
+				value: '{"foo":3,"bar":{"x":5}}',
 				tag: "tag",
 			};
 			assert.deepStrictEqual(converted, expected);

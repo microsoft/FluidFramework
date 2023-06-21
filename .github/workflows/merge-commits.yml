@@ -56,7 +56,7 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             // Peek at messages in the queue
-            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 5 });
+            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 10 });
             if(peekedMessages.peekedMessageItems.length === 0) { return false; }
             let firstMessage;
             for (i = 0; i < peekedMessages.peekedMessageItems.length; i++) {
@@ -72,6 +72,7 @@ jobs:
       LABEL: ${{ fromJSON(steps.dequeue-message.outputs.result).label }}
       AUTHOR: ${{ fromJSON(steps.dequeue-message.outputs.result).author }}
       SHA: ${{ fromJSON(steps.dequeue-message.outputs.result).sha }}
+      VAL: ${{ steps.dequeue-message.outputs.result }}
   create-branch:
     runs-on: ubuntu-latest
     permissions:
@@ -83,7 +84,7 @@ jobs:
       pull-requests: write
       statuses: write
     needs: [dequeue]
-    if: (needs.dequeue.output.EXISTS) != 'false'
+    if: (needs.dequeue.outputs.VAL) != 'false'
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
@@ -184,7 +185,7 @@ jobs:
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueClient = queueServiceClient.getQueueClient(queueName);
             // Get up to 5 messages from the queue
-            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 5, visibilityTimeout: 5 * 60 });
+            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 10, visibilityTimeout: 5 * 60 });
             for (i = 0; i < receivedMsgsResp.receivedMessageItems.length; i++) {
                 message = receivedMsgsResp.receivedMessageItems[i];
                 console.log("Dequeuing message: ", message.messageText);

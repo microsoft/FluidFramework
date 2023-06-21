@@ -5,7 +5,6 @@
 export {
 	DefaultChangeset,
 	DefaultChangeFamily,
-	defaultChangeFamily,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
@@ -31,6 +30,42 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	localNodeKeySymbol,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	SetValueBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
@@ -52,6 +87,8 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
+	FieldGenerator,
+	TreeDataContext,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -59,7 +96,7 @@ export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
-export { getSchemaString } from "./schemaIndexFormat";
+export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,
@@ -79,7 +116,6 @@ export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
@@ -127,16 +163,12 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
+	NodeExistenceState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export {
-	ForestRepairDataStore,
-	ForestRepairDataStoreProvider,
-	repairDataStoreFromForest,
-} from "./forestRepairDataStore";
+export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
@@ -144,12 +176,15 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 export {
-	Identifier,
-	identifierFieldSchema,
-	IdentifierIndex,
-	identifierSchema,
-	identifierFieldSchemaLibrary,
-} from "./identifierIndex";
+	buildNodeKeySchema,
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	StableNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+} from "./node-key";
 
 export {
 	FieldKinds,
@@ -157,6 +192,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

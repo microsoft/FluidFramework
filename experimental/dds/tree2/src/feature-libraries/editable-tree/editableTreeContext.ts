@@ -13,9 +13,14 @@ import {
 	Anchor,
 	SchemaDataAndPolicy,
 	ForestEvents,
+	GlobalFieldKey,
+	FieldStoredSchema,
+	FieldKey,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
+import { NodeKeyManager } from "../node-key";
+import { FieldGenerator } from "../contextuallyTyped";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -101,6 +106,11 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * to create new trees starting from the root.
 	 */
 	clear(): void;
+
+	/**
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 */
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -117,10 +127,15 @@ export class ProxyContext implements EditableTreeContext {
 	/**
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
+	 * @param nodeKeys - an object which handles node key generation and conversion
+	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
+		public readonly nodeKeys: NodeKeyManager,
+		public readonly nodeKeyFieldKey?: GlobalFieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -204,12 +219,17 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
+ * @param nodeKeyManager - an object which handles node key generation and conversion
+ * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+ * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
+	nodeKeyManager: NodeKeyManager,
+	nodeKeyFieldKey?: GlobalFieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor);
+	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

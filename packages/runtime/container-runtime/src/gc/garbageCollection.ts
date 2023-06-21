@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -17,6 +16,7 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -446,7 +446,7 @@ export class GarbageCollector implements IGarbageCollector {
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -528,7 +528,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -641,7 +641,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		sweepReadyNodes: string[],
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] {
 		// Log events for objects that are ready to be deleted by sweep. This will give us data on sweep when
 		// its not enabled.
@@ -719,7 +719,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
 		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear

@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
 import execa from "execa";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -28,6 +29,7 @@ import {
 	mixinSynchronization,
 	runTestForSeed,
 	Synchronize,
+	DDSFuzzHarnessEvents,
 } from "../ddsFuzzHarness";
 import { Operation, SharedNothingFactory, baseModel } from "./sharedNothing";
 
@@ -409,6 +411,119 @@ describe("DDS Fuzz Harness", () => {
 			const finalState = await runTestForSeed(model, options, 0);
 			assert.equal(finalState.clients.length, 4);
 			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
+		});
+	});
+
+	describe("events", () => {
+		describe("clientCreate", () => {
+			it("is raised for initial clients before generating any operations", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					emitter,
+				};
+
+				const model: typeof baseModel = {
+					...baseModel,
+					generatorFactory: () =>
+						takeAsync(1, async (): Promise<Operation> => {
+							log.push("generated an operation");
+							return { type: "noop" };
+						}),
+				};
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.equal(finalState.clients.length, 3);
+				assert.deepEqual(log, ["A", "B", "C", "generated an operation"]);
+			});
+
+			it("is raised for clients added to the test mid-run", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					clientJoinOptions: {
+						maxNumberOfClients: 4,
+						clientAddProbability: 0.25,
+					},
+					emitter,
+				};
+				const model = mixinNewClient(
+					{
+						...baseModel,
+						generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+					},
+					options,
+				);
+				await runTestForSeed(model, options, 0);
+				assert.deepEqual(log, ["A", "B", "C", "D"]);
+			});
+		});
+		describe("testStart", () => {
+			it("is raised before performing the fuzzActions, but after creating the clients", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				emitter.on("testStart", (initialState) => {
+					log.push("testStart");
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					emitter,
+				};
+
+				const model: typeof baseModel = {
+					...baseModel,
+					generatorFactory: () =>
+						takeAsync(1, async (): Promise<Operation> => {
+							log.push("generated an operation");
+							return { type: "noop" };
+						}),
+				};
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.equal(finalState.clients.length, 3);
+				assert.deepEqual(log, ["A", "B", "C", "testStart", "generated an operation"]);
+			});
+		});
+		describe("testEnd", () => {
+			it("is raised after performing the fuzzActions", async () => {
+				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const log: string[] = [];
+				emitter.on("clientCreate", (client) => {
+					log.push(client.containerRuntime.clientId);
+				});
+				emitter.on("testEnd", (state) => {
+					log.push("testEnd");
+				});
+				const options = {
+					...defaultDDSFuzzSuiteOptions,
+					numberOfClients: 3,
+					emitter,
+				};
+
+				const model: typeof baseModel = {
+					...baseModel,
+					generatorFactory: () =>
+						takeAsync(1, async (): Promise<Operation> => {
+							log.push("generated an operation");
+							return { type: "noop" };
+						}),
+				};
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.equal(finalState.clients.length, 3);
+				assert.deepEqual(log, ["A", "B", "C", "generated an operation", "testEnd"]);
+			});
 		});
 	});
 

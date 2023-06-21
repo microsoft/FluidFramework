@@ -5,18 +5,18 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 */
 
 .hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 0.5em;
-  background: #f0f0f0;
-  -webkit-text-size-adjust: none;
+	display: block;
+	overflow-x: auto;
+	padding: 0.5em;
+	background: #f0f0f0;
+	-webkit-text-size-adjust: none;
 }
 
 .hljs,
 .hljs-subst,
 .hljs-tag .hljs-title,
 .nginx .hljs-title {
-  color: black;
+	color: black;
 }
 
 .hljs-string,
@@ -47,7 +47,7 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .asciidoc .hljs-header,
 .markdown .hljs-header,
 .coffeescript .hljs-attribute {
-  color: #800;
+	color: #800;
 }
 
 .smartquote,
@@ -57,7 +57,7 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .hljs-chunk,
 .asciidoc .hljs-blockquote,
 .markdown .hljs-blockquote {
-  color: #008000;
+	color: #008000;
 }
 
 .hljs-number,
@@ -74,7 +74,7 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .markdown .hljs-bullet,
 .asciidoc .hljs-link_url,
 .markdown .hljs-link_url {
-  color: #008200;
+	color: #008200;
 }
 
 .hljs-label,
@@ -107,7 +107,7 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .lasso .hljs-attribute,
 .coffeescript .hljs-property,
 .hljs-phony {
-  color: #0000FF;
+	color: #0000ff;
 }
 
 .hljs-keyword,
@@ -131,16 +131,16 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .markdown .hljs-strong,
 .hljs-request,
 .hljs-status {
-  color: #0000FF;
+	color: #0000ff;
 }
 
 .asciidoc .hljs-emphasis,
 .markdown .hljs-emphasis {
-  font-style: italic;
+	font-style: italic;
 }
 
 .nginx .hljs-built_in {
-  font-weight: normal;
+	font-weight: normal;
 }
 
 .coffeescript .javascript,
@@ -151,15 +151,15 @@ Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiac
 .xml .vbscript,
 .xml .css,
 .xml .hljs-cdata {
-  opacity: 0.5;
+	opacity: 0.5;
 }
 
 /*
     ADDITIONAL TICINO STYLES
  */
 .json .hljs-attribute {
-    color: #0451A5;
+	color: #0451a5;
 }
 .json .hljs-string {
-    color: #A31515;
+	color: #a31515;
 }

@@ -14,12 +14,18 @@ import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./
 const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		return true;
 	}
 }
 
 export class LesscTask extends LeafTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		// TODO: assume lessc <src> <dst>
 		const args = this.command.split(" ");
@@ -34,12 +40,12 @@ export class LesscTask extends LeafTask {
 			const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
 			const result = srcTime <= dstTime;
 			if (!result) {
-				this.logVerboseNotUpToDate();
+				this.traceNotUpToDate();
 			}
 			return result;
 		} catch (e: any) {
 			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
-			this.logVerboseTrigger("failed to get file stats");
+			this.traceTrigger("failed to get file stats");
 			return false;
 		}
 	}
@@ -81,6 +87,10 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
+
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async getInputFiles() {
 		if (!this.parsed) {
 			// If we can't parse the argument, we don't know what we are doing.
@@ -123,6 +133,9 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
@@ -131,20 +144,20 @@ export class GenVerTask extends LeafTask {
 				/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m,
 			);
 			if (match === null) {
-				this.logVerboseTrigger("src/packageVersion.ts content not matched");
+				this.traceTrigger("src/packageVersion.ts content not matched");
 				return false;
 			}
 			if (this.node.pkg.name !== match[1]) {
-				this.logVerboseTrigger("package name in src/packageVersion.ts not matched");
+				this.traceTrigger("package name in src/packageVersion.ts not matched");
 				return false;
 			}
 			if (this.node.pkg.version !== match[2]) {
-				this.logVerboseTrigger("package version in src/packageVersion.ts not matched");
+				this.traceTrigger("package version in src/packageVersion.ts not matched");
 				return false;
 			}
 			return true;
 		} catch {
-			this.logVerboseTrigger(`failed to read src/packageVersion.ts`);
+			this.traceTrigger(`failed to read src/packageVersion.ts`);
 			return false;
 		}
 	}
@@ -157,6 +170,9 @@ export class TypeValidationTask extends LeafWithDoneFileTask {
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	private inputFiles: string[] | undefined;
 	protected async getInputFiles(): Promise<string[]> {
 		if (!this.inputFiles) {

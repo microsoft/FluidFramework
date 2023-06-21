@@ -23,10 +23,10 @@ import {
 import registerDebug from "debug";
 
 const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
-const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
-const { info, verbose } = defaultLogger;
+const { log } = defaultLogger;
 
 export enum BuildResult {
 	Success,
@@ -53,6 +53,7 @@ class TaskStats {
 	public leafUpToDateCount = 0;
 	public leafBuiltCount = 0;
 	public leafExecTimeTotal = 0;
+	public leafQueueWaitTimeTotal = 0;
 }
 
 class BuildContext {
@@ -64,7 +65,6 @@ class BuildContext {
 
 export class BuildPackage {
 	private tasks = new Map<string, Task>();
-	public readonly parents = new Array<BuildPackage>();
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
 	private buildP?: Promise<BuildResult>;
@@ -73,7 +73,6 @@ export class BuildPackage {
 	constructor(
 		public readonly buildContext: BuildContext,
 		public readonly pkg: Package,
-		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 	) {
 		this.taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions);
@@ -86,8 +85,12 @@ export class BuildPackage {
 		);
 	}
 
-	public createTasks() {
-		const taskNames = this.buildTaskNames;
+	public get taskCount() {
+		return this.tasks.size;
+	}
+
+	public createTasks(buildTaskNames: string[]) {
+		const taskNames = buildTaskNames;
 		if (taskNames.length === 0) {
 			return undefined;
 		}
@@ -206,9 +209,42 @@ export class BuildPackage {
 		return dependentTasks;
 	}
 
+	public finalizeDependentTasks() {
+		// Set up the dependencies for "before"
+		this.tasks.forEach((task) => {
+			if (task.taskName === undefined) {
+				return;
+			}
+			const taskConfig = this.taskDefinitions[task.taskName];
+			if (taskConfig.before.includes("*")) {
+				this.tasks.forEach((depTask) => {
+					if (depTask !== task) {
+						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						depTask.dependentTasks!.push(task);
+					}
+				});
+			} else {
+				for (const dep of taskConfig.before) {
+					const depTask = this.tasks.get(dep);
+					if (depTask === undefined) {
+						continue;
+					}
+					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					depTask.dependentTasks!.push(task);
+				}
+			}
+		});
+	}
+
 	public initializeDependentLeafTasks() {
 		this.tasks.forEach((task) => {
 			task.initializeDependentLeafTasks();
+		});
+	}
+
+	public initializeWeight() {
+		this.tasks.forEach((task) => {
+			task.initializeWeight();
 		});
 	}
 
@@ -244,7 +280,8 @@ export class BuildPackage {
 }
 
 export class BuildGraph {
-	public readonly buildPackages = new Map<string, BuildPackage>();
+	private matchedPackages = 0;
+	private readonly buildPackages = new Map<Package, BuildPackage>();
 	private readonly buildContext = new BuildContext(
 		options.worker
 			? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
@@ -252,37 +289,14 @@ export class BuildGraph {
 	);
 
 	public constructor(
-		packages: Package[],
+		packages: Map<string, Package>,
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
-		packages.forEach((value) => {
-			try {
-				this.buildPackages.set(
-					value.name,
-					new BuildPackage(
-						this.buildContext,
-						value,
-						buildTaskNames,
-						globalTaskDefinitions,
-					),
-				);
-			} catch (e: unknown) {
-				throw new Error(
-					`${value.nameColored}: Failed to load build package in ${value.directory}\n\t${
-						(e as Error).message
-					}`,
-				);
-			}
-		});
-
-		traceGraph("package initialized");
-
-		const needPropagate = this.buildDependencies(getDepFilter);
+		this.initializePackages(packages, globalTaskDefinitions, getDepFilter);
 		this.populateLevel();
-		this.propagateMarkForBuild(needPropagate);
-		this.filterPackagesAndInitializeTasks();
+		this.initializeTasks(buildTaskNames);
 	}
 
 	private async isUpToDate() {
@@ -309,16 +323,18 @@ export class BuildGraph {
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
-		info(
-			`Starting build tasks "${chalk.cyanBright(this.buildTaskNames.join(" && "))}" for ${
+		log(
+			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${
+				this.matchedPackages
+			} matched packages (${this.buildContext.taskStats.leafTotalCount} total tasks in ${
 				this.buildPackages.size
-			} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`,
+			} packages)`,
 		);
 		if (isUpToDate) {
 			return BuildResult.UpToDate;
 		}
 		if (this.numSkippedTasks) {
-			info(`Skipping ${this.numSkippedTasks} up to date tasks.`);
+			log(`Skipping ${this.numSkippedTasks} up to date tasks.`);
 		}
 		this.buildContext.fileHashCache.clear();
 		const q = Task.createTaskQueue();
@@ -334,23 +350,16 @@ export class BuildGraph {
 		}
 	}
 
-	public async clean() {
-		const cleanPackages: Package[] = [];
-		this.buildPackages.forEach((node) => {
-			if (options.matchedOnly === true && !node.pkg.matched) {
-				return;
-			}
-			cleanPackages.push(node.pkg);
-		});
-		return Packages.clean(cleanPackages, true);
-	}
-
 	public get numSkippedTasks(): number {
 		return this.buildContext.taskStats.leafUpToDateCount;
 	}
 
 	public get totalElapsedTime(): number {
 		return this.buildContext.taskStats.leafExecTimeTotal;
+	}
+
+	public get totalQueueWaitTime(): number {
+		return this.buildContext.taskStats.leafQueueWaitTimeTotal;
 	}
 
 	public get taskFailureSummary(): string {
@@ -367,42 +376,80 @@ export class BuildGraph {
 		return summaryLines.join("\n");
 	}
 
-	private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
-		const needPropagate: BuildPackage[] = [];
-		this.buildPackages.forEach((node) => {
-			if (node.pkg.markForBuild) {
-				needPropagate.push(node);
+	private getBuildPackage(
+		pkg: Package,
+		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		pendingInitDep: BuildPackage[],
+	) {
+		let buildPackage = this.buildPackages.get(pkg);
+		if (buildPackage === undefined) {
+			try {
+				buildPackage = new BuildPackage(this.buildContext, pkg, globalTaskDefinitions);
+			} catch (e: unknown) {
+				throw new Error(
+					`${pkg.nameColored}: Failed to load build package in ${pkg.directory}\n\t${
+						(e as Error).message
+					}`,
+				);
+			}
+			this.buildPackages.set(pkg, buildPackage);
+			pendingInitDep.push(buildPackage);
+		}
+		return buildPackage;
+	}
+
+	private initializePackages(
+		packages: Map<string, Package>,
+		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+	) {
+		const pendingInitDep: BuildPackage[] = [];
+		for (const pkg of packages.values()) {
+			// Start with only matched packages
+			if (pkg.matched) {
+				this.getBuildPackage(pkg, globalTaskDefinitions, pendingInitDep);
+			}
+		}
+
+		traceGraph("package created");
+
+		// Create all the dependent packages
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			const node = pendingInitDep.pop();
+			if (node === undefined) {
+				break;
 			}
 			const depFilter = getDepFilter(node.pkg);
 			for (const { name, version } of node.pkg.combinedDependencies) {
-				const child = this.buildPackages.get(name);
-				if (child) {
+				const dep = packages.get(name);
+				if (dep) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const satisfied =
 						version!.startsWith("workspace:") ||
-						semver.satisfies(child.pkg.version, version!);
+						semver.satisfies(dep.version, version!);
 					if (satisfied) {
-						if (depFilter(child.pkg)) {
+						if (depFilter(dep)) {
 							traceGraph(
-								`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+								`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`,
 							);
-							node.dependentPackages.push(child);
-							child.parents.push(node);
+							node.dependentPackages.push(
+								this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
+							);
 						} else {
 							traceGraph(
-								`Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+								`Package dependency skipped: ${node.pkg.nameColored} => ${dep.nameColored}`,
 							);
 						}
 					} else {
 						traceGraph(
-							`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+							`Package dependency version mismatch: ${node.pkg.nameColored} => ${dep.nameColored}`,
 						);
 					}
 				}
 			}
-		});
+		}
 		traceGraph("package dependencies initialized");
-		return needPropagate;
 	}
 
 	private populateLevel() {
@@ -433,34 +480,18 @@ export class BuildGraph {
 		traceGraph("package dependency level initialized");
 	}
 
-	private propagateMarkForBuild(needPropagate: BuildPackage[]) {
-		// eslint-disable-next-line no-constant-condition
-		while (true) {
-			const node = needPropagate.pop();
-			if (!node) {
-				break;
-			}
-			node.dependentPackages.forEach((child) => {
-				if (!child.pkg.markForBuild) {
-					child.pkg.setMarkForBuild();
-					needPropagate.push(child);
-				}
-			});
-		}
-		traceGraph("package mark for build");
-	}
-
-	private filterPackagesAndInitializeTasks() {
+	private initializeTasks(buildTaskNames: string[]) {
 		let hasTask = false;
-		this.buildPackages.forEach((node, name) => {
-			if (!node.pkg.markForBuild) {
-				verbose(`${node.pkg.nameColored}: Not marked for build`);
-				this.buildPackages.delete(name);
+		this.buildPackages.forEach((node) => {
+			if (options.matchedOnly && !node.pkg.matched) {
+				// Don't initialize task on package that wasn't matched in matchedOnly mode
 				return;
 			}
 
+			this.matchedPackages++;
+
 			// Initialize tasks
-			if (node.createTasks()) {
+			if (node.createTasks(buildTaskNames)) {
 				hasTask = true;
 			}
 		});
@@ -469,7 +500,12 @@ export class BuildGraph {
 			throw new Error(`No task(s) found for '${this.buildTaskNames.join()}'`);
 		}
 
-		traceGraph("package filtered and task initialize");
+		traceGraph("package task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.finalizeDependentTasks();
+		});
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
@@ -477,5 +513,12 @@ export class BuildGraph {
 		});
 
 		traceGraph("dependent task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.initializeWeight();
+		});
+
+		traceGraph("task weight initialized");
 	}
 }

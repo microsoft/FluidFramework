@@ -115,15 +115,15 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public
+// @public @deprecated
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
+    // @deprecated (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
+    // @deprecated (undocumented)
     reason: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     version: string;
 }
 
@@ -140,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
-    dispose?(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -242,9 +242,11 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public
+// @public @deprecated
 export interface IDeltaHandlerStrategy {
+    // @deprecated
     process: (message: ISequencedDocumentMessage) => void;
+    // @deprecated
     processSignal: (message: ISignalMessage) => void;
 }
 
@@ -551,6 +553,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

@@ -14,7 +14,7 @@ const smallestAssetSize = 100;
 function main() {
 	// Get all the package locations
 	const lernaOutput = JSON.parse(
-		child_process.execSync("npx lerna list --all --json").toString(),
+		child_process.execSync("npx lerna@5.6.2 list --all --json").toString(),
 	);
 	if (!Array.isArray(lernaOutput)) {
 		throw new Error("failed to get package information");

@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema } from "@sinclair/typebox";
+import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, Mutable } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
-import type { NodeUpdate, OptionalChangeset, ValueChangeset } from "./defaultFieldChangeTypes";
+import type {
+	NodeUpdate,
+	OptionalChangeset,
+	OptionalFieldChange,
+	ValueChangeset,
+} from "./defaultFieldChangeTypes";
 import type { NodeChangeset } from "./modular-schema";
 import {
 	EncodedValueChangeset,
@@ -17,7 +22,9 @@ import {
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
-export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([[0, makeValueCodec()]]);
+export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
+	[0, makeValueCodec(Type.Number())],
+]);
 
 export const makeValueFieldCodecFamily = (childCodec: IJsonCodec<NodeChangeset>) =>
 	makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]);
@@ -56,6 +63,7 @@ function makeValueFieldCodec(
 
 			return decoded;
 		},
+		encodedSchema: EncodedValueChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
@@ -67,7 +75,13 @@ function makeOptionalFieldCodec(
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.fieldChange !== undefined) {
-				encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+				encoded.fieldChange = {
+					id: change.fieldChange.id,
+					wasEmpty: change.fieldChange.wasEmpty,
+				};
+				if (change.fieldChange.revision !== undefined) {
+					encoded.fieldChange.revision = change.fieldChange.revision;
+				}
 				if (change.fieldChange.newContent !== undefined) {
 					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
 						change.fieldChange.newContent,
@@ -79,29 +93,42 @@ function makeOptionalFieldCodec(
 				encoded.childChange = childCodec.encode(change.childChange);
 			}
 
+			if (change.deletedBy !== undefined) {
+				encoded.deletedBy = change.deletedBy;
+			}
+
 			return encoded;
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
-			const decoded: OptionalChangeset = {};
+			const decoded: Mutable<OptionalChangeset> = {};
 			if (encoded.fieldChange !== undefined) {
-				decoded.fieldChange = {
+				const decodedFieldChange: Mutable<OptionalFieldChange> = {
+					id: encoded.fieldChange.id,
 					wasEmpty: encoded.fieldChange.wasEmpty,
 				};
-
+				if (encoded.fieldChange.revision !== undefined) {
+					decodedFieldChange.revision = encoded.fieldChange.revision;
+				}
 				if (encoded.fieldChange.newContent !== undefined) {
-					decoded.fieldChange.newContent = nodeUpdateCodec.decode(
+					decodedFieldChange.newContent = nodeUpdateCodec.decode(
 						encoded.fieldChange.newContent,
 					);
 				}
+				decoded.fieldChange = decodedFieldChange;
 			}
 
 			if (encoded.childChange !== undefined) {
 				decoded.childChange = childCodec.decode(encoded.childChange);
 			}
 
+			if (encoded.deletedBy !== undefined) {
+				decoded.deletedBy = encoded.deletedBy;
+			}
+
 			return decoded;
 		},
+		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
@@ -114,7 +141,7 @@ function makeNodeUpdateCodec(
 				"revert" in update
 					? {
 							revert: jsonableTreeFromCursor(update.revert),
-							revision: update.revision,
+							changeId: update.changeId,
 					  }
 					: {
 							set: update.set,
@@ -131,7 +158,7 @@ function makeNodeUpdateCodec(
 				"revert" in encoded
 					? {
 							revert: singleTextCursor(encoded.revert),
-							revision: encoded.revision,
+							changeId: encoded.changeId,
 					  }
 					: { set: encoded.set };
 
@@ -141,5 +168,6 @@ function makeNodeUpdateCodec(
 
 			return decoded;
 		},
+		encodedSchema: EncodedNodeUpdate(childCodec.encodedSchema ?? Type.Any()),
 	};
 }

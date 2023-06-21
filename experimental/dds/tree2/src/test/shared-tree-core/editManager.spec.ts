@@ -17,42 +17,26 @@ import {
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	TestAnchorSet,
-	TestChangeFamily,
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
-	testChangeFamilyFactory,
 	asDelta,
+	NoOpChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
-
-type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
-
-function editManagerFactory(options: {
-	rebaser?: ChangeRebaser<TestChange>;
-	sessionId?: SessionId;
-}): {
-	manager: TestEditManager;
-	anchors: TestAnchorSet;
-	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
-} {
-	const family = testChangeFamilyFactory(options.rebaser);
-	const anchors = new TestAnchorSet();
-	const manager = new EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? localSessionId, new MockRepairDataStoreProvider(), anchors);
-	return { manager, anchors, family };
-}
+import {
+	TestEditManager,
+	editManagerFactory,
+	rebaseLocalEditsOverTrunkEdits,
+	rebasePeerEditsOverTrunkEdits,
+} from "./editManagerTestUtils";
 
 const localSessionId: SessionId = "0";
 const peer1: SessionId = "1";
 const peer2: SessionId = "2";
 
-const NUM_STEPS = 5;
+// TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
+const NUM_STEPS = 4;
 const NUM_PEERS = 2;
 const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
@@ -226,7 +210,7 @@ describe("EditManager", () => {
 			{ seq: 4, type: "Pull", ref: 1, from: peer2 },
 			{ seq: 6, type: "Pull", ref: 3, from: peer1 },
 			{ seq: 8, type: "Pull", ref: 3, from: peer1 },
-			{ seq: 10, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 10, type: "Pull", ref: 1, from: peer2 },
 			{ seq: 12, type: "Pull", ref: 1, from: peer2 },
 		]);
 
@@ -237,6 +221,18 @@ describe("EditManager", () => {
 			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
 			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
 		]);
+
+		runUnitTestScenario(
+			// See the test "Rebases peer branches during trunk eviction" for a more detailed analysis of this case.
+			"Can handle changes from a lagging peer which catches up after a local ack",
+			[
+				{ seq: 1, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 2, type: "Push" },
+				{ seq: 2, type: "Ack" },
+				{ seq: 3, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 4, type: "Pull", from: peer1, ref: 3 },
+			],
+		);
 
 		describe("Trunk eviction", () => {
 			function applyLocalCommit(
@@ -334,6 +330,8 @@ describe("EditManager", () => {
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
 			});
+
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 
 		it("Rebases anchors over local changes", () => {
@@ -389,57 +387,108 @@ describe("EditManager", () => {
 		});
 	});
 
-	describe("Avoids unnecessary rebases", () => {
-		runUnitTestScenario(
-			"Sequenced changes that are based on the trunk should not be rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 4, type: "Pull", ref: 3, from: peer2 },
-				{ seq: 5, type: "Pull", ref: 4, from: peer2 },
-				{ seq: 6, type: "Pull", ref: 5, from: peer1 },
-				{ seq: 7, type: "Pull", ref: 5, from: peer1 },
-			],
-			new UnrebasableTestChangeRebaser(),
-		);
-		runUnitTestScenario(
-			"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Push" },
-				{ seq: 2, type: "Push" },
-				{ seq: 4, type: "Push" },
-				{ seq: 1, type: "Ack" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Ack" },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
-		runUnitTestScenario(
-			"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Pull", ref: 0, from: peer1 },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
+	describe("Perf", () => {
+		describe("Avoids unnecessary rebases", () => {
+			runUnitTestScenario(
+				"Sequenced changes that are based on the trunk should not be rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 4, type: "Pull", ref: 3, from: peer2 },
+					{ seq: 5, type: "Pull", ref: 4, from: peer2 },
+					{ seq: 6, type: "Pull", ref: 5, from: peer1 },
+					{ seq: 7, type: "Pull", ref: 5, from: peer1 },
+				],
+				new UnrebasableTestChangeRebaser(),
+			);
+			runUnitTestScenario(
+				"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Push" },
+					{ seq: 2, type: "Push" },
+					{ seq: 4, type: "Push" },
+					{ seq: 1, type: "Ack" },
+					{ seq: 2, type: "Ack" },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Ack" },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+			runUnitTestScenario(
+				"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+		});
+
+		interface Scenario {
+			readonly rebasedEditCount: number;
+			readonly trunkEditCount: number;
+		}
+
+		const scenarios: Scenario[] = [
+			{ rebasedEditCount: 1, trunkEditCount: 1 },
+			{ rebasedEditCount: 10, trunkEditCount: 1 },
+			{ rebasedEditCount: 1, trunkEditCount: 10 },
+			{ rebasedEditCount: 7, trunkEditCount: 3 },
+		];
+
+		describe("Local commit rebasing", () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
+					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
+					assert.equal(
+						rebaser.composedCount,
+						trunkEditCount * (rebasedEditCount * 2 + 1),
+					);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+				});
+			}
+		});
+		describe("Peer commit rebasing", () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+					assert.equal(
+						rebaser.rebasedCount,
+						trunkEditCount * rebasedEditCount +
+							rebasedEditCount * (rebasedEditCount - 1),
+					);
+					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
+					// assert.equal(nbInverted, nbRebased - 1);
+					assert.equal(
+						rebaser.invertedCount,
+						((rebasedEditCount - 1) * rebasedEditCount) / 2,
+					);
+					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+				});
+			}
+		});
 	});
 
 	/**
@@ -546,7 +595,7 @@ function runUnitTestScenario(
 	steps: readonly UnitTestScenarioStep[],
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
-	const run = () => {
+	const run = (advanceMinimumSequenceNumber: boolean) => {
 		const { manager, anchors } = editManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
@@ -588,6 +637,38 @@ function runUnitTestScenario(
 		 */
 		let localRef: number = 0;
 		/**
+		 * The greatest sequence number that could have been received by all peers at the time when the local
+		 * session is made aware of the given sequence number.
+		 */
+		const computeMinimumSequenceNumber = (sequenceNumber: number) => {
+			if (advanceMinimumSequenceNumber) {
+				// Find all non-local peers participating in this scenario by scanning the scenario steps
+				const activePeers = steps
+					.filter((s): s is UnitTestPullStep => s.type === "Pull")
+					.map((s) => s.from);
+
+				// For each peer, find its next step and extract the ref number.
+				// The min of all these ref numbers for all peers is the highest possible min sequence number across those peers.
+				const minPeerRef = activePeers
+					.map(
+						(peer) =>
+							steps
+								.filter(
+									(s): s is UnitTestPullStep =>
+										s.type === "Pull" && s.from === peer,
+								)
+								.find((s) => s.seq > sequenceNumber)?.ref ??
+							Number.POSITIVE_INFINITY,
+					)
+					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
+
+				// Compute the true min sequence number by including our local session's last seen sequence number as well.
+				return Math.min(sequenceNumber, minPeerRef);
+			}
+
+			return 0;
+		};
+		/**
 		 * The sequence number of the last sequenced in the scenario.
 		 */
 		const finalSequencedEdit = [...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
@@ -600,6 +681,9 @@ function runUnitTestScenario(
 		 */
 		let iNextAck = 0;
 		for (const step of steps) {
+			const minimumSequenceNumber = computeMinimumSequenceNumber(
+				step.type === "Push" ? localRef : step.seq,
+			);
 			const type = step.type;
 			switch (type) {
 				case "Push": {
@@ -650,7 +734,8 @@ function runUnitTestScenario(
 					);
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
 					assert.deepEqual(delta, emptyDelta);
-					localRef = seq;
+					localRef = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
 					recordSequencedEdit(commit);
 					break;
 				}
@@ -708,7 +793,8 @@ function runUnitTestScenario(
 					}
 					recordSequencedEdit(commit);
 					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
-					localRef = seq;
+					localRef = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
 					break;
 				}
 				default:
@@ -717,7 +803,13 @@ function runUnitTestScenario(
 			// Anchors should be kept up to date with the known intentions
 			assert.deepEqual(anchors.intentions, knownToLocal);
 			// The exposed trunk and local changes should reflect what is known to the local client
-			checkChangeList(manager, knownToLocal);
+			checkChangeList(
+				manager,
+				knownToLocal.filter(
+					// Only expect changes which have not been dropped by trunk eviction
+					(i) => i >= minimumSequenceNumber,
+				),
+			);
 			checkChangeList(summarizer, trunk);
 
 			// Spin-up a new joiner whenever a summary client would have a different state.
@@ -739,9 +831,11 @@ function runUnitTestScenario(
 		}
 	};
 	if (title !== undefined) {
-		it(title, run);
+		// Run two versions of the scenario, one where the minimum sequence number is advanced and one where it is not
+		it(title, () => run(false));
+		it(`${title} (while advancing the min seq number)`, () => run(true));
 	} else {
-		run();
+		run(true);
 	}
 }
 

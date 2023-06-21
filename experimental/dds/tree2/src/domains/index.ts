@@ -15,3 +15,5 @@ export {
 	jsonString,
 	singleJsonCursor,
 } from "./json";
+
+export { nodeKeyFieldKey, nodeKeySchema } from "./nodeKey";

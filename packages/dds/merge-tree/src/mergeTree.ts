@@ -909,14 +909,14 @@ export class MergeTree {
 		// References are slid in groups to preserve their order.
 		let currentSlideGroup: LocalReferenceCollection[] = [];
 
-		let currentRightSlideDestination: ISegment | undefined;
-		let currentRightSlideIsForward: boolean | undefined;
-		const rightPred = (ref: LocalReferencePosition) =>
+		let currentForwardSlideDestination: ISegment | undefined;
+		let currentForwardSlideIsForward: boolean | undefined;
+		const forwardPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference !== SlidingPreference.BACKWARD;
 
-		let currentLeftSlideDestination: ISegment | undefined;
-		let currentLeftSlideIsForward: boolean | undefined;
-		const leftPred = (ref: LocalReferencePosition) =>
+		let currentBackwardSlideDestination: ISegment | undefined;
+		let currentBackwardSlideIsForward: boolean | undefined;
+		const backwardPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference === SlidingPreference.BACKWARD;
 
 		const slideGroup = (
@@ -1016,33 +1016,33 @@ export class MergeTree {
 
 			trySlideSegment(
 				segment,
-				currentRightSlideDestination,
-				currentRightSlideIsForward,
-				rightPred,
+				currentForwardSlideDestination,
+				currentForwardSlideIsForward,
+				forwardPred,
 				SlidingPreference.FORWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
 					currentSlideGroup = [localRefs];
-					currentRightSlideDestination = slideToSegment;
-					currentRightSlideIsForward = slideIsForward;
+					currentForwardSlideDestination = slideToSegment;
+					currentForwardSlideIsForward = slideIsForward;
 				},
 			);
 
 			trySlideSegment(
 				segment,
-				currentLeftSlideDestination,
-				currentLeftSlideIsForward,
-				leftPred,
+				currentBackwardSlideDestination,
+				currentBackwardSlideIsForward,
+				backwardPred,
 				SlidingPreference.BACKWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
 					currentSlideGroup = [localRefs];
-					currentLeftSlideDestination = slideToSegment;
-					currentLeftSlideIsForward = slideIsForward;
+					currentBackwardSlideDestination = slideToSegment;
+					currentBackwardSlideIsForward = slideIsForward;
 				},
 			);
 		}
 
-		slideGroup(currentRightSlideDestination, currentRightSlideIsForward, rightPred);
-		slideGroup(currentLeftSlideDestination, currentLeftSlideIsForward, leftPred);
+		slideGroup(currentForwardSlideDestination, currentForwardSlideIsForward, forwardPred);
+		slideGroup(currentBackwardSlideDestination, currentBackwardSlideIsForward, backwardPred);
 	}
 
 	private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {

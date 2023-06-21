@@ -10,10 +10,6 @@ import { BuildPackage, BuildResult } from "../buildGraph";
 import { LeafTask } from "./leaf/leafTask";
 import { Task, TaskExec } from "./task";
 
-const { verbose } = defaultLogger;
-
-const traceTaskExec = registerDebug("fluid-build:task:exec");
-
 export class GroupTask extends Task {
 	constructor(
 		node: BuildPackage,
@@ -27,9 +23,7 @@ export class GroupTask extends Task {
 
 	public initializeDependentLeafTasks() {
 		// Push this task's dependencies to the leaves
-		const dependentLeafTasks = new Set<LeafTask>();
-		this.collectDependentLeafTasks(dependentLeafTasks);
-		this.addDependentLeafTasks(dependentLeafTasks);
+		this.addDependentLeafTasks(this.transitiveDependentLeafTask);
 
 		// Make sure each subtask depends on previous subtask to ensure sequential execution
 		if (this.sequential) {
@@ -38,7 +32,7 @@ export class GroupTask extends Task {
 				if (prevTask !== undefined) {
 					const leafTasks = new Set<LeafTask>();
 					prevTask.collectLeafTasks(leafTasks);
-					task.addDependentLeafTasks(leafTasks);
+					task.addDependentLeafTasks(leafTasks.values());
 				}
 				prevTask = task;
 			}
@@ -51,9 +45,15 @@ export class GroupTask extends Task {
 		}
 	}
 
-	public addDependentLeafTasks(dependentLeafTasks: Set<LeafTask>): void {
+	public addDependentLeafTasks(dependentLeafTasks: Iterable<LeafTask>): void {
 		for (const task of this.subTasks) {
 			task.addDependentLeafTasks(dependentLeafTasks);
+		}
+	}
+
+	public initializeWeight() {
+		for (const task of this.subTasks) {
+			task.initializeWeight();
 		}
 	}
 
@@ -72,7 +72,7 @@ export class GroupTask extends Task {
 	}
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-		this.logVerboseTask(`Begin Child Tasks`);
+		this.traceExec(`Begin Child Tasks`);
 		const taskP = new Array<Promise<BuildResult>>();
 		for (const task of this.subTasks) {
 			taskP.push(task.run(q));
@@ -88,13 +88,7 @@ export class GroupTask extends Task {
 				retResult = BuildResult.Success;
 			}
 		}
-		this.logVerboseTask(`End Child Tasks`);
+		this.traceExec(`End Child Tasks`);
 		return retResult;
-	}
-
-	protected logVerboseTask(msg: string) {
-		const out = `Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`;
-		traceTaskExec(out);
-		verbose(out);
 	}
 }

@@ -33,11 +33,16 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @returns file document service.
 	 */
 	public async createDocumentService(
-		fileURL: IResolvedUrl,
+		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
+		return new FileDocumentService(
+			resolvedUrl,
+			this.storage,
+			this.deltaStorage,
+			this.deltaConnection,
+		);
 	}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.

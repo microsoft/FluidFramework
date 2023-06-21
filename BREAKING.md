@@ -15,6 +15,136 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.5.0.0
+
+## 2.0.0-internal.5.0.0 Upcoming changes
+
+-   [IFluidResolvedUrl Deprecated](#IFluidResolvedUrl-Deprecated)
+
+### IFluidResolvedUrl Deprecated
+
+IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the preceding change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+
+## 2.0.0-internal.5.0.0 Breaking changes
+
+-   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+-   [@fluidframework/garbage-collector removed](#@fluidframework/garbage-collector-removed)
+-   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+-   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
+-   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
+-   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
+-   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
+-   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
+-   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
+-   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
+-   [IntervalCollection removed](#IntervalCollection-removed)
+-   [Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt](#internal-itelemetrylogger-interface-upgraded-to-itelemetryloggerext)
+
+### IResolvedUrl equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
+
+This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl have been removed due to this.
+
+### @fluidframework/garbage-collector removed
+
+The `@fluidframework/garbage-collector` package was deprecated in 2.0.0-internal.4.1.0. It has now been removed with the following functions, interfaces, and types in it.
+
+-   `runGarbageCollection`
+-   `trimLeadingAndTrailingSlashes`
+-   `trimLeadingSlashes`
+-   `trimTrailingSlashes`
+-   `cloneGCData`
+-   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
+-   `removeRouteFromAllNodes`
+-   `concatGarbageCollectionStates`
+-   `concatGarbageCollectionData`
+-   `GCDataBuilder`
+-   `getGCDataFromSnapshot`
+-   `IGCResult`
+
+### GC interfaces removed from runtime-definitions
+
+The following interfaces available in `@fluidframework/runtime-definitions` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
+
+-   `IGarbageCollectionNodeData`
+-   `IGarbageCollectionState`
+-   `IGarbageCollectionSnapshotData`
+-   `IGarbageCollectionSummaryDetailsLegacy`
+
+### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Configure the timeout for the test instead.
+
+### Container-loader deprecation removals
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so have been removed from export in this release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
+
+### Closing Container no longer disposes
+
+Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call (this should be the most common case). Using `IContainer.dispose(...)` will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+If you intend to pass your own critical error to the container, use `IContainer.close(...)`. Once you are done using the container, call `IContainer.dispose(...)`.
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### `IContainer.dispose` is now required
+
+`IContainer.dispose` is now a required method. This method should dispose any resources and switch the container to a permanently disconnected state.
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### ISummarizerRuntime on/off op required
+
+The `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics.
+
+### Driver param removed from appendToMergeTreeDeltaRevertibles
+
+The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles has been removed. Additionally, the interface MergeTreeRevertibleDriver has been simplified, and no longer requires:
+
+-   createLocalReferencePosition
+-   localReferencePositionToPosition
+-   getPosition
+-   getContainingSegment
+
+### PureDataObject.getFluidObjectFromDirectory removed
+
+`PureDataObject.getFluidObjectFromDirectory` was deprecated in a previous release and has been removed.
+
+### IProvideContainerRuntime and IContainerRuntime member removed
+
+`IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+
+### IntervalCollection removed
+
+The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
+
+### Internal ITelemetryLogger interface upgraded to ITelemetryLoggerExt
+
+`ITelemetryLoggerExt` is a replacement for `ITelemetryLogger`, which adds additional types that can be logged as property values.
+This interface is not expected to be used outside the codebase, and all Logger implementations already use the new interface.
+In this release, the new type is used throughout the codebase to allow richer instrumentation.
+
+# 2.0.0-internal.4.4.0
+
+## 2.0.0-internal.4.4.0 Upcoming changes
+
+-   [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated)
+
+### IntervalCollection public export deprecated
+
+`IntervalCollection` has been deprecated in favor of an interface (`IIntervalCollection`) containing its public API.
+Several types transitively referenced by `IntervalCollection` implementation details have also been deprecated: `CompressedSerializedInterval`, `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`.
+
 # 2.0.0-internal.4.3.0
 
 ## 2.0.0-internal.4.3.0 Breaking changes

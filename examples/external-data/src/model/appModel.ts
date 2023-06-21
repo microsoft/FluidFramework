@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
 
@@ -54,7 +54,7 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	/**
 	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
 	 */
-	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {
-		return this.container?.resolvedUrl as IFluidResolvedUrl;
+	public readonly getContainerResolvedUrl = (): IResolvedUrl | undefined => {
+		return this.container?.resolvedUrl;
 	};
 }

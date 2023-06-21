@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	LoggingError,
+	ChildLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	Deferred,
@@ -12,7 +17,6 @@ import {
 	Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -177,7 +181,7 @@ export class SummaryGenerator {
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),

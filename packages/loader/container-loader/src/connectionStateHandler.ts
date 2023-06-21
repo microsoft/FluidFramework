@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLogger,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
@@ -27,7 +27,7 @@ const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,
@@ -59,6 +59,13 @@ export interface IConnectionStateHandler {
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
 	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
+	establishingConnection(reason: string): void;
+	/**
+	 * Switches state to disconnected when we are still establishing connection during container.load(),
+	 * container connect() or reconnect and the container gets closed or disposed or disconnect happens.
+	 * @param reason - reason for cancelling the connection.
+	 */
+	cancelEstablishingConnection(reason: string): void;
 }
 
 export function createConnectionStateHandler(
@@ -142,6 +149,14 @@ class ConnectionStateHandlerPassThrough
 	}
 	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		return this.pimpl.receivedDisconnectEvent(reason, error);
+	}
+
+	public establishingConnection(reason: string) {
+		return this.pimpl.establishingConnection(reason);
+	}
+
+	public cancelEstablishingConnection(reason: string) {
+		return this.pimpl.cancelEstablishingConnection(reason);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -230,9 +245,17 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
-			case ConnectionState.CatchingUp:
+			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
+			// during container.connect() or reconnect because of an error.
+			case ConnectionState.EstablishingConnection:
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
+					0x6d2 /* connectivity transition to establishing connection */,
+				);
+				break;
+			case ConnectionState.CatchingUp:
+				assert(
+					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
@@ -469,6 +492,27 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		this.connection = undefined;
 		this.setConnectionState(ConnectionState.Disconnected, reason, error);
+	}
+
+	public cancelEstablishingConnection(reason: string) {
+		assert(
+			this._connectionState === ConnectionState.EstablishingConnection,
+			0x6d3 /* Connection state should be EstablishingConnection */,
+		);
+		assert(this.connection === undefined, 0x6d4 /* No connetion should be present */);
+		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.Disconnected;
+		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
+	}
+
+	public establishingConnection(reason: string) {
+		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.EstablishingConnection;
+		this.handler.connectionStateChanged(
+			ConnectionState.EstablishingConnection,
+			oldState,
+			`Establishing Connection due to ${reason}`,
+		);
 	}
 
 	private shouldWaitForJoinSignal() {

@@ -22,14 +22,14 @@ ReactDOM.render(
 	},
 );
 
-const debuggerElement = document.createElement("debugger");
-document.body.append(debuggerElement);
+const devtoolsElement = document.createElement("devtools");
+document.body.append(devtoolsElement);
 
-ReactDOM.render(<DevToolsView />, debuggerElement, () => {
-	console.log("Debugger UI rendered!");
+ReactDOM.render(<DevtoolsView />, devtoolsElement, () => {
+	console.log("Devtools UI rendered!");
 });
 
-function DevToolsView(): React.ReactElement {
+function DevtoolsView(): React.ReactElement {
 	return (
 		<Resizable
 			style={{
@@ -40,10 +40,12 @@ function DevToolsView(): React.ReactElement {
 				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
+			enable={{ left: true }} // Only allow re-sizing from the left.
 			defaultSize={{ width: 500, height: "100%" }}
-			className={"debugger-panel"}
 		>
-			<DevtoolsPanel messageRelay={new WindowMessageRelay("fluid-client-debugger-inline")} />
+			<DevtoolsPanel
+				messageRelay={new WindowMessageRelay("fluid-framwork-devtools-inline")}
+			/>
 		</Resizable>
 	);
 }

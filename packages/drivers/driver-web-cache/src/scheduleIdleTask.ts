@@ -24,13 +24,13 @@ export function scheduleIdleTask(task: () => void) {
 		task,
 	});
 
-	ensureIdleCallback();
+	ensureIdleCallback(2000);
 }
 
 /**
  * Ensures an idle callback has been scheduled for the remaining tasks
  */
-function ensureIdleCallback() {
+function ensureIdleCallback(timeout: number = 0) {
 	if (!idleTaskScheduled) {
 		// Exception added when eslint rule was added, this should be revisited when modifying this code
 		if (self.requestIdleCallback) {
@@ -43,7 +43,7 @@ function ensureIdleCallback() {
 						timeRemaining: () => Math.max(deadline - Date.now(), 0),
 						didTimeout: false,
 					}),
-				0,
+				timeout,
 			);
 		}
 		idleTaskScheduled = true;

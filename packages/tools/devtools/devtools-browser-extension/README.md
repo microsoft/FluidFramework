@@ -7,19 +7,21 @@ It is currently compatible with [Chromium](https://www.chromium.org/Home/)-based
 
 ## Artifacts
 
-This package does not generate any library artifacts, so it is marked as `private` in its `package.json`.
+-   Chrome browser extension: <https://aka.ms/fluid/devtool/chrome>
+-   Edge browser extension: <https://aka.ms/fluid/devtool/edge>
 
-We are not yet publishing any artifacts to the Chrome/Edge extension stores, but that is planned for the near future.
+Note: this package does not generate any library artifacts, so it is marked as `private` in its `package.json`.
 
-## Usage
+## Testing Local Changes
 
-To use this extension in your browser:
+To use a local build of this extension in your browser:
 
 1. Build this package and its dependencies.
-   Your extension files should be generated under the build output directory (`dist/bundle`) in this package.
+   Your extension files should be generated under the build output directory (`dist/bundle`) in this package directory.
 2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
-   For [WSL](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
-   In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
+    - For [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
+      In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
+    - If you are working in a [Codespace](https://code.visualstudio.com/docs/remote/codespaces) with Visual Studio Code, you can download the build artifacts by right-clicking on `dist/bundle` in the `Explorer` view and clicking `download`. This will download the files to your local machine, which you can upload to the browser.
 
 ## Devtools Extensions
 

@@ -56,7 +56,7 @@ class V1SequenceIntervalCollectionFactory
 			compareEnds: compareSequenceIntervalEnds,
 			create: createSequenceInterval,
 		};
-		return new V1IntervalCollection(helpers, true, emitter, raw);
+		return new V1IntervalCollection(helpers, true, emitter, raw, {});
 	}
 	public store(
 		value: V1IntervalCollection<SequenceInterval>,
@@ -127,6 +127,7 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new V1SequenceIntervalCollectionValueType(),
+			{},
 		);
 	}
 }

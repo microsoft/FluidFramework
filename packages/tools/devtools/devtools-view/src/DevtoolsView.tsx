@@ -3,7 +3,17 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { useId } from "@fluentui/react-hooks";
+
+import {
+	Button,
+	FluentProvider,
+	makeStyles,
+	tokens,
+	Tooltip,
+	Divider,
+} from "@fluentui/react-components";
+import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
+
 import {
 	ContainerKey,
 	ContainerList,
@@ -17,26 +27,19 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-
-import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
-import { FluentProvider, Button } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
-	MenuItem,
-	MenuSection,
 	LandingView,
+	SettingsView,
 	Waiting,
+	MenuSection,
+	MenuItem,
 } from "./components";
-import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
-
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
 
 /**
  * Message sent to the webpage to query for the supported set of Devtools features.
@@ -71,74 +74,62 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Settings view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface SettingsMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "settingsMenuSelection";
+}
+
+/**
+ * Indicates that the currently selected menu option is the Home view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface HomeMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "homeMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection =
+	| TelemetryMenuSelection
+	| ContainerMenuSelection
+	| SettingsMenuSelection
+	| HomeMenuSelection;
 
-// #region Styles definitions
-
-const stackStyles: IStackStyles = {
+const useDevtoolsStyles = makeStyles({
 	root: {
 		"display": "flex",
 		"flexDirection": "row",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
+		"width": "100%",
+		"height": "100%",
+		"overflowY": "auto",
 		"> *": {
 			textOverflow: "ellipsis",
 		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
 	},
-};
-
-const contentViewStyles: IStackItemStyles = {
-	root: {
-		"alignItems": "center",
-		"display": "flex",
-		"justifyContent": "center",
-		"flexDirection": "column",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
-		"> *": {
-			textOverflow: "ellipsis",
-		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
-	},
-};
-
-const menuStyles: IStackItemStyles = {
-	root: {
-		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		borderRight: `2px solid`,
-		minWidth: 150,
-	},
-};
-
-// #endregion
+});
 
 /**
- * Primary Devtools view.
+ * Primary Fluid Framework Devtools view.
+ *
+ * @remarks
+ *
  * Communicates with {@link @fluid-experimental/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
  * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
  * and sub-views.
+ *
+ * Requires {@link MessageRelayContext} to have been set.
  */
 export function DevtoolsView(): React.ReactElement {
 	// Set of features supported by the Devtools.
@@ -146,6 +137,8 @@ export function DevtoolsView(): React.ReactElement {
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
@@ -154,7 +147,7 @@ export function DevtoolsView(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
 				return true;
@@ -200,25 +193,30 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
-			{supportedFeatures === undefined ? (
-				queryTimedOut ? (
-					<>
-						<div>Devtools not found. Timeout exceeded.</div>
-						<TooltipHost
-							content="Retry searching for Devtools"
-							id="retry-query-button-tooltip"
-						>
-							<Button onClick={retryQuery}>Search again</Button>
-						</TooltipHost>
-					</>
+		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+				{supportedFeatures === undefined ? (
+					queryTimedOut ? (
+						<>
+							<div>Devtools not found. Timeout exceeded.</div>
+							<Tooltip
+								content="Retry searching for Devtools"
+								relationship="description"
+							>
+								<Button onClick={retryQuery}>Search again</Button>
+							</Tooltip>
+						</>
+					) : (
+						<>
+							<Waiting />
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					)
 				) : (
-					<Waiting />
-				)
-			) : (
-				<_DevtoolsView supportedFeatures={supportedFeatures} />
-			)}
-		</FluentProvider>
+					<_DevtoolsView supportedFeatures={supportedFeatures} />
+				)}
+			</FluentProvider>
+		</ThemeContext.Provider>
 	);
 }
 
@@ -237,7 +235,6 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -245,7 +242,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerList.MessageType]: (untypedMessage) => {
+			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
@@ -271,18 +268,33 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		};
 	}, [messageRelay, setContainers]);
 
+	const styles = useDevtoolsStyles();
+
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+		<div className={styles.root}>
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
+			<Divider vertical appearance="strong" />
 			<View menuSelection={menuSelection} containers={containers} />
-		</Stack>
+		</div>
 	);
 }
+
+const useViewStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "column",
+		height: "100%",
+		minWidth: "200px",
+		overflowY: "auto",
+		boxSizing: "border-box",
+	},
+});
 
 /**
  * {@link View} input props.
@@ -307,6 +319,8 @@ interface ViewProps {
 function View(props: ViewProps): React.ReactElement {
 	const { menuSelection, containers } = props;
 
+	const styles = useViewStyles();
+
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
@@ -324,22 +338,46 @@ function View(props: ViewProps): React.ReactElement {
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
 			break;
+		case "settingsMenuSelection":
+			view = <SettingsView />;
+			break;
+		case "homeMenuSelection":
+			view = <LandingView />;
+			break;
 		default:
 			view = <LandingView />;
 			break;
 	}
 
-	return (
-		<Stack.Item grow={5} styles={contentViewStyles}>
-			<div
-				id="devtools-view-content"
-				style={{ width: "100%", height: "100%", overflowY: "auto" }}
-			>
-				{view}
-			</div>
-		</Stack.Item>
-	);
+	return <div className={styles.root}>{view}</div>;
 }
+
+const useMenuStyles = makeStyles({
+	root: {
+		"display": "flex",
+		"flexDirection": "column",
+		"height": "100%",
+		"overflowY": "auto",
+		"minWidth": "150px",
+		// Ensures the last div/component is anchored to the bottom.
+		"> :last-child": {
+			marginTop: "auto",
+		},
+	},
+
+	// TODO: dedupe with MenuItem
+	button: {
+		"alignItems": "center",
+		"cursor": "pointer",
+		"display": "flex",
+		"flexDirection": "row",
+		"paddingLeft": "5px",
+		"&:hover": {
+			color: tokens.colorNeutralForeground1Hover,
+			backgroundColor: tokens.colorNeutralBackground1Hover,
+		},
+	},
+});
 
 /**
  * {@link Menu} input props.
@@ -375,12 +413,22 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
+	const styles = useMenuStyles();
+
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
 	}
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+	}
+
+	function onSettingsClicked(): void {
+		setSelection({ type: "settingsMenuSelection" });
+	}
+
+	function onHomeClicked(): void {
+		setSelection({ type: "homeMenuSelection" });
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -412,9 +460,16 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	return (
-		<Stack.Item styles={menuStyles}>
+		<div className={styles.root}>
+			<div className={styles.button} onClick={onHomeClicked}>
+				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
+			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-		</Stack.Item>
+			<div className={styles.button} onClick={onSettingsClicked}>
+				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
+				<Settings20Regular />
+			</div>
+		</div>
 	);
 }
 
@@ -455,9 +510,10 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
+		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerKey) => (
+				{containers.map((containerKey: string) => (
 					<MenuItem
 						key={containerKey}
 						isActive={currentContainerSelection === containerKey}
@@ -483,11 +539,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 }
 
 /**
- * A refresh button to retrive the latest list of containers.
+ * A refresh button to retrieve the latest list of containers.
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const refreshButtonTooltipId = useId("refresh-container-list-button-tooltip");
+
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
 		border: "none",
@@ -500,13 +556,13 @@ function RefreshButton(): React.ReactElement {
 	}
 
 	return (
-		<TooltipHost content="Refresh Containers list" id={refreshButtonTooltipId}>
+		<Tooltip content="Refresh Containers list" relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
 				aria-label="Refresh Containers list"
 			></Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 }
