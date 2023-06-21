@@ -443,9 +443,9 @@ describe("SharedTree benchmarks", () => {
 
 						// Setup
 						const provider = new TestTreeProviderLite(nbPeers);
-						for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
-							const peer = provider.trees[iPeer];
-							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+								const peer = provider.trees[iPeer];
 								insert(peer, 0, `p${iPeer}c${iCommit}`);
 							}
 						}
