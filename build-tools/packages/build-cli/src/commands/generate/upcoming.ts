@@ -8,7 +8,7 @@ import path from "node:path";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { loadChangesets } from "../../lib";
+import { getDisplayDate, loadChangesets } from "../../lib";
 
 const DEFAULT_FILE = "UPCOMING.md";
 const DEFAULT_CHANGESET_PATH = ".changeset";
@@ -50,7 +50,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 
 		let body: string = "";
 		for (const change of changes) {
-			body += `**${change.added}**\n\n${change.content}\n\n---\n\n`;
+			body += `## ${change.summary}\n\n${change.content}\n\n`;
 		}
 
 		const contents = `${header}\n\n${intro}\n\n${body}`;

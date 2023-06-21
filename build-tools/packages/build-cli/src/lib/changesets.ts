@@ -3,15 +3,14 @@ import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
-import { fstatSync } from "node:fs";
 
 import { ReleasePackage } from "../releaseGroups";
 import { Repository } from "./git";
-import { getDisplayDate } from "./dates";
 
 export interface ChangesetEntry {
 	content: string;
 	added?: Date;
+	summary?: string;
 }
 
 function compareChangesetEntry(a: ChangesetEntry, b: ChangesetEntry) {
@@ -41,7 +40,6 @@ export async function loadChangesets(
 	const changesetFiles = await globby(["*.md", "!README.md"], { cwd: dir, absolute: true });
 	const changesetEntries: ChangesetEntry[] = [];
 	let changeType: VersionBumpType | undefined;
-	let expectedType: VersionBumpType | undefined;
 
 	const hadWarnings = new Set<string>();
 	for (const file of changesetFiles) {
@@ -52,16 +50,20 @@ export async function loadChangesets(
 
 		// Read the changeset file into content and metadata (front-matter)
 		const md = matter.read(file);
-		const content = md.content.trim();
+		const paragraphs = md.content.trim().split("\n\n");
+		const summary = paragraphs[0];
+		const content = paragraphs.slice(1).join("\n\n");
 
 		// changesetEntries should contain one entry per changeset file...
-		changesetEntries.push({ content, added });
+		changesetEntries.push({ content, added, summary });
 
 		// ...while the map contains the entries as they apply to each released package.
 		for (const [pkgName, type] of Object.entries(md.data)) {
 			if (changeType === undefined) {
 				changeType = type;
-				log?.verbose(`${file}: Found ${changeType} bump type; expecting all others to match.`);
+				log?.verbose(
+					`${file}: Found ${changeType} bump type; expecting all others to match.`,
+				);
 			}
 
 			if (type !== changeType && !hadWarnings.has(file)) {

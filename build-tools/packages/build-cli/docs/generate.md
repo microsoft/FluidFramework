@@ -7,6 +7,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate buildVersion`
 
@@ -139,4 +140,25 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
+```
+
+## `flub generate upcoming`
+
+Generates a summary of all changesets.
+
+```
+USAGE
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--out <value>]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  --out=<value>                [default: UPCOMING.md] Output the results to this file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
 ```
