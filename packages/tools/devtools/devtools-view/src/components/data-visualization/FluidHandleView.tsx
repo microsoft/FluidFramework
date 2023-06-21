@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { Spinner, Button } from "@fluentui/react-components";
-import { TooltipHost } from "@fluentui/react";
+import { Spinner, Button, Tooltip } from "@fluentui/react-components";
+// import { TooltipHost } from "@fluentui/react";
 
 import {
 	DataVisualization,
@@ -91,7 +91,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}
 
 	const button = (
-		<TooltipHost content={`Click to copy handle`}>
+		<Tooltip content={`Click to copy handle`} relationship={"label"}>
 			<Button
 				onClick={async (e): Promise<void> => {
 					e.preventDefault();
@@ -100,16 +100,16 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 				icon={<ClipboardPaste16Regular />}
 				size="small"
 			></Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
-	const header2 = (
+	const header = (
 		<TreeHeader label={label} inlineValue={button} nodeTypeMetadata={"FluidHandle"} />
 	);
 
 	return (
-		<TreeItem header={header2}>
-			<TreeDataView containerKey={containerKey} label={label} node={visualTree} />
+		<TreeItem header={header}>
+			<TreeDataView containerKey={containerKey} label={"FluidObject"} node={visualTree} />
 		</TreeItem>
 	);
 }
