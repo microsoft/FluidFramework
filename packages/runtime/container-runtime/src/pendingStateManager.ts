@@ -417,6 +417,7 @@ export class PendingStateManager implements IDisposable {
 		this.logger?.sendTelemetryEvent({
 			eventName: "PendingStatesReplayed",
 			count: initialPendingMessagesCount,
+			clientId: this.stateHandler.clientId(),
 		});
 	}
 }
