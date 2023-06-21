@@ -340,7 +340,7 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-					this.globalCheckpointOnly = false;
+					this.globalCheckpointOnly = true;
 					const enableServiceSummaryForTenant =
 						this.disableTransientTenantFiltering ||
 						!this.transientTenants.has(this.tenantId);
