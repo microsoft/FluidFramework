@@ -304,8 +304,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.insert(0, content);
 				break;
 			}
-			case FieldKinds.nodeIdentifier: {
-				fail("Cannot set identifier field: Identifiers are immutable.");
+			case FieldKinds.nodeKey: {
+				fail("Cannot set node key field: node keys are immutable.");
 			}
 			default:
 				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);

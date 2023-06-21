@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
 import type { IImportExportModel, IVersionedModel } from "./migratableModel";
 import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool";
 
@@ -24,6 +25,13 @@ export interface ISameContainerMigratableModel
 	 * Can we merge these interfaces later somehow?
 	 */
 	readonly migrationTool: ISameContainerMigrationTool;
+
+	/**
+	 * A reference to the container associated with this model.
+	 * TODO: Similar to the note on the migration tool, can we scope the required exposure here to just what the tool needs?
+	 * Exposing the whole IContainer makes it available to a larger audience than should have access to it.
+	 */
+	readonly container: IContainer;
 
 	/**
 	 * Returns if the runtime is currently connected.

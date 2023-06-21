@@ -143,13 +143,19 @@ export interface PolicyConfig {
 		};
 	};
 	dependencies?: {
-		requireTilde?: string[];
+		commandPackages: [string, string][];
 	};
 	/**
 	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
 	 * policy-check.
 	 */
 	exclusions?: string[];
+
+	/**
+	 * An object with handler name as keys that maps to an array of strings/regular expressions to
+	 * exclude that rule from being checked.
+	 */
+	handlerExclusions?: { [rule: string]: string[] };
 }
 
 /**
