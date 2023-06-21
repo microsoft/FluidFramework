@@ -1302,6 +1302,7 @@ export class ContainerRuntime
 				orderSequentially: this.orderSequentially.bind(this),
 			},
 			pendingRuntimeState?.pending,
+			this.logger,
 		);
 
 		const disableCompression = this.mc.config.getBoolean(

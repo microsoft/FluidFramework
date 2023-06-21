@@ -8,6 +8,7 @@ import { assert, Lazy } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
@@ -132,6 +133,7 @@ export class PendingStateManager implements IDisposable {
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
 		/**
 		 * Convert old local state format to the new format (IPendingMessageOld to IPendingMessageNew)
@@ -351,18 +353,19 @@ export class PendingStateManager implements IDisposable {
 			0x174 /* "initial states should be empty before replaying pending" */,
 		);
 
-		let pendingMessagesCount = this.pendingMessages.length;
-		if (pendingMessagesCount === 0) {
+		const initialPendingMessagesCount = this.pendingMessages.length;
+		let remainingPendingMessagesCount = this.pendingMessages.length;
+		if (remainingPendingMessagesCount === 0) {
 			return;
 		}
 
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
 		// which must not be replayed.
-		while (pendingMessagesCount > 0) {
+		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
-			pendingMessagesCount--;
+			remainingPendingMessagesCount--;
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
@@ -375,12 +378,12 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
-					pendingMessagesCount > 0,
+					remainingPendingMessagesCount > 0,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
 				this.stateHandler.orderSequentially(() => {
-					while (pendingMessagesCount >= 0) {
+					while (remainingPendingMessagesCount >= 0) {
 						// check is >= because batch end may be last pending message
 						this.stateHandler.reSubmit(
 							pendingMessage.content,
@@ -391,11 +394,11 @@ export class PendingStateManager implements IDisposable {
 						if (pendingMessage.opMetadata?.batch === false) {
 							break;
 						}
-						assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
+						assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
 
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						pendingMessage = this.pendingMessages.shift()!;
-						pendingMessagesCount--;
+						remainingPendingMessagesCount--;
 						assert(
 							pendingMessage.opMetadata?.batch !== true,
 							0x556 /* Batch start needs a corresponding batch end */,
@@ -410,5 +413,10 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 		}
+
+		this.logger?.sendTelemetryEvent({
+			eventName: "PendingStatesReplayed",
+			count: initialPendingMessagesCount,
+		});
 	}
 }

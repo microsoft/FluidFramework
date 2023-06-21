@@ -115,7 +115,8 @@ describe("Pending State Manager", () => {
 						callback();
 					},
 				},
-				undefined,
+				undefined /* initialLocalState */,
+				undefined /* logger */,
 			);
 		});
 
@@ -290,6 +291,7 @@ describe("Pending State Manager", () => {
 					orderSequentially: () => {},
 				},
 				{ pendingStates },
+				undefined /* logger */,
 			);
 		}
 
