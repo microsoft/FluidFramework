@@ -26,6 +26,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
 		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
+		"test:debug": "mocha inspect --recursive ./dist/test --unhandled-rejections=strict --grep 'Your test key word' --timeout 0",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc"
 	},
@@ -56,7 +57,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-test-utils": "^0.1041.1000-154635",
+		"@fluidframework/server-test-utils": "^1.0.0-169721",
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",
