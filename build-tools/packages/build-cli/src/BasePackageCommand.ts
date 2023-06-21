@@ -43,7 +43,7 @@ export abstract class PackageCommand<
 	 * @param pkg - The package being processed.
 	 * @param kind - The kind of the package.
 	 */
-	protected abstract processPackage(pkg: Package, kind: PackageKind): Promise<void>;
+	protected abstract processPackage<U extends Package>(pkg: U, kind: PackageKind): Promise<void>;
 
 	public async run(): Promise<void> {
 		this.selectionOptions = parsePackageSelectionFlags(this.flags);
@@ -62,7 +62,7 @@ export abstract class PackageCommand<
 
 		this.info(
 			`Filtered ${selected.length} packages to ${listNames(
-				filtered.map(({ package: pkg }) => pkg.directory),
+				filtered.map((pkg) => pkg.directory),
 			)}`,
 		);
 
@@ -99,7 +99,7 @@ export abstract class PackageCommand<
 					started += 1;
 					updateStatus();
 					try {
-						await this.processPackage(details.package, details.kind);
+						await this.processPackage(details, details.kind);
 						succeeded += 1;
 					} finally {
 						finished += 1;

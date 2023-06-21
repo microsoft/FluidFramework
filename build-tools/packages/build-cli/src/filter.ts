@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Package } from "@fluidframework/build-tools";
+import { Context, MonoRepo, Package, PackageJson } from "@fluidframework/build-tools";
 import path from "node:path";
 import { ReleaseGroup } from "./releaseGroups";
 
@@ -101,35 +101,43 @@ export const selectAndFilterPackages = (
 	const selected: PackageDetails[] = [];
 
 	if (selection.directory !== undefined) {
-		selected.push({
-			package: new Package(path.join(selection.directory, "package.json"), "none", undefined),
-			kind: "packageFromDirectory",
-		});
+		selected.push(
+			new PackageDetails(
+				path.join(selection.directory, "package.json"),
+				"none",
+				undefined,
+				"packageFromDirectory",
+			),
+		);
 	}
 
 	// Select packages
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
-			selected.push({ package: pkg, kind: "independentPackage" });
+			selected.push(new PackageDetails(pkg, pkg.group, pkg.monoRepo, "independentPackage"));
 		}
 	}
 
 	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
-			selected.push({ package: pkg, kind: "releaseGroupChildPackage" });
+			selected.push(
+				new PackageDetails(pkg, pkg.group, pkg.monoRepo, "releaseGroupChildPackage"),
+			);
 		}
 	}
 
 	for (const rg of selection.releaseGroupRoots ?? []) {
 		const dir = context.packagesInReleaseGroup(rg)[0].directory;
 		const pkg = new Package(path.join(dir, "package.json"), rg);
-		selected.push({ package: pkg, kind: "releaseGroupRootPackage" });
+		selected.push(new PackageDetails(pkg, pkg.group, pkg.monoRepo, "releaseGroupRootPackage"));
 	}
 
 	const filtered = filter === undefined ? selected : filterPackages(selected, filter);
 
 	return { selected, filtered };
 };
+
+type FilterablePackage = Pick<PackageJson, "name" | "private">;
 
 /**
  * Filters a list of packages by the filter criteria.
@@ -138,19 +146,17 @@ export const selectAndFilterPackages = (
  * @param filters - The filter criteria to filter the packages by.
  * @returns An array containing only the filtered items.
  */
-export function filterPackages(
-	packages: PackageDetails[],
+export function filterPackages<T extends FilterablePackage>(
+	packages: T[],
 	filters: PackageFilterOptions,
-): PackageDetails[] {
-	const filtered = packages.filter((details) => {
+): T[] {
+	const filtered = packages.filter((pkg) => {
 		if (filters === undefined) {
 			return true;
 		}
 
-		const { package: pkg } = details;
-
-		const isPrivate: boolean = pkg.packageJson.private ?? false;
-		if (pkg.packageJson.private !== undefined && filters.private !== isPrivate) {
+		const isPrivate: boolean = pkg.private ?? false;
+		if (pkg.private !== undefined && filters.private !== isPrivate) {
 			return false;
 		}
 
@@ -212,7 +218,29 @@ export type PackageKind =
 /**
  * A convenience type mapping a directory containing a package to its PackageKind.
  */
-export interface PackageDetails {
-	package: Package;
-	kind: PackageKind;
+export class PackageDetails extends Package {
+	constructor(
+		private readonly pkg: string | Package,
+		public readonly group: string,
+		public readonly monoRepo: MonoRepo | undefined,
+		public readonly kind: PackageKind,
+	) {
+		super(
+			typeof pkg === "string" ? pkg : path.join(pkg.directory, "package.json"),
+			typeof pkg === "string" ? "none" : pkg.group,
+			typeof pkg === "string" ? undefined : pkg.monoRepo,
+		);
+		// let packageJson: string;
+		// let grp: string;
+		// let repo: MonoRepo | undefined;
+
+		// if (typeof pkg === "string") {
+		// 	packageJson = pkg;
+		// 	grp = "none";
+		// } else {
+		// 	packageJson = path.join(pkg.directory, "package.json");
+		// 	grp = group ? group : pkg.group;
+		// 	repo = pkg.monoRepo;
+		// }
+	}
 }
