@@ -11,4 +11,6 @@ We have a list of common questions to get you started with changesets in this pr
 
 ## Updating changelogs
 
-See [@fluid-internal/changelog-generator](../build-tools/packages/changelog-generator/README.md).
+See
+[flub generate changelog](../build-tools/packages/build-cli/docs/generate.md#flub-generate-changelog)
+and [@fluid-internal/changelog-generator](../build-tools/packages/changelog-generator/README.md).

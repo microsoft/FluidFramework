@@ -13,9 +13,14 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
+import {
+	SharedTreeFactory,
+	ISharedTree,
+	UntypedTree,
+	UntypedField,
+} from "@fluid-experimental/tree2";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
-
 import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
@@ -191,6 +196,42 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
+ * {@link VisualizeSharedObject} for {@link ISharedTree}.
+ */
+export const visualizeSharedTree: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const sharedTree = sharedObject as ISharedTree;
+
+	const contextRoot = sharedTree.context.root;
+	const children: Record<string, VisualChildNode> = {};
+
+	const iterateNodes = async (field: UntypedField): Promise<void> => {
+		for (const child of field) {
+			await iterateFields(child as unknown as UntypedTree);
+		}
+	};
+
+	const iterateFields = async (node: UntypedTree): Promise<void> => {
+		for (const field of node) {
+			const renderedChild = await visualizeChildData(field);
+
+			children[field.fieldKey as string] = renderedChild;
+		}
+	};
+
+	await iterateNodes(contextRoot);
+
+	return {
+		fluidObjectId: sharedTree.id,
+		children,
+		typeMetadata: "SharedTree",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
  * {@link VisualizeSharedObject} for unrecognized {@link ISharedObject}s.
  */
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
@@ -213,5 +254,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
+	[new SharedTreeFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };
