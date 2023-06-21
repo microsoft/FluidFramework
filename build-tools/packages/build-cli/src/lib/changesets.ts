@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, parseISO } from "date-fns";
