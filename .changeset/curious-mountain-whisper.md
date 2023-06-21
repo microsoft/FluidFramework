@@ -3,4 +3,6 @@
 "@fluidframework/sequence": minor
 ---
 
-Adds interval indexes to the public API which support querying intervals whose start/end-points fall in some specified range.
+New APIs for interval querying by range
+
+SharedString now supports querying intervals whose start/end-points fall in a specified range.
