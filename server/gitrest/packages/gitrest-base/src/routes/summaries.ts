@@ -269,7 +269,9 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument
+			? ephemeralFileSystemManagerFactory
+			: durableFileSystemManagerFactory;
 		if (
 			!repoManagerParams.storageRoutingId?.tenantId ||
 			!repoManagerParams.storageRoutingId?.documentId
@@ -313,7 +315,9 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument
+			? ephemeralFileSystemManagerFactory
+			: durableFileSystemManagerFactory;
 		// request.query type is { [string]: string } but it's actually { [string]: any }
 		// Account for possibilities of undefined, boolean, or string types. A number will be false.
 		const isInitialSummary: boolean | undefined =
@@ -381,7 +385,9 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument
+			? ephemeralFileSystemManagerFactory
+			: durableFileSystemManagerFactory;
 		if (
 			!repoManagerParams.storageRoutingId?.tenantId ||
 			!repoManagerParams.storageRoutingId?.documentId

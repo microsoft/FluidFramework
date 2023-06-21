@@ -46,6 +46,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		count: number,
+		isEphemeralContainer: boolean,
 	): Promise<git.ICommitDetails[]> {
 		const service = await utils.createGitService({
 			config,
@@ -55,6 +56,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getCommits(sha, count);
 	}
@@ -70,6 +72,7 @@ export function create(
 				request.get("Authorization"),
 				utils.queryParamToString(request.query.sha),
 				utils.queryParamToNumber(request.query.count),
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(commitsP, response, false);

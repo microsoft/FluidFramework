@@ -59,7 +59,9 @@ export function getExternalWriterParams(
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
 	const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-	const isEphemeralDocument: boolean | undefined = request.query.isEphemeralContainer;
+	const isEphemeralDocument: boolean | undefined = queryParamToBoolean(
+		request.query.isEphemeralContainer,
+	);
 	const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(
 		request.get(Constants.StorageRoutingIdHeader),
 	);
@@ -322,4 +324,12 @@ export async function checkSoftDeleted(
 		);
 		throw error;
 	}
+}
+
+// Move this to shared utils
+export function queryParamToBoolean(value: any): boolean {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	return value.toLocaleLowerCase() === "true";
 }

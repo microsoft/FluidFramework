@@ -30,8 +30,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	// Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
 	// the requests are meant for different repos.
 	private readonly mutexes = new Map<string, MutexInterface>();
-	private isEphemeralDocument: boolean;
-	private fileSystemManagerFactory: IFileSystemManagerFactory;
+	private readonly isEphemeralDocument: boolean;
+	private readonly fileSystemManagerFactory: IFileSystemManagerFactory;
 	private readonly internalHandler: (
 		params: IRepoManagerParams,
 		onRepoNotExists: (
@@ -71,6 +71,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		this.internalHandler = repoPerDocEnabled
 			? this.repoPerDocInternalHandler.bind(this)
 			: this.repoPerTenantInternalHandler.bind(this);
+
+		this.fileSystemManagerFactory = this.isEphemeralDocument
+			? this.ephemeralFileSystemManagerFactory
+			: this.durablefileSystemManagerFactory;
+		Lumberjack.info(`prrajen: isEphemeraldoc is ${this.isEphemeralDocument} in GitrestBase`);
 	}
 
 	public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -80,8 +85,6 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			gitdir: string,
 			lumberjackBaseProperties: Record<string, any>,
 		) => {
-			this.fileSystemManagerFactory = this.isEphemeralDocument ? this.ephemeralFileSystemManagerFactory : this.durablefileSystemManagerFactory;
-
 			// Create and then cache the repository
 			const repository = await this.initGitRepo(fileSystemManager, gitdir);
 			this.repositoryCache.set(repoPath, repository);

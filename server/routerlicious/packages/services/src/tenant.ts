@@ -14,7 +14,7 @@ import {
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { AxiosRequestHeaders } from "axios";
 
 export class Tenant implements core.ITenant {
@@ -119,6 +119,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			false,
 			tenantRestWrapper,
 			isEphemeralContainer,
+		);
+		Lumberjack.info(
+			`prrajen: Created historian with isEphemeralContainer: ${isEphemeralContainer}`,
 		);
 		const gitManager = new GitManager(historian);
 

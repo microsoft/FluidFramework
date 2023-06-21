@@ -46,6 +46,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<IHeader> {
 		const service = await utils.createGitService({
 			config,
@@ -55,6 +56,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getHeader(sha, useCache);
 	}
@@ -64,6 +66,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<any> {
 		const service = await utils.createGitService({
 			config,
@@ -73,6 +76,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getFullTree(sha, useCache);
 	}
@@ -89,6 +93,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(headerP, response, useCache);
 		},
@@ -106,6 +111,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(headerP, response, useCache);
 		},

@@ -45,6 +45,7 @@ export function create(
 		tenantId: string,
 		authorization: string,
 		params: git.ICreateTreeParams,
+		isEphemeralContainer: boolean,
 	): Promise<git.ITree> {
 		const service = await utils.createGitService({
 			config,
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.createTree(params);
 	}
@@ -64,6 +66,7 @@ export function create(
 		sha: string,
 		recursive: boolean,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<git.ITree> {
 		const service = await utils.createGitService({
 			config,
@@ -73,6 +76,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getTree(sha, recursive, useCache);
 	}
@@ -87,6 +91,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(treeP, response, false, undefined, 201);
 		},
@@ -105,6 +110,7 @@ export function create(
 				request.params.sha,
 				request.query.recursive === "1",
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(treeP, response, useCache);
 		},

@@ -28,7 +28,9 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument
+			? ephemeralFileSystemManagerFactory
+			: durableFileSystemManagerFactory;
 		const resultP = getRepoManagerFromWriteAPI(
 			repoManagerFactory,
 			repoManagerParams,
@@ -53,7 +55,9 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument ? ephemeralFileSystemManagerFactory : durableFileSystemManagerFactory;
+		const fileSystemManagerFactory = repoManagerParams.isEphemeralDocument
+			? ephemeralFileSystemManagerFactory
+			: durableFileSystemManagerFactory;
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {

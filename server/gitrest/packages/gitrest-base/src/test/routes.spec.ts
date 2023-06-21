@@ -214,6 +214,7 @@ testModes.forEach((mode) => {
 				return new NodegitRepositoryManagerFactory(
 					testUtils.defaultProvider.get("storageDir"),
 					fileSystemManagerFactory,
+					fileSystemManagerFactory,
 					externalStorageManager,
 					testMode.repoPerDocEnabled,
 				);
@@ -222,6 +223,7 @@ testModes.forEach((mode) => {
 			// The other possibility is isomorphic-git.
 			return new IsomorphicGitManagerFactory(
 				testUtils.defaultProvider.get("storageDir"),
+				fileSystemManagerFactory,
 				fileSystemManagerFactory,
 				externalStorageManager,
 				testMode.repoPerDocEnabled,
@@ -237,6 +239,7 @@ testModes.forEach((mode) => {
 				testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
 				const testApp = app.create(
 					testUtils.defaultProvider,
+					fileSystemManagerFactory,
 					fileSystemManagerFactory,
 					repoManagerFactory,
 				);

@@ -186,6 +186,11 @@ export class DeliLambdaFactory
 			}
 		}
 
+		Lumberjack.info(
+			`Last Checkpoint: ${JSON.stringify(lastCheckpoint)}`,
+			getLumberBaseProperties(documentId, tenantId),
+		);
+
 		// Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
 		if (
 			lastCheckpoint.checkpointTimestamp === undefined ||

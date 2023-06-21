@@ -27,6 +27,7 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	public readonly volume = new Volume();
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		console.log("prrajen: Creating RedisFsManagerFactory");
 		return this.volume as unknown as IFileSystemManager;
 	}
 }

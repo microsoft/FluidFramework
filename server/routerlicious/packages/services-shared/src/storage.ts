@@ -274,8 +274,10 @@ export class DocumentStorage implements IDocumentStorage {
 					tenantId,
 					version: "0.1",
 					storageName,
+					isEphemeralContainer,
 				},
 			);
+			Lumberjack.info(`prrajen: Updated document collection with ${JSON.stringify(result)}`);
 			createDocumentCollectionMetric.success("Successfully created document");
 			return result;
 		} catch (error: any) {

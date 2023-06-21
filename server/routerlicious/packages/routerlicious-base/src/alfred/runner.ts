@@ -183,6 +183,6 @@ export class AlfredRunner implements IRunner {
 		const addr = this.server.httpServer.address();
 		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
 		winston.info(`Listening on ${bind}`);
-		Lumberjack.info(`Listening on ${bind}`);
+		Lumberjack.info(`prrajen: Listening on ${bind}`);
 	}
 }

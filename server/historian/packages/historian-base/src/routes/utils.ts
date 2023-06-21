@@ -113,6 +113,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		initialUpload && storageName
 			? storageName
 			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
+	Lumberjack.info(
+		`prrajen: Creating git service for ${tenantId}/${documentId} with isEphemeralContainer: ${isEphemeralContainer}`,
+	);
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
@@ -141,13 +144,24 @@ export function queryParamToNumber(value: any): number {
 
 /**
  * Helper function to convert Request's query param to a string.
- * @param value - The value to be converted to number.
+ * @param value - The value to be converted to string.
  */
 export function queryParamToString(value: any): string {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	return value;
+}
+
+/**
+ * Helper function to convert Request's query param to a bool.
+ * @param value - The value to be converted to boolean.
+ */
+export function queryParamToBoolean(value: any): boolean {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	return value.toLocaleLowerCase() === "true";
 }
 
 /**

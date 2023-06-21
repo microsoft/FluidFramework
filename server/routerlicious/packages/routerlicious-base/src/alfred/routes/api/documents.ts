@@ -165,6 +165,9 @@ export function create(
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
 
 			const isEphemeralContainer: boolean = request.body.isEphemeralContainer ?? false;
+			Lumberjack.info(
+				`prrajen: Creating document ${id} in tenant ${tenantId} with ephemeral container ${isEphemeralContainer}`,
+			);
 
 			const createP = storage.createDocument(
 				tenantId,

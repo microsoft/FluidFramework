@@ -100,10 +100,11 @@ export class RestGitService {
 		);
 
 		Lumberjack.info(
-			`Created RestGitService: ${JSON.stringify({
+			`prrajen: Created RestGitService: ${JSON.stringify({
 				"BaseUrl": baseUrl,
 				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 				"Storage-Name": this.storageName,
+				"isEphemeralContainer": this.isEphemeralContainer,
 			})}`,
 			this.lumberProperties,
 		);

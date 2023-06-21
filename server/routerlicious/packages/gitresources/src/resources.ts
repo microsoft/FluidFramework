@@ -143,7 +143,6 @@ export interface IPatchRefParams {
  */
 export interface ICreateRepoParams {
 	name: string;
-	isEphemeralContainer?: boolean;
 }
 
 /**

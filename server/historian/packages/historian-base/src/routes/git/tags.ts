@@ -45,6 +45,7 @@ export function create(
 		tenantId: string,
 		authorization: string,
 		params: git.ICreateTagParams,
+		isEphemeralContainer: boolean,
 	): Promise<git.ITag> {
 		const service = await utils.createGitService({
 			config,
@@ -54,11 +55,17 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.createTag(params);
 	}
 
-	async function getTag(tenantId: string, authorization: string, tag: string): Promise<git.ITag> {
+	async function getTag(
+		tenantId: string,
+		authorization: string,
+		tag: string,
+		isEphemeralContainer: boolean,
+	): Promise<git.ITag> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -67,6 +74,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getTag(tag);
 	}
@@ -81,6 +89,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(tagP, response, false, undefined, 201);
 		},
@@ -96,6 +105,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.params[0],
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(tagP, response, false);
 		},

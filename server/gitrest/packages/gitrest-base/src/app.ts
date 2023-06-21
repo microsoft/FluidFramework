@@ -66,7 +66,12 @@ export function create(
 
 	app.use(cors());
 
-	const apiRoutes = routes.create(store, durableFileSystemManagerFactory, ephemeralFileSystemManagerFactory, repositoryManagerFactory);
+	const apiRoutes = routes.create(
+		store,
+		durableFileSystemManagerFactory,
+		ephemeralFileSystemManagerFactory,
+		repositoryManagerFactory,
+	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.repos);

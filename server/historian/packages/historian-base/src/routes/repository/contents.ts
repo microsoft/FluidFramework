@@ -45,6 +45,7 @@ export function create(
 		authorization: string,
 		path: string,
 		ref: string,
+		isEphemeralContainer: boolean,
 	): Promise<any> {
 		const service = await utils.createGitService({
 			config,
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getContent(path, ref);
 	}
@@ -69,6 +71,7 @@ export function create(
 				request.get("Authorization"),
 				request.params[0],
 				utils.queryParamToString(request.query.ref),
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(contentP, response, false);
 		},

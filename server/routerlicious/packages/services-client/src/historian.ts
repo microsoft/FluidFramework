@@ -55,6 +55,7 @@ export class Historian implements IHistorian {
 		if (this.isEphemeralContainer) {
 			this.defaultQueryString.isEphemeralContainer = this.isEphemeralContainer;
 		}
+		console.log(`prrajen: defaultQueryString: ${JSON.stringify(this.defaultQueryString)}`);
 	}
 
 	public async getHeader(sha: string): Promise<any> {

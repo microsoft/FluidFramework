@@ -45,6 +45,7 @@ export function create(
 		tenantId: string,
 		authorization: string,
 		params: ICreateCommitParams,
+		isEphemeralContainer: boolean,
 	): Promise<ICommit> {
 		const service = await utils.createGitService({
 			config,
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.createCommit(params);
 	}
@@ -63,6 +65,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<ICommit> {
 		const service = await utils.createGitService({
 			config,
@@ -72,6 +75,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getCommit(sha, useCache);
 	}
@@ -86,6 +90,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(commitP, response, false, undefined, 201);
@@ -104,6 +109,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(commitP, response, useCache);

@@ -154,7 +154,7 @@ export class GitManager implements IGitManager {
 
 // @public
 export class Historian implements IHistorian {
-    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper);
+    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper, isEphemeralContainer?: boolean);
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
     // (undocumented)

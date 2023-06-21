@@ -45,7 +45,11 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
+	async function getRefs(
+		tenantId: string,
+		authorization: string,
+		isEphemeralContainer: boolean,
+	): Promise<git.IRef[]> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -54,27 +58,16 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getRefs();
 	}
 
-	async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
-		const service = await utils.createGitService({
-			config,
-			tenantId,
-			authorization,
-			tenantService,
-			storageNameRetriever,
-			cache,
-			asyncLocalStorage,
-		});
-		return service.getRef(ref);
-	}
-
-	async function createRef(
+	async function getRef(
 		tenantId: string,
 		authorization: string,
-		params: ICreateRefParamsExternal,
+		ref: string,
+		isEphemeralContainer: boolean,
 	): Promise<git.IRef> {
 		const service = await utils.createGitService({
 			config,
@@ -84,6 +77,26 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
+		});
+		return service.getRef(ref);
+	}
+
+	async function createRef(
+		tenantId: string,
+		authorization: string,
+		params: ICreateRefParamsExternal,
+		isEphemeralContainer: boolean,
+	): Promise<git.IRef> {
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			cache,
+			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.createRef(params);
 	}
@@ -93,6 +106,7 @@ export function create(
 		authorization: string,
 		ref: string,
 		params: IPatchRefParamsExternal,
+		isEphemeralContainer: boolean,
 	): Promise<git.IRef> {
 		const service = await utils.createGitService({
 			config,
@@ -102,11 +116,17 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.updateRef(ref, params);
 	}
 
-	async function deleteRef(tenantId: string, authorization: string, ref: string): Promise<void> {
+	async function deleteRef(
+		tenantId: string,
+		authorization: string,
+		ref: string,
+		isEphemeralContainer: boolean,
+	): Promise<void> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -115,6 +135,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.deleteRef(ref);
 	}
@@ -124,7 +145,11 @@ export function create(
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
-			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
+			const refsP = getRefs(
+				request.params.tenantId,
+				request.get("Authorization"),
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
+			);
 			utils.handleResponse(refsP, response, false);
 		},
 	);
@@ -138,6 +163,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.params[0],
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(refP, response, false);
 		},
@@ -152,6 +178,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(refP, response, false, undefined, 201);
 		},
@@ -168,6 +195,7 @@ export function create(
 				request.get("Authorization"),
 				request.params[0],
 				request.body,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(refP, response, false);
 		},
@@ -183,6 +211,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.params[0],
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(refP, response, false, undefined, 204);
 		},

@@ -65,6 +65,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<git.IBlob> {
 		const service = await utils.createGitService({
 			config,
@@ -74,6 +75,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getBlob(sha, useCache);
 	}
@@ -102,7 +104,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
-				request.params.isEphemeralContainer,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(blobP, response, false, 201);
 		},
@@ -123,6 +125,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 			utils.handleResponse(blobP, response, useCache);
 		},
@@ -144,6 +147,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			blobP.then(

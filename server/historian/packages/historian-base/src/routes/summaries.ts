@@ -87,6 +87,7 @@ export function create(
 		authorization: string,
 		sha: string,
 		useCache: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<IWholeFlatSummary> {
 		const service = await utils.createGitService({
 			config,
@@ -96,6 +97,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			isEphemeralContainer,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -106,6 +108,7 @@ export function create(
 		params: IWholeSummaryPayload,
 		initial?: boolean,
 		storageName?: string,
+		isEphemeralContainer?: boolean,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -117,6 +120,7 @@ export function create(
 			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
+			isEphemeralContainer,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -125,6 +129,7 @@ export function create(
 		tenantId: string,
 		authorization: string,
 		softDelete: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<boolean[]> {
 		const service = await utils.createGitService({
 			config,
@@ -135,6 +140,7 @@ export function create(
 			cache,
 			asyncLocalStorage,
 			allowDisabledTenant: true,
+			isEphemeralContainer,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
@@ -157,6 +163,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(
@@ -193,6 +200,7 @@ export function create(
 				request.body,
 				initial,
 				request.get("StorageName"),
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);
@@ -209,6 +217,7 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				softDelete,
+				utils.queryParamToBoolean(request.params.isEphemeralContainer),
 			);
 
 			utils.handleResponse(summaryP, response, false);

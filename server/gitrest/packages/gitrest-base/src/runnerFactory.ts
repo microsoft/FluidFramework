@@ -18,6 +18,7 @@ import {
 	NodeFsManagerFactory,
 	IStorageDirectoryConfig,
 } from "./utils";
+// eslint-disable-next-line import/no-internal-modules
 import { RedisFsManagerFactory } from "./utils/filesystems";
 
 export class GitrestResources implements core.IResources {
@@ -69,6 +70,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 					apiMetricsSamplingPeriod,
 				);
 			} else if (gitLibrary === "isomorphic-git") {
+				console.log("prrajen: Using isomorphic-git library");
 				return new IsomorphicGitManagerFactory(
 					storageDirectoryConfig,
 					durableFileSystemManagerFactory,
