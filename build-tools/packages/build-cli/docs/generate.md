@@ -68,31 +68,17 @@ Generate a changelog for packages based on changesets.
 
 ```
 USAGE
-  $ flub generate changelog [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools|gitrest|historian]
-    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools|gitrest|historian]
-    [--version <value>]
+  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
 
 FLAGS
-  -a, --all                    Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                               --releaseGroup.
-  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --all, --packages, or
-                               --releaseGroup.
-  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --all, --dir, or
-                               --packages.
+  -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -g, --skipScope=<option>...  Package scopes to filter out.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --packages                   Run on all independent packages in the repo. Cannot be used with --all, --dir, or
-                               --releaseGroup.
-  --[no-]private               Only include private packages (or non-private packages for --no-private)
-  --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
-                               --releaseGroup.
-  --scope=<value>...           Package scopes to filter to.
   --version=<value>            The version for which to generate the changelog. If this is not provided, the version of
                                the package according to package.json will be used.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Generate a changelog for packages based on changesets.
