@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { SequenceIntervalIndexes } from "./SequenceIntervalIndexes";
-export { createOverlapping } from "./overlappingSequenceIntervalsIndex";
-export { sequenceIntervalIndexFactory } from "./IntervalIndexFactories";
+export { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
+export {
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+} from "./overlappingIntervalsIndex";
+export { createOverlappingSequenceIntervalsIndex } from "./overlappingSequenceIntervalsIndex";

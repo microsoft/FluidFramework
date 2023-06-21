@@ -40,9 +40,10 @@ export {
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export {
-	sequenceIntervalIndexFactory,
 	SequenceIntervalIndexes,
-	createOverlapping,
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
 } from "./intervalIndex";
 export {
 	appendAddIntervalToRevertibles,

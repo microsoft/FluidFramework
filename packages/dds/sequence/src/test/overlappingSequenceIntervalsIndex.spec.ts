@@ -9,10 +9,10 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { sequenceIntervalHelpers, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { sequenceIntervalIndexFactory } from "../intervalIndex";
+import { createOverlappingSequenceIntervalsIndex } from "../intervalIndex";
 import { RandomIntervalOptions } from "./intervalIndexUtils";
 
 class TestSharedString extends SharedString {
@@ -52,7 +52,6 @@ function assertSequenceIntervalsEqual(
 }
 
 describe("findOverlappingIntervalsBySegoff", () => {
-	const helpers = sequenceIntervalHelpers;
 	// sort the query results by the local reference position of interval endpoints
 	const compareFn = (a: SequenceInterval, b: SequenceInterval) => {
 		if (compareReferencePositions(a.start, b.start) !== 0) {
@@ -62,15 +61,15 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	};
 	let testSharedString: TestSharedString;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
+	let overlappingSequenceIntervalsIndex;
 	let collection;
-	let overlappingIntervalsIndex;
 	let results;
 
 	const queryIntervalsByPositions = (start: number, end: number): Iterable<SequenceInterval> => {
 		const startSegOff = testSharedString.client.getContainingSegment(start);
 		const endSegOff = testSharedString.client.getContainingSegment(end);
 
-		const intervals = overlappingIntervalsIndex.findOverlappingIntervals(
+		const intervals = overlappingSequenceIntervalsIndex.findOverlappingIntervalsBySegoff(
 			startSegOff,
 			endSegOff,
 		);
@@ -87,62 +86,53 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			"test-shared-string",
 			SharedStringFactory.Attributes,
 		);
-		overlappingIntervalsIndex = sequenceIntervalIndexFactory.createOverlapping(
+		overlappingSequenceIntervalsIndex = createOverlappingSequenceIntervalsIndex(
 			testSharedString.client,
 		);
+
+		testSharedString.initializeLocal();
+		collection = testSharedString.getIntervalCollection("test");
+		collection.attachIndex(overlappingSequenceIntervalsIndex);
 	});
 
 	describe("find no intervals", () => {
-		let interval1;
-		let interval2;
-		let interval3;
-
 		beforeEach(() => {
-			testSharedString.initializeLocal();
 			testSharedString.insertText(0, "ab");
 			testSharedString.insertText(2, "cde");
 			testSharedString.insertText(5, "fg");
-			collection = testSharedString.getIntervalCollection("test");
-			interval1 = collection.add(1, 1, IntervalType.SlideOnRemove);
-			interval2 = collection.add(2, 3, IntervalType.SlideOnRemove);
-			interval3 = collection.add(5, 6, IntervalType.SlideOnRemove);
 		});
 
-		/**
-		 * The overlappingIntervalsIndex is not attached to the interval collection, and initially,
-		 * no intervals are added to the index. As a result, the index starts off empty within this suite.
-		 */
 		it("when the index is empty", () => {
 			results = queryIntervalsByPositions(0, 2);
 			assert.equal(results.length, 0);
 		});
 
 		it("when all intervals in index are above the query range", () => {
-			overlappingIntervalsIndex.add(interval3);
+			collection.add(5, 6, IntervalType.SlideOnRemove);
 			results = queryIntervalsByPositions(0, 2);
 			assert.equal(results.length, 0);
 		});
 
 		it("when all intervals in index are below the query range", () => {
-			overlappingIntervalsIndex.add(interval1);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
 			results = queryIntervalsByPositions(2, 5);
 			assert.equal(results.length, 0);
 		});
 
 		it("when startSegment occurs `after` the endSegment", () => {
-			overlappingIntervalsIndex.add(interval1);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
 			results = queryIntervalsByPositions(2, 0);
 			assert.equal(results.length, 0);
 		});
 
 		it("when the segments are the same but startOffset occurs `after` the endOffset", () => {
-			overlappingIntervalsIndex.add(interval1);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
 			results = queryIntervalsByPositions(1, 0);
 			assert.equal(results.length, 0);
 		});
 
 		it("when the endSegment does not exist (out of bound)", () => {
-			overlappingIntervalsIndex.add(interval3);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
 			results = queryIntervalsByPositions(1, 1000);
 			assert.equal(results.length, 0);
 		});
@@ -154,17 +144,12 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		let interval3;
 
 		beforeEach(() => {
-			testSharedString.initializeLocal();
 			testSharedString.insertText(0, "ab");
 			testSharedString.insertText(2, "cde");
 			testSharedString.insertText(5, "fg");
-			collection = testSharedString.getIntervalCollection("test");
-			interval1 = collection.add(1, 1, IntervalType.SlideOnRemove);
-			interval2 = collection.add(2, 3, IntervalType.SlideOnRemove);
-			interval3 = collection.add(5, 6, IntervalType.SlideOnRemove);
-			overlappingIntervalsIndex.add(interval1);
-			overlappingIntervalsIndex.add(interval2);
-			overlappingIntervalsIndex.add(interval3);
+			interval1 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			interval2 = collection.add(2, 3, IntervalType.SlideOnRemove).getIntervalId();
+			interval3 = collection.add(5, 6, IntervalType.SlideOnRemove).getIntervalId();
 		});
 
 		it("when each interval is within a single segment", () => {
@@ -196,12 +181,9 @@ describe("findOverlappingIntervalsBySegoff", () => {
 
 		it("when existing interval across multiple segments", () => {
 			// Add intervals which are across more than one segments
-			const interval4 = collection.add(1, 3, IntervalType.SlideOnRemove);
-			const interval5 = collection.add(2, 5, IntervalType.SlideOnRemove);
-			const interval6 = collection.add(1, 6, IntervalType.SlideOnRemove);
-			overlappingIntervalsIndex.add(interval4);
-			overlappingIntervalsIndex.add(interval5);
-			overlappingIntervalsIndex.add(interval6);
+			collection.add(1, 3, IntervalType.SlideOnRemove);
+			collection.add(2, 5, IntervalType.SlideOnRemove);
+			collection.add(1, 6, IntervalType.SlideOnRemove);
 
 			results = queryIntervalsByPositions(0, 1);
 			assertSequenceIntervalsEqual(testSharedString, results, [
@@ -228,12 +210,9 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		});
 
 		it("when adding duplicate intervals to the index", () => {
-			const interval4 = collection.add(1, 1, IntervalType.SlideOnRemove);
-			const interval5 = collection.add(2, 3, IntervalType.SlideOnRemove);
-			const interval6 = collection.add(1, 1, IntervalType.SlideOnRemove);
-			overlappingIntervalsIndex.add(interval4);
-			overlappingIntervalsIndex.add(interval5);
-			overlappingIntervalsIndex.add(interval6);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
+			collection.add(2, 3, IntervalType.SlideOnRemove);
+			collection.add(1, 1, IntervalType.SlideOnRemove);
 
 			results = queryIntervalsByPositions(1, 6);
 			assertSequenceIntervalsEqual(testSharedString, results, [
@@ -247,7 +226,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		});
 
 		it("when removing intervals from the index", () => {
-			overlappingIntervalsIndex.remove(interval2);
+			collection.removeIntervalById(interval2);
 			results = queryIntervalsByPositions(1, 6);
 			assertSequenceIntervalsEqual(testSharedString, results, [
 				{ start: 1, end: 1 },
@@ -255,16 +234,15 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			]);
 
 			// Add and remove duplicate intervals
-			const interval4 = collection.add(1, 1, IntervalType.SlideOnRemove);
-			overlappingIntervalsIndex.add(interval4);
-			overlappingIntervalsIndex.remove(interval1);
+			const interval4 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			collection.removeIntervalById(interval1);
 			results = queryIntervalsByPositions(1, 6);
 			assertSequenceIntervalsEqual(testSharedString, results, [
 				{ start: 1, end: 1 },
 				{ start: 5, end: 6 },
 			]);
 
-			overlappingIntervalsIndex.remove(interval4);
+			collection.removeIntervalById(interval4);
 			results = queryIntervalsByPositions(1, 6);
 			assertSequenceIntervalsEqual(testSharedString, results, [{ start: 5, end: 6 }]);
 		});
@@ -272,8 +250,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		it("when inserting or appending additional segments to the string", () => {
 			// Append a segment to the end of the string
 			testSharedString.insertText(7, "hijk");
-			const interval4 = collection.add(7, 9, IntervalType.SlideOnRemove);
-			overlappingIntervalsIndex.add(interval4);
+			collection.add(7, 9, IntervalType.SlideOnRemove); // `interval4` in below graphs
 
 			/**
 			 * Visualization of intervals within the string after the last insertion:
@@ -391,38 +368,30 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	});
 
 	describe("find consistent results with `naive` method", () => {
-		let fillInRandomSequenceIntervals;
-
-		beforeEach(() => {
-			testSharedString.initializeLocal();
-			collection = testSharedString.getIntervalCollection("test");
-
-			/**
-			 * Fills in random sequence intervals to the index and interval collection
-			 * @param options - The options object containing random, count, and min properties.
-			 */
-			fillInRandomSequenceIntervals = ({
-				random,
-				count,
-				min,
-			}: Pick<RandomIntervalOptions, "random" | "count" | "min">): void => {
-				// Generate random text, and insert them into random positions of the string
-				for (let i = 0; i < count / 2; ++i) {
-					testSharedString.insertText(
-						random.integer(0, Math.max(testSharedString.getLength() - 1, 0)),
-						random.string(random.bool() ? 2 : 1),
-					);
-				}
-				const max = testSharedString.getLength() - 1;
-				// Genereate random sequence intervals
-				for (let i = 0; i < count; ++i) {
-					const start = random.integer(min, max);
-					const end = random.integer(start, max);
-					const interval = collection.add(start, end, IntervalType.SlideOnRemove);
-					overlappingIntervalsIndex.add(interval);
-				}
-			};
-		});
+		/**
+		 * Fills in random sequence intervals to the index and interval collection
+		 * @param options - The options object containing random, count, and min properties.
+		 */
+		const fillInRandomSequenceIntervals = ({
+			random,
+			count,
+			min,
+		}: Pick<RandomIntervalOptions, "random" | "count" | "min">): void => {
+			// Generate random text, and insert them into random positions of the string
+			for (let i = 0; i < count / 2; ++i) {
+				testSharedString.insertText(
+					random.integer(0, Math.max(testSharedString.getLength() - 1, 0)),
+					random.string(random.bool() ? 2 : 1),
+				);
+			}
+			const max = testSharedString.getLength() - 1;
+			// Genereate random sequence intervals
+			for (let i = 0; i < count; ++i) {
+				const start = random.integer(min, max);
+				const end = random.integer(start, max);
+				collection.add(start, end, IntervalType.SlideOnRemove);
+			}
+		};
 
 		it("when given massive random inputs", () => {
 			const random = makeRandom(0);

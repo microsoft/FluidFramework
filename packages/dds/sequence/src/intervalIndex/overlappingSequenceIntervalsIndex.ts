@@ -14,31 +14,22 @@ import {
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
-	IIntervalHelpers,
 } from "../intervalCollection";
-import { IntervalTree } from "../intervalTree";
-import { SequenceIntervalIndexes } from "./SequenceIntervalIndexes";
+import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
+import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
-class OverlappingSequenceIntervalsIndex implements SequenceIntervalIndexes.Overlapping {
-	private readonly intervalTree = new IntervalTree<SequenceInterval>();
-
-	constructor(
-		private readonly helpers: IIntervalHelpers<SequenceInterval>,
-		private readonly client: Client,
-	) {}
-
-	public remove(interval: SequenceInterval) {
-		this.intervalTree.removeExisting(interval);
+class OverlappingSequenceIntervalsIndex
+	extends OverlappingIntervalsIndex<SequenceInterval>
+	implements SequenceIntervalIndexes.Overlapping
+{
+	constructor(client: Client) {
+		super(client, sequenceIntervalHelpers);
 	}
 
-	public add(interval: SequenceInterval) {
-		this.intervalTree.put(interval);
-	}
-
-	public findOverlappingIntervals(
+	public findOverlappingIntervalsBySegoff(
 		startSegoff: { segment: ISegment | undefined; offset: number | undefined },
 		endSegoff: { segment: ISegment | undefined; offset: number | undefined },
-	) {
+	): Iterable<SequenceInterval> {
 		if (this.intervalTree.intervals.isEmpty()) {
 			return [];
 		}
@@ -73,6 +64,8 @@ class OverlappingSequenceIntervalsIndex implements SequenceIntervalIndexes.Overl
 	}
 }
 
-export function createOverlapping(client: Client): SequenceIntervalIndexes.Overlapping {
-	return new OverlappingSequenceIntervalsIndex(sequenceIntervalHelpers, client);
+export function createOverlappingSequenceIntervalsIndex(
+	client: Client,
+): SequenceIntervalIndexes.Overlapping {
+	return new OverlappingSequenceIntervalsIndex(client);
 }

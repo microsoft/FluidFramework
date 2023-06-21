@@ -69,7 +69,10 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlapping(client: Client): SequenceIntervalIndexes.Overlapping;
+export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IOverlappingIntervalsIndex<TInterval>;
+
+// @public (undocumented)
+export function createOverlappingSequenceIntervalsIndex(client: Client): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
@@ -288,6 +291,14 @@ export enum IntervalType {
     Transient = 4
 }
 
+// @public (undocumented)
+export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
+    // (undocumented)
+    findOverlappingIntervals(start: number, end: number): TInterval[];
+    // (undocumented)
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+}
+
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
@@ -421,7 +432,7 @@ export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 // @public
 export namespace SequenceIntervalIndexes {
     export interface Overlapping extends IntervalIndex<SequenceInterval> {
-        findOverlappingIntervals(startSegoff: {
+        findOverlappingIntervalsBySegoff(startSegoff: {
             segment: ISegment | undefined;
             offset: number | undefined;
         }, endSegoff: {
@@ -430,11 +441,6 @@ export namespace SequenceIntervalIndexes {
         }): any;
     }
 }
-
-// @public
-export const sequenceIntervalIndexFactory: {
-    createOverlapping: typeof createOverlapping;
-};
 
 // @public
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
