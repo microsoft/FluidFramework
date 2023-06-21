@@ -61,8 +61,8 @@ class TestDataObject1 extends DataObject {
 			return;
 		}
 
-		// If the second data store already exists, don't create another one. This ensures that we create data stores
-		// endlessly during summarization.
+		// If the second data store already exists, don't create another one. This ensures that we don't create data
+		// stores endlessly during summarization.
 		let dataObject2: RootTestDataObject | undefined;
 		const dataObject2Handle = this.root.get<IFluidHandle<RootTestDataObject>>(
 			this.datastoreKey,
@@ -77,14 +77,15 @@ class TestDataObject1 extends DataObject {
 		const newDataObject = await rootDataObjectFactory.createInstance(
 			this.context.containerRuntime,
 		);
+		this.root.set(this.datastoreKey, newDataObject.handle);
 		// Store the handle asynchronously to add some delay between data store creation and attaching it. Basically,
 		// the validation during summarization behave differently when data store is in detached, attaching and attached
 		//
-		return Promise.resolve()
-			.then(() => {
-				this.root.set(this.datastoreKey, newDataObject.handle);
-			})
-			.catch(console.error);
+		// return Promise.resolve()
+		// 	.then(() => {
+		// 		this.root.set(this.datastoreKey, newDataObject.handle);
+		// 	})
+		// 	.catch(console.error);
 	}
 }
 
