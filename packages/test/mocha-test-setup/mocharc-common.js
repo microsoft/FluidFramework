@@ -80,7 +80,6 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		config["reporter"] = `mocha-multi-reporters`;
 		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
-		console.log(outputFilePrefix);
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				__dirname,
