@@ -428,9 +428,8 @@ describe("SharedTree benchmarks", () => {
 	// Note that the times reported by this benchmark represent the computation of several peers.
 	// In practice, this computation is distributed across peers, so the actual time reported should be
 	// divided by the number of peers.
-	describe.only("rebasing commits", () => {
-		// const commitCounts = [1, 10, 20, 30, 40];
-		const commitCounts = [40];
+	describe("rebasing commits", () => {
+		const commitCounts = [1, 10, 20];
 		const nbPeers = 5;
 		for (const nbCommits of commitCounts) {
 			benchmark({
