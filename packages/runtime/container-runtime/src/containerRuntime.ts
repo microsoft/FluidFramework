@@ -42,7 +42,6 @@ import {
 	loggerToMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
-	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -151,6 +150,7 @@ import {
 	IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
 	IGenerateSummaryTreeResult,
+	RetriableSummaryError,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -2823,7 +2823,11 @@ export class ContainerRuntime
 			const validateResult = this.summarizerNode.validateSummary();
 			if (!validateResult.success) {
 				const { success, ...loggingProps } = validateResult;
-				const error = new LoggingError(validateResult.reason, { ...loggingProps });
+				const error = new RetriableSummaryError(
+					validateResult.reason,
+					validateResult.retryAfterSeconds,
+					{ ...loggingProps },
+				);
 				return { stage: "base", ...generateSummaryData, error };
 			}
 

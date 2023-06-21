@@ -9,6 +9,8 @@ import {
 	LoggingError,
 	ChildLogger,
 } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
 import {
 	assert,
 	Deferred,
@@ -165,6 +167,20 @@ export class SummarizeResultBuilder {
 			summaryOpBroadcasted: this.summaryOpBroadcasted.promise,
 			receivedSummaryAckOrNack: this.receivedSummaryAckOrNack.promise,
 		} as const;
+	}
+}
+
+/**
+ * Errors type for errors hit during summary that may be retriable.
+ */
+export class RetriableSummaryError extends LoggingError {
+	public readonly canRetry = this.retryAfterSeconds !== undefined;
+	constructor(
+		message: string,
+		public readonly retryAfterSeconds?: number,
+		props?: ITelemetryProperties,
+	) {
+		super(message, props);
 	}
 }
 
