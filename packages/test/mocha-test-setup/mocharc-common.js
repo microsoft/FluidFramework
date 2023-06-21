@@ -78,7 +78,15 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 
 	if (process.env.FLUID_TEST_MULTIREPORT === "1") {
 		config["reporter"] = `mocha-multi-reporters`;
-		config["reporter-options"] = [`configFile=${path.join(__dirname, "test-config.json")}`];
+		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+		console.log(outputFilePrefix);
+		config["reporter-options"] = [
+			`configFile=${path.join(
+				__dirname,
+				"test-config.json",
+			)},cmrOutput=xunit+output+${outputFilePrefix}:mocha-json-output-reporter+output+${outputFilePrefix}`,
+		];
 		console.log(`configFile=${path.join(__dirname, "test-config.json")}`);
 	}
 
