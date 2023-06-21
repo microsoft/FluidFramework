@@ -12,17 +12,22 @@ module:
     extended: true
     min: "0.76.5"
   mounts:
+    # We are supplementing the default content, data, and static mounts, so we need to redefine their defaults.
+    # Otherwise files within the default folders will be ignored.
     - source: content
       target: content
+    - source: data
+      target: data
+    - source: static
+      target: static
+
+    # Import content from outside the docs folder
     - source: _replacements
       target: content
     - source: ../packages/dds/counter/README.md
       target: content/docs/counter-readme.md
     - source: ../packages/dds/sequence/README.md
       target: content/docs/sequence-readme.md
-
-    - source: static
-      target: static
 
     # SVG icons from the @vscode/codicons package
     - source: node_modules/@vscode/codicons/src/icons/beaker.svg
@@ -43,6 +48,18 @@ module:
       target: static/codicons/rss.svg
     - source: node_modules/@vscode/codicons/src/icons/twitter.svg
       target: static/codicons/twitter.svg
+
+    # BREAKING.md
+    - source: ../BREAKING.md
+      target: content/upcoming/previous/index.md
+
+    # Changesets
+    - source: ../.changeset
+      target: content/changesets
+
+    # Root package.json to get the version
+    - source: ../package.json
+      target: content/packageMetadata/root.json
 
 permalinks:
   page: "/:slug"

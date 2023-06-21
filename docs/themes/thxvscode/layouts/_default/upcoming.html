@@ -1,0 +1,53 @@
+{{ define "header" }}
+{{ partial "header.html" . }}
+{{ end }}
+
+
+{{ define "main" }}
+<div class="container body-content docs">
+    <div class="row">
+        <div class="col-md-2 docs-navbar-container"> {{ partial "apiNav.html" .}} </div>
+        <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
+            {{- $version := (getJSON "../package.json").version -}}
+            <div>
+                <h1>{{ .Title }}: v{{ $version }}</h1>
+                <div>{{ .Content }}</div>
+                <hr/>
+                {{ range where $.Site.RegularPages ".Section" "changesets" }}
+                    {{ if ne .File.BaseFileName "README" }}
+                        {{- $raw := split .RawContent "\n\n" }}
+                        {{- $firstLine := index $raw 0 -}}
+                        {{- $rest := delimit (after 1 $raw) "" | markdownify -}}
+                        {{ if ne $rest "" }}
+                            <h2>{{ $firstLine }}</h2>
+                            <p>{{ $rest }}</p>
+                            <h3>Affected packages:</h3>
+                            <ul>
+                                {{ range $pkg, $bumpType := .Params }}
+                                    {{- if or (hasPrefix $pkg "@fluid") (hasPrefix $pkg "fluid") -}}
+                                        <li>{{- $pkg -}}</li>
+                                    {{- end -}}
+                                {{- end -}}
+                            </ul>
+                        {{ end }}
+                    {{ end }}
+                {{ end }}
+            </div>
+        </div>
+
+        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
+            {{ partial "toc.html" .}}
+            <!-- TODO: OR subnav -->
+        </div>
+    </div>
+</div>
+
+{{ block "footer" . -}}{{ end }}
+{{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
+<!-- <script src="{{/* $script.Permalink | relURL */}}" -->
+<!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
+{{- if templates.Exists "partials/extra-foot.html" -}}
+{{ partial "extra-foot.html" . }}
+{{- end }}
+
+{{ end }}
