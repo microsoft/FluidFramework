@@ -48,7 +48,7 @@ export interface IRootSummarizerNodeWithGC
 // Extend SummaryNode to add used routes tracking to it.
 class SummaryNodeWithGC extends SummaryNode {
 	constructor(
-		public readonly serializedUsedRoutes: string,
+		public readonly serializedUsedRoutes: string | undefined,
 		summary: {
 			readonly referenceSequenceNumber: number;
 			readonly basePath: EscapedPath | undefined;
@@ -269,7 +269,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
 		 * 1. A child node was created after GC was already run on the parent. For example, a data store
 		 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
-		 * case, the used routes of the parent should be passed on the child nodes and it should be fine.
+		 * case, the parent will pass on used routes to the child nodes and it will have wip used routes.
 		 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
 		 * during summarize is incomplete.
 		 *
@@ -318,8 +318,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
 				const summaryNodeWithGC = new SummaryNodeWithGC(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					wipSerializedUsedRoutes!,
+					wipSerializedUsedRoutes,
 					summaryNode,
 				);
 				this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);

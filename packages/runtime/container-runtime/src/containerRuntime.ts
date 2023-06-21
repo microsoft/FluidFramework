@@ -150,6 +150,7 @@ import {
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
+	IGenerateSummaryTreeResult,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -2809,7 +2810,7 @@ export class ContainerRuntime
 				summaryNumber,
 				...partialStats,
 			};
-			const generateSummaryData = {
+			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
 				referenceSequenceNumber: summaryRefSeqNum,
 				minimumSequenceNumber,
 				summaryTree,

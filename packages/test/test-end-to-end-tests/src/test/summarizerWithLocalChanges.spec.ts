@@ -30,6 +30,7 @@ import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/data
 import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export const rootDataObjectType = "@fluid-example/rootDataObject";
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
@@ -46,20 +47,31 @@ class TestDataObject1 extends DataObject {
 	private readonly datastoreKey = "TestDataObject2";
 
 	protected async hasInitialized() {
+		this.initSync().catch((error) => {});
+	}
+
+	protected async initSync() {
 		if (this.context.clientDetails.capabilities.interactive === true) {
 			return;
 		}
 
-		if (this.root.has(this.datastoreKey)) {
+		let dataObject2: RootTestDataObject | undefined;
+		const dataObject2Handle = this.root.get<IFluidHandle<RootTestDataObject>>(
+			this.datastoreKey,
+		);
+		if (dataObject2Handle !== undefined) {
+			dataObject2 = await dataObject2Handle.get();
+		}
+		if (dataObject2 !== undefined) {
 			return;
 		}
 
-		const dataObject2 = await rootDataObjectFactory.createInstance(
+		const newDataObject = await rootDataObjectFactory.createInstance(
 			this.context.containerRuntime,
 		);
-		Promise.resolve()
+		return Promise.resolve()
 			.then(() => {
-				this.root.set(this.datastoreKey, dataObject2.handle);
+				this.root.set(this.datastoreKey, newDataObject.handle);
 			})
 			.catch(console.error);
 	}
@@ -242,6 +254,11 @@ describeNoCompat(
 				await timeoutAwait(waitForSummaryOp(mainContainer), {
 					errorMsg: "Timeout on waiting for summary op",
 				});
+
+				const summaryEvents = logger.events.filter((event) => {
+					return event.eventName.includes("summar") === true;
+				});
+				assert(summaryEvents !== undefined);
 
 				// The sequence of events that should happen:
 				// 1. First summarize attempt starts for the first phase, i.e., summarizeAttemptPerPhase = 1.

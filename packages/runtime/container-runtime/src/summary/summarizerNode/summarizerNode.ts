@@ -20,7 +20,6 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
 	ChildLogger,
@@ -311,7 +310,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		assert(localPathsToUse !== undefined, "local paths should be present");
+		// If localPathsToUse is undefined, it means summarize didn't run for this node and in that case the validate
+		// step should have failed.
+		assert(localPathsToUse !== undefined, "summarize didn't run for node");
 		const summary = new SummaryNode({
 			...localPathsToUse,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
@@ -775,25 +776,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	public isSummaryInProgress(): boolean {
 		return this.wipReferenceSequenceNumber !== undefined;
-	}
-
-	/**
-	 * Creates and throws an error due to unexpected conditions.
-	 */
-	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
-		const error = new LoggingError(eventProps.eventName, {
-			...eventProps,
-			referenceSequenceNumber: this.wipReferenceSequenceNumber,
-			id: {
-				tag: TelemetryDataTag.CodeArtifact,
-				value: this.telemetryNodeId,
-			},
-			// Add retry after because failures in summarizer node during summarize may be transient and may
-			// get fixed on a summarize retry.
-			retryAfterSeconds: 1,
-		});
-		this.logger.sendErrorEvent(eventProps, error);
-		throw error;
 	}
 }
 
