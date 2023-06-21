@@ -455,6 +455,40 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
 		});
 
+		it("move adjacent nodes to separate destinations", () => {
+			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
+			const tree2 = tree.fork();
+
+			tree2.transaction.start();
+
+			const sequence = tree2.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+			sequence.move(1, 1, 0);
+			sequence.move(2, 1, 3);
+			tree2.transaction.commit();
+			tree.merge(tree2);
+			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
+		});
+
+		it("move separate nodes to adjacent destinations", () => {
+			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
+			const tree2 = tree.fork();
+
+			tree2.transaction.start();
+
+			const sequence = tree2.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+			sequence.move(0, 1, 1);
+			sequence.move(3, 1, 2);
+			tree2.transaction.commit();
+			tree.merge(tree2);
+			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
+		});		
+
 		it("rebase changes to field untouched by base", () => {
 			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, "B"] });
 			const tree1 = tree.fork();
