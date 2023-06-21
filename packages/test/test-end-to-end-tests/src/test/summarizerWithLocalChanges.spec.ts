@@ -78,14 +78,6 @@ class TestDataObject1 extends DataObject {
 			this.context.containerRuntime,
 		);
 		this.root.set(this.datastoreKey, newDataObject.handle);
-		// Store the handle asynchronously to add some delay between data store creation and attaching it. Basically,
-		// the validation during summarization behave differently when data store is in detached, attaching and attached
-		//
-		// return Promise.resolve()
-		// 	.then(() => {
-		// 		this.root.set(this.datastoreKey, newDataObject.handle);
-		// 	})
-		// 	.catch(console.error);
 	}
 }
 
