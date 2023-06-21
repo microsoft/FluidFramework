@@ -256,7 +256,7 @@ export class Outbox {
 	 * @param rawBatch - the batch to be rebased
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
-		assert(!this.rebasing, "");
+		assert(!this.rebasing, "Reentrancy");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
