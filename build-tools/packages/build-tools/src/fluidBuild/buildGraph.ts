@@ -216,6 +216,9 @@ export class BuildPackage {
 				return;
 			}
 			const taskConfig = this.taskDefinitions[task.taskName];
+			if (taskConfig === undefined) {
+				return;
+			}
 			if (taskConfig.before.includes("*")) {
 				this.tasks.forEach((depTask) => {
 					if (depTask !== task) {
