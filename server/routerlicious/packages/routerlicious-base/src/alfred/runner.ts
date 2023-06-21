@@ -158,7 +158,7 @@ export class AlfredRunner implements IRunner {
 		try {
 			// Close the underlying server and then resolve the runner once closed
 			await this.server.close();
-			if (caller === "sigterm" || caller === "uncaughtException") {
+			if (caller === "uncaughtException") {
 				this.runningDeferred?.reject({
 					caller,
 					uncaughtException: serializeError(uncaughtException),

@@ -126,7 +126,7 @@ export class KafkaRunner implements IRunner {
 			await promiseTimeout(30000, this.consumer.close());
 
 			// Mark ourselves done once the partition manager has stopped
-			if (caller === "sigterm" || caller === "uncaughtException") {
+			if (caller === "uncaughtException") {
 				this.deferred?.reject({
 					caller,
 					uncaughtException: serializeError(uncaughtException),
