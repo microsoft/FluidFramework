@@ -1590,118 +1590,6 @@ export class MergeTree {
 		}
 	}
 
-	public insertAtReferencePosition(
-		referencePosition: ReferencePosition,
-		insertSegment: ISegment,
-		opArgs: IMergeTreeDeltaOpArgs,
-	): void {
-		if (insertSegment.cachedLength === 0) {
-			return;
-		}
-		if (
-			insertSegment.parent ||
-			insertSegment.removedSeq ||
-			insertSegment.seq !== UniversalSequenceNumber
-		) {
-			throw new Error("Cannot insert segment that has already been inserted.");
-		}
-
-		const rebalanceTree = (segment: ISegment) => {
-			// Blocks should never be left full
-			// if the inserts makes the block full
-			// then we need to walk up the chain of parents
-			// and split the blocks until we find a block with
-			// room
-			let block = segment.parent;
-			let ordinalUpdateNode: IMergeBlock | undefined = block;
-			while (block !== undefined) {
-				if (block.childCount >= MaxNodesInBlock) {
-					const splitNode = this.split(block);
-					if (block === this.root) {
-						this.updateRoot(splitNode);
-						// Update root already updates all its children ordinals
-						ordinalUpdateNode = undefined;
-					} else {
-						this.insertChildNode(block.parent!, splitNode, block.index + 1);
-						ordinalUpdateNode = splitNode.parent;
-						this.blockUpdateLength(block.parent!, UnassignedSequenceNumber, clientId);
-					}
-				} else {
-					this.blockUpdateLength(block, UnassignedSequenceNumber, clientId);
-				}
-				block = block.parent;
-			}
-			// Only update ordinals once, for all children,
-			// on the path
-			if (ordinalUpdateNode) {
-				this.nodeUpdateOrdinals(ordinalUpdateNode);
-			}
-		};
-
-		const clientId = this.collabWindow.clientId;
-		const refSegment = referencePosition.getSegment()!;
-		const refOffset = referencePosition.getOffset();
-		const refSegLen = this.nodeLength(refSegment, this.collabWindow.currentSeq, clientId);
-		let startSeg = refSegment;
-		// if the change isn't at a boundary, we need to split the segment
-		if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
-			const splitSeg = this.splitLeafSegment(refSegment, refOffset);
-			assert(!!splitSeg.next, 0x050 /* "Next segment changes are undefined!" */);
-			this.insertChildNode(refSegment.parent!, splitSeg.next, refSegment.index + 1);
-			rebalanceTree(splitSeg.next);
-			startSeg = splitSeg.next;
-		}
-		// walk back from the segment, to see if there is a previous tie break seg
-		backwardExcursion(startSeg, (backSeg) => {
-			if (!backSeg.isLeaf()) {
-				return true;
-			}
-			const backLen = this.nodeLength(backSeg, this.collabWindow.currentSeq, clientId);
-			// ignore removed segments
-			if (backLen === undefined) {
-				return true;
-			}
-			// Find the nearest 0 length seg we can insert over, as all other inserts
-			// go near to far
-			if (backLen === 0) {
-				if (this.breakTie(0, backSeg, UnassignedSequenceNumber)) {
-					startSeg = backSeg;
-				}
-				return true;
-			}
-			return false;
-		});
-
-		if (this.collabWindow.collaborating) {
-			insertSegment.localSeq = ++this.collabWindow.localSeq;
-			insertSegment.seq = UnassignedSequenceNumber;
-		} else {
-			insertSegment.seq = UniversalSequenceNumber;
-		}
-
-		insertSegment.clientId = clientId;
-
-		if (Marker.is(insertSegment)) {
-			const markerId = insertSegment.getId();
-			if (markerId) {
-				this.mapIdToSegment(markerId, insertSegment);
-			}
-		}
-
-		this.insertChildNode(startSeg.parent!, insertSegment, startSeg.index);
-
-		rebalanceTree(insertSegment);
-
-		this.mergeTreeDeltaCallback?.(opArgs, {
-			deltaSegments: [{ segment: insertSegment }],
-			operation: MergeTreeDeltaType.INSERT,
-		});
-
-		if (this.collabWindow.collaborating) {
-			this.addToPendingList(insertSegment, undefined, insertSegment.localSeq);
-		}
-	}
-
 	/**
 	 * Resolves a remote client's position against the local sequence
 	 * and returns the remote client's position relative to the local
@@ -1741,18 +1629,6 @@ export class MergeTree {
 				return this.getLength(currentSeq, clientId);
 			}
 		}
-	}
-
-	private insertChildNode(block: IMergeBlock, child: IMergeNode, childIndex: number) {
-		assert(block.childCount < MaxNodesInBlock, 0x051 /* "Too many children on merge block!" */);
-
-		for (let i = block.childCount; i > childIndex; i--) {
-			block.children[i] = block.children[i - 1];
-			block.children[i].index = i;
-		}
-
-		block.childCount++;
-		block.assignChild(child, childIndex, false);
 	}
 
 	private blockInsert<T extends ISegment>(
