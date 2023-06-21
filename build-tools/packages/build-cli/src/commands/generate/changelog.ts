@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { Package, FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { readFile, writeFile } from "fs/promises";
 import { CleanOptions } from "simple-git";
-import { Package, FluidRepo } from "@fluidframework/build-tools";
 
-import { PackageCommand } from "../../BasePackageCommand";
 import { BaseCommand } from "../../base";
+import { releaseGroupFlag } from "../../flags";
 import { Repository } from "../../lib";
 import { isReleaseGroup } from "../../releaseGroups";
-import { PackageKind } from "../../filter";
-import { releaseGroupFlag } from "../../flags";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
 	const content = await readFile(path, "utf8");
