@@ -154,6 +154,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
+	// Blocked waiting on AB#2690
 	itExpects.skip(
 		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
