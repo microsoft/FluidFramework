@@ -8,13 +8,14 @@ import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
+	ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
 	describeNoCompat,
@@ -231,6 +232,8 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 // tests above when the LTS version is bumped > 0.47
 describeNoCompat("blobs", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
+	const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
+		dataObject.context.containerRuntime as ContainerRuntime;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
@@ -575,5 +578,39 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		]);
 		provider.opProcessingController.resumeProcessing();
 		await uploadP;
+	});
+
+	it("it removes the pending blob entry after round trip", async function () {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		
+		await dataStore1.runtime.uploadBlob(stringToBuffer("blob1", "utf-8"));
+		let pendingState: any;
+		pendingState = runtimeOf(dataStore1).getPendingLocalState();
+		assert.strictEqual(Object.keys(pendingState.pendingAttachmentBlobs).length, 1);
+
+		await provider.ensureSynchronized();
+
+		pendingState = runtimeOf(dataStore1).getPendingLocalState();
+		assert.strictEqual(Object.keys(pendingState.pendingAttachmentBlobs).length, 0);
+	
+	});
+
+	it("it removes the pending blob entry after round trip", async function () {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		
+		await dataStore1.runtime.uploadBlob(stringToBuffer("blob1", "utf-8"));
+		await dataStore1.runtime.uploadBlob(stringToBuffer("blob2", "utf-8"));
+		await dataStore1.runtime.uploadBlob(stringToBuffer("blob3", "utf-8"));
+		let pendingState: any;
+		pendingState = runtimeOf(dataStore1).getPendingLocalState();
+		assert.strictEqual(Object.keys(pendingState.pendingAttachmentBlobs).length, 3);
+
+		await provider.ensureSynchronized();
+
+		pendingState = runtimeOf(dataStore1).getPendingLocalState();
+		assert.strictEqual(Object.keys(pendingState.pendingAttachmentBlobs).length, 0);
+	
 	});
 });

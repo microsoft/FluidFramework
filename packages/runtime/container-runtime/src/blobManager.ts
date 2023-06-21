@@ -293,8 +293,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	public get hasPendingOfflineUploads(): boolean {
-		return this.pendingOfflineUploads.length > 0;
+	private get pendingOfflineOps() {
+		return Array.from(this.pendingBlobs.values()).filter(
+			(e) => e.status === PendingBlobStatus.OfflinePendingOp,
+		);
+	}
+
+	public get hasPendingOfflineWork(): boolean {
+		return this.pendingOfflineUploads.length > 0 || this.pendingOfflineOps.length > 0;
 	}
 
 	public get hasPendingBlobs(): boolean {
@@ -310,6 +316,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async onConnected() {
 		this.retryThrottler.cancel();
 		const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
+		this.pendingOfflineOps.forEach( pendingblob => pendingblob.status = PendingBlobStatus.OnlinePendingOp);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{

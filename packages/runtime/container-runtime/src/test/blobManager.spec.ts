@@ -199,7 +199,7 @@ class MockRuntime
 	public async connect(delay?: number) {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, 0));
-		if (this.blobManager.hasPendingOfflineUploads) {
+		if (this.blobManager.hasPendingOfflineWork) {
 			const uploadP = this.blobManager.onConnected();
 			this.processing = true;
 			await this.processBlobs();
