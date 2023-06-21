@@ -112,6 +112,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
