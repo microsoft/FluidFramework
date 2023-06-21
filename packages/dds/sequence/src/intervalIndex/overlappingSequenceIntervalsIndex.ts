@@ -15,7 +15,7 @@ import {
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
 } from "../intervalCollection";
-import { SequenceIntervalIndexes } from "./SequenceIntervalIndexes";
+import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
 class OverlappingSequenceIntervalsIndex

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { SequenceIntervalIndexes } from "./SequenceIntervalIndexes";
+export { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 export {
 	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,

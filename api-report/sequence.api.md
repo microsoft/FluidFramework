@@ -430,7 +430,7 @@ export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
 // @public
 export namespace SequenceIntervalIndexes {
-    export interface Overlapping extends IntervalIndex<SequenceInterval> {
+    export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
         findOverlappingIntervalsBySegoff(startSegoff: {
             segment: ISegment | undefined;
             offset: number | undefined;

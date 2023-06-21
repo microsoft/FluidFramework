@@ -4,7 +4,8 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
-import { IntervalIndex, SequenceInterval } from "../intervalCollection";
+import { SequenceInterval } from "../intervalCollection";
+import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
 /**
  * This namespace contains specialiazations of indexes which support spatial queries
@@ -17,7 +18,7 @@ export namespace SequenceIntervalIndexes {
 	 *
 	 * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
 	 */
-	export interface Overlapping extends IntervalIndex<SequenceInterval> {
+	export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
 		/**
 		 * Finds overlapping intervals within the specified range.
 		 *
