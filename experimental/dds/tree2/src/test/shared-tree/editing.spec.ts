@@ -1175,7 +1175,7 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], []);
 			});
 
-			it("cross-field move test", () => {
+			it("not violated by move out under delete", () => {
 				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 				const tree2 = tree.fork();
 
@@ -1230,7 +1230,7 @@ describe("Editing", () => {
 
 			// TODO: Constraint state isn't updated properly because
 			// rebaseChild isn't called when currMark is undefined in rebaseMarkList
-			it.skip("cross-field move delete violates constraint", () => {
+			it.skip("violated by move in under delete", () => {
 				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 				const tree2 = tree.fork();
 
