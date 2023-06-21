@@ -425,8 +425,8 @@ describe("SharedTree benchmarks", () => {
 		}
 	});
 
-	// Note that the times reported by this benchmark represent the computation of several peers.
-	// In practice, this computation is distributed across peers, so the actual time reported should be
+	// Note that this runs the computation for several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported is
 	// divided by the number of peers.
 	describe("rebasing commits", () => {
 		const commitCounts = [1, 10, 20];
@@ -434,7 +434,7 @@ describe("SharedTree benchmarks", () => {
 		for (const nbCommits of commitCounts) {
 			benchmark({
 				type: BenchmarkType.Measurement,
-				title: `for ${nbCommits} commits per peer x ${nbPeers} peers`,
+				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
 				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 					let duration: number;
 					do {
@@ -454,8 +454,8 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						provider.processMessages();
 						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
-						// Collect data
+						// Divide the duration by the number of peers so we get the average time per peer.
+						duration = state.timer.toSeconds(before, after) / nbPeers;
 					} while (state.recordBatch(duration));
 				},
 				// Force batch size of 1
