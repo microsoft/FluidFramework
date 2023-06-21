@@ -215,7 +215,7 @@ describeNoCompat(
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
 				);
-				rootDataObject._root.set("store", dataObject.handle);
+				rootDataObject._root.set("dataStore2", dataObject.handle);
 				const { summarizer } = await createSummarizer(provider, container);
 				await provider.ensureSynchronized();
 
@@ -232,6 +232,12 @@ describeNoCompat(
 			},
 		);
 
+		/**
+		 * This test results in gcUnknownOutboundReferences error - A data store is created in summarizer and its handle
+		 * is stored in the root data store's DDS. This results in a reference to the new data store but it is not
+		 * explicitly notified to GC. The notification to GC happens when op containing handle is processed and the
+		 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
+		 */
 		itExpects(
 			"Heuristic based summaries should pass on second attempt when NodeDidNotRunGC is hit",
 			[
