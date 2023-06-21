@@ -81,7 +81,6 @@
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
 		"inquirer": "^8.2.5",
-		"lerna": "^5.6.2",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
