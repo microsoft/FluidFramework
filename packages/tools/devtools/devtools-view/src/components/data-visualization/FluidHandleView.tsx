@@ -4,7 +4,6 @@
  */
 import React from "react";
 import { Spinner, Button, Tooltip } from "@fluentui/react-components";
-// import { TooltipHost } from "@fluentui/react";
 
 import {
 	DataVisualization,
