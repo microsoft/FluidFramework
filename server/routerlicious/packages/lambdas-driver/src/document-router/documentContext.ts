@@ -12,6 +12,7 @@ import {
 	IContextErrorData,
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class DocumentContext extends EventEmitter implements IContext {
 	// We track two offsets - head and tail. Head represents the largest offset related to this document we
@@ -19,6 +20,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	// the document.
 	private headInternal: IQueuedMessage;
 	private tailInternal: IQueuedMessage;
+	private firstTest: boolean;
 
 	private closed = false;
 	private contextError = undefined;
@@ -35,6 +37,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Tail will be set to the checkpoint offset of the previous head
 		this.headInternal = head;
 		this.tailInternal = this.getLatestTail();
+		this.firstTest = true;
 	}
 
 	public get head(): IQueuedMessage {
@@ -79,15 +82,56 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		assert(
-			offset > this.tail.offset && offset <= this.head.offset,
-			`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
-				`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
-		);
+		// let offset = message.offset;
+		if (this.firstTest) {
+			this.tail.offset = this.head.offset;
+			// offset = offset-1;
+			this.firstTest = false;
+		}
 
-		// Update the tail and broadcast the checkpoint
-		this.tailInternal = message;
-		this.emit("checkpoint", restartOnCheckpointFailure);
+		try {
+			console.log(`*********`);
+			console.log(`Tail: ${this.tail.offset}, Offset: ${offset}, Head: ${this.head.offset}`);
+			console.log(`*********`);
+			assert(
+				offset > this.tail.offset && offset <= this.head.offset,
+				`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
+					`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
+			);
+
+			// Update the tail and broadcast the checkpoint
+			this.tailInternal = message;
+			console.log(`*******EMIT HERE*********`);
+			this.emit("checkpoint", restartOnCheckpointFailure);
+		} catch (error) {
+			console.log(`*******ERROR*********`);
+			// Mark the document as corrupted
+			const documentId = this.routingKey.documentId;
+			const tenantId = this.routingKey.tenantId;
+			// Update the tail
+			this.tailInternal = message;
+			const properties = {
+				...getLumberBaseProperties(documentId, tenantId),
+				messageOffset: message.offset,
+				headOffset: this.head.offset,
+				tailOffset: this.tail.offset,
+				topic: message.topic,
+				partition: message.partition,
+			};
+			Lumberjack.error(
+				`Skipping checkpoint and marking document as corrupted. Message offset is not between the current tail and head offsets.`,
+				properties,
+				error,
+			);
+			// we emit the error last
+			this.error(error, {
+				restart: false,
+				markAsCorrupt: message,
+				skipCheckpoint: true,
+				documentId,
+				tenantId,
+			});
+		}
 	}
 
 	public error(error: any, errorData: IContextErrorData) {

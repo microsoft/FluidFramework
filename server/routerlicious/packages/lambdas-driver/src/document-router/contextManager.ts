@@ -81,10 +81,11 @@ export class DocumentContextManager extends EventEmitter {
 	 */
 	public setHead(head: IQueuedMessage) {
 		if (head.offset > this.head.offset) {
+			console.log(`MSG OFFSET: ${head.offset}, HEAD: ${this.head.offset}`);
 			this.head = head;
 			return true;
 		}
-
+		console.log(`MSG OFFSET: ${head.offset}, HEAD: ${this.head.offset}`);
 		return false;
 	}
 

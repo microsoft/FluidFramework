@@ -68,7 +68,7 @@ export class DocumentPartition {
 
 		this.context.on("error", (error: any, errorData: IContextErrorData) => {
 			if (errorData.markAsCorrupt) {
-				this.markAsCorrupt(error, errorData.markAsCorrupt);
+				this.markAsCorrupt(error, errorData.markAsCorrupt, errorData.skipCheckpoint);
 			} else if (errorData.restart) {
 				// ensure no more messages are processed by this partition
 				// while the process is restarting / closing
@@ -140,7 +140,7 @@ export class DocumentPartition {
 	 * Marks this document partition as corrupt
 	 * Future messages will be checkpointed but no real processing will happen
 	 */
-	private markAsCorrupt(error: any, message?: IQueuedMessage) {
+	private markAsCorrupt(error: any, message?: IQueuedMessage, skipCheckpoint: boolean = false) {
 		this.corrupt = true;
 		this.context.log?.error(`Marking document as corrupted due to error: ${inspect(error)}`, {
 			messageMetaData: {
@@ -159,7 +159,8 @@ export class DocumentPartition {
 			tenantId: this.tenantId,
 			documentId: this.documentId,
 		});
-		if (message) {
+		console.log(`SKIP CHECKPOINT: ${skipCheckpoint}`);
+		if (message && !skipCheckpoint) {
 			this.context.checkpoint(message);
 		}
 	}

@@ -50,6 +50,11 @@ export interface IContextErrorData {
 	 */
 	markAsCorrupt?: IQueuedMessage;
 
+	/**
+	 * Indicates if the checkpoint should be skipped when marking a document as corrupt.
+	 */
+	skipCheckpoint?: boolean;
+
 	tenantId?: string;
 	documentId?: string;
 }
