@@ -154,14 +154,23 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
 	// This first if statement turns the internal version to x.y.z
 	let semverInternal: string | undefined;
-	if (pkgVersion.startsWith("2.0.0-internal.")) {
-		semverInternal = pkgVersion.split("internal.")[1];
-	} else if (pkgVersion.startsWith("2.0.0-dev.")) {
-		semverInternal = pkgVersion.split("dev.")[1];
+	let version: string = pkgVersion;
+	// This grabs the code version to find the backwards compatible options.
+	const codeVersion = process.env.SETVERSION_CODEVERSION;
+	if (
+		codeVersion !== undefined &&
+		(codeVersion.startsWith("2.0.0-internal.") || codeVersion.startsWith("2.0.0-dev."))
+	) {
+		version = codeVersion;
+	}
+	if (version.startsWith("2.0.0-internal.")) {
+		semverInternal = version.split("internal.")[1];
+	} else if (version.startsWith("2.0.0-dev.")) {
+		semverInternal = version.split("dev.")[1];
 	} else {
 		// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
 		throw new Error(
-			`Unexpected back compat scenario! Expecting package versions to just be 2.0.0-internal.x.y.z, but got ${pkgVersion}.`,
+			`Unexpected back compat scenario! Expecting package versions to just be 2.0.0-internal.x.y.z, but got ${version}.`,
 		);
 	}
 
