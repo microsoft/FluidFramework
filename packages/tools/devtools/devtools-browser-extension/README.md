@@ -12,7 +12,9 @@ It is currently compatible with [Chromium](https://www.chromium.org/Home/)-based
 
 Note: this package does not generate any library artifacts, so it is marked as `private` in its `package.json`.
 
-## Testing Local Changes
+## Working with the Package
+
+### Testing Local Changes
 
 To use a local build of this extension in your browser:
 
@@ -23,7 +25,12 @@ To use a local build of this extension in your browser:
       In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
     - If you are working in a [Codespace](https://code.visualstudio.com/docs/remote/codespaces) with Visual Studio Code, you can download the build artifacts by right-clicking on `dist/bundle` in the `Explorer` view and clicking `download`. This will download the files to your local machine, which you can upload to the browser.
 
-## Devtools Extensions
+### Publishing
+
+Publishing the extension to the browser stores is (at least for now) a somewhat involved process.
+A detailed article covering the required steps can be found [here](https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools-browser-extension/docs/Publish-Instructions.md).
+
+## How It Works
 
 This package runs as a [Devtools Extension](https://developer.chrome.com/docs/extensions/mv3/devtools/) in Chromium-based browsers that support them.
 
