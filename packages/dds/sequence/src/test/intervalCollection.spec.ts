@@ -1732,4 +1732,56 @@ describe("SharedString interval collections", () => {
 			});
 		});
 	});
+
+	describe("changeInterval event", () => {
+		let collection: IIntervalCollection<SequenceInterval>;
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+		beforeEach(() => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			const services = {
+				deltaConnection: containerRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			sharedString.initializeLocal();
+			sharedString.connect(services);
+
+			collection = sharedString.getIntervalCollection("test");
+		});
+
+		it("gets events when position remove slides interval", () => {
+			let eventCount = 0;
+			collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+				assert.equal(local, true, `local is ${local}`);
+				assert.equal(slide, true, `slide is ${slide}`);
+				eventCount++;
+			});
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.removeRange(0, 6);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(eventCount, 2, `eventCount is ${eventCount}`);
+		});
+
+		it("gets event when interval is moved", () => {
+			let eventCount = 0;
+			collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+				assert.equal(local, true, `local is ${local}`);
+				assert.equal(slide, false, `slide is ${slide}`);
+				assert.equal(interval.start.getOffset(), 3);
+				assert.equal(interval.end.getOffset(), 4);
+				eventCount++;
+			});
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			collection.change(id, 3, 4);
+
+			assert.equal(eventCount, 1, `eventCount is ${eventCount}`);
+		});
+	});
 });
