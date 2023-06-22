@@ -7,6 +7,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate buildVersion`
 
@@ -139,4 +140,37 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
+```
+
+## `flub generate upcoming`
+
+Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.
+
+```
+USAGE
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [-v | --quiet] [--json]
+    [--out <value>]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -t, --releaseType=<option>   (required) The type of release for which the upcoming file is being generated.
+                               <options: major|minor>
+  --out=<value>                [default: UPCOMING.md] Output the results to this file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+EXAMPLES
+  Generate UPCOMING.md for the client release group using the minor changesets.
+
+    $ flub generate upcoming -g client -t minor
+
+  You can output a different file using the --out flag.
+
+    $ flub generate upcoming -g client -t minor --out testOutput.md
 ```
