@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils";
+import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils.js";
 
 describe("versionUtils", () => {
 	it("Get the major version number above or below the baseVersion", () => {

@@ -14,8 +14,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|prerelease|none] [--patch
-    <value>] [--base <value>] [--tag <value>] [-i <value>]
+  $ flub generate buildVersion --build <value> [-v | --quiet] [--testBuild <value>] [--release release|prerelease|none]
+    [--patch <value>] [--base <value>] [--tag <value>] [-i <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -28,8 +28,9 @@ FLAGS
   --tag=<value>                          The tag name to use.
   --testBuild=<value>                    Indicates the build is a test build.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   This command is used to compute the version number of Fluid packages. The release version number is based on what's in
@@ -46,14 +47,15 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub generate bundleStats [-v] [--smallestAssetSize <value>]
+  $ flub generate bundleStats [-v | --quiet] [--smallestAssetSize <value>]
 
 FLAGS
   --smallestAssetSize=<value>  [default: 100] The smallest asset size in bytes to consider correct. Adjust when testing
                                for assets that are smaller.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
@@ -66,31 +68,17 @@ Generate a changelog for packages based on changesets.
 
 ```
 USAGE
-  $ flub generate changelog [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools|gitrest|historian]
-    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools|gitrest|historian]
-    [--version <value>]
+  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
 
 FLAGS
-  -a, --all                    Run on all packages and release groups. Cannot be used with --dir, --packages, or
-                               --releaseGroup.
-  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --all, --packages, or
-                               --releaseGroup.
-  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --all, --dir, or
-                               --packages.
+  -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -g, --skipScope=<option>...  Package scopes to filter out.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-  --packages                   Run on all independent packages in the repo. Cannot be used with --all, --dir, or
-                               --releaseGroup.
-  --[no-]private               Only include private packages (or non-private packages for --no-private)
-  --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
-                               --releaseGroup.
-  --scope=<value>...           Package scopes to filter to.
   --version=<value>            The version for which to generate the changelog. If this is not provided, the version of
                                the package according to package.json will be used.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Generate a changelog for packages based on changesets.
@@ -107,7 +95,7 @@ Generates a new changeset file. You will be prompted to select the packages affe
 
 ```
 USAGE
-  $ flub generate changeset [-v] [--json] [-b <value>] [--empty] [--all] [--uiMode default|simple]
+  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty] [--all] [--uiMode default|simple]
 
 FLAGS
   -b, --branch=<value>  [default: main] The branch to compare the current changes against. The current changes will be
@@ -117,9 +105,12 @@ FLAGS
   --empty               Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
                         randomly named changeset file will be created every time --empty is used.
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 EXPERIMENTAL FLAGS
   --uiMode=<option>  [default: default] Controls the mode in which the interactive UI is displayed. The 'default' mode

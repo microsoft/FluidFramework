@@ -10,7 +10,7 @@ import { Interval } from "../intervalCollection";
 
 const reservedIntervalIdKey = "intervalId";
 
-interface RandomIntervalOptions {
+export interface RandomIntervalOptions {
 	random: IRandom;
 	count: number;
 	min: number;
