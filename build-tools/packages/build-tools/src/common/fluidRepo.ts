@@ -300,6 +300,16 @@ export class FluidRepo {
 		}
 		return FluidRepo.ensureInstalled(this.packages.packages);
 	}
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	public relativeToRepo(p: string): string {
+		return path.relative(this.resolvedRoot, p);
+	}
 }
 
 /**
