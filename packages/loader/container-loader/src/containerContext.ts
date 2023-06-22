@@ -16,10 +16,6 @@ import {
 	ILoaderOptions,
 	IRuntimeFactory,
 	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IProvideFluidCodeDetailsComparer,
-	ICodeDetailsLoader,
-	IFluidModuleWithDetails,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -55,8 +51,6 @@ export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
 		container: Container,
 		scope: FluidObject,
-		codeLoader: ICodeDetailsLoader,
-		specifiedCodeDetails: IFluidCodeDetails,
 		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -73,23 +67,9 @@ export class ContainerContext implements IContainerContext {
 		existing: boolean,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
-		const taggedLogger = container.subLogger;
-		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			taggedLogger,
-			{ eventName: "CodeLoad" },
-			async () => codeLoader.load(specifiedCodeDetails),
-		);
-
-		const loadedModule: IFluidModuleWithDetails = {
-			module: loadCodeResult.module,
-			details: loadCodeResult.details ?? specifiedCodeDetails,
-		};
-
 		const context = new ContainerContext(
 			container,
 			scope,
-			codeLoader,
-			loadedModule,
 			runtimeFactory,
 			baseSnapshot,
 			deltaManager,
@@ -217,8 +197,6 @@ export class ContainerContext implements IContainerContext {
 	constructor(
 		private readonly container: Container,
 		public readonly scope: FluidObject,
-		private readonly codeLoader: ICodeDetailsLoader,
-		private readonly _loadedModule: IFluidModuleWithDetails,
 		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -329,45 +307,6 @@ export class ContainerContext implements IContainerContext {
 
 	public getPendingLocalState(): unknown {
 		return this.runtime.getPendingLocalState();
-	}
-
-	/**
-	 * Determines if the current code details of the context
-	 * satisfy the incoming constraint code details
-	 */
-	public async satisfies(constraintCodeDetails: IFluidCodeDetails) {
-		const comparers: IFluidCodeDetailsComparer[] = [];
-
-		const maybeCompareCodeLoader = this.codeLoader;
-		if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
-			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
-		}
-
-		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
-			this._loadedModule.module.fluidExport;
-		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
-			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
-		}
-
-		// if there are not comparers it is not possible to know
-		// if the current satisfy the incoming, so return false,
-		// as assuming they do not satisfy is safer .e.g we will
-		// reload, rather than potentially running with
-		// incompatible code
-		if (comparers.length === 0) {
-			return false;
-		}
-
-		for (const comparer of comparers) {
-			const satisfies = await comparer.satisfies(
-				this._loadedModule.details,
-				constraintCodeDetails,
-			);
-			if (satisfies === false) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {

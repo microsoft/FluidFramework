@@ -29,6 +29,8 @@ import {
 	IHostLoader,
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
+	IProvideFluidCodeDetailsComparer,
+	IFluidCodeDetailsComparer,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -669,6 +671,8 @@ export class Container
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
 	}
+
+	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
 	 * Retrieves the audience associated with the document
@@ -1386,7 +1390,7 @@ export class Container
 			this.deltaManager.inboundSignal.pause(),
 		]);
 
-		if ((await this.context.satisfies(codeDetails)) === true) {
+		if ((await this.satisfies(codeDetails)) === true) {
 			this.deltaManager.inbound.resume();
 			this.deltaManager.inboundSignal.resume();
 			return;
@@ -1395,6 +1399,49 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
+	}
+
+	/**
+	 * Determines if the currently loaded module satisfies the incoming constraint code details
+	 */
+	private async satisfies(constraintCodeDetails: IFluidCodeDetails) {
+		// If we have no module, it can't satisfy anything.
+		if (this._loadedModule === undefined) {
+			return false;
+		}
+
+		const comparers: IFluidCodeDetailsComparer[] = [];
+
+		const maybeCompareCodeLoader = this.codeLoader;
+		if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
+		}
+
+		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
+			this._loadedModule?.module.fluidExport;
+		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
+		}
+
+		// if there are not comparers it is not possible to know
+		// if the current satisfy the incoming, so return false,
+		// as assuming they do not satisfy is safer .e.g we will
+		// reload, rather than potentially running with
+		// incompatible code
+		if (comparers.length === 0) {
+			return false;
+		}
+
+		for (const comparer of comparers) {
+			const satisfies = await comparer.satisfies(
+				this._loadedModule?.details,
+				constraintCodeDetails,
+			);
+			if (satisfies === false) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -2222,20 +2269,22 @@ export class Container
 		const maybeLoader: FluidObject<IHostLoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
-		const taggedLogger = this.subLogger;
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			taggedLogger,
+			this.subLogger,
 			{ eventName: "CodeLoad" },
 			async () => this.codeLoader.load(codeDetails),
 		);
 
-		const loadedModule: IFluidModuleWithDetails = {
+		this._loadedModule = {
 			module: loadCodeResult.module,
+			// An older interface ICodeLoader could return an IFluidModule which didn't have details.
+			// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
+			// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
 			details: loadCodeResult.details ?? codeDetails,
 		};
 
 		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
-			loadedModule.module.fluidExport;
+			this._loadedModule.module.fluidExport;
 		const runtimeFactory = fluidExport?.IRuntimeFactory;
 		if (runtimeFactory === undefined) {
 			throw new Error(PackageNotFactoryError);
@@ -2244,8 +2293,6 @@ export class Container
 		this._context = await ContainerContext.createOrLoad(
 			this,
 			this.scope,
-			this.codeLoader,
-			codeDetails,
 			runtimeFactory,
 			snapshot,
 			new DeltaManagerProxy(this._deltaManager),
