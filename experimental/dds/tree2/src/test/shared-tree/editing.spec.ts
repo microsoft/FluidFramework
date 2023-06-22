@@ -487,7 +487,7 @@ describe("Editing", () => {
 			tree2.transaction.commit();
 			tree.merge(tree2);
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
-		});		
+		});
 
 		it("rebase changes to field untouched by base", () => {
 			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, "B"] });

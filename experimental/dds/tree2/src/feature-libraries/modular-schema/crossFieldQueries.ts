@@ -65,45 +65,69 @@ export function setInRangeMap<T>(
 	count: number,
 	value: T,
 ): void {
+	const lastTargetId: ChangesetLocalId = brand((id as number) + count - 1);
 	const newEntry: CrossFieldRange<T> = { id, length: count, data: value };
-	for (const [i, range] of map.entries()) {
-		const lastRangeId = (range.id as number) + range.length - 1;
-		const lastTargetId = (id as number) + count - 1;
 
-		if (range.id > lastTargetId) {
+	let iBefore = -1;
+	let iAfter = map.length;
+	for (const [i, entry] of map.entries()) {
+		const entryLastId = (entry.id as number) + entry.length - 1;
+		if (entryLastId < id) {
+			iBefore = i;
+		} else if (entry.id > lastTargetId) {
+			iAfter = i;
 			break;
-		}
-
-		if (lastRangeId < id) {
-			continue;
-		}
-
-		if (range.id < id && lastRangeId > lastTargetId) {
-			// range has excess portions both before and after target range
-			// We replace the existing range with a range before and a range after and insert the new range
-			range.length = (id as number) + count - range.id;
-			map.splice(i + 1, 0, newEntry);
-			map.splice(i + 2, 0, {
-				id: brand((id as number) + 1),
-				length: lastRangeId - id,
-				data: range.data,
-			});
-			return;
-		}
-
-		if (range.id < id) {
-			range.length = id - range.id;
-		} else if (lastRangeId > lastTargetId) {
-			range.id = brand((id as number) + 1);
-			range.length = lastRangeId - range.id + 1;
-			map.splice(i, 0, newEntry);
-			return;
-		} else {
-			map.splice(i, 1);
 		}
 	}
 
-	map.push(newEntry);
+	const numOverlappingEntries = iAfter - iBefore - 1;
+	if (numOverlappingEntries === 0) {
+		map.splice(iAfter, 0, newEntry);
+		return;
+	}
+
+	const iFirst = iBefore + 1;
+	const firstEntry = map[iFirst];
+	const iLast = iAfter - 1;
+	const lastEntry = map[iLast];
+	const lengthBeforeFirst = id - firstEntry.id;
+	const lastEntryId = (lastEntry.id as number) + lastEntry.length - 1;
+	const lengthAfterLast = lastEntryId - lastTargetId;
+
+	if (lengthBeforeFirst > 0 && lengthAfterLast > 0 && iFirst === iLast) {
+		// The new entry fits in the middle of an existing entry.
+		// We replace the existing entry with:
+		// 1) the portion which comes before `newEntry`
+		// 2) `newEntry`
+		// 3) the portion which comes after `newEntry`
+		map.splice(iFirst, 1, { ...firstEntry, length: lengthBeforeFirst }, newEntry, {
+			...lastEntry,
+			id: brand((lastTargetId as number) + 1),
+			length: lengthAfterLast,
+		});
+		return;
+	}
+
+	if (lengthBeforeFirst > 0) {
+		map[iFirst] = { ...firstEntry, length: lengthBeforeFirst };
+
+		// The entry at `iFirst` is no longer overlapping with `newEntry`.
+		iBefore = iFirst;
+	}
+
+	if (lengthAfterLast > 0) {
+		map[iLast] = {
+			...lastEntry,
+			id: brand((lastTargetId as number) + 1),
+			length: lengthAfterLast,
+		};
+
+		// The entry at `iLast` is no longer overlapping with `newEntry`.
+		iAfter = iLast;
+	}
+
+	const numContainedEntries = iAfter - iBefore - 1;
+	map.splice(iBefore + 1, numContainedEntries, newEntry);
 }
 
 /**
