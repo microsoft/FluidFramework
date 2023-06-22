@@ -81,12 +81,15 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 }
 
 /**
- * Creates a map of 
- * @param changesets - An array of changesets to be grouped.
- * @returns a Map of package names to an array of all the changesets that apply to the package. The entries are sorted
+ * Creates a map of package names to an array of all the changesets that apply to the package. The entries are sorted
  * oldest-to-newest (that is, index 0 is the earliest changeset, and the last changeset in the array is the newest).
+ *
+ * @param changesets - An array of changesets to be grouped.
+ * @returns a Map of package names to an array of all the changesets that apply to the package.
  */
-export function groupByPackage(changesets: ChangesetEntry[]): Map<ReleasePackage, ChangesetEntry[]> {
+export function groupByPackage(
+	changesets: ChangesetEntry[],
+): Map<ReleasePackage, ChangesetEntry[]> {
 	const changesetMap = new Map<ReleasePackage, ChangesetEntry[]>();
 	for (const changeset of changesets) {
 		const entries = changesetMap.get(changeset.pkg) ?? [];

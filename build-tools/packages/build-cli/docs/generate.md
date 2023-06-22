@@ -144,7 +144,7 @@ EXAMPLES
 
 ## `flub generate upcoming`
 
-Generates a summary of all changesets.
+Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.
 
 ```
 USAGE
@@ -164,4 +164,13 @@ LOGGING FLAGS
 
 GLOBAL FLAGS
   --json  Format output as json.
+
+EXAMPLES
+  Generate UPCOMING.md for the client release group using the minor changesets.
+
+    $ flub generate upcoming -g client -t minor
+
+  You can output a different file using the --out flag.
+
+    $ flub generate upcoming -g client -t minor --out testOutput.md
 ```

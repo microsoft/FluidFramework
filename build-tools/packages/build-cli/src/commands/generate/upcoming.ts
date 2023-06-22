@@ -18,7 +18,7 @@ const DEFAULT_FILE = "UPCOMING.md";
  * that provides a single place where developers can see upcoming changes.
  */
 export default class GenerateUpcomingCommand extends BaseCommand<typeof GenerateUpcomingCommand> {
-	static summary = `Generates a summary of all changesets.`;
+	static summary = `Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
 
 	// Enables the global JSON flag in oclif.
 	static enableJsonFlag = true;
@@ -48,10 +48,14 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 	};
 
 	static examples = [
-		// {
-		// 	description: `By default example and private packages are excluded, but they can be included with --all.`,
-		// 	command: "<%= config.bin %> <%= command.id %> --all",
-		// },
+		{
+			description: `Generate UPCOMING.md for the client release group using the minor changesets.`,
+			command: "<%= config.bin %> <%= command.id %> -g client -t minor",
+		},
+		{
+			description: `You can output a different file using the --out flag.`,
+			command: "<%= config.bin %> <%= command.id %> -g client -t minor --out testOutput.md",
+		},
 	];
 
 	public async run(): Promise<string> {
@@ -79,11 +83,8 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 		const contents = `${header}\n\n${intro}\n\n${body}`;
 		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
 		this.info(`Writing output file: ${outputPath}`);
-		await writeFile(
-			outputPath,
-			prettier(contents, { proseWrap: "never", parser: "markdown" }),
-		);
-	
+		await writeFile(outputPath, prettier(contents, { proseWrap: "never", parser: "markdown" }));
+
 		return contents;
 	}
 }
