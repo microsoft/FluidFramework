@@ -8,7 +8,7 @@ import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
-	IFluidInternalReferenceInfo,
+	IExperimentalFluidGCInfo,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -934,7 +934,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * cases where objects are used after they are deleted and throw / log errors accordingly.
 	 */
 	public isNodeDeleted(nodePath: string): boolean {
-		//* TODO: Replace usages with getInternalReferenceInfo?
+		//* TODO: Replace usages with getGCReferenceInfo?
 		return this.deletedNodes.has(nodePath);
 	}
 
@@ -944,7 +944,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * some time later it will transition to Inactive even if it is revived in the meantime.
 	 * @param nodePath - Container-relative path to the node
 	 */
-	public getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo {
+	public getGCReferenceInfo(nodePath: string): IExperimentalFluidGCInfo {
 		// Callers should know not to query for internal reference info for deleted nodes
 		assert(
 			!this.deletedNodes.has("nodePath"),
@@ -962,7 +962,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		//* Finalize state values and logic here
-		let state: IFluidInternalReferenceInfo["state"];
+		let state: IExperimentalFluidGCInfo["state"];
 		switch (trackedState.state) {
 			case "Active":
 				state = "Unreferenced";

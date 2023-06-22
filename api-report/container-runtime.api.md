@@ -23,11 +23,11 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
@@ -143,10 +143,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getCurrentReferenceTimestampMs(): number | undefined;
     // (undocumented)
     getEntryPoint?(): Promise<FluidObject | undefined>;
+    // (undocumented)
+    getExperimentalGCReferenceInfo(nodePath: string): IExperimentalFluidGCInfo;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
-    // (undocumented)
-    getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)

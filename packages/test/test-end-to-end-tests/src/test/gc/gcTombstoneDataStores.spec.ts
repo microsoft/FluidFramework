@@ -38,17 +38,19 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	IFluidDataStoreChannel,
-	IFluidInternalReferenceInfo,
+	IExperimentalFluidGCInfo,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
+//* ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY
+
 /**
  * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
+describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(
@@ -854,16 +856,16 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					unreferencedId,
 				);
 
-				const handle = manufactureHandle<FluidObject<IFluidInternalReferenceInfo>>(
+				const handle = manufactureHandle<FluidObject<IExperimentalFluidGCInfo>>(
 					dataObject1._context.IFluidHandleContext,
 					unreferencedId,
 				);
 
 				// handle.get for the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
 				// Logs a tombstone and sweep ready error
-				const dataObject: FluidObject<IFluidInternalReferenceInfo> = await handle.get();
+				const dataObject: FluidObject<IExperimentalFluidGCInfo> = await handle.get();
 				assert.equal(
-					dataObject.IFluidInternalReferenceInfo?.state ?? "",
+					dataObject.IExperimentalFluidGCInfo?.state ?? "",
 					"Tombstoned",
 					"Expected the reference info to report Tombstoned",
 				);

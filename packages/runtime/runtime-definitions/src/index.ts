@@ -22,8 +22,8 @@ export {
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
-	IFluidInternalReferenceInfo,
-	IProvideFluidInternalReferenceInfo,
+	IExperimentalFluidGCInfo,
+	IProvideExperimentalFluidGCInfo,
 	VisibilityState,
 } from "./dataStoreContext";
 export { IFluidDataStoreFactory, IProvideFluidDataStoreFactory } from "./dataStoreFactory";

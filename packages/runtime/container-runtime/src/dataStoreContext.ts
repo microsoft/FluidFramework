@@ -46,7 +46,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	VisibilityState,
-	IFluidInternalReferenceInfo,
+	IExperimentalFluidGCInfo,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -215,8 +215,8 @@ export abstract class FluidDataStoreContext
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	private deleted: boolean = false;
 
-	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo {
-		return this._containerRuntime.getInternalReferenceInfo(`/${this.id}`);
+	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo {
+		return this._containerRuntime.getExperimentalGCReferenceInfo(`/${this.id}`);
 	}
 
 	public get attachState(): AttachState {

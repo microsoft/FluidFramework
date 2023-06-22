@@ -16,8 +16,8 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
 	IFluidDataStoreContext,
-	IFluidInternalReferenceInfo,
-	IProvideFluidInternalReferenceInfo,
+	IExperimentalFluidGCInfo,
+	IProvideExperimentalFluidGCInfo,
 } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
@@ -32,11 +32,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends EventForwarder<I["Events"] & IEvent>
-	implements
-		IFluidLoadable,
-		IFluidRouter,
-		IProvideFluidHandle,
-		IProvideFluidInternalReferenceInfo
+	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideExperimentalFluidGCInfo
 {
 	private _disposed = false;
 
@@ -80,8 +76,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.handle;
 	}
 
-	public get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined {
-		return this.context.IFluidInternalReferenceInfo;
+	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo | undefined {
+		return this.context.IExperimentalFluidGCInfo;
 	}
 
 	/**

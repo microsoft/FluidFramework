@@ -350,9 +350,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 
 //* TODO: Find final home for these
 
-export interface IProvideFluidInternalReferenceInfo {
+export interface IProvideExperimentalFluidGCInfo {
 	//* Make required here?
-	IFluidInternalReferenceInfo?: IFluidInternalReferenceInfo;
+	IExperimentalFluidGCInfo?: IExperimentalFluidGCInfo;
 }
 
 //* TODO: Consider converging this type with UnreferencedStateTracker (e.g. have UnreferencedStateTracker implement this interface)
@@ -360,7 +360,7 @@ export interface IProvideFluidInternalReferenceInfo {
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.
  */
-export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
+export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
 	/** Server timestamp in Unix Epoch format of the point in time (in the op stream) this was detected as unreferenced */
 	unreferencedTimestampMs?: number;
 
@@ -376,7 +376,7 @@ export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
 		Partial<IProvideFluidDataStoreRegistry>,
 		IProvideFluidHandleContext,
-		IProvideFluidInternalReferenceInfo {
+		IProvideExperimentalFluidGCInfo {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads

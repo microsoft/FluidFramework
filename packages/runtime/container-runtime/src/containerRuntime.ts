@@ -2488,8 +2488,8 @@ export class ContainerRuntime
 		return this.dataStores.updateStateBeforeGC();
 	}
 
-	public getInternalReferenceInfo(nodePath: string) {
-		return this.garbageCollector.getInternalReferenceInfo(nodePath);
+	public getExperimentalGCReferenceInfo(nodePath: string) {
+		return this.garbageCollector.getGCReferenceInfo(nodePath);
 	}
 
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {

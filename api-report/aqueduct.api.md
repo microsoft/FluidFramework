@@ -24,13 +24,13 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
+import { IExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
-import { IProvideFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
+import { IProvideExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
@@ -121,7 +121,7 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideFluidInternalReferenceInfo {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideExperimentalFluidGCInfo {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     dispose(): void;
@@ -137,7 +137,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
-    get IFluidInternalReferenceInfo(): IFluidInternalReferenceInfo | undefined;
+    get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo | undefined;
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)
