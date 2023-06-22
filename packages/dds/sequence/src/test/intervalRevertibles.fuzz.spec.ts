@@ -91,8 +91,8 @@ emitter.on("clientCreate", (client) => {
 				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
 			}
 		});
-		collection.on("changeInterval", (interval, previousInterval, local, op) => {
-			if (local && !channel.isCurrentRevert) {
+		collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+			if (local && !channel.isCurrentRevert && !slide) {
 				appendChangeIntervalToRevertibles(
 					channel,
 					interval,
