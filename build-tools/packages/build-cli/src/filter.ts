@@ -156,7 +156,7 @@ export function filterPackages<T extends FilterablePackage>(
 		}
 
 		const isPrivate: boolean = pkg.private ?? false;
-		if (pkg.private !== undefined && filters.private !== isPrivate) {
+		if (filters.private !== undefined && filters.private !== isPrivate) {
 			return false;
 		}
 
