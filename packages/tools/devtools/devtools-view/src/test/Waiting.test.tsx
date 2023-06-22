@@ -5,8 +5,6 @@
 
 import React from "react";
 
-// // eslint-disable-next-line import/no-unassigned-import
-// import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
 import { Waiting, defaultWaitingLabel } from "../components";
