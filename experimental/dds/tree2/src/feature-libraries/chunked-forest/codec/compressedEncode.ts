@@ -114,7 +114,7 @@ export function asNodesEncoder(encoder: NodeEncoderShape): NodesEncoderShape {
 }
 
 // Encodes a chunk polymorphically.
-class AnyShape extends ShapeGeneric<EncodedChunkShape> {
+export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	private constructor() {
 		super();
 	}
@@ -263,7 +263,7 @@ export class InlineArrayShape
 		return {
 			b: {
 				length: this.length,
-				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail(""),
+				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail("missing shape"),
 			},
 		};
 	}

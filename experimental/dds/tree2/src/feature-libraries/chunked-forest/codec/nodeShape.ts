@@ -23,6 +23,7 @@ import {
 } from "./compressedEncode";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderShape {
+	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
 	private readonly fields: FieldShape<FieldKey>[];
 	private readonly explicitKeys: Set<FieldKey>;
 

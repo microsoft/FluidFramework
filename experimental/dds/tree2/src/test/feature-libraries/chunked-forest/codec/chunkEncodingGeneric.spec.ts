@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
 import {
@@ -14,7 +14,6 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 
 import {
-	EncodedChunkGeneric,
 	unionOptions,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
@@ -23,10 +22,6 @@ import {
 	DeduplicationTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
-import { ReferenceCountedBase } from "../../../../util";
-import { TreeChunk } from "../../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk";
 
 export const Constant = Type.Literal(0);
 
@@ -45,9 +40,6 @@ const version = "test format";
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
 type EncodedChunkShape = Static<typeof EncodedChunkShape>;
-
-const EncodedChunk = EncodedChunkGeneric(version, EncodedChunkShape);
-type EncodedChunk = Static<typeof EncodedChunk>;
 
 class TestShape extends Shape<EncodedChunkShape> {
 	public constructor(
@@ -87,42 +79,6 @@ class TestConstantShape extends Shape<EncodedChunkShape> {
 }
 
 const testConstantShape = new TestConstantShape();
-
-class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
-	public readonly topLevelLength: number = 1;
-
-	public constructor(public value: string) {
-		super();
-	}
-
-	public clone(): TestChunk1 {
-		return new TestChunk1(this.value);
-	}
-
-	public cursor(): ChunkedCursor {
-		fail("not implemented");
-	}
-
-	protected dispose(): void {}
-}
-
-class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
-	public readonly topLevelLength: number = 1;
-
-	public constructor(public value: number) {
-		super();
-	}
-
-	public clone(): TestChunk2 {
-		return new TestChunk2(this.value);
-	}
-
-	public cursor(): ChunkedCursor {
-		fail("not implemented");
-	}
-
-	protected dispose(): void {}
-}
 
 describe("chunkEncodingGeneric", () => {
 	describe("handleShapesAndIdentifiers", () => {
@@ -237,39 +193,4 @@ describe("chunkEncodingGeneric", () => {
 			);
 		});
 	});
-
-	// it("encode: empty", () => {
-	// 	const manager: TestManager = new Map();
-	// 	const encoded = encode(version, encodeLibrary, manager, emptyChunk);
-	// 	assert.deepEqual(encoded, {
-	// 		version,
-	// 		identifiers: [],
-	// 		shapes: [],
-	// 		data: [],
-	// 	});
-	// });
-
-	// it("encode: constant shape", () => {
-	// 	const manager: TestManager = new Map();
-	// 	const chunk = new TestChunk2(5);
-	// 	const encoded = encode(version, encodeLibrary, manager, chunk);
-	// 	assert.deepEqual(encoded, {
-	// 		version,
-	// 		identifiers: [],
-	// 		shapes: [{ a: 0 }],
-	// 		data: [0, 5],
-	// 	});
-	// });
-
-	// it("encode: flexible shape", () => {
-	// 	const manager: TestManager = new Map();
-	// 	const chunk = new TestChunk1("content");
-	// 	const encoded = encode(version, encodeLibrary, manager, chunk);
-	// 	assert.deepEqual(encoded, {
-	// 		version,
-	// 		identifiers: [],
-	// 		shapes: [{ b: "content" }],
-	// 		data: [0],
-	// 	});
-	// });
 });

@@ -280,7 +280,4 @@ describe("compressedEncode", () => {
 			]);
 		});
 	});
-
-	// TODO: be sure to test recursive case to test laziness
-	describe("EncoderCache", () => {});
 });

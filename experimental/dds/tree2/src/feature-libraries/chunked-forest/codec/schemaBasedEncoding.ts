@@ -41,27 +41,35 @@ export function schemaCompressedEncode(
 	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
-	const cache = new EncoderCache(
+	return compressedEncode(cursor, buildCache(schema));
+}
+
+export function buildCache(schema: SchemaDataAndPolicy<FullSchemaPolicy>): EncoderCache {
+	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
 			treeShaper(schema, fieldHandler, schemaName),
-		fieldShaper,
+		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
+			fieldShaper(treeHandler, field, cache),
 	);
-	return compressedEncode(cursor, cache);
+	return cache;
 }
 
 /**
  * Selects shapes to use to encode fields.
  */
-export function fieldShaper(treeHandler: TreeShaper, field: FieldStoredSchema): FieldEncoderShape {
+export function fieldShaper(
+	treeHandler: TreeShaper,
+	field: FieldStoredSchema,
+	cache: EncoderCache,
+): FieldEncoderShape {
 	const kind = getFieldKind(field);
 	const type = oneFromSet(field.types);
+	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (kind.multiplicity === Multiplicity.Value) {
-		return asFieldEncoder(
-			type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder,
-		);
+		return asFieldEncoder(nodeEncoder);
 	} else {
-		return anyFieldEncoder;
+		return cache.nestedArray(nodeEncoder);
 	}
 }
 
@@ -74,6 +82,10 @@ export function treeShaper(
 	schemaName: TreeSchemaIdentifier,
 ): NodeShape {
 	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+
+	// TODO:Performance:
+	// consider moving some optional and sequence fields to extra fields if they are commonly empty
+	// to reduce encoded size.
 
 	const local: FieldShape<LocalFieldKey>[] = [];
 	for (const [key, field] of schema.localFields) {
@@ -94,12 +106,12 @@ export function treeShaper(
 		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
 			? undefined
 			: fieldHandler.shapeFromField(schema.extraLocalFields),
-		schema.extraGlobalFields ? undefined : anyFieldEncoder,
+		schema.extraGlobalFields ? anyFieldEncoder : undefined,
 	);
 	return shape;
 }
 
-function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
 		return undefined;
 	}

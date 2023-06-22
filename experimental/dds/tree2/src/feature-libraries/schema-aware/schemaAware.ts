@@ -150,7 +150,7 @@ export type UnbrandedName<TName> = [
  * In Editable mode, unwraps the fields.
  *
  * TODO:
- * Extend this to support global fields.
+ * Extend this to support global fields. (And use something like RestrictiveRecord to reject invalid symbols)
  * @alpha
  */
 export type TypedFields<
