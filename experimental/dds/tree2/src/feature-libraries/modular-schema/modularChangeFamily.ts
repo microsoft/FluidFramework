@@ -14,7 +14,6 @@ import {
 	Delta,
 	FieldKey,
 	UpPath,
-	Value,
 	TaggedChange,
 	ReadonlyRepairDataStore,
 	RevisionTag,

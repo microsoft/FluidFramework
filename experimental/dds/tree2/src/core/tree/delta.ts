@@ -5,7 +5,7 @@
 
 import { Brand, Opaque } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
-import { FieldKey, Value } from "./types";
+import { FieldKey } from "./types";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.

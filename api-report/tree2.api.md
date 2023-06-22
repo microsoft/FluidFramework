@@ -1541,7 +1541,6 @@ export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-    onSetValue(path: UpPath, value: Value): void;
 }
 
 // @alpha

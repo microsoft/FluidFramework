@@ -24,13 +24,7 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import {
-	getFieldKind,
-	getFieldSchema,
-	typeNameSymbol,
-	valueSymbol,
-	allowsValue,
-} from "../contextuallyTyped";
+import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
