@@ -54,17 +54,21 @@ export interface IOutboxParameters {
 }
 
 /**
- * Temporarily increase the stack limit to 50 frames.
+ * Temporarily increase the stack limit while executing the provided action.
+ * If a negative value is provided for `length`, no stack frames will be collected.
+ * If Infinity is provided, all frames will be collected.
+ *
  * ADO:4663 - add this to the common packages.
  *
  * @param action - action which returns an error
+ * @param length - number of stack frames to collect, 50 if unspecified.
  * @returns the result of the action provided
  */
-export function getLongStack(action: () => Error): Error {
+export function getLongStack<T>(action: () => T, length: number = 50): T {
 	const originalStackTraceLimit = (Error as any).stackTraceLimit;
 
 	try {
-		(Error as any).stackTraceLimit = 50;
+		(Error as any).stackTraceLimit = length;
 		return action();
 	} finally {
 		(Error as any).stackTraceLimit = originalStackTraceLimit;

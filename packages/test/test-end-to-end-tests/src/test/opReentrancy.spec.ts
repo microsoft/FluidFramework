@@ -214,29 +214,47 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	});
 
 	describe("Reentry safeguards", () => {
-		it("Deep recursion is not supported", async () => {
-			await setupContainers(testContainerConfig);
+		itExpects(
+			"Deep recursion is not supported",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Op reentrancy detected with a recursion depth of 100",
+				},
+			],
+			async () => {
+				await setupContainers(testContainerConfig);
 
-			sharedString1.on("sequenceDelta", () => {
-				sharedString1.insertText(0, "x");
-			});
-			assert.throws(() => sharedString1.insertText(0, "ad"));
-			await provider.ensureSynchronized();
-		});
+				sharedString1.on("sequenceDelta", () => {
+					sharedString1.insertText(0, "x");
+				});
+				assert.throws(() => sharedString1.insertText(0, "ad"));
+				await provider.ensureSynchronized();
+			},
+		);
 
-		it("Deep recursion is not supported, two clients, two data structures", async () => {
-			await setupContainers(testContainerConfig);
+		itExpects(
+			"Deep recursion is not supported, two clients, two data structures",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Op reentrancy detected with a recursion depth of 100",
+				},
+			],
+			async () => {
+				await setupContainers(testContainerConfig);
 
-			sharedString1.on("sequenceDelta", () => {
-				sharedMap2.set("0", 1);
-			});
-			sharedMap2.on("valueChanged", () => {
-				sharedString1.insertText(0, "x");
-			});
+				sharedString1.on("sequenceDelta", () => {
+					sharedMap2.set("0", 1);
+				});
+				sharedMap2.on("valueChanged", () => {
+					sharedString1.insertText(0, "x");
+				});
 
-			assert.throws(() => sharedString1.insertText(0, "ad"));
-			await provider.ensureSynchronized();
-		});
+				assert.throws(() => sharedString1.insertText(0, "ad"));
+				await provider.ensureSynchronized();
+			},
+		);
 
 		itExpects(
 			"Flushing is not supported",
