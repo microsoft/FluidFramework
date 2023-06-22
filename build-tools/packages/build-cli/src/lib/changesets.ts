@@ -8,26 +8,33 @@ import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
+import path from "node:path";
 
 import { ReleasePackage } from "../releaseGroups";
 import { Repository } from "./git";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
+export interface Changeset {
+	metadata: { [pkg: string]: VersionBumpType };
+	changeTypes: VersionBumpType[];
+	content: string;
+	summary?: string;
+	added?: Date;
+	sourceFile: string;
+}
+
 /**
  * A ChangesetEntry is an object containing flattened content and file metadata from a changesets file. Changeset files
  * themselves include a mapping of package to version bump type. This object includes the change type and a single
  * package, effectively flattening the changesets.
  */
-export interface ChangesetEntry {
+export type ChangesetEntry = Omit<Changeset, "metadata" | "changeTypes"> & {
 	pkg: string;
 	changeType: VersionBumpType;
-	content: string;
-	summary?: string;
-	added?: Date;
-}
+};
 
-function compareChangesetEntry(a: ChangesetEntry, b: ChangesetEntry) {
+function compareChangesets<T extends Pick<Changeset, "added">>(a: T, b: T) {
 	if (a.added === undefined || b.added === undefined) {
 		return 0;
 	}
@@ -35,14 +42,18 @@ function compareChangesetEntry(a: ChangesetEntry, b: ChangesetEntry) {
 }
 
 /**
+ * Loads changeset files into a list of individual changes for a package. Changeset files themselves include a mapping
+ * of package to version bump type. This function returns an array with an entry per-package-changeset, effectively
+ * flattening the changesets.
+ *
  * @param dir - The directory containing changesets.
  * @param log - An optional logger.
- * @returns An object with the bumpt type and a map of packages to changeset entries.
+ * @returns An array containing the flattened changesets.
  */
-export async function loadChangesets(dir: string, log?: Logger): Promise<ChangesetEntry[]> {
+export async function loadChangesets(dir: string, log?: Logger): Promise<Changeset[]> {
 	const repo = new Repository({ baseDir: dir });
 	const changesetFiles = await globby(["*.md", "!README.md"], { cwd: dir, absolute: true });
-	const changesetEntries: ChangesetEntry[] = [];
+	const changesets: Changeset[] = [];
 
 	for (const file of changesetFiles) {
 		// Get the date the changeset file was added to git.
@@ -62,22 +73,25 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		const summary = paragraphs[0];
 		const content = paragraphs.slice(1).join("\n\n");
 
-		// ...while the map contains the entries as they apply to each released package.
-		for (const [pkgName, changeType] of Object.entries(md.data)) {
-			changesetEntries.push({
-				pkg: pkgName,
-				content,
-				added,
-				summary,
-				changeType,
-			});
+		const newChangeset: Changeset = {
+			metadata: md.data,
+			content,
+			added,
+			summary,
+			sourceFile: file,
+			changeTypes: [...new Set(Object.values(md.data))],
+		};
+
+		changesets.push(newChangeset);
+		if(newChangeset.changeTypes.length > 1) {
+			log?.warning(`Changeset ${path.basename(file)} contains multiple change types. Is this expected?`);
 		}
 	}
 
 	// Sort all the entries by date
-	changesetEntries.sort(compareChangesetEntry);
+	changesets.sort(compareChangesets);
 
-	return changesetEntries;
+	return changesets;
 }
 
 /**
@@ -99,8 +113,31 @@ export function groupByPackage(
 
 	// Sort all the entries by date
 	for (const entries of changesetMap.values()) {
-		entries.sort(compareChangesetEntry);
+		entries.sort(compareChangesets);
 	}
 
 	return changesetMap;
+}
+
+/**
+ * Given an array of changesets, flattens the changesets into an array of ChangesetEntry objects.
+ */
+export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
+	const entries: ChangesetEntry[] = [];
+
+	for (const changeset of changesets) {
+		const { content, summary, added, sourceFile, metadata } = changeset;
+		for (const [pkg, changeType] of Object.entries(metadata)) {
+			entries.push({
+				pkg,
+				changeType,
+				content,
+				summary,
+				added,
+				sourceFile,
+			});
+		}
+	}
+
+	return entries;
 }
