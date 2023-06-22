@@ -9,13 +9,23 @@ import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
 
-interface ListEntry {
+/**
+ * The output of `pnpm -r list` is an array of objects of this shape.
+ */
+interface PnpmListEntry {
 	name: string;
 	version: string;
 	path: string;
 	private: boolean;
 }
 
+/**
+ * Lists all the packages in a release group in topological order.
+ *
+ * @remarks
+ * This command is primarily used in our CI pipelines to ensure we publish packages in order to prevent customers from
+ * seeing errors if they happen to be installing packages while we are publishing a new release.
+ */
 export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	static description = `List packages in a release group in topological order.`;
 	static enableJsonFlag = true;
@@ -30,7 +40,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}),
 	};
 
-	public async run(): Promise<ListEntry[]> {
+	public async run(): Promise<PnpmListEntry[]> {
 		const context = await this.getContext();
 		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
 		if (releaseGroup === undefined) {
@@ -46,7 +56,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			this.error(`No output from pnpm list.`, { exit: 1 });
 		}
 
-		const parsed: ListEntry[] = JSON.parse(raw.stdout);
+		const parsed: PnpmListEntry[] = JSON.parse(raw.stdout);
 		const filtered = filterPackages(parsed, filterOptions)
 			.reverse()
 			.map((item) => {

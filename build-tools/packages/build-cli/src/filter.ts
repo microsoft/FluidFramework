@@ -210,6 +210,7 @@ type FilterablePackage = Pick<Package, "name" | "private">;
  *
  * @param packages - An array of packages to be filtered.
  * @param filters - The filter criteria to filter the packages by.
+ * @typeParam T - The type of the package-like objects being filtered.
  * @returns An array containing only the filtered items.
  */
 export function filterPackages<T extends FilterablePackage>(
