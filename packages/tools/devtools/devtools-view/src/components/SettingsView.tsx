@@ -59,7 +59,7 @@ const useStyles = makeStyles({
 });
 
 /**
- * Settings page for the debugger
+ * Settings page for the devtools.
  */
 export function SettingsView(): React.ReactElement {
 	const { setTheme } = React.useContext(ThemeContext) ?? {};

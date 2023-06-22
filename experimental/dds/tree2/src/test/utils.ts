@@ -513,6 +513,10 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
+export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+}
+
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
 	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
 	return makeTreeFromCursor(cursors, jsonSchema);

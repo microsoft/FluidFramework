@@ -14,7 +14,7 @@ const useStyles = makeStyles({
 });
 
 /**
- * Landing page for the debugger
+ * Landing page for the devtools.
  */
 export function LandingView(): React.ReactElement {
 	const styles = useStyles();
