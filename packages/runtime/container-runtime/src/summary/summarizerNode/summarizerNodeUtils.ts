@@ -67,7 +67,7 @@ export type ValidateSummaryResult =
 export interface ISummarizerNodeRootContract {
 	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt): void;
 	validateSummary(): ValidateSummaryResult;
-	completeSummary(proposalHandle: string): void;
+	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;
 	refreshLatestSummary(
 		proposalHandle: string | undefined,

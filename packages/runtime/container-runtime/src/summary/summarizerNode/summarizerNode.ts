@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
@@ -213,6 +214,33 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
 	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
+		if (!this.didSummarize(parentSkipRecursion)) {
+			return {
+				success: false,
+				reason: "NodeDidNotSummarize",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: this.telemetryNodeId,
+				},
+				// These errors are usually transient and should go away when summarize is retried.
+				retryAfterSeconds: 1,
+			};
+		}
+		if (parentSkipRecursion) {
+			return { success: true };
+		}
+
+		for (const child of this.children.values()) {
+			const result = child.validateSummaryCore(this.wipSkipRecursion || parentSkipRecursion);
+			// If any child fails, return the failure.
+			if (!result.success) {
+				return result;
+			}
+		}
+		return { success: true };
+	}
+
+	private didSummarize(parentSkipRecursion: boolean): boolean {
 		assert(
 			this.wipSummaryLogger !== undefined,
 			"wipSummaryLogger should have been set in startSummary or ctor",
@@ -220,8 +248,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
 
 		// If the parentSkipRecursion is true, the parent node did not call summarize on this node. Return success.
-		if (parentSkipRecursion) {
-			return { success: true };
+		if (parentSkipRecursion || this.wipLocalPaths !== undefined) {
+			return true;
 		}
 
 		/**
@@ -237,28 +265,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
 		 * summarize is attempted again.
 		 */
-		if (this.wipLocalPaths === undefined) {
-			return {
-				success: false,
-				reason: "NodeDidNotSummarize",
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
-				},
-				// These errors are usually transient and should go away when summarize is retried.
-				retryAfterSeconds: 1,
-			};
-		}
-
-		for (const child of this.children.values()) {
-			const result = child.validateSummaryCore(this.wipSkipRecursion || parentSkipRecursion);
-			// If any child fails, return the failure.
-			if (!result.success) {
-				return result;
-			}
-		}
-
-		return { success: true };
+		return false;
 	}
 
 	/**
@@ -266,8 +273,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
-	public completeSummary(proposalHandle: string) {
-		this.completeSummaryCore(proposalHandle, undefined, false);
+	public completeSummary(proposalHandle: string, validate: boolean) {
+		this.completeSummaryCore(
+			proposalHandle,
+			undefined /* parentPath */,
+			false /* parentSkipRecursion */,
+			validate,
+		);
 	}
 
 	/**
@@ -281,7 +293,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
+		validate: boolean,
 	) {
+		if (validate && !this.didSummarize(parentSkipRecursion)) {
+			this.throwUnexpectedError({
+				eventName: "NodeDidNotSummarize",
+				proposalHandle,
+			});
+		}
+
 		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
 		let localPathsToUse = this.wipLocalPaths;
 
@@ -324,6 +344,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				proposalHandle,
 				fullPathForChildren,
 				this.wipSkipRecursion || parentSkipRecursion,
+				validate,
 			);
 		}
 		// Note that this overwrites existing pending summary with
@@ -776,6 +797,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	public isSummaryInProgress(): boolean {
 		return this.wipReferenceSequenceNumber !== undefined;
+	}
+
+	/**
+	 * Creates and throws an error due to unexpected conditions.
+	 */
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+		const error = new LoggingError(eventProps.eventName, {
+			...eventProps,
+			referenceSequenceNumber: this.wipReferenceSequenceNumber,
+			id: {
+				tag: TelemetryDataTag.CodeArtifact,
+				value: this.telemetryNodeId,
+			},
+		});
+		this.logger.sendErrorEvent(eventProps, error);
+		throw error;
 	}
 }
 

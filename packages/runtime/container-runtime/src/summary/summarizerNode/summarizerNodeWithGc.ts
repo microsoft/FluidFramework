@@ -265,18 +265,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
 	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
-		/**
-		 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
-		 * 1. A child node was created after GC was already run on the parent. For example, a data store
-		 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
-		 * case, the parent will pass on used routes to the child nodes and it will have wip used routes.
-		 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
-		 * during summarize is incomplete.
-		 *
-		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
-		 * summarize is attempted again.
-		 */
-		if (!this.gcDisabled && this.wipSerializedUsedRoutes === undefined) {
+		if (!this.didGCRun()) {
 			return {
 				success: false,
 				reason: "NodeDidNotRunGC",
@@ -288,8 +277,25 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				retryAfterSeconds: 1,
 			};
 		}
-
 		return super.validateSummaryCore(parentSkipRecursion);
+	}
+
+	private didGCRun(): boolean {
+		if (this.gcDisabled || this.wipSerializedUsedRoutes !== undefined) {
+			return true;
+		}
+		/**
+		 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
+		 * 1. A child node was created after GC was already run on the parent. For example, a data store
+		 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
+		 * case, the parent will pass on used routes to the child nodes and it will have wip used routes.
+		 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
+		 * during summarize is incomplete.
+		 *
+		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
+		 * summarize is attempted again.
+		 */
+		return false;
 	}
 
 	/**
@@ -304,14 +310,22 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
+		validate: boolean,
 	) {
+		if (validate && !this.didGCRun()) {
+			this.throwUnexpectedError({
+				eventName: "NodeDidNotRunGC",
+				proposalHandle,
+			});
+		}
+
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
 		}
 
-		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
+		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion, validate);
 
 		// If GC is disabled, skip setting pending summary with GC state.
 		if (!this.gcDisabled) {

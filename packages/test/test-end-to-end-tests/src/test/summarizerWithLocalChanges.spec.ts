@@ -117,9 +117,7 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 ]);
 
-const settings = {};
-settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
-settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
+let settings = {};
 
 const createContainer = async (
 	provider: ITestObjectProvider,
@@ -168,8 +166,10 @@ async function createSummarizer(
 		container,
 		rootDataObjectFactory,
 		summaryVersion,
-		undefined,
+		undefined /* containerRuntimeFactoryType */,
 		registryStoreEntries,
+		undefined /* logger */,
+		mockConfigProvider(settings),
 	);
 }
 
@@ -183,135 +183,174 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeNoCompat(
-	"Data store realized between startSummary and summarize",
-	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
+describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
 
-		beforeEach(async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-		});
+	beforeEach(async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		settings = [];
+		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
+	});
 
-		itExpects(
-			"summarizeOnDemand should fail with NodeDidNotRunGC error when data store is created during summarize",
-			[
+	itExpects(
+		"summary should fail before generate stage when data store is created during summarize",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+		],
+		async () => {
+			const container = await createContainer(provider);
+			await waitForContainerConnection(container);
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const dataObject = await dataStoreFactory1.createInstance(
+				rootDataObject.containerRuntime,
+			);
+			rootDataObject._root.set("dataStore2", dataObject.handle);
+			const { summarizer } = await createSummarizer(provider, container);
+			await provider.ensureSynchronized();
+
+			// Summarization should fail because of a data store created during summarization which does not run GC.
+			await assert.rejects(
+				async () => {
+					await summarizeNow(summarizer);
+				},
+				(error) => {
+					// The summary should have failed because of "NodeDidNotRunGC" error before it was generated,
+					// i.e., "base" stage.
+					return error.message === "NodeDidNotRunGC" && error.data.stage === "base";
+				},
+				"expected NodeDidNotRunGC",
+			);
+		},
+	);
+
+	itExpects(
+		"with ValidateSummaryBeforeUpload false, summary should fail after upload when data store is created during summarize",
+		[
+			{
+				eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+		],
+		async () => {
+			settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = false;
+			const container = await createContainer(provider);
+			await waitForContainerConnection(container);
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const dataObject = await dataStoreFactory1.createInstance(
+				rootDataObject.containerRuntime,
+			);
+			rootDataObject._root.set("dataStore2", dataObject.handle);
+			const { summarizer } = await createSummarizer(provider, container);
+			await provider.ensureSynchronized();
+
+			// Summarization should fail because of a data store created during summarization which does not run GC.
+			await assert.rejects(
+				async () => {
+					await summarizeNow(summarizer);
+				},
+				(error) => {
+					// The summary should have failed because of "NodeDidNotRunGC" error after it was uploaded,
+					// i.e., "upload" stage.
+					return error.message === "NodeDidNotRunGC" && error.data.stage === "upload";
+				},
+				"expected NodeDidNotRunGC",
+			);
+		},
+	);
+
+	/**
+	 * This test results in gcUnknownOutboundReferences error - A data store is created in summarizer and its handle
+	 * is stored in the root data store's DDS. This results in a reference to the new data store but it is not
+	 * explicitly notified to GC. The notification to GC happens when op containing handle is processed and the
+	 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
+	 */
+	itExpects(
+		"Heuristic based summaries should pass on second attempt when NodeDidNotRunGC is hit",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
+				clientType: "noninteractive/summarizer",
+			},
+		],
+		async () => {
+			const logger = new MockLogger();
+			const mainContainer = await createContainer(
+				provider,
+				false /* disableSummary */,
+				logger,
+			);
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(mainContainer, "/");
+			const dataObject = await dataStoreFactory1.createInstance(
+				rootDataObject.containerRuntime,
+			);
+			rootDataObject._root.set("store", dataObject.handle);
+			await waitForContainerConnection(mainContainer);
+
+			const summarySucceeded = await timeoutAwait(waitForSummaryOp(mainContainer), {
+				errorMsg: "Timeout on waiting for summary op",
+			});
+			assert(summarySucceeded === true, "Summary should have been successful");
+
+			// The sequence of events that should happen:
+			// 1. First summarize attempt starts for the first phase, i.e., summarizeAttemptPerPhase = 1.
+			// 2. Data store is created in summarizer.
+			// 3. Summarize cancels with NodeDidNotRunGC error.
+			// 4. Second summarize attempts starts for the first phase, i.e., summarizeAttemptPerPhase = 2.
+			// 5. Summary is successfully generated.
+			const clientType = "noninteractive/summarizer";
+			const expectedEventsInSequence: Omit<ITelemetryBaseEvent, "category">[] = [
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:Summarize_start",
+					clientType,
+					summaryAttemptPhase: 1,
+					summaryAttempts: 1,
+					summaryAttemptsPerPhase: 1,
+				},
+				{
+					eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedInSummarizer",
+					clientType,
+				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
+					clientType,
 					error: "NodeDidNotRunGC",
-				},
-			],
-			async () => {
-				const container = await createContainer(provider);
-				await waitForContainerConnection(container);
-				const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
-				const dataObject = await dataStoreFactory1.createInstance(
-					rootDataObject.containerRuntime,
-				);
-				rootDataObject._root.set("dataStore2", dataObject.handle);
-				const { summarizer } = await createSummarizer(provider, container);
-				await provider.ensureSynchronized();
-
-				// Summarization should fail because of a data store created during summarization which does not run GC.
-				await assert.rejects(
-					async () => {
-						await summarizeNow(summarizer);
-					},
-					(error) => {
-						return error.message === "NodeDidNotRunGC";
-					},
-					"expected NodeDidNotRunGC",
-				);
-			},
-		);
-
-		/**
-		 * This test results in gcUnknownOutboundReferences error - A data store is created in summarizer and its handle
-		 * is stored in the root data store's DDS. This results in a reference to the new data store but it is not
-		 * explicitly notified to GC. The notification to GC happens when op containing handle is processed and the
-		 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
-		 */
-		itExpects(
-			"Heuristic based summaries should pass on second attempt when NodeDidNotRunGC is hit",
-			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					error: "NodeDidNotRunGC",
+					summaryAttemptPhase: 1,
+					summaryAttempts: 1,
+					summaryAttemptsPerPhase: 1,
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
-					clientType: "noninteractive/summarizer",
+					eventName: "fluid:telemetry:Summarizer:Running:Summarize_start",
+					clientType,
+					summaryAttemptPhase: 1,
+					summaryAttempts: 2,
+					summaryAttemptsPerPhase: 2,
 				},
-			],
-			async () => {
-				const logger = new MockLogger();
-				const mainContainer = await createContainer(
-					provider,
-					false /* disableSummary */,
-					logger,
-				);
-				const rootDataObject = await requestFluidObject<RootTestDataObject>(
-					mainContainer,
-					"/",
-				);
-				const dataObject = await dataStoreFactory1.createInstance(
-					rootDataObject.containerRuntime,
-				);
-				rootDataObject._root.set("store", dataObject.handle);
-				await waitForContainerConnection(mainContainer);
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:Summarize_generate",
+					clientType,
+					summaryAttemptPhase: 1,
+					summaryAttempts: 2,
+					summaryAttemptsPerPhase: 2,
+				},
+			];
 
-				const summarySucceeded = await timeoutAwait(waitForSummaryOp(mainContainer), {
-					errorMsg: "Timeout on waiting for summary op",
-				});
-				assert(summarySucceeded === true, "Summary should have been successful");
-
-				// The sequence of events that should happen:
-				// 1. First summarize attempt starts for the first phase, i.e., summarizeAttemptPerPhase = 1.
-				// 2. Data store is created in summarizer.
-				// 3. Summarize cancels with NodeDidNotRunGC error.
-				// 4. Second summarize attempts starts for the first phase, i.e., summarizeAttemptPerPhase = 2.
-				// 5. Summary is successfully generated.
-				const clientType = "noninteractive/summarizer";
-				const expectedEventsInSequence: Omit<ITelemetryBaseEvent, "category">[] = [
-					{
-						eventName: "fluid:telemetry:Summarizer:Running:Summarize_start",
-						clientType,
-						summaryAttemptPhase: 1,
-						summaryAttempts: 1,
-						summaryAttemptsPerPhase: 1,
-					},
-					{
-						eventName:
-							"fluid:telemetry:FluidDataStoreContext:DataStoreCreatedInSummarizer",
-						clientType,
-					},
-					{
-						eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-						clientType,
-						error: "NodeDidNotRunGC",
-						summaryAttemptPhase: 1,
-						summaryAttempts: 1,
-						summaryAttemptsPerPhase: 1,
-					},
-					{
-						eventName: "fluid:telemetry:Summarizer:Running:Summarize_start",
-						clientType,
-						summaryAttemptPhase: 1,
-						summaryAttempts: 2,
-						summaryAttemptsPerPhase: 2,
-					},
-					{
-						eventName: "fluid:telemetry:Summarizer:Running:Summarize_generate",
-						clientType,
-						summaryAttemptPhase: 1,
-						summaryAttempts: 2,
-						summaryAttemptsPerPhase: 2,
-					},
-				];
-
-				logger.assertMatch(expectedEventsInSequence, "Unexpected sequence of events");
-			},
-		);
-	},
-);
+			logger.assertMatch(expectedEventsInSequence, "Unexpected sequence of events");
+		},
+	);
+});

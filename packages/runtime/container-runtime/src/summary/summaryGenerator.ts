@@ -34,6 +34,8 @@ import {
 	ISummaryCancellationToken,
 	ISummarizeTelemetryProperties,
 	SummaryGeneratorTelemetry,
+	SummaryStage,
+	SubmitSummaryFailureData,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -131,7 +133,9 @@ export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
-	public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
+	public readonly summarySubmitted = new Deferred<
+		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
+	>();
 	public readonly summaryOpBroadcasted = new Deferred<
 		SummarizeResultPart<IBroadcastSummaryResult>
 	>();
@@ -142,6 +146,7 @@ export class SummarizeResultBuilder {
 	public fail(
 		message: string,
 		error: any,
+		stage: SummaryStage = "unknown",
 		nackSummaryResult?: INackSummaryResult,
 		retryAfterSeconds?: number,
 	) {
@@ -157,7 +162,7 @@ export class SummarizeResultBuilder {
 			error,
 			retryAfterSeconds,
 		} as const;
-		this.summarySubmitted.resolve(result);
+		this.summarySubmitted.resolve({ ...result, data: { stage } });
 		this.summaryOpBroadcasted.resolve(result);
 		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
 	}
@@ -258,8 +263,11 @@ export class SummaryGenerator {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
+		// Use record type to prevent unexpected value types
+		let summaryData: SubmitSummaryResult | undefined;
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
+			stage: SummaryStage = summaryData?.stage ?? "unknown",
 			error?: any,
 			properties?: SummaryGeneratorTelemetry,
 			nackSummaryResult?: INackSummaryResult,
@@ -286,14 +294,11 @@ export class SummaryGenerator {
 				},
 				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.
-			resultsBuilder.fail(reason, error, nackSummaryResult, retryAfterSeconds);
+			resultsBuilder.fail(reason, error, stage, nackSummaryResult, retryAfterSeconds);
 		};
 
 		// Wait to generate and send summary
 		this.summarizeTimer.start();
-
-		// Use record type to prevent unexpected value types
-		let summaryData: SubmitSummaryResult | undefined;
 		try {
 			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
@@ -323,7 +328,12 @@ export class SummaryGenerator {
 			);
 
 			if (summaryData.stage !== "submit") {
-				return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps);
+				return fail(
+					"submitSummaryFailure",
+					summaryData.stage,
+					summaryData.error,
+					summarizeTelemetryProps,
+				);
 			}
 
 			/**
@@ -356,7 +366,7 @@ export class SummaryGenerator {
 			summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
 			resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 		} catch (error) {
-			return fail("submitSummaryFailure", error);
+			return fail("submitSummaryFailure", undefined /* stage */, error);
 		} finally {
 			if (summaryData === undefined) {
 				this.heuristicData.recordAttempt();
@@ -375,10 +385,10 @@ export class SummaryGenerator {
 				cancellationToken,
 			);
 			if (waitBroadcastResult.result === "cancelled") {
-				return fail("disconnect");
+				return fail("disconnect", summaryData.stage);
 			}
 			if (waitBroadcastResult.result !== "done") {
-				return fail("summaryOpWaitTimeout");
+				return fail("summaryOpWaitTimeout", summaryData.stage);
 			}
 			const summarizeOp = waitBroadcastResult.value;
 
@@ -456,6 +466,7 @@ export class SummaryGenerator {
 				// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
 				return fail(
 					"summaryNack",
+					undefined /* stage */,
 					error,
 					{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
 					{ summaryNackOp: ackNackOp, ackNackDuration },

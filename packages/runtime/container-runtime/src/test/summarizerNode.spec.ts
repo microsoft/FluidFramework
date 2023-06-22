@@ -24,7 +24,7 @@ import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } f
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode/summarizerNodeUtils";
+import { ValidateSummaryResult } from "../summary/summarizerNode";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -256,7 +256,7 @@ describe("Runtime", () => {
 					createRoot();
 					rootNode.startSummary(11, logger);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle");
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
 					rootNode.startSummary(12, logger);
 				});
 
@@ -269,10 +269,11 @@ describe("Runtime", () => {
 			});
 
 			describe("Validate Summary", () => {
-				it("Should fail validateSummary if summarize not called on root node", () => {
+				it("summary validation should fail if summarize not called on root node", () => {
 					createRoot();
 					rootNode.startSummary(11, logger);
 
+					// Validate summary fails by calling validateSummary.
 					const expectedResult: ValidateSummaryResult = {
 						success: false,
 						reason: "NodeDidNotSummarize",
@@ -288,9 +289,20 @@ describe("Runtime", () => {
 						expectedResult,
 						"validate summary should have failed at the root node",
 					);
+
+					// Validate summary fails by calling completeSummary.
+					assert.throws(
+						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+						(error) => {
+							const correctErrorMessage = error.message === "NodeDidNotSummarize";
+							const correctErrorId = error.id.value === "";
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the root node",
+					);
 				});
 
-				it("Should fail validateSummary if summarize not called on child node", async () => {
+				it("summary validation should fail if summarize not called on child node", async () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -299,6 +311,7 @@ describe("Runtime", () => {
 					await leafNode?.summarize(false);
 					const midNodeId = `/${ids[1]}`;
 
+					// Validate summary fails by calling validateSummary.
 					const expectedResult: ValidateSummaryResult = {
 						success: false,
 						reason: "NodeDidNotSummarize",
@@ -314,9 +327,19 @@ describe("Runtime", () => {
 						expectedResult,
 						"validate summary should have failed at the mid node",
 					);
+
+					assert.throws(
+						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+						(error) => {
+							const correctErrorMessage = error.message === "NodeDidNotSummarize";
+							const correctErrorId = error.id.value === midNodeId;
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the mid node",
+					);
 				});
 
-				it("Should fail validateSummary if summarize not called on leaf node", async () => {
+				it("summary validation should fail if summarize not called on leaf node", async () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -325,6 +348,7 @@ describe("Runtime", () => {
 					await midNode?.summarize(false);
 					const leafNodeId = `/${ids[1]}/${ids[2]}`;
 
+					// Validate summary fails by calling validateSummary.
 					const expectedResult: ValidateSummaryResult = {
 						success: false,
 						reason: "NodeDidNotSummarize",
@@ -339,6 +363,17 @@ describe("Runtime", () => {
 						result,
 						expectedResult,
 						"validate summary should have failed at the leaf node",
+					);
+
+					// Validate summary fails by calling completeSummary.
+					assert.throws(
+						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+						(error) => {
+							const correctErrorMessage = error.message === "NodeDidNotSummarize";
+							const correctErrorId = error.id.value === leafNodeId;
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the leaf node",
 					);
 				});
 			});
@@ -467,7 +502,7 @@ describe("Runtime", () => {
 
 					rootNode.startSummary(10, logger);
 					await rootNode.summarize(false);
-					rootNode.completeSummary(proposalHandle);
+					rootNode.completeSummary(proposalHandle, true /* validateSummary */);
 
 					const result = await rootNode.refreshLatestSummary(
 						proposalHandle,

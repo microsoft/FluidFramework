@@ -484,7 +484,8 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
+    // Warning: (ae-forgotten-export) The symbol "SubmitSummaryFailureData" needs to be exported by the entry point index.d.ts
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
 // @public (undocumented)
