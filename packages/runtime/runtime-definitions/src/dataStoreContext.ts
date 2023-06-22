@@ -362,10 +362,10 @@ export interface IProvideFluidInternalReferenceInfo {
  */
 export interface IFluidInternalReferenceInfo extends Partial<IProvideFluidInternalReferenceInfo> {
 	/** Server timestamp in Unix Epoch format of the point in time (in the op stream) this was detected as unreferenced */
-	unreferencedTime?: number;
+	unreferencedTimestampMs?: number;
 
 	/** Describes varying states regarding whether the object is referenced or not, if known */
-	state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
+	state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
 }
 
 /**

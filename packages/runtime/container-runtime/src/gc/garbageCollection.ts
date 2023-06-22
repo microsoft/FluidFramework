@@ -945,12 +945,16 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param nodePath - Container-relative path to the node
 	 */
 	public getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo {
-		//* Is this a fair requirement?
-		//* PS - It's assert not UsageError because this class isn't exported, so callers are internal and should know better
+		// Callers should know not to query for internal reference info for deleted nodes
 		assert(
 			!this.deletedNodes.has("nodePath"),
 			"Getting internal reference info for a deleted node is not supported",
 		);
+
+		//* TODO: Include unref time too if available (I think it's not)
+		if (this.tombstones.includes(nodePath)) {
+			return { state: "Tombstoned" };
+		}
 
 		const trackedState = this.unreferencedNodesState.get(nodePath);
 		if (trackedState === undefined) {
@@ -961,21 +965,19 @@ export class GarbageCollector implements IGarbageCollector {
 		let state: IFluidInternalReferenceInfo["state"];
 		switch (trackedState.state) {
 			case "Active":
-				state = "Referenced";
+				state = "Unreferenced";
 				break;
 			case "Inactive":
-			case "SweepReady":
 				state = "Inactive";
+				break;
+			case "SweepReady":
+				state = "SweepReady";
 				break;
 			default:
 				unreachableCase(trackedState.state, "All known states covered above");
 		}
-		if (this.tombstones.includes(nodePath)) {
-			state = "Tombstoned";
-		}
 
-		//* Probably rename unreferencedTime prop
-		return { state, unreferencedTime: trackedState.unreferencedTimestampMs };
+		return { state, unreferencedTimestampMs: trackedState.unreferencedTimestampMs };
 	}
 
 	public dispose(): void {

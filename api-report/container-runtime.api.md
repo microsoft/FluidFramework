@@ -27,6 +27,7 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidInternalReferenceInfo } from '@fluidframework/runtime-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
@@ -144,6 +145,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getEntryPoint?(): Promise<FluidObject | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
+    // (undocumented)
+    getInternalReferenceInfo(nodePath: string): IFluidInternalReferenceInfo;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
