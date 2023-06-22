@@ -150,7 +150,7 @@ export function filterPackages(
 		const { package: pkg } = details;
 
 		const isPrivate: boolean = pkg.packageJson.private ?? false;
-		if (pkg.packageJson.private !== undefined && filters.private !== isPrivate) {
+		if (filters.private !== undefined && filters.private !== isPrivate) {
 			return false;
 		}
 
