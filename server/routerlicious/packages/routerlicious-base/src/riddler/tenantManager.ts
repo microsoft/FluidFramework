@@ -410,8 +410,7 @@ export class TenantManager {
 				key2: tenantKey2,
 			};
 		} catch (error) {
-			Lumberjack.error(`Error trying to retrieve tenant keys.`, error);
-			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheError);
+			Lumberjack.error(`Error with getting tenant keys.`, error);
 			throw error;
 		}
 	}
@@ -654,13 +653,19 @@ export class TenantManager {
 	}
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
-		const cachedKey = await this.cache?.get(`tenantKeys:${tenantId}`);
-		if (cachedKey == null) {
-			this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
-		} else {
-			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheSucess);
+		try {
+			const cachedKey = await this.cache?.get(`tenantKeys:${tenantId}`);
+			if (cachedKey == null) {
+				this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
+			} else {
+				this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheSucess);
+			}
+			return cachedKey;
+		} catch (error) {
+			Lumberjack.error(`Error trying to retreive tenant keys from the cache.`, error);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheError);
+			throw error;
 		}
-		return cachedKey;
 	}
 
 	private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
