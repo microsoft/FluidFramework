@@ -21,7 +21,7 @@ import { HasContainerKey } from "./CommonInterfaces";
  */
 export interface IContainerDevtools extends HasContainerKey, IDisposable {
 	/**
-	 * Gets the history of all ConnectionState changes since the debugger session was initialized.
+	 * Gets the history of all ConnectionState changes since the devtools session was initialized.
 	 *
 	 * @remarks
 	 *
@@ -41,7 +41,7 @@ export interface IContainerDevtools extends HasContainerKey, IDisposable {
 	getAudienceHistory(): readonly AudienceChangeLogEntry[];
 
 	/**
-	 * Disposes the debugger session.
+	 * Disposes the devtools session.
 	 * All data recording will stop, and no further state change events will be emitted.
 	 */
 	dispose(): void;

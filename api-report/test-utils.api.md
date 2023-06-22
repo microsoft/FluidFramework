@@ -342,10 +342,10 @@ export class TestObjectProvider implements ITestObjectProvider {
     waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
-// @public (undocumented)
+// @public
 export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public (undocumented)

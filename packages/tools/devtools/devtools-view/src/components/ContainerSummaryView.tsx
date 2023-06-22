@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import {
 	Button,
 	Badge,
 	createTableColumn,
+	makeStyles,
+	shorthands,
 	Table,
 	TableRow,
 	TableCell,
@@ -41,14 +42,10 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
-
-// Ensure FluentUI icons are initialized for use below.
-initializeFluentUiIcons();
 
 /**
  * {@link ContainerSummaryView} input props.
@@ -174,13 +171,28 @@ function containerStatusValueCell(statusComponents: string[]): React.ReactElemen
 	);
 }
 
+const useContainerSummaryViewStyles = makeStyles({
+	root: {
+		display: "flex",
+		flexDirection: "column",
+	},
+	title: {
+		alignSelf: "center",
+	},
+	actions: {
+		alignSelf: "start",
+	},
+});
+
 /**
- * Debugger view displaying basic Container stats.
+ * View displaying a simple summary of the Container state.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
+
+	const styles = useContainerSummaryViewStyles();
 
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
@@ -275,15 +287,22 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		statusComponents.push(containerState.attachState);
 		if (containerState.attachState === AttachState.Attached) {
 			statusComponents.push(connectionStateToString(containerState.connectionState));
+		} else {
+			/*
+			 * If the container is not attached, it is not connected
+			 * TODO: If the container is detached, it is advisable to disable the action buttons
+			 * since Fluid will consistently fail to establish a connection with a detached container.
+			 */
+			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
 		}
 	}
 
 	return (
-		<Stack>
-			<StackItem align="center">
+		<div className={styles.root}>
+			<div className={styles.title}>
 				<h2>{containerState.containerKey}</h2>
-			</StackItem>
-			<StackItem>
+			</div>
+			<div>
 				<Table size="extra-small" ref={tableRef}>
 					<DataRow
 						label="Status"
@@ -304,8 +323,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						columnProps={columnSizing_unstable}
 					/>
 				</Table>
-			</StackItem>
-			<StackItem align="start">
+			</div>
+			<div className={styles.actions}>
 				<ActionsBar
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected
@@ -315,13 +334,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					forceDisconnect={forceDisconnect}
 					closeContainer={closeContainer}
 				/>
-			</StackItem>
-		</Stack>
+			</div>
+		</div>
 	);
 }
 
 /**
- * Container actions supported by the debugger view.
+ * Container actions supported by the devtools view.
  */
 export interface IContainerActions {
 	/**
@@ -346,6 +365,14 @@ export interface IContainerActions {
 	closeContainer?: () => void;
 }
 
+const useActionBarStyles = makeStyles({
+	root: {
+		...shorthands.padding("5px"),
+		display: "flex",
+		flexDirection: "row",
+	},
+});
+
 interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
 	isContainerClosed: boolean;
@@ -354,6 +381,8 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
 		props;
+
+	const styles = useActionBarStyles();
 
 	const changeConnectionStateButton = isContainerConnected ? (
 		<Button
@@ -386,16 +415,10 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		</Button>
 	);
 
-	const itemStyles: IStackItemStyles = {
-		root: {
-			padding: "5px",
-		},
-	};
-
 	return (
-		<Stack horizontal>
-			<StackItem styles={itemStyles}>{changeConnectionStateButton}</StackItem>
-			<StackItem styles={itemStyles}>{disposeContainerButton}</StackItem>
-		</Stack>
+		<div className={styles.root}>
+			{changeConnectionStateButton}
+			{disposeContainerButton}
+		</div>
 	);
 }

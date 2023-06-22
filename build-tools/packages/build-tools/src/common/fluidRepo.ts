@@ -143,13 +143,19 @@ export interface PolicyConfig {
 		};
 	};
 	dependencies?: {
-		requireTilde?: string[];
+		commandPackages: [string, string][];
 	};
 	/**
 	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
 	 * policy-check.
 	 */
 	exclusions?: string[];
+
+	/**
+	 * An object with handler name as keys that maps to an array of strings/regular expressions to
+	 * exclude that rule from being checked.
+	 */
+	handlerExclusions?: { [rule: string]: string[] };
 }
 
 /**
@@ -293,6 +299,16 @@ export class FluidRepo {
 			return this.packages.noHoistInstall(this.resolvedRoot);
 		}
 		return FluidRepo.ensureInstalled(this.packages.packages);
+	}
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	public relativeToRepo(p: string): string {
+		return path.relative(this.resolvedRoot, p);
 	}
 }
 

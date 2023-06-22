@@ -10,7 +10,6 @@ import {
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
-	RevisionMetadataSource,
 	jsonableTreeFromCursor,
 	singleTextCursor,
 	valueSymbol,
@@ -30,10 +29,12 @@ import {
 	mintRevisionTag,
 	ValueSchema,
 	tagChange,
+	tagRollbackInverse,
 } from "../../core";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnly, brand } from "../../util";
 import {
 	assertMarkListEqual,
+	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
 	makeEncodingTestSuite,
 } from "../utils";
@@ -58,7 +59,13 @@ const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 // a tree format intended for in memory use, such as Cursor or MapTree.
 // TODO: Figure out issue with deepfreezing here
 const tree1 = jsonableTreeFromCursor(
-	cursorFromContextualData(schemaData, new Set([nodeSchema.name]), tree1ContextuallyTyped),
+	cursorFromContextualData(
+		{
+			schema: schemaData,
+		},
+		new Set([nodeSchema.name]),
+		tree1ContextuallyTyped,
+	),
 );
 
 const tree2 = { type: nodeSchema.name, value: "value2" };
@@ -74,15 +81,6 @@ const crossFieldManager = {
 	getOrCreate: unexpectedDelegate,
 	addDependency: unexpectedDelegate,
 	invalidate: unexpectedDelegate,
-};
-
-const revisionIndexer = (tag: RevisionTag) => {
-	assert.fail("Unexpected revision index query");
-};
-
-const revisionMetadata: RevisionMetadataSource = {
-	getIndex: revisionIndexer,
-	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
@@ -135,7 +133,10 @@ describe("Value field changesets", () => {
 	const change2 = tagChange(fieldHandler.editor.set(singleTextCursor(tree2)), mintRevisionTag());
 
 	const revertChange2: FieldKindsTypes.ValueChangeset = {
-		value: { revert: singleTextCursor(tree1), revision: change2.revision },
+		value: {
+			revert: singleTextCursor(tree1),
+			changeId: { revision: change2.revision, localId: brand(42) },
+		},
 	};
 
 	const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
@@ -154,20 +155,21 @@ describe("Value field changesets", () => {
 			simpleChildComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionMetadata,
+			defaultRevisionMetadataFromChanges([change1, change2]),
 		);
 
 		assert.deepEqual(composed, change2.change);
 	});
 
 	it("can be composed with child changes", () => {
+		const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
 		assert.deepEqual(
 			fieldHandler.rebaser.compose(
-				[change1, tagChange(childChange1, mintRevisionTag())],
+				[change1, taggedChildChange1],
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([change1, taggedChildChange1]),
 			),
 			change1WithChildChange,
 		);
@@ -184,7 +186,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([change1]),
 			),
 			change1.change,
 		);
@@ -195,7 +197,7 @@ describe("Value field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([]),
 			),
 			childChange3,
 		);
@@ -228,7 +230,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([]),
 			),
 			change2.change,
 		);
@@ -254,7 +256,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([]),
 			),
 			childChange3,
 		);
@@ -300,39 +302,67 @@ describe("Optional field changesets", () => {
 
 	const change1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
-			fieldChange: { newContent: { set: tree1, changes: nodeChange1 }, wasEmpty: true },
+			fieldChange: {
+				id: brand(1),
+				newContent: { set: tree1, changes: nodeChange1 },
+				wasEmpty: true,
+			},
 		},
 		mintRevisionTag(),
 	);
 
 	const change2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), false),
+		editor.set(singleTextCursor(tree2), false, brand(2)),
 		mintRevisionTag(),
 	);
 
 	const revertChange2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
-				newContent: { revert: singleTextCursor(tree1), revision: change2.revision },
+				id: brand(2),
+				newContent: {
+					revert: singleTextCursor(tree1),
+					changeId: { revision: change2.revision, localId: brand(2) },
+				},
 				wasEmpty: false,
 			},
 		},
 		mintRevisionTag(),
 	);
 
-	const change3: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), true),
-		mintRevisionTag(),
+	/**
+	 * Represents what change2 would have been had it been concurrent with change1.
+	 */
+	const change2PreChange1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+		editor.set(singleTextCursor(tree2), true, brand(2)),
+		change2.revision,
 	);
+
+	/**
+	 * Represents the outcome of composing change1 and change2.
+	 */
+	const change1And2: TaggedChange<FieldKindsTypes.OptionalChangeset> = makeAnonChange({
+		fieldChange: {
+			id: brand(2),
+			revision: change2.revision,
+			newContent: { set: tree2 },
+			wasEmpty: true,
+		},
+	});
+
 	const change4: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
 		editor.buildChildChange(0, nodeChange2),
 		mintRevisionTag(),
 	);
 
 	it("can be created", () => {
-		const actual: FieldKindsTypes.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
+		const actual: FieldKindsTypes.OptionalChangeset = editor.set(
+			singleTextCursor(tree1),
+			true,
+			brand(42),
+		);
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
+			fieldChange: { id: brand(42), newContent: { set: tree1 }, wasEmpty: true },
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -345,14 +375,19 @@ describe("Optional field changesets", () => {
 			childComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionMetadata,
+			defaultRevisionMetadataFromChanges([change1, change2]),
 		);
-		assert.deepEqual(composed, change3.change);
+		assert.deepEqual(composed, change1And2.change);
 	});
 
 	it("can compose child changes", () => {
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { wasEmpty: true, newContent: { set: tree1, changes: nodeChange3 } },
+			fieldChange: {
+				id: brand(1),
+				revision: change1.revision,
+				wasEmpty: true,
+				newContent: { set: tree1, changes: nodeChange3 },
+			},
 		};
 
 		assert.deepEqual(
@@ -361,7 +396,7 @@ describe("Optional field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([change1, change4]),
 			),
 			expected,
 		);
@@ -374,7 +409,7 @@ describe("Optional field changesets", () => {
 		};
 
 		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: { wasEmpty: false },
+			fieldChange: { id: brand(1), wasEmpty: false },
 			childChange: nodeChange2,
 		};
 
@@ -405,12 +440,12 @@ describe("Optional field changesets", () => {
 			) => assert.fail("Should not be called");
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
-					change3.change,
+					change2PreChange1.change,
 					change1,
 					childRebaser,
 					idAllocator,
 					crossFieldManager,
-					revisionMetadata,
+					defaultRevisionMetadataFromChanges([change1]),
 				),
 				change2.change,
 			);
@@ -438,7 +473,7 @@ describe("Optional field changesets", () => {
 					childRebaser,
 					idAllocator,
 					crossFieldManager,
-					revisionMetadata,
+					defaultRevisionMetadataFromChanges([]),
 				),
 				expected,
 			);
@@ -448,8 +483,8 @@ describe("Optional field changesets", () => {
 			const tag1 = mintRevisionTag();
 			const tag2 = mintRevisionTag();
 			const changeToRebase = editor.buildChildChange(0, nodeChange1);
-			const deletion = tagChange(editor.set(undefined, false), tag1);
-			const revive = tagChange(
+			const deletion = tagChange(editor.set(undefined, false, brand(1)), tag1);
+			const revive = tagRollbackInverse(
 				fieldHandler.rebaser.invert(
 					deletion,
 					() => assert.fail("Should not need to invert children"),
@@ -458,6 +493,7 @@ describe("Optional field changesets", () => {
 					crossFieldManager,
 				),
 				tag2,
+				tag1,
 			);
 
 			const childRebaser = (
@@ -475,7 +511,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([deletion]),
 			);
 
 			const changeToRebase3 = fieldHandler.rebaser.rebase(
@@ -484,7 +520,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionMetadata,
+				defaultRevisionMetadataFromChanges([revive]),
 			);
 
 			assert.deepEqual(changeToRebase3, changeToRebase);

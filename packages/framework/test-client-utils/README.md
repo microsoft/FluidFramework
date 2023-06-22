@@ -1,5 +1,7 @@
 # @fluidframework/test-client-utils
 
+## WARNING: This package is deprecated as of 2.0.0-internal.5.1.0 and will be removed in an upcoming release.
+
 Utilities to use while developing and testing using the service-specific clients (i.e. `AzureClient`, `TinyliciousClient`) supplied by the FluidFramework.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
