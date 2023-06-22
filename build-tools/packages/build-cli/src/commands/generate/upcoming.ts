@@ -5,14 +5,18 @@
 import { Flags } from "@oclif/core";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { format as prettier } from "prettier";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { loadChangesets } from "../../lib";
+import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../lib";
 
 const DEFAULT_FILE = "UPCOMING.md";
-const DEFAULT_CHANGESET_PATH = ".changeset";
 
+/**
+ * Generates a summary of all changesets and outputs the results to a file. This is used to generate an UPCOMING.md file
+ * that provides a single place where developers can see upcoming changes.
+ */
 export default class GenerateUpcomingCommand extends BaseCommand<typeof GenerateUpcomingCommand> {
 	static summary = `Generates a summary of all changesets.`;
 
@@ -75,7 +79,11 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 		const contents = `${header}\n\n${intro}\n\n${body}`;
 		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
 		this.info(`Writing output file: ${outputPath}`);
-		await writeFile(outputPath, contents);
+		await writeFile(
+			outputPath,
+			prettier(contents, { proseWrap: "never", parser: "markdown" }),
+		);
+	
 		return contents;
 	}
 }

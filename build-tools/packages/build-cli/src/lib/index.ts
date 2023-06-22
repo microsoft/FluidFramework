@@ -15,7 +15,7 @@ export {
 } from "./branches";
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
-export { loadChangesets } from "./changesets";
+export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,

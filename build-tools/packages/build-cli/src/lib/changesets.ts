@@ -4,13 +4,15 @@
  */
 
 import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Logger, Package } from "@fluidframework/build-tools";
+import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
 
 import { ReleasePackage } from "../releaseGroups";
 import { Repository } from "./git";
+
+export const DEFAULT_CHANGESET_PATH = ".changeset";
 
 /**
  * A ChangesetEntry is an object containing flattened content and file metadata from a changesets file. Changeset files
@@ -78,7 +80,13 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 	return changesetEntries;
 }
 
-export function groupByPackage(changesets: ChangesetEntry[]): Map<string, ChangesetEntry[]> {
+/**
+ * Creates a map of 
+ * @param changesets - An array of changesets to be grouped.
+ * @returns a Map of package names to an array of all the changesets that apply to the package. The entries are sorted
+ * oldest-to-newest (that is, index 0 is the earliest changeset, and the last changeset in the array is the newest).
+ */
+export function groupByPackage(changesets: ChangesetEntry[]): Map<ReleasePackage, ChangesetEntry[]> {
 	const changesetMap = new Map<ReleasePackage, ChangesetEntry[]>();
 	for (const changeset of changesets) {
 		const entries = changesetMap.get(changeset.pkg) ?? [];
