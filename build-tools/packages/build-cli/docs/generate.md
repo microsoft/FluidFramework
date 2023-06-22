@@ -148,11 +148,14 @@ Generates a summary of all changesets.
 
 ```
 USAGE
-  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--out <value>]
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [-v | --quiet] [--json]
+    [--out <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
+  -t, --releaseType=<option>   (required) The type of release for which the upcoming file is being generated.
+                               <options: major|minor>
   --out=<value>                [default: UPCOMING.md] Output the results to this file.
 
 LOGGING FLAGS

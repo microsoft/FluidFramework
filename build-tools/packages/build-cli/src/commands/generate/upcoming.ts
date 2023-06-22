@@ -7,7 +7,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { BaseCommand } from "../../base";
-import { bumpTypeFlag, releaseGroupFlag } from "../../flags";
+import { releaseGroupFlag } from "../../flags";
 import { loadChangesets } from "../../lib";
 
 const DEFAULT_FILE = "UPCOMING.md";
@@ -25,7 +25,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 		}),
 		releaseType: Flags.custom<"major" | "minor">({
 			char: "t",
-			description: "The type of release for which the upcom.",
+			description: "The type of release for which the upcoming file is being generated.",
 			options: ["major", "minor"],
 			required: true,
 			parse: async (input) => {
