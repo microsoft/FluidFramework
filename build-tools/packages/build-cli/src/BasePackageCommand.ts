@@ -8,10 +8,10 @@ import async from "async";
 
 import { BaseCommand } from "./base";
 import {
-	PackageDetails,
 	PackageFilterOptions,
 	PackageKind,
 	PackageSelectionCriteria,
+	PackageWithKind,
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
@@ -42,8 +42,12 @@ export abstract class PackageCommand<
 	 *
 	 * @param pkg - The package being processed.
 	 * @param kind - The kind of the package.
+	 * @typeparam TPkg - Type of the package-like object being processed.
 	 */
-	protected abstract processPackage(pkg: Package, kind: PackageKind): Promise<void>;
+	protected abstract processPackage<TPkg extends Package>(
+		pkg: TPkg,
+		kind: PackageKind,
+	): Promise<void>;
 
 	public async run(): Promise<void> {
 		this.selectionOptions = parsePackageSelectionFlags(this.flags);
@@ -62,14 +66,14 @@ export abstract class PackageCommand<
 
 		this.info(
 			`Filtered ${selected.length} packages to ${listNames(
-				filtered.map(({ package: pkg }) => pkg.directory),
+				filtered.map((pkg) => pkg.directory),
 			)}`,
 		);
 
 		return this.processPackages(filtered);
 	}
 
-	private async processPackages(packages: PackageDetails[]): Promise<void> {
+	private async processPackages(packages: PackageWithKind[]): Promise<void> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
@@ -95,11 +99,11 @@ export abstract class PackageCommand<
 			await async.mapLimit(
 				packages,
 				this.flags.concurrency,
-				async (details: PackageDetails) => {
+				async (details: PackageWithKind) => {
 					started += 1;
 					updateStatus();
 					try {
-						await this.processPackage(details.package, details.kind);
+						await this.processPackage(details, details.kind);
 						succeeded += 1;
 					} finally {
 						finished += 1;
