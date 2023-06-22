@@ -20,7 +20,6 @@ export class DocumentContext extends EventEmitter implements IContext {
 	// the document.
 	private headInternal: IQueuedMessage;
 	private tailInternal: IQueuedMessage;
-	private firstTest: boolean;
 
 	private closed = false;
 	private contextError = undefined;
@@ -82,17 +81,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		// let offset = message.offset;
-		if (this.firstTest) {
-			this.tail.offset = this.head.offset;
-			// offset = offset-1;
-			this.firstTest = false;
-		}
-
 		try {
-			console.log(`*********`);
-			console.log(`Tail: ${this.tail.offset}, Offset: ${offset}, Head: ${this.head.offset}`);
-			console.log(`*********`);
 			assert(
 				offset > this.tail.offset && offset <= this.head.offset,
 				`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
@@ -101,10 +90,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 			// Update the tail and broadcast the checkpoint
 			this.tailInternal = message;
-			console.log(`*******EMIT HERE*********`);
 			this.emit("checkpoint", restartOnCheckpointFailure);
 		} catch (error) {
-			console.log(`*******ERROR*********`);
 			// Mark the document as corrupted
 			const documentId = this.routingKey.documentId;
 			const tenantId = this.routingKey.tenantId;
