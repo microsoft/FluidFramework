@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { Spinner, Button, Tooltip } from "@fluentui/react-components";
+import { Spinner } from "@fluentui/react-components";
 
 import {
 	DataVisualization,
@@ -16,7 +16,6 @@ import {
 	FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
 
-import { ClipboardPaste16Regular } from "@fluentui/react-icons";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
@@ -86,29 +85,13 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
 		return <TreeItem header={header} />;
+	} else {
+		const header = <TreeHeader label={label} nodeTypeMetadata={"FluidHandle"} />;
+
+		return (
+			<TreeItem header={header}>
+				<TreeDataView containerKey={containerKey} label={"data"} node={visualTree} />
+			</TreeItem>
+		);
 	}
-
-	//Button to inlcude in header to copy fluid handle
-	const button = (
-		<Tooltip content={`Click to copy handle`} relationship={"label"}>
-			<Button
-				onClick={async (e): Promise<void> => {
-					e.preventDefault();
-					return navigator.clipboard.writeText(fluidObjectId);
-				}}
-				icon={<ClipboardPaste16Regular />}
-				size="small"
-			></Button>
-		</Tooltip>
-	);
-
-	const header2 = (
-		<TreeHeader label={label} inlineValue={button} nodeTypeMetadata={"FluidHandle"} />
-	);
-
-	return (
-		<TreeItem header={header2}>
-			<TreeDataView containerKey={containerKey} label={"FluidObject"} node={visualTree} />
-		</TreeItem>
-	);
 }
