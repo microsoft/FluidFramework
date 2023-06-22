@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { createInsertOnlyAttributionPolicy } from "../attributionPolicy";
+import { InsertOnlyAttributionPolicyFactory } from "../attributionPolicy";
 import { TestClient } from "./testClient";
 
 const localUserLongId = "localUser";
@@ -15,7 +15,7 @@ describe("createInsertOnlyAttributionPolicy", () => {
 		client = new TestClient({
 			attribution: {
 				track: true,
-				policyFactory: createInsertOnlyAttributionPolicy,
+				policyFactory: new InsertOnlyAttributionPolicyFactory(),
 			},
 		});
 		seq = 0;

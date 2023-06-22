@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/common-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -16,7 +15,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "./ops";
-import { AttributionCollection } from "./attributionCollection";
+import { AttributionCollection, IAttributionCollectionSerializer } from "./attributionCollection";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
 // This is because the base callbacks don't always have enough information to infer whether the op being
@@ -189,62 +188,157 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 }
 
 /**
- * @alpha
- * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * Produces {@link AttributionPolicy}s which track only insertion of content.
  */
-export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
-	return createAttributionPolicyFromCallbacks(
-		combineMergeTreeCallbacks([
-			ensureAttributionCollectionCallbacks,
-			insertOnlyAttributionPolicyCallbacks,
-		]),
-	);
-}
-
-/**
- * @param propNames - List of property names for which attribution should be tracked.
- * @returns - A policy which only attributes annotation of the properties specified.
- * Keys for each property are stored under attribution channels of the same name--see example below.
- *
- * @example
- *
- * ```typescript
- * // Use this policy when creating your merge-tree:
- * const policy = createPropertyTrackingAttributionPolicyFactory("bold", "italic");
- * // ... later, you can get attribution keys for the last time the "bold" and "italic"
- * // properties were changed on a segment using `getAtOffset`:
- * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
- * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
- * ```
- * @alpha
- */
-export function createPropertyTrackingAttributionPolicyFactory(
-	...propNames: string[]
-): () => AttributionPolicy {
-	return () =>
-		createAttributionPolicyFromCallbacks(
-			combineMergeTreeCallbacks([
-				ensureAttributionCollectionCallbacks,
-				createPropertyTrackingMergeTreeCallbacks(...propNames),
-			]),
-		);
-}
-
-/**
- * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
- * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
- * {@link createInsertOnlyAttributionPolicy}: see there for more details.
- * @alpha
- */
-export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
-	...propNames: string[]
-): () => AttributionPolicy {
-	return () =>
-		createAttributionPolicyFromCallbacks(
+export class InsertOnlyAttributionPolicyFactory implements IAttributionPolicyFactory {
+	public readonly name = "InsertOnly";
+	create() {
+		return createAttributionPolicyFromCallbacks(
 			combineMergeTreeCallbacks([
 				ensureAttributionCollectionCallbacks,
 				insertOnlyAttributionPolicyCallbacks,
-				createPropertyTrackingMergeTreeCallbacks(...propNames),
 			]),
 		);
+	}
+}
+
+/**
+ * Options which can be used by
+ */
+export interface PropertyTrackingAttributionOptions {
+	name: string;
+
+	/**
+	 * List of property names for which attribution should be tracked.
+	 */
+	propNames: string[];
+}
+
+/**
+ * {@link IAttributionPolicyFactory} which tracks only attribution of certain properties on a SharedString.
+ * @alpha
+ */
+export class PropertyTrackingAttributionPolicyFactory implements IAttributionPolicyFactory {
+	/**
+	 *
+	 * @param name - See {@link IAttributionPolicyFactory.name}
+	 * @param propNames -  Keys for each property are stored under attribution channels of the same name--see example below.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // Use this policy when creating your merge-tree:
+	 * const factory = new PropertyTrackingAttributionPolicyFactory("emphasis", ["bold", "italic"]);
+	 * // ... later, you can get attribution keys for the last time the "bold" and "italic"
+	 * // properties were changed on a segment using `getAtOffset`:
+	 * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
+	 * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
+	 * ```
+	 */
+	public constructor(public readonly name, private readonly propNames: string[]) {}
+	public create() {
+		return createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				createPropertyTrackingMergeTreeCallbacks(...this.propNames),
+			]),
+		);
+	}
+}
+
+/**
+ * Attribution policy which tracks insertion as well as annotation of certain property names.
+ * This combines the policies creatable using {@link PropertyTrackingAttributionPolicyFactory} and
+ * {@link InsertOnlyAttributionPolicyFactory}: see there for more details.
+ * @alpha
+ */
+export class PropertyTrackingAndInsertionAttributionPolicyFactory
+	implements IAttributionPolicyFactory
+{
+	public constructor(public readonly name, private readonly propNames: string[]) {}
+	public create() {
+		return createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				insertOnlyAttributionPolicyCallbacks,
+				createPropertyTrackingMergeTreeCallbacks(...this.propNames),
+			]),
+		);
+	}
+}
+
+/**
+ * Implements policy dictating which kinds of operations should be attributed and how.
+ * @alpha
+ * @sealed
+ */
+export interface AttributionPolicy {
+	/**
+	 * Enables tracking attribution information for operations on this merge-tree.
+	 * This function is expected to subscribe to appropriate change events in order
+	 * to manage any attribution data it stores on segments.
+	 *
+	 * This must be done in an eventually consistent fashion.
+	 * @internal
+	 */
+	attach: (client: Client) => void;
+	/**
+	 * Disables tracking attribution information on segments.
+	 * @internal
+	 */
+	detach: () => void;
+	/**
+	 * @internal
+	 */
+	isAttached: boolean;
+	/**
+	 * Serializer capable of serializing any attribution data this policy stores on segments.
+	 * @internal
+	 */
+	serializer: IAttributionCollectionSerializer;
+}
+
+/**
+ * IAttributionPolicyFactory create data stores.  It is associated with an identifier (its `name` member)
+ * and usually provided to consumers using this mapping through a data store registry.
+ */
+export interface IAttributionPolicyFactory {
+	/**
+	 * String that uniquely identifies the type of data store created by this factory.
+	 * @remarks - Beware that the name chosen here is typically persisted in the document and used as an identifier
+	 * to look up the correct attribution policy from an {@link (IAttributionPolicyRegistry:interface)}. Thus, changes to
+	 * supported attribution policies have compatibility constraints!
+	 */
+	name: string;
+
+	/**
+	 * Generates runtime for the data store from the data store context. Once created should be bound to the context.
+	 * @param context - Context for the data store.
+	 * @param existing - If instantiating from an existing file.
+	 */
+	create(): AttributionPolicy;
+}
+
+/**
+ * An associated pair of an identifier and registry entry.
+ */
+export type NamedAttributionPolicyRegistryEntry = [string, IAttributionPolicyFactory];
+
+/**
+ * An iterable identifier/registry entry pair list
+ */
+export type NamedAttributionPolicyRegistryEntries = Iterable<NamedAttributionPolicyRegistryEntry>;
+
+export const IAttributionPolicyRegistry: keyof IProvideAttributionPolicyRegistry =
+	"IAttributionPolicyRegistry";
+
+export interface IProvideAttributionPolicyRegistry {
+	readonly IAttributionPolicyRegistry: IAttributionPolicyRegistry;
+}
+
+/**
+ * An association of policy names to attribution policy factories, which can be used to enable attribution on a merge-tree.
+ */
+export interface IAttributionPolicyRegistry extends IProvideAttributionPolicyRegistry {
+	get(name: string): IAttributionPolicyFactory | undefined;
 }

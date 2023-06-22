@@ -647,6 +647,7 @@ declare function get_old_InterfaceDeclaration_IMergeTreeAttributionOptions():
 declare function use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
     use: TypeOnly<current.IMergeTreeAttributionOptions>);
 use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeAttributionOptions());
 
 /*
@@ -887,6 +888,7 @@ declare function get_old_InterfaceDeclaration_IMergeTreeOptions():
 declare function use_current_InterfaceDeclaration_IMergeTreeOptions(
     use: TypeOnly<current.IMergeTreeOptions>);
 use_current_InterfaceDeclaration_IMergeTreeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeOptions());
 
 /*
@@ -2897,26 +2899,14 @@ use_old_FunctionDeclaration_createGroupOp(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_createInsertOnlyAttributionPolicy": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy():
-    TypeOnly<typeof old.createInsertOnlyAttributionPolicy>;
-declare function use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>);
-use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"backCompat": false}
+* "RemovedFunctionDeclaration_createInsertOnlyAttributionPolicy": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy():
-    TypeOnly<typeof current.createInsertOnlyAttributionPolicy>;
-declare function use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>);
-use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -36,6 +36,8 @@ import {
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
 	SlidingPreference,
+	IProvideAttributionPolicyRegistry,
+	IMergeTreeOptions,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -48,6 +50,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged, SequenceOptions } from "./defaultMapInterfaces";
@@ -192,6 +195,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
 		options?: SequenceOptions,
+		services?: FluidObject<IProvideAttributionPolicyRegistry>,
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
@@ -199,12 +203,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
-		let clientOptions = dataStoreRuntime.options;
-		if (options?.attribution) {
-			clientOptions = {
-				...clientOptions,
-				attribution: options.attribution,
-			};
+		const clientOptions: IMergeTreeOptions = {
+			...dataStoreRuntime.options,
+			...options,
+		};
+		if (clientOptions?.attribution && services !== undefined && options !== undefined) {
+			clientOptions.attribution.policyFactory = services.IAttributionPolicyRegistry?.get(
+				options.attribution.policyName,
+			);
 		}
 		this.client = new Client(
 			segmentFromSpec,

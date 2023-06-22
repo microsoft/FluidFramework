@@ -114,6 +114,16 @@
 		"broken": {
 			"InterfaceDeclaration_MergeTreeRevertibleDriver": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeAttributionOptions": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeOptions": {
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_createInsertOnlyAttributionPolicy": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

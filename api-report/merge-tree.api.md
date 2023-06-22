@@ -255,9 +255,6 @@ export function createDetachedLocalReferencePosition(refType?: ReferenceType): L
 // @public (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
-// @alpha (undocumented)
-export function createInsertOnlyAttributionPolicy(): AttributionPolicy;
-
 // @public (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
@@ -341,6 +338,22 @@ export interface IAttributionCollectionSpec<T> {
         offset: number;
         key: T | null;
     }>;
+}
+
+// @public
+export interface IAttributionPolicyFactory {
+    // Warning: (ae-incompatible-release-tags) The symbol "create" is marked as @public, but its signature references "AttributionPolicy" which is marked as @alpha
+    create(): AttributionPolicy;
+    name: string;
+}
+
+// @public (undocumented)
+export const IAttributionPolicyRegistry: keyof IProvideAttributionPolicyRegistry;
+
+// @public
+export interface IAttributionPolicyRegistry extends IProvideAttributionPolicyRegistry {
+    // (undocumented)
+    get(name: string): IAttributionPolicyFactory | undefined;
 }
 
 // @public (undocumented)
@@ -472,7 +485,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 // @public (undocumented)
 export interface IMergeTreeAttributionOptions {
     // @alpha
-    policyFactory?: () => AttributionPolicy;
+    policyFactory?: IAttributionPolicyFactory;
     // @alpha
     track?: boolean;
 }
@@ -651,8 +664,24 @@ export interface InsertContext {
     structureChange?: boolean;
 }
 
+// @public
+export class InsertOnlyAttributionPolicyFactory implements IAttributionPolicyFactory {
+    // Warning: (ae-incompatible-release-tags) The symbol "create" is marked as @public, but its signature references "AttributionPolicy" which is marked as @alpha
+    //
+    // (undocumented)
+    create(): AttributionPolicy;
+    // (undocumented)
+    readonly name = "InsertOnly";
+}
+
 // @public (undocumented)
 export function internedSpaces(n: number): string;
+
+// @public (undocumented)
+export interface IProvideAttributionPolicyRegistry {
+    // (undocumented)
+    readonly IAttributionPolicyRegistry: IAttributionPolicyRegistry;
+}
 
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
@@ -955,6 +984,12 @@ export interface MinListener {
 // @public (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
+// @public
+export type NamedAttributionPolicyRegistryEntries = Iterable<NamedAttributionPolicyRegistryEntry>;
+
+// @public
+export type NamedAttributionPolicyRegistryEntry = [string, IAttributionPolicyFactory];
+
 // @public (undocumented)
 export interface NodeAction<TClientData> {
     // (undocumented)
@@ -1005,6 +1040,24 @@ export interface PropertyAction<TKey, TData> {
 
 // @public (undocumented)
 export type PropertySet = MapLike<any>;
+
+// @alpha
+export class PropertyTrackingAndInsertionAttributionPolicyFactory implements IAttributionPolicyFactory {
+    constructor(name: any, propNames: string[]);
+    // (undocumented)
+    create(): AttributionPolicy;
+    // (undocumented)
+    readonly name: any;
+}
+
+// @alpha
+export class PropertyTrackingAttributionPolicyFactory implements IAttributionPolicyFactory {
+    constructor(name: any, propNames: string[]);
+    // (undocumented)
+    create(): AttributionPolicy;
+    // (undocumented)
+    readonly name: any;
+}
 
 // @internal (undocumented)
 export interface QProperty<TKey, TData> {

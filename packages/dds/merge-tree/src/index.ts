@@ -10,7 +10,17 @@ export {
 	SerializedAttributionCollection,
 	SequenceOffsets,
 } from "./attributionCollection";
-export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
+export {
+	AttributionPolicy,
+	IAttributionPolicyFactory,
+	IProvideAttributionPolicyRegistry,
+	IAttributionPolicyRegistry,
+	InsertOnlyAttributionPolicyFactory,
+	NamedAttributionPolicyRegistryEntries,
+	NamedAttributionPolicyRegistryEntry,
+	PropertyTrackingAndInsertionAttributionPolicyFactory,
+	PropertyTrackingAttributionPolicyFactory,
+} from "./attributionPolicy";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export {
@@ -42,7 +52,7 @@ export {
 	LocalReferencePosition,
 	SlidingPreference,
 } from "./localReference";
-export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
+export { IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,

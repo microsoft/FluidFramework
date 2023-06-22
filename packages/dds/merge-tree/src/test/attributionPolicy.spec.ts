@@ -7,9 +7,9 @@
 import { strict as assert } from "assert";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import {
-	createInsertOnlyAttributionPolicy,
-	createPropertyTrackingAndInsertionAttributionPolicyFactory,
-	createPropertyTrackingAttributionPolicyFactory,
+	InsertOnlyAttributionPolicyFactory,
+	PropertyTrackingAndInsertionAttributionPolicyFactory,
+	PropertyTrackingAttributionPolicyFactory,
 } from "../attributionPolicy";
 import { TestClient } from "./testClient";
 
@@ -122,7 +122,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createInsertOnlyAttributionPolicy,
+					policyFactory: new InsertOnlyAttributionPolicyFactory(),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -153,7 +153,9 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
+					policyFactory: new PropertyTrackingAttributionPolicyFactory("test-name", [
+						"foo",
+					]),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -208,8 +210,10 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory:
-						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+					policyFactory: new PropertyTrackingAndInsertionAttributionPolicyFactory(
+						"test-name",
+						["foo"],
+					),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -225,7 +229,10 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAttributionPolicyFactory("foo", "bar"),
+					policyFactory: new PropertyTrackingAttributionPolicyFactory("test-name", [
+						"foo",
+						"bar",
+					]),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);

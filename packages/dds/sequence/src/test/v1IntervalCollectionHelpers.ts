@@ -31,6 +31,7 @@ import {
 } from "../intervalCollection";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;
@@ -112,8 +113,11 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 	 * Get a factory for SharedString to register with the data store.
 	 * @returns a factory that creates and load SharedString
 	 */
-	public static getFactory() {
-		return new V1IntervalCollectionSharedStringFactory();
+	public static getFactory(): SharedStringFactory {
+		// Implementing this to give a separate factory results in TS issues due to private fields on SharedStringFactory:
+		// `Class static side 'typeof SharedStringWithV1IntervalCollection' incorrectly extends base class static side 'typeof SharedString'`
+		// This method isn't necessary for back-compat tests, so instead just have it throw.
+		throw new Error("should never be called");
 	}
 
 	constructor(

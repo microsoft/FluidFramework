@@ -10,7 +10,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
@@ -89,7 +88,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
-import { Client } from "./client";
+import { AttributionPolicy, IAttributionPolicyFactory } from "./attributionPolicy";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -474,38 +473,7 @@ export interface IMergeTreeAttributionOptions {
 	 * - a document containing existing attribution information is loaded
 	 * @alpha
 	 */
-	policyFactory?: () => AttributionPolicy;
-}
-
-/**
- * Implements policy dictating which kinds of operations should be attributed and how.
- * @alpha
- * @sealed
- */
-export interface AttributionPolicy {
-	/**
-	 * Enables tracking attribution information for operations on this merge-tree.
-	 * This function is expected to subscribe to appropriate change events in order
-	 * to manage any attribution data it stores on segments.
-	 *
-	 * This must be done in an eventually consistent fashion.
-	 * @internal
-	 */
-	attach: (client: Client) => void;
-	/**
-	 * Disables tracking attribution information on segments.
-	 * @internal
-	 */
-	detach: () => void;
-	/**
-	 * @internal
-	 */
-	isAttached: boolean;
-	/**
-	 * Serializer capable of serializing any attribution data this policy stores on segments.
-	 * @internal
-	 */
-	serializer: IAttributionCollectionSerializer;
+	policyFactory?: IAttributionPolicyFactory;
 }
 
 /**
@@ -581,7 +549,7 @@ export class MergeTree {
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
-		this.attributionPolicy = options?.attribution?.policyFactory?.();
+		this.attributionPolicy = options?.attribution?.policyFactory?.create();
 	}
 
 	private _root: IRootMergeBlock;

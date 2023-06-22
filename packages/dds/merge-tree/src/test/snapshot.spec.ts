@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import {
-	createInsertOnlyAttributionPolicy,
-	createPropertyTrackingAttributionPolicyFactory,
+	InsertOnlyAttributionPolicyFactory,
+	PropertyTrackingAttributionPolicyFactory,
 } from "../attributionPolicy";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
@@ -23,7 +23,7 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 			// Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
 			// bugs that might be missed if the test case forgets to call/await `str.expect()`.
 			await str.checkSnapshot({
-				attribution: { policyFactory: createInsertOnlyAttributionPolicy },
+				attribution: { policyFactory: new InsertOnlyAttributionPolicyFactory() },
 			});
 		});
 
@@ -128,7 +128,7 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 describe("snapshot", () => {
 	describe("with attribution", () => {
 		makeSnapshotSuite({
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: { track: true, policyFactory: new InsertOnlyAttributionPolicyFactory() },
 		});
 	});
 
@@ -136,7 +136,7 @@ describe("snapshot", () => {
 		makeSnapshotSuite({
 			attribution: {
 				track: true,
-				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
+				policyFactory: new PropertyTrackingAttributionPolicyFactory("test-name", ["foo"]),
 			},
 		});
 	});
@@ -147,11 +147,11 @@ describe("snapshot", () => {
 
 	it("presence of attribution overrides merge-tree initialization value", async () => {
 		const str = new TestString("id", {
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: { track: true, policyFactory: new InsertOnlyAttributionPolicyFactory() },
 		});
 		str.append("hello world", /* increaseMsn: */ true);
 		await str.checkSnapshot({
-			attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: { track: false, policyFactory: new InsertOnlyAttributionPolicyFactory() },
 		});
 		str.insert(0, "should have attribution", false);
 		str.applyPendingOps();
@@ -165,7 +165,7 @@ describe("snapshot", () => {
 		const str = new TestString("id", { attribution: { track: false } });
 		str.append("hello world", /* increaseMsn: */ true);
 		await str.checkSnapshot({
-			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			attribution: { track: true, policyFactory: new InsertOnlyAttributionPolicyFactory() },
 		});
 		str.insert(0, "should not have attribution", false);
 		str.applyPendingOps();

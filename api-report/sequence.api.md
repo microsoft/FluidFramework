@@ -7,6 +7,7 @@
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -17,7 +18,6 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
-import { IMergeTreeAttributionOptions } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
@@ -25,6 +25,7 @@ import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
+import { IProvideAttributionPolicyRegistry } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -331,8 +332,8 @@ export interface ISharedStringAttributes extends IChannelAttributes {
     // (undocumented)
     attribution?: {
         track: boolean;
-        policy: string;
-    };
+        policyName: string;
+    } | undefined;
 }
 
 // @internal
@@ -412,7 +413,12 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 // @public
 export interface SequenceOptions {
     // (undocumented)
-    [key: string]: boolean;
+    [key: string]: any;
+    // (undocumented)
+    attribution: {
+        track: boolean;
+        policyName: string;
+    };
     intervalStickinessEnabled: boolean;
 }
 
@@ -461,7 +467,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
-    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment, options?: SequenceOptions);
+    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment, options?: SequenceOptions, services?: FluidObject<IProvideAttributionPolicyRegistry>);
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
@@ -543,7 +549,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 
 // @public
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, options?: SequenceOptions);
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, options?: SequenceOptions, services?: FluidObject<IProvideAttributionPolicyRegistry>);
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
@@ -573,7 +579,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
 // @public (undocumented)
 export class SharedStringFactory implements IChannelFactory {
-    constructor(options?: SequenceOptions | undefined);
+    constructor(options?: SequenceOptions | undefined, services?: FluidObject<IProvideAttributionPolicyRegistry>);
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)

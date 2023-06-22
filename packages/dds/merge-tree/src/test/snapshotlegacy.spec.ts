@@ -10,8 +10,8 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import {
-	createInsertOnlyAttributionPolicy,
-	createPropertyTrackingAndInsertionAttributionPolicyFactory,
+	InsertOnlyAttributionPolicyFactory,
+	PropertyTrackingAndInsertionAttributionPolicyFactory,
 } from "../attributionPolicy";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
@@ -116,7 +116,7 @@ describe("snapshot", () => {
 		const roundTripClient = new TestClient({
 			attribution: {
 				track: true,
-				policyFactory: createInsertOnlyAttributionPolicy,
+				policyFactory: new InsertOnlyAttributionPolicyFactory(),
 			},
 		});
 		const runtime: Partial<IFluidDataStoreRuntime> = {
@@ -145,8 +145,10 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory:
-							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+						policyFactory: new PropertyTrackingAndInsertionAttributionPolicyFactory(
+							"test-name",
+							["foo"],
+						),
 					},
 				},
 			},

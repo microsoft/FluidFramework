@@ -8,6 +8,7 @@ import {
 	IMergeTreeInsertMsg,
 	IMergeTreeRemoveMsg,
 	IMergeTreeTextHelper,
+	IProvideAttributionPolicyRegistry,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
@@ -19,6 +20,7 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { SharedSegmentSequence } from "./sequence";
 import { SequenceOptions } from "./defaultMapInterfaces";
 import { SharedStringFactory } from "./sequenceFactory";
@@ -105,8 +107,16 @@ export class SharedString
 		public id: string,
 		attributes: IChannelAttributes,
 		options?: SequenceOptions,
+		services?: FluidObject<IProvideAttributionPolicyRegistry>,
 	) {
-		super(document, id, attributes, SharedStringFactory.segmentFromSpec as any, options);
+		super(
+			document,
+			id,
+			attributes,
+			SharedStringFactory.segmentFromSpec as any,
+			options,
+			services,
+		);
 		this.mergeTreeTextHelper = this.client.createTextHelper();
 	}
 
