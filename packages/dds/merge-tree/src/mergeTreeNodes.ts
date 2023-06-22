@@ -39,10 +39,6 @@ export interface IMergeNodeCommon {
 	 */
 	parent?: IMergeBlock;
 	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number;
-	/**
 	 * The index of this node in its parent's list of children.
 	 */
 	index: number;
@@ -88,6 +84,10 @@ export interface IMergeBlock extends IMergeNodeCommon {
 	 * objects are always defined.
 	 */
 	partialLengths?: PartialSequenceLengths;
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number | undefined;
 	hierBlock(): IHierBlock | undefined;
 	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
 	setOrdinal(child: IMergeNode, index: number): void;
@@ -144,6 +144,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number;
 	/**
 	 * Stores attribution keys associated with offsets of this segment.
 	 * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
@@ -622,6 +626,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			);
 		}
 
+		this.cachedLength ??= 0;
 		this.cachedLength += other.cachedLength;
 	}
 

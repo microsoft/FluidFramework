@@ -264,9 +264,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		const op = createInsertSegmentOp(pos, segment);
 
-		const opArgs = { op };
-		this._mergeTree.insertAtReferencePosition(refPos, segment, opArgs);
-		return op;
+		if (this.applyInsertOp({ op })) {
+			return op;
+		}
 	}
 
 	public walkSegments<TClientData>(
@@ -1125,7 +1125,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getLength() {
-		return this._mergeTree.length;
+		return this._mergeTree.length ?? 0;
 	}
 
 	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {

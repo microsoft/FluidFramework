@@ -47,7 +47,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.20.0-169245",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/container-definitions-previous": "npm:@fluidframework/container-definitions@2.0.0-internal.5.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -61,6 +61,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerContext": {
+				"backCompat": false
+			}
+		}
 	}
 }
