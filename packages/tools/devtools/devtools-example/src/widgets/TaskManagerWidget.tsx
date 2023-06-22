@@ -4,8 +4,18 @@
  */
 
 import React from "react";
-// import { ISharedMap } from "@fluidframework/map";
+import sillyname from "sillyname";
 import { TaskManager } from "@fluidframework/task-manager";
+import { EditRegular, DocumentRegular, CheckmarkRegular } from "@fluentui/react-icons";
+import {
+	TableBody,
+	TableCell,
+	TableRow,
+	Table,
+	TableHeader,
+	TableHeaderCell,
+	TableCellLayout,
+} from "@fluentui/react-components";
 
 /**
  * {@link TaskManagerWidget} input props.
@@ -51,50 +61,104 @@ export function TaskManagerWidget(props: TaskManagerWidgetProps): React.ReactEle
 
 	if (taskManager === undefined) return <div />;
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+	const taskLabel = (sillyname() as unknown as string).toLowerCase().split(" ").join("-");
+
+	const items = [
+		{
+			task: { label: taskLabel, icon: <DocumentRegular /> },
+			assigned: { label: assigned, icon: <CheckmarkRegular /> },
+			queued: { label: queued, status: <DocumentRegular /> },
+			actions: {
+				label: (
+					<ActionButtons
+						taskManager={taskManager}
+						taskManagerId={taskManagerId}
+						assigned={assigned}
+						subscribed={subscribed}
+						queued={queued}
+					/>
+				),
+				icon: <EditRegular />,
+			},
+		},
+	];
+
+	const columns = [
+		{ columnKey: "task", label: "Task" },
+		{ columnKey: "assigned", label: "Assigned" },
+		{ columnKey: "queued", label: "Queued" },
+		{ columnKey: "actions", label: "Actions" },
+	];
+
+	return (
+		<Table size="small" aria-label="Task-Manager-Table">
+			<TableHeader>
+				<TableRow>
+					{columns.map((column) => (
+						<TableHeaderCell key={column.columnKey}>{column.label}</TableHeaderCell>
+					))}
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{items.map((item) => (
+					<TableRow key={item.task.label}>
+						<TableCell>
+							<TableCellLayout>{item.task.label}</TableCellLayout>
+						</TableCell>
+						<TableCell>
+							<TableCellLayout>
+								{item.assigned.label ? "True" : "False"}
+							</TableCellLayout>
+						</TableCell>
+						<TableCell>
+							<TableCellLayout>
+								{item.queued.label ? "True" : "False"}
+							</TableCellLayout>
+						</TableCell>
+						<TableCell>
+							<TableCellLayout>{item.actions.label}</TableCellLayout>
+						</TableCell>
+					</TableRow>
+				))}
+			</TableBody>
+		</Table>
+	);
+}
+
+/**
+ * TODO
+ */
+interface ActionButtonsProps {
+	taskManager: TaskManager;
+	taskManagerId: string;
+	assigned: boolean;
+	subscribed: boolean;
+	queued: boolean;
+}
+
+function ActionButtons(props: ActionButtonsProps): React.ReactElement {
+	const { taskManager, taskManagerId, assigned, subscribed, queued } = props;
+
 	const abandon = (): void => taskManager.abandon(taskManagerId);
 	const volunteer = async (): Promise<boolean> => taskManager.volunteerForTask(taskManagerId);
 	const subscribe = (): void => taskManager.subscribeToTask(taskManagerId);
 	const complete = (): void => taskManager.complete(taskManagerId);
 
 	return (
-		<div style={{ margin: "15px 0px 15px 0px" }}>
-			<div className="task-manager-header">
-				<strong>Task Manager Info</strong>
-			</div>
-
-			<div className="task-manager-body">
-				<div>
-					{assigned
-						? "This Client is currently: Task Assignee"
-						: "This Client is currently: Not Task Assignee"}
-				</div>
-				<div>Queued: {queued.toString()}</div>
-				<div>Assigned: {assigned.toString()}</div>
-				<div>Subscribed: {subscribed.toString()}</div>
-
-				<div className="task-manager-controls" style={{ margin: "7px 0px 7px 0px" }}>
-					<button disabled={!queued} onClick={abandon} className="debug-controls button">
-						Abandon
-					</button>
-					<button disabled={queued} onClick={volunteer} className="debug-controls button">
-						Volunteer
-					</button>
-					<button
-						disabled={queued && subscribed}
-						onClick={subscribe}
-						className="debug-controls button"
-					>
-						Subscribe
-					</button>
-					<button
-						disabled={!assigned}
-						onClick={complete}
-						className="debug-controls button"
-					>
-						Complete
-					</button>
-				</div>
-			</div>
+		<div className="task-manager-controls" style={{ margin: "7px 0px 7px 0px" }}>
+			<button disabled={!queued} onClick={abandon}>
+				Abandon
+			</button>
+			<button disabled={queued} onClick={volunteer}>
+				Volunteer
+			</button>
+			<button disabled={queued && subscribed} onClick={subscribe}>
+				Subscribe
+			</button>
+			<button disabled={!assigned} onClick={complete}>
+				Complete
+			</button>
 		</div>
 	);
 }

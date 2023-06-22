@@ -139,10 +139,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 
 	rootMap.set(emojiMatrixKey, emojiMatrix.handle);
 
-	// Set up TaskManager for TaskManagerWidget
-	const taskManager = await container.create(TaskManager);
-	rootMap.set(taskManagerKey, taskManager.handle);
-
 	// Set up SharedText for text form
 	const sharedText = await container.create(SharedString);
 	sharedText.insertText(0, "Enter text here.");
@@ -151,6 +147,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
+
+	// Set up TaskManager for TaskManagerWidget
+	const taskManager = await container.create(TaskManager);
+	rootMap.set(taskManagerKey, taskManager.handle);
 
 	// Set up SharedTree for visualization
 	const sharedTree = await container.create(sharedTreeObject);
@@ -467,8 +467,8 @@ function AppView(props: AppViewProps): React.ReactElement {
 			<h4>{containerKey}</h4>
 			<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />
 			<CounterView sharedCounterHandle={sharedCounterHandle} />
-			<TextView sharedTextHandle={sharedTextHandle} />
 			<TaskManagerView taskManagerHandle={taskManagerHandle} />
+			<TextView sharedTextHandle={sharedTextHandle} />
 		</div>
 	);
 }
