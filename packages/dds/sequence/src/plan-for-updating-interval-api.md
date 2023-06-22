@@ -35,7 +35,7 @@
 
 - `OverlappingSequenceIntervalsIndex`
 
-- `SequenceIntervalIndexes`: store the namespace contains specialiazations of indexes which support spatial queries specifically for `SequenceInterval`s.
+- `SequenceIntervalIndexes`: store the namespace contains specialiazations of indexes which support spatial queries specifically for `SequenceInterval`.
 
 4. Move `IntervalCollectionFactory` and `SequenceIntervalCollectionFactory` to separate files, which are responsible for creating instances of various types of IntervalCollection
 
@@ -71,7 +71,7 @@ The files hierarchy is supposed to be:
 
 2. Mark below API's as internal
 
-- `union`, `addProperties`, `modify` are never intended to be public
+- `union`, `addProperties`, `modify` of `Interval` and `SequenceInterval` are never intended to be public
 
 3. The `idIntervalIndex` and `endIntervalIndex` were never used explicity, should we remove them from the `LocalIntervalCollection`?
 
