@@ -114,7 +114,7 @@ export class Repository {
 	}
 
 	private async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
-		const divergedAt = await this.getMergeBase(ref, remote);
+		const divergedAt = await this.getMergeBaseRemote(ref, remote);
 		// Now we can find which files we added
 		const added = await this.gitClient
 			.fetch(["--all"]) // make sure we have the latest remote refs

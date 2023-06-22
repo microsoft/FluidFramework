@@ -59,6 +59,16 @@
 			"args": ["generate", "changeset", "-v", "-b", "main"],
 		},
 		{
+			// Runs the `flub exec` command with a debugger attached.
+			"name": "flub exec",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}/build-tools",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["exec", "--releaseGroup", "build-tools", "--no-private", "--", "pwd"],
+		},
+		{
 			"name": "flub bump deps",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",

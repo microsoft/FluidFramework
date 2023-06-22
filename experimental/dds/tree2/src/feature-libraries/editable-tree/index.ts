@@ -18,6 +18,7 @@ export {
 	contextSymbol,
 	NewFieldContent,
 	areCursors,
+	localNodeKeySymbol,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";

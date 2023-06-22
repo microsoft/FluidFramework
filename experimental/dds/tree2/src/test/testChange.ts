@@ -236,6 +236,32 @@ export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
 	}
 }
 
+export class NoOpChangeRebaser extends TestChangeRebaser {
+	public rebasedCount = 0;
+	public invertedCount = 0;
+	public composedCount = 0;
+	public rebaseAnchorCallsCount = 0;
+
+	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+		this.rebasedCount += 1;
+		return change;
+	}
+
+	public invert(change: TaggedChange<TestChange>): TestChange {
+		this.invertedCount += 1;
+		return change.change;
+	}
+
+	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+		this.composedCount += changes.length;
+		return changes.length === 0 ? emptyChange : changes[0].change;
+	}
+
+	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
+		this.rebaseAnchorCallsCount += 1;
+	}
+}
+
 export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 	public constructor(
 		private readonly constraint: (
