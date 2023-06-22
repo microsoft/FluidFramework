@@ -167,7 +167,7 @@ export class MonoRepo {
 
 		logger.verbose(`${kind}: Loading packages from ${packageManager}`);
 		for (const pkgDir of packageDirs) {
-			this.packages.push(new Package(path.join(pkgDir, "package.json"), kind, this));
+			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
 		}
 		return;
 	}
