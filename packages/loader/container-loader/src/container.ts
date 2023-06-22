@@ -118,7 +118,7 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
-const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
+const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
  * @internal
@@ -1423,11 +1423,9 @@ export class Container
 			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
 		}
 
-		// if there are not comparers it is not possible to know
-		// if the current satisfy the incoming, so return false,
-		// as assuming they do not satisfy is safer .e.g we will
-		// reload, rather than potentially running with
-		// incompatible code
+		// If there are no comparers, then it's impossible to know if the currently loaded package satisfies
+		// the incoming constraint, so we return false. Assuming it does not satisfy is safer, to force a reload
+		// rather than potentially running with incompatible code.
 		if (comparers.length === 0) {
 			return false;
 		}
@@ -2287,7 +2285,7 @@ export class Container
 			this._loadedModule.module.fluidExport;
 		const runtimeFactory = fluidExport?.IRuntimeFactory;
 		if (runtimeFactory === undefined) {
-			throw new Error(PackageNotFactoryError);
+			throw new Error(packageNotFactoryError);
 		}
 
 		this._context = await ContainerContext.createOrLoad(
