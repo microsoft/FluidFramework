@@ -57,6 +57,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
 -   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
 -   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
+-   [ContainerRuntime.closeFn no longer disposes](#containerruntimeclosefn-no-longer-disposes)
 -   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
 -   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
 -   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
@@ -125,6 +126,14 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 `IContainer.dispose` is now a required method. This method should dispose any resources and switch the container to a permanently disconnected state.
 
 Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### ContainerRuntime.closeFn no longer disposes
+
+Calling `ContainerRuntime.closeFn(...)` will no longer call `ContainerContext.disposeFn(...)` as well. This means the `ContainerRuntime` will no longer be disposed by calling this method.
+
+To achieve the `ContainerRuntime` being disposed, use the exposed `ContainerRuntime.disposeFn` method.
+
+For more information about close vs. dispose expectations, see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md.
 
 ### ISummarizerRuntime on/off op required
 
