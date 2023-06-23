@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
-import { FieldKey, Value } from "./types";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { ChangesetLocalId, IdRangeMap } from "../../feature-libraries/modular-schema";
+import {
+	getFirstFromRangeMap,
+	setInRangeMap,
+} from "../../feature-libraries/modular-schema/crossFieldQueries";
+import { brand, extractFromOpaque } from "../../util";
 import * as Delta from "./delta";
+import { FieldKey, Value } from "./types";
 
 /**
  * Implementation notes:
@@ -68,16 +74,19 @@ import * as Delta from "./delta";
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
+	const movedOutNodes: IdRangeMap<Delta.MoveId> = [];
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
 		func: firstPass,
 		applyValueChanges: true,
 		modsToMovedTrees,
+		movedOutRanges: movedOutNodes,
 	});
 	if (containsMovesOrDeletes) {
 		visitFieldMarks(delta, visitor, {
 			func: secondPass,
 			applyValueChanges: false,
 			modsToMovedTrees,
+			movedOutRanges: movedOutNodes,
 		});
 	}
 }
@@ -101,7 +110,10 @@ export interface DeltaVisitor {
 interface PassConfig {
 	readonly func: Pass;
 	readonly applyValueChanges: boolean;
+
+	// XXX: Does this need to be changed?
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
+	readonly movedOutRanges: IdRangeMap<Delta.MoveId>;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
@@ -172,6 +184,12 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
 					visitor.onMoveOut(index, mark.count, mark.moveId);
+					setInRangeMap(
+						config.movedOutRanges,
+						brand(extractFromOpaque(mark.moveId)),
+						mark.count,
+						mark.moveId,
+					);
 					break;
 				case Delta.MarkType.Modify:
 					result = visitModify(index, mark, visitor, config);
@@ -225,14 +243,66 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					}
 					break;
 				case Delta.MarkType.MoveIn: {
-					visitor.onMoveIn(index, mark.count, mark.moveId);
+					let entry = getFirstFromRangeMap(
+						config.movedOutRanges,
+						brand(extractFromOpaque(mark.moveId)),
+						mark.count,
+					);
+					assert(entry !== undefined, "Expected a move out for this move in");
+					visitor.onMoveIn(index, entry.length, entry.data);
+					let endIndex = index + entry.length;
+
+					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.id;
+					if (lengthBeforeMark > 0) {
+						visitor.onMoveOut(index, lengthBeforeMark, entry.data);
+						endIndex -= lengthBeforeMark;
+						setInRangeMap(
+							config.movedOutRanges,
+							entry.id,
+							lengthBeforeMark,
+							entry.data,
+						);
+					}
+
+					const lastMarkId = (extractFromOpaque(mark.moveId) as number) + mark.count - 1;
+					let lastEntryId = (entry.id as number) + entry.length - 1;
+					let lengthAfterEntry = lastMarkId - lastEntryId;
+					while (lengthAfterEntry > 0) {
+						const nextId: ChangesetLocalId = brand(lastEntryId + 1);
+						entry = getFirstFromRangeMap(config.movedOutRanges, nextId, mark.count);
+
+						assert(
+							entry !== undefined && entry.id === nextId,
+							"Expected a move out for the remaining portion of this move in",
+						);
+
+						lastEntryId = (entry.id as number) + entry.length - 1;
+						lengthAfterEntry = lastMarkId - lastEntryId;
+
+						visitor.onMoveIn(endIndex, entry.length, brand(entry.id));
+						endIndex += entry.length;
+					}
+
+					const lengthAfterMark = -lengthAfterEntry;
+					if (lengthAfterMark > 0) {
+						const nextMoveId: Delta.MoveId = brand(lastMarkId + 1);
+						visitor.onMoveOut(endIndex - lengthAfterMark, lengthAfterMark, nextMoveId);
+						endIndex -= lengthAfterMark;
+						setInRangeMap(
+							config.movedOutRanges,
+							brand(extractFromOpaque(nextMoveId)),
+							lengthAfterMark,
+							nextMoveId,
+						);
+					}
+
 					if (mark.count === 1) {
 						const modify = config.modsToMovedTrees.get(mark.moveId);
 						if (modify !== undefined) {
 							visitModify(index, modify, visitor, config);
 						}
 					}
-					index += mark.count;
+					index = endIndex;
 					break;
 				}
 				default:
