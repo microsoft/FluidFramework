@@ -2,23 +2,15 @@
 
 # Upcoming changes in Fluid Framework v2.0.0-internal.5.2.0
 
-## IConnectionDetailsInternal and IDeltaHandlerStrategy deprecated
+## IConnectionDetailsInternal and IDeltaHandlerStrategy deprecated (2023-06-20)
 
 The IConnectionDetailsInternal and IDeltaHandlerStrategy interfaces from the @fluidframework/container-definitions package have been deprecated and will be removed in a future release. These are internal-only interfaces and should not be used.
 
-## Deprecate unnecessary exports
+## Deprecate unnecessary exports (2023-06-21)
 
 This change deprecates a number of interfaces in the merge tree package that are not used in the exported apis surface and therefore should not be used.
 
-## Deprecate ISegment.parent
-
-This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
-
-There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
-
-Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
-
-## Deprecate ISegment.parent
+## Deprecate ISegment.parent (2023-06-21)
 
 This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
 
