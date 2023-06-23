@@ -163,7 +163,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set(newContent, false, id),
 				);
-				this.modularBuilder.submitChange(field, optional.identifier, change);
+				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
 		};
 	}
