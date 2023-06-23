@@ -119,6 +119,8 @@ export async function bumpVersion(
  * Bump version of packages in the repo
  *
  * @param versionBump the kind of version bump
+ *
+ * @deprecated
  */
 export async function bumpRepo(
 	context: Context,

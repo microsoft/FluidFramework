@@ -78,6 +78,7 @@
 		"chai": "^4.3.7",
 		"concurrently": "^8.0.1",
 		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
 		"dir-compare": "^4.0.0",
 		"eslint": "~8.6.0",
 		"eslint-plugin-chai-expect": "^3.0.0",

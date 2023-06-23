@@ -20,8 +20,6 @@ export interface IChannel extends IFluidLoadable {
 	 */
 	readonly id: string;
 
-	readonly owner?: string;
-
 	readonly attributes: IChannelAttributes;
 
 	/**

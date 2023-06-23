@@ -5,9 +5,14 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, Mutable } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
-import type { NodeUpdate, OptionalChangeset, ValueChangeset } from "./defaultFieldChangeTypes";
+import type {
+	NodeUpdate,
+	OptionalChangeset,
+	OptionalFieldChange,
+	ValueChangeset,
+} from "./defaultFieldChangeTypes";
 import type { NodeChangeset } from "./modular-schema";
 import {
 	EncodedValueChangeset,
@@ -74,6 +79,9 @@ function makeOptionalFieldCodec(
 					id: change.fieldChange.id,
 					wasEmpty: change.fieldChange.wasEmpty,
 				};
+				if (change.fieldChange.revision !== undefined) {
+					encoded.fieldChange.revision = change.fieldChange.revision;
+				}
 				if (change.fieldChange.newContent !== undefined) {
 					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
 						change.fieldChange.newContent,
@@ -93,18 +101,21 @@ function makeOptionalFieldCodec(
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
-			const decoded: OptionalChangeset = {};
+			const decoded: Mutable<OptionalChangeset> = {};
 			if (encoded.fieldChange !== undefined) {
-				decoded.fieldChange = {
+				const decodedFieldChange: Mutable<OptionalFieldChange> = {
 					id: encoded.fieldChange.id,
 					wasEmpty: encoded.fieldChange.wasEmpty,
 				};
-
+				if (encoded.fieldChange.revision !== undefined) {
+					decodedFieldChange.revision = encoded.fieldChange.revision;
+				}
 				if (encoded.fieldChange.newContent !== undefined) {
-					decoded.fieldChange.newContent = nodeUpdateCodec.decode(
+					decodedFieldChange.newContent = nodeUpdateCodec.decode(
 						encoded.fieldChange.newContent,
 					);
 				}
+				decoded.fieldChange = decodedFieldChange;
 			}
 
 			if (encoded.childChange !== undefined) {
@@ -130,7 +141,7 @@ function makeNodeUpdateCodec(
 				"revert" in update
 					? {
 							revert: jsonableTreeFromCursor(update.revert),
-							revision: update.revision,
+							changeId: update.changeId,
 					  }
 					: {
 							set: update.set,
@@ -147,7 +158,7 @@ function makeNodeUpdateCodec(
 				"revert" in encoded
 					? {
 							revert: singleTextCursor(encoded.revert),
-							revision: encoded.revision,
+							changeId: encoded.changeId,
 					  }
 					: { set: encoded.set };
 

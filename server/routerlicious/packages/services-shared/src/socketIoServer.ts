@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
@@ -48,6 +48,24 @@ class SocketIoSocket implements core.IWebSocket {
 	}
 }
 
+/**
+ * From https://socket.io/docs/v4/server-api/#event-connection_error
+ */
+interface ISocketIoConnectionError extends Error {
+	code: number;
+	message: string;
+	req: http.IncomingMessage;
+	context: any;
+}
+function isSocketIoConnectionError(error: unknown): error is ISocketIoConnectionError {
+	return (
+		error !== undefined &&
+		typeof (error as ISocketIoConnectionError).code == "number" &&
+		typeof (error as ISocketIoConnectionError).message == "string" &&
+		typeof (error as ISocketIoConnectionError).req == "object"
+	);
+}
+
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
 
@@ -59,6 +77,19 @@ class SocketIoServer implements core.IWebSocketServer {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
+		});
+		this.io.engine.on("connection_error", (error) => {
+			if (isSocketIoConnectionError(error) && error.req.url !== undefined) {
+				const url = new URL(error.req.url);
+				const telemetryProperties = {
+					protocolVersion: url.searchParams.get("EIO"), // '2', '3', or '4'
+					transport: url.searchParams.get("transport"), // 'websocket' or 'polling'
+					reason: JSON.stringify({ code: error.code, message: error.message }), // e.g. { code: 1, message: "Session ID unknown" }
+					[BaseTelemetryProperties.tenantId]: url.searchParams.get("tenantId") ?? "",
+					[BaseTelemetryProperties.documentId]: url.searchParams.get("documentId") ?? "",
+				};
+				Lumberjack.error("Socket.io Connection Error", telemetryProperties, error);
+			}
 		});
 	}
 
@@ -86,7 +117,20 @@ export function create(
 		host: redisConfig.host,
 		port: redisConfig.port,
 		password: redisConfig.pass,
+		connectTimeout: redisConfig.connectTimeout,
+		enableReadyCheck: true,
+		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+		enableOfflineQueue: redisConfig.enableOfflineQueue,
 	};
+	if (redisConfig.enableAutoPipelining) {
+		/**
+		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+		 * More info: https://github.com/luin/ioredis#autopipelining
+		 */
+		options.enableAutoPipelining = true;
+		options.autoPipeliningIgnoredCommands = ["ping"];
+	}
 	if (redisConfig.tls) {
 		options.tls = {
 			servername: redisConfig.host,

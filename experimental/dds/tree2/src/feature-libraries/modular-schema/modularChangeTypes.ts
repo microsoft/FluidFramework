@@ -15,6 +15,22 @@ import { Brand } from "../../util";
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
+ * A globally unique ID for an atom of change, or a node associated with the atom of change.
+ * @alpha
+ */
+export interface ChangeAtomId {
+	/**
+	 * Uniquely identifies the changeset within which the change was made.
+	 * Only undefined when referring to an anonymous changesets.
+	 */
+	readonly revision: RevisionTag | undefined;
+	/**
+	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+	 */
+	readonly localId: ChangesetLocalId;
+}
+
+/**
  * @alpha
  */
 export interface RevisionInfo {
