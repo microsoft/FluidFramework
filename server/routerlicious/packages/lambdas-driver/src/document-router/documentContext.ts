@@ -36,7 +36,6 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Tail will be set to the checkpoint offset of the previous head
 		this.headInternal = head;
 		this.tailInternal = this.getLatestTail();
-		this.firstTest = true;
 	}
 
 	public get head(): IQueuedMessage {

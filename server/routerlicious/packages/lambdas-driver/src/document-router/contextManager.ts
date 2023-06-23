@@ -84,6 +84,7 @@ export class DocumentContextManager extends EventEmitter {
 			this.head = head;
 			return true;
 		}
+
 		return false;
 	}
 
