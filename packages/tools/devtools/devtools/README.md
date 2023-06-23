@@ -44,7 +44,7 @@ For example, when using the `AzureClient` API you would do something like this (
 to `initializeDevtools()` _and_ to `new AzureClient()`):
 
 ```typescript
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools-core";
+import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
 
 // Instantiate the logger
 const devtoolsLogger = new DevtoolsLogger();
