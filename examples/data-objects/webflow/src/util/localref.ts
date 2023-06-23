@@ -4,8 +4,8 @@
  */
 
 import { LocalReferencePosition } from "@fluidframework/merge-tree";
-import { debug } from "../document/debug";
-import { FlowDocument } from "../document/index";
+import { debug } from "../document/debug.js";
+import { FlowDocument } from "../document/index.js";
 
 export function updateRef(doc: FlowDocument, ref: LocalReferencePosition, position: number) {
 	if (isNaN(position)) {

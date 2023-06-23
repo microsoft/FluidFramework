@@ -43,7 +43,8 @@ import {
 	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
-import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from "./intervalTree";
+import { IInterval, IntervalConflictResolver } from "./intervalTree";
+import { IOverlappingIntervalsIndex, createOverlappingIntervalsIndex } from "./intervalIndex";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -772,7 +773,7 @@ export class SequenceInterval implements ISerializableInterval {
 	}
 }
 
-function createPositionReferenceFromSegoff(
+export function createPositionReferenceFromSegoff(
 	client: Client,
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	refType: ReferenceType,
@@ -889,6 +890,7 @@ export function createSequenceInterval(
 		undefined,
 		startReferenceSlidingPreference(stickiness),
 	);
+
 	const endLref = createPositionReference(
 		client,
 		end,
@@ -898,6 +900,7 @@ export function createSequenceInterval(
 		undefined,
 		endReferenceSlidingPreference(stickiness),
 	);
+
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
 	};
@@ -947,135 +950,6 @@ export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
 	remove(interval: TInterval): void;
-}
-
-class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
-	implements IntervalIndex<TInterval>
-{
-	private readonly intervalTree = new IntervalTree<TInterval>();
-
-	constructor(
-		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<TInterval>,
-	) {}
-
-	public map(fn: (interval: TInterval) => void) {
-		this.intervalTree.map(fn);
-	}
-
-	public mapUntil(fn: (interval: TInterval) => boolean) {
-		this.intervalTree.mapUntil(fn);
-	}
-
-	public gatherIterationResults(
-		results: TInterval[],
-		iteratesForward: boolean,
-		start?: number,
-		end?: number,
-	) {
-		if (this.intervalTree.intervals.isEmpty()) {
-			return;
-		}
-
-		if (start === undefined && end === undefined) {
-			// No start/end provided. Gather the whole tree in the specified order.
-			if (iteratesForward) {
-				this.intervalTree.map((interval: TInterval) => {
-					results.push(interval);
-				});
-			} else {
-				this.intervalTree.mapBackward((interval: TInterval) => {
-					results.push(interval);
-				});
-			}
-		} else {
-			const transientInterval: TInterval = this.helpers.create(
-				"transient",
-				start,
-				end,
-				this.client,
-				IntervalType.Transient,
-			);
-
-			if (start === undefined) {
-				// Only end position provided. Since the tree is not sorted by end position,
-				// walk the whole tree in the specified order, gathering intervals that match the end.
-				if (iteratesForward) {
-					this.intervalTree.map((interval: TInterval) => {
-						if (transientInterval.compareEnd(interval) === 0) {
-							results.push(interval);
-						}
-					});
-				} else {
-					this.intervalTree.mapBackward((interval: TInterval) => {
-						if (transientInterval.compareEnd(interval) === 0) {
-							results.push(interval);
-						}
-					});
-				}
-			} else {
-				// Start and (possibly) end provided. Walk the subtrees that may contain
-				// this start position.
-				const compareFn =
-					end === undefined
-						? (node: IntervalNode<TInterval>) => {
-								return transientInterval.compareStart(node.key);
-						  }
-						: (node: IntervalNode<TInterval>) => {
-								return transientInterval.compare(node.key);
-						  };
-				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
-				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
-				const actionFn = (node: IntervalNode<TInterval>) => {
-					results.push(node.key);
-				};
-
-				if (iteratesForward) {
-					this.intervalTree.intervals.walkExactMatchesForward(
-						compareFn,
-						actionFn,
-						continueLeftFn,
-						continueRightFn,
-					);
-				} else {
-					this.intervalTree.intervals.walkExactMatchesBackward(
-						compareFn,
-						actionFn,
-						continueLeftFn,
-						continueRightFn,
-					);
-				}
-			}
-		}
-	}
-
-	/**
-	 * @returns an array of all intervals contained in this collection that overlap the range
-	 * `[startPosition, endPosition)`.
-	 */
-	public findOverlappingIntervals(startPosition: number, endPosition: number) {
-		if (endPosition < startPosition || this.intervalTree.intervals.isEmpty()) {
-			return [];
-		}
-		const transientInterval = this.helpers.create(
-			"transient",
-			startPosition,
-			endPosition,
-			this.client,
-			IntervalType.Transient,
-		);
-
-		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
-		return overlappingIntervalNodes.map((node) => node.key);
-	}
-
-	public remove(interval: TInterval) {
-		this.intervalTree.removeExisting(interval);
-	}
-
-	public add(interval: TInterval) {
-		this.intervalTree.put(interval);
-	}
 }
 
 class IdIntervalIndex<TInterval extends ISerializableInterval>
@@ -1297,7 +1171,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
 			assert(
 				typeof helpers.compareStarts === "function",
-				"compareStarts does not exist in the helpers",
+				0x6d1 /* compareStarts does not exist in the helpers */,
 			);
 
 			const compareStartsResult = helpers.compareStarts(a, b);
@@ -1380,7 +1254,7 @@ export function createStartpointInRangeIndex<TInterval extends ISerializableInte
 
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	private static readonly legacyIdPrefix = "legacy";
-	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
+	public readonly overlappingIntervalsIndex: IOverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IdIntervalIndex<TInterval>;
 	public readonly endIntervalIndex: EndpointIndex<TInterval>;
 	private readonly indexes: Set<IntervalIndex<TInterval>>;
@@ -1395,7 +1269,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			previousInterval: TInterval,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
+		this.overlappingIntervalsIndex = createOverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = new IdIntervalIndex();
 		this.endIntervalIndex = new EndpointIndex(client, helpers);
 		this.indexes = new Set([

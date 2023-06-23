@@ -20,7 +20,7 @@ import {
 	getVersionedTestObjectProvider,
 } from "@fluid-internal/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
-import { pkgVersion } from "../packageVersion";
+import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider) => {
 	describe("Compression", () => {

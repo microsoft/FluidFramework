@@ -5,7 +5,7 @@
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
 import { EncodedJsonableTree, RevisionTagSchema } from "../core";
-import { ChangesetLocalIdSchema } from "./modular-schema";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modular-schema";
 
 export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([
@@ -18,7 +18,7 @@ export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =
 			 * The node being restored.
 			 */
 			revert: EncodedJsonableTree,
-			revision: Type.Optional(RevisionTagSchema),
+			changeId: EncodedChangeAtomId,
 			changes: Type.Optional(tNodeChange),
 		}),
 	]);
@@ -63,8 +63,15 @@ export const EncodedOptionalFieldChange = <Schema extends TSchema>(tNodeChange: 
 	Type.Object({
 		/**
 		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+		 * Globally unique across all changesets when paired with the changeset's revision tag.
 		 */
 		id: ChangesetLocalIdSchema,
+		/**
+		 * When populated, indicates the revision that this field change is associated with.
+		 * Is left undefined when the revision is the same as that of the whole changeset
+		 * (which would also be undefined in the case of an anonymous changeset).
+		 */
+		revision: Type.Optional(RevisionTagSchema),
 		/**
 		 * The new content for the trait. If undefined, the trait will be cleared.
 		 */
@@ -83,6 +90,7 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object({
 		fieldChange: Type.Optional(EncodedOptionalFieldChange(tNodeChange)),
 		childChange: Type.Optional(tNodeChange),
+		deletedBy: Type.Optional(EncodedChangeAtomId),
 	});
 
 export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
