@@ -6,19 +6,30 @@
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 // Allow importing from these specific files which are being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, RevisionTag, findCommonAncestor, rebaseBranch } from "../../core/rebase";
+import {
+	GraphCommit,
+	RevisionTag,
+	findAncestor,
+	findCommonAncestor,
+	rebaseBranch,
+	/* eslint-disable-next-line import/no-internal-modules */
+} from "../../core/rebase";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
+import { MockRepairDataStoreProvider } from "../utils";
 
 function newCommit(
-	inputContext: readonly number[],
 	intention: number | number[],
 	parent?: GraphCommit<TestChange>,
 ): GraphCommit<TestChange> {
+	const inputContext2: number[] = [];
+	if (parent !== undefined) {
+		const path: GraphCommit<TestChange>[] = [];
+		const ancestor = findAncestor([parent, path]);
+		inputContext2.push(...[ancestor, ...path].map((c) => Number.parseInt(c.revision, 10)));
+	}
 	return {
-		change: TestChange.mint(inputContext, intention),
+		change: TestChange.mint(inputContext2, intention),
 		revision: intention.toString() as RevisionTag,
-		sessionId: "TestSession",
 		parent,
 	};
 }
@@ -56,66 +67,67 @@ describe("rebaseBranch", () => {
 	it("fails if branches are disjoint", () => {
 		// 1 ─ 2
 		// 3
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([], 3);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n3, n2),
+			() => rebaseBranch(new TestChangeRebaser(), new MockRepairDataStoreProvider(), n3, n2),
 			(e) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n2, n3, n1),
+			() =>
+				rebaseBranch(
+					new TestChangeRebaser(),
+					new MockRepairDataStoreProvider(),
+					n2,
+					n3,
+					n1,
+				),
 			(e) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
 
-	it("does nothing if already rebased past target", () => {
-		// 1 ─ 2
-		//     └─ 3 ─ 4
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1, 2, 3], 4, n3);
-
-		// (1)─ 2
-		//      └─ 4 ─ 5
-		const [n4_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n4, n1);
-		assert.equal(n4_1, n4);
-		assert.equal(change, undefined);
-		assert.deepEqual(commits.deletedSourceCommits, []);
-		assert.deepEqual(commits.newSourceCommits, []);
-	});
-
-	it("does nothing if already rebased at target", () => {
+	it("does nothing if already rebased onto target", () => {
 		// 1
 		// └─ 2 ─ 3
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
 
 		// (1)
 		//  └─ 2 ─ 3
-		const [n3_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n3, n1);
+		const [n3_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n3,
+			n1,
+		);
 		assert.equal(n3_1, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
-		assert.deepEqual(commits.newSourceCommits, []);
+		assert.deepEqual(commits.targetCommits, []);
+		assert.deepEqual(commits.sourceCommits, [n2, n3]);
 	});
 
 	it("can rebase a branch onto the head of another branch", () => {
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1], 4, n1);
-		const n5 = newCommit([1, 4], 5, n4);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n1);
+		const n5 = newCommit(5, n4);
 
 		// 1 ─ 2 ─(3)
 		//         └─ 4'─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n3);
+		const [n5_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n5,
+			n3,
+		);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
@@ -124,21 +136,28 @@ describe("rebaseBranch", () => {
 		);
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
-		assert.deepEqual(commits.newSourceCommits, [n2, n3, ...newPath]);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("can rebase a branch onto the middle of another branch", () => {
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1], 4, n1);
-		const n5 = newCommit([1, 4], 5, n4);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n1);
+		const n5 = newCommit(5, n4);
 
 		// 1 ─(2)─ 3
 		//     └─ 4'─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n2, n3);
+		const [n5_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n5,
+			n2,
+			n3,
+		);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
@@ -147,24 +166,30 @@ describe("rebaseBranch", () => {
 		);
 		assertOutputContext(change, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
-		assert.deepEqual(commits.newSourceCommits, [n2, ...newPath]);
-		assert.equal(commits.newBase, n2);
+		assert.deepEqual(commits.targetCommits, [n2]);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("skips and advances over commits with the same revision tag", () => {
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'─ 5
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1, 2, 3], 4, n3);
-		const n2_1 = newCommit([1], 2, n1);
-		const n3_1 = newCommit([1, 2], 3, n2_1);
-		const n5 = newCommit([1, 2, 3], 5, n3_1);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n3);
+		const n2_1 = newCommit(2, n1);
+		const n3_1 = newCommit(3, n2_1);
+		const n5 = newCommit(5, n3_1);
 
 		// 1 ─(2)─ 3 ─ 4
 		//         └─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n2, n4);
+		const [n5_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n5,
+			n2,
+			n4,
+		);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3],
@@ -173,24 +198,29 @@ describe("rebaseBranch", () => {
 		});
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
-		assert.deepEqual(commits.newSourceCommits, [n2, n3, ...newPath]);
-		assert.equal(commits.newBase, n3);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("correctly rebases over branches that share some commits", () => {
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'─ 5
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1, 2, 3], 4, n3);
-		const n2_1 = newCommit([1], 2, n1);
-		const n3_1 = newCommit([1, 2], 3, n2_1);
-		const n5 = newCommit([1, 2, 3], 5, n3_1);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n3);
+		const n2_1 = newCommit(2, n1);
+		const n3_1 = newCommit(3, n2_1);
+		const n5 = newCommit(5, n3_1);
 
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n4);
+		const [n5_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n5,
+			n4,
+		);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3, 4],
@@ -199,26 +229,61 @@ describe("rebaseBranch", () => {
 		});
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
-		assert.deepEqual(commits.newSourceCommits, [n2, n3, n4, ...newPath]);
+		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("reports no change for equivalent branches", () => {
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1, 2, 3], 4, n3);
-		const n2_1 = newCommit([1], 2, n1);
-		const n3_1 = newCommit([1, 2], 3, n2_1);
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n3);
+		const n2_1 = newCommit(2, n1);
+		const n3_1 = newCommit(3, n2_1);
 
 		// 1 ─ 2 ─(3)─ 4
 		//         └─
-		const [n3_2, change, commits] = rebaseBranch(new TestChangeRebaser(), n3_1, n3, n4);
+		const [n3_2, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n3_1,
+			n3,
+			n4,
+		);
 		assert.equal(n3_2, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
-		assert.deepEqual(commits.newSourceCommits, [n2, n3]);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
+		assert.deepEqual(commits.sourceCommits, []);
+	});
+
+	it("generates and stores repair data for rebased changes", () => {
+		// 1 ─ 2 ─ 3 ─ 4
+		// └─ 2'─ 3'─ 5
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n2);
+		const n4 = newCommit(4, n3);
+		const repair4 = n4.repairData;
+		const n2_1 = newCommit(2, n1);
+		const n3_1 = newCommit(3, n2_1);
+		const n5 = newCommit(5, n3_1);
+
+		// 1 ─ 2 ─ 3 ─(4)
+		//             └─ 5'
+		const [n5_1, change, commits] = rebaseBranch(
+			new TestChangeRebaser(),
+			new MockRepairDataStoreProvider(),
+			n5,
+			n4,
+		);
+
+		// Check that 5' has newly generated repair data from 5
+		// and the 4 has the same repair data as before
+		assert.notEqual(n5.repairData, n5_1.repairData);
+		assert.equal(n5_1.parent?.repairData, repair4);
 	});
 });
 

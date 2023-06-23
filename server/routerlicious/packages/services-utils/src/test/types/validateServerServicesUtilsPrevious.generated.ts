@@ -35,6 +35,7 @@ declare function get_current_ClassDeclaration_DummyTokenRevocationManager():
 declare function use_old_ClassDeclaration_DummyTokenRevocationManager(
     use: TypeOnly<old.DummyTokenRevocationManager>);
 use_old_ClassDeclaration_DummyTokenRevocationManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DummyTokenRevocationManager());
 
 /*
@@ -784,26 +785,14 @@ use_old_FunctionDeclaration_validateTokenClaims(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_validateTokenRevocationClaims": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_validateTokenRevocationClaims": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_validateTokenRevocationClaims():
-    TypeOnly<typeof old.validateTokenRevocationClaims>;
-declare function use_current_FunctionDeclaration_validateTokenRevocationClaims(
-    use: TypeOnly<typeof current.validateTokenRevocationClaims>);
-use_current_FunctionDeclaration_validateTokenRevocationClaims(
-    get_old_FunctionDeclaration_validateTokenRevocationClaims());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_validateTokenRevocationClaims": {"backCompat": false}
+* "RemovedFunctionDeclaration_validateTokenRevocationClaims": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_validateTokenRevocationClaims():
-    TypeOnly<typeof current.validateTokenRevocationClaims>;
-declare function use_old_FunctionDeclaration_validateTokenRevocationClaims(
-    use: TypeOnly<typeof old.validateTokenRevocationClaims>);
-use_old_FunctionDeclaration_validateTokenRevocationClaims(
-    get_current_FunctionDeclaration_validateTokenRevocationClaims());
 
 /*
 * Validate forward compat by using old type in place of current type

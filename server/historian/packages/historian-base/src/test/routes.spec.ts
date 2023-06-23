@@ -99,6 +99,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -203,6 +204,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -321,6 +323,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -427,6 +430,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -496,6 +500,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -557,6 +562,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -617,6 +623,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -705,6 +712,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -797,6 +805,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -903,6 +912,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -990,6 +1000,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -1051,6 +1062,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -1104,6 +1116,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,
@@ -1160,6 +1173,7 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
 					defaultCache,

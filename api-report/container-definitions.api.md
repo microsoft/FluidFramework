@@ -7,6 +7,7 @@
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -114,13 +115,15 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public
+// @public @deprecated
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
+    // @deprecated (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
+    // @deprecated (undocumented)
+    reason: string;
+    // @deprecated (undocumented)
     version: string;
 }
 
@@ -137,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
-    dispose?(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -239,9 +242,11 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public
+// @public @deprecated
 export interface IDeltaHandlerStrategy {
+    // @deprecated
     process: (message: ISequencedDocumentMessage) => void;
+    // @deprecated
     processSignal: (message: ISignalMessage) => void;
 }
 
@@ -280,7 +285,7 @@ export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    (event: "disconnect", listener: (reason: string) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 
@@ -548,6 +553,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

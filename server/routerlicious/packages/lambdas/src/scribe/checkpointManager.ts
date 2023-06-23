@@ -13,6 +13,7 @@ import {
 	runWithRetry,
 	IDeltaService,
 	IDocumentRepository,
+	ICheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -30,6 +31,8 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly verifyLastOpPersistence: boolean,
+		private readonly checkpointService: ICheckpointService,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 	}
@@ -41,9 +44,12 @@ export class CheckpointManager implements ICheckpointManager {
 		checkpoint: IScribe,
 		protocolHead: number,
 		pending: ISequencedOperationMessage[],
+		noActiveClients: boolean,
+		globalCheckpointOnly: boolean,
 	) {
+		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
 		if (this.getDeltasViaAlfred) {
-			if (pending.length > 0) {
+			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
 				// If it is, we can checkpoint
 				const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
@@ -94,8 +100,13 @@ export class CheckpointManager implements ICheckpointManager {
 					);
 				}
 			}
-
-			await this.writeScribeCheckpointState(checkpoint);
+			await this.checkpointService.writeCheckpoint(
+				this.documentId,
+				this.tenantId,
+				"scribe",
+				checkpoint,
+				isLocalCheckpoint,
+			);
 		} else {
 			// The order of the three operations below is important.
 			// We start by writing out all pending messages to the database. This may be more messages that we would
@@ -124,8 +135,14 @@ export class CheckpointManager implements ICheckpointManager {
 				);
 			}
 
-			// Write out the full state first that we require
-			await this.writeScribeCheckpointState(checkpoint);
+			// Write out the full state first that we require to global & local DB
+			await this.checkpointService.writeCheckpoint(
+				this.documentId,
+				this.tenantId,
+				"scribe",
+				checkpoint,
+				isLocalCheckpoint,
+			);
 
 			// And then delete messagses that were already summarized.
 			await this.opCollection.deleteMany({
@@ -134,21 +151,6 @@ export class CheckpointManager implements ICheckpointManager {
 				"tenantId": this.tenantId,
 			});
 		}
-	}
-
-	private async writeScribeCheckpointState(checkpoint: IScribe) {
-		await this.documentRepository.updateOne(
-			{
-				documentId: this.documentId,
-				tenantId: this.tenantId,
-			},
-			{
-				// MongoDB is particular about the format of stored JSON data. For this reason we store stringified
-				// given some data is user generated.
-				scribe: JSON.stringify(checkpoint),
-			},
-			null,
-		);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/smde",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.5.2.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -15,11 +15,9 @@
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:esnext",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
@@ -40,28 +38,28 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluidframework/aqueduct": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-runtime": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-runtime-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/datastore": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/map": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/merge-tree": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/request-handler": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/view-adapters": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/merge-tree": "workspace:~",
+		"@fluidframework/request-handler": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/view-adapters": "workspace:~",
 		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"simplemde": "^1.11.2"
 	},
 	"devDependencies": {
-		"@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluid-tools/webpack-fluid-loader": "workspace:~",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/events": "^3.0.0",
 		"@types/react": "^17.0.44",
@@ -74,7 +72,7 @@
 		"style-loader": "^1.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2",
+		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.6.0",
 		"webpack-merge": "^5.8.0"
@@ -86,15 +84,6 @@
 					"dist/main.bundle.js"
 				],
 				"library": "main"
-			}
-		}
-	},
-	"pnpm": {
-		"packageExtensions": {
-			"simplemde": {
-				"dependencies": {
-					"codemirror": "^5.65.11"
-				}
 			}
 		}
 	},

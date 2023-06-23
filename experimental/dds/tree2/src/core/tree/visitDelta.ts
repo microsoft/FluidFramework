@@ -50,7 +50,7 @@ import * as Delta from "./delta";
  *
  * Future work:
  *
- * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
+ * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial views).
  *
  * - Avoid moving the visitor through parts of the document that do not need changing in the current pass.
  * This could be done by assigning IDs to nodes of interest and asking the visitor to jump to these nodes in order to edit them.
@@ -217,8 +217,12 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
-					// Handled in the first pass
-					index += mark.content.length;
+					visitModify(index, mark, visitor, config);
+					if (mark.isTransient === true) {
+						visitor.onDelete(index, mark.content.length);
+					} else {
+						index += mark.content.length;
+					}
 					break;
 				case Delta.MarkType.MoveIn: {
 					visitor.onMoveIn(index, mark.count, mark.moveId);

@@ -18,7 +18,7 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		factory.pushOffset(42);
 		factory.pushContent(dummyMark);
-		assert.deepStrictEqual(factory.list, [42, dummyMark]);
+		assert.deepStrictEqual(factory.list, [{ count: 42 }, dummyMark]);
 	});
 
 	it("Does not insert 0-length offsets", () => {
@@ -33,7 +33,7 @@ describe("SequenceField - MarkListFactory", () => {
 		factory.pushOffset(42);
 		factory.pushOffset(42);
 		factory.pushContent(dummyMark);
-		assert.deepStrictEqual(factory.list, [84, dummyMark]);
+		assert.deepStrictEqual(factory.list, [{ count: 84 }, dummyMark]);
 	});
 
 	it("Does not insert an offset when there is no content after the offset", () => {
@@ -93,7 +93,7 @@ describe("SequenceField - MarkListFactory", () => {
 
 		assert.deepStrictEqual(factory2.list, [
 			{ type: "MoveOut", id: 0, count: 2 },
-			3,
+			{ count: 3 },
 			{ type: "MoveIn", id: 0, count: 2 },
 		]);
 	});
@@ -122,7 +122,7 @@ describe("SequenceField - MarkListFactory", () => {
 
 		assert.deepStrictEqual(factory2.list, [
 			{ type: "MoveOut", id: 0, count: 3 },
-			3,
+			{ count: 3 },
 			{ type: "MoveIn", id: 0, count: 3 },
 		]);
 	});
@@ -131,15 +131,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachedBy,
-			detachIndex: 0,
+			detachEvent: { revision: detachedBy, index: 0 },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachedBy,
-			detachIndex: 1,
+			detachEvent: { revision: detachedBy, index: 1 },
 			content: fakeRepair(detachedBy, 1, 1),
 			count: 1,
 		};
@@ -147,8 +145,7 @@ describe("SequenceField - MarkListFactory", () => {
 		factory.pushContent(revive2);
 		const expected: SF.Reattach = {
 			type: "Revive",
-			detachedBy,
-			detachIndex: 0,
+			detachEvent: { revision: detachedBy, index: 0 },
 			content: fakeRepair(detachedBy, 0, 2),
 			count: 2,
 		};
@@ -159,15 +156,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachedBy,
-			detachIndex: 0,
+			detachEvent: { revision: detachedBy, index: 0 },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachedBy,
-			detachIndex: 2,
+			detachEvent: { revision: detachedBy, index: 2 },
 			content: fakeRepair(detachedBy, 2, 1),
 			count: 1,
 		};

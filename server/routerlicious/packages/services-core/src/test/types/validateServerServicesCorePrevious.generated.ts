@@ -527,6 +527,7 @@ declare function get_old_InterfaceDeclaration_IDatabaseManager():
 declare function use_current_InterfaceDeclaration_IDatabaseManager(
     use: TypeOnly<current.IDatabaseManager>);
 use_current_InterfaceDeclaration_IDatabaseManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDatabaseManager());
 
 /*
@@ -2341,6 +2342,7 @@ declare function get_current_InterfaceDeclaration_ITokenRevocationManager():
 declare function use_old_InterfaceDeclaration_ITokenRevocationManager(
     use: TypeOnly<old.ITokenRevocationManager>);
 use_old_InterfaceDeclaration_ITokenRevocationManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITokenRevocationManager());
 
 /*
@@ -2365,6 +2367,7 @@ declare function get_current_InterfaceDeclaration_ITokenRevocationResponse():
 declare function use_old_InterfaceDeclaration_ITokenRevocationResponse(
     use: TypeOnly<old.ITokenRevocationResponse>);
 use_old_InterfaceDeclaration_ITokenRevocationResponse(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITokenRevocationResponse());
 
 /*
@@ -2713,6 +2716,7 @@ declare function get_old_ClassDeclaration_MongoDatabaseManager():
 declare function use_current_ClassDeclaration_MongoDatabaseManager(
     use: TypeOnly<current.MongoDatabaseManager>);
 use_current_ClassDeclaration_MongoDatabaseManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoDatabaseManager());
 
 /*

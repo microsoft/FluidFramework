@@ -5,12 +5,14 @@
 import { AsyncLocalStorage } from "async_hooks";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import winston from "winston";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
+import { IHistorianResourcesCustomizations } from "./customizations";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -19,31 +21,45 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
+		public readonly storageNameRetriever: core.IStorageNameRetriever,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-		public tokenRevocationManager?: core.ITokenRevocationManager,
+		public revokedTokenChecker?: core.IRevokedTokenChecker,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}
 
 	public async dispose(): Promise<void> {
-		if (this.tokenRevocationManager) {
-			await this.tokenRevocationManager.close();
-		}
 		return;
 	}
 }
 
 export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
-	public async create(config: Provider): Promise<HistorianResources> {
+	public async create(
+		config: Provider,
+		customizations: IHistorianResourcesCustomizations,
+	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
 		const redisOptions: Redis.RedisOptions = {
 			host: redisConfig.host,
 			port: redisConfig.port,
 			password: redisConfig.pass,
+			connectTimeout: redisConfig.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfig.enableOfflineQueue,
 		};
+		if (redisConfig.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptions.enableAutoPipelining = true;
+			redisOptions.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfig.tls) {
 			redisOptions.tls = {
 				servername: redisConfig.host,
@@ -54,7 +70,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis(redisOptions);
+		const redisClient = new Redis.default(redisOptions);
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
@@ -75,13 +91,26 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			host: redisConfigForThrottling.host,
 			port: redisConfigForThrottling.port,
 			password: redisConfigForThrottling.pass,
+			connectTimeout: redisConfigForThrottling.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
 		};
+		if (redisConfigForThrottling.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptionsForThrottling.enableAutoPipelining = true;
+			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfigForThrottling.tls) {
 			redisOptionsForThrottling.tls = {
 				servername: redisConfigForThrottling.host,
 			};
 		}
-		const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number
@@ -94,16 +123,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				redisParamsForThrottling,
 			);
 
-		interface IThrottleConfig {
-			maxPerMs: number;
-			maxBurst: number;
-			minCooldownIntervalInMs: number;
-			minThrottleIntervalInMs: number;
-			maxInMemoryCacheSize: number;
-			maxInMemoryCacheAgeInMs: number;
-			enableEnhancedTelemetry?: boolean;
-		}
-		const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
+		const configureThrottler = (
+			throttleConfig: Partial<utils.IThrottleConfig>,
+		): core.IThrottler => {
 			const throttlerHelper = new services.ThrottlerHelper(
 				redisThrottleAndUsageStorageManager,
 				throttleConfig.maxPerMs,
@@ -121,18 +143,21 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		};
 
 		// Rest API Throttler
-		const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:generalRestCall") ?? {};
+		const restApiTenantGeneralThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:generalRestCall"),
+		);
 		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
 
-		const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:getSummary") ?? {};
+		const restApiTenantGetSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:getSummary"),
+		);
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
 		);
 
-		const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerTenant:createSummary") ?? {};
+		const restApiTenantCreateSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerTenant:createSummary"),
+		);
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
 		);
@@ -151,14 +176,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restTenantGeneralThrottler,
 		);
 
-		const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerCluster:createSummary") ?? {};
+		const restApiClusterCreateSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerCluster:createSummary"),
+		);
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
 		);
 
-		const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling:restCallsPerCluster:getSummary") ?? {};
+		const restApiClusterGetSummaryThrottleConfig = utils.getThrottleConfig(
+			config.get("throttling:restCallsPerCluster:getSummary"),
+		);
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
 		);
@@ -172,17 +199,27 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			Constants.getSummaryThrottleIdPrefix,
 			throttlerGetSummaryPerCluster,
 		);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		const storageNameRetriever = storagePerDocEnabled
+			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
+			: undefined;
 
 		const port = normalizePort(process.env.PORT || "3000");
+
+		// Token revocation
+		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
 
 		return new HistorianResources(
 			config,
 			port,
 			riddler,
+			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
 			gitCache,
 			asyncLocalStorage,
+			revokedTokenChecker,
 		);
 	}
 }
@@ -194,11 +231,12 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.config,
 			resources.port,
 			resources.riddler,
+			resources.storageNameRetriever,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,
-			resources.tokenRevocationManager,
+			resources.revokedTokenChecker,
 		);
 	}
 }

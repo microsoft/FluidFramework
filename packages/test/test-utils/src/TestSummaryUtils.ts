@@ -140,7 +140,9 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 	const result = summarizer.summarizeOnDemand({ reason });
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
-	assert(submitResult.success, "on-demand summary should submit");
+	if (!submitResult.success) {
+		throw submitResult.error;
+	}
 	assert(
 		submitResult.data.stage === "submit",
 		"on-demand summary submitted data stage should be submit",
@@ -148,10 +150,14 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
-	assert(broadcastResult.success, "summary op should be broadcast");
+	if (!broadcastResult.success) {
+		throw broadcastResult.error;
+	}
 
 	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
-	assert(ackNackResult.success, "summary op should be acked");
+	if (!ackNackResult.success) {
+		throw ackNackResult.error;
+	}
 
 	await new Promise((resolve) => process.nextTick(resolve));
 

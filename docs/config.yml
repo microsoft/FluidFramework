@@ -12,44 +12,44 @@ module:
     extended: true
     min: "0.76.5"
   mounts:
-  - source: content
-    target: content
-  - source: _replacements
-    target: content
-  - source: ../packages/dds/counter/README.md
-    target: content/docs/counter-readme.md
-  - source: ../packages/dds/sequence/README.md
-    target: content/docs/sequence-readme.md
+    - source: content
+      target: content
+    - source: _replacements
+      target: content
+    - source: ../packages/dds/counter/README.md
+      target: content/docs/counter-readme.md
+    - source: ../packages/dds/sequence/README.md
+      target: content/docs/sequence-readme.md
 
-  - source: static
-    target: static
+    - source: static
+      target: static
 
-  # SVG icons from the @vscode/codicons package
-  - source: node_modules/@vscode/codicons/src/icons/beaker.svg
-    target: static/codicons/beaker.svg
-  - source: node_modules/@vscode/codicons/src/icons/book.svg
-    target: static/codicons/book.svg
-  - source: node_modules/@vscode/codicons/src/icons/bug.svg
-    target: static/codicons/bug.svg
-  - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
-    target: static/codicons/comment-discussion.svg
-  - source: node_modules/@vscode/codicons/src/icons/edit.svg
-    target: static/codicons/edit.svg
-  - source: node_modules/@vscode/codicons/src/icons/github.svg
-    target: static/codicons/github.svg
-  - source: node_modules/@vscode/codicons/src/icons/play-circle.svg
-    target: static/codicons/play-circle.svg
-  - source: node_modules/@vscode/codicons/src/icons/rss.svg
-    target: static/codicons/rss.svg
-  - source: node_modules/@vscode/codicons/src/icons/twitter.svg
-    target: static/codicons/twitter.svg
+    # SVG icons from the @vscode/codicons package
+    - source: node_modules/@vscode/codicons/src/icons/beaker.svg
+      target: static/codicons/beaker.svg
+    - source: node_modules/@vscode/codicons/src/icons/book.svg
+      target: static/codicons/book.svg
+    - source: node_modules/@vscode/codicons/src/icons/bug.svg
+      target: static/codicons/bug.svg
+    - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
+      target: static/codicons/comment-discussion.svg
+    - source: node_modules/@vscode/codicons/src/icons/edit.svg
+      target: static/codicons/edit.svg
+    - source: node_modules/@vscode/codicons/src/icons/github.svg
+      target: static/codicons/github.svg
+    - source: node_modules/@vscode/codicons/src/icons/play-circle.svg
+      target: static/codicons/play-circle.svg
+    - source: node_modules/@vscode/codicons/src/icons/rss.svg
+      target: static/codicons/rss.svg
+    - source: node_modules/@vscode/codicons/src/icons/twitter.svg
+      target: static/codicons/twitter.svg
 
 permalinks:
   page: "/:slug"
   post: "/:year/:month/:title"
 
 params:
-  appInsightKey: ""  # This is provided by the build system as an env variable
+  appInsightKey: "" # This is provided by the build system as an env variable
   cookies: false
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
@@ -68,70 +68,70 @@ params:
 
 menu:
   main:
-  - name: "Getting started"
-    url: "/docs/start/quick-start/"
-    weight: -100
-  - name: "Recipes"
-    url: "/docs/recipes/react/"
-    weight: -90
-  - name: "Docs"
-    url: "/docs/"
-    weight: -80
-  - name: "Community"
-    url: "/community/"
-    weight: -60
-#  - name: "Updates"
-#    url: "/posts/"
-#    weight: -50
+    - name: "Getting started"
+      url: "/docs/start/quick-start/"
+      weight: -100
+    - name: "Recipes"
+      url: "/docs/recipes/react/"
+      weight: -90
+    - name: "Docs"
+      url: "/docs/"
+      weight: -80
+    - name: "Community"
+      url: "/community/"
+      weight: -60
+  #  - name: "Updates"
+  #    url: "/posts/"
+  #    weight: -50
 
   old_section:
-  - identifier: "quick-start"
-    name: "Quick Start"
-    url: "/start/quick-start/"
-    weight: -800
-  - identifier: "tutorial"
-    name: "Tutorial"
-    url: "/start/tutorial/"
-    weight: -700
-  - identifier: "examples"
-    name: "Examples"
-    url: "/start/examples/"
-    weight: -600
+    - identifier: "quick-start"
+      name: "Quick Start"
+      url: "/start/quick-start/"
+      weight: -800
+    - identifier: "tutorial"
+      name: "Tutorial"
+      url: "/start/tutorial/"
+      weight: -700
+    - identifier: "examples"
+      name: "Examples"
+      url: "/start/examples/"
+      weight: -600
 
   # this menu supplements one generated in the apiNav partial
   docs:
-  - identifier: "start"
-    name: "Getting started"
-    weight: -800
-  - identifier: "recipes"
-    name: "Recipes"
-    weight: -700
-  - identifier: "build"
-    name: "Build with Fluid"
-    weight: -600
-  - identifier: "testing"
-    name: "Testing"
-    weight: -500
-  - identifier: "deployment"
-    name: "Deployment"
-    weight: -400
-  - identifier: "DDS"
-    name: "Data structures"
-    weight: -300
-  - identifier: "concepts"
-    name: "Concepts"
-    weight: -200
-  - identifier: "faq"
-    name: "FAQ"
-    url: "/docs/faq/"
-    weight: -100
-  - identifier: "glossary"
-    name: "Glossary"
-    url: "/docs/glossary/"
-    weight: -90
-  - identifier: "updates"
-    name: "Release notes"
-    weight: -80
+    - identifier: "start"
+      name: "Getting started"
+      weight: -800
+    - identifier: "recipes"
+      name: "Recipes"
+      weight: -700
+    - identifier: "build"
+      name: "Build with Fluid"
+      weight: -600
+    - identifier: "testing"
+      name: "Testing"
+      weight: -500
+    - identifier: "deployment"
+      name: "Deployment"
+      weight: -400
+    - identifier: "DDS"
+      name: "Data structures"
+      weight: -300
+    - identifier: "concepts"
+      name: "Concepts"
+      weight: -200
+    - identifier: "faq"
+      name: "FAQ"
+      url: "/docs/faq/"
+      weight: -100
+    - identifier: "glossary"
+      name: "Glossary"
+      url: "/docs/glossary/"
+      weight: -90
+    - identifier: "updates"
+      name: "Release notes"
+      weight: -80
 
 markup:
   goldmark:

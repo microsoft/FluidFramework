@@ -12,60 +12,62 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
+export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
+export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	isolatedFieldChangeRebaser,
-	FieldChange,
 	FieldChangeHandler,
-	FieldChangeMap,
 	FieldChangeRebaser,
-	FieldChangeset,
 	FieldEditor,
-	HasFieldChanges,
-	ModularChangeset,
+	getIntention,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
 	RevisionMetadataSource,
 	RevisionIndexer,
-	RevisionInfo,
 	ToDelta,
-	ValueChange,
-	ValueConstraint,
+	NodeExistenceState,
 } from "./fieldChangeHandler";
 export {
-	convertGenericChange,
-	EncodedGenericChange,
-	EncodedGenericChangeset,
-	GenericChange,
-	genericChangeHandler,
-	GenericChangeset,
-	genericFieldKind,
-} from "./genericFieldKind";
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	RevisionInfo,
+	ValueChange,
+	ValueConstraint,
+	NodeExistsConstraint,
+} from "./modularChangeTypes";
+export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
-export {
-	FieldViewSchema as FieldTypeView,
-	TreeViewSchema,
-	ViewSchemaCollection,
-	ViewSchema,
-	FieldViewSchema,
-} from "./view";
+export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as TypedSchema from "./typedSchema";
-export { TypedSchema };
+export {
+	SchemaBuilder,
+	TreeSchema,
+	FieldSchema,
+	GlobalFieldSchema,
+	Any,
+	AllowedTypes,
+	InternalTypedSchemaTypes,
+	allowedTypesToTypeSet,
+	TypedSchemaCollection,
+	SchemaLibrary,
+	SchemaLibraryData,
+} from "./typedSchema";

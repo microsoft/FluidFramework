@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.5.2.0",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -20,13 +20,11 @@
 		"dist/index.d.ts"
 	],
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build . --task build",
 		"postbuild": "npm run gen:tscdef",
-		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
@@ -68,9 +66,9 @@
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.13.7",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-dds": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluid-experimental/property-dds": "workspace:~",
+		"@fluid-experimental/property-properties": "workspace:~",
 		"lodash": "^4.17.21",
 		"underscore": "^1.13.6"
 	},
@@ -80,9 +78,9 @@
 		"@babel/plugin-proposal-decorators": "^7.20.4",
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "22.2.3",
 		"@types/lodash": "^4.14.118",
 		"@types/node": "^14.18.38",
@@ -111,7 +109,14 @@
 		"source-map-support": "^0.5.16",
 		"typedoc": "^0.12.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2"
+		"webpack": "^5.82.0"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"gen:tscdef": [
+				"^tsc"
+			]
+		}
 	},
 	"jest-junit": {
 		"outputDirectory": "nyc",

@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
-import { cloneMark, isSkipMark } from "./utils";
+import { cloneMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -25,11 +25,6 @@ export interface MoveEffect<T> {
 	 * There should be an entry in the MoveEffectTable for this ID.
 	 */
 	child?: MoveId;
-
-	/**
-	 * When true, this mark should be deleted.
-	 */
-	shouldRemove?: boolean;
 
 	/**
 	 * If defined, this move mark should be replaced by `mark`.
@@ -175,9 +170,6 @@ export function makeMergeable<T>(
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
-	if (isSkipMark(mark)) {
-		return false;
-	}
 	switch (mark.type) {
 		case "MoveIn":
 		case "MoveOut":
@@ -205,20 +197,18 @@ function applyMoveEffectsToDest<T>(
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 
-	if (effect.shouldRemove !== true) {
-		const newMark: MoveIn | ReturnTo = {
-			...mark,
-			count: effect.count ?? mark.count,
-		};
-		if (effect.pairedMarkStatus !== undefined) {
-			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-				newMark.isSrcConflicted = true;
-			} else {
-				delete newMark.isSrcConflicted;
-			}
+	const newMark: MoveIn | ReturnTo = {
+		...mark,
+		count: effect.count ?? mark.count,
+	};
+	if (effect.pairedMarkStatus !== undefined) {
+		if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+			newMark.isSrcConflicted = true;
+		} else {
+			delete newMark.isSrcConflicted;
 		}
-		result.push(newMark);
 	}
+	result.push(newMark);
 
 	if (effect.child !== undefined) {
 		const childEffect = getMoveEffect(
@@ -229,21 +219,25 @@ function applyMoveEffectsToDest<T>(
 		);
 		assert(childEffect.count !== undefined, 0x567 /* Child effects should have size */);
 
-		const newMark: Mark<T> = {
+		const secondMark: Mark<T> = {
 			...mark,
 			id: effect.child,
 			count: childEffect.count,
 		};
 
-		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
+		if (secondMark.type === "ReturnTo" && secondMark.detachEvent !== undefined) {
 			assert(
 				effect.count !== undefined,
-				0x568 /* Should define count when splitting a mark */,
+				0x699 /* Should have a count when splitting a mark */,
 			);
-			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
+			secondMark.detachEvent = {
+				...secondMark.detachEvent,
+				index: secondMark.detachEvent.index + effect.count,
+			};
 		}
 
-		result.push(...applyMoveEffectsToDest(newMark, revision, effects, consumeEffect));
+		// TODO: Split detachEvent if necessary
+		result.push(...applyMoveEffectsToDest(secondMark, revision, effects, consumeEffect));
 	}
 
 	if (consumeEffect) {
@@ -267,34 +261,36 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (effect.shouldRemove !== true) {
-		const newMark = cloneMark(mark);
-		newMark.count = effect.count ?? newMark.count;
-		if (effect.modifyAfter !== undefined) {
-			assert(
-				composeChildren !== undefined,
-				0x569 /* Must provide a change composer if modifying moves */,
-			);
-			const changes = composeChildren(newMark.changes, effect.modifyAfter);
-			if (changes !== undefined) {
-				newMark.changes = changes;
-			} else {
-				delete newMark.changes;
-			}
-		}
-		if (effect.pairedMarkStatus !== undefined) {
-			assert(
-				newMark.type === "ReturnFrom",
-				0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
-			);
-			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-				newMark.isDstConflicted = true;
-			} else {
-				delete newMark.isDstConflicted;
-			}
-		}
-		result.push(newMark);
+
+	let nodeChange = mark.changes;
+	if (effect.modifyAfter !== undefined) {
+		assert(
+			composeChildren !== undefined,
+			0x569 /* Must provide a change composer if modifying moves */,
+		);
+		nodeChange = composeChildren(mark.changes, effect.modifyAfter);
 	}
+
+	const newMark = cloneMark(mark);
+	newMark.count = effect.count ?? newMark.count;
+
+	if (nodeChange !== undefined) {
+		newMark.changes = nodeChange;
+	} else {
+		delete newMark.changes;
+	}
+	if (effect.pairedMarkStatus !== undefined) {
+		assert(
+			newMark.type === "ReturnFrom",
+			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
+		);
+		if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+			newMark.isDstConflicted = true;
+		} else {
+			delete newMark.isDstConflicted;
+		}
+	}
+	result.push(newMark);
 
 	if (effect.child !== undefined) {
 		const childEffect = getMoveEffect(
@@ -304,20 +300,29 @@ function applyMoveEffectsToSource<T>(
 			effect.child,
 		);
 		assert(childEffect.count !== undefined, 0x56b /* Child effects should have size */);
-		const newMark: MoveOut<T> | ReturnFrom<T> = {
+		const splitMark: MoveOut<T> | ReturnFrom<T> = {
 			...mark,
 			id: effect.child,
 			count: childEffect.count,
 		};
-		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
+		if (splitMark.detachEvent !== undefined) {
 			assert(
 				effect.count !== undefined,
-				0x56c /* Should define count when splitting a mark */,
+				0x69a /* Should specify a count when splitting a mark */,
 			);
-			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
+			splitMark.detachEvent = {
+				...splitMark.detachEvent,
+				index: splitMark.detachEvent.index + effect.count,
+			};
 		}
 		result.push(
-			...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),
+			...applyMoveEffectsToSource(
+				splitMark,
+				revision,
+				effects,
+				consumeEffect,
+				composeChildren,
+			),
 		);
 	}
 

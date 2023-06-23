@@ -88,5 +88,7 @@ extends:
     containerName: fluidframework/routerlicious/gitrest
     test: test
     tagName: gitrest
+    lint: true
     pack: true
-    usesPrettier: false
+    checks:
+    - prettier

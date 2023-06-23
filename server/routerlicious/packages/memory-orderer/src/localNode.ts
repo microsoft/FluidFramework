@@ -17,6 +17,8 @@ import {
 	ILogger,
 	DefaultServiceConfiguration,
 	IDocumentRepository,
+	ICheckpointRepository,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
@@ -67,6 +69,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
 		documentRepository: IDocumentRepository,
+		deliCheckpointRepository: ICheckpointRepository,
+		scribeCheckpointRepository: ICheckpointRepository,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
 		maxMessageSize: number,
@@ -81,6 +87,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			storage,
 			databaseManager,
 			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			timeoutLength,
 			maxMessageSize,
 			logger,
@@ -150,6 +160,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly deliCheckpointRepository: ICheckpointRepository,
+		private readonly scribeCheckpointRepository: ICheckpointRepository,
+		private readonly deliCheckpointService: CheckpointService,
+		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
 		private readonly maxMessageSize: number,
 		private readonly logger: ILogger,
@@ -247,6 +261,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			documentId,
 			this.logger,
 			this.documentRepository,
+			this.deliCheckpointRepository,
+			this.scribeCheckpointRepository,
+			this.deliCheckpointService,
+			this.scribeCheckpointService,
 		);
 		assert(!this.orderMap.has(fullId));
 		this.orderMap.set(fullId, orderer);

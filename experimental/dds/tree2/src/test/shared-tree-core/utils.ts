@@ -5,17 +5,16 @@
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import { AnchorSet, GraphCommit, ITreeCursorSynchronous, RepairDataStore } from "../../core";
-import {
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	ModularChangeset,
-} from "../../feature-libraries";
-import { TransactionResult } from "../../util";
+import { AnchorSet } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
+import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
 
-/** A `SharedTreeCore` with protected methods exposed but no additional behavior */
+/**
+ * A `SharedTreeCore` with
+ * - some protected methods exposed
+ * - encoded data schema validation enabled
+ */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	private static readonly attributes: IChannelAttributes = {
 		type: "TestSharedTreeCore",
@@ -31,9 +30,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	) {
 		super(
 			summarizables,
-			defaultChangeFamily,
+			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
 			anchors,
 			new MockRepairDataStoreProvider(),
+			{ jsonValidator: typeboxValidator },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,
@@ -41,35 +41,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		);
 	}
 
-	public override startTransaction(
-		repairStore?: RepairDataStore<ITreeCursorSynchronous> | undefined,
-	): void {
-		return super.startTransaction(repairStore);
-	}
-
-	public override commitTransaction(): TransactionResult.Commit {
-		return super.commitTransaction();
-	}
-
-	public override abortTransaction(): TransactionResult.Abort {
-		return super.abortTransaction();
-	}
-
-	public override isTransacting(): boolean {
-		return super.isTransacting();
-	}
-
-	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch(new MockRepairDataStoreProvider());
-	}
-
-	public override mergeBranch(
-		branch: SharedTreeBranch<DefaultEditBuilder, ModularChangeset>,
-	): void {
-		return super.mergeBranch(branch);
-	}
-
-	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
-		return super.getLocalBranchHead();
+	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+		return super.getLocalBranch();
 	}
 }

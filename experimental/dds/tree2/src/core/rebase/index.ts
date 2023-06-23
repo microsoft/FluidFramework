@@ -10,7 +10,9 @@ export {
 	mintCommit,
 	GraphCommit,
 	RevisionTag,
+	RevisionTagSchema,
 	SessionId,
+	SessionIdSchema,
 } from "./types";
 export {
 	ChangeRebaser,

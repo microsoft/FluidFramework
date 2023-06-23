@@ -108,6 +108,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 		connectionDetails2 = {
 			clientId: pendingClientId2,
@@ -119,6 +120,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 		connectionDetails3 = {
 			clientId: pendingClientId3,
@@ -130,6 +132,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 
 		protocolHandler = new ProtocolHandler(
@@ -204,6 +207,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -230,6 +234,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -263,6 +268,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -317,6 +323,7 @@ describe("ConnectionStateHandler Tests", () => {
 			true,
 		); // readClientsWaitForJoinSignal
 
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -383,6 +390,8 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,

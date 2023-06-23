@@ -25,6 +25,11 @@ import { FieldKey, NodeData } from "./types";
  * TODO: stabilize this format (probably after schema are more stable).
  *
  * This format does not include schema: typically schema would be stored alongside data in this format.
+ *
+ * @privateRemarks - A forked version of these types is available at `persistedTreeTextFormat.ts`.
+ * Changes to them might necessitate changes to the analogous forked types, or codecs which transcode between
+ * them.
+ * See persistedTreeTextFormat's module documentation for more details.
  */
 
 /**

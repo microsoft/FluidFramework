@@ -5,7 +5,8 @@
 
 import BTree from 'sorted-btree';
 import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
-import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
+import type { IEvent } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { compareArrays } from '@fluidframework/core-utils';
 import { fail } from './Common';
 import type { EditId } from './Identifiers';
@@ -257,7 +258,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public constructor(
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
-		private readonly logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLoggerExt,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
 		private readonly evictionFrequency = targetLength * 2,

@@ -19,17 +19,17 @@ import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/te
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
+import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
+} from "../mockDetachedBlobStorage.js";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
 	waitForContainerWriteModeConnectionWrite,
-} from "./gcTestSummaryUtils";
+} from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TUnsafe, Type } from "@sinclair/typebox";
 import { Invariant, isAny } from "./typeCheck";
 
 /**
@@ -27,7 +28,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
- * See {@link MakeNominal} for some more details.
+ * See {@link InternalTypes#MakeNominal} for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think its true in some cases.
@@ -139,4 +140,23 @@ export function brandOpaque<T extends BrandedType<any, string>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
 	return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
+}
+
+/**
+ * Create a TypeBox string schema for a branded string type.
+ * This only validates that the value is a string,
+ * and not that it came from the correct branded type (that information is lost when serialized).
+ */
+export function brandedStringType<T extends string>(): TUnsafe<T> {
+	// This could use:
+	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
+	// Since there isn't any useful custom validation to do and
+	// TUnsafe is documented as unsupported in `typebox/compiler`,
+	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
+	return Type.String() as unknown as TUnsafe<T>;
+}
+
+export function brandedNumberType<T extends number>(): TUnsafe<T> {
+	// See comments on `brandedStringType`.
+	return Type.Number() as unknown as TUnsafe<T>;
 }

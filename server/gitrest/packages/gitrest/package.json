@@ -12,9 +12,8 @@
 	"author": "Microsoft and contributors",
 	"main": "dist/www.js",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"build:genver": "gen-version",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -44,7 +43,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/async": "^3.2.9",

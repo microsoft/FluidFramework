@@ -38,7 +38,6 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
@@ -134,7 +133,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -164,7 +162,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 				error: "expectedFailure",
 			},
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -223,7 +220,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -262,7 +259,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -579,7 +576,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			run,
 			0,
@@ -615,7 +612,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			() => runtimeDispose++,
 		);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			containerDisposed,
 			1,
@@ -662,7 +659,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		container.close();
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 		assert.strictEqual(containerClosed, 1, "Container should send closed event");
 		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
@@ -777,7 +774,7 @@ describeNoCompat("Driver", (getTestObjectProvider) => {
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
 		const { resolvedUrl } = await provider.makeTestContainer();
-		ensureFluidResolvedUrl(resolvedUrl);
+		assert(resolvedUrl !== undefined, "Missing resolved url");
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);

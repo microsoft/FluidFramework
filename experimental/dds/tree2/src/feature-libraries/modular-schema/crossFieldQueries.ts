@@ -5,8 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { brand, Brand, NestedSet } from "../../util";
+import { brand, NestedSet } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
+import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
@@ -50,14 +51,6 @@ export interface CrossFieldManager<T = unknown> {
 		invalidateDependents: boolean,
 	): T;
 }
-
-/**
- * An ID which is unique within a revision of a `ModularChangeset`.
- * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
- * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
- */
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 export interface IdAllocationState {
 	maxId: ChangesetLocalId;

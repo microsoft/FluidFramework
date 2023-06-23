@@ -39,6 +39,15 @@ export type MergeTreeDeltaRevertible =
 			propertyDeltas: PropertySet;
 	  };
 
+/**
+ * Tests whether x is a MergeTreeDeltaRevertible
+ *
+ * @alpha
+ */
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible {
+	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
+}
+
 type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> = MergeTreeDeltaRevertible & {
 	operation: T;
 };
@@ -65,30 +74,6 @@ export interface MergeTreeRevertibleDriver {
 	insertFromSpec(pos: number, spec: IJSONSegment);
 	removeRange(start: number, end: number);
 	annotateRange(start: number, end: number, props: PropertySet);
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	createLocalReferencePosition(
-		segment: ISegment,
-		offset: number,
-		refType: ReferenceType,
-		properties: PropertySet | undefined,
-	): LocalReferencePosition;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	localReferencePositionToPosition(lref: LocalReferencePosition): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getPosition(segment: ISegment): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getContainingSegment(pos: number): {
-		segment: ISegment | undefined;
-		offset: number | undefined;
-	};
 }
 
 /**
@@ -219,7 +204,6 @@ function appendLocalAnnotateToRevertibles(
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
-	driver: MergeTreeRevertibleDriver,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {

@@ -8,7 +8,6 @@ import { VersionBumpType, VersionChangeType, isVersionBumpType } from "@fluid-to
 
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
 import { bumpVersionCommand } from "./bumpVersion";
 import { Context } from "./context";
@@ -16,7 +15,7 @@ import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
-import { fatal } from "./utils";
+import { fatal, MonoRepoKind, supportedMonoRepoValues } from "./utils";
 import { writeReleaseVersions } from "./writeReleaseVersions";
 
 function printUsage() {

@@ -4,7 +4,13 @@
  */
 
 import { compareSets, fail } from "../../util";
-import { TreeSchema, ValueSchema, FieldSchema, TreeTypeSet, SchemaData } from "../../core";
+import {
+	TreeStoredSchema,
+	ValueSchema,
+	FieldStoredSchema,
+	TreeTypeSet,
+	SchemaData,
+} from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
 /**
@@ -15,8 +21,8 @@ import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	original: TreeSchema,
-	superset: TreeSchema,
+	original: TreeStoredSchema,
+	superset: TreeStoredSchema,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
@@ -115,8 +121,8 @@ export function allowsValueSuperset(original: ValueSchema, superset: ValueSchema
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	original: FieldSchema,
-	superset: FieldSchema,
+	original: FieldStoredSchema,
+	superset: FieldStoredSchema,
 ): boolean {
 	return (
 		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
@@ -199,7 +205,7 @@ export function allowsRepoSuperset(
 export function isNeverField(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 ): boolean {
 	return isNeverFieldRecursive(policy, originalData, field, new Set());
 }
@@ -207,8 +213,8 @@ export function isNeverField(
 export function isNeverFieldRecursive(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	field: FieldSchema,
-	parentTypeStack: Set<TreeSchema>,
+	field: FieldStoredSchema,
+	parentTypeStack: Set<TreeStoredSchema>,
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
@@ -241,7 +247,7 @@ export function isNeverFieldRecursive(
 export function isNeverTree(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeSchema,
+	tree: TreeStoredSchema,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, tree, new Set());
 }
@@ -253,8 +259,8 @@ export function isNeverTree(
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeSchema,
-	parentTypeStack: Set<TreeSchema>,
+	tree: TreeStoredSchema,
+	parentTypeStack: Set<TreeStoredSchema>,
 ): boolean {
 	if (parentTypeStack.has(tree)) {
 		return true;
