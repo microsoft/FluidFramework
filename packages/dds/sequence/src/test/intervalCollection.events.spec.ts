@@ -239,7 +239,8 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] = eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
+						eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
@@ -256,7 +257,8 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] = eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
+						eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
