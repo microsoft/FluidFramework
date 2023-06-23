@@ -12,6 +12,7 @@ import {
 	IContextErrorData,
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class DocumentContext extends EventEmitter implements IContext {
 	// We track two offsets - head and tail. Head represents the largest offset related to this document we
@@ -79,12 +80,27 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		assert(
-			offset > this.tail.offset && offset <= this.head.offset,
-			`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
-				`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
-		);
-
+		try {
+			assert(
+				offset > this.tail.offset && offset <= this.head.offset,
+				`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
+					`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
+			);
+		} catch (error) {
+			Lumberjack.error(
+				`Offset not between current tail and head.`,
+				{
+					...getLumberBaseProperties(
+						this.routingKey.documentId,
+						this.routingKey.tenantId,
+					),
+					currentOffset: offset,
+					tailOffset: this.tail.offset,
+					headOffset: this.head.offset,
+				},
+				error,
+			);
+		}
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
 		this.emit("checkpoint", restartOnCheckpointFailure);
