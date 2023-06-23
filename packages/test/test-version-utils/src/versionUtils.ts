@@ -7,15 +7,16 @@
 
 import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
-import { pkgVersion } from "./packageVersion";
-import { InstalledPackage } from "./testApi";
+import { pkgVersion } from "./packageVersion.js";
+import { InstalledPackage } from "./testApi.js";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
-const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
+const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
 
@@ -33,7 +34,7 @@ async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
-	const release = await lock(__dirname, { retries: { forever: true } });
+	const release = await lock(fileURLToPath(import.meta.url), { retries: { forever: true } });
 	try {
 		// Check it again under the lock
 		if (existsSync(installedJsonPath)) {
@@ -190,7 +191,7 @@ export async function ensureInstalled(
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
 
-	// Release the __dirname but lock the modulePath so we can do parallel installs
+	// Release the base path but lock the modulePath so we can do parallel installs
 	const release = await lock(modulePath, { retries: { forever: true } });
 	try {
 		if (force) {
@@ -261,10 +262,8 @@ export function checkInstalled(requested: string) {
 	);
 }
 
-export const loadPackage = (modulePath: string, pkg: string) =>
-	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
-	require(path.join(modulePath, "node_modules", pkg));
-
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
+	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
 /**
  * Used to get the major version number above or below the baseVersion.
  * @param baseVersion - The base version to move from (eg. "0.60.0")

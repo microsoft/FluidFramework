@@ -12,7 +12,7 @@ import {
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -34,7 +34,7 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -149,7 +149,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -176,7 +176,7 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -202,7 +202,7 @@ export function create(
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

@@ -424,6 +424,45 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 	});
+
+	// Note that this runs the computation for several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported is
+	// divided by the number of peers.
+	describe("rebasing commits", () => {
+		const commitCounts = [1, 10, 20];
+		const nbPeers = 5;
+		for (const nbCommits of commitCounts) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite(nbPeers);
+						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+								const peer = provider.trees[iPeer];
+								insert(peer, 0, `p${iPeer}c${iCommit}`);
+							}
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						// Divide the duration by the number of peers so we get the average time per peer.
+						duration = state.timer.toSeconds(before, after) / nbPeers;
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
 });
 
 function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
