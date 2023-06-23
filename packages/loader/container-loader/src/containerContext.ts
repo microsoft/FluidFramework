@@ -161,7 +161,9 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
+	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
 	 */
 	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
