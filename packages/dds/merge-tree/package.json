@@ -110,58 +110,83 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_BaseSegment": {
+			"RemovedInterfaceDeclaration_BlockAction": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IConsensusInfo": {
+			"RemovedInterfaceDeclaration_BlockUpdateActions": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IMergeBlock": {
+			"RemovedInterfaceDeclaration_IHierBlock": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_IMergeNode": {
+			"RemovedInterfaceDeclaration_IMergeBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IMergeNode": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalBlockAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_IncrementalMapState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalSegmentAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalSegmentActions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_MergeBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_NodeAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SegmentActions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_InsertContext": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IMergeNodeCommon": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_ISegmentChanges": {
+			"RemovedInterfaceDeclaration_ISegmentChanges": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_IncrementalMapState": {
+			"RemovedEnumDeclaration_IncrementalExecOp": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_InsertContext": {
+			"RemovedVariableDeclaration_MaxNodesInBlock": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_Marker": {
+			"RemovedInterfaceDeclaration_MinListener": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_MergeBlock": {
+			"RemovedInterfaceDeclaration_SearchResult": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_MergeNode": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_SortedSegmentSetItem": {
-				"backCompat": false
-			},
-			"ClassDeclaration_TextSegment": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IHierBlock": {
-				"backCompat": false
-			},
-			"ClassDeclaration_TrackingGroup": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_Trackable": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITrackingGroup": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+			"RemovedFunctionDeclaration_ordinalToArray": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
