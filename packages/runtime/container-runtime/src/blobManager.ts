@@ -145,7 +145,13 @@ interface PendingBlob {
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds?: number; attached: boolean; acked: boolean };
+	[id: string]: {
+		blob: string;
+		uploadTime?: number;
+		minTTLInSeconds?: number;
+		attached: boolean;
+		acked: boolean;
+	};
 }
 
 export interface IBlobManagerEvents {
@@ -415,7 +421,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.routeContext,
 			async () => this.getBlob(id),
 			() => {
-				if(entry){ // in detached container case, there is no pending entry
+				// in detached container case, there is no pending entry
+				if (entry) {
 					entry.attached = true;
 					this.deletePendingBlobMaybe(id);
 				}
