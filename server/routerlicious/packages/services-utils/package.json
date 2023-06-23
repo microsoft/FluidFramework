@@ -102,6 +102,9 @@
 			"RemovedFunctionDeclaration_validateTokenRevocationClaims": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_DummyTokenRevocationManager": {
+				"backCompat": false
 			}
 		}
 	}

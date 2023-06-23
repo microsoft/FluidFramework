@@ -731,9 +731,7 @@ export class ContainerRuntime
 				if (loadSequenceNumberVerification === "log") {
 					logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
 				} else {
-					// Call both close and dispose as closeFn implementation will no longer dispose runtime in future
 					context.closeFn(error);
-					context.disposeFn?.(error);
 				}
 			}
 		}
@@ -821,11 +819,7 @@ export class ContainerRuntime
 	}
 
 	public get closeFn(): (error?: ICriticalContainerError) => void {
-		// Also call disposeFn to retain functionality of runtime being disposed on close
-		return (error?: ICriticalContainerError) => {
-			this.context.closeFn(error);
-			this.context.disposeFn?.(error);
-		};
+		return this.context.closeFn;
 	}
 
 	public get flushMode(): FlushMode {
@@ -3313,7 +3307,7 @@ export class ContainerRuntime
 						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 					},
 				);
-				this.closeFn(error);
+				this.disposeFn(error);
 				throw error;
 			}
 
@@ -3464,7 +3458,7 @@ export class ContainerRuntime
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
+			this.disposeFn(error);
 			throw error;
 		}
 
