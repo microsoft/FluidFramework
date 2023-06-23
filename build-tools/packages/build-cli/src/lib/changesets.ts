@@ -59,7 +59,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
 		const results = await repo.gitClient.log({ file, maxCount: 1, strictDate: true });
-		
+
 		// Newly added files won't have any results from git log, so default to now.
 		const added = parseISO(results.all?.[0]?.date ?? formatISO(Date.now()));
 
