@@ -158,17 +158,25 @@ export function appendChangeIntervalToRevertibles(
 	revertibles: SharedStringRevertible[],
 ) {
 	const startSeg = previousInterval.start.getSegment() as SharedStringSegment;
+	const startType =
+		startSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove
+			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
 	const endSeg = previousInterval.end.getSegment() as SharedStringSegment;
+	const endType =
+		endSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove
+			: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
 	const prevStartRef = string.createLocalReferencePosition(
 		startSeg,
 		previousInterval.start.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+		startType,
 		undefined,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+		endType,
 		undefined,
 	);
 	const revertible = {
@@ -397,10 +405,19 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
+	const startSlidePos: number =
+		revertible.start.getSegment() === undefined
+			? collection.getSlideToSegment(revertible.start)?.offset
+			: start;
 	const end = string.localReferencePositionToPosition(revertible.end);
-	string.getIntervalCollection(label).change(id, start, end);
+	const endSlidePos: number =
+		revertible.end.getSegment() === undefined
+			? collection.getSlideToSegment(revertible.end)?.offset
+			: end;
+	collection.change(id, startSlidePos, endSlidePos);
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);

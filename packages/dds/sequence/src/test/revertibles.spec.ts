@@ -274,6 +274,48 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection2 = sharedString2.getIntervalCollection("test");
 	});
 
+	it("interval change, range remove, ack, revert range remove", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 6, 8);
+		sharedString2.removeRange(0, 5);
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+	});
+
+	it("local only text remove, no ack, move interval out of range", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(2, 4, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		sharedString.removeRange(0, 5);
+		collection.change(id, 6, 8);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
+	});
+
 	it("remote string remove interacting with reverting an interval remove", () => {
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);

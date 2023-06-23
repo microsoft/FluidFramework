@@ -2006,6 +2006,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	previousInterval(pos: number): TInterval | undefined;
 
 	nextInterval(pos: number): TInterval | undefined;
+
+	getSlideToSegment(lref: LocalReferencePosition);
 }
 
 /**
@@ -2654,7 +2656,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	private getSlideToSegment(lref: LocalReferencePosition) {
+	public getSlideToSegment(lref: LocalReferencePosition) {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}

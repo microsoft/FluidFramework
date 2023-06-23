@@ -125,6 +125,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IIntervalCollection": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
