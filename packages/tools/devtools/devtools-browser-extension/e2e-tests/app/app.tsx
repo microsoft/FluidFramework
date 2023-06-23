@@ -48,13 +48,14 @@ getContainerInfo(client).then((containerInfo) => {
 
 ReactDOM.render(
 	<React.StrictMode>
-		<div className="text-area">
+		<div className="text-area" id="text-area-id">
 			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(text)} />
 		</div>
 	</React.StrictMode>,
 	document.querySelector("#content"),
 	() => {
 		console.log("App rendered!");
+		window["fluidStarted"] = true;
 	},
 );
 
