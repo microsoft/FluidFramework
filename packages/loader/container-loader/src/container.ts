@@ -722,9 +722,7 @@ export class Container
 				0x5a2 /* Context still not defined after contextChanged event */,
 			);
 		}
-		// Disable lint rule for the sake of more complete stack traces
-		// eslint-disable-next-line no-return-await
-		return await this._context.getEntryPoint?.();
+		return this._context.getEntryPoint();
 	}
 
 	/**
