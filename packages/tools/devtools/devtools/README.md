@@ -30,8 +30,6 @@ This function accepts a `DevtoolsLogger` for receiving Fluid telemetry from your
 `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing
 `Container` data.
 
-TODO: link to API docs once API shape has settled.
-
 #### About the [`DevtoolsLogger`][devtools-logger-docs]
 
 The `DevtoolsLogger` is an optional piece when calling `initializeDevtools` but it is strongly recommended that you use
@@ -106,10 +104,8 @@ That said, if you wish to have tighter control over when the Devtools are torn d
 
 ## Related Tooling
 
-This library is designed to work alongside our Chromium browser extension.
-
-TODO: link to code on github once package names have been finalized.
-TODO: link to the various browsers' webstore pages for our extension once it has been publiched.
+This library is designed to work alongside our [Chromium browser extension][browser-extension].
+It is available in the [Edge][edge-store-extension] and [Chrome][chrome-store-extension] extension stores.
 
 ## Working in the package
 
@@ -198,3 +194,6 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
 [container-loader-package]: https://www.npmjs.com/package/@fluidframework/container-loader
 [devtools-core-package]: https://www.npmjs.com/package/@fluid-experimental/devtools-core
+[browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension
+[edge-store-extension]: https://aka.ms/fluid/devtool/edge
+[chrome-store-extension]: https://aka.ms/fluid/devtool/chrome
