@@ -128,22 +128,15 @@ export interface ICellLocalOpMetadata<T = any> {
 }
 
 /**
- * Options related to attribution
- *
+ * Options which impact SharedCell's behavior.
  * @alpha
  */
-export interface ICellOptions {
-	attribution?: ICellAttributionOptions;
-}
-
-/**
- * This enables the cell to store the attribution information which can be accessed with the runtime
- * (i.e. who creeated the content and when it was created)
- *
- * default: false
- *
- * @alpha
- */
-export interface ICellAttributionOptions {
-	track?: boolean;
+export interface CellOptions {
+	/**
+	 * Whether the cell should track attribution of its content.
+	 * Default: false.
+	 * @remarks - This option only applies at datastore creation time. Existing data stores that are loaded will inherit
+	 * whatever option was set at creation time.
+	 */
+	enableAttribution?: boolean;
 }

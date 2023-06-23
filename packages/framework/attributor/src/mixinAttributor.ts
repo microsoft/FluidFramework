@@ -47,10 +47,23 @@ export interface IProvideAttributorConfig {
  * @alpha
  */
 export interface IAttributorConfig extends IProvideAttributorConfig {
+	/**
+	 * {@link IRuntimeAttributor} to attach to the loaded container runtime.
+	 */
 	runtimeAttributor: IRuntimeAttributor;
+
+	/**
+	 * Whether attribution should be
+	 * @remarks - This flag will be ignored when loading existing files. Attribution enablement will instead
+	 * be dictated by whether the file was created with this flag.
+	 */
 	enableOnNewFile: boolean;
 }
 
+/**
+ * Convenience implementation of {@link (IAttributorConfig:interface)}.
+ * @alpha
+ */
 export class AttributorConfig implements IAttributorConfig {
 	public get IAttributorConfig() {
 		return this;

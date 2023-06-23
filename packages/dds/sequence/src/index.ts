@@ -63,7 +63,7 @@ export {
 	SequenceEvent,
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent";
-export { SharedStringFactory, ISharedStringAttributes } from "./sequenceFactory";
+export { SharedStringFactory } from "./sequenceFactory";
 export {
 	getTextAndMarkers,
 	ISharedString,

@@ -51,6 +51,7 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
+import { UsageError } from "@fluidframework/container-utils";
 
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged, SequenceOptions } from "./defaultMapInterfaces";
@@ -204,14 +205,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		});
 
 		const clientOptions: IMergeTreeOptions = {
-			...dataStoreRuntime.options,
-			...options,
+			...(dataStoreRuntime.options as any),
+			// It would be nice to merge the options object directly (or to stop depending on options
+			// being injected by dataStoreRuntime options here),
+			// but attribution specification doesn't align exactly with sequence option specification
+			// and other options have
 		};
-		if (clientOptions?.attribution && services !== undefined && options !== undefined) {
-			clientOptions.attribution.policyFactory = services.IAttributionPolicyRegistry?.get(
-				options.attribution.policyName,
-			);
+		const { policyName } = options?.attribution ?? {};
+		if (policyName !== undefined) {
+			const policyFactory = services?.IAttributionPolicyRegistry?.get(policyName);
+			if (policyFactory === undefined) {
+				throw new UsageError("Policy not found in attribution registry", { policyName });
+			}
+			clientOptions.attribution = { track: true, policyFactory };
 		}
+
 		this.client = new Client(
 			segmentFromSpec,
 			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),

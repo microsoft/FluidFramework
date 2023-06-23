@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-internal/test-drivers";
 import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -71,6 +72,31 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 				// - the test author already imported a version of the DDS which matches the current compat config.
 				oldRegistry.push([key, factory]);
 			} else {
+				/**
+				 * If you hit this assert while writing an e2e test, it likely means you created a SharedObject factory
+				 * with non-default parameters. Rather than write something like:
+				 *
+				 * ```typescript
+				 * import { SharedString } from "@fluidframework/sequence";
+				 * const factory = SharedString.getFactory({ myTestFlag: true });
+				 * ```
+				 *
+				 * use the `SharedString` provided as an argument to `describeCompat` and variants:
+				 *
+				 * ```typescript
+				 * describeCompat("my test", (getTestObjectProvider, apis) => {
+				 *     const factory = apis.dds.SharedString.getFactory({ myTestFlag: true });
+				 * });
+				 * ```
+				 *
+				 * This ensures that the factory you create depends on the correct fluid runtime version for compat purposes,
+				 * and so the test data object's registry (which is being built here) can use your factory directly.
+				 */
+				assert.deepEqual(
+					oldFactory.attributes,
+					factory.attributes,
+					"Mismatched factory attributes.",
+				);
 				oldRegistry.push([key, oldFactory]);
 			}
 		}

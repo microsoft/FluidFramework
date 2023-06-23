@@ -10,8 +10,17 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedCell } from "./cell";
-import { ISharedCell } from "./interfaces";
+import { CellOptions, ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
+
+/**
+ * Persisted attributes which dictate SharedCell configuration
+ * @remarks - This information should generally align with the subset of {@link CellOptions} fields
+ * which have compatibility constraints (i.e. collaborating clients must agree on the configuration).
+ */
+export interface ICellAttributes extends IChannelAttributes {
+	enableAttribution?: true;
+}
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.
@@ -33,6 +42,8 @@ export class CellFactory implements IChannelFactory {
 		packageVersion: pkgVersion,
 	};
 
+	public constructor(public options: CellOptions = {}) {}
+
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -44,7 +55,11 @@ export class CellFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
 	public get attributes(): IChannelAttributes {
-		return CellFactory.Attributes;
+		const attributes: ICellAttributes = {
+			...CellFactory.Attributes,
+			enableAttribution: this.options.enableAttribution === true ? true : undefined,
+		};
+		return attributes;
 	}
 
 	/**

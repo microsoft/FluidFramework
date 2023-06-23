@@ -355,15 +355,6 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-// @public (undocumented)
-export interface ISharedStringAttributes extends IChannelAttributes {
-    // (undocumented)
-    attribution?: {
-        track: boolean;
-        policyName: string;
-    } | undefined;
-}
-
 // @public
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
@@ -464,9 +455,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 export interface SequenceOptions {
     // (undocumented)
     [key: string]: any;
-    // (undocumented)
-    attribution: {
-        track: boolean;
+    attribution?: {
         policyName: string;
     };
     intervalStickinessEnabled: boolean;
@@ -629,17 +618,17 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
 // @public (undocumented)
 export class SharedStringFactory implements IChannelFactory {
-    constructor(options?: SequenceOptions | undefined, services?: FluidObject<IProvideAttributionPolicyRegistry>);
+    constructor(options?: SequenceOptions, services?: FluidObject<IProvideAttributionPolicyRegistry>);
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
-    get attributes(): ISharedStringAttributes;
+    get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): SharedString;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
     // (undocumented)
-    readonly options?: SequenceOptions | undefined;
+    readonly options: SequenceOptions;
     // (undocumented)
     static segmentFromSpec(spec: any): SharedStringSegment;
     // (undocumented)

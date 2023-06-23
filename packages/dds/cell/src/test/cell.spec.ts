@@ -15,12 +15,12 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell, ICellOptions } from "../interfaces";
+import { ISharedCell, CellOptions } from "../interfaces";
 
 function createConnectedCell(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-	options?: ICellOptions,
+	options?: CellOptions,
 ): ISharedCell {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -37,7 +37,7 @@ function createConnectedCell(
 	return cell;
 }
 
-function createDetachedCell(id: string, options?: ICellOptions): ISharedCell {
+function createDetachedCell(id: string, options?: CellOptions): ISharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
@@ -172,7 +172,7 @@ describe("Cell", () => {
 		describe("Attributor", () => {
 			it("should retrive proper attribution in detached state", async () => {
 				// overwrite the cell with attribution tracking enabled
-				const options: ICellOptions = { attribution: { track: true } };
+				const options: CellOptions = { enableAttribution: true };
 				cell = createDetachedCell("cell", options);
 				cell.set("value");
 
@@ -297,7 +297,7 @@ describe("Cell", () => {
 
 		describe("Attributor", () => {
 			beforeEach(() => {
-				const options: ICellOptions = { attribution: { track: true } };
+				const options: CellOptions = { enableAttribution: true };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell with attribution enabled.
 				cell1 = createConnectedCell("cell1", containerRuntimeFactory, options);

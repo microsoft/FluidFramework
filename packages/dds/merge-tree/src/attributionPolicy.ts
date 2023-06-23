@@ -300,8 +300,9 @@ export interface AttributionPolicy {
 }
 
 /**
- * IAttributionPolicyFactory create data stores.  It is associated with an identifier (its `name` member)
- * and usually provided to consumers using this mapping through a data store registry.
+ * IAttributionPolicyFactory create data stores. It is associated with an identifier (its `name` member)
+ * and usually provided to consumers using this mapping through an {@link AttributionPolicyRegistry}.
+ * @alpha
  */
 export interface IAttributionPolicyFactory {
 	/**
@@ -322,28 +323,42 @@ export interface IAttributionPolicyFactory {
 
 /**
  * An associated pair of an identifier and registry entry.
+ * @alpha
  */
 export type NamedAttributionPolicyRegistryEntry = [string, IAttributionPolicyFactory];
 
 /**
  * An iterable identifier/registry entry pair list
+ * @alpha
  */
 export type NamedAttributionPolicyRegistryEntries = Iterable<NamedAttributionPolicyRegistryEntry>;
 
+/**
+ * @alpha
+ */
 export const IAttributionPolicyRegistry: keyof IProvideAttributionPolicyRegistry =
 	"IAttributionPolicyRegistry";
 
+/**
+ * FluidObject provider-pattern for {@link (IAttributionPolicyRegistry:interface)}.
+ * @alpha
+ */
 export interface IProvideAttributionPolicyRegistry {
 	readonly IAttributionPolicyRegistry: IAttributionPolicyRegistry;
 }
 
 /**
  * An association of policy names to attribution policy factories, which can be used to enable attribution on a merge-tree.
+ * @remarks - A simple implementation is provided for application authors, see {@link AttributionPolicyRegistry}.
+ * @alpha
  */
 export interface IAttributionPolicyRegistry extends IProvideAttributionPolicyRegistry {
 	get(name: string): IAttributionPolicyFactory | undefined;
 }
 
+/**
+ * Basic implementation of {@link (IAttributionPolicyRegistry:interface)} exported for convenience.
+ */
 export class AttributionPolicyRegistry implements IAttributionPolicyRegistry {
 	private readonly map: Map<string, IAttributionPolicyFactory>;
 

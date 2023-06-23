@@ -18,15 +18,8 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @alpha
-export interface ICellAttributionOptions {
-    // (undocumented)
-    track?: boolean;
-}
-
-// @alpha
-export interface ICellOptions {
-    // (undocumented)
-    attribution?: ICellAttributionOptions;
+export interface CellOptions {
+    enableAttribution?: boolean;
 }
 
 // @public
@@ -57,6 +50,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // @alpha (undocumented)
     getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
+    // @alpha
+    static getFactory(options: CellOptions): IChannelFactory;
     protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;

@@ -54,10 +54,17 @@ export interface IMapMessageLocalMetadata {
  * Optional flags that configure options for sequence DDSs
  */
 export interface SequenceOptions {
-	attribution: {
-		track: boolean;
-		policyName: string;
-	};
+	/**
+	 * If undefined, signifies attribution should be disabled for this SharedString (this is the default value).
+	 *
+	 * When defined, the policy name dictates the registry key used to determine the attribution policy.
+	 * See `IAttributionPolicyFactory` for more documentation and compatibility constraints.
+	 *
+	 * This option only applies at datastore creation time. Existing data stores that are loaded will inherit
+	 * whatever option was set at creation time.
+	 */
+	attribution?: { policyName: string };
+
 	/**
 	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
 	 * other than "end"

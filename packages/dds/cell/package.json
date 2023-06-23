@@ -95,6 +95,15 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ICellOptions": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICellAttributionOptions": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

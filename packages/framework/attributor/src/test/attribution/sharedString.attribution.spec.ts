@@ -253,10 +253,12 @@ function createSharedString(
 			]);
 			const factory = SharedString.getFactory(
 				{
-					attribution: {
-						track: makeSerializer !== undefined,
-						policyName: policyFactory.name,
-					},
+					attribution:
+						makeSerializer !== undefined
+							? {
+									policyName: policyFactory.name,
+							  }
+							: undefined,
 					intervalStickinessEnabled: false,
 				},
 				attributionRegistry,

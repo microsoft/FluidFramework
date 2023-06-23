@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import { createRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -17,15 +17,6 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-
-const cellId = "sharedCellKey";
-const registry: ChannelFactoryRegistry = [
-	[cellId, SharedCell.getFactory(/* { attribution: { track: true } } */)],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
 function assertAttributionMatches(
 	sharedCell: SharedCell,
@@ -74,7 +65,19 @@ function assertAttributionMatches(
 	}
 }
 
-describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
+describeNoCompat("Attributor for SharedCell", (getTestObjectProvider, apis) => {
+	const {
+		dds: { SharedCell },
+	} = apis;
+	const cellId = "sharedCellKey";
+	const registry: ChannelFactoryRegistry = [
+		[cellId, SharedCell.getFactory({ enableAttribution: true })],
+	];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

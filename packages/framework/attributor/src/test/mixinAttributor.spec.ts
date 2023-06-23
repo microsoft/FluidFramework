@@ -24,10 +24,9 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	AttributorConfig,
 	createRuntimeAttributor,
-	IAttributorConfig,
 	IProvideAttributorConfig,
-	IRuntimeAttributor,
 	mixinAttributor,
 } from "../mixinAttributor";
 import { Attributor } from "../attributor";
@@ -38,16 +37,6 @@ import { makeMockAudience } from "./utils";
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
 };
-
-class Config implements IAttributorConfig {
-	public get IAttributorConfig() {
-		return this;
-	}
-	constructor(
-		public readonly runtimeAttributor: IRuntimeAttributor,
-		public readonly enableOnNewFile: boolean,
-	) {}
-}
 
 describe("mixinAttributor", () => {
 	const clientId = "mock client id";
@@ -71,7 +60,7 @@ describe("mixinAttributor", () => {
 	};
 
 	const getScope = (enableOnNewFile: boolean): FluidObject<IProvideAttributorConfig> => {
-		return new Config(createRuntimeAttributor(), enableOnNewFile);
+		return new AttributorConfig(createRuntimeAttributor(), enableOnNewFile);
 	};
 
 	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;

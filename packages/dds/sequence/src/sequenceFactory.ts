@@ -15,17 +15,20 @@ import { pkgVersion } from "./packageVersion";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { SequenceOptions } from "./defaultMapInterfaces";
 
+/**
+ * Persisted attributes which dictate SharedString configuration
+ * @remarks - This information should generally align with the subset of {@link SequenceOptions} fields
+ * which have compatibility constraints (i.e. collaborating clients must agree on the configuration).
+ */
 export interface ISharedStringAttributes extends IChannelAttributes {
-	attribution?:
-		| {
-				track: boolean;
-				/**
-				 * Unique name identifying the attribution policy
-				 */
-				policyName: string;
-		  }
-		| undefined;
+	attribution?: {
+		policyName: string;
+	};
 }
+
+const defaultSequenceOptions: SequenceOptions = {
+	intervalStickinessEnabled: false,
+};
 
 export class SharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -40,14 +43,12 @@ export class SharedStringFactory implements IChannelFactory {
 
 	/**
 	 * Constructs a factory which:
-	 * - creates new {@link SharedString} objects using the attribution policy name
+	 * - creates new {@link SharedString} objects using the attribution policy name (if enabled)
 	 * - is capable of loading existing {@link SharedString}s which either do not have attribution enabled,
 	 * or have a policy supported by the registry provided via `services`.
-	 *
-	 * TODO: improve doc
 	 */
 	public constructor(
-		public readonly options?: SequenceOptions,
+		public readonly options: SequenceOptions = defaultSequenceOptions,
 		private readonly services: FluidObject<IProvideAttributionPolicyRegistry> = {},
 	) {}
 
@@ -69,14 +70,12 @@ export class SharedStringFactory implements IChannelFactory {
 		return SharedStringFactory.Type;
 	}
 
-	public get attributes(): ISharedStringAttributes {
-		if (this.options !== undefined) {
-			return {
-				...SharedStringFactory.Attributes,
-				attribution: this.options?.attribution,
-			};
-		}
-		return SharedStringFactory.Attributes;
+	public get attributes(): IChannelAttributes {
+		const attributes: ISharedStringAttributes = {
+			...SharedStringFactory.Attributes,
+			attribution: this.options.attribution,
+		};
+		return attributes;
 	}
 
 	/**
@@ -88,7 +87,17 @@ export class SharedStringFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		const sharedString = new SharedString(runtime, id, attributes, this.options, this.services);
+		const options: SequenceOptions = {
+			...this.options,
+			...attributes,
+		};
+		// attributes go through a JSON round-trip, so if the attributes specify that attribution should be disabled,
+		// the above spread operations won't explicitly override the `attribution` field of `this.options` (since the
+		// property is empty). Explicitly do that here.
+		if ((attributes as ISharedStringAttributes).attribution === undefined) {
+			options.attribution = undefined;
+		}
+		const sharedString = new SharedString(runtime, id, attributes, options, this.services);
 		await sharedString.load(services);
 		return sharedString;
 	}

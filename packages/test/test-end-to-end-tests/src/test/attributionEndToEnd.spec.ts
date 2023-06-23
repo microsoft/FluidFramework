@@ -93,7 +93,6 @@ describeNoCompat("Attributor", (getTestObjectProvider, apis) => {
 			SharedString.getFactory(
 				{
 					attribution: {
-						track: true,
 						policyName: policyFactory.name,
 					},
 					intervalStickinessEnabled: true,

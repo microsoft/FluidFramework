@@ -126,7 +126,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_SequenceOptions": {
+			"ClassDeclaration_SharedStringFactory": {
 				"forwardCompat": false
 			}
 		}

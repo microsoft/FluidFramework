@@ -671,7 +671,6 @@ declare function get_old_InterfaceDeclaration_SequenceOptions():
 declare function use_current_InterfaceDeclaration_SequenceOptions(
     use: TypeOnly<current.SequenceOptions>);
 use_current_InterfaceDeclaration_SequenceOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SequenceOptions());
 
 /*
@@ -840,6 +839,7 @@ declare function get_old_ClassDeclaration_SharedStringFactory():
 declare function use_current_ClassDeclaration_SharedStringFactory(
     use: TypeOnly<current.SharedStringFactory>);
 use_current_ClassDeclaration_SharedStringFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedStringFactory());
 
 /*

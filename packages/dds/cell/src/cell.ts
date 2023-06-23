@@ -19,8 +19,8 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
-import { ISharedCell, ISharedCellEvents, ICellLocalOpMetadata, ICellOptions } from "./interfaces";
+import { CellFactory, ICellAttributes } from "./cellFactory";
+import { ISharedCell, ISharedCellEvents, ICellLocalOpMetadata, CellOptions } from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -74,10 +74,20 @@ export class SharedCell<T = any>
 	/**
 	 * Gets the factory for the `SharedCell` to register with the data store.
 	 *
-	 * @returns A factory that creates and loads `SharedCell`s.
+	 * @returns A factory that creates and loads `SharedCell`s using the default options.
 	 */
-	public static getFactory(): IChannelFactory {
-		return new CellFactory();
+	public static getFactory(): IChannelFactory;
+	/**
+	 * Gets the factory for the `SharedCell` to register with the data store.
+	 *
+	 * @returns A factory that creates and loads `SharedCell`s using the provided options.
+	 * See notes on {@link CellOptions}: some options can only be set at datastore creation
+	 * time and do not apply to subsequent loads.
+	 * @alpha
+	 */
+	public static getFactory(options: CellOptions): IChannelFactory;
+	public static getFactory(options?: CellOptions): IChannelFactory {
+		return new CellFactory(options);
 	}
 
 	/**
@@ -101,7 +111,7 @@ export class SharedCell<T = any>
 
 	private attribution: AttributionKey | undefined;
 
-	private readonly options: ICellOptions | undefined;
+	private readonly options: Required<CellOptions>;
 
 	/**
 	 * Constructs a new `SharedCell`.
@@ -110,11 +120,15 @@ export class SharedCell<T = any>
 	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+	) {
 		super(id, runtime, attributes, "fluid_cell_");
-
-		this.options = runtime.options as ICellOptions;
+		this.options = {
+			enableAttribution: (attributes as ICellAttributes).enableAttribution ?? false,
+		};
 	}
 
 	/**
@@ -188,7 +202,7 @@ export class SharedCell<T = any>
 	 * or set the local/detached attribution.
 	 */
 	private setAttribution(message?: ISequencedDocumentMessage): void {
-		if (this.options?.attribution?.track ?? false) {
+		if (this.options.enableAttribution) {
 			this.attribution = message
 				? { type: "op", seq: message.sequenceNumber }
 				: this.isAttached()
