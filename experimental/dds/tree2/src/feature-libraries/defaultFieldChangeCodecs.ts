@@ -4,7 +4,7 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
+import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../codec";
 import { JsonCompatibleReadOnly, Mutable } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import type {
@@ -21,10 +21,6 @@ import {
 } from "./defaultFieldChangeFormat";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
-
-export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
-	[0, makeValueCodec(Type.Number())],
-]);
 
 export const makeValueFieldCodecFamily = (childCodec: IJsonCodec<NodeChangeset>) =>
 	makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]);
