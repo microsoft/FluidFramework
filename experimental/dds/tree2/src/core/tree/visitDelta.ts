@@ -70,7 +70,7 @@ import { FieldKey, Value } from "./types";
  * Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied
  * to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls
  * will pass indices 0 and 1 respectively.
- * 
+ *
  * Note a node may be moved more than once while visiting a delta.
  * This is because the delta may move-out a single block of adjacent nodes which are not all moved to the same destination.
  * To avoid the need for the visitor to support moving-in a subrange of a moved-out block, this function will instead

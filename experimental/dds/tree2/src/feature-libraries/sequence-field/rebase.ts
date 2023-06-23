@@ -437,6 +437,10 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 	}
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendMarkToDest<T>(
 	mark: Mark<T>,
 	moveEffects: MoveEffectTable<T>,
@@ -465,6 +469,10 @@ function sendMarkToDest<T>(
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 function setPairedMarkStatus(
 	moveEffects: MoveEffectTable<unknown>,
 	target: CrossFieldTarget,
@@ -632,6 +640,10 @@ function amendRebaseI<TNodeChange>(
 	return factory2.list;
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 function getMovedMark<T>(
 	moveEffects: MoveEffectTable<T>,
 	revision: RevisionTag | undefined,

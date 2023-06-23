@@ -960,14 +960,25 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
-				const dependent = getFirstFromCrossFieldMap(
-					dependentsMap,
-					revision,
-					id,
-					count,
-				)?.value;
-				if (dependent !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependent);
+
+				let dependentEntry = getFirstFromCrossFieldMap(dependentsMap, revision, id, count);
+
+				const lastChangedId = (id as number) + count - 1;
+				while (dependentEntry !== undefined) {
+					crossFieldTable.invalidatedFields.add(dependentEntry.value);
+					const lastEntryId = dependentEntry.start + dependentEntry.length - 1;
+					const numChangedIdsAfterEntry = lastChangedId - lastEntryId;
+					if (numChangedIdsAfterEntry > 0) {
+						dependentEntry = getFirstFromCrossFieldMap(
+							dependentsMap,
+							revision,
+							brand(lastEntryId + 1),
+							numChangedIdsAfterEntry,
+						);
+					} else {
+						// We have found the last entry for the changed ID range.
+						break;
+					}
 				}
 
 				if (

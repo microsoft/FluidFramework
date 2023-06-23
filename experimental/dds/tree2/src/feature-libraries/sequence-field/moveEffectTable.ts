@@ -308,6 +308,10 @@ export function applyMoveEffectsToMark<T>(
 	return [mark];
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 export function getModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
 	revision: RevisionTag | undefined,
@@ -334,6 +338,10 @@ export function getModifyAfter<T>(
 	return undefined;
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 function getPairedMarkStatus<T>(
 	moveEffects: MoveEffectTable<T>,
 	target: CrossFieldTarget,
