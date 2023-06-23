@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import { createRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -17,24 +17,10 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-
-const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [
-	[
-		stringId,
-		SharedString.getFactory({
-			attribution: {
-				track: true,
-				policyFactory: createInsertOnlyAttributionPolicy,
-			},
-		}),
-	],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+import {
+	AttributionPolicyRegistry,
+	InsertOnlyAttributionPolicyFactory,
+} from "@fluidframework/merge-tree";
 
 function assertAttributionMatches(
 	sharedString: SharedString,
@@ -95,9 +81,33 @@ function assertAttributionMatches(
 
 // TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
 // unit tests.
-// NOTE: Skipped because `convertRegistry` in `compatUtils.ts` does not interact in an acceptable way with DDSes that have parameterized
-// factories.
-describeNoCompat.skip("Attributor", (getTestObjectProvider) => {
+describeNoCompat("Attributor", (getTestObjectProvider, apis) => {
+	const {
+		dds: { SharedString },
+	} = apis;
+	const stringId = "sharedStringKey";
+	const policyFactory = new InsertOnlyAttributionPolicyFactory();
+	const registry: ChannelFactoryRegistry = [
+		[
+			stringId,
+			SharedString.getFactory(
+				{
+					attribution: {
+						track: true,
+						policyName: policyFactory.name,
+					},
+					intervalStickinessEnabled: true,
+				},
+				new AttributionPolicyRegistry([[policyFactory.name, policyFactory]]),
+			),
+		],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

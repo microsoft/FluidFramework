@@ -34,6 +34,15 @@ export interface AttributionPolicy {
 }
 
 // @public (undocumented)
+export class AttributionPolicyRegistry implements IAttributionPolicyRegistry {
+    constructor(namedEntries: NamedAttributionPolicyRegistryEntries);
+    // (undocumented)
+    get(name: string): IAttributionPolicyFactory | undefined;
+    // (undocumented)
+    get IAttributionPolicyRegistry(): this;
+}
+
+// @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;

@@ -52,7 +52,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 		}
 	}
 
-	const registryMapping = {};
+	const registryMapping: Record<string, IChannelFactory> = {};
 	for (const value of Object.values(api.dds)) {
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
@@ -64,7 +64,15 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
-			oldRegistry.push([key, oldFactory]);
+
+			if (oldFactory.attributes.packageVersion === factory.attributes.packageVersion) {
+				// Factory created by test author is already using the old APIs: don't bother replacing it as
+				// - the conversion utils here assume `.getFactory()` is parameterless, which isn't always true
+				// - the test author already imported a version of the DDS which matches the current compat config.
+				oldRegistry.push([key, factory]);
+			} else {
+				oldRegistry.push([key, oldFactory]);
+			}
 		}
 
 		return oldRegistry;

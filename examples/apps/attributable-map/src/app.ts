@@ -4,7 +4,6 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import { enableOnNewFileKey } from "@fluid-experimental/attributor";
 import { HitCounterContainerRuntimeFactory, IHitCounterAppModel } from "./containerCode";
 import { renderHitCounter } from "./view";
 
@@ -14,11 +13,6 @@ import { renderHitCounter } from "./view";
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	/**
-	 * Manually enable the attribution config,
-	 */
-	sessionStorage.setItem(enableOnNewFileKey, "true");
-
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IHitCounterAppModel>(
 		new StaticCodeLoader(new HitCounterContainerRuntimeFactory()),
 	);

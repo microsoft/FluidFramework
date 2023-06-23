@@ -4,6 +4,7 @@
  */
 
 import {
+	IAttributionPolicyRegistry,
 	ICombiningOp,
 	IMergeTreeInsertMsg,
 	IMergeTreeRemoveMsg,
@@ -83,17 +84,26 @@ export class SharedString
 
 	/**
 	 * Get a factory for SharedString to register with the data store.
+	 * @param options - Options controlling SharedString behavior.
+	 * @param services - If attribution is enabled, the attribution registry must contain an entry for the policy name
+	 * in `options`.
 	 * @returns a factory that creates and load SharedString
 	 */
-	public static getFactory(options: SequenceOptions): SharedStringFactory;
+	public static getFactory(
+		options: SequenceOptions,
+		services?: FluidObject<IAttributionPolicyRegistry>,
+	): SharedStringFactory;
 
 	/**
 	 * Get a factory for SharedString to register with the data store using the default options.
 	 * @returns a factory that creates and load SharedString
 	 */
 	public static getFactory(): SharedStringFactory;
-	public static getFactory(options?: SequenceOptions): SharedStringFactory {
-		return new SharedStringFactory(options);
+	public static getFactory(
+		options?: SequenceOptions,
+		services?: FluidObject<IAttributionPolicyRegistry>,
+	): SharedStringFactory {
+		return new SharedStringFactory(options, services);
 	}
 
 	public get ISharedString(): ISharedString {

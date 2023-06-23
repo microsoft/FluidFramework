@@ -110,9 +110,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_MergeTreeRevertibleDriver": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_IMergeTreeAttributionOptions": {
 				"forwardCompat": false
 			},

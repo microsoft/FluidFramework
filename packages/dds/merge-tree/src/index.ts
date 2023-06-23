@@ -12,6 +12,7 @@ export {
 } from "./attributionCollection";
 export {
 	AttributionPolicy,
+	AttributionPolicyRegistry,
 	IAttributionPolicyFactory,
 	IProvideAttributionPolicyRegistry,
 	IAttributionPolicyRegistry,

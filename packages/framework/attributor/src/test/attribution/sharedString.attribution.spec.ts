@@ -35,7 +35,10 @@ import {
 import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+import {
+	AttributionPolicyRegistry,
+	InsertOnlyAttributionPolicyFactory,
+} from "@fluidframework/merge-tree";
 import { IAttributor, OpStreamAttributor } from "../../attributor";
 import {
 	AttributorSerializer,
@@ -244,12 +247,20 @@ function createSharedString(
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 			const { deltaManager } = dataStoreRuntime;
-			const factory = SharedString.getFactory({
-				attribution: {
-					track: makeSerializer !== undefined,
-					policyFactory: createInsertOnlyAttributionPolicy,
+			const policyFactory = new InsertOnlyAttributionPolicyFactory();
+			const attributionRegistry = new AttributionPolicyRegistry([
+				[policyFactory.name, policyFactory],
+			]);
+			const factory = SharedString.getFactory(
+				{
+					attribution: {
+						track: makeSerializer !== undefined,
+						policyName: policyFactory.name,
+					},
+					intervalStickinessEnabled: false,
 				},
-			});
+				attributionRegistry,
+			);
 			const sharedString = factory.create(dataStoreRuntime, String.fromCharCode(index + 65));
 			if (index === 0 && makeSerializer !== undefined) {
 				attributor = new OpStreamAttributor(deltaManager, audience);

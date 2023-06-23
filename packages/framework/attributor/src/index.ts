@@ -4,6 +4,7 @@
  */
 export { Attributor, OpStreamAttributor, IAttributor } from "./attributor";
 export {
+	AttributorConfig,
 	createRuntimeAttributor,
 	IProvideAttributorConfig,
 	IAttributorConfig,

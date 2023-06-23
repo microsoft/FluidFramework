@@ -7,7 +7,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
+import { IRuntimeAttributor, IProvideAttributorConfig } from "@fluid-experimental/attributor";
 import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution";
 import { HitCounter } from "./dataObject";
 
@@ -48,8 +48,8 @@ export class HitCounterContainerRuntimeFactory extends ModelContainerRuntimeFact
 			await runtime.getRootDataStore(hitCounterId),
 			"",
 		);
-		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = runtime.scope;
-		const runtimeAttributor = maybeProvidesAttributor.IRuntimeAttributor;
+		const maybeProvidesAttributor: FluidObject<IProvideAttributorConfig> = runtime.scope;
+		const runtimeAttributor = maybeProvidesAttributor.IAttributorConfig?.runtimeAttributor;
 		return new HitCounterAppModel(hitCounter, runtimeAttributor);
 	}
 }

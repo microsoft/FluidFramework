@@ -13,9 +13,10 @@ import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/cont
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import {
+	AttributorConfig,
 	mixinAttributor,
 	createRuntimeAttributor,
-	IProvideRuntimeAttributor,
+	IProvideAttributorConfig,
 } from "@fluid-experimental/attributor";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { makeModelRequestHandler } from "@fluid-example/example-utils";
@@ -48,7 +49,10 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 	): Promise<IRuntime> {
 		const fromExisting = existing ?? context.existing ?? false;
 		const attributor = createRuntimeAttributor();
-		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
+		const scope: FluidObject<IProvideAttributorConfig> = new AttributorConfig(
+			attributor,
+			/* enableOnNewFile */ true,
+		);
 
 		const runtime = await containerRuntimeWithAttribution.load(
 			context,

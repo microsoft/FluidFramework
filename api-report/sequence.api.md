@@ -8,6 +8,7 @@ import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAttributionPolicyRegistry } from '@fluidframework/merge-tree';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -606,7 +607,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         tile: ReferencePosition;
         pos: number;
     } | undefined;
-    static getFactory(options: SequenceOptions): SharedStringFactory;
+    static getFactory(options: SequenceOptions, services?: FluidObject<IAttributionPolicyRegistry>): SharedStringFactory;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;

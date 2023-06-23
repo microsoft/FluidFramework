@@ -51,6 +51,14 @@ export interface IAttributorConfig extends IProvideAttributorConfig {
 	enableOnNewFile: boolean;
 }
 
+export class AttributorConfig implements IAttributorConfig {
+	public get IAttributorConfig() {
+		return this;
+	}
+
+	public constructor(public readonly runtimeAttributor, public readonly enableOnNewFile) {}
+}
+
 /**
  * Provides access to attribution information stored on the container runtime.
  *

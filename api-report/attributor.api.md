@@ -24,6 +24,19 @@ export class Attributor implements IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "AttributorConfig" is marked as @public, but its signature references "IAttributorConfig" which is marked as @alpha
+//
+// @public (undocumented)
+export class AttributorConfig implements IAttributorConfig {
+    constructor(runtimeAttributor: any, enableOnNewFile: any);
+    // (undocumented)
+    readonly enableOnNewFile: any;
+    // (undocumented)
+    get IAttributorConfig(): this;
+    // (undocumented)
+    readonly runtimeAttributor: any;
+}
+
 // @alpha (undocumented)
 export function createRuntimeAttributor(): IRuntimeAttributor;
 

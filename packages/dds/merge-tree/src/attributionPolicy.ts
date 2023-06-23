@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -341,4 +342,26 @@ export interface IProvideAttributionPolicyRegistry {
  */
 export interface IAttributionPolicyRegistry extends IProvideAttributionPolicyRegistry {
 	get(name: string): IAttributionPolicyFactory | undefined;
+}
+
+export class AttributionPolicyRegistry implements IAttributionPolicyRegistry {
+	private readonly map: Map<string, IAttributionPolicyFactory>;
+
+	public get IAttributionPolicyRegistry() {
+		return this;
+	}
+
+	constructor(namedEntries: NamedAttributionPolicyRegistryEntries) {
+		this.map = new Map();
+		for (const [key, value] of namedEntries) {
+			if (this.map.has(key)) {
+				throw new UsageError("Duplicate entry names exist");
+			}
+			this.map.set(key, value);
+		}
+	}
+
+	public get(name: string): IAttributionPolicyFactory | undefined {
+		return this.map.get(name);
+	}
 }
