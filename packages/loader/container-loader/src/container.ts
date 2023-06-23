@@ -695,14 +695,14 @@ export class Container
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
 		// allow it since they mean a kind of read-only state for the Container.
 		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
 		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
 			throw new UsageError("The container is disposing or disposed");
 		}
-		while (this._context === undefined) {
+		if (this._context === undefined) {
 			await new Promise<void>((resolve, reject) => {
 				const contextChangedHandler = () => {
 					resolve();
