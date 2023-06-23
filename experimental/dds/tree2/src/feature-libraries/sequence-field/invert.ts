@@ -265,13 +265,13 @@ function applyMovedChanges<TNodeChange>(
 		return [mark];
 	}
 
-	if (entry.id > mark.id) {
+	if (entry.start > mark.id) {
 		// The entry does not apply to the first cell in the mark.
-		const [mark1, mark2] = splitMark(mark, entry.id - mark.id);
+		const [mark1, mark2] = splitMark(mark, entry.start - mark.id);
 		return [mark1, ...applyMovedChanges(mark2, revision, manager)];
-	} else if ((entry.id as number) + entry.length < (mark.id as number) + mark.count) {
+	} else if (entry.start + entry.length < (mark.id as number) + mark.count) {
 		// The entry applies to the first cell in the mark, but not the mark's entire range.
-		const [mark1, mark2] = splitMark(mark, (entry.id as number) + entry.length - mark.id);
+		const [mark1, mark2] = splitMark(mark, entry.start + entry.length - mark.id);
 		return [withNodeChange(mark1, entry.data), ...applyMovedChanges(mark2, revision, manager)];
 	} else {
 		// The entry applies to all cells in the mark.

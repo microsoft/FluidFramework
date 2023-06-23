@@ -106,6 +106,7 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
+	RangeEntry,
 } from "./util";
 
 export {
@@ -154,7 +155,6 @@ export {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	CrossFieldManager,
-	CrossFieldRange,
 	CrossFieldTarget,
 	RevisionIndexer,
 	RevisionMetadataSource,

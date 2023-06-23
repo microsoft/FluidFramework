@@ -16,11 +16,8 @@ export {
 	CrossFieldManager,
 	CrossFieldMap,
 	CrossFieldQuerySet,
-	CrossFieldRange,
 	CrossFieldTarget,
-	getFirstFromRangeMap,
 	idAllocatorFromMaxId,
-	IdRangeMap,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";

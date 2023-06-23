@@ -1004,7 +1004,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 			setInCrossFieldMap(
 				manager.table.srcDependents,
 				revision,
-				range.id,
+				brand(range.start),
 				range.length,
 				fieldData,
 			);
@@ -1017,7 +1017,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 			setInCrossFieldMap(
 				manager.table.dstDependents,
 				revision,
-				range.id,
+				brand(range.start),
 				range.length,
 				fieldData,
 			);

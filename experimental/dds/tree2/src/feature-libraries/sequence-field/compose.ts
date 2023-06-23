@@ -662,8 +662,11 @@ function getReplacementMark<T>(
 	}
 
 	const lastTargetId = (id as number) + count - 1;
-	const lastEffectId = (effect.id as number) + effect.length - 1;
-	assert(effect.id <= id && lastEffectId >= lastTargetId, "Expected effect to cover entire mark");
+	const lastEffectId = effect.start + effect.length - 1;
+	assert(
+		effect.start <= id && lastEffectId >= lastTargetId,
+		"Expected effect to cover entire mark",
+	);
 
 	let mark = effect.data.mark;
 	assert(
@@ -675,11 +678,19 @@ function getReplacementMark<T>(
 	// We only want to return the portion of the replacement mark which covers the cells from this query.
 	// We should then delete the replacement mark from the portion of the effect which covers the query range,
 	// and trim the replacement marks in the portion of the effect before and after the query range.
-	const cellsBefore = id - effect.id;
+	const cellsBefore = id - effect.start;
 	if (cellsBefore > 0) {
 		const [markBefore, newMark] = splitMark(mark, cellsBefore);
 		const effectBefore = { ...effect.data, mark: markBefore };
-		setMoveEffect(moveEffects, target, revision, effect.id, cellsBefore, effectBefore, false);
+		setMoveEffect(
+			moveEffects,
+			target,
+			revision,
+			brand(effect.start),
+			cellsBefore,
+			effectBefore,
+			false,
+		);
 		mark = newMark;
 	}
 
@@ -717,7 +728,7 @@ function setReplacementMark<T>(
 	let newEffect: MoveEffect<T>;
 	if (effect !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		newEffect = { ...effect.data, mark };
@@ -867,7 +878,7 @@ function setModifyAfter<T>(
 	let newEffect: MoveEffect<unknown>;
 	if (effect !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		const nodeChange =

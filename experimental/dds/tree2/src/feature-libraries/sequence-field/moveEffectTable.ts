@@ -5,7 +5,8 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { CrossFieldManager, CrossFieldRange, CrossFieldTarget } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+import { RangeEntry } from "../../util";
 import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
 import { cloneMark, splitMark } from "./utils";
 
@@ -90,7 +91,7 @@ export function getMoveEffect<T>(
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): CrossFieldRange<MoveEffect<T>> | undefined {
+): RangeEntry<MoveEffect<T>> | undefined {
 	return moveEffects.get(target, revision, id, count, addDependency);
 }
 
@@ -211,8 +212,8 @@ export function applyMoveEffectsToMark<T>(
 					return [mark];
 				}
 
-				if (effect.id > mark.id) {
-					const [firstMark, secondMark] = splitMark(mark, effect.id - mark.id);
+				if (effect.start > mark.id) {
+					const [firstMark, secondMark] = splitMark(mark, effect.start - mark.id);
 					return [
 						firstMark,
 						...applyMoveEffectsToMark(
@@ -225,7 +226,7 @@ export function applyMoveEffectsToMark<T>(
 					];
 				}
 
-				const lastEffectId = (effect.id as number) + effect.length - 1;
+				const lastEffectId = effect.start + effect.length - 1;
 				const lastMarkId = (mark.id as number) + mark.count - 1;
 				if (lastEffectId < lastMarkId) {
 					const [firstMark, secondMark] = splitMark(mark, lastEffectId - mark.id + 1);
@@ -269,8 +270,8 @@ export function applyMoveEffectsToMark<T>(
 					return [mark];
 				}
 
-				if (effect.id > mark.id) {
-					const [firstMark, secondMark] = splitMark(mark, effect.id - mark.id);
+				if (effect.start > mark.id) {
+					const [firstMark, secondMark] = splitMark(mark, effect.start - mark.id);
 					return [
 						firstMark,
 						...applyMoveEffectsToMark(
@@ -283,7 +284,7 @@ export function applyMoveEffectsToMark<T>(
 					];
 				}
 
-				const lastEffectId = (effect.id as number) + effect.length - 1;
+				const lastEffectId = effect.start + effect.length - 1;
 				const lastMarkId = (mark.id as number) + mark.count - 1;
 				if (lastEffectId < lastMarkId) {
 					const [firstMark, secondMark] = splitMark(mark, lastEffectId - mark.id + 1);
@@ -319,7 +320,7 @@ export function getModifyAfter<T>(
 
 	if (effect?.data.modifyAfter !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		if (consumeEffect) {
@@ -345,7 +346,7 @@ function getPairedMarkStatus<T>(
 
 	if (effect?.data.pairedMarkStatus !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		if (consumeEffect) {

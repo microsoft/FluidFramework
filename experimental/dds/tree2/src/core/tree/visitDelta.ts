@@ -4,12 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { ChangesetLocalId, IdRangeMap } from "../../feature-libraries/modular-schema";
 import {
+	RangeMap,
+	brand,
+	extractFromOpaque,
 	getFirstFromRangeMap,
 	setInRangeMap,
-} from "../../feature-libraries/modular-schema/crossFieldQueries";
-import { brand, extractFromOpaque } from "../../util";
+} from "../../util";
 import * as Delta from "./delta";
 import { FieldKey, Value } from "./types";
 
@@ -74,7 +75,7 @@ import { FieldKey, Value } from "./types";
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
-	const movedOutNodes: IdRangeMap<Delta.MoveId> = [];
+	const movedOutNodes: RangeMap<Delta.MoveId> = [];
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
 		func: firstPass,
 		applyValueChanges: true,
@@ -113,7 +114,7 @@ interface PassConfig {
 
 	// XXX: Does this need to be changed?
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
-	readonly movedOutRanges: IdRangeMap<Delta.MoveId>;
+	readonly movedOutRanges: RangeMap<Delta.MoveId>;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
@@ -186,7 +187,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					visitor.onMoveOut(index, mark.count, mark.moveId);
 					setInRangeMap(
 						config.movedOutRanges,
-						brand(extractFromOpaque(mark.moveId)),
+						extractFromOpaque(mark.moveId),
 						mark.count,
 						mark.moveId,
 					);
@@ -245,41 +246,41 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 				case Delta.MarkType.MoveIn: {
 					let entry = getFirstFromRangeMap(
 						config.movedOutRanges,
-						brand(extractFromOpaque(mark.moveId)),
+						extractFromOpaque(mark.moveId),
 						mark.count,
 					);
 					assert(entry !== undefined, "Expected a move out for this move in");
 					visitor.onMoveIn(index, entry.length, entry.data);
 					let endIndex = index + entry.length;
 
-					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.id;
+					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.start;
 					if (lengthBeforeMark > 0) {
 						visitor.onMoveOut(index, lengthBeforeMark, entry.data);
 						endIndex -= lengthBeforeMark;
 						setInRangeMap(
 							config.movedOutRanges,
-							entry.id,
+							entry.start,
 							lengthBeforeMark,
 							entry.data,
 						);
 					}
 
 					const lastMarkId = (extractFromOpaque(mark.moveId) as number) + mark.count - 1;
-					let lastEntryId = (entry.id as number) + entry.length - 1;
+					let lastEntryId = entry.start + entry.length - 1;
 					let lengthAfterEntry = lastMarkId - lastEntryId;
 					while (lengthAfterEntry > 0) {
-						const nextId: ChangesetLocalId = brand(lastEntryId + 1);
+						const nextId = lastEntryId + 1;
 						entry = getFirstFromRangeMap(config.movedOutRanges, nextId, mark.count);
 
 						assert(
-							entry !== undefined && entry.id === nextId,
+							entry !== undefined && entry.start === nextId,
 							"Expected a move out for the remaining portion of this move in",
 						);
 
-						lastEntryId = (entry.id as number) + entry.length - 1;
+						lastEntryId = entry.start + entry.length - 1;
 						lengthAfterEntry = lastMarkId - lastEntryId;
 
-						visitor.onMoveIn(endIndex, entry.length, brand(entry.id));
+						visitor.onMoveIn(endIndex, entry.length, brand(entry.start));
 						endIndex += entry.length;
 					}
 
@@ -290,7 +291,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						endIndex -= lengthAfterMark;
 						setInRangeMap(
 							config.movedOutRanges,
-							brand(extractFromOpaque(nextMoveId)),
+							extractFromOpaque(nextMoveId),
 							lengthAfterMark,
 							nextMoveId,
 						);

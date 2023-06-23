@@ -5,15 +5,19 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
-import { fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
+import {
+	fail,
+	getFirstFromRangeMap,
+	getOrAddEmptyToMap,
+	RangeMap,
+	StackyIterator,
+} from "../../util";
 import {
 	addCrossFieldQuery,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	IdAllocator,
-	IdRangeMap,
-	getFirstFromRangeMap,
 	setInCrossFieldMap,
 } from "../modular-schema";
 import {
@@ -679,8 +683,8 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, IdRangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, IdRangeMap<T>>;
+	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
 	reset: () => void;
 }
 
@@ -690,8 +694,8 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
 	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, IdRangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, IdRangeMap<T>> = new Map();
+	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
 	const getMap = (target: CrossFieldTarget) =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;

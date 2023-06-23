@@ -455,7 +455,7 @@ function sendMarkToDest<T>(
 	let newEffect: MoveEffect<T>;
 	if (effect !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		newEffect = { ...effect.data, movedMark: mark };
@@ -477,7 +477,7 @@ function setPairedMarkStatus(
 	let newEffect: MoveEffect<unknown>;
 	if (effect !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		newEffect = { ...effect.data, pairedMarkStatus: status };
@@ -642,7 +642,7 @@ function getMovedMark<T>(
 
 	if (effect?.data.movedMark !== undefined) {
 		assert(
-			effect.id <= id && (effect.id as number) + effect.length >= (id as number) + count,
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		const newEffect = { ...effect.data };
