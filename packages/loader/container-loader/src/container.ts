@@ -347,8 +347,6 @@ export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer, IContainerExperimental
 {
-	public static version = "^0.1.0";
-
 	/**
 	 * Load an existing container.
 	 * @internal
@@ -2330,7 +2328,6 @@ export class Container
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
-			Container.version,
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
 			existing,
 			pendingLocalState,
