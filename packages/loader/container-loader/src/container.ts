@@ -41,7 +41,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
@@ -93,7 +92,11 @@ import {
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
-import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import {
+	combineAppAndProtocolSummary,
+	getProtocolSnapshotTree,
+	getSnapshotTreeFromSerializedContainer,
+} from "./utils";
 import {
 	initQuorumValuesFromCodeDetails,
 	getCodeDetailsFromQuorumValues,
