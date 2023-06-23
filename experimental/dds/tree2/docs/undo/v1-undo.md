@@ -141,22 +141,17 @@ it is necessary to keep the repair data be kept up to date until such a case ari
 This then forces us to consider cases where the repair data is not needed but is edited.
 This can happen when a client edits a region of the document tree while that region is concurrently deleted by another client.
 
-### The Stygian Forest
+### Storing Repair Data in the Forest
 
-[Stygian](https://www.merriam-webster.com/dictionary/stygian),
-is used here to mean [Styx](https://en.wikipedia.org/wiki/Styx)-like in its ability to span the realms of in-document (living) content and deleted (dead) content,
-and ferry data across it.
+The design presented here leverages the `Forest` owned by the `SharedTreeView` to house and maintain repair data.
+This made possible by the fact that all repair data comes in the shape of trees,
+that are functionally equivalent to the tree content that makes up the document.
 
-The responsibility of a `StygianForest` is to maintain,
-in addition to the typical in-document data,
-the repair data that may be needed to handle the cases listed above.
+This approach is motivated by the following points:
 
-This coupling of repair data with the in-document data is motivated by the following points:
-
--   Aside from a pair of performance-motivated exceptions (covered below) the repair data is solely relevant to applying changes.
--   The needs of repair data storage, reading, and editing, are identical to that of in-document data.
--   Storing both in the same forest makes it easy, when it is appealing to do so,
-    to efficiently remove/restore deleted content because it saves us from having to export/import it from and to the forest.
+-   Aside from a pair of performance-motivated exceptions (covered below) the repair data content is solely relevant to applying changes to the forest.
+-   The needs of repair data storage, reading, and editing, are identical to that of in-document data, which the forest satisfies.
+-   Storing both in the same forest makes it easy to efficiently remove/restore deleted content because it saves us from having to export/import it from and to the forest.
 
 The alternative, coupling repair data with the changesets that birthed them, is undesirable for the following reasons:
 
@@ -167,29 +162,33 @@ The alternative, coupling repair data with the changesets that birthed them, is 
     making it more self-contained and therefore easier to implement and test.
     This is made possible by the fact that repair data is **not** required for the purpose of rebasing changesets.
 
-#### Implementation Strategy
+### The Repair Data `TreeIndex`
 
-Each `StygianForest` wraps a "normal" forest, meaning, a forest that is unaware of the distinction between in-document and deleted nodes.
-From hereon, we refer to this wrapped forest as "the inner forest".
+One challenge associated with storing repair data in the forest,
+is that it requires us to establish a system for keeping track of which removed subtrees exist in the repair data,
+and where they reside in the forest.
+Specifically, we have to maintain a correspondence between the identification scheme used by changesets, and the one used by the forest.
+Changesets identify removed trees using a `ChangeAtomId` while the forest uses paths.
 
-This implementation strategy enables the `StygianForest` to leverage the capabilities of the inner forest implementation
-(i.e., storage, reading, and editing) for the purpose of managing repair data.
-In effect, the `StygianForest` meets the more advanced requirements of our repair data system
-(understanding the difference between normal document data vs. repair data, and supporting the more complex lifecycle of the latter)
-by appropriately driving the forest it wraps.
-This allows us to cleanly separate the concerns of locally storing, reading, and editing tree data on one side
-from the the concerns of repair data on the other.
+In order to meet this need, we introduce the `TreeIndex` class,
+which maintains a mapping between the two identification systems,
+and also serves as inventory of the repair data that exists in the forest.
 
-This approach to dealing with repair data requires that the `StygianForest` be able to maintain a correspondence between
-how changesets refer to deleted/overwritten content
-and how the inner forest refers to this same content.
-Here is one approach that can be used:
+We also introduce the concept of `RemovedTreeId`,
+which is a value type (likely a number) that uniquely identifies a removed subtree within the forest on a given `SharedTreeView`.
 
--   Store the repair data under a detached field with a unique ID such as `styx-${counter}` where...
-    -   `counter` is monotonically increased integer that is scope to the `StygianForest`.
--   Keep a `Map<RevisionId, { changeId: ChangesetLocalId, repairData: number }>` where..
-    -   The `changeId` field is the `ChangesetLocalId` associated with the change that lead to the creation of a specific piece of repair data.
-    -   The `repairData` field is the value of the `counter` when deriving `styx-${counter}` .
+`TreeIndex`'s interface needs to offer the following methods:
+
+-   Retrieve the matching `RemovedTreeId` for a given `ChangeAtomId` if any.
+-   Add an entry in its records for a given `ChangeAtomId` to `RemovedTreeId` mapping.
+-   Remove an entry from its records for a given `ChangeAtomId`.
+
+The first of these methods can be kept under a separate `ReadonlyTreeIndex` interface that `TreeIndex` extends.
+
+The generation of new `RemovedTreeId`s and their conversion to forest paths is left as implementation detail for the `SharedTreeView`.
+In the future, it is likely that the `Forest` will take on these responsibilities.
+For now, the `SharedTreeView` can use a monotonically increasing counter to generate `RemovedTreeId`s,
+and can use `removed-${removedTreeId}` as way of generating unique paths.
 
 ### Creating Repair Data On Change Application
 
@@ -199,24 +198,29 @@ There are two cases that can lead to the erasure of document data:
 -   When a subtree is deleted
 -   When the value on an node is overwritten
 
-When a `Delta` is applied to the `StygianForest`,
-for every change conveyed by the `Delta` that would erase document data,
-the `StygianForest` must do the following:
+When a changeset is applied to the `SharedTreeView`,
+for every change conveyed by the changeset that would erase document data,
+the `SharedTreeView` must do the following:
 
--   Translate that change into an equivalent change that preserves the otherwise erased data
-    (i.e., the deleted subtree or overwritten value)
-    by moving or copying it in a part of the inner forest that lies outside the scope of the document.
--   Apply that change to the inner forest.
--   Keep a record of where that particular piece of repair data is stored in the inner forest.
+-   Generate a new `RemovedTreeId`.
+-   Translate that change into an equivalent delta that preserves the otherwise deleted subtree
+    by moving that subtree to a part of the inner forest that lies outside the scope of the document.
+-   Apply that delta to the forest.
+-   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
 
-Another scenario where repair data is added to the `StygianForest`
-arises when a peer sends a commit whose changes explicitly instructs the `StygianForest` to do so,
-and provides the repair data as part of that commit.
-(The need for this is covered in [Garbage-Collecting Repair Data](#garbage-collecting-repair-data).)
-
-When that happens, the `StygianForest` should check whether it already has that piece of repair data.
+Another scenario where repair data is added to the `Forest`
+arises when a peer sends a commit whose changes explicitly instructs the `SharedTreeView` to do so,
+and provides a `ChangeAtomId` as well as the tree contents.
+When that happens, `SharedTreeView` should consult its `TreeIndex` to check whether an entry already exists for the `ChangeAtomId`.
 If it does, then it can safely keep the repair data that it has.
-If it doesn't, then it should add it to the inner forest and keep a record of where that particular piece of repair data is stored in the inner forest.
+If it doesn't, then it should:
+
+-   Generate a new `RemovedTreeId`.
+-   Generate a delta a delta that adds the content to the forest.
+-   Apply that delta to the forest.
+-   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
+
+(The need for this capability is covered in [Garbage-Collecting Repair Data](#garbage-collecting-repair-data).)
 
 ### Consuming Repair Data On Change Application
 
@@ -290,10 +294,12 @@ We can address this by using the following implementation strategy:
     for each piece of repair data associated with changesets that make up the transaction,
     leave the repair data in the `StygianForest` untouched but update its entry so that it is now associated with the composed changeset.
 
+Note that the `AnchorSet` for the view also needs to be patched so that any anchors pointing to the repair data is updated with the appropriate path.
+
 The above approach relies on the fact that composition can elide but not reassign changeset-local IDs.
 This avoids the problem of having to reverse-engineer how the repair data produced by the individual changesets maps to the repair data produced by composed changeset.
 
-Note that this requires reassigning new changeset-local IDs to changesets that are merged into the branch whose transaction is open.
+Note that this requires reassigning new changeset-local IDs to any changesets that are merged from another branch into the branch whose transaction is open.
 
 ### Patching Repair Data After Rebasing
 
