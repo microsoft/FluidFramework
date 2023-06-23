@@ -214,7 +214,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
 	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
-		if (!this.didSummarize(parentSkipRecursion)) {
+		if (this.wasSummarizeMissed(parentSkipRecursion)) {
 			return {
 				success: false,
 				reason: "NodeDidNotSummarize",
@@ -240,16 +240,18 @@ export class SummarizerNode implements IRootSummarizerNode {
 		return { success: true };
 	}
 
-	private didSummarize(parentSkipRecursion: boolean): boolean {
+	private wasSummarizeMissed(parentSkipRecursion: boolean): boolean {
 		assert(
 			this.wipSummaryLogger !== undefined,
 			"wipSummaryLogger should have been set in startSummary or ctor",
 		);
 		assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
 
-		// If the parentSkipRecursion is true, the parent node did not call summarize on this node. Return success.
+		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
+		// but was intentionally not called.
+		// Otherwise, summarize should have been called on this node and wipLocalPaths must be set.
 		if (parentSkipRecursion || this.wipLocalPaths !== undefined) {
-			return true;
+			return false;
 		}
 
 		/**
@@ -265,7 +267,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
 		 * summarize is attempted again.
 		 */
-		return false;
+		return true;
 	}
 
 	/**
@@ -288,6 +290,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param parentPath - The path of the parent node which is used to build the path of this node.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
+	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
@@ -295,7 +298,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		parentSkipRecursion: boolean,
 		validate: boolean,
 	) {
-		if (validate && !this.didSummarize(parentSkipRecursion)) {
+		if (validate && this.wasSummarizeMissed(parentSkipRecursion)) {
 			this.throwUnexpectedError({
 				eventName: "NodeDidNotSummarize",
 				proposalHandle,

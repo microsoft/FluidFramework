@@ -265,7 +265,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
 	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
-		if (!this.didGCRun()) {
+		if (this.wasGCMissed()) {
 			return {
 				success: false,
 				reason: "NodeDidNotRunGC",
@@ -280,9 +280,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		return super.validateSummaryCore(parentSkipRecursion);
 	}
 
-	private didGCRun(): boolean {
+	private wasGCMissed(): boolean {
+		// If GC is disabled, it should not have run so it was not missed.
+		// Otherwise, GC should have been called on this node and wipSerializedUsedRoutes must be set.
 		if (this.gcDisabled || this.wipSerializedUsedRoutes !== undefined) {
-			return true;
+			return false;
 		}
 		/**
 		 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
@@ -295,7 +297,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
 		 * summarize is attempted again.
 		 */
-		return false;
+		return true;
 	}
 
 	/**
@@ -305,6 +307,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentPath - The path of the parent node which is used to build the path of this node.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
+	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
@@ -312,7 +315,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		parentSkipRecursion: boolean,
 		validate: boolean,
 	) {
-		if (validate && !this.didGCRun()) {
+		if (validate && this.wasGCMissed()) {
 			this.throwUnexpectedError({
 				eventName: "NodeDidNotRunGC",
 				proposalHandle,

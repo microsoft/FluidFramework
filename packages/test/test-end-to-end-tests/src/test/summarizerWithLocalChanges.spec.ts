@@ -194,7 +194,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	});
 
 	itExpects(
-		"summary should fail before generate stage when data store is created during summarize",
+		"with ValidateSummaryBeforeUpload true, summary should fail before generate stage when data store is created during summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -203,6 +203,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			},
 		],
 		async () => {
+			settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
@@ -215,9 +216,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 
 			// Summarization should fail because of a data store created during summarization which does not run GC.
 			await assert.rejects(
-				async () => {
-					await summarizeNow(summarizer);
-				},
+				async () => summarizeNow(summarizer),
 				(error) => {
 					// The summary should have failed because of "NodeDidNotRunGC" error before it was generated,
 					// i.e., "base" stage.
@@ -276,7 +275,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
 	 */
 	itExpects(
-		"Heuristic based summaries should pass on second attempt when NodeDidNotRunGC is hit",
+		"with ValidateSummaryBeforeUpload true, heuristic based summaries should pass on retry when NodeDidNotRunGC is hit",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -289,6 +288,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			},
 		],
 		async () => {
+			settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
 			const logger = new MockLogger();
 			const mainContainer = await createContainer(
 				provider,

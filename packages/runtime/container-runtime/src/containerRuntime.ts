@@ -957,7 +957,7 @@ export class ContainerRuntime
 	/**
 	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
 	 * summaries will be accepted once uploaded, so they should be validated before upload. However, this can
-	 * currently be disabled via a feature flag as its a new functionality.
+	 * currently be controlled via a feature flag as its a new functionality.
 	 */
 	private readonly validateSummaryBeforeUpload: boolean;
 
@@ -1358,7 +1358,7 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 		this.validateSummaryBeforeUpload =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload") ??
-			true;
+			false;
 
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
