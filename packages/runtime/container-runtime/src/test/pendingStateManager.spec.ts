@@ -294,7 +294,7 @@ describe("Pending State Manager", () => {
 		}
 
 		describe("Constructor conversion", () => {
-			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor
+			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor (AB#4763)
 			describe("deserialized content", () => {
 				it("Empty local state", () => {
 					{
@@ -369,90 +369,8 @@ describe("Pending State Manager", () => {
 			});
 		});
 
-		it("getLocalState writes new flush format", async () => {
-			const pendingStateManager = createPendingStateManager([
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: true },
-					content: '{"type":"component"}',
-				},
-				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: false },
-					content: '{"type":"component"}',
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: true },
-					content: '{"type":"component"}',
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: false },
-					content: '{"type":"component"}',
-				},
-				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
-			]);
-
-			await pendingStateManager.applyStashedOpsAt(0);
-
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					content: undefined,
-					messageType: "component",
-				},
-			]);
-		});
-
-		// TODO: change to new format in "2.0.0-internal.6.0.0" (AB#3826)
-		it("getLocalState writes old message format", async () => {
+		// TODO: remove when we only read new format in "2.0.0-internal.7.0.0" (AB#4763)
+		it("getLocalState writes new message format", async () => {
 			const pendingStateManager = createPendingStateManager([
 				{ type: "message", messageType: "component" },
 				{ type: "message", content: '{"type":"component"}' },
@@ -468,27 +386,25 @@ describe("Pending State Manager", () => {
 			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
 				{
 					type: "message",
-					messageType: "component",
-					content: undefined,
+					content: '{"type":"component"}',
+					localOpMetadata: undefined,
+					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
+				},
+				{
+					type: "message",
+					content: '{"type":"component"}',
 					localOpMetadata: undefined,
 				},
 				{
 					type: "message",
-					messageType: "component",
-					content: undefined,
+					content: '{"type": "component", "contents": {"prop1": "value"}}',
 					localOpMetadata: undefined,
 				},
 				{
 					type: "message",
-					messageType: "component",
-					content: { prop1: "value" },
+					content: '{"type":"component","contents":{"prop1":"value"}}',
 					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					messageType: "component",
-					content: { prop1: "value" },
-					localOpMetadata: undefined,
+					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
 				},
 			]);
 		});
