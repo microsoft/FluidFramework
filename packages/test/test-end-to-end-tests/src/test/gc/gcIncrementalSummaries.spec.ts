@@ -243,9 +243,8 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 			const { summarizer: summarizer1 } = await createSummarizer(
 				provider,
 				mainContainer,
-				undefined /* summaryVersion */,
-				undefined /* gcOptions */,
-				undefined /* configProvider */,
+				undefined /** config */,
+				undefined /** summaryVersion */,
 				mockLogger,
 			);
 

@@ -39,9 +39,9 @@ describeNoCompat("Summarizer can refresh a snapshot from the server", (getTestOb
 		const { container: summarizingContainer, summarizer } = await createSummarizer(
 			provider,
 			container,
+			testContainerConfig,
 			undefined,
 			undefined,
-			mockConfigProvider(settings),
 		);
 
 		await provider.ensureSynchronized();
@@ -52,7 +52,7 @@ describeNoCompat("Summarizer can refresh a snapshot from the server", (getTestOb
 		await summarizeNow(summarizer);
 		summarizer.stop("summarizerClientDisconnected");
 		summarizer.close();
-		await createSummarizer(provider, container, summaryVersion);
+		await createSummarizer(provider, container, undefined, summaryVersion);
 		await provider.ensureSynchronized();
 	});
 });
