@@ -1839,6 +1839,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * endpoints. These references should be used for position information only.
 	 * `local` reflects whether the change originated locally.
 	 * `op` is defined if and only if the server has acked this change.
+	 * `slide` is true if the change is due to sliding on removal of position
 	 */
 	(
 		event: "changeInterval",
@@ -1847,6 +1848,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			previousInterval: TInterval,
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
+			slide: boolean,
 		) => void,
 	);
 	/**
@@ -2178,7 +2180,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			client,
 			label,
 			this.helpers,
-			(interval, previousInterval) => this.emitChange(interval, previousInterval, true),
+			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
@@ -2218,6 +2220,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		interval: TInterval,
 		previousInterval: TInterval,
 		local: boolean,
+		slide: boolean,
 		op?: ISequencedDocumentMessage,
 	): void {
 		// Temporarily make references transient so that positional queries work (non-transient refs
@@ -2230,11 +2233,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			endRefType = previousInterval.end.refType;
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
-			this.emit("changeInterval", interval, previousInterval, local, op);
+			this.emit("changeInterval", interval, previousInterval, local, op, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
-			this.emit("changeInterval", interval, previousInterval, local, op);
+			this.emit("changeInterval", interval, previousInterval, local, op, slide);
 		}
 	}
 
@@ -2404,7 +2407,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			this.addPendingChange(id, serializedInterval);
-			this.emitChange(newInterval, interval, true);
+			this.emitChange(newInterval, interval, true, false);
 			return newInterval;
 		}
 		// No interval to change
@@ -2540,7 +2543,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 
 			if (newInterval !== interval) {
-				this.emitChange(newInterval, interval, local, op);
+				this.emitChange(newInterval, interval, local, false, op);
 			}
 
 			const changedProperties = Object.keys(newProps).length > 0;
@@ -2763,7 +2766,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
 			this.localCollection.add(interval);
-			this.emitChange(interval, oldInterval as TInterval, true, op);
+			this.emitChange(interval, oldInterval as TInterval, true, true, op);
 		}
 	}
 
