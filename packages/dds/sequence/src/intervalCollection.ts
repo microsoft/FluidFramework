@@ -2764,7 +2764,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
 			this.localCollection.add(interval);
-			this.emitChange(interval, oldInterval as TInterval, true, false, op);
+			this.emitChange(interval, oldInterval as TInterval, true, true, op);
 		}
 	}
 
