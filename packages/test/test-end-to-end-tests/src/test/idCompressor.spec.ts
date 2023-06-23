@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
@@ -16,9 +16,9 @@ import {
 	createSummarizerWithTestConfig,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
@@ -32,6 +32,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+		dds: { SharedMap, SharedCell },
 	} = apis;
 	class TestDataObject extends DataObject {
 		public get _root() {
@@ -612,7 +613,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) => {
+describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -624,7 +625,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) =
 	it("Compressors sync after detached container attaches and sends an op", async () => {
 		const testConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", SharedCell.getFactory()]],
+			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
 			runtimeOptions: {
 				enableRuntimeIdCompressor: true,
 			},
