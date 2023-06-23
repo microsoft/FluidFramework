@@ -2132,6 +2132,9 @@ export class Container
 				throw new Error("Remote message's clientId is missing from the quorum");
 			}
 
+			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
+			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
+			// document we don't need to blow up aggressively.
 			if (
 				this.clientsWhoShouldHaveLeft.has(message.clientId) &&
 				!canBeCoalescedByService(message)
