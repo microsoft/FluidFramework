@@ -192,19 +192,16 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			if (!this.firstCacheMiss) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
+				// Set the firstCacheMiss as true in case we didn't get all the ops.
+				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
+				this.firstCacheMiss = from + messagesFromCache.length < to
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
-					// Set the firstCacheMiss as true in case we didn't get all the ops.
-					// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
-					if (from + messagesFromCache.length < to) {
-						this.firstCacheMiss = true;
-					}
 					return {
 						messages: messagesFromCache,
 						partialResult: true,
 					};
 				}
-				this.firstCacheMiss = true;
 			}
 
 			if (cachedOnly) {
