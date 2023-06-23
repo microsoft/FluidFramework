@@ -159,10 +159,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent),
+					valueFieldKind.changeHandler.editor.set(newContent, false, id),
 				);
-				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
+				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
 		};
 	}
