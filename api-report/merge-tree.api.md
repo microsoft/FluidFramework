@@ -33,14 +33,9 @@ export interface AttributionPolicy {
     serializer: IAttributionCollectionSerializer;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "AttributionPolicyRegistry" is marked as @public, but its signature references "IAttributionPolicyRegistry" which is marked as @alpha
-//
-// @public
+// @alpha
 export class AttributionPolicyRegistry implements IAttributionPolicyRegistry {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "NamedAttributionPolicyRegistryEntries" which is marked as @alpha
     constructor(namedEntries: NamedAttributionPolicyRegistryEntries);
-    // Warning: (ae-incompatible-release-tags) The symbol "get" is marked as @public, but its signature references "IAttributionPolicyFactory" which is marked as @alpha
-    //
     // (undocumented)
     get(name: string): IAttributionPolicyFactory | undefined;
     // (undocumented)
@@ -677,12 +672,8 @@ export interface InsertContext {
     structureChange?: boolean;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "InsertOnlyAttributionPolicyFactory" is marked as @public, but its signature references "IAttributionPolicyFactory" which is marked as @alpha
-//
-// @public
+// @alpha
 export class InsertOnlyAttributionPolicyFactory implements IAttributionPolicyFactory {
-    // Warning: (ae-incompatible-release-tags) The symbol "create" is marked as @public, but its signature references "AttributionPolicy" which is marked as @alpha
-    //
     // (undocumented)
     create(): AttributionPolicy;
     // (undocumented)

@@ -26,13 +26,13 @@ export class Attributor implements IAttributor {
 
 // @alpha
 export class AttributorConfig implements IAttributorConfig {
-    constructor(runtimeAttributor: any, enableOnNewFile: any);
+    constructor(runtimeAttributor: IRuntimeAttributor, enableOnNewFile: boolean);
     // (undocumented)
-    readonly enableOnNewFile: any;
+    readonly enableOnNewFile: boolean;
     // (undocumented)
     get IAttributorConfig(): this;
     // (undocumented)
-    readonly runtimeAttributor: any;
+    readonly runtimeAttributor: IRuntimeAttributor;
 }
 
 // @alpha (undocumented)

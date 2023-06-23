@@ -69,7 +69,10 @@ export class AttributorConfig implements IAttributorConfig {
 		return this;
 	}
 
-	public constructor(public readonly runtimeAttributor, public readonly enableOnNewFile) {}
+	public constructor(
+		public readonly runtimeAttributor: IRuntimeAttributor,
+		public readonly enableOnNewFile: boolean,
+	) {}
 }
 
 /**

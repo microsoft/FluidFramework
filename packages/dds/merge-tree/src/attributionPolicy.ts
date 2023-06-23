@@ -190,6 +190,7 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 
 /**
  * Produces {@link AttributionPolicy}s which track only insertion of content.
+ * @alpha
  */
 export class InsertOnlyAttributionPolicyFactory implements IAttributionPolicyFactory {
 	public readonly name = "InsertOnly";
@@ -358,6 +359,7 @@ export interface IAttributionPolicyRegistry extends IProvideAttributionPolicyReg
 
 /**
  * Basic implementation of {@link (IAttributionPolicyRegistry:interface)} exported for convenience.
+ * @alpha
  */
 export class AttributionPolicyRegistry implements IAttributionPolicyRegistry {
 	private readonly map: Map<string, IAttributionPolicyFactory>;

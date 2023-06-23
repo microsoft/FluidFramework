@@ -62,6 +62,7 @@ export interface SequenceOptions {
 	 *
 	 * This option only applies at datastore creation time. Existing data stores that are loaded will inherit
 	 * whatever option was set at creation time.
+	 * @alpha
 	 */
 	attribution?: { policyName: string };
 

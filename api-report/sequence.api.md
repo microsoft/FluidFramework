@@ -455,6 +455,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 export interface SequenceOptions {
     // (undocumented)
     [key: string]: any;
+    // @alpha
     attribution?: {
         policyName: string;
     };
