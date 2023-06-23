@@ -85,7 +85,6 @@ export class DocumentContextManager extends EventEmitter {
 			this.head = head;
 			return true;
 		}
-		console.log(`MSG OFFSET: ${head.offset}, HEAD: ${this.head.offset}`);
 		return false;
 	}
 
