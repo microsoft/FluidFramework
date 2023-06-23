@@ -163,12 +163,12 @@ export class ContainerContext implements IContainerContext {
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
-			return this._runtime?.getEntryPoint?.();
+			return this._runtime.getEntryPoint?.();
 		}
 		return new Promise<FluidObject | undefined>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {
