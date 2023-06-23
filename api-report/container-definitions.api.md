@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
@@ -24,7 +23,6 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -113,18 +111,6 @@ export interface IConnectionDetails {
     clientId: string;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-}
-
-// @public @deprecated
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
-    // @deprecated (undocumented)
-    reason: string;
-    // @deprecated (undocumented)
-    version: string;
 }
 
 // @public
@@ -240,14 +226,6 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public @deprecated
-export interface IDeltaHandlerStrategy {
-    // @deprecated
-    process: (message: ISequencedDocumentMessage) => void;
-    // @deprecated
-    processSignal: (message: ISignalMessage) => void;
-}
-
 // @public
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
@@ -277,11 +255,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
-    (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
-    // @deprecated (undocumented)
-    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;

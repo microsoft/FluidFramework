@@ -64,6 +64,14 @@
 		"broken": {
 			"InterfaceDeclaration_IContainerContext": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConnectionDetailsInternal": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDeltaHandlerStrategy": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
