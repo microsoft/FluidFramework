@@ -7,18 +7,9 @@ import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
 import { JsonCompatibleReadOnly, Mutable } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
-import type {
-	NodeUpdate,
-	OptionalChangeset,
-	OptionalFieldChange,
-	ValueChangeset,
-} from "./defaultFieldChangeTypes";
+import type { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import type { NodeChangeset } from "./modular-schema";
-import {
-	EncodedValueChangeset,
-	EncodedOptionalChangeset,
-	EncodedNodeUpdate,
-} from "./defaultFieldChangeFormat";
+import { EncodedOptionalChangeset, EncodedNodeUpdate } from "./defaultFieldChangeFormat";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
@@ -26,46 +17,9 @@ export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
 ]);
 
-export const makeValueFieldCodecFamily = (childCodec: IJsonCodec<NodeChangeset>) =>
-	makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]);
-
 export const makeOptionalFieldCodecFamily = (
 	childCodec: IJsonCodec<NodeChangeset>,
 ): ICodecFamily<OptionalChangeset> => makeCodecFamily([[0, makeOptionalFieldCodec(childCodec)]]);
-
-function makeValueFieldCodec(
-	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<ValueChangeset, EncodedValueChangeset<TAnySchema>> {
-	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
-	return {
-		encode: (change: ValueChangeset) => {
-			const encoded: EncodedValueChangeset<TAnySchema> = {};
-			if (change.value !== undefined) {
-				encoded.value = nodeUpdateCodec.encode(change.value);
-			}
-
-			if (change.changes !== undefined) {
-				encoded.changes = childCodec.encode(change.changes);
-			}
-
-			return encoded;
-		},
-
-		decode: (encoded: EncodedValueChangeset<TAnySchema>) => {
-			const decoded: ValueChangeset = {};
-			if (encoded.value !== undefined) {
-				decoded.value = nodeUpdateCodec.decode(encoded.value);
-			}
-
-			if (encoded.changes !== undefined) {
-				decoded.changes = childCodec.decode(encoded.changes);
-			}
-
-			return decoded;
-		},
-		encodedSchema: EncodedValueChangeset(childCodec.encodedSchema ?? Type.Any()),
-	};
-}
 
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
