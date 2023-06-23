@@ -1,6 +1,10 @@
 # @fluid-experimental/devtools
 
-This library provides a developer tools suite for use alongside the Fluid Framework.
+This library contains developer tools for use alongside the Fluid Framework.
+It is used to power our associated [browser extension][browser-extension].
+
+-   Chrome: <https://aka.ms/fluid/devtool/chrome>
+-   Edge: <https://aka.ms/fluid/devtool/edge>
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
@@ -102,11 +106,6 @@ That singleton is automatically cleaned up prior to the Window's "unload" event.
 So typical application flows likely won't need to worry about cleanup.
 That said, if you wish to have tighter control over when the Devtools are torn down, you can simply call the `dispose` method on the handle returned by [initialization](#initialization).
 
-## Related Tooling
-
-This library is designed to work alongside our [Chromium browser extension][browser-extension].
-It is available in the [Edge][edge-store-extension] and [Chrome][chrome-store-extension] extension stores.
-
 ## Working in the package
 
 ### Build
@@ -195,5 +194,3 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [container-loader-package]: https://www.npmjs.com/package/@fluidframework/container-loader
 [devtools-core-package]: https://www.npmjs.com/package/@fluid-experimental/devtools-core
 [browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension
-[edge-store-extension]: https://aka.ms/fluid/devtool/edge
-[chrome-store-extension]: https://aka.ms/fluid/devtool/chrome

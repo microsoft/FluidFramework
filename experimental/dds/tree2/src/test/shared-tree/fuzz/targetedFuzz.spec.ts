@@ -98,10 +98,13 @@ describe("Fuzz - Targeted", () => {
 			emitter,
 		});
 	});
+	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
 		insert: 1,
 		delete: 1,
+		start: 0,
+		commit: 0,
 	};
 	describe("Composed vs individual changes converge to the same tree", () => {
 		const generatorFactory = () =>

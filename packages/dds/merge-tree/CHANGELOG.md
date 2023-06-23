@@ -1,5 +1,13 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.5.1.0
+
+### Minor Changes
+
+-   New APIs for interval querying by range ([#15837](https://github.com/microsoft/FluidFramework/issues/15837)) [2a4242e1b5](https://github.com/microsoft/FluidFramework/commits/2a4242e1b5f15442b13ae413124ec76315a4cc52)
+
+    SharedString now supports querying intervals whose start/end-points fall in a specified range.
+
 ## 2.0.0-internal.5.0.0
 
 Dependency updates only.

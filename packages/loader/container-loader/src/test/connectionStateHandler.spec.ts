@@ -154,6 +154,7 @@ describe("ConnectionStateHandler Tests", () => {
 			},
 			connectionStateChanged: () => {},
 			logger: new TelemetryNullLogger(),
+			clientShouldHaveLeft: (clientId: string) => {},
 		};
 
 		deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();

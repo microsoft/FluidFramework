@@ -27,6 +27,10 @@ import {
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IHostLoader,
+	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
+	IProvideFluidCodeDetailsComparer,
+	IFluidCodeDetailsComparer,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -44,6 +48,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
+	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -113,6 +118,8 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
+
+const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
  * @internal
@@ -551,6 +558,7 @@ export class Container
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
+	private readonly clientsWhoShouldHaveLeft = new Set<string>();
 
 	private setAutoReconnectTime = performance.now();
 
@@ -656,14 +664,17 @@ export class Container
 		return this.getCodeDetailsFromQuorum();
 	}
 
+	private _loadedCodeDetails: IFluidCodeDetails | undefined;
 	/**
 	 * Get the code details that were used to load the container.
 	 * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
 	 * loaded.
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
-		return this._context?.codeDetails;
+		return this._loadedCodeDetails;
 	}
+
+	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
 	 * Retrieves the audience associated with the document
@@ -870,6 +881,9 @@ export class Container
 						this.disconnect();
 						this.connect();
 					}
+				},
+				clientShouldHaveLeft: (clientId: string) => {
+					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
 			},
 			this.deltaManager,
@@ -1348,7 +1362,7 @@ export class Container
 		return this.urlResolver.getAbsoluteUrl(
 			this.resolvedUrl,
 			relativeUrl,
-			getPackageName(this._context?.codeDetails),
+			getPackageName(this._loadedCodeDetails),
 		);
 	}
 
@@ -1381,7 +1395,7 @@ export class Container
 			this.deltaManager.inboundSignal.pause(),
 		]);
 
-		if ((await this.context.satisfies(codeDetails)) === true) {
+		if ((await this.satisfies(codeDetails)) === true) {
 			this.deltaManager.inbound.resume();
 			this.deltaManager.inboundSignal.resume();
 			return;
@@ -1390,6 +1404,47 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
+	}
+
+	/**
+	 * Determines if the currently loaded module satisfies the incoming constraint code details
+	 */
+	private async satisfies(constraintCodeDetails: IFluidCodeDetails) {
+		// If we have no module, it can't satisfy anything.
+		if (this._loadedModule === undefined) {
+			return false;
+		}
+
+		const comparers: IFluidCodeDetailsComparer[] = [];
+
+		const maybeCompareCodeLoader = this.codeLoader;
+		if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
+		}
+
+		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
+			this._loadedModule?.module.fluidExport;
+		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
+		}
+
+		// If there are no comparers, then it's impossible to know if the currently loaded package satisfies
+		// the incoming constraint, so we return false. Assuming it does not satisfy is safer, to force a reload
+		// rather than potentially running with incompatible code.
+		if (comparers.length === 0) {
+			return false;
+		}
+
+		for (const comparer of comparers) {
+			const satisfies = await comparer.satisfies(
+				this._loadedModule?.details,
+				constraintCodeDetails,
+			);
+			if (satisfies === false) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -2117,6 +2172,28 @@ export class Container
 		}
 		const local = this.clientId === message.clientId;
 
+		// Check and report if we're getting messages from a clientId that we previously
+		// flagged should have left, or from a client that's not in the quorum but should be
+		if (message.clientId != null) {
+			const client = this.protocolHandler.quorum.getMember(message.clientId);
+
+			if (client === undefined && message.type !== MessageType.ClientJoin) {
+				// pre-0.58 error message: messageClientIdMissingFromQuorum
+				throw new Error("Remote message's clientId is missing from the quorum");
+			}
+
+			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
+			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
+			// document we don't need to blow up aggressively.
+			if (
+				this.clientsWhoShouldHaveLeft.has(message.clientId) &&
+				!canBeCoalescedByService(message)
+			) {
+				// pre-0.58 error message: messageClientIdShouldHaveLeft
+				throw new Error("Remote message's clientId already should have left");
+			}
+		}
+
 		// Allow the protocol handler to process the message
 		const result = this.protocolHandler.processMessage(message, local);
 
@@ -2216,11 +2293,32 @@ export class Container
 		// are set. Global requests will still go directly to the loader
 		const maybeLoader: FluidObject<IHostLoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
+
+		const loadCodeResult = await PerformanceEvent.timedExecAsync(
+			this.subLogger,
+			{ eventName: "CodeLoad" },
+			async () => this.codeLoader.load(codeDetails),
+		);
+
+		this._loadedModule = {
+			module: loadCodeResult.module,
+			// An older interface ICodeLoader could return an IFluidModule which didn't have details.
+			// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
+			// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
+			details: loadCodeResult.details ?? codeDetails,
+		};
+
+		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+			this._loadedModule.module.fluidExport;
+		const runtimeFactory = fluidExport?.IRuntimeFactory;
+		if (runtimeFactory === undefined) {
+			throw new Error(packageNotFactoryError);
+		}
+
 		this._context = await ContainerContext.createOrLoad(
 			this,
 			this.scope,
-			this.codeLoader,
-			codeDetails,
+			runtimeFactory,
 			snapshot,
 			new DeltaManagerProxy(this._deltaManager),
 			new QuorumProxy(this.protocolHandler.quorum),
@@ -2239,6 +2337,8 @@ export class Container
 			existing,
 			pendingLocalState,
 		);
+
+		this._loadedCodeDetails = codeDetails;
 
 		this.emit("contextChanged", codeDetails);
 	}
