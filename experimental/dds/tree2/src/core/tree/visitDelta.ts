@@ -250,18 +250,18 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						mark.count,
 					);
 					assert(entry !== undefined, "Expected a move out for this move in");
-					visitor.onMoveIn(index, entry.length, entry.data);
+					visitor.onMoveIn(index, entry.length, entry.value);
 					let endIndex = index + entry.length;
 
 					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.start;
 					if (lengthBeforeMark > 0) {
-						visitor.onMoveOut(index, lengthBeforeMark, entry.data);
+						visitor.onMoveOut(index, lengthBeforeMark, entry.value);
 						endIndex -= lengthBeforeMark;
 						setInRangeMap(
 							config.movedOutRanges,
 							entry.start,
 							lengthBeforeMark,
-							entry.data,
+							entry.value,
 						);
 					}
 

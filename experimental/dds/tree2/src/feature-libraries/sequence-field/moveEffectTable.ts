@@ -318,17 +318,17 @@ export function getModifyAfter<T>(
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 
-	if (effect?.data.modifyAfter !== undefined) {
+	if (effect?.value.modifyAfter !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		if (consumeEffect) {
-			const newEffect = { ...effect.data };
+			const newEffect = { ...effect.value };
 			delete newEffect.modifyAfter;
 			setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
 		}
-		return effect.data.modifyAfter;
+		return effect.value.modifyAfter;
 	}
 
 	return undefined;
@@ -344,17 +344,17 @@ function getPairedMarkStatus<T>(
 ): PairedMarkUpdate | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 
-	if (effect?.data.pairedMarkStatus !== undefined) {
+	if (effect?.value.pairedMarkStatus !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
 		if (consumeEffect) {
-			const newEffect = { ...effect.data };
+			const newEffect = { ...effect.value };
 			delete newEffect.pairedMarkStatus;
 			setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
 		}
-		return effect.data.pairedMarkStatus;
+		return effect.value.pairedMarkStatus;
 	}
 
 	return undefined;

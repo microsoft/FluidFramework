@@ -458,7 +458,7 @@ function sendMarkToDest<T>(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
-		newEffect = { ...effect.data, movedMark: mark };
+		newEffect = { ...effect.value, movedMark: mark };
 	} else {
 		newEffect = { movedMark: mark };
 	}
@@ -480,7 +480,7 @@ function setPairedMarkStatus(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
-		newEffect = { ...effect.data, pairedMarkStatus: status };
+		newEffect = { ...effect.value, pairedMarkStatus: status };
 	} else {
 		newEffect = { pairedMarkStatus: status };
 	}
@@ -640,12 +640,12 @@ function getMovedMark<T>(
 ): Mark<T> | undefined {
 	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
 
-	if (effect?.data.movedMark !== undefined) {
+	if (effect?.value.movedMark !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
-		const newEffect = { ...effect.data };
+		const newEffect = { ...effect.value };
 		delete newEffect.movedMark;
 		setMoveEffect(
 			moveEffects,
@@ -656,7 +656,7 @@ function getMovedMark<T>(
 			newEffect,
 			false,
 		);
-		return effect.data.movedMark;
+		return effect.value.movedMark;
 	}
 
 	return undefined;

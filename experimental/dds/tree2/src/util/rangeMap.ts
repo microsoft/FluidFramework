@@ -4,23 +4,30 @@
  */
 
 /**
+ * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
+ */
+export type RangeMap<T> = RangeEntry<T>[];
+
+/**
+ * An association between a range of integer keys a single value.
  * @alpha
  */
 export interface RangeEntry<T> {
 	start: number;
 	length: number;
-	data: T;
+	value: T;
 }
 
-export type RangeMap<T> = RangeEntry<T>[];
-
+/**
+ * @returns The first `RangeEntry` in `map` which intersects the range defined by `start` and `length`.
+ */
 export function getFirstFromRangeMap<T>(
 	map: RangeMap<T>,
 	start: number,
-	count: number,
+	length: number,
 ): RangeEntry<T> | undefined {
 	for (const range of map) {
-		if (range.start >= start + count) {
+		if (range.start >= start + length) {
 			break;
 		}
 
@@ -32,9 +39,12 @@ export function getFirstFromRangeMap<T>(
 	return undefined;
 }
 
-export function setInRangeMap<T>(map: RangeMap<T>, start: number, count: number, value: T): void {
-	const end = start + count - 1;
-	const newEntry: RangeEntry<T> = { start, length: count, data: value };
+/**
+ * Sets the keys from `start` to `start + length - 1` to `value`.
+ */
+export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number, value: T): void {
+	const end = start + length - 1;
+	const newEntry: RangeEntry<T> = { start, length, value };
 
 	let iBefore = -1;
 	let iAfter = map.length;

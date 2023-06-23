@@ -272,10 +272,10 @@ function applyMovedChanges<TNodeChange>(
 	} else if (entry.start + entry.length < (mark.id as number) + mark.count) {
 		// The entry applies to the first cell in the mark, but not the mark's entire range.
 		const [mark1, mark2] = splitMark(mark, entry.start + entry.length - mark.id);
-		return [withNodeChange(mark1, entry.data), ...applyMovedChanges(mark2, revision, manager)];
+		return [withNodeChange(mark1, entry.value), ...applyMovedChanges(mark2, revision, manager)];
 	} else {
 		// The entry applies to all cells in the mark.
-		return [withNodeChange(mark, entry.data)];
+		return [withNodeChange(mark, entry.value)];
 	}
 }
 

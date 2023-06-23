@@ -22,7 +22,7 @@ describe("RangeMap", () => {
 
 		// Set keys 3-6
 		setInRangeMap(map, 3, 4, "a");
-		const expectedEntry: RangeEntry<string> = { start: 3, length: 4, data: "a" };
+		const expectedEntry: RangeEntry<string> = { start: 3, length: 4, value: "a" };
 
 		// Read keys 0-2
 		const entryBefore = getFirstFromRangeMap(map, 0, 3);
@@ -49,11 +49,11 @@ describe("RangeMap", () => {
 
 		// Set keys 2-3
 		setInRangeMap(map, 2, 2, "a");
-		const expected1: RangeEntry<string> = { start: 2, length: 2, data: "a" };
+		const expected1: RangeEntry<string> = { start: 2, length: 2, value: "a" };
 
 		// Set keys 6-6
 		setInRangeMap(map, 6, 1, "b");
-		const expected2: RangeEntry<string> = { start: 6, length: 1, data: "b" };
+		const expected2: RangeEntry<string> = { start: 6, length: 1, value: "b" };
 
 		// Read key 3
 		const entryFirst = getFirstFromRangeMap(map, 3, 1);
@@ -89,10 +89,10 @@ describe("RangeMap", () => {
 
 		// Set keys 1-7
 		setInRangeMap(map, 1, 7, "e");
-		const expectedE: RangeEntry<string> = { start: 1, length: 7, data: "e" };
+		const expectedE: RangeEntry<string> = { start: 1, length: 7, value: "e" };
 
 		const entry0 = getFirstFromRangeMap(map, 0, 8);
-		const expectedA: RangeEntry<string> = { start: 0, length: 1, data: "a" };
+		const expectedA: RangeEntry<string> = { start: 0, length: 1, value: "a" };
 		assert.deepEqual(entry0, expectedA);
 
 		const entry1 = getFirstFromRangeMap(map, 1, 1);
@@ -111,7 +111,7 @@ describe("RangeMap", () => {
 		assert.deepEqual(entry7, expectedE);
 
 		const entry8 = getFirstFromRangeMap(map, 8, 1);
-		const expectedD: RangeEntry<string> = { start: 8, length: 1, data: "d" };
+		const expectedD: RangeEntry<string> = { start: 8, length: 1, value: "d" };
 		assert.deepEqual(entry8, expectedD);
 	});
 
@@ -123,17 +123,17 @@ describe("RangeMap", () => {
 
 		// Set keys 4-6
 		setInRangeMap(map, 4, 3, "b");
-		const expectedB: RangeEntry<string> = { start: 4, length: 3, data: "b" };
+		const expectedB: RangeEntry<string> = { start: 4, length: 3, value: "b" };
 
 		const entry1 = getFirstFromRangeMap(map, 1, 10);
-		const expectedA1: RangeEntry<string> = { start: 1, length: 3, data: "a" };
+		const expectedA1: RangeEntry<string> = { start: 1, length: 3, value: "a" };
 		assert.deepEqual(entry1, expectedA1);
 
 		const entry4 = getFirstFromRangeMap(map, 4, 8);
 		assert.deepEqual(entry4, expectedB);
 
 		const entry7 = getFirstFromRangeMap(map, 7, 4);
-		const expectedA2: RangeEntry<string> = { start: 7, length: 4, data: "a" };
+		const expectedA2: RangeEntry<string> = { start: 7, length: 4, value: "a" };
 		assert.deepEqual(entry7, expectedA2);
 	});
 });

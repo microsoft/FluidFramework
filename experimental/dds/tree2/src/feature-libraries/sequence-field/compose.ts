@@ -657,7 +657,7 @@ function getReplacementMark<T>(
 	count: number,
 ): Mark<T> | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	if (effect?.data.mark === undefined) {
+	if (effect?.value.mark === undefined) {
 		return undefined;
 	}
 
@@ -668,7 +668,7 @@ function getReplacementMark<T>(
 		"Expected effect to cover entire mark",
 	);
 
-	let mark = effect.data.mark;
+	let mark = effect.value.mark;
 	assert(
 		getMarkLength(mark) === effect.length,
 		"Expected replacement mark to be same length as number of cells replaced",
@@ -681,7 +681,7 @@ function getReplacementMark<T>(
 	const cellsBefore = id - effect.start;
 	if (cellsBefore > 0) {
 		const [markBefore, newMark] = splitMark(mark, cellsBefore);
-		const effectBefore = { ...effect.data, mark: markBefore };
+		const effectBefore = { ...effect.value, mark: markBefore };
 		setMoveEffect(
 			moveEffects,
 			target,
@@ -697,7 +697,7 @@ function getReplacementMark<T>(
 	const cellsAfter = lastEffectId - lastTargetId;
 	if (cellsAfter > 0) {
 		const [newMark, markAfter] = splitMark(mark, cellsAfter);
-		const effectAfter = { ...effect.data, mark: markAfter };
+		const effectAfter = { ...effect.value, mark: markAfter };
 		setMoveEffect(
 			moveEffects,
 			target,
@@ -710,7 +710,7 @@ function getReplacementMark<T>(
 		mark = newMark;
 	}
 
-	const newEffect = { ...effect.data };
+	const newEffect = { ...effect.value };
 	delete newEffect.mark;
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
 	return mark;
@@ -731,7 +731,7 @@ function setReplacementMark<T>(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
 			"Expected effect to cover entire mark",
 		);
-		newEffect = { ...effect.data, mark };
+		newEffect = { ...effect.value, mark };
 	} else {
 		newEffect = { mark };
 	}
@@ -882,13 +882,13 @@ function setModifyAfter<T>(
 			"Expected effect to cover entire mark",
 		);
 		const nodeChange =
-			effect.data.modifyAfter !== undefined
+			effect.value.modifyAfter !== undefined
 				? composeChanges([
-						makeAnonChange(effect.data.modifyAfter),
+						makeAnonChange(effect.value.modifyAfter),
 						tagChange(modifyAfter, revision),
 				  ])
 				: modifyAfter;
-		newEffect = { ...effect.data, modifyAfter: nodeChange };
+		newEffect = { ...effect.value, modifyAfter: nodeChange };
 	} else {
 		newEffect = { modifyAfter };
 	}

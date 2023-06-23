@@ -965,7 +965,7 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					revision,
 					id,
 					count,
-				)?.data;
+				)?.value;
 				if (dependent !== undefined) {
 					crossFieldTable.invalidatedFields.add(dependent);
 				}
