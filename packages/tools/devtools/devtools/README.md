@@ -25,14 +25,14 @@ The Devtools' API surface is designed to fit nicely into most application flows.
 
 ### Initialization
 
-To initialize a devtools session for your container, call `initializeDevtools`.
+To initialize a devtools session for your container, call [`initializeDevtools`][initialize-devtools-docs].
 This function accepts a `DevtoolsLogger` for receiving Fluid telemetry from your application, a list of initial Fluid
 `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing
 `Container` data.
 
 TODO: link to API docs once API shape has settled.
 
-#### About the `DevtoolsLogger`
+#### About the [`DevtoolsLogger`][devtools-logger-docs]
 
 The `DevtoolsLogger` is an optional piece when calling `initializeDevtools` but it is strongly recommended that you use
 it because several features in Fluid Devtools are powered by the telemetry that Fluid Framework generates, and this
@@ -48,19 +48,36 @@ to `initializeDevtools()` _and_ to `new AzureClient()`):
 ```typescript
 import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools-core";
 
+// Instantiate the logger
 const devtoolsLogger = new DevtoolsLogger();
-const devtools = initializeDevtools({ logger: devtoolsLogger });
 
+// Pass the logger when instantiating the AzureClient
 const clientProps = {
     connection: { ... }, // Your application's configuration to connect to the Fluid service
     logger: devtoolsLogger,
 };
 const client = new AzureClient(clientProps);
+
+// Use the AzureClient to create a Container
+const containerSchema = { /* Define the objects in your Fluid Container */ };
+const { container, services } = await client.createContainer(containerSchema)
+
+// Initialize the Devtools passing the logger and your Container.
+// The Container could be added later as well with devtools.registerContainerDevtools().
+const devtools = initializeDevtools({
+    logger: devtoolsLogger,
+    initialContainers: [
+        {
+            container,
+            containerKey: "My Container",
+        },
+    ],
+});
 ```
 
 If you're not working with `AzureClient` but with lower-level APIs (e.g. you manually instantiate a `Loader` from the
-[@fluidframework/container-loader package](../../../loader/container-loader/) package, you probably want to refer to
-the [@fluidframework/devtools-core package](../devtools-core/) instead of this one).
+[@fluidframework/container-loader package][container-loader-package] package, you probably want to refer to
+the [@fluid-experimental/devtools-core package][devtools-core-package] instead of this one).
 
 During local development the recommendation is that your application should receive the `DevtoolsLogger` instance _instead_
 of any logger it would normally receive when deployed to a real environment, to avoid local development activity from
@@ -70,7 +87,7 @@ at the same time, you can pass an existing logger to the `DevtoolsLogger` constr
 it receives to that logger as well:
 
 ```typescript
-import { DevtoolsLogger } from "@fluid-experimental/devtools-core";
+import { DevtoolsLogger } from "@fluid-experimental/devtools";
 
 // Your application's logger
 const yourApplicationLogger = getInstanceOfYourApplicationLogger();
@@ -175,3 +192,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- Links -->
+[initialize-devtools-docs]: https://fluidframework.com/docs/apis/devtools#initializedevtools-function
+[devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
+[container-loader-package]: https://www.npmjs.com/package/@fluidframework/container-loader
+[devtools-core-package]: https://www.npmjs.com/package/@fluid-experimental/devtools-core

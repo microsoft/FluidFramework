@@ -28,14 +28,14 @@ The Devtools' API surface is designed to fit nicely into most application flows.
 
 ### Initialization
 
-To initialize a devtools session for your container, call `initializeDevtools`.
+To initialize a devtools session for your container, call [`initializeDevtools`][initialize-devtools-docs].
 This function accepts a `DevtoolsLogger` for receiving Fluid telemetry from your application, a list of initial Fluid
 `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing
 `Container` data.
 
-TODO: link to API docs once API shape has settled.
 
-#### About the `DevtoolsLogger`
+
+#### About the [`DevtoolsLogger`][devtools-logger-docs]
 
 The `DevtoolsLogger` is an optional piece when calling `initializeDevtools` but it is strongly recommended that you use
 it because several features in Fluid Devtools are powered by the telemetry that Fluid Framework generates, and this
@@ -49,17 +49,34 @@ Fluid Devtools as necessary.
 ```typescript
 import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools-core";
 
+// Instantiate the logger
 const devtoolsLogger = new DevtoolsLogger();
-const devtools = initializeDevtools({ logger: devtoolsLogger });
 
+// Pass the logger when instantiating the Loader
 const loader = new Loader({
     logger: devtoolsLogger,
     // Other necessary properties ...
 });
+
+// Use the Loader to create (and optionally, attach) a Container
+const container = await loader.createDetachedContainer(/* params */);
+await container.attach(/* params */);
+
+// Initialize the Devtools passing the logger and your Container.
+// The Container could be added later as well with devtools.registerContainerDevtools().
+const devtools = initializeDevtools({
+    logger: devtoolsLogger,
+    initialContainers: [
+        {
+            container,
+            containerKey: "My Container",
+        },
+    ],
+});
 ```
 
 If you're working with `AzureClient` instead of lower-level APIs like the one described above, you probably want to
-refer to the [@fluidframework/devtools package](../devtools/) instead of this one.
+refer to the [@fluid-experimental/devtools package][devtools-package] instead of this one.
 
 During local development the recommendation is that your application should receive the `DevtoolsLogger` instance _instead_
 of any logger it would normally receive when deployed to a real environment, to avoid local development activity from
@@ -185,3 +202,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- Links -->
+[initialize-devtools-docs]: https://fluidframework.com/docs/apis/devtools-core#initializedevtools-function
+[devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
+[devtools-package]: https://www.npmjs.com/package/@fluid-experimental/devtools
