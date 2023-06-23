@@ -48,6 +48,20 @@ export async function run<T extends IResources>(
 		});
 	});
 
+	process.on("uncaughtException", (error, origin) => {
+		Lumberjack.error(`Encountered uncaughtException while running service`, { origin }, error);
+		runner.stop().catch((innerError) => {
+			logger?.error(
+				`Could not stop runner after uncaughtException event due to error: ${innerError}`,
+			);
+			Lumberjack.error(
+				`Could not stop runner after uncaughtException event due to error`,
+				undefined,
+				innerError,
+			);
+		});
+	});
+
 	try {
 		// Wait for the runner to complete
 		await runningP;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Used by public types, but not part of the desired API surface
+// Used by public types, but not part of the desired API surface.
 export {
 	MakeNominal,
 	Invariant,
@@ -20,4 +20,6 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	isAny,
+	RestrictiveReadonlyRecord,
+	BrandedKeyContent,
 } from "./util";

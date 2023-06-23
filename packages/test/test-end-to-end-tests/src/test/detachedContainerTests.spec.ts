@@ -35,6 +35,7 @@ import {
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 	waitForContainerConnection,
+	timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -323,6 +324,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.insertText(0, "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.insertText(0, "b");
@@ -362,6 +366,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("1", "b");
@@ -403,6 +410,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		});
 
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire attach op
 		const testChannel = dataStore.runtime.createChannel(
@@ -424,6 +434,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
+
 		const router = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
@@ -500,6 +514,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		await testChannel1.write("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -544,6 +561,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("1", "b");
@@ -582,6 +602,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("b");
@@ -630,6 +653,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		};
 		testChannel1.createStroke({ color, thickness: 10 });
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.createStroke({ color, thickness: 20 });
@@ -668,6 +694,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		await testChannel1.add("a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -719,6 +748,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		testChannel1.insertRows(0, 1);
 		testChannel1.insertCols(0, 1);
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.setItems(0, 0, seg.items);
@@ -759,6 +791,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		testChannel1.insertRows(0, 20);
 		testChannel1.insertCols(0, 20);
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.insertRows(0, 9);

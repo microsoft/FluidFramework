@@ -1123,6 +1123,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		if (provider.driver.type === "local") {
+			// TODO:AB#4746: Resolve flakiness of this test on localserver CI.
+			this.skip();
+		}
+
 		// upload blob offline so an entry is added to redirect table
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
@@ -1191,6 +1196,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("not expired stashed blobs", async function () {
+		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+			this.skip();
+		}
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
 			container.container,

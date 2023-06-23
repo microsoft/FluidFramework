@@ -32,8 +32,19 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
+	sequenceIntervalHelpers,
+	IEndpointInRangeIndex,
+	IStartpointInRangeIndex,
+	createEndpointInRangeIndex,
+	createStartpointInRangeIndex,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+	SequenceIntervalIndexes,
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
+} from "./intervalIndex";
 export {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,

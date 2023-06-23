@@ -270,7 +270,7 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 
 // @public
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
     // (undocumented)
     cancel(props?: ITelemetryProperties, error?: any): void;
     // (undocumented)
@@ -281,11 +281,11 @@ export class PerformanceEvent {
     // (undocumented)
     reportProgress(props?: ITelemetryProperties, eventNameSuffix?: string): void;
     // (undocumented)
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers): PerformanceEvent;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean): PerformanceEvent;
     // (undocumented)
     static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers): T;
     // (undocumented)
-    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers): Promise<T>;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean): Promise<T>;
 }
 
 // @public
@@ -322,7 +322,10 @@ export enum TelemetryDataTag {
 }
 
 // @public
-export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[];
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
+    [key: string]: // Flat objects can have the same properties as the event itself
+    string | number | boolean | undefined | (string | number | boolean)[];
+};
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;

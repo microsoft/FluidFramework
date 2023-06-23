@@ -87,13 +87,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract readonly type: string;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface BlockAction<TClientData> {
     // (undocumented)
     (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface BlockUpdateActions {
     // (undocumented)
     child: (block: IMergeBlock, index: number) => void;
@@ -384,7 +384,7 @@ export interface IConsensusValue {
     value: any;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IHierBlock extends IMergeBlock {
     // (undocumented)
     hierToString(indentCount: number): string;
@@ -434,7 +434,7 @@ export interface IMarkerModifiedAction {
     (marker: Marker): void;
 }
 
-// @public
+// @internal @deprecated
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
@@ -450,7 +450,7 @@ export interface IMergeBlock extends IMergeNodeCommon {
     setOrdinal(child: IMergeNode, index: number): void;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export type IMergeNode = IMergeBlock | ISegment;
 
 // @public
@@ -460,7 +460,7 @@ export interface IMergeNodeCommon {
     // (undocumented)
     isLeaf(): this is ISegment;
     ordinal: string;
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     parent?: IMergeBlock;
 }
 
@@ -593,13 +593,13 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IncrementalBlockAction<TContext> {
     // (undocumented)
     (state: IncrementalMapState<TContext>): any;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export enum IncrementalExecOp {
     // (undocumented)
     Go = 0,
@@ -609,7 +609,7 @@ export enum IncrementalExecOp {
     Yield = 2
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export class IncrementalMapState<TContext> {
     constructor(block: IMergeBlock, actions: IncrementalSegmentActions<TContext>, pos: number, refSeq: number, clientId: number, context: TContext, start: number, end: number, childIndex?: number);
     // (undocumented)
@@ -634,13 +634,13 @@ export class IncrementalMapState<TContext> {
     start: number;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IncrementalSegmentAction<TContext> {
     // (undocumented)
     (segment: ISegment, state: IncrementalMapState<TContext>): any;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IncrementalSegmentActions<TContext> {
     // (undocumented)
     leaf: IncrementalSegmentAction<TContext>;
@@ -650,7 +650,7 @@ export interface IncrementalSegmentActions<TContext> {
     pre?: IncrementalBlockAction<TContext>;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface InsertContext {
     // (undocumented)
     candidateSegment?: ISegment;
@@ -749,7 +749,7 @@ export interface ISegmentAction<TClientData> {
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISegmentChanges {
     // (undocumented)
     next?: ISegment;
@@ -881,13 +881,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
 // @public (undocumented)
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
-// @public (undocumented)
+// @internal @deprecated
 export const MaxNodesInBlock = 8;
 
 // @public (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export class MergeBlock extends MergeNode implements IMergeBlock {
     constructor(childCount: number);
     // (undocumented)
@@ -912,7 +912,7 @@ export class MergeNode implements IMergeNodeCommon {
     isLeaf(): boolean;
     // (undocumented)
     ordinal: string;
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     parent?: IMergeBlock;
 }
 
@@ -973,7 +973,7 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): any;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface MinListener {
     // (undocumented)
     minRequired: number;
@@ -990,7 +990,7 @@ export type NamedAttributionPolicyRegistryEntries = Iterable<NamedAttributionPol
 // @public
 export type NamedAttributionPolicyRegistryEntry = [string, IAttributionPolicyFactory];
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface NodeAction<TClientData> {
     // (undocumented)
     (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, clientData: TClientData): boolean;
@@ -999,7 +999,7 @@ export interface NodeAction<TClientData> {
 // @public (undocumented)
 export const NonCollabClient = -2;
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export function ordinalToArray(ord: string): number[];
 
 // @public (undocumented)
@@ -1216,7 +1216,7 @@ export const reservedTileLabelsKey = "referenceTileLabels";
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface SearchResult {
     // (undocumented)
     pos: number;
@@ -1230,7 +1230,7 @@ export interface SegmentAccumulator {
     segments: ISegment[];
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface SegmentActions<TClientData> {
     // (undocumented)
     contains?: NodeAction<TClientData>;
