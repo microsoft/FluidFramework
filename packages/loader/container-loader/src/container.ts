@@ -585,10 +585,6 @@ export class Container
 		return this.service?.resolvedUrl;
 	}
 
-	public get loadedFromVersion(): IVersion | undefined {
-		return this._loadedFromVersion;
-	}
-
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
 	}
@@ -807,8 +803,8 @@ export class Container
 				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
 				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
 				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-				containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
-				containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+				containerLoadedFromVersionId: () => this._loadedFromVersion?.id,
+				containerLoadedFromVersionDate: () => this._loadedFromVersion?.date,
 				// message information to associate errors with the specific execution state
 				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
@@ -2280,7 +2276,7 @@ export class Container
 	private async instantiateContext(
 		existing: boolean,
 		codeDetails: IFluidCodeDetails,
-		snapshot?: ISnapshotTree,
+		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
 		assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
@@ -2316,6 +2312,7 @@ export class Container
 			this.scope,
 			runtimeFactory,
 			snapshot,
+			this._loadedFromVersion,
 			new DeltaManagerProxy(this._deltaManager),
 			new QuorumProxy(this.protocolHandler.quorum),
 			loader,
@@ -2330,6 +2327,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
 			existing,
+			this.subLogger,
 			pendingLocalState,
 		);
 

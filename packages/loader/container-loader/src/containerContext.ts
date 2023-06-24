@@ -53,6 +53,7 @@ export class ContainerContext implements IContainerContext {
 		scope: FluidObject,
 		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
+		version: IVersion | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
 		loader: ILoader,
@@ -64,6 +65,7 @@ export class ContainerContext implements IContainerContext {
 		closeFn: (error?: ICriticalContainerError) => void,
 		updateDirtyContainerState: (dirty: boolean) => void,
 		existing: boolean,
+		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
 		const context = new ContainerContext(
@@ -71,6 +73,7 @@ export class ContainerContext implements IContainerContext {
 			scope,
 			runtimeFactory,
 			baseSnapshot,
+			version,
 			deltaManager,
 			quorum,
 			loader,
@@ -82,13 +85,13 @@ export class ContainerContext implements IContainerContext {
 			closeFn,
 			updateDirtyContainerState,
 			existing,
+			taggedLogger,
 			pendingLocalState,
 		);
 		await context.instantiateRuntime(existing);
 		return context;
 	}
 
-	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {
@@ -199,6 +202,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly scope: FluidObject,
 		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
+		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
 		public readonly loader: ILoader,
@@ -222,11 +226,11 @@ export class ContainerContext implements IContainerContext {
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly existing: boolean,
+		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
 		this._connected = this.container.connected;
 		this._quorum = quorum;
-		this.taggedLogger = container.subLogger;
 
 		this.supportedFeatures = new Map([
 			/**
@@ -264,7 +268,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
-		return this.container.loadedFromVersion;
+		return this._version;
 	}
 
 	public get attachState(): AttachState {
