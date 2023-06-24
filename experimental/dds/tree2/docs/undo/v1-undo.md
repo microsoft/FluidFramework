@@ -144,7 +144,7 @@ This can happen when a client edits a region of the document tree while that reg
 ### Storing Repair Data in the Forest
 
 The design presented here leverages the `Forest` owned by the `SharedTreeView` to house and maintain repair data.
-This made possible by the fact that all repair data comes in the shape of trees,
+This is made possible by the fact that all repair data comes in the shape of trees,
 that are functionally equivalent to the tree content that makes up the document.
 
 This approach is motivated by the following points:
@@ -172,7 +172,7 @@ Changesets identify removed trees using a `ChangeAtomId` while the forest uses p
 
 In order to meet this need, we introduce the `TreeIndex` class,
 which maintains a mapping between the two identification systems,
-and also serves as inventory of the repair data that exists in the forest.
+and also serves as an inventory of the repair data that exists in the forest.
 
 We also introduce the concept of `RemovedTreeId`,
 which is a value type (likely a number) that uniquely identifies a removed subtree within the forest on a given `SharedTreeView`.
@@ -185,10 +185,10 @@ which is a value type (likely a number) that uniquely identifies a removed subtr
 
 The first of these methods can be kept under a separate `ReadonlyTreeIndex` interface that `TreeIndex` extends.
 
-The generation of new `RemovedTreeId`s and their conversion to forest paths is left as implementation detail for the `SharedTreeView`.
+The generation of new `RemovedTreeId`s and their conversion to forest paths is left as an implementation detail of the `SharedTreeView`.
 In the future, it is likely that the `Forest` will take on these responsibilities.
 For now, the `SharedTreeView` can use a monotonically increasing counter to generate `RemovedTreeId`s,
-and can use `removed-${removedTreeId}` as way of generating unique paths.
+and can use `removed-${removedTreeId}` as a way of generating unique paths.
 
 ### Creating Repair Data On Change Application
 
@@ -216,7 +216,7 @@ If it does, then it can safely keep the repair data that it has.
 If it doesn't, then it should:
 
 -   Generate a new `RemovedTreeId`.
--   Generate a delta a delta that adds the content to the forest.
+-   Generate a delta that adds the content to the forest.
 -   Apply that delta to the forest.
 -   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
 
@@ -294,7 +294,7 @@ We can address this by using the following implementation strategy:
     for each piece of repair data associated with changesets that make up the transaction,
     leave the repair data in the `StygianForest` untouched but update its entry so that it is now associated with the composed changeset.
 
-Note that the `AnchorSet` for the view also needs to be patched so that any anchors pointing to the repair data is updated with the appropriate path.
+Note that the `AnchorSet` for the view also needs to be patched so that any anchors pointing to the repair data are updated with the appropriate path.
 
 The above approach relies on the fact that composition can elide but not reassign changeset-local IDs.
 This avoids the problem of having to reverse-engineer how the repair data produced by the individual changesets maps to the repair data produced by composed changeset.
