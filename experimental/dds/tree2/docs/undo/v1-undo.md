@@ -168,7 +168,9 @@ One challenge associated with storing repair data in the forest,
 is that it requires us to establish a system for keeping track of which removed subtrees exist in the repair data,
 and where they reside in the forest.
 Specifically, we have to maintain a correspondence between the identification scheme used by changesets, and the one used by the forest.
-Changesets identify removed trees using a `ChangeAtomId` while the forest uses paths.
+Changesets identify removed trees using a `ChangeAtomId`
+(which is made up of a `RevisionTag` and a `ChangesetLocalId`)
+while the forest uses paths.
 
 In order to meet this need, we introduce the `TreeIndex` class,
 which maintains a mapping between the two identification systems,
@@ -177,13 +179,20 @@ and also serves as an inventory of the repair data that exists in the forest.
 We also introduce the concept of `RemovedTreeId`,
 which is a value type (likely a number) that uniquely identifies a removed subtree within the forest on a given `SharedTreeView`.
 
-`TreeIndex`'s interface needs to offer the following methods:
+At a minimum, `TreeIndex`'s interface needs to offer the following methods:
 
 -   Retrieve the matching `RemovedTreeId` for a given `ChangeAtomId` if any.
 -   Add an entry in its records for a given `ChangeAtomId` to `RemovedTreeId` mapping.
 -   Remove an entry from its records for a given `ChangeAtomId`.
+-   Save to a summary format.
+-   Load from the summary format.
 
-The first of these methods can be kept under a separate `ReadonlyTreeIndex` interface that `TreeIndex` extends.
+For the sake of performance, it would likely make sense to also support the following methods:
+
+-   Retrieve all the `RemovedTreeId`s for a given `RevisionTag`.
+-   Add a range of entries in its records for a given `RevisionTag` and range of `ChangeAtomId` to `RemovedTreeId` pairs.
+-   Remove all the entries from its records for a given `RevisionTag`.
+-   Reassign all the entries for a given `RevisionTag` to a new `RevisionTag`.
 
 The generation of new `RemovedTreeId`s and their conversion to forest paths is left as an implementation detail of the `SharedTreeView`.
 In the future, it is likely that the `Forest` will take on these responsibilities.
@@ -204,7 +213,7 @@ the `SharedTreeView` must do the following:
 
 -   Generate a new `RemovedTreeId`.
 -   Translate that change into an equivalent delta that preserves the otherwise deleted subtree
-    by moving that subtree to a part of the inner forest that lies outside the scope of the document.
+    by moving that subtree to a part of the forest that lies outside the scope of the document.
 -   Apply that delta to the forest.
 -   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
 
@@ -229,7 +238,7 @@ and into the area of the forest where the document is stored.
 Changesets themselves don't carry the repair data that is consumed,
 they just describe a change
 (such as the undo of a subtree deletion)
-and it is the `StygianForest` that interprets the change as prompting the consumption of the relevant repair data stored in the forest.
+and it is the `SharedTreeView` that interprets the change as prompting the consumption of the relevant repair data stored in the forest.
 
 There are three cases that can lead the consumption of repair data:
 
@@ -239,16 +248,14 @@ There are three cases that can lead the consumption of repair data:
     and that move's destination lies within the document tree.
     (This last scenario is not yet supported and is subject to debate.)
 
-When a `Delta` is applied to the `StygianForest`,
-for every change conveyed by the `Delta` that consumes repair data,
-the `StygianForest` must do the following:
+When a changeset is applied to the `SharedTreeView`,
+for every change conveyed by the changeset that consumes repair data,
+the `SharedTreeView` must do the following:
 
--   Lookup in its records where the relevant piece of repair data is stored in the inner forest.
--   Translate the change into an equivalent change that either...
-    -   moves the repair data to the document tree.
-    -   copies the repair data to the document tree and deletes the original.
--   Apply that change to the inner forest.
--   Remove the entry in its records for where the relevant piece of repair data was located in the inner forest.
+-   Look up the `RemovedTreeId` in the `TreeIndex` for the relevant subtree.
+-   Translate the change into an equivalent delta that moves the repair data tree into the document tree.
+-   Apply that delta to the forest.
+-   Remove the entry in the `TreeIndex` for the relevant subtree.
 
 ### Editing Repair Data On Change Application
 
@@ -259,13 +266,13 @@ Note that this includes cases where:
 -   The edit spans a pair of deleted subtrees
 -   The edit spans a deleted subtree and the document tree
 
-When a `Delta` is applied to the `StygianForest`,
-for every change conveyed by the `Delta` that edits repair data,
-the `StygianForest` must do the following:
+When a changeset is applied to the `SharedTreeView`,
+for every change conveyed by the changeset that edits repair data,
+the `SharedTreeView` must do the following:
 
--   Lookup in its records where the relevant piece of repair data is stored in the inner forest.
--   Translate the change into an equivalent change that applies to the repair data tree in the inner forest.
--   Apply that change to the inner forest.
+-   Look up the `RemovedTreeId` in the `TreeIndex` for the relevant subtree.
+-   Translate the change into an equivalent delta that applies to the repair data tree in the forest.
+-   Apply that delta to the forest.
 
 ### Patching Repair Data After Transactions
 
@@ -278,9 +285,9 @@ the `StygianForest` must do the following:
     - If the transaction was aborted, then the commits from the transaction are removed from the branch and the changes are reverted from the forest.
     - If the transaction was committed, then the commits from the transaction are composed into a single commit, and the forest is left untouched.
 
-In the abort case, the `StygianForest` will be correctly updated through the application of the inverses of the transaction's commits.
+In the abort case, the `TreeIndex` will be correctly updated through the application of the inverses of the transaction's commits.
 In the commit case however,
-the `StygianForest` needs to be patched to account for the following fact:
+the `TreeIndex` needs to be patched to account for the following fact:
 any repair data generated by the transaction's individual commits should now be attributed to the one composed commit that makes up the whole transaction.
 
 We can address this by using the following implementation strategy:
@@ -288,13 +295,12 @@ We can address this by using the following implementation strategy:
 -   As changes are being made during the transaction,
     assign each transaction change
     a changeset-local ID that is unique across the whole transaction.
-    (At the time of writing, we already avoid recycling changeset-local ID among the changesets that make up a transaction.)
--   When the `StygianForest` is informed of such a change, it stores the repair data for it as normal.
+    (At the time of writing, we already avoid recycling changeset-local ID among the changesets that make up a transaction,
+    except when merging in changesets from other branches into the transaction.)
+-   When the `SharedTreeView` is informed of such a change, it updates the `Forest` and `TreeIndex` as normal.
 -   When the transaction is completed,
-    for each piece of repair data associated with changesets that make up the transaction,
-    leave the repair data in the `StygianForest` untouched but update its entry so that it is now associated with the composed changeset.
-
-Note that the `AnchorSet` for the view also needs to be patched so that any anchors pointing to the repair data are updated with the appropriate path.
+    for each changeset that makes up the transaction,
+    reassign in the `TreeIndex` all the entries for the `RevisionTag` of the changeset to the `RevisionTag` of the transaction.
 
 The above approach relies on the fact that composition can elide but not reassign changeset-local IDs.
 This avoids the problem of having to reverse-engineer how the repair data produced by the individual changesets maps to the repair data produced by composed changeset.
@@ -306,9 +312,9 @@ Note that this requires reassigning new changeset-local IDs to any changesets th
 When a `SharedTreeBranch` is rebased,
 any owning `SharedTreeView` may have to be updated to reflect the changes performed by the concurrent changes on which the branch was rebased,
 as well as the knock-on effects of those changes on the changes that were on the rebased branch.
-Updating the `SharedTreeView` includes updating the `StygianForest` it carries with it.
+Updating the `SharedTreeView` includes updating the `Forest` and `TreeIndex` it carries with it.
 
-Our existing approach to updating the forest is to compose an "update" changeset that is a composition of the following changesets:
+Our existing approach to updating the forest is to produce an "update" changeset that is a composition of the following changesets:
 
 1. The inverse of each changeset (in reverse order) on the branch that is being rebased
 2. The concurrent changesets being rebased over
@@ -320,13 +326,13 @@ where the changesets from the third group may largely cancel-out with the change
 leading to unnecessary state churning and invalidation of downstream components.
 
 Another approach that could be taken, would be to clone the `SharedTreeView` components
-(such as `StygianForest` and the `AnchorSet`)
+(such as the `Forest`, `TreeIndex`, and `AnchorSet`)
 of the branch onto which the current `SharedTreeView` is being rebased,
 and apply the rebased edits to that clone.
 The drawback of that approach is that this not only may cause invalidation in parts of the documents that are not actually changed by the rebase,
 but it also forces all consumers of these components to update/rebuild any references that might have had (such as anchors) to those components.
 
-The upshot is that `StygianForest` must tolerate the kind of changesets that results from such rebase operations.
+The upshot is that `SharedTreeView` must tolerate the kind of changesets that results from such rebase operations.
 This includes paying attention to the `RevisionInfo.rollbackOf` field on changesets in order to correctly distinguish edits that should lead to the production of repair data from edits that should not.
 
 ### Garbage-Collecting Repair Data
@@ -411,21 +417,18 @@ While this repair data is part of the undo commit,
 it is not, properly speaking, a change and therefore does not take part in rebasing operations.
 
 Note that, contrary to cases where the repair data is consumed,
-generating such an undo should not remove the repair data from the `StygianForest`.
+generating such an undo should not remove the repair data from the `TreeIndex`.
 That data will however be consumed, and therefore removed, through the usual channels if and when the undo edit is applied.
 
 ### Repair Data In Summaries
 
-The `StygianForest` needs to ensure that the inner forest contributes its usual summary data.
-By virtue of the `StygianForest` maintaining repair data within the inner forest,
-the summary data from the inner forest will also include that repair data.
-
-The `StygianForest` must also contribute any data that it requires in order to maintain the correspondence between
-how changesets refer to deleted/overwritten content
-and how the inner forest refers to the corresponding repair data.
+The `SharedTreeView` must contribute any relevant repair data to the summary.
+By virtue of the fact that `SharedTreeView` maintains repair data within the forest,
+the summary data from the forest will also include that repair data.
+In addition to that, the `TreeIndex` must also contribute its data.
 
 Because summaries are generated on clients that have no local edits,
-there is no risk that the summary data contributed by the `StygianForest` (and its inner forest)
+there is no risk that the summary data contributed by the `SharedTreeView`
 might include repair data that is only needed for the purpose of supporting undo/redo on that client
 (and therefore does not belong in a summary),
 as opposed to repair data that is needed by all peers.
@@ -462,7 +465,7 @@ If the latter of the two such undos carries with it a refresher,
 then the receiving peers (as well as the issuing client) will end up
 creating the repair data as the refresher instructs, despite the same tree content having already been revived.
 This could be addressed by rendering refreshers ineffective when they are rebased over a revival of the associated subtree.
-For example, the `StygianForest` could keep a record of the repair data entries
+For example, the `SharedTreeView` could keep a record of the repair data entries
 (but not the repair data itself)
 that have been revived by the edits that lie within the current collaboration window.
 
@@ -518,7 +521,7 @@ while at the same time transforming all of the immediate children of that node i
 The children can then be consumed to create a new node, or moved.
 
 This destructuring feature interacts with repair data because deleted nodes can be destructured.
-When that happens, the `StygianForest` would need to update its records to remove the entry for the destructured node if there is one,
+When that happens, the `SharedTreeView` would need to update both the `Forest` and the `TreeIndex` to remove the entry for the destructured node if there is one,
 and add entries for the new roots if the destructured node had any children.
 
 #### Garbage-Collecting Repair Data of Expired Sessions
