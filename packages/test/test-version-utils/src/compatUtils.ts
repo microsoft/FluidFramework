@@ -11,7 +11,11 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	IFluidDataStoreRuntime,
+	IChannelFactory,
+	IChannelAttributes,
+} from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -58,6 +62,14 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
+	const copyAttributesBesidesPackageVersion = (
+		attributes: IChannelAttributes,
+	): Omit<IChannelAttributes, "packageVersion"> => {
+		const remainingAttributes = JSON.parse(JSON.stringify(attributes));
+		delete remainingAttributes.packageVersion;
+		return remainingAttributes;
+	};
+
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
@@ -93,8 +105,8 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 				 * and so the test data object's registry (which is being built here) can use your factory directly.
 				 */
 				assert.deepEqual(
-					oldFactory.attributes,
-					factory.attributes,
+					copyAttributesBesidesPackageVersion(oldFactory.attributes),
+					copyAttributesBesidesPackageVersion(factory.attributes),
 					"Mismatched factory attributes.",
 				);
 				oldRegistry.push([key, oldFactory]);

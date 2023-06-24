@@ -24,15 +24,15 @@ function createConnectedCell(
 ): ISharedCell {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
-
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
-	const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
+	const factory =
+		options !== undefined ? SharedCell.getFactory(options) : SharedCell.getFactory();
+	const cell = factory.create(dataStoreRuntime, id) as SharedCell;
 	cell.connect(services);
 	return cell;
 }
