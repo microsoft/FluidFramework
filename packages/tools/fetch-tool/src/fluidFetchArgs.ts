@@ -35,8 +35,6 @@ export let connectToWebSocket = false;
 
 export let localDataOnly = false;
 
-export let paramSite: string | undefined;
-
 const optionsArray = [
 	["--dump:rawmessage", "dump all messages"],
 	["--dump:snapshotVersion", "dump a list of snapshot version"],
