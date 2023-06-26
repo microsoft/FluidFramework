@@ -125,6 +125,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_IntervalConflictResolver": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -376,6 +376,18 @@ use_old_ClassDeclaration_Interval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IntervalIndex": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IntervalIndex():
