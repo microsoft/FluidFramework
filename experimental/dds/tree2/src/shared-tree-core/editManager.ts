@@ -415,7 +415,7 @@ export class EditManager<
 	public afterSummaryLoad(): void {
 		assert(
 			this.localBranch.repairDataStoreProvider !== undefined,
-			"Local branch must maintain repair data",
+			0x6cb /* Local branch must maintain repair data */,
 		);
 		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
 	}

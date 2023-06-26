@@ -5,8 +5,8 @@
 
 import nconf from "nconf";
 import { RouterliciousEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { resolveVersion } from "./versionUtils";
-import { pkgVersion } from "./packageVersion";
+import { resolveVersion } from "./versionUtils.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Different kind of compat version config

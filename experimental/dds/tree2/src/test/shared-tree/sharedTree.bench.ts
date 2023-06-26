@@ -19,6 +19,7 @@ import {
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
+import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
@@ -68,7 +69,7 @@ const deepSchema = deepBuilder.intoDocumentSchema(
 	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 /**
  * JS object like a deep tree.
@@ -372,7 +373,9 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedTreeData(
-								tree.storedSchema,
+								{
+									schema: tree.storedSchema,
+								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
@@ -414,6 +417,45 @@ describe("SharedTree benchmarks", () => {
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
 						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	// Note that this runs the computation for several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported is
+	// divided by the number of peers.
+	describe("rebasing commits", () => {
+		const commitCounts = [1, 10, 20];
+		const nbPeers = 5;
+		for (const nbCommits of commitCounts) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite(nbPeers);
+						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+								const peer = provider.trees[iPeer];
+								insert(peer, 0, `p${iPeer}c${iCommit}`);
+							}
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						// Divide the duration by the number of peers so we get the average time per peer.
+						duration = state.timer.toSeconds(before, after) / nbPeers;
 					} while (state.recordBatch(duration));
 				},
 				// Force batch size of 1

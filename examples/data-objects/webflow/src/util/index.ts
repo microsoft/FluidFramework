@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export { ICaretBounds, ICaretEvent, CaretEventType, caretEnter, caretLeave } from "./caret";
-export { ICommand } from "./command";
-export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
-export { Dom } from "./dom";
-export { KeyCode } from "./keycode";
-export { randomId } from "./random";
-export { IRect, Rect } from "./rect";
-export { getSegmentRange } from "./segment";
-export { areStringsEquivalent } from "./string";
-export { hasTagName, isElementNode, isTextNode, TagName } from "./tagName";
-export { findToken, TokenList } from "./tokenlist";
+export { ICaretBounds, ICaretEvent, CaretEventType, caretEnter, caretLeave } from "./caret.js";
+export { ICommand } from "./command.js";
+export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction.js";
+export { Dom } from "./dom.js";
+export { KeyCode } from "./keycode.js";
+export { randomId } from "./random.js";
+export { IRect, Rect } from "./rect.js";
+export { getSegmentRange } from "./segment.js";
+export { areStringsEquivalent } from "./string.js";
+export { hasTagName, isElementNode, isTextNode, TagName } from "./tagName.js";
+export { findToken, TokenList } from "./tokenlist.js";
 
 export const done = Promise.resolve();
 export const emptyObject = Object.freeze({});

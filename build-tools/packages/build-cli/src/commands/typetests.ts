@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 
-import { PackageCommand, PackageKind } from "../BasePackageCommand";
+import { PackageCommand } from "../BasePackageCommand";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -74,8 +74,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		},
 	];
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected async processPackage(directory: string, kind: PackageKind): Promise<void> {
+	protected async processPackage(pkg: Package): Promise<void> {
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
@@ -83,7 +82,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				: this.flags.previous
 				? VersionOptions.Previous
 				: VersionOptions.ClearIfDisabled);
-		updatePackageJsonFile(directory, (json) => {
+		updatePackageJsonFile(pkg.directory, (json) => {
 			if (this.flags.disable) {
 				json.typeValidation ??= { broken: {} };
 				json.typeValidation.disabled = true;
