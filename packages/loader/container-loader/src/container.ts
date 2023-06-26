@@ -1330,7 +1330,7 @@ export class Container
 		this.connectToDeltaStream(args);
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+	public readonly getAbsoluteUrl = async (relativeUrl: string): Promise<string | undefined> => {
 		if (this.resolvedUrl === undefined) {
 			return undefined;
 		}
@@ -1340,7 +1340,7 @@ export class Container
 			relativeUrl,
 			getPackageName(this._loadedCodeDetails),
 		);
-	}
+	};
 
 	public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
 		if (!isFluidCodeDetails(codeDetails)) {
@@ -2315,7 +2315,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
-			async (relativeUrl: string) => this.getAbsoluteUrl(relativeUrl),
+			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
 			() => this.serviceConfiguration,
