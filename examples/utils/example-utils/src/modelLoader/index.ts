@@ -5,7 +5,7 @@
 
 export { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 export { ModelContainerRuntimeFactory } from "./modelContainerRuntimeFactory";
-export { makeModelRequestHandler, ModelLoader } from "./modelLoader";
+export { makeModelRequestHandler, ModelLoader, ILoadOptions } from "./modelLoader";
 export { SessionStorageModelLoader } from "./sessionStorageModelLoader";
 export { StaticCodeLoader } from "./staticCodeLoader";
 export { TinyliciousModelLoader } from "./tinyliciousModelLoader";

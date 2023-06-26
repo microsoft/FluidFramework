@@ -24,6 +24,10 @@ interface IModelRequest extends IRequest {
 	};
 }
 
+export interface ILoadOptions {
+	readonly freezeAtSeqNum: number;
+}
+
 const isModelRequest = (request: IRequest): request is IModelRequest =>
 	request.url === modelUrl && request.headers?.containerRef !== undefined;
 
@@ -123,6 +127,22 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 					// trailing ops).  If we don't fully process those ops, the expected object won't be found.
 					opsBeforeReturn: "all",
 				},
+			},
+		});
+		const model = await this.getModelFromContainer(container);
+		return model;
+	}
+
+	public async loadExistingFrozen(id: string, loadOptions: ILoadOptions): Promise<ModelType> {
+		const container = await this.loader.resolve({
+			url: id,
+			headers: {
+				"fluid-cache": false,
+				"loadMode": {
+					opsBeforeReturn: "sequenceNumber",
+					freezeAfterLoad: true,
+				},
+				"fluid-sequence-number": loadOptions.freezeAtSeqNum,
 			},
 		});
 		const model = await this.getModelFromContainer(container);

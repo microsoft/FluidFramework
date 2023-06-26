@@ -33,6 +33,16 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	constructor() {
 		super(
 			new Map([DiceRollerInstantiationFactory.registryEntry]), // registryEntries
+			{
+				summaryOptions: {
+					summaryConfigOverrides: {
+						// We completely disable summaries for the purpose of this POC.
+						// In the future we will want to disable summaries once we agree to migrate, and then re-enable
+						// once we complete the export.
+						state: "disabled",
+					},
+				},
+			},
 		);
 	}
 

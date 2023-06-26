@@ -566,6 +566,9 @@ export enum LoaderHeader {
 	 */
 	loadMode = "loadMode",
 	reconnect = "fluid-reconnect",
+	/**
+	 * Return the container loaded to exactly the provided sequence number
+	 */
 	sequenceNumber = "fluid-sequence-number",
 
 	/**
@@ -583,6 +586,11 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 	| undefined
+		/**
+		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
+		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
+		 */
+		| "sequenceNumber"
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -617,15 +625,10 @@ export interface IContainerLoadMode {
 		 */
 		| undefined;
 
-	freezeAtSeqNum?: /*
-	 * Container loads normally. Default value
+	/**
+	 * When the container is returned, all incoming and outgoing ops will be paused indefinitely.
 	 */
-	| undefined
-		/*
-		 * Container is loaded at the specified sequence number and will not receive any additional ops.
-		 * TODO: Avoid collision with other load modes
-		 */
-		| number;
+	freezeAfterLoad?: boolean;
 }
 
 /**
@@ -638,6 +641,9 @@ export interface ILoaderHeader {
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
+	/**
+	 * Return the container loaded to exactly the provided sequence number
+	 */
 	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;

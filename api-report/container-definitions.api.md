@@ -219,10 +219,14 @@ export interface IContainerEvents extends IEvent {
 export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
+    freezeAfterLoad?: boolean;
     // (undocumented)
-    freezeAtSeqNum?: undefined | number;
-    // (undocumented)
-    opsBeforeReturn?: undefined | "cached" | "all";
+    opsBeforeReturn?: undefined
+    /**
+    * Only fetch and apply trailing ops up until (and including) the specified sequence number.
+    * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
+    */
+    | "sequenceNumber" | "cached" | "all";
 }
 
 // @public
@@ -398,7 +402,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    // (undocumented)
     [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
@@ -514,7 +517,6 @@ export enum LoaderHeader {
     loadMode = "loadMode",
     // (undocumented)
     reconnect = "fluid-reconnect",
-    // (undocumented)
     sequenceNumber = "fluid-sequence-number",
     version = "version"
 }

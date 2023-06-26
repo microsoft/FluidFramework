@@ -28,13 +28,15 @@ import { describeFullCompat } from "@fluid-internal/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
-	opsBeforeReturn: [undefined, "cached", "all"],
-	freezeAtSeqNum: [undefined, 1],
+	opsBeforeReturn: [undefined, "sequenceNumber", "cached", "all"],
+	freezeAfterLoad: [undefined, true, false],
 });
 
 const testConfigs = generatePairwiseOptions({
 	loadOptions,
 	waitForSummary: [true, false],
+	// -1 is a dummy value that will be replaced later
+	sequenceNumber: [undefined, -1],
 });
 
 const maxOps = 10;
@@ -73,11 +75,13 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
 	const scenarioToContainerUrl = new Map<string, string>();
+	const scenarioToSeqNum = new Map<string, number>();
 	before(() => {
 		// clear first, so each version combination gets a new container
 		scenarioToContainerUrl.clear();
+		scenarioToSeqNum.clear();
 	});
-	async function getContainerUrl(
+	async function setupContainer(
 		provider: ITestObjectProvider,
 		waitForSummary: boolean,
 		timeout: number,
@@ -119,6 +123,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						errorMsg: "Not saved before timeout",
 					});
 				}
+				scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
 				initContainer.close();
 			}
 			const containerUrl = await provider.driver.createContainerUrl(
@@ -161,15 +166,22 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					durationMs: timeout / 2,
 					errorMsg: "Not summary acked before timeout",
 				});
+				scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
 				summaryContainer.close();
 			}
 		}
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return scenarioToContainerUrl.get(scenario)!;
+		return {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			containerUrl: scenarioToContainerUrl.get(scenario)!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			lastSequenceNumber: scenarioToSeqNum.get(scenario)!,
+		};
 	}
 
 	for (const testConfig of testConfigs) {
-		it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function () {
+		it.only(`Validate Load Modes: ${JSON.stringify(
+			testConfig ?? "undefined",
+		)}`, async function () {
 			const provider = getTestObjectProvider();
 			switch (provider.driver.type) {
 				case "local":
@@ -177,7 +189,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				default:
 					this.skip();
 			}
-			const containerUrl = await getContainerUrl(
+			const { containerUrl, lastSequenceNumber } = await setupContainer(
 				provider,
 				testConfig.waitForSummary,
 				this.timeout(),
@@ -244,9 +256,17 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					provider.urlResolver,
 				);
 
+				// Override sequenceNumber if opsBeforeReturn is set to sequenceNumber
+				if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
+					testConfig.sequenceNumber = lastSequenceNumber;
+				}
+
 				const storageOnlyContainer = await storageOnlyLoader.resolve({
 					url: containerUrl,
-					headers: { [LoaderHeader.loadMode]: testConfig.loadOptions },
+					headers: {
+						[LoaderHeader.loadMode]: testConfig.loadOptions,
+						[LoaderHeader.sequenceNumber]: testConfig.sequenceNumber,
+					},
 				});
 
 				storageOnlyContainer.connect();

@@ -39,6 +39,29 @@ async function start() {
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
 	renderDiceRoller(model.diceRoller, contentDiv);
+
+	let exportModel: IDiceRollerAppModel | undefined;
+
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	model.diceRoller.once("export", async (lastSequenceNumber: number) => {
+		// console.log("Loading frozen container at seq #:", lastSequenceNumber);
+		// Load frozen container at lastSequenceNumber
+		exportModel = await tinyliciousModelLoader.loadExistingFrozen(id, lastSequenceNumber);
+		console.log("Frozen container loaded at seq #:", exportModel.diceRoller.lastSequenceNumber);
+		// Try reading data from exported model
+		console.log("Reading exported model's dice value:", exportModel.diceRoller.value);
+	});
+
+	// Log each container's last sequence number as time passes
+	setInterval(() => {
+		console.log(
+			"active container last seq #:",
+			model.diceRoller.lastSequenceNumber,
+			"|",
+			"frozen container last seq #:",
+			exportModel?.diceRoller.lastSequenceNumber,
+		);
+	}, 5000);
 }
 
 start().catch((error) => console.error(error));

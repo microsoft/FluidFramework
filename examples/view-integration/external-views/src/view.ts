@@ -24,7 +24,13 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
 	// Call the roll method to modify the shared data when the button is clicked.
 	rollButton.addEventListener("click", diceRoller.roll);
 
-	wrapperDiv.append(diceCharDiv, rollButton);
+	const exportButton = document.createElement("button");
+	exportButton.style.fontSize = "50px";
+	exportButton.textContent = "Export";
+	// Call the roll method to modify the shared data when the button is clicked.
+	exportButton.addEventListener("click", diceRoller.export);
+
+	wrapperDiv.append(diceCharDiv, rollButton, exportButton);
 
 	// Get the current value of the shared data to update the view whenever it changes.
 	const updateDiceChar = () => {
