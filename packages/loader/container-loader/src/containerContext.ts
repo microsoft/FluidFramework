@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
 	IContainerContext,
@@ -15,12 +15,7 @@ import {
 	AttachState,
 	ILoaderOptions,
 	IRuntimeFactory,
-	IProvideRuntimeFactory,
 	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IProvideFluidCodeDetailsComparer,
-	ICodeDetailsLoader,
-	IFluidModuleWithDetails,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -42,8 +37,6 @@ import {
 import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
-const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
-
 /**
  * Events that {@link ContainerContext} can emit through its lifecycle.
  *
@@ -58,8 +51,7 @@ export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
 		container: Container,
 		scope: FluidObject,
-		codeLoader: ICodeDetailsLoader,
-		codeDetails: IFluidCodeDetails,
+		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -78,8 +70,7 @@ export class ContainerContext implements IContainerContext {
 		const context = new ContainerContext(
 			container,
 			scope,
-			codeLoader,
-			codeDetails,
+			runtimeFactory,
 			baseSnapshot,
 			deltaManager,
 			quorum,
@@ -164,26 +155,22 @@ export class ContainerContext implements IContainerContext {
 		return this._disposed;
 	}
 
-	public get codeDetails() {
-		return this._codeDetails;
-	}
-
 	private readonly _quorum: IQuorum;
 	public get quorum(): IQuorumClients {
 		return this._quorum;
 	}
 
-	private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
-
 	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
+	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
-			return this._runtime?.getEntryPoint?.();
+			return this._runtime.getEntryPoint?.();
 		}
 		return new Promise<FluidObject | undefined>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {
@@ -212,8 +199,7 @@ export class ContainerContext implements IContainerContext {
 	constructor(
 		private readonly container: Container,
 		public readonly scope: FluidObject,
-		private readonly codeLoader: ICodeDetailsLoader,
-		private readonly _codeDetails: IFluidCodeDetails,
+		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorum: IQuorum,
@@ -244,9 +230,6 @@ export class ContainerContext implements IContainerContext {
 		this._connected = this.container.connected;
 		this._quorum = quorum;
 		this.taggedLogger = container.subLogger;
-		this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () =>
-			this.loadCodeModule(_codeDetails),
-		);
 
 		this.supportedFeatures = new Map([
 			/**
@@ -328,70 +311,17 @@ export class ContainerContext implements IContainerContext {
 		return this.runtime.getPendingLocalState();
 	}
 
-	/**
-	 * Determines if the current code details of the context
-	 * satisfy the incoming constraint code details
-	 */
-	public async satisfies(constraintCodeDetails: IFluidCodeDetails) {
-		const comparers: IFluidCodeDetailsComparer[] = [];
-
-		const maybeCompareCodeLoader = this.codeLoader;
-		if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
-			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
-		}
-
-		const moduleWithDetails = await this._fluidModuleP;
-		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
-			moduleWithDetails.module?.fluidExport;
-		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
-			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
-		}
-
-		// if there are not comparers it is not possible to know
-		// if the current satisfy the incoming, so return false,
-		// as assuming they do not satisfy is safer .e.g we will
-		// reload, rather than potentially running with
-		// incompatible code
-		if (comparers.length === 0) {
-			return false;
-		}
-
-		for (const comparer of comparers) {
-			const satisfies = await comparer.satisfies(
-				moduleWithDetails.details,
-				constraintCodeDetails,
-			);
-			if (satisfies === false) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
 		return this.runtime.notifyOpReplay?.(message);
 	}
 
 	// #region private
 
-	private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined = (
-			await this._fluidModuleP
-		).module?.fluidExport;
-		const runtimeFactory = fluidExport?.IRuntimeFactory;
-		if (runtimeFactory === undefined) {
-			throw new Error(PackageNotFactoryError);
-		}
-
-		return runtimeFactory;
-	}
-
 	private async instantiateRuntime(existing: boolean) {
-		const runtimeFactory = await this.getRuntimeFactory();
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.taggedLogger,
 			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(this, existing),
+			async () => this._runtimeFactory.instantiateRuntime(this, existing),
 		);
 		this.lifecycleEvents.emit("runtimeInstantiated");
 	}
@@ -403,27 +333,6 @@ export class ContainerContext implements IContainerContext {
 		this.container.once("attached", () => {
 			this.runtime.setAttachState(AttachState.Attached);
 		});
-	}
-
-	private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			this.taggedLogger,
-			{ eventName: "CodeLoad" },
-			async () => this.codeLoader.load(codeDetails),
-		);
-
-		if ("module" in loadCodeResult) {
-			const { module, details } = loadCodeResult;
-			return {
-				module,
-				details: details ?? codeDetails,
-			};
-		} else {
-			// If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
-			// Once usage drops to 0 we can remove this compat path.
-			this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
-			return loadCodeResult;
-		}
 	}
 	// #endregion
 }

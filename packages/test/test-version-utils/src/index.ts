@@ -32,9 +32,11 @@ export {
 	isMemoryTest,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
+	DocumentMatrixInfo,
 	assertDocumentTypeInfo,
 	isDocumentMapInfo,
 	isDocumentMultipleDataStoresInfo,
+	isDocumentMatrixInfo,
 } from "./describeE2eDocs.js";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
