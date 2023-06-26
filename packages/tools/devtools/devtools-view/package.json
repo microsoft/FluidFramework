@@ -45,9 +45,11 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
+		"color": "^4.2.3",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"react-split-pane": "^0.1.92",
+		"recharts": "^2.7.2",
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
