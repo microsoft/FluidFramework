@@ -217,7 +217,7 @@ export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.MoveOut;
 	/**
-	 * Must be 1 when either `setValue` or `fields` is populated.
+	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
 	/**
@@ -247,7 +247,7 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
 	/**
-	 * Must be of length 1 when either `setValue` or `fields` is populated.
+	 * Must be of length 1 when `fields` is populated.
 	 */
 	readonly content: readonly TTree[];
 
