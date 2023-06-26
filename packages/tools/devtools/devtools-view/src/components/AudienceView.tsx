@@ -136,5 +136,5 @@ export interface TransformedAudienceStateData {
 export interface TransformedAudienceHistoryData {
 	clientId: string;
 	time: string;
-	changeKind: string;
+	changeKind: "joined" | "left";
 }

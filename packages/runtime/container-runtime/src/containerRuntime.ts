@@ -113,7 +113,11 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
-import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
+import {
+	IPendingBatchMessage,
+	IPendingLocalState,
+	PendingStateManager,
+} from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -1325,7 +1329,7 @@ export class ContainerRuntime
 				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
-				orderSequentially: this.orderSequentially.bind(this),
+				reSubmitBatch: this.reSubmitBatch.bind(this),
 			},
 			pendingRuntimeState?.pending,
 		);
@@ -3214,14 +3218,19 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmit(
-		content: string,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) {
+	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+		this.orderSequentially(() => {
+			for (const message of batch) {
+				this.reSubmit(message);
+			}
+		});
+		this.flush();
+	}
+
+	private reSubmit(message: IPendingBatchMessage) {
 		// Need to parse from string for back-compat
-		const { contents, type } = this.parseOpContent(content);
-		this.reSubmitCore(type, contents, localOpMetadata, opMetadata);
+		const { contents, type } = this.parseOpContent(message.content);
+		this.reSubmitCore(type, contents, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
