@@ -484,7 +484,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
 // @public (undocumented)
@@ -650,6 +650,14 @@ export enum RuntimeMessage {
     Operation = "op",
     // (undocumented)
     Rejoin = "rejoin"
+}
+
+// @public
+export interface SubmitSummaryFailureData {
+    // Warning: (ae-forgotten-export) The symbol "SummaryStage" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    stage: SummaryStage;
 }
 
 // @public

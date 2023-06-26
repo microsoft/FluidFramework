@@ -1,5 +1,9 @@
 # @fluid-experimental/property-binder
 
+## 2.0.0-internal.5.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.5.0.0
 
 Dependency updates only.

@@ -28,20 +28,6 @@ You can run this example using the following steps:
 To run the tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test` from a terminal within this directory.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
-
-## API Documentation
-
-API documentation for **@fluid-tools/client-debugger-view** is available at <https://fluidframework.com/docs/apis/client-debugger-view>.
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -108,4 +94,4 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
-[@fluid-internal/devtools-browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/devtools-browser-extension
+[@fluid-internal/devtools-browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension

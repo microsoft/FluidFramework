@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// For "typetests:gen", it is only needed to be done before the tsc command
-// that will build the generated files.  Most of the time it is "build:test"
-// but sometimes it is "tsc".  Just include in all of them.
-
-const tscDependsOn = ["^tsc", "build:genver", "typetests:gen"];
+const tscDependsOn = ["^tsc", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -43,7 +39,7 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "tsc"],
+		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
