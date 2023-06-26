@@ -25,6 +25,7 @@ import {
 	timeoutPromise,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -278,34 +279,36 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					);
 				}
 
-				storageOnlyContainer.connect();
-				assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-				assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
-				assert.ok(
-					deltaManager.readOnlyInfo.permissions,
-					"deltaManager.readOnlyInfo.permissions",
-				);
-				assert.ok(
-					deltaManager.readOnlyInfo.storageOnly,
-					"deltaManager.readOnlyInfo.storageOnly",
-				);
-
-				const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-					storageOnlyContainer,
-					"default",
-				);
-
-				for (const key of validationDataObject.root.keys()) {
-					assert.strictEqual(
-						storageOnlyDataObject.root.get(key),
-						storageOnlyDataObject.root.get(key),
-						`${storageOnlyDataObject.root.get(
-							key,
-						)} !== ${storageOnlyDataObject.root.get(key)}`,
+				if (testConfig.loadOptions.freezeAfterLoad !== true) {
+					storageOnlyContainer.connect();
+					assert.strictEqual(deltaManager.active, false, "deltaManager.active");
+					assert.ok(
+						deltaManager.readOnlyInfo.readonly,
+						"deltaManager.readOnlyInfo.readonly",
 					);
-				}
+					assert.ok(
+						deltaManager.readOnlyInfo.permissions,
+						"deltaManager.readOnlyInfo.permissions",
+					);
+					assert.ok(
+						deltaManager.readOnlyInfo.storageOnly,
+						"deltaManager.readOnlyInfo.storageOnly",
+					);
 
-				if (testConfig.loadOptions.freezeAfterLoad === true) {
+					const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
+						storageOnlyContainer,
+						"default",
+					);
+					for (const key of validationDataObject.root.keys()) {
+						assert.strictEqual(
+							storageOnlyDataObject.root.get(key),
+							storageOnlyDataObject.root.get(key),
+							`${storageOnlyDataObject.root.get(
+								key,
+							)} !== ${storageOnlyDataObject.root.get(key)}`,
+						);
+					}
+				} else {
 					if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
 						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
 						assert.strictEqual(
@@ -319,6 +322,11 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						deltaManager.lastSequenceNumber,
 						loadedSeqNum,
 						"deltaManager.lastSequenceNumber === loadedSeqNum",
+					);
+					assert.strictEqual(
+						storageOnlyContainer.connectionState,
+						ConnectionState.Disconnected,
+						"storageOnlyContainer.connectionState === ConnectionState.Disconnected",
 					);
 				}
 			}
