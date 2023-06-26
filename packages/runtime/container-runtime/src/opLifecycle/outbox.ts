@@ -14,7 +14,7 @@ import { IContainerContext, ICriticalContainerError } from "@fluidframework/cont
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { PendingStateManager } from "../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -44,11 +44,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (
-		content: string,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void;
+	readonly reSubmit: (message: IPendingBatchMessage) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -274,12 +270,12 @@ export class Outbox {
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
-			this.params.reSubmit(
+			this.params.reSubmit({
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.localOpMetadata,
-				message.metadata,
-			);
+				content: message.contents!,
+				localOpMetadata: message.localOpMetadata,
+				opMetadata: message.metadata,
+			});
 		}
 
 		if (this.batchRebasesToReport > 0) {

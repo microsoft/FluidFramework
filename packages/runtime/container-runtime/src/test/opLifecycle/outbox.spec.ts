@@ -16,7 +16,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { PendingStateManager } from "../../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager";
 import {
 	BatchMessage,
 	IBatch,
@@ -204,11 +204,7 @@ describe("Outbox", () => {
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (
-				content: string,
-				localOpMetadata: unknown,
-				opMetadata: Record<string, unknown> | undefined,
-			) => {},
+			reSubmit: (message: IPendingBatchMessage) => {},
 			opReentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
