@@ -56,7 +56,7 @@ const optionsArray = [
 	["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
 ];
 
-export function printUsage() {
+function printUsage() {
 	console.log("Usage: fluid-fetch [options] URL");
 	console.log("URL: <ODSP URL>|<Routerlicious URL>");
 	console.log("Options:");
