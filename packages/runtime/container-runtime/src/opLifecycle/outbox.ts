@@ -65,13 +65,23 @@ export interface IOutboxParameters {
  * @returns the result of the action provided
  */
 export function getLongStack<T>(action: () => T, length: number = 50): T {
-	const originalStackTraceLimit = (Error as any).stackTraceLimit;
+	const errorObj = Error as any;
+	if (
+		(
+			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit") ||
+			{}
+		).writable !== true
+	) {
+		return action();
+	}
 
+	const originalStackTraceLimit = errorObj.stackTraceLimit;
 	try {
-		(Error as any).stackTraceLimit = length;
+		errorObj.stackTraceLimit = length;
 		return action();
 	} finally {
-		(Error as any).stackTraceLimit = originalStackTraceLimit;
+		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
 
