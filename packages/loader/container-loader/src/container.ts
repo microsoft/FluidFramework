@@ -2320,9 +2320,15 @@ export class Container
 		);
 
 		this._loadedCodeDetails = codeDetails;
-		this._context.on("dirty", () => this.emit("dirty"));
+		this._context.on("dirty", () => {
+			this._dirtyContainer = true;
+			this.emit("dirty");
+		});
 		this._context.on("saved", () => this.connectionStateHandler.containerSaved());
-		this._context.on("saved", () => this.emit("saved"));
+		this._context.on("saved", () => {
+			this._dirtyContainer = false;
+			this.emit("saved");
+		});
 
 		this.emit("contextChanged", codeDetails);
 	}
