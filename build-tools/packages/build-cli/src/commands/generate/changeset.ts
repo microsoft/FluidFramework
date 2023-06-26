@@ -138,7 +138,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				const answer = await prompts({
 					type: "select",
 					name: "selectedBranch",
-					message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to ${branch}. Maybe you meant to select a different target branch?`,
+					message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to the ${branch} branch. Maybe you meant to select a different target branch?`,
 					choices: [
 						{ title: "next", value: "next" },
 						{ title: "main", value: "main" },
