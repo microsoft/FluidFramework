@@ -265,7 +265,7 @@ export class Outbox {
 
 	/**
 	 * Rebases a batch. All the ops in the batch are resubmitted to the runtime and
-	 * they will eventually end up in the batch manager and subsequently flushed.
+	 * they will end up back in the same batch manager they were flushed from and subsequently flushed.
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
