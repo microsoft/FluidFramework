@@ -27,6 +27,7 @@ export {
 	IntervalStickiness,
 	Interval,
 	SequenceInterval,
+	sequenceIntervalHelpers,
 } from "./intervals";
 export {
 	DeserializeCallback,
@@ -35,7 +36,6 @@ export {
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
-	sequenceIntervalHelpers,
 	IEndpointInRangeIndex,
 	IStartpointInRangeIndex,
 	createEndpointInRangeIndex,

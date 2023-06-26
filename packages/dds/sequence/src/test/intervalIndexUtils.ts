@@ -43,7 +43,7 @@ export function assertPlainNumberIntervals(
 export function createTestInterval(start: number, end: number): Interval {
 	const props: PropertySet = {};
 	props[reservedIntervalIdKey] = [uuid()];
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
 	return new Interval(start, end, props);
 }
 

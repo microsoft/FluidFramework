@@ -8,10 +8,11 @@ import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
+	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ISerializableInterval, ISerializedInterval } from "./intervalUtils";
+import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -211,3 +212,19 @@ export class Interval implements ISerializableInterval {
 		}
 	}
 }
+
+export function createInterval(label: string, start: number, end: number): Interval {
+	const rangeProp: PropertySet = {};
+
+	if (label && label.length > 0) {
+		rangeProp[reservedRangeLabelsKey] = [label];
+	}
+
+	return new Interval(start, end, rangeProp);
+}
+
+export const intervalHelpers: IIntervalHelpers<Interval> = {
+	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
+	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
+	create: createInterval,
+};

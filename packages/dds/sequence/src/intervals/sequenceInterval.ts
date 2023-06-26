@@ -26,6 +26,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import {
+	IIntervalHelpers,
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
@@ -476,3 +477,15 @@ export function createSequenceInterval(
 	);
 	return ival;
 }
+
+const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
+	compareReferencePositions(a.end, b.end);
+
+const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
+	compareReferencePositions(a.start, b.start);
+
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
+	compareEnds: compareSequenceIntervalEnds,
+	compareStarts: compareSequenceIntervalStarts,
+	create: createSequenceInterval,
+};

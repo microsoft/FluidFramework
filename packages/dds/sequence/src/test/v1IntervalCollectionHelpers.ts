@@ -9,7 +9,7 @@ import {
 	IChannelServices,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { Client } from "@fluidframework/merge-tree";
+import { Client, compareReferencePositions } from "@fluidframework/merge-tree";
 import { DefaultMap } from "../defaultMap";
 import {
 	IValueFactory,
@@ -21,7 +21,6 @@ import {
 	IntervalCollection,
 	ISerializedIntervalCollectionV2,
 	makeOpsMap,
-	compareSequenceIntervalEnds,
 	LocalIntervalCollection,
 } from "../intervalCollection";
 import {
@@ -55,7 +54,8 @@ class V1SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 	): V1IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: compareSequenceIntervalEnds,
+			compareEnds: (a: SequenceInterval, b: SequenceInterval) =>
+				compareReferencePositions(a.start, b.start),
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
@@ -64,7 +64,6 @@ class V1SequenceIntervalCollectionFactory
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
 		return Array.from(value, (interval) =>
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}

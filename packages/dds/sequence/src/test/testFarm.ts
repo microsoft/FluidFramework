@@ -78,7 +78,6 @@ export function propertyCopy() {
 function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 	const mt = random.engines.mt19937();
 	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-	// const bookmarks = <SharedString.SequenceInterval[]>[];
 	const bookmarks = <SequenceInterval[]>[];
 	const len = client.mergeTree.getLength(
 		MergeTree.UniversalSequenceNumber,
@@ -122,7 +121,6 @@ function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 			i--;
 		}
 	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return bookmarks;
 }
 

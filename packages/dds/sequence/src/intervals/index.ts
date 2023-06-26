@@ -16,10 +16,11 @@ export {
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 } from "./intervalUtils";
-export { Interval } from "./interval";
+export { Interval, createInterval, intervalHelpers } from "./interval";
 export {
 	SequenceInterval,
 	createPositionReference,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
+	sequenceIntervalHelpers,
 } from "./sequenceInterval";

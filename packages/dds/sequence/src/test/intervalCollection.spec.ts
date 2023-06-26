@@ -46,7 +46,6 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 	}
 
 	public get(idx: number): TInterval {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.intervals[idx];
 	}
 

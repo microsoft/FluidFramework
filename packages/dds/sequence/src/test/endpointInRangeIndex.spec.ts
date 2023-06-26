@@ -6,12 +6,8 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { Client } from "@fluidframework/merge-tree";
-import {
-	IEndpointInRangeIndex,
-	createEndpointInRangeIndex,
-	intervalHelpers,
-} from "../intervalCollection";
-import { Interval } from "../intervals";
+import { IEndpointInRangeIndex, createEndpointInRangeIndex } from "../intervalCollection";
+import { Interval, intervalHelpers } from "../intervals";
 import {
 	assertPlainNumberIntervals,
 	createTestInterval,

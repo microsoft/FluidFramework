@@ -11,7 +11,6 @@ import { UsageError } from "@fluidframework/container-utils";
 import {
 	addProperties,
 	Client,
-	compareReferencePositions,
 	createMap,
 	ISegment,
 	MergeTreeDeltaType,
@@ -39,7 +38,6 @@ import {
 } from "./defaultMapInterfaces";
 import {
 	CompressedSerializedInterval,
-	createSequenceInterval,
 	IIntervalHelpers,
 	Interval,
 	IntervalOpType,
@@ -52,6 +50,8 @@ import {
 	createPositionReferenceFromSegoff,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	sequenceIntervalHelpers,
+	createInterval,
 } from "./intervals";
 import { createOverlappingIntervalsIndex, IOverlappingIntervalsIndex } from "./intervalIndex";
 
@@ -107,7 +107,7 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 
 export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
-		compareEnds: compareIntervalEnds,
+		compareEnds: (a: Interval, b: Interval) => a.end - b.end,
 		create: createInterval,
 	};
 	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
@@ -663,24 +663,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.end, b.end);
-
-export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.start, b.start);
-
-export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
-	compareEnds: compareSequenceIntervalEnds,
-	compareStarts: compareSequenceIntervalStarts,
-	create: createSequenceInterval,
-};
-
-export const intervalHelpers: IIntervalHelpers<Interval> = {
-	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
-	create: createInterval,
-};
-
 class SequenceIntervalCollectionFactory
 	implements IValueFactory<IntervalCollection<SequenceInterval>>
 {
@@ -728,26 +710,6 @@ export class SequenceIntervalCollectionValueType
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
-
-function createInterval(
-	label: string,
-	start: number,
-	end: number,
-	client: Client,
-	intervalType?: IntervalType,
-	op?: ISequencedDocumentMessage,
-	fromSnapshot?: boolean,
-): Interval {
-	const rangeProp: PropertySet = {};
-
-	if (label && label.length > 0) {
-		rangeProp[reservedRangeLabelsKey] = [label];
-	}
-
-	return new Interval(start, end, rangeProp);
-}
-
 class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {
 	public load(
 		emitter: IValueOpEmitter,
@@ -755,7 +717,7 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 		options?: Partial<SequenceOptions>,
 	): IntervalCollection<Interval> {
 		const helpers: IIntervalHelpers<Interval> = {
-			compareEnds: compareIntervalEnds,
+			compareEnds: (a: Interval, b: Interval) => a.end - b.end,
 			create: createInterval,
 		};
 		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw, options);
