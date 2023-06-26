@@ -69,6 +69,7 @@ export class ContainerContext implements IContainerContext {
 		updateDirtyContainerState: (dirty: boolean) => void,
 		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		getContainerDiagnosticId: () => string | undefined,
+		clientDetails: IClientDetails,
 		existing: boolean,
 		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
@@ -94,6 +95,7 @@ export class ContainerContext implements IContainerContext {
 			updateDirtyContainerState,
 			getAbsoluteUrl,
 			getContainerDiagnosticId,
+			clientDetails,
 			existing,
 			taggedLogger,
 			pendingLocalState,
@@ -116,7 +118,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get clientDetails(): IClientDetails {
-		return this.container.clientDetails;
+		return this._clientDetails;
 	}
 
 	private _connected: boolean;
@@ -240,6 +242,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		private readonly _getContainerDiagnosticId: () => string | undefined,
+		private readonly _clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,

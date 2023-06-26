@@ -2331,6 +2331,7 @@ export class Container
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
 			async (relativeUrl: string) => this.getAbsoluteUrl(relativeUrl),
 			() => this.resolvedUrl?.id,
+			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
 			pendingLocalState,
