@@ -103,11 +103,6 @@ describe("editable-tree: event subscription", () => {
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
-				onSetValue(path: UpPath, value: Value): void {
-					assert.equal(value, "xyz");
-					assert.deepEqual(path, node);
-					visitLog.push(path);
-				},
 			};
 			return visitor;
 		});
@@ -122,12 +117,11 @@ describe("editable-tree: event subscription", () => {
 		visitors.forEach((visitor) => {
 			visitor.onDelete(node, 11);
 			visitor.onInsert(node, insertContent);
-			visitor.onSetValue(node, "xyz");
 		});
 		unsubscribeChanging();
 		emitter.emit("subtreeChanging", node);
 		assert.deepEqual(log, [node]);
-		assert.deepEqual(visitLog, [node, node, node]);
+		assert.deepEqual(visitLog, [node, node]);
 	});
 });
 

@@ -620,9 +620,6 @@ describe("editable-tree: editing", () => {
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
 
-				// edit using symbol
-				assert.equal(root[fieldKey], "via symbol");
-
 				// edit using indexing
 				field[0] = "replaced";
 				assert.equal(root[fieldKey], "replaced");
@@ -688,9 +685,6 @@ describe("editable-tree: editing", () => {
 				// edit using assignment
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
-
-				// edit using symbol
-				assert.equal(root[fieldKey], "via symbol");
 
 				// edit using indexing
 				field[0] = "replaced";
