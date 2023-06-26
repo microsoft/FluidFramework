@@ -68,6 +68,7 @@ export class ContainerContext implements IContainerContext {
 		closeFn: (error?: ICriticalContainerError) => void,
 		updateDirtyContainerState: (dirty: boolean) => void,
 		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
+		getContainerDiagnosticId: () => string | undefined,
 		existing: boolean,
 		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
@@ -92,6 +93,7 @@ export class ContainerContext implements IContainerContext {
 			closeFn,
 			updateDirtyContainerState,
 			getAbsoluteUrl,
+			getContainerDiagnosticId,
 			existing,
 			taggedLogger,
 			pendingLocalState,
@@ -110,7 +112,7 @@ export class ContainerContext implements IContainerContext {
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.container.resolvedUrl?.id ?? "";
+		return this._getContainerDiagnosticId() ?? "";
 	}
 
 	public get clientDetails(): IClientDetails {
@@ -237,6 +239,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
+		private readonly _getContainerDiagnosticId: () => string | undefined,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
