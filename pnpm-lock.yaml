@@ -7890,7 +7890,6 @@ importers:
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -7924,7 +7923,6 @@ importers:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
