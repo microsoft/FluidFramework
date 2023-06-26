@@ -190,6 +190,11 @@ export interface ISummarizerNode {
 	 */
 	recordChange(op: ISequencedDocumentMessage): void;
 
+	/**
+	 * Determines whether or not the summarizerNode will fully summarize between summaries
+	 */
+	hasChanged(): boolean;
+
 	createChild(
 		/**
 		 * Summarize function

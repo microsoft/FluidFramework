@@ -2707,6 +2707,8 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		await this.dataStores.realizeChangedDataStores();
+
 		const shouldPauseInboundSignal =
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",

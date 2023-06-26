@@ -181,4 +181,12 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 		this.ensureDeferred(id);
 		this.resolveDeferred(id);
 	}
+
+	public async waitForAllAttached() {
+		return Promise.all(
+			Array.from(this._contexts.values()).map(
+				async (context) => context.attachDeferred.promise,
+			),
+		);
+	}
 }

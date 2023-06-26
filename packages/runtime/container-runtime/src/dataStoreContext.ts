@@ -253,7 +253,8 @@ export abstract class FluidDataStoreContext
 	private _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
-	protected readonly summarizerNode: ISummarizerNodeWithGC;
+	public readonly summarizerNode: ISummarizerNodeWithGC;
+	public attachDeferred: Deferred<boolean>;
 	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
@@ -288,6 +289,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.attachDeferred = new Deferred<boolean>();
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -948,7 +950,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
-
+		this.attachDeferred.resolve(true);
 		this.initSnapshotValue = props.snapshotTree;
 
 		if (props.snapshotTree !== undefined) {
@@ -1057,6 +1059,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				0x14e /* "Should move from attaching to attached" */,
 			);
 			this._attachState = AttachState.Attached;
+			this.attachDeferred.resolve(true);
 		});
 	}
 

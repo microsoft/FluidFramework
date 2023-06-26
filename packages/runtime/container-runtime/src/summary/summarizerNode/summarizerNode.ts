@@ -612,7 +612,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * the latest successfully acked summary reference sequence number.
 	 * False implies that the previous summary can be reused.
 	 */
-	protected hasChanged(): boolean {
+	public hasChanged(): boolean {
 		return this._changeSequenceNumber > this.referenceSequenceNumber;
 	}
 

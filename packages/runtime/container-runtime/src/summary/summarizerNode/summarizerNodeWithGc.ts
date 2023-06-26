@@ -624,7 +624,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Override the hasChanged method. If this node data or its used state changed, the node is considered changed.
 	 */
-	protected hasChanged(): boolean {
+	public hasChanged(): boolean {
 		return this.hasDataChanged() || this.hasUsedStateChanged();
 	}
 

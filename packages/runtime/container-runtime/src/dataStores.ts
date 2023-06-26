@@ -632,6 +632,18 @@ export class DataStores implements IDisposable {
 		return summaryBuilder.getSummaryTree();
 	}
 
+	public async realizeChangedDataStores() {
+		await Promise.all(
+			Array.from(this.contexts)
+				.filter(([_, context]) => context.summarizerNode.hasChanged())
+				.map(async ([_, context]) => {
+					await (await context.realize()).entryPoint?.get();
+				}),
+		);
+
+		await this.contexts.waitForAllAttached();
+	}
+
 	public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		// Attaching graph of some stores can cause other stores to get bound too.

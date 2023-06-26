@@ -418,6 +418,7 @@ export interface ISummarizerNode {
     config?: ISummarizerNodeConfig): ISummarizerNode;
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
+    hasChanged(): boolean;
     invalidate(sequenceNumber: number): void;
     isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;

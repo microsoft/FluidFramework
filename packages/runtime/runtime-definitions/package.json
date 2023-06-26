@@ -54,6 +54,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISummarizerNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerNodeWithGC": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
