@@ -320,16 +320,16 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 	const aChanged = changedPackages.some((cp) => cp.name === a.name);
 	const bChanged = changedPackages.some((cp) => cp.name === b.name);
 
-  // If a has changed but b hasn't, then a should be sorted earlier.
+	// If a has changed but b hasn't, then a should be sorted earlier.
 	if (aChanged && !bChanged) {
 		return -1;
 	}
 
-  // If a hasn't changed but b has, then b should be sorted earlier.
+	// If a hasn't changed but b has, then b should be sorted earlier.
 	if (!aChanged && bChanged) {
 		return 1;
 	}
 
-  // Otherwise, compare by name.
+	// Otherwise, compare by name.
 	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
 }
