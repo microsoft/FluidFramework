@@ -79,7 +79,6 @@ export {
 	IMapMessageLocalMetadata,
 	Interval,
 	IIntervalCollection,
-	IntervalConflictResolver,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 	IntervalType,
