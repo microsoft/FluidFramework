@@ -127,7 +127,7 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0,
 	},
 	// Once the bugs are resolved, the test count will go back to being set at 100.
-	defaultTestCount: 10,
+	defaultTestCount: 100,
 	// Uncomment this line to replay a specific seed from its failure file:
 	// replay: 0,
 	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
@@ -184,15 +184,15 @@ describe("IntervalCollection fuzz testing", () => {
 		generatorFactory: () =>
 			take(
 				// Shortened op stream for now. Will be reset to 100 after bugs are resolved.
-				30,
+				100,
 				operationGenerator({
 					weights: {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 0,
 						addInterval: 2,
-						deleteInterval: 0,
-						changeInterval: 0,
+						deleteInterval: 2,
+						changeInterval: 2,
 						changeProperties: 0,
 					},
 				}),
