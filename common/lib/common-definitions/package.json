@@ -60,6 +60,12 @@
 		"branchReleaseTypes": {
 			"main": "minor",
 			"release/**": "patch"
+		},
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
 		}
 	},
 	"typeValidation": {

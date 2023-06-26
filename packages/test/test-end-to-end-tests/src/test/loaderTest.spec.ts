@@ -5,11 +5,6 @@
 
 import { strict as assert } from "assert";
 import { parse } from "url";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -23,97 +18,101 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
 
-class TestSharedDataObject1 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
+// REVIEW: enable compat testing?
+describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class TestSharedDataObject1 extends DataObject {
+		public get _root() {
+			return this.root;
+		}
 
-	public get _runtime() {
-		return this.runtime;
-	}
+		public get _runtime() {
+			return this.runtime;
+		}
 
-	public get _context() {
-		return this.context;
-	}
+		public get _context() {
+			return this.context;
+		}
 
-	// Returns query params (if any) in the request.
-	// Used in tests that verify query params work correctly with loader.request
-	public async request(request: IRequest): Promise<IResponse> {
-		const url = request.url;
-		const parsed = parse(url, true);
-		if (parsed.query.inspect === "1") {
-			// returning query params instead of the data object for testing purposes
-			return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
-		} else if (parsed?.pathname === "/") {
-			return { value: this, status: 200, mimeType: "fluid/object" };
-		} else {
-			return super.request(request);
+		// Returns query params (if any) in the request.
+		// Used in tests that verify query params work correctly with loader.request
+		public async request(request: IRequest): Promise<IResponse> {
+			const url = request.url;
+			const parsed = parse(url, true);
+			if (parsed.query.inspect === "1") {
+				// returning query params instead of the data object for testing purposes
+				return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
+			} else if (parsed?.pathname === "/") {
+				return { value: this, status: 200, mimeType: "fluid/object" };
+			} else {
+				return super.request(request);
+			}
 		}
 	}
-}
 
-class TestSharedDataObject2 extends DataObject {
-	public get _root() {
-		return this.root;
+	class TestSharedDataObject2 extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _runtime() {
+			return this.runtime;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+
+		public get _id() {
+			return this.id;
+		}
+
+		public async request(request: IRequest): Promise<IResponse> {
+			const url = request.url;
+			const parsed = parse(url, true);
+			return parsed?.pathname === "/"
+				? { value: this, status: 200, mimeType: "fluid/object" }
+				: super.request(request);
+		}
 	}
 
-	public get _runtime() {
-		return this.runtime;
+	/**
+	 * Data object that handles requests that have headers. It returns the headers in the request. This is
+	 * used to validate that headers are correctly propagated all the way in the stack.
+	 */
+	class TestDataObjectWithRequestHeaders extends DataObject {
+		public async request(request: IRequest): Promise<IResponse> {
+			// If the request has headers, return a specialized response with the headers in the request.
+			return request.headers !== undefined
+				? { value: request.headers, status: 200, mimeType: "request/headers" }
+				: super.request(request);
+		}
 	}
 
-	public get _context() {
-		return this.context;
-	}
+	const testSharedDataObjectFactory1 = new DataObjectFactory(
+		"TestSharedDataObject1",
+		TestSharedDataObject1,
+		[],
+		[],
+	);
 
-	public get _id() {
-		return this.id;
-	}
+	const testSharedDataObjectFactory2 = new DataObjectFactory(
+		"TestSharedDataObject2",
+		TestSharedDataObject2,
+		[],
+		[],
+	);
 
-	public async request(request: IRequest): Promise<IResponse> {
-		const url = request.url;
-		const parsed = parse(url, true);
-		return parsed?.pathname === "/"
-			? { value: this, status: 200, mimeType: "fluid/object" }
-			: super.request(request);
-	}
-}
+	const testFactoryWithRequestHeaders = new DataObjectFactory(
+		"TestDataObjectWithRequestHeaders",
+		TestDataObjectWithRequestHeaders,
+		[],
+		[],
+	);
 
-/**
- * Data object that handles requests that have headers. It returns the headers in the request. This is
- * used to validate that headers are correctly propagated all the way in the stack.
- */
-class TestDataObjectWithRequestHeaders extends DataObject {
-	public async request(request: IRequest): Promise<IResponse> {
-		// If the request has headers, return a specialized response with the headers in the request.
-		return request.headers !== undefined
-			? { value: request.headers, status: 200, mimeType: "request/headers" }
-			: super.request(request);
-	}
-}
-
-const testSharedDataObjectFactory1 = new DataObjectFactory(
-	"TestSharedDataObject1",
-	TestSharedDataObject1,
-	[],
-	[],
-);
-
-const testSharedDataObjectFactory2 = new DataObjectFactory(
-	"TestSharedDataObject2",
-	TestSharedDataObject2,
-	[],
-	[],
-);
-
-const testFactoryWithRequestHeaders = new DataObjectFactory(
-	"TestDataObjectWithRequestHeaders",
-	TestDataObjectWithRequestHeaders,
-	[],
-	[],
-);
-
-// REVIEW: enable compat testing?
-describeNoCompat("Loader.request", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	let dataStore1: TestSharedDataObject1;
