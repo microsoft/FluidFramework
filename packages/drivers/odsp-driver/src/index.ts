@@ -10,6 +10,7 @@ export {
 	ClpCompliantAppHeader,
 	IClpCompliantAppHeader,
 	ISharingLinkHeader,
+	ISocketStorageDiscovery,
 	OdspFluidDataStoreLocator,
 	SharingLinkHeader,
 } from "./contractsPublic";
@@ -50,3 +51,5 @@ export {
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
+
+export { getJoinSessionInfo } from "./exposeJoinSessionInfo";

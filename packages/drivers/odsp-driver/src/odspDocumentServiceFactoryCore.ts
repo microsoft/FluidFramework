@@ -56,6 +56,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
+	public get joinSessionCache() {
+		return this.nonPersistentCache.sessionJoinCache;
+	}
+
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
 		createNewResolvedUrl: IResolvedUrl,

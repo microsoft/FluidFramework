@@ -60,6 +60,9 @@ export function getApiRoot(origin: string): string;
 // @public (undocumented)
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
+// @public (undocumented)
+export function getJoinSessionInfo(factory: IDocumentServiceFactory, resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+
 // @public
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
 
@@ -88,6 +91,23 @@ export interface ISnapshotContents {
     sequenceNumber: number | undefined;
     // (undocumented)
     snapshotTree: ISnapshotTree;
+}
+
+// @public
+export interface ISocketStorageDiscovery {
+    // (undocumented)
+    deltaStorageUrl: string;
+    deltaStreamSocketUrl: string;
+    // (undocumented)
+    id: string;
+    refreshSessionDurationSeconds?: number;
+    // (undocumented)
+    runtimeTenantId?: string;
+    // (undocumented)
+    snapshotStorageUrl: string;
+    socketToken?: string;
+    // (undocumented)
+    tenantId: string;
 }
 
 // @public
@@ -124,6 +144,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // (undocumented)
+    get joinSessionCache(): PromiseCache<string, {
+    entryTime: number;
+    joinSessionResponse: ISocketStorageDiscovery;
+    }>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
