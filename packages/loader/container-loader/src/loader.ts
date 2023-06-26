@@ -464,7 +464,7 @@ export class Loader implements IHostLoader {
 		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== -1) {
 			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be set to -1 (default value).
 			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
-			throw new Error("opsBeforeReturn must be set to \"sequenceNumber\"");
+			throw new Error('opsBeforeReturn must be set to "sequenceNumber"');
 		}
 
 		let container: Container;

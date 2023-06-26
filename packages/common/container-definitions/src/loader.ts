@@ -587,7 +587,7 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 	| undefined
-		/**
+		/*
 		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
 		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
 		 */
