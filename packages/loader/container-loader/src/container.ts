@@ -1159,6 +1159,7 @@ export class Container
 						// starting to attach the container to storage.
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
+						this.context.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1221,6 +1222,7 @@ export class Container
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 						this._attachState = AttachState.Attaching;
+						this.context.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1237,6 +1239,7 @@ export class Container
 					}
 
 					this._attachState = AttachState.Attached;
+					this.context.setAttachState(AttachState.Attached);
 					this.emit("attached");
 
 					if (!this.closed) {
@@ -2308,7 +2311,6 @@ export class Container
 		}
 
 		this._context = await ContainerContext.createOrLoad(
-			this,
 			this.options,
 			this.scope,
 			runtimeFactory,

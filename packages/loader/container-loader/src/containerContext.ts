@@ -35,7 +35,6 @@ import {
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { Container } from "./container";
 
 /**
  * Events that {@link ContainerContext} can emit through its lifecycle.
@@ -49,7 +48,6 @@ type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 
 export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
-		container: Container,
 		options: ILoaderOptions,
 		scope: FluidObject,
 		runtimeFactory: IRuntimeFactory,
@@ -79,7 +77,6 @@ export class ContainerContext implements IContainerContext {
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
 		const context = new ContainerContext(
-			container,
 			options,
 			scope,
 			runtimeFactory,
@@ -218,7 +215,6 @@ export class ContainerContext implements IContainerContext {
 	private readonly lifecycleEvents = new TypedEventEmitter<ContextLifecycleEvents>();
 
 	constructor(
-		private readonly container: Container,
 		private readonly _options: ILoaderOptions,
 		public readonly scope: FluidObject,
 		private readonly _runtimeFactory: IRuntimeFactory,
@@ -270,7 +266,6 @@ export class ContainerContext implements IContainerContext {
 			 */
 			["referenceSequenceNumbers", true],
 		]);
-		this.attachListener();
 	}
 
 	/**
@@ -342,6 +337,10 @@ export class ContainerContext implements IContainerContext {
 		return this.runtime.notifyOpReplay?.(message);
 	}
 
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
+		this.runtime.setAttachState(attachState);
+	}
+
 	// #region private
 
 	private async instantiateRuntime(existing: boolean) {
@@ -353,13 +352,5 @@ export class ContainerContext implements IContainerContext {
 		this.lifecycleEvents.emit("runtimeInstantiated");
 	}
 
-	private attachListener() {
-		this.container.once("attaching", () => {
-			this.runtime.setAttachState(AttachState.Attaching);
-		});
-		this.container.once("attached", () => {
-			this.runtime.setAttachState(AttachState.Attached);
-		});
-	}
 	// #endregion
 }
