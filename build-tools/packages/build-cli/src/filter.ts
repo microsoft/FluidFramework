@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, MonoRepo, Package, PackageJson } from "@fluidframework/build-tools";
+import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { ReleaseGroup } from "./releaseGroups";
 
@@ -199,8 +199,6 @@ export const selectAndFilterPackages = (
 
 	return { selected, filtered };
 };
-
-type FilterablePackage = Pick<PackageJson, "name" | "private">;
 
 /**
  * Convenience type that extracts only the properties of a package that are needed for filtering.
