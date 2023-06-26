@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import child_process from "child_process";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	getChildrenByDriveItem,
@@ -20,7 +21,6 @@ import {
 	OdspTokenConfig,
 	IOdspTokenManagerCacheKey,
 } from "@fluidframework/tool-utils";
-import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
 
 export async function resolveWrapper<T>(
@@ -147,3 +147,13 @@ export async function getSingleSharePointFile(server: string, drive: string, ite
 		clientConfig,
 	);
 }
+
+const fluidFetchWebNavigator = (url: string) => {
+	let message = "Please open browser and navigate to this URL:";
+	if (process.platform === "win32") {
+		child_process.exec(`start "fluid-fetch" /B "${url}"`);
+		message =
+			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
+	}
+	console.log(`${message}\n  ${url}`);
+};
