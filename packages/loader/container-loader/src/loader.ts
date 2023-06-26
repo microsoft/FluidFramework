@@ -452,6 +452,15 @@ export class Loader implements IHostLoader {
 			request.headers[LoaderHeader.cache] !== false &&
 			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
+		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
+			| string
+			| undefined;
+		if (opsBeforeReturn === "sequenceNumber" && fromSequenceNumber < 0) {
+			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
+			// If it is negative it was either left undefined or set to a negative value. Either way we should throw an error.
+			throw new Error("sequenceNumber must be set to a non-negative integer");
+		}
+		const shouldFreeze = request.headers[LoaderHeader.loadMode]?.freezeAfterLoad === true;
 
 		let container: Container;
 		if (canCache) {
@@ -468,10 +477,30 @@ export class Loader implements IHostLoader {
 			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 		}
 
-		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
+		if (shouldFreeze) {
+			if (
+				opsBeforeReturn === "sequenceNumber" &&
+				container.deltaManager.lastSequenceNumber > fromSequenceNumber
+			) {
+				// If we are trying to freeze the container at a specific sequence number, then we need to throw an
+				// error if the latest snapshot is past the specified sequence number.
+				throw new Error(
+					"Cannot satisfy request to freeze the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+				);
+			}
+			// Force readonly mode - this will ensure we don't receive an error for the lack of join op
+			container.forceReadonly(true);
+		}
+
+		// If we have not yet reached `fromSequenceNumber`, we will wait for ops to arrive until we reach it
+		if (container.deltaManager.lastSequenceNumber < fromSequenceNumber) {
 			await new Promise<void>((resolve, reject) => {
 				function opHandler(message: ISequencedDocumentMessage) {
-					if (message.sequenceNumber > fromSequenceNumber) {
+					if (message.sequenceNumber >= fromSequenceNumber) {
+						if (shouldFreeze) {
+							// Disconnect the container now that we have finished loading.
+							container.disconnect();
+						}
 						resolve();
 						container.removeListener("op", opHandler);
 					}
@@ -479,6 +508,9 @@ export class Loader implements IHostLoader {
 
 				container.on("op", opHandler);
 			});
+		} else if (shouldFreeze) {
+			// Disconnect the container now that we have finished loading.
+			container.disconnect();
 		}
 
 		return { container, parsed };
@@ -499,6 +531,7 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
+				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
 			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
