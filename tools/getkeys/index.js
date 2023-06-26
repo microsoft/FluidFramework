@@ -11,26 +11,9 @@ import child_process from "child_process";
 import interactiveLogin from "ms-rest-azure";
 import KeyVaultClient from "azure-keyvault";
 import { loadRC, saveRC } from "@fluidframework/tool-utils";
+import { escapeString } from "./utils.js";
 
 const appendFile = util.promisify(fs.appendFile);
-
-/**
- * Escapes characters in the given string so it can be written to .<shell>rc files without causing parsing issues.
- *
- * @param str - The original string.
- *
- * @remarks
- * Calling this function should only be done when writing 'export VARIABLE="value"' statements to shell init files
- * (.<shell>rc, e.g. ~/.zshrc, ~/.bashrc).
- * We use different logic for the fish shell and for Windows environments.
- * Either of those might break if we apply the logic in this function to the values before storing them.
- *
- * @returns
- * The given string with double quotes and backticks escaped.
- */
-function escapeStringForRcFiles(str) {
-	return `"${str.split('"').join('\\"').replace('`', '\\`')}"`;
-}
 
 // Converts the given 'entries' [key, value][] array into export statements for bash
 // and zsh, appending the result to the given 'shellRc' file.
@@ -39,10 +22,9 @@ async function exportToShellRc(shellRc, entries) {
 	console.log(`Writing '${rcPath}'.`);
 
 	const stmts = `\n# Fluid dev/test secrets\n${entries
-		.map(([key, value]) => `export ${key}=${escapeStringForRcFiles(value)}`)
+		.map(([key, value]) => `export ${key}=${escapeString(value, ['"', '`'])}`)
 		.join("\n")}\n`;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return appendFile(rcPath, stmts, "utf-8");
 }
 
@@ -85,7 +67,7 @@ async function saveEnv(env) {
 
 				// On Windows, invoke 'setx' to update the user's persistent environment variables.
 				return Promise.all(
-					entries.map(async ([key, value]) => execAsync(`setx ${key} ${escapeStringForRcFiles(value)}`)),
+					entries.map(async ([key, value]) => execAsync(`setx ${key} ${escapeString(value, ['"'])}`)),
 				);
 			}
 	}

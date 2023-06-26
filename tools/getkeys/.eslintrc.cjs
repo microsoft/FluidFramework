@@ -26,5 +26,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
 		"promise/param-names": "off",
+		"tsdoc/syntax": "off", // No Typescript in this package; we use JSDoc syntax for some type annotations
 	},
 };
