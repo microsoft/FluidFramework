@@ -187,9 +187,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 				...rg.packages
 					.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-					.sort((a, b) =>
-						a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-					)
+					.sort((a, b) => packageComparer(a, b, changedPackages))
 					.map((pkg) => {
 						const changed = changedPackages.some((cp) => cp.name === pkg.name);
 						return {
@@ -224,9 +222,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
 						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-						.sort((a, b) =>
-							a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-						)
+						.sort((a, b) => packageComparer(a, b, changedPackages))
 						.map((pkg) => {
 							return {
 								title: pkg.name,
@@ -337,4 +333,29 @@ function isIncludedByDefault(pkg: Package): boolean {
 	}
 
 	return true;
+}
+
+/**
+ * Compares two packages for sorting purposes. Packages that have changed are sorted first.
+ *
+ * @param a - The first package to compare.
+ * @param b - The second package to compare.
+ * @param changedPackages - An array of changed packages.
+ */
+function packageComparer(a: Package, b: Package, changedPackages: Package[]): number {
+	const aChanged = changedPackages.some((cp) => cp.name === a.name);
+	const bChanged = changedPackages.some((cp) => cp.name === b.name);
+
+	// If a has changed but b hasn't, then a should be sorted earlier.
+	if (aChanged && !bChanged) {
+		return -1;
+	}
+
+	// If a hasn't changed but b has, then b should be sorted earlier.
+	if (!aChanged && bChanged) {
+		return 1;
+	}
+
+	// Otherwise, compare by name.
+	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
 }
