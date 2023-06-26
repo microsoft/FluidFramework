@@ -457,9 +457,9 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	public readonly options: ILoaderOptions;
+	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	public subLogger: TelemetryLogger;
+	private readonly subLogger: TelemetryLogger;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
@@ -519,9 +519,6 @@ export class Container
 	private _attachState = AttachState.Detached;
 
 	private readonly storageAdapter: ContainerStorageAdapter;
-	public get storage(): IDocumentStorageService {
-		return this.storageAdapter;
-	}
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
@@ -589,10 +586,6 @@ export class Container
 		return this._deltaManager.readOnlyInfo;
 	}
 
-	public get closeSignal(): AbortSignal {
-		return this._deltaManager.closeAbortController.signal;
-	}
-
 	/**
 	 * Tracks host requiring read-only mode.
 	 */
@@ -608,7 +601,7 @@ export class Container
 		return this.connectionStateHandler.connectionState;
 	}
 
-	public get connected(): boolean {
+	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
 	}
 
@@ -630,24 +623,12 @@ export class Container
 		return this._clientId;
 	}
 
-	/**
-	 * The server provided claims of the client.
-	 * Set once this.connected is true, otherwise undefined
-	 */
-	public get scopes(): string[] | undefined {
-		return this._deltaManager.connectionManager.scopes;
-	}
-
-	public get clientDetails(): IClientDetails {
-		return this._deltaManager.clientDetails;
-	}
-
 	private get offlineLoadEnabled(): boolean {
 		const enabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
 			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return enabled && this.clientDetails.capabilities.interactive;
+		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -1188,7 +1169,7 @@ export class Container
 							"containerAttach",
 							this.mc.logger,
 							{
-								cancel: this.closeSignal,
+								cancel: this._deltaManager.closeAbortController.signal,
 							}, // progress
 						);
 					}
@@ -1519,7 +1500,10 @@ export class Container
 			if (this.offlineLoadEnabled) {
 				this.baseSnapshot = snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
-				this.baseSnapshotBlobs = await getBlobContentsFromTree(snapshot, this.storage);
+				this.baseSnapshotBlobs = await getBlobContentsFromTree(
+					snapshot,
+					this.storageAdapter,
+				);
 			}
 		}
 
