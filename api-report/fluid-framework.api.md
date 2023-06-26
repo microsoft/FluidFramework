@@ -42,7 +42,6 @@ import { ILocalValue } from '@fluidframework/map';
 import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
 import { IMember } from '@fluidframework/fluid-static';
 import { Interval } from '@fluidframework/sequence';
-import { IntervalConflictResolver } from '@fluidframework/sequence';
 import { IntervalLocator } from '@fluidframework/sequence';
 import { intervalLocatorFromEndpoint } from '@fluidframework/sequence';
 import { IntervalType } from '@fluidframework/sequence';
@@ -165,8 +164,6 @@ export { IMapMessageLocalMetadata }
 export { IMember }
 
 export { Interval }
-
-export { IntervalConflictResolver }
 
 export { IntervalLocator }
 
