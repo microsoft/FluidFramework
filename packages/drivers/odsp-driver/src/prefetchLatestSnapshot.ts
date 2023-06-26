@@ -141,15 +141,19 @@ export async function prefetchLatestSnapshot(
 					});
 					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
 					await cacheP;
+					// Schedule it to remove from cache after 5s, so that if this snapshot is going to be used on load,
+					// and we don't find it in this cache, then we will make a network call again to fetch this
+					// snapshot which is redundant. So don't clear this cache immediately. We also clear this cache,
+					// if this cached snapshot is used on load.
+					setTimeout(() => {
+						snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
+					}, 5000);
 				})
 				.catch((err) => {
+					// Remove it from the non persistent cache if an error occured.
+					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					snapshotContentsWithEpochP.reject(err);
 					throw err;
-				})
-				.finally(() => {
-					// Remove it from the non persistent cache once it is cached in the persistent cache or an error
-					// occured.
-					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 				});
 			return true;
 		},
