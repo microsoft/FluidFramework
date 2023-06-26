@@ -67,7 +67,7 @@ export async function resolveWrapper<T>(
 	}
 }
 
-export async function resolveDriveItemByServerRelativePath(
+async function resolveDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
 	clientConfig: IClientConfig,
