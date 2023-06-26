@@ -13,7 +13,9 @@ import {
 	PathVisitor,
 	NamedTreeSchema,
 	isCursor,
+	GlobalFieldKeySymbol,
 } from "../../core";
+import { brand } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
@@ -57,6 +59,12 @@ export const parentField: unique symbol = Symbol("editable-tree:parentField()");
  * @alpha
  */
 export const contextSymbol: unique symbol = Symbol("editable-tree:context");
+
+/**
+ * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
+ * @alpha
+ */
+export const localNodeKeySymbol: GlobalFieldKeySymbol = brand(Symbol("editable-tree:localNodeKey"));
 
 /**
  * A symbol for subscribing to events.

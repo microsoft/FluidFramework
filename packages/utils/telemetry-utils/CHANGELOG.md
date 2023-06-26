@@ -1,5 +1,15 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-internal.5.1.0
+
+### Minor Changes
+
+-   Logger interface now supports logging a flat object ([#15759](https://github.com/microsoft/FluidFramework/issues/15759)) [8ae4fe32b1](https://github.com/microsoft/FluidFramework/commits/8ae4fe32b11d9bdfe6d2d43950970c95bdc660a6)
+
+    The internal logger interface used when instrumenting the code now supports logging a flat object,
+    which will be JSON.stringified before being sent to the host's base logger.
+    This is technically a breaking change but based on typical logger configuration, should not require any changes to accommodate.
+
 ## 2.0.0-internal.5.0.0
 
 ### Major Changes

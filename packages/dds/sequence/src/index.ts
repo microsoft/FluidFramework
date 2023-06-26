@@ -42,6 +42,12 @@ export {
 	createStartpointInRangeIndex,
 } from "./intervalCollection";
 export {
+	SequenceIntervalIndexes,
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
+} from "./intervalIndex";
+export {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,

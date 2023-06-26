@@ -44,25 +44,41 @@ export interface IConnectionDetails {
 
 /**
  * Internal version of IConnectionDetails with props are only exposed internally
+ * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
  */
 export interface IConnectionDetailsInternal extends IConnectionDetails {
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	mode: ConnectionMode;
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	version: string;
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	initialClients: ISignalClient[];
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	reason: string;
 }
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
+ * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
  */
 export interface IDeltaHandlerStrategy {
 	/**
 	 * Processes the message.
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
 	 */
 	process: (message: ISequencedDocumentMessage) => void;
 
 	/**
 	 * Processes the signal.
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
 	 */
 	processSignal: (message: ISignalMessage) => void;
 }

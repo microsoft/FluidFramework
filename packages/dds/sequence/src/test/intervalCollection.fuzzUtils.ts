@@ -11,7 +11,19 @@ import {
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervals";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
+import { SharedString } from "../sharedString";
+
+export type RevertibleSharedString = SharedString & {
+	revertibles: SharedStringRevertible[];
+	// This field prevents change events that are emitted while in the process of a revert from
+	// being added into the revertibles stack.
+	isCurrentRevert: boolean;
+};
+export function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
+	return (s as RevertibleSharedString).revertibles !== undefined;
+}
 
 export interface RangeSpec {
 	start: number;
@@ -58,15 +70,67 @@ export interface ChangeProperties extends IntervalCollectionSpec {
 	properties: PropertySet;
 }
 
-export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
+export interface RevertSharedStringRevertibles {
+	type: "revertSharedStringRevertibles";
+	editsToRevert: number;
+}
 
+export interface RevertibleWeights {
+	revertWeight: number;
+	addText: number;
+	removeRange: number;
+	addInterval: number;
+	deleteInterval: number;
+	changeInterval: number;
+	changeProperties: number;
+}
+
+export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
+export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
 export type TextOperation = AddText | RemoveRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
 export type Operation = ClientOperation;
+export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
+
+export interface OperationGenerationConfig {
+	/**
+	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
+	 * Note due to concurrency, during test execution the actual length of the string may exceed this.
+	 */
+	maxStringLength?: number;
+	/**
+	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
+	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
+	 */
+	maxIntervals?: number;
+	maxInsertLength?: number;
+	intervalCollectionNamePool?: string[];
+	propertyNamePool?: string[];
+	validateInterval?: number;
+	weights?: RevertibleWeights;
+}
+
+export const defaultOptions: Required<OperationGenerationConfig> = {
+	maxStringLength: 1000,
+	maxIntervals: 100,
+	maxInsertLength: 10,
+	intervalCollectionNamePool: ["comments"],
+	propertyNamePool: ["prop1", "prop2", "prop3"],
+	validateInterval: 100,
+	weights: {
+		revertWeight: 2,
+		addText: 2,
+		removeRange: 1,
+		addInterval: 2,
+		deleteInterval: 2,
+		changeInterval: 2,
+		changeProperties: 2,
+	},
+};
 
 export interface LoggingInfo {
 	/** id of the interval to track over time */
@@ -103,7 +167,9 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 type ClientOpState = FuzzTestState;
 
-export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpState> {
+export function makeReducer(
+	loggingInfo?: LoggingInfo,
+): Reducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
 		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
 		async (state, operation) => {
@@ -115,7 +181,7 @@ export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, Clien
 			await baseReducer(state, operation);
 		};
 
-	const reducer = combineReducers<Operation, ClientOpState>({
+	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
 		addText: async ({ channel }, { index, content }) => {
 			channel.insertText(index, content);
 		},
@@ -137,6 +203,13 @@ export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, Clien
 		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
+		},
+		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
+			assert(isRevertibleSharedString(channel));
+			channel.isCurrentRevert = true;
+			const few = channel.revertibles.splice(-editsToRevert, editsToRevert);
+			revertSharedStringRevertibles(channel, few);
+			channel.isCurrentRevert = false;
 		},
 	});
 

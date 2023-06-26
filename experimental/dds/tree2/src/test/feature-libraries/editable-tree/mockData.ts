@@ -24,6 +24,7 @@ import {
 	Any,
 	GlobalFieldSchema,
 	TypedSchemaCollection,
+	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -279,7 +280,7 @@ export function buildTestSchema<T extends FieldSchema>(rootField: T) {
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor);
+	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
 }
 
 export function setupForest<T extends GlobalFieldSchema>(

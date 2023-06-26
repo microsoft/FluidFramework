@@ -41,7 +41,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
@@ -93,7 +92,11 @@ import {
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
-import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import {
+	combineAppAndProtocolSummary,
+	getProtocolSnapshotTree,
+	getSnapshotTreeFromSerializedContainer,
+} from "./utils";
 import {
 	initQuorumValuesFromCodeDetails,
 	getCodeDetailsFromQuorumValues,
@@ -354,6 +357,10 @@ export class Container
 
 		const container = new Container(createProps, loadProps);
 
+		const disableRecordHeapSize = container.mc.config.getBoolean(
+			"Fluid.Loader.DisableRecordHeapSize",
+		);
+
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
 			{ eventName: "Load" },
@@ -395,6 +402,7 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
+			disableRecordHeapSize !== true /* recordHeapSize */,
 		);
 	}
 

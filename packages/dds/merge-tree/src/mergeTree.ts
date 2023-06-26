@@ -32,6 +32,7 @@ import {
 	CollaborationWindow,
 	IHierBlock,
 	IMergeBlock,
+	IMergeLeaf,
 	IMergeNode,
 	IncrementalExecOp,
 	IncrementalMapState,
@@ -44,7 +45,6 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	MergeNode,
 	MinListener,
 	reservedMarkerIdKey,
 	SegmentActions,
@@ -90,6 +90,12 @@ import {
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
 import { Client } from "./client";
+
+/**
+ * someday we may split tree leaves from segments, but for now they are the same
+ * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
+ */
+export type ISegmentLeaf = ISegment & IMergeLeaf;
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -521,7 +527,7 @@ export const clientSeqComparer: Comparer<ClientSeq> = {
  * @internal
  */
 export interface LRUSegment {
-	segment?: ISegment;
+	segment?: ISegmentLeaf;
 	maxSeq: number;
 }
 
@@ -763,15 +769,15 @@ export class MergeTree {
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
-	private addToLRUSet(segment: ISegment, seq: number) {
+	private addToLRUSet(leaf: IMergeLeaf, seq: number) {
 		// If the parent node has not yet been marked for scour (i.e., needsScour is not false or undefined),
 		// add the segment and mark the mark the node now.
 
 		// TODO: 'seq' may be less than the current sequence number when inserting pre-ACKed
 		//       segments from a snapshot.  We currently skip these for now.
-		if (segment.parent!.needsScour !== true && seq > this.collabWindow.currentSeq) {
-			segment.parent!.needsScour = true;
-			this.segmentsToScour.add({ segment, maxSeq: seq });
+		if (leaf.parent!.needsScour !== true && seq > this.collabWindow.currentSeq) {
+			leaf.parent!.needsScour = true;
+			this.segmentsToScour.add({ segment: leaf, maxSeq: seq });
 		}
 	}
 
@@ -790,7 +796,7 @@ export class MergeTree {
 		return this.root.cachedLength;
 	}
 
-	public getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number) {
+	public getPosition(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
 		let totalOffset = 0;
 		let parent = node.parent;
 		let prevParent: IMergeBlock | undefined;
@@ -924,7 +930,7 @@ export class MergeTree {
 			ref.slidingPreference === SlidingPreference.BACKWARD;
 
 		const slideGroup = (
-			currentSlideDestination: ISegment | undefined,
+			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
 			pred: (ref: LocalReferencePosition) => boolean,
 		) => {
@@ -1207,7 +1213,7 @@ export class MergeTree {
 		refSeq = this.collabWindow.currentSeq,
 		clientId = this.collabWindow.clientId,
 	): number {
-		const seg = refPos.getSegment();
+		const seg: ISegmentLeaf | undefined = refPos.getSegment();
 		if (seg?.parent === undefined) {
 			return DetachedReferencePosition;
 		}
@@ -1447,7 +1453,7 @@ export class MergeTree {
 		if (pendingSegmentGroup !== undefined) {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
-			pendingSegmentGroup.segments.map((pendingSegment) => {
+			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 				overwrite = overlappingRemove || overwrite;
 				overlappingRemoves.push(overlappingRemove);
@@ -1631,7 +1637,7 @@ export class MergeTree {
 		}
 	}
 
-	private blockInsert<T extends ISegment>(
+	private blockInsert<T extends ISegmentLeaf>(
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -2094,7 +2100,7 @@ export class MergeTree {
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
-			for (const segment of pendingSegmentGroup.segments) {
+			pendingSegmentGroup.segments.forEach((segment: ISegmentLeaf) => {
 				const segmentSegmentGroup = segment.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
@@ -2131,7 +2137,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
-			}
+			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
@@ -2230,7 +2236,7 @@ export class MergeTree {
 	public removeLocalReferencePosition(
 		lref: LocalReferencePosition,
 	): LocalReferencePosition | undefined {
-		const segment = lref.getSegment();
+		const segment: ISegmentLeaf | undefined = lref.getSegment();
 		if (segment) {
 			const removedRefs = segment?.localRefs?.removeLocalRef(lref);
 			if (removedRefs !== undefined && refTypeIncludesFlag(lref, hierRefTypes)) {
@@ -2245,7 +2251,7 @@ export class MergeTree {
 	}
 
 	public createLocalReferencePosition(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
@@ -2275,7 +2281,7 @@ export class MergeTree {
 	}
 
 	// Segments should either be removed remotely, removed locally, or inserted locally
-	private normalizeAdjacentSegments(affectedSegments: List<ISegment>): void {
+	private normalizeAdjacentSegments(affectedSegments: List<ISegmentLeaf>): void {
 		// Eagerly demand this since we're about to shift elements in the list around
 		const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
 			parent: seg.parent,
