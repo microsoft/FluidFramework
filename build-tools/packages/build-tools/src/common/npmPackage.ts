@@ -93,10 +93,21 @@ export class Package {
 		return this._packageJson;
 	}
 
+	/**
+	 * Create a new package from a package.json file. Prefer the .load method to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
 	constructor(
-		private readonly packageJsonFileName: string,
+		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
@@ -107,6 +118,7 @@ export class Package {
 			? "yarn"
 			: "npm";
 		verbose(`Package loaded: ${this.nameColored}`);
+		Object.assign(this, additionalProperties);
 	}
 
 	/**
@@ -137,12 +149,16 @@ export class Package {
 		return PackageName.getScope(this.name);
 	}
 
+	public get private(): boolean {
+		return this.packageJson.private ?? false;
+	}
+
 	public get version(): string {
 		return this.packageJson.version;
 	}
 
 	public get isPublished(): boolean {
-		return !this.packageJson.private;
+		return !this.private;
 	}
 
 	public get isTestPackage(): boolean {
@@ -267,6 +283,56 @@ export class Package {
 		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
 	}
+
+	/**
+	 * Load a package from a package.json file. Prefer this to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
+	public static load<T extends typeof Package, TAddProps>(
+		this: T,
+		packageJsonFileName: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return new this(
+			packageJsonFileName,
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
+	}
+
+	/**
+	 * Load a package from directory containing a package.json.
+	 *
+	 * @param packageDir - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 * @typeParam TAddProps - The type of the additional properties object.
+	 * @returns a loaded Package. If additional properties are specifed, the returned type will be Package & TAddProps.
+	 */
+	public static loadDir<T extends typeof Package, TAddProps>(
+		this: T,
+		packageDir: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return Package.load(
+			path.join(packageDir, "package.json"),
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
+	}
 }
 
 interface TaskExec<TItem, TResult> {
@@ -319,7 +385,7 @@ export class Packages {
 	) {
 		const packageJsonFileName = path.join(dirFullPath, "package.json");
 		if (existsSync(packageJsonFileName)) {
-			return [new Package(packageJsonFileName, group, monoRepo)];
+			return [Package.load(packageJsonFileName, group, monoRepo)];
 		}
 
 		const packages: Package[] = [];

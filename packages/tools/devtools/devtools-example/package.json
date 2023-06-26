@@ -44,6 +44,7 @@
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -67,7 +68,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0",
+		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@testing-library/dom": "^8.2.0",
