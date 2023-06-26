@@ -25,8 +25,7 @@ export function addCrossFieldQuery(
 	id: ChangesetLocalId,
 	count: number,
 ): void {
-	const rangeMap = getOrAddInMap(set, revision, []);
-	setInRangeMap(rangeMap, id, count, true);
+	setInCrossFieldMap(set, revision, id, count, true);
 }
 
 export function setInCrossFieldMap<T>(

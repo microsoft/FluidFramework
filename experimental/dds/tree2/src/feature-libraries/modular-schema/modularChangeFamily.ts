@@ -987,7 +987,7 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 					manager.fieldInvalidated = true;
 				}
 			}
-			return setInCrossFieldMap(getMap(target), revision, id, count, newValue);
+			setInCrossFieldMap(getMap(target), revision, id, count, newValue);
 		},
 		get: (
 			target: CrossFieldTarget,
