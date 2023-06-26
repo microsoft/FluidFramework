@@ -74,7 +74,13 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 }>;
 
 // @public
-export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger): Promise<{
+export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger, configProvider?: IConfigProviderBase): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
+// @public
+export function createSummarizerWithTestConfig(provider: ITestObjectProvider, container: IContainer, config: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -154,6 +160,7 @@ export interface ITestContainerConfig {
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
+    simulateReadConnectionUsingDelay?: boolean;
 }
 
 // @public (undocumented)
@@ -212,7 +219,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
-    ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
     processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -311,7 +317,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(timeoutDuration?: number): Promise<void>;
+    ensureSynchronized(): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
@@ -336,10 +342,10 @@ export class TestObjectProvider implements ITestObjectProvider {
     waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
-// @public (undocumented)
+// @public
 export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public (undocumented)

@@ -288,7 +288,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public update(name: string | undefined, channel: AttributionCollection) {
 		assert(
 			channel.length === this.length,
-			"AttributionCollection channel update should have consistent segment length",
+			0x5c0 /* AttributionCollection channel update should have consistent segment length */,
 		);
 		if (name === undefined) {
 			this.offsets = [...channel.offsets];
@@ -405,7 +405,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				for (const { offset, key } of getSpecEntries(spec)) {
 					assert(
 						key?.type !== "local",
-						"local attribution keys should never be put in summaries",
+						0x5c1 /* local attribution keys should never be put in summaries */,
 					);
 					if (
 						mostRecentAttributionKey === undefined ||

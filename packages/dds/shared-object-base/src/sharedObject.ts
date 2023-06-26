@@ -4,7 +4,16 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	EventEmitterWithErrorHandling,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -21,15 +30,8 @@ import {
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ChildLogger,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
@@ -58,7 +60,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	/**
 	 * Telemetry logger for the shared object
 	 */
-	protected readonly logger: ITelemetryLogger;
+	protected readonly logger: ITelemetryLoggerExt;
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -138,7 +140,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				category: "performance",
 			},
 			this.logger,
-			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
+			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
 			new Map<string, ITelemetryProperties>([
 				["local", { localOp: true }],
@@ -151,7 +153,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				category: "performance",
 			},
 			this.logger,
-			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
+			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
 		);
 
@@ -656,8 +658,13 @@ export abstract class SharedObject<
 		fullTree: boolean = false,
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
-		const result = this.summarizeCore(this.serializer, telemetryContext);
+		const result = this.summarizeCore(
+			this.serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
 			result.stats.blobNodeCount,
@@ -722,6 +729,7 @@ export abstract class SharedObject<
 	protected abstract summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats;
 
 	private incrementTelemetryMetric(

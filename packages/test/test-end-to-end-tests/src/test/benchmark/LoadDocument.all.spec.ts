@@ -11,11 +11,9 @@ import {
 	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoader,
-} from "./DocumentCreator";
+} from "./DocumentCreator.js";
 
-const scenarioTitle = "Load Document";
-
-describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
+describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
@@ -24,12 +22,23 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		documentWrapper = createDocument({
-			testName: `${scenarioTitle} - ${docData.testTitle}`,
+			testName: `Load Document - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
+	});
+
+	beforeEach(async function () {
+		const docData = getDocumentInfo();
+		if (
+			docData.supportedEndpoints &&
+			!docData.supportedEndpoints?.includes(provider.driver.type)
+		) {
+			this.skip();
+		}
 	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
@@ -39,7 +48,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
 	benchmarkAll(
-		scenarioTitle,
+		"Load Document",
 		new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			minSampleCount = getDocumentInfo().minSampleCount;

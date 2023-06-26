@@ -8,14 +8,13 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
-	ITelemetryLogger,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,
@@ -32,6 +31,13 @@ import {
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
+export interface Memory {
+	usedJSHeapSize: number;
+}
+
+export interface PerformanceWithMemory extends IsomorphicPerformance {
+	readonly memory: Memory;
+}
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
@@ -263,7 +269,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					newEvent[key] = value;
 					break;
 				case TelemetryDataTag.UserData:
-					// Strip out anything tagged explicitly as PII.
+					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
@@ -290,7 +296,6 @@ export class ChildLogger extends TelemetryLogger {
 	 * is created, but it does not send telemetry events anywhere.
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	public static create(
 		baseLogger?: ITelemetryBaseLogger,
@@ -344,7 +349,7 @@ export class ChildLogger extends TelemetryLogger {
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
-			mixinMonitoringContext(this, new CachedConfigProvider(baseLogger.config));
+			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
 		}
 	}
 
@@ -361,7 +366,6 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
- * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[] = [];
@@ -370,7 +374,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
 	 */
 	constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
 		super(namespace, properties);
@@ -416,15 +419,16 @@ export interface IPerformanceEventMarkers {
  */
 export class PerformanceEvent {
 	public static start(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
+		recordHeapSize: boolean = false,
 	) {
-		return new PerformanceEvent(logger, event, markers);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize);
 	}
 
 	public static timedExec<T>(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
@@ -441,12 +445,13 @@ export class PerformanceEvent {
 	}
 
 	public static async timedExecAsync<T>(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
+		recordHeapSize?: boolean,
 	) {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -464,11 +469,13 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEvent;
 	private readonly startTime = performance.now();
 	private startMark?: string;
+	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
+		private readonly recordHeapSize: boolean = false,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -531,6 +538,20 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
+			if (this.startMemoryCollection) {
+				const currentMemory = (performance as PerformanceWithMemory)?.memory
+					?.usedJSHeapSize;
+				const differenceInKBytes = Math.floor(
+					(currentMemory - this.startMemoryCollection) / 1024,
+				);
+				if (differenceInKBytes > 0) {
+					event.usedJSHeapSize = differenceInKBytes;
+				}
+			}
+		} else if (this.recordHeapSize) {
+			this.startMemoryCollection = (
+				performance as PerformanceWithMemory
+			)?.memory?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
@@ -541,7 +562,7 @@ export class PerformanceEvent {
  * Logger that is useful for UT
  * It can be used in places where logger instance is required, but events should be not send over.
  */
-export class TelemetryUTLogger implements ITelemetryLogger {
+export class TelemetryUTLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
@@ -591,7 +612,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * Null logger
  * It can be used in places where logger instance is required, but events should be not send over.
  */
-export class TelemetryNullLogger implements ITelemetryLogger {
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
 	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
 	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
@@ -645,7 +666,7 @@ function convertToBasePropertyTypeUntagged(
 		case "undefined":
 			return x;
 		case "object":
-			// We assume this is an array based on the input types
+			// We assume this is an array or flat object based on the input types
 			return JSON.stringify(x);
 		default:
 			// should never reach this case based on the input types

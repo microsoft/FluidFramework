@@ -20,6 +20,7 @@ module.exports = {
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
+		sharedTree2: "./src/sharedTree2",
 	},
 	mode: "production",
 	module: {

@@ -23,8 +23,8 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
+	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
-	DependencyContainer,
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
@@ -96,8 +96,14 @@ async function createDataObject<
 	// access DDSes or other services of runtime as objects are not fully initialized.
 	// In order to use object, we need to go through full initialization by calling finishInitialization().
 	const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
-	const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-	const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
+	const providers =
+		scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
+			optionalProviders,
+			{},
+		) ??
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		({} as AsyncFluidObjectProvider<never>);
+
 	const instance = new ctor({ runtime, context, providers, initProps });
 
 	// if it's a newly created object, we need to wait for it to finish initialization

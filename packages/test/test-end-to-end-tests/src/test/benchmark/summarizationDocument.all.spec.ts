@@ -12,7 +12,7 @@ import {
 	IBenchmarkParameters,
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
-} from "./DocumentCreator";
+} from "./DocumentCreator.js";
 
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
@@ -28,6 +28,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
@@ -35,6 +36,15 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		await documentWrapper.summarize();
 	});
 
+	beforeEach(async function () {
+		const docData = getDocumentInfo();
+		if (
+			docData.supportedEndpoints &&
+			!docData.supportedEndpoints?.includes(provider.driver.type)
+		) {
+			this.skip();
+		}
+	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -53,7 +63,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				this.container = await documentWrapper.loadDocument();
 				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
-
+				assert(this.container.closed !== true, "container needs to be open.");
 				this.summarizerClient = await documentWrapper.summarize(summaryVersion);
 				assert(
 					this.summarizerClient.summaryVersion !== undefined,

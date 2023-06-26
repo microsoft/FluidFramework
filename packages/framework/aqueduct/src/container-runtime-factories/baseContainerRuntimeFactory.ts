@@ -40,7 +40,7 @@ export class BaseContainerRuntimeFactory
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
-	 * @param dependencyContainer -
+	 * @param dependencyContainer - deprecated, will be removed in a future release
 	 * @param requestHandlers - Request handlers for containers produced
 	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
 	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
@@ -73,13 +73,14 @@ export class BaseContainerRuntimeFactory
 		existing: boolean,
 	): Promise<ContainerRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
-		const dc = new DependencyContainer<FluidObject<IContainerRuntime>>(
-			this.dependencyContainer,
-			scope.IFluidDependencySynthesizer,
-		);
-		scope.IFluidDependencySynthesizer = dc;
-
-		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
+		if (this.dependencyContainer) {
+			const dc = new DependencyContainer<FluidObject>(
+				this.dependencyContainer,
+				scope.IFluidDependencySynthesizer,
+			);
+			scope.IFluidDependencySynthesizer = dc;
+		}
+		return ContainerRuntime.loadRuntime({
 			context,
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			existing,
@@ -88,11 +89,6 @@ export class BaseContainerRuntimeFactory
 			containerScope: scope,
 			initializeEntryPoint: this.initializeEntryPoint,
 		});
-
-		// we register the runtime so developers of providers can use it in the factory pattern.
-		dc.register(IContainerRuntime, runtime);
-
-		return runtime;
 	}
 
 	/**

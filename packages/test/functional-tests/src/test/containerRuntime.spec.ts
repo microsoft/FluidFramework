@@ -106,6 +106,7 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service,
+						() => false,
 						client as IClient,
 						false,
 						DebugLogger.create("fluid:testConnectionManager"),
@@ -143,7 +144,7 @@ describe("Container Runtime", () => {
 				);
 			});
 
-			await deltaManager.attachOpHandler(0, 0, 1, {
+			await deltaManager.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};
@@ -308,13 +309,14 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service2,
+						() => false,
 						client as IClient,
 						true,
 						DebugLogger.create("fluid:testConnectionManager"),
 						props,
 					),
 			);
-			await deltaManager2.attachOpHandler(0, 0, 1, {
+			await deltaManager2.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};

@@ -1,0 +1,4 @@
+{
+	"tags": ["content"],
+	"imports": ["globals", "messaging"]
+}

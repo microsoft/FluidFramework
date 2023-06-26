@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "..";
 import { extract, expectSize } from "./utils";
+import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 describe("Matrix", () => {
 	describe("stress", () => {
@@ -69,12 +70,16 @@ describe("Matrix", () => {
 			numOps: number,
 			syncProbability: number,
 			disconnectProbability: number,
+			undoProbability: number,
 			seed: number,
 		) {
 			try {
 				matrices = [];
 				runtimes = [];
 				trace = [];
+
+				const undoRedoStacks: UndoRedoStackManager[] | undefined =
+					undoProbability === 0 ? undefined : [];
 
 				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
@@ -94,7 +99,11 @@ describe("Matrix", () => {
 						SharedMatrixFactory.Attributes,
 					);
 					matrixN.connect(servicesN);
-
+					if (undoRedoStacks) {
+						const undoRedo = new UndoRedoStackManager();
+						matrixN.openUndo(undoRedo);
+						undoRedoStacks.push(undoRedo);
+					}
 					matrices.push(matrixN);
 					runtimes.push(containerRuntimeN);
 				}
@@ -281,8 +290,13 @@ describe("Matrix", () => {
 								const length = (int32(rowCount - row - 1) + 1) * stride;
 								setCells(matrixIndex, row, col, stride, values(length));
 							}
+							undoRedoStacks?.[matrixIndex]?.closeCurrentOperation();
 							break;
 						}
+					}
+
+					if (float64() < undoProbability) {
+						undoRedoStacks?.[matrixIndex]?.undoOperation();
 					}
 
 					if (float64() < disconnectProbability) {
@@ -323,12 +337,20 @@ describe("Matrix", () => {
 			}
 		}
 
-		for (const { numClients, numOps, syncProbability, disconnectProbability, seed } of [
+		for (const {
+			numClients,
+			numOps,
+			syncProbability,
+			disconnectProbability,
+			undoRedoProbability,
+			seed,
+		} of [
 			{
 				numClients: 2,
 				numOps: 200,
 				syncProbability: 0.3,
 				disconnectProbability: 0,
+				undoRedoProbability: 0,
 				seed: 0x84d43a0a,
 			},
 			{
@@ -336,6 +358,7 @@ describe("Matrix", () => {
 				numOps: 200,
 				syncProbability: 0.1,
 				disconnectProbability: 0,
+				undoRedoProbability: 0,
 				seed: 0x655c763b,
 			},
 			{
@@ -343,6 +366,7 @@ describe("Matrix", () => {
 				numOps: 200,
 				syncProbability: 0.0,
 				disconnectProbability: 0,
+				undoRedoProbability: 0,
 				seed: 0x2f98736d,
 			},
 			{
@@ -350,16 +374,32 @@ describe("Matrix", () => {
 				numOps: 200,
 				syncProbability: 0.2,
 				disconnectProbability: 0.4,
+				undoRedoProbability: 0,
 				seed: 0x84d43a0a,
 			},
+			{
+				numClients: 3,
+				numOps: 100,
+				syncProbability: 0.2,
+				disconnectProbability: 0,
+				undoRedoProbability: 0.2,
+				seed: 0x84f43a0a,
+			},
 		]) {
-			it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed
+			it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} undoRedoProbability=${undoRedoProbability} seed=0x${seed
 				.toString(16)
 				.padStart(8, "0")})`, async function () {
 				// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
 				this.timeout(20000);
 
-				await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
+				await stress(
+					numClients,
+					numOps,
+					syncProbability,
+					disconnectProbability,
+					undoRedoProbability,
+					seed,
+				);
 			});
 		}
 
@@ -377,6 +417,7 @@ describe("Matrix", () => {
 					/* numOps: */ 10000,
 					/* syncProbability: */ 0.1,
 					/* disconnectProbability: */ 0.01,
+					/* undoRedoProbability */ 0,
 					// eslint-disable-next-line no-bitwise
 					/* seed: */ (Math.random() * 0x100000000) >>> 0,
 				);

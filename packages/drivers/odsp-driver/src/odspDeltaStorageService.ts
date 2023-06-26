@@ -5,7 +5,9 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { validateMessages } from "@fluidframework/driver-base";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
@@ -16,7 +18,7 @@ import {
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
-import { getWithRetryForTokenRefresh, validateMessages } from "./odspUtils";
+import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -26,7 +28,7 @@ export class OdspDeltaStorageService {
 		private readonly deltaFeedUrl: string,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	/**
@@ -49,62 +51,70 @@ export class OdspDeltaStorageService {
 			const baseUrl = this.buildUrl(from, to);
 			const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
-			const formBoundary = uuid();
-			let postBody = `--${formBoundary}\r\n`;
-			postBody += `Authorization: Bearer ${storageToken}\r\n`;
-			postBody += `X-HTTP-Method-Override: GET\r\n`;
-
-			postBody += `_post: 1\r\n`;
-			postBody += `\r\n--${formBoundary}--`;
-			const headers: { [index: string]: any } = {
-				"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-			};
-
-			// Some request take a long time (1-2 minutes) to complete, where telemetry shows very small amount
-			// of time spent on server, and usually small payload sizes. I.e. all the time is spent somewhere in
-			// networking. Even bigger problem - a lot of requests timeout (based on cursory look - after 1-2 minutes)
-			// So adding some timeout to ensure we retry again in hope of faster success.
-			// Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
-			const abort = new AbortController();
-			const timer = setTimeout(() => abort.abort(), 30000);
-
-			const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
-				baseUrl,
+			return PerformanceEvent.timedExecAsync(
+				this.logger,
 				{
-					headers,
-					body: postBody,
-					method: "POST",
-					signal: abort.signal,
+					eventName: "OpsFetch",
+					attempts: options.refresh ? 2 : 1,
+					from,
+					to,
+					...telemetryProps,
+					reason: scenarioName,
 				},
-				"ops",
-				true,
-				scenarioName,
+				async (event) => {
+					const formBoundary = uuid();
+					let postBody = `--${formBoundary}\r\n`;
+					postBody += `Authorization: Bearer ${storageToken}\r\n`;
+					postBody += `X-HTTP-Method-Override: GET\r\n`;
+
+					postBody += `_post: 1\r\n`;
+					postBody += `\r\n--${formBoundary}--`;
+					const headers: { [index: string]: any } = {
+						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+					};
+
+					// Some request take a long time (1-2 minutes) to complete, where telemetry shows very small amount
+					// of time spent on server, and usually small payload sizes. I.e. all the time is spent somewhere in
+					// networking. Even bigger problem - a lot of requests timeout (based on cursory look - after 1-2 minutes)
+					// So adding some timeout to ensure we retry again in hope of faster success.
+					// Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
+					const abort = new AbortController();
+					const timer = setTimeout(() => abort.abort(), 30000);
+
+					const response =
+						await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
+							baseUrl,
+							{
+								headers,
+								body: postBody,
+								method: "POST",
+								signal: abort.signal,
+							},
+							"ops",
+							true,
+							scenarioName,
+						);
+					clearTimeout(timer);
+					const deltaStorageResponse = response.content;
+					const messages =
+						deltaStorageResponse.value.length > 0 &&
+						"op" in deltaStorageResponse.value[0]
+							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
+									(operation) => operation.op,
+							  )
+							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
+
+					event.end({
+						headers: Object.keys(headers).length !== 0 ? true : undefined,
+						length: messages.length,
+						...response.propsToLog,
+					});
+
+					// It is assumed that server always returns all the ops that it has in the range that was requested.
+					// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
+					return { messages, partialResult: false };
+				},
 			);
-			clearTimeout(timer);
-			const deltaStorageResponse = response.content;
-			const messages =
-				deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
-					? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
-							(operation) => operation.op,
-					  )
-					: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
-
-			this.logger.sendPerformanceEvent({
-				eventName: "OpsFetch",
-				headers: Object.keys(headers).length !== 0 ? true : undefined,
-				length: messages.length,
-				duration: response.duration, // this duration for single attempt!
-				...response.propsToLog,
-				attempts: options.refresh ? 2 : 1,
-				from,
-				to,
-				...telemetryProps,
-				reason: scenarioName,
-			});
-
-			// It is assumed that server always returns all the ops that it has in the range that was requested.
-			// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
-			return { messages, partialResult: false };
 		});
 	}
 
@@ -118,11 +128,11 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-	private firstCacheMiss = Number.MAX_SAFE_INTEGER;
+	private firstCacheMiss = false;
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly batchSize: number,
 		private readonly concurrency: number,
 		private readonly getFromStorage: (
@@ -168,7 +178,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				validateMessages("cached", messages, from, this.logger);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
-					opsFromSnapshot = messages.length;
+					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };
 				}
 				this.snapshotOps = undefined;
@@ -179,9 +189,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
 			// This saves a bit of processing time
-			if (from < this.firstCacheMiss) {
+			if (!this.firstCacheMiss) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
+				// Set the firstCacheMiss as true in case we didn't get all the ops.
+				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
+				this.firstCacheMiss = from + messagesFromCache.length < to;
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
 					return {
@@ -189,7 +202,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 						partialResult: true,
 					};
 				}
-				this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
 			}
 
 			if (cachedOnly) {
@@ -228,6 +240,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					opsFromSnapshot,
 					opsFromCache,
 					opsFromStorage,
+					reason: fetchReason,
 				});
 			}
 		});

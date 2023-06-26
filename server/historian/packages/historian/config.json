@@ -10,26 +10,80 @@
 	"requestSizeLimit": "1gb",
 	"redis": {
 		"host": "redis",
-		"port": 6379
+		"port": 6379,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
-		"port": 6379
+		"port": 6379,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
 		"endpoint": ""
 	},
 	"throttling": {
-		"maxRequestsPerMs": 1000000,
-		"maxRequestBurst": 1000000,
-		"minCooldownIntervalInMs": 1000000,
-		"minThrottleIntervalInMs": 1000000,
-		"maxInMemoryCacheSize": 1000,
-		"maxInMemoryCacheAgeInMs": 60000
+		"restCallsPerTenant": {
+			"generalRestCall": {
+				"maxPerMs": 1000000,
+				"maxBurst": 1000000,
+				"minCooldownIntervalInMs": 1000000,
+				"minThrottleIntervalInMs": 1000000,
+				"maxInMemoryCacheSize": 1000,
+				"maxInMemoryCacheAgeInMs": 60000,
+				"enableEnhancedTelemetry": false
+			},
+			"getSummary": {
+				"maxPerMs": 1000000,
+				"maxBurst": 1000000,
+				"minCooldownIntervalInMs": 1000000,
+				"minThrottleIntervalInMs": 1000000,
+				"maxInMemoryCacheSize": 1000,
+				"maxInMemoryCacheAgeInMs": 60000,
+				"enableEnhancedTelemetry": false
+			},
+			"createSummary": {
+				"maxPerMs": 1000000,
+				"maxBurst": 1000000,
+				"minCooldownIntervalInMs": 1000000,
+				"minThrottleIntervalInMs": 1000000,
+				"maxInMemoryCacheSize": 1000,
+				"maxInMemoryCacheAgeInMs": 60000,
+				"enableEnhancedTelemetry": false
+			}
+		},
+		"restCallsPerCluster": {
+			"getSummary": {
+				"maxPerMs": 1000000,
+				"maxBurst": 1000000,
+				"minCooldownIntervalInMs": 1000000,
+				"minThrottleIntervalInMs": 1000000,
+				"maxInMemoryCacheSize": 1000,
+				"maxInMemoryCacheAgeInMs": 60000,
+				"enableEnhancedTelemetry": false
+			},
+			"createSummary": {
+				"maxPerMs": 1000000,
+				"maxBurst": 1000000,
+				"minCooldownIntervalInMs": 1000000,
+				"minThrottleIntervalInMs": 1000000,
+				"maxInMemoryCacheSize": 1000,
+				"maxInMemoryCacheAgeInMs": 60000,
+				"enableEnhancedTelemetry": false
+			}
+		}
 	},
 	"restGitService": {
 		"disableGitCache": false
 	},
-	"storageUrl": ""
+	"storageUrl": "",
+	"tokenRevocation": {
+		"enable": false
+	}
 }

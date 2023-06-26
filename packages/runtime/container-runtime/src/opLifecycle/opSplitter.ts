@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
@@ -11,7 +11,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
 import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
@@ -31,7 +30,7 @@ export class OpSplitter {
 			| undefined,
 		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
 		this.logger = ChildLogger.create(logger, "OpSplitter");
@@ -135,7 +134,7 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be processed
 	 * @returns A new adjusted batch which can be sent over the wire
 	 */
-	public splitCompressedBatch(batch: IBatch): IBatch {
+	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
@@ -152,10 +151,6 @@ export class OpSplitter {
 		);
 
 		const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
-		assert(
-			firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined,
-			0x517 /* Batch needs to be compressed */,
-		);
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
@@ -218,7 +213,7 @@ const chunkToBatchMessage = (
 	};
 	return {
 		contents: JSON.stringify(payload),
-		deserializedContent: payload,
+		type: payload.type,
 		metadata,
 		localOpMetadata: undefined,
 		referenceSequenceNumber,
@@ -255,7 +250,7 @@ export const splitOp = (
 		const chunk: IChunkedOp = {
 			chunkId,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
-			originalType: op.deserializedContent.type,
+			originalType: op.type,
 			totalChunks: chunkCount,
 		};
 

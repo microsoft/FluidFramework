@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable @rushstack/no-new-null */
-import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { summarizerClientType } from "./summarizerClientElection";
 
 // helper types for recursive readonly.
@@ -91,7 +91,7 @@ export class OrderedClientCollection
 	};
 	/** Pointer to end of linked list, for optimized client adds. */
 	private _youngestClient: LinkNode = this.rootNode;
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	public get count() {
 		return this.clientMap.size;
@@ -101,7 +101,7 @@ export class OrderedClientCollection
 	}
 
 	constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {
@@ -336,7 +336,7 @@ export class OrderedClientElection
 	}
 
 	constructor(
-		logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly orderedClientCollection: IOrderedClientCollection,
 		/** Serialized state from summary or current sequence number at time of load if new. */
 		initialState: ISerializedElection | number,
@@ -372,7 +372,7 @@ export class OrderedClientElection
 			// Override the initially elected client with the initial state.
 			if (initialClient?.clientId !== initialState.electedClientId) {
 				// Cannot find initially elected client, so elect undefined.
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientNotFound",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -382,7 +382,7 @@ export class OrderedClientElection
 			} else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
 				// Initially elected client is ineligible, so elect next eligible client.
 				initialClient = initialParent = this.findFirstEligibleParent(initialParent);
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientIneligible",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -457,7 +457,7 @@ export class OrderedClientElection
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
 			const electedClientIsSummarizer =
 				this._electedClient?.client.details.type === summarizerClientType;
-			// Note that we allow a summarizer client to supercede an interactive client as elected client.
+			// Note that we allow a summarizer client to supersede an interactive client as elected client.
 			if (
 				this._electedClient === undefined ||
 				(!electedClientIsSummarizer && newClientIsSummarizer)

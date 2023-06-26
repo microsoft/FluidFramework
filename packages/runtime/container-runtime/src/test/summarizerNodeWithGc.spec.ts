@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { cloneGCData, GCDataBuilder } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -16,15 +15,17 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
+import { MockLogger, TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { IFetchSnapshotResult } from "../summary/summarizerNode";
+import { IFetchSnapshotResult, ValidateSummaryResult } from "../summary/summarizerNode";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
+	SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
+import { cloneGCData } from "../gc";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
@@ -237,7 +238,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 	});
 
-	describe("Complete Summary", () => {
+	describe("Validate Summary", () => {
 		const ids = ["rootId", "midId", "leafId"] as const;
 		let rootNode: IRootSummarizerNodeWithGC;
 		let midNode: ISummarizerNodeWithGC | undefined;
@@ -280,11 +281,30 @@ describe("SummarizerNodeWithGC Tests", () => {
 			leafNode = midNode?.createChild(getSummarizeInternalFn(2), ids[2], createParam);
 		}
 
-		it("Should fail completeSummary if GC not run on root node", () => {
+		it("summary validation should fail if GC not run on root node", () => {
 			createRoot();
 			rootNode.startSummary(11, logger);
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "",
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the root node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
 				(error) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === "";
@@ -294,7 +314,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on child node", async () => {
+		it("summary validation should fail if GC not run on child node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -308,8 +328,27 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await leafNode?.summarize(false);
 			const midNodeId = `/${ids[1]}`;
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: midNodeId,
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the mid node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
 				(error) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === midNodeId;
@@ -319,7 +358,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on leaf node", async () => {
+		it("summary validation should fail if GC not run on leaf node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -332,8 +371,27 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
 			const leafNodeId = `/${ids[1]}/${ids[2]}`;
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: leafNodeId,
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the leaf node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
 				(error) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === leafNodeId;
@@ -388,7 +446,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle1");
+			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
 			let result = await rootNode.refreshLatestSummary(
 				"test-handle1",
@@ -406,7 +464,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle2");
+			rootNode.completeSummary("test-handle2", true /* validateSummary */);
 
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -420,6 +478,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
+			);
 		});
 
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
@@ -431,7 +496,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle1");
+			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
 			let result = await rootNode.refreshLatestSummary(
 				"test-handle1",
@@ -449,7 +514,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle2");
+			rootNode.completeSummary("test-handle2", true /* validateSummary */);
 
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -463,6 +528,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
+			);
 		});
 	});
 });

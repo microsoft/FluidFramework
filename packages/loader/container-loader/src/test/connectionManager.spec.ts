@@ -9,7 +9,11 @@ import {
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
 import { Deferred } from "@fluidframework/common-utils";
-import { DriverErrorType, IAnyDriverError } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorType,
+	IAnyDriverError,
+	IDocumentService,
+} from "@fluidframework/driver-definitions";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -20,10 +24,7 @@ import { pkgVersion } from "../packageVersion";
 describe("connectionManager", () => {
 	let nextClientId = 0;
 	let _mockDeltaConnection: MockDocumentDeltaConnection | undefined;
-	const mockDocumentService = new MockDocumentService(undefined /* deltaStorageFactory */, () => {
-		_mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`);
-		return _mockDeltaConnection;
-	});
+	let mockDocumentService: IDocumentService;
 	const client: Partial<IClient> = {
 		details: { capabilities: { interactive: true } },
 		mode: "write",
@@ -53,6 +54,8 @@ describe("connectionManager", () => {
 		readonlyChangeHandler: () => {},
 		reconnectionDelayHandler: () => {},
 		signalHandler: () => {},
+		establishConnectionHandler: () => {},
+		cancelConnectionHandler: () => {},
 	};
 
 	const mockLogger = new MockLogger();
@@ -66,18 +69,27 @@ describe("connectionManager", () => {
 		connectionCount = 0;
 		connectionDeferred = new Deferred<MockDocumentDeltaConnection>();
 		disconnectCount = 0;
+		mockDocumentService = new MockDocumentService(undefined /* deltaStorageFactory */, () => {
+			_mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`);
+			return _mockDeltaConnection;
+		});
 	});
 
-	it("reconnectOnError - exceptions invoke closeHandler", async () => {
-		// Arrange
-		const connectionManager = new ConnectionManager(
+	function createConnectionManager(): ConnectionManager {
+		return new ConnectionManager(
 			() => mockDocumentService,
+			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger,
 			props,
 		);
-		connectionManager.connect();
+	}
+
+	it("reconnectOnError - exceptions invoke closeHandler", async () => {
+		// Arrange
+		const connectionManager = createConnectionManager();
+		connectionManager.connect("test:reconnectOnError");
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
@@ -100,14 +112,8 @@ describe("connectionManager", () => {
 
 	it("reconnectOnError - error, disconnect, and nack handling", async () => {
 		// Arrange
-		const connectionManager = new ConnectionManager(
-			() => mockDocumentService,
-			client as IClient,
-			true /* reconnectAllowed */,
-			mockLogger,
-			props,
-		);
-		connectionManager.connect();
+		const connectionManager = createConnectionManager();
+		connectionManager.connect("test:reconnectOnError");
 		let connection = await waitForConnection();
 
 		// Act I - retryableError
@@ -187,5 +193,60 @@ describe("connectionManager", () => {
 			!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]),
 			"Should not see reconnectingDespiteFatalError event after fatal nack",
 		);
+	});
+
+	describe("readonly", () => {
+		it("default is undefined", () => {
+			const connectionManager = createConnectionManager();
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
+		});
+
+		it("force readonly", () => {
+			const connectionManager = createConnectionManager();
+
+			connectionManager.forceReadonly(false);
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
+
+			connectionManager.forceReadonly(true);
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
+				readonly: true,
+				forced: true,
+				permissions: undefined,
+				storageOnly: false,
+				storageOnlyReason: undefined,
+			});
+		});
+
+		it("readonly permissions", () => {
+			const connectionManager = createConnectionManager();
+
+			(connectionManager as any).set_readonlyPermissions(false);
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: false });
+
+			(connectionManager as any).set_readonlyPermissions(true);
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
+				readonly: true,
+				forced: false,
+				permissions: true,
+				storageOnly: false,
+				storageOnlyReason: undefined,
+			});
+		});
+
+		it("storage only", () => {
+			const connectionManager = createConnectionManager();
+			mockDocumentService.policies = { storageOnly: true };
+
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
+
+			connectionManager.connect("test");
+			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
+				readonly: true,
+				forced: false,
+				permissions: true, // storageOnly also implies client does not have write permissions
+				storageOnly: true,
+				storageOnlyReason: undefined,
+			});
+		});
 	});
 });

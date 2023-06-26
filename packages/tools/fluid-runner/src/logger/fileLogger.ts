@@ -27,7 +27,6 @@ export enum OutputFormat {
 /* eslint-disable tsdoc/syntax */
 /**
  * Options to provide upon creation of IFileLogger
- * @internal
  */
 export interface ITelemetryOptions {
 	/** Desired output format used to create a specific IFileLogger implementation */

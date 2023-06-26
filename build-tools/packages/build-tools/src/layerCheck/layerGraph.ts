@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
-import { EOL as newline } from "os";
-import * as path from "path";
+import assert from "node:assert";
+import { EOL as newline } from "node:os";
+import * as path from "node:path";
+import { readJsonSync } from "fs-extra";
 
 import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
-import { readJsonSync } from "../common/utils";
 
 const { verbose } = defaultLogger;
 

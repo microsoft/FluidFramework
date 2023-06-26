@@ -16,17 +16,21 @@ import { expect } from "chai";
 
 import {
 	CodeSpanNode,
+	DocumentNode,
 	DocumentationNode,
 	FencedCodeBlockNode,
+	HeadingNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
+	SectionNode,
 	SpanNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
+	UnorderedListNode,
 } from "../../documentation-domain";
 import { getHeadingForApiItem } from "../ApiItemUtilities";
 import { apiItemToSections } from "../TransformApiItem";
@@ -35,6 +39,7 @@ import {
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration";
 import { wrapInSection } from "../helpers";
+import { transformApiModel } from "../TransformApiModel";
 
 /**
  * Sample "default" configuration.
@@ -43,6 +48,9 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
+/**
+ * Generates an `ApiModel` from the API report file at the provided path.
+ */
 function generateModel(testReportFileName: string): ApiModel {
 	const filePath = Path.resolve(__dirname, "test-data", testReportFileName);
 
@@ -52,6 +60,10 @@ function generateModel(testReportFileName: string): ApiModel {
 	return apiModel;
 }
 
+/**
+ * Gets the API items from the provided `ApiModel`.
+ * Assumes that the model has a single package with a single entry-point.
+ */
 function getApiItems(apiModel: ApiModel): readonly ApiItem[] {
 	const packages = apiModel.packages;
 	expect(packages.length).to.equal(1);
@@ -62,6 +74,10 @@ function getApiItems(apiModel: ApiModel): readonly ApiItem[] {
 	return entryPoints[0].members;
 }
 
+/**
+ * Gets the API item with the specified name and kind from the provided list.
+ * Fails if a match is not found.
+ */
 function findApiMember(
 	members: readonly ApiItem[],
 	memberName: string,
@@ -77,6 +93,9 @@ function findApiMember(
 	);
 }
 
+/**
+ * Creates a config for testing.
+ */
 function createConfig(
 	partialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">,
 	apiModel: ApiModel,
@@ -333,5 +352,214 @@ describe("ApiItem to Documentation transformation tests", () => {
 		];
 
 		expect(result).deep.equals(expected);
+	});
+
+	it("Transform a Model with multiple entry-points", () => {
+		const model = generateModel("multiple-entry-points.json");
+		const config = createConfig(defaultPartialConfig, model);
+
+		const documents = transformApiModel(config);
+		expect(documents).to.have.length(4); // Model, package, and 2 entry-points
+
+		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
+
+		const expectedPackageDoc = new DocumentNode({
+			filePath: "test-package.md",
+			children: [
+				new SectionNode(
+					[
+						// Breadcrumb
+						new SectionNode([
+							new ParagraphNode([
+								LinkNode.createFromPlainText("Packages", "./"),
+								new PlainTextNode(" > "),
+								LinkNode.createFromPlainText("test-package", "./test-package"),
+							]),
+						]),
+
+						// Body
+						new SectionNode(
+							[
+								new UnorderedListNode([
+									LinkNode.createFromPlainText(
+										"entry-point-a",
+										"./test-package/entry-point-a-entrypoint",
+									),
+									LinkNode.createFromPlainText(
+										"entry-point-b",
+										"./test-package/entry-point-b-entrypoint",
+									),
+								]),
+							],
+							HeadingNode.createFromPlainText("Entry Points"),
+						),
+					],
+					HeadingNode.createFromPlainText("test-package"),
+				),
+			],
+		});
+		expect(documents[1]).to.deep.equal(expectedPackageDoc);
+
+		const expectedEntryPointADoc = new DocumentNode({
+			filePath: "test-package/entry-point-a-entrypoint.md",
+			children: [
+				new SectionNode(
+					[
+						// Breadcrumb
+						new SectionNode([
+							new ParagraphNode([
+								LinkNode.createFromPlainText("Packages", "./"),
+								new PlainTextNode(" > "),
+								LinkNode.createFromPlainText("test-package", "./test-package"),
+								new PlainTextNode(" > "),
+								LinkNode.createFromPlainText(
+									"entry-point-a",
+									"./test-package/entry-point-a-entrypoint",
+								),
+							]),
+						]),
+
+						// Variables table
+						new SectionNode(
+							[
+								new TableNode(
+									[
+										new TableBodyRowNode([
+											new TableBodyCellNode([
+												LinkNode.createFromPlainText(
+													"hello",
+													"./test-package#hello-variable",
+												),
+											]),
+											new TableBodyCellNode([
+												CodeSpanNode.createFromPlainText("readonly"),
+											]),
+											TableBodyCellNode.createFromPlainText("Test Constant"),
+										]),
+									],
+									new TableHeaderRowNode([
+										TableHeaderCellNode.createFromPlainText("Variable"),
+										TableHeaderCellNode.createFromPlainText("Modifiers"),
+										TableHeaderCellNode.createFromPlainText("Description"),
+									]),
+								),
+							],
+							HeadingNode.createFromPlainText("Variables"),
+						),
+
+						// Variables details
+						new SectionNode(
+							[
+								new SectionNode(
+									[
+										// Summary
+										new SectionNode([
+											ParagraphNode.createFromPlainText("Test Constant"),
+										]),
+
+										// Signature
+										new SectionNode(
+											[
+												FencedCodeBlockNode.createFromPlainText(
+													'hello = "Hello"',
+													"typescript",
+												),
+											],
+											HeadingNode.createFromPlainText(
+												"Signature",
+												"hello-signature",
+											),
+										),
+									],
+									HeadingNode.createFromPlainText("hello", "hello-variable"),
+								),
+							],
+							HeadingNode.createFromPlainText("Variable Details"),
+						),
+					],
+					HeadingNode.createFromPlainText("entry-point-a"),
+				),
+			],
+		});
+		expect(documents[2]).to.deep.equal(expectedEntryPointADoc);
+
+		const expectedEntryPointBDoc = new DocumentNode({
+			filePath: "test-package/entry-point-b-entrypoint.md",
+			children: [
+				new SectionNode(
+					[
+						// Breadcrumb
+						new SectionNode([
+							new ParagraphNode([
+								LinkNode.createFromPlainText("Packages", "./"),
+								new PlainTextNode(" > "),
+								LinkNode.createFromPlainText("test-package", "./test-package"),
+								new PlainTextNode(" > "),
+								LinkNode.createFromPlainText(
+									"entry-point-b",
+									"./test-package/entry-point-b-entrypoint",
+								),
+							]),
+						]),
+
+						// Variables table
+						new SectionNode(
+							[
+								new TableNode(
+									[
+										new TableBodyRowNode([
+											new TableBodyCellNode([
+												LinkNode.createFromPlainText(
+													"world",
+													"./test-package#world-variable",
+												),
+											]),
+											TableBodyCellNode.createFromPlainText("Test Constant"),
+										]),
+									],
+									new TableHeaderRowNode([
+										TableHeaderCellNode.createFromPlainText("Variable"),
+										TableHeaderCellNode.createFromPlainText("Description"),
+									]),
+								),
+							],
+							HeadingNode.createFromPlainText("Variables"),
+						),
+
+						// Variables details
+						new SectionNode(
+							[
+								new SectionNode(
+									[
+										// Summary
+										new SectionNode([
+											ParagraphNode.createFromPlainText("Test Constant"),
+										]),
+
+										// Signature
+										new SectionNode(
+											[
+												FencedCodeBlockNode.createFromPlainText(
+													'world = "world"',
+													"typescript",
+												),
+											],
+											HeadingNode.createFromPlainText(
+												"Signature",
+												"world-signature",
+											),
+										),
+									],
+									HeadingNode.createFromPlainText("world", "world-variable"),
+								),
+							],
+							HeadingNode.createFromPlainText("Variable Details"),
+						),
+					],
+					HeadingNode.createFromPlainText("entry-point-b"),
+				),
+			],
+		});
+		expect(documents[3]).to.deep.equal(expectedEntryPointBDoc);
 	});
 });

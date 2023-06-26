@@ -40,6 +40,30 @@ use_old_TypeAliasDeclaration_Factory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_GCDataBuilder": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_GCDataBuilder():
+    TypeOnly<old.GCDataBuilder>;
+declare function use_current_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<current.GCDataBuilder>);
+use_current_ClassDeclaration_GCDataBuilder(
+    get_old_ClassDeclaration_GCDataBuilder());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_GCDataBuilder": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_GCDataBuilder():
+    TypeOnly<current.GCDataBuilder>;
+declare function use_old_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<old.GCDataBuilder>);
+use_old_ClassDeclaration_GCDataBuilder(
+    get_current_ClassDeclaration_GCDataBuilder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ObjectStoragePartition": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ObjectStoragePartition():
@@ -684,6 +708,30 @@ declare function use_old_FunctionDeclaration_seqFromTree(
     use: TypeOnly<typeof old.seqFromTree>);
 use_old_FunctionDeclaration_seqFromTree(
     get_current_FunctionDeclaration_seqFromTree());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof old.unpackChildNodesUsedRoutes>;
+declare function use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof current.unpackChildNodesUsedRoutes>);
+use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_old_FunctionDeclaration_unpackChildNodesUsedRoutes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof current.unpackChildNodesUsedRoutes>;
+declare function use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof old.unpackChildNodesUsedRoutes>);
+use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_current_FunctionDeclaration_unpackChildNodesUsedRoutes());
 
 /*
 * Validate forward compat by using old type in place of current type

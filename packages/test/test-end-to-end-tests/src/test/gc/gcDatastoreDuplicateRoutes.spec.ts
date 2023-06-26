@@ -20,12 +20,10 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
-import {
-	gcTreeKey,
-	gcBlobPrefix,
-	IGarbageCollectionState,
-} from "@fluidframework/runtime-definitions";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc/index.js";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called

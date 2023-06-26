@@ -49,10 +49,12 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
-	sectionBody.push("1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.");
-	sectionBody.push(`1. Run \`pnpm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
+	sectionBody.push(
+		"1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.",
+	);
+	sectionBody.push(`1. Run \`pnpm install\` and \`pnpm run build:fast --nolint\` from the \`FluidFramework\` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      \`npm run build:fast -- --nolint ${packageName}\``);
+      \`pnpm run build:fast --nolint ${packageName}\``);
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
@@ -61,7 +63,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 	}
 
 	sectionBody.push(
-		`1. Run \`npm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
+		`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
 	);
 
 	return formattedSectionText(
@@ -95,6 +97,19 @@ npm i ${packageName}${devDependency ? " -D" : ""}
 const generateTrademarkSection = (includeHeading) => {
 	const sectionBody = readTemplate("Trademark-Template.md");
 	return formattedSectionText(sectionBody, includeHeading ? "Trademark" : undefined);
+};
+
+/**
+ * Generats a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const generateDependencyGuidelines = (includeHeading) => {
+	const sectionBody = readTemplate("Dependency-Guidelines-Template.md");
+	return formattedSectionText(
+		sectionBody,
+		includeHeading ? "Using Fluid Framework libraries" : undefined,
+	);
 };
 
 /**
@@ -222,7 +237,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	const sections = [];
+	const sections = [generateDependencyGuidelines(true)];
 	if (options.installation !== "FALSE") {
 		sections.push(generateInstallationSection(packageName, options.devDependency, true));
 	}
@@ -401,6 +416,21 @@ function readmeContributionGuidelinesSectionTransform(content, options, config) 
 }
 
 /**
+ * Generates a README section with fluid-framework dependency guidelines.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeDependencyGuidelinesSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	return formattedGeneratedContentBody(generateDependencyGuidelines(includeHeading));
+}
+
+/**
  * Generates a README "help" section.
  *
  * @param {object} content - The original document file contents.
@@ -513,6 +543,18 @@ module.exports = {
 		 * ```
 		 */
 		README_CONTRIBUTION_GUIDELINES_SECTION: readmeContributionGuidelinesSectionTransform,
+
+		/**
+		 * See {@link readmeContributionGuidelinesSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_DEPENDENCY_GUIDELINES_SECTION: readmeDependencyGuidelinesSectionTransform,
 
 		/**
 		 * See {@link readmeHelpSectionTransform}.

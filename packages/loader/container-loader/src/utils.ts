@@ -13,7 +13,11 @@ import {
 } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import {
+	DeltaStreamConnectionForbiddenError,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -126,7 +130,9 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+export const getSnapshotTreeFromSerializedContainer = (
+	detachedContainerSnapshot: ISummaryTree,
+): ISnapshotTreeWithBlobContents => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x1e0 /* "Protocol and App summary trees should be present" */,
@@ -142,4 +148,14 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
 
 export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
 	return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+}
+
+export function isDeltaStreamConnectionForbiddenError(
+	error: any,
+): error is DeltaStreamConnectionForbiddenError {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		error?.errorType === DriverErrorType.deltaStreamConnectionForbidden
+	);
 }

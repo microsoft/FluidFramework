@@ -33,3 +33,8 @@ export async function getOrCreateRepository(
 		await Axios.post(`${endpoint}/${owner}/repos`, createParams, { headers });
 	}
 }
+
+/**
+ * getRandomInt is not and should not be used as part of any secure random number generation
+ */
+export const getRandomInt = (range: number) => Math.floor(Math.random() * range);

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, writeFileSync } from "fs";
+import { promises as fs, writeFileSync, mkdirSync } from "fs";
+import path from "path";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -105,22 +106,34 @@ export async function performFuzzActionsAsync<
 		operation = await generator(state)
 	) {
 		operations.push(operation);
-		if (saveInfo !== undefined && operations.length === saveInfo.saveAt) {
-			await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
-		}
 
 		try {
 			state = (await applyOperation(operation)) ?? state;
 		} catch (err) {
 			console.log(`Error encountered on operation number ${operations.length}`);
 			if (saveInfo?.saveOnFailure === true) {
-				await fs.writeFile(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
+				await saveOpsToFile(saveInfo.filepath, operations);
 			}
 			throw err;
 		}
 	}
 
+	if (saveInfo?.saveOnSuccess === true) {
+		await saveOpsToFile(saveInfo.filepath, operations);
+	}
+
 	return state;
+}
+
+/**
+ * Saves the operations in a file and creates the directory if it doesn't exist.
+ *
+ * @param filepath - path to the file
+ * @param operations - operations to save in the file
+ */
+async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+	await fs.mkdir(path.dirname(filepath), { recursive: true });
+	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
 
 /**
@@ -206,20 +219,32 @@ export function performFuzzActions<
 
 	for (let operation = generator(state); operation !== done; operation = generator(state)) {
 		operations.push(operation);
-		if (saveInfo !== undefined && operations.length === saveInfo.saveAt) {
-			writeFileSync(saveInfo.filepath, JSON.stringify(operations));
-		}
 
 		try {
 			state = applyOperation(operation);
 		} catch (err) {
 			console.log(`Error encountered on operation number ${operations.length}`);
 			if (saveInfo?.saveOnFailure === true) {
-				writeFileSync(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
+				saveOpsToFileSync(saveInfo.filepath, operations);
 			}
 			throw err;
 		}
 	}
 
+	if (saveInfo?.saveOnSuccess === true) {
+		saveOpsToFileSync(saveInfo.filepath, operations);
+	}
+
 	return state;
+}
+
+/**
+ * Saves the operations in a file and creates the directory if it doesn't exist.
+ *
+ * @param filepath - path to the file
+ * @param operations - operations to save in the file
+ */
+function saveOpsToFileSync(filepath: string, operations: { type: string | number }[]) {
+	mkdirSync(path.dirname(filepath), { recursive: true });
+	writeFileSync(filepath, JSON.stringify(operations, undefined, 4));
 }

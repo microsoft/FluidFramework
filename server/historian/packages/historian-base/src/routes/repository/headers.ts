@@ -5,7 +5,11 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { IHeader } from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -16,20 +20,26 @@ import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	async function getHeader(
 		tenantId: string,
@@ -37,14 +47,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<IHeader> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getHeader(sha, useCache);
 	}
 
@@ -54,21 +65,23 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<any> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getFullTree(sha, useCache);
 	}
 
 	router.get(
 		"/repos/:ignored?/:tenantId/headers/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getHeader(
@@ -84,7 +97,8 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/tree/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getTree(

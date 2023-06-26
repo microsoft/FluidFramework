@@ -135,6 +135,7 @@ export class SharedCell<T = any>
 
 		// Set the value locally.
 		const previousValue = this.setCore(value);
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -154,6 +155,7 @@ export class SharedCell<T = any>
 	public delete(): void {
 		// Delete the value locally.
 		const previousValue = this.deleteCore();
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -182,11 +184,16 @@ export class SharedCell<T = any>
 	}
 
 	/**
-	 * Set the attribution through the SequencedDocumentMessage
+	 * Set the Op-based attribution through the SequencedDocumentMessage,
+	 * or set the local/detached attribution.
 	 */
-	private setAttribution(message: ISequencedDocumentMessage): void {
+	private setAttribution(message?: ISequencedDocumentMessage): void {
 		if (this.options?.attribution?.track ?? false) {
-			this.attribution = { type: "op", seq: message.sequenceNumber };
+			this.attribution = message
+				? { type: "op", seq: message.sequenceNumber }
+				: this.isAttached()
+				? { type: "local" }
+				: { type: "detached", id: 0 };
 		}
 	}
 
@@ -196,7 +203,10 @@ export class SharedCell<T = any>
 	 * @returns The summary of the current state of the Cell.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const content: ICellValue = { value: this.data, attribution: this.attribution };
+		const content: ICellValue =
+			this.attribution?.type === "local"
+				? { value: this.data, attribution: undefined }
+				: { value: this.data, attribution: this.attribution };
 		return createSingleBlobSummary(
 			snapshotFileName,
 			serializer.stringify(content, this.handle),

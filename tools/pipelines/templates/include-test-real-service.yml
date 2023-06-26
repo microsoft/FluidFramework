@@ -10,7 +10,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluidframework/test-end-to-end-tests"
+  default: "@fluid-internal/test-end-to-end-tests"
 
 - name: testWorkspace
   type: string
@@ -40,15 +40,9 @@ parameters:
   type: string
   default: null
 
-- name: downloadAzureTestArtifacts
-  type: boolean
-  default: false
-
 # Id of the pipeline run that contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
 # incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
-# Make sure that the value provided corresponds to a run of the 'Build - azure' pipeline if downloadAzureTestArtifacts=true
-# or a run of the 'Build - client packages' otherwise.
 - name: artifactBuildId
   type: string
 
@@ -80,6 +74,7 @@ jobs:
       condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
+      - group: ado-feeds
       - name: isTestBranch
         value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
         readonly: true
@@ -96,21 +91,18 @@ jobs:
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
+      - name: artifactPipeline
+        value: Build - client packages
       - name: feed
         ${{ if eq(variables.isTestBranch, 'true') }}:
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+          value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
         ${{ else }}:
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+          value: $(ado-feeds-build) # Comes from the ado-feeds variable group
       - name: devFeed
         ${{ if eq(variables.isTestBranch, 'true') }}:
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+          value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
         ${{ else }}:
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      - name: artifactPipeline
-        ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
-          value: Build - azure
-        ${{ else }}:
-          value: Build - client packages
+          value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
 
       steps:
       # Setup
@@ -207,6 +199,7 @@ jobs:
         inputs:
           targetType: 'inline'
           workingDirectory: ${{ parameters.testWorkspace }}
+          # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
           script: |
             echo Initialize package
             npm init --yes
@@ -218,8 +211,8 @@ jobs:
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-            echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-            echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+            echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+            echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
             cat .npmrc
 
@@ -353,8 +346,8 @@ jobs:
         condition: succeededOrFailed()
 
       # Log Test Failures
-      - template: include-log-test-failures.yml
-        parameters:
-          buildDirectory: ${{ variables.testPackageDir }}
+      # - template: include-log-test-failures.yml
+      #   parameters:
+      #     buildDirectory: ${{ variables.testPackageDir }}
 
       - ${{ parameters.additionalSteps }}

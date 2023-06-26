@@ -68,9 +68,9 @@ export type AsyncWeights<TOp, TState> = [
 ][];
 
 export interface SaveInfo {
-	saveAt?: number;
 	saveOnFailure: boolean;
-	/** Filepath to dump the history file. Containing folder must already be created. */
+	saveOnSuccess?: boolean;
+	/** Filepath to dump the history file. Containing folder is created if it doesn't exist. */
 	filepath: string;
 }
 

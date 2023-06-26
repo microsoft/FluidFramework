@@ -35,6 +35,7 @@ import {
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 	waitForContainerConnection,
+	timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -298,7 +299,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedString>(sharedStringId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.equal(message.type, ContainerMessageType.FluidDataStoreOp);
 
 			assert.equal(message.contents.contents.type, DataStoreMessageType.ChannelOp);
@@ -320,6 +324,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.insertText(0, "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.insertText(0, "b");
@@ -338,7 +345,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sharedMapId,
@@ -356,6 +366,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("1", "b");
@@ -373,7 +386,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const response = await container.request({ url: "/" });
 		const dataStore = response.value as ITestFluidObject;
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.id,
 				testChannelId,
@@ -394,6 +410,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		});
 
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire attach op
 		const testChannel = dataStore.runtime.createChannel(
@@ -415,12 +434,19 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
+
 		const router = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
 		const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			try {
 				assert.strictEqual(
 					message.type,
@@ -467,7 +493,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 			crcId,
 		);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				crcId,
@@ -485,6 +514,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		await testChannel1.write("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -508,7 +540,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sharedDirectoryId,
@@ -526,6 +561,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("0", "a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("1", "b");
@@ -543,7 +581,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sharedCellId,
@@ -561,6 +602,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		testChannel1.set("a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.set("b");
@@ -577,7 +621,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sharedInkId,
@@ -606,6 +653,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		};
 		testChannel1.createStroke({ color, thickness: 10 });
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.createStroke({ color, thickness: 20 });
@@ -623,7 +673,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<ConsensusQueue>(cocId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				cocId,
@@ -641,6 +694,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Fire op before attaching the container
 		await testChannel1.add("a");
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -660,7 +716,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sparseMatrixId,
@@ -689,6 +748,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		testChannel1.insertRows(0, 1);
 		testChannel1.insertCols(0, 1);
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.setItems(0, 0, seg.items);
@@ -707,7 +769,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = response.value as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 
-		dataStore.context.containerRuntime.on("op", (message) => {
+		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
+			if (runtimeMessage === false) {
+				return;
+			}
 			assert.strictEqual(
 				message.contents.contents.content.address,
 				sharedMatrixId,
@@ -726,6 +791,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		testChannel1.insertRows(0, 20);
 		testChannel1.insertCols(0, 20);
 		const containerP = container.attach(request);
+		if (container.attachState === AttachState.Detached) {
+			await timeoutPromise((resolve) => container.once("attaching", resolve));
+		}
 
 		// Fire op after the summary is taken and before it is attached.
 		testChannel1.insertRows(0, 9);
@@ -813,10 +881,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 
 	itExpects(
 		"Container should be closed on failed attach with non retryable error",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "Test Error" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" }],
 		async () => {
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 

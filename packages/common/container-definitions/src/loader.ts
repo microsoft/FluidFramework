@@ -160,7 +160,19 @@ export interface IContainerEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
 
 	/**
-	 * Emitted when a {@link AttachState.Detached | detached} container is
+	 * Emitted when a {@link AttachState.Detached | detached} container begins the process of
+	 * {@link AttachState.Attaching | attached} to the Fluid service.
+	 *
+	 * @see
+	 *
+	 * - {@link IContainer.attachState}
+	 *
+	 * - {@link IContainer.attach}
+	 */
+	(event: "attaching", listener: () => void);
+
+	/**
+	 * Emitted when the {@link AttachState.Attaching | attaching} process is complete and the container is
 	 * {@link AttachState.Attached | attached} to the Fluid service.
 	 *
 	 * @see
@@ -343,7 +355,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose?(error?: ICriticalContainerError): void;
+	dispose(error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -357,7 +369,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
 	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState(): string;
 

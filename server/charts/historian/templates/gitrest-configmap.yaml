@@ -34,6 +34,7 @@ data:
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
             "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},
+            "apiMetricsSamplingPeriod": {{ .Values.gitrest.git.apiMetricsSamplingPeriod }},
             {{- if eq (toString .Values.gitrest.git.enableLowIoWrite) "initial" }}
             "enableLowIoWrite": "{{ .Values.gitrest.git.enableLowIoWrite }}",
             {{- else }}

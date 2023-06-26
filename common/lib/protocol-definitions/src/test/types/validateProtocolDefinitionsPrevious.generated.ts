@@ -371,6 +371,7 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -419,6 +420,7 @@ declare function get_current_InterfaceDeclaration_IDocumentAttributes():
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: TypeOnly<old.IDocumentAttributes>);
 use_old_InterfaceDeclaration_IDocumentAttributes(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentAttributes());
 
 /*
@@ -472,26 +474,14 @@ use_old_InterfaceDeclaration_IDocumentSystemMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IHelpMessage": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IHelpMessage": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IHelpMessage():
-    TypeOnly<old.IHelpMessage>;
-declare function use_current_InterfaceDeclaration_IHelpMessage(
-    use: TypeOnly<current.IHelpMessage>);
-use_current_InterfaceDeclaration_IHelpMessage(
-    get_old_InterfaceDeclaration_IHelpMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IHelpMessage": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IHelpMessage": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IHelpMessage():
-    TypeOnly<current.IHelpMessage>;
-declare function use_old_InterfaceDeclaration_IHelpMessage(
-    use: TypeOnly<old.IHelpMessage>);
-use_old_InterfaceDeclaration_IHelpMessage(
-    get_current_InterfaceDeclaration_IHelpMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -616,26 +606,14 @@ use_old_InterfaceDeclaration_IProtocolState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IQueueMessage": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IQueueMessage": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IQueueMessage():
-    TypeOnly<old.IQueueMessage>;
-declare function use_current_InterfaceDeclaration_IQueueMessage(
-    use: TypeOnly<current.IQueueMessage>);
-use_current_InterfaceDeclaration_IQueueMessage(
-    get_old_InterfaceDeclaration_IQueueMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IQueueMessage": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IQueueMessage": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IQueueMessage():
-    TypeOnly<current.IQueueMessage>;
-declare function use_old_InterfaceDeclaration_IQueueMessage(
-    use: TypeOnly<old.IQueueMessage>);
-use_old_InterfaceDeclaration_IQueueMessage(
-    get_current_InterfaceDeclaration_IQueueMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -827,6 +805,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMes
 declare function use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
     use: TypeOnly<old.ISequencedDocumentAugmentedMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMessage());
 
 /*
@@ -851,6 +830,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentMessage():
 declare function use_old_InterfaceDeclaration_ISequencedDocumentMessage(
     use: TypeOnly<old.ISequencedDocumentMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentMessage());
 
 /*
@@ -875,6 +855,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentSystemMessag
 declare function use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
     use: TypeOnly<old.ISequencedDocumentSystemMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentSystemMessage());
 
 /*
@@ -1487,6 +1468,7 @@ declare function get_old_EnumDeclaration_MessageType():
 declare function use_current_EnumDeclaration_MessageType(
     use: TypeOnly<current.MessageType>);
 use_current_EnumDeclaration_MessageType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MessageType());
 
 /*
