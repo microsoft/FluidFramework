@@ -837,6 +837,11 @@ export class ContainerRuntime
 	}
 
 	public get closeFn(): (error?: ICriticalContainerError) => void {
+		if (this._summarizer !== undefined) {
+			// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
+			return this.disposeFn;
+		}
+
 		// Also call disposeFn to retain functionality of runtime being disposed on close
 		return (error?: ICriticalContainerError) => {
 			this.context.closeFn(error);
