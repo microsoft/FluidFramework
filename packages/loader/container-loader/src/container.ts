@@ -1022,7 +1022,8 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						category: "generic",
+						// Only log error if container isn't closed
+						category: !this.closed && error !== undefined ? "error" : "generic",
 					},
 					error,
 				);
