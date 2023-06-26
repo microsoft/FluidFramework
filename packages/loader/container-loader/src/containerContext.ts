@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
@@ -37,6 +38,14 @@ import {
 import { UsageError } from "@fluidframework/container-utils";
 
 /**
+ * Internal events for the ContainerContext to communicate up to the Container.
+ */
+export interface IContainerContextEvents extends IEvent {
+	(event: "dirty", listener: (readonly: boolean) => void): void;
+	(event: "saved", listener: (readonly: boolean) => void): void;
+}
+
+/**
  * Events that {@link ContainerContext} can emit through its lifecycle.
  *
  * "runtimeInstantiated" - When an {@link @fluidframework/container-definitions#IRuntime} has been instantiated (by
@@ -46,7 +55,10 @@ import { UsageError } from "@fluidframework/container-utils";
  */
 type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 
-export class ContainerContext implements IContainerContext {
+export class ContainerContext
+	extends TypedEventEmitter<IContainerContextEvents>
+	implements IContainerContext
+{
 	public static async createOrLoad(
 		options: ILoaderOptions,
 		scope: FluidObject,
@@ -64,7 +76,6 @@ export class ContainerContext implements IContainerContext {
 		submitSignalFn: (contents: any) => void,
 		disposeFn: (error?: ICriticalContainerError) => void,
 		closeFn: (error?: ICriticalContainerError) => void,
-		updateDirtyContainerState: (dirty: boolean) => void,
 		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		getContainerDiagnosticId: () => string | undefined,
 		getClientId: () => string | undefined,
@@ -93,7 +104,6 @@ export class ContainerContext implements IContainerContext {
 			submitSignalFn,
 			disposeFn,
 			closeFn,
-			updateDirtyContainerState,
 			getAbsoluteUrl,
 			getContainerDiagnosticId,
 			getClientId,
@@ -242,7 +252,6 @@ export class ContainerContext implements IContainerContext {
 		public readonly submitSignalFn: (contents: any) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
-		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		private readonly _getContainerDiagnosticId: () => string | undefined,
 		private readonly _getClientId: () => string | undefined,
@@ -254,6 +263,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
+		super();
 		this._quorum = quorum;
 
 		this.supportedFeatures = new Map([
@@ -338,6 +348,14 @@ export class ContainerContext implements IContainerContext {
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
 		this.runtime.setAttachState(attachState);
 	}
+
+	public readonly updateDirtyContainerState = (dirty: boolean): void => {
+		if (dirty) {
+			this.emit("dirty");
+		} else {
+			this.emit("saved");
+		}
+	};
 
 	// #region private
 
