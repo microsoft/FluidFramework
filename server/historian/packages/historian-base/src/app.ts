@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -34,7 +34,7 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -86,7 +86,7 @@ export function create(
 		restClusterThrottlers,
 		cache,
 		asyncLocalStorage,
-		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);

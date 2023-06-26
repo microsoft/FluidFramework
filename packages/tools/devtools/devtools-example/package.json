@@ -44,6 +44,7 @@
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",

@@ -111,9 +111,7 @@ describe("Pending State Manager", () => {
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
 					reSubmit: () => {},
-					orderSequentially: (callback: () => void) => {
-						callback();
-					},
+					reSubmitBatch: () => {},
 				},
 				undefined /* initialLocalState */,
 				undefined /* logger */,
@@ -288,7 +286,7 @@ describe("Pending State Manager", () => {
 					close: () => {},
 					connected: () => true,
 					reSubmit: () => {},
-					orderSequentially: () => {},
+					reSubmitBatch: () => {},
 				},
 				{ pendingStates },
 				undefined /* logger */,
