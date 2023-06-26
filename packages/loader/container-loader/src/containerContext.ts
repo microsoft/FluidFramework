@@ -50,12 +50,15 @@ type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
 		container: Container,
+		options: ILoaderOptions,
 		scope: FluidObject,
 		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
 		version: IVersion | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		storage: IDocumentStorageService,
 		quorum: IQuorum,
+		audience: IAudience,
 		loader: ILoader,
 		submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
 		submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number,
@@ -70,12 +73,15 @@ export class ContainerContext implements IContainerContext {
 	): Promise<ContainerContext> {
 		const context = new ContainerContext(
 			container,
+			options,
 			scope,
 			runtimeFactory,
 			baseSnapshot,
 			version,
 			deltaManager,
+			storage,
 			quorum,
+			audience,
 			loader,
 			submitFn,
 			submitSummaryFn,
@@ -127,11 +133,11 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get audience(): IAudience {
-		return this.container.audience;
+		return this._audience;
 	}
 
 	public get options(): ILoaderOptions {
-		return this.container.options;
+		return this._options;
 	}
 
 	public get baseSnapshot() {
@@ -139,7 +145,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get storage(): IDocumentStorageService {
-		return this.container.storage;
+		return this._storage;
 	}
 
 	private _runtime: IRuntime | undefined;
@@ -199,12 +205,15 @@ export class ContainerContext implements IContainerContext {
 
 	constructor(
 		private readonly container: Container,
+		private readonly _options: ILoaderOptions,
 		public readonly scope: FluidObject,
 		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly _storage: IDocumentStorageService,
 		quorum: IQuorum,
+		private readonly _audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,

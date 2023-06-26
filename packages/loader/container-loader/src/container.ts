@@ -2309,12 +2309,15 @@ export class Container
 
 		this._context = await ContainerContext.createOrLoad(
 			this,
+			this.options,
 			this.scope,
 			runtimeFactory,
 			snapshot,
 			this._loadedFromVersion,
 			new DeltaManagerProxy(this._deltaManager),
+			this.storageAdapter,
 			new QuorumProxy(this.protocolHandler.quorum),
+			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
