@@ -161,7 +161,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			set: (newContent: ITreeCursor): void => {
 				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, false, id),
+					valueFieldKind.changeHandler.editor.set(newContent, id),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},

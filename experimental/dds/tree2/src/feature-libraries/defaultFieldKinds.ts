@@ -44,7 +44,7 @@ import {
 	makeOptionalFieldCodecFamily,
 	noChangeCodecFamily,
 } from "./defaultFieldChangeCodecs";
-import { ValueChangeset, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
 /**
  * @alpha
@@ -213,11 +213,11 @@ export const counter: BrandedFieldKind<
 	new Set(),
 );
 
-export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 */
-	set(newValue: ITreeCursor): ValueChangeset;
+	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
 }
 
 const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
@@ -486,10 +486,16 @@ const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
-const valueChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
+const valueFieldEditor: ValueFieldEditor = {
+	...optionalFieldEditor,
+	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
+		optionalFieldEditor.set(newContent, false, id),
+};
+
+const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
 	rebaser: optionalChangeRebaser,
 	codecsFactory: makeOptionalFieldCodecFamily,
-	editor: optionalFieldEditor,
+	editor: valueFieldEditor,
 
 	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
 		optionalFieldIntoDelta(change, deltaFromChild),
@@ -500,7 +506,7 @@ const valueChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEdi
 /**
  * Exactly one item.
  */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, OptionalFieldEditor> =
+export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
 	brandedFieldKind(
 		"Value",
 		Multiplicity.Value,
