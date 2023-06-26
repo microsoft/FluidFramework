@@ -85,7 +85,7 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		newValue: T,
-		invalidateDependents: boolean, // TODO: Is this still needed?
+		invalidateDependents: boolean,
 	): void;
 }
 

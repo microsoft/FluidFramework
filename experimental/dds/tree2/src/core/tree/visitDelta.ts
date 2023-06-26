@@ -117,7 +117,6 @@ interface PassConfig {
 	readonly func: Pass;
 	readonly applyValueChanges: boolean;
 
-	// XXX: Does this need to be changed?
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
 	readonly movedOutRanges: RangeMap<Delta.MoveId>;
 }
