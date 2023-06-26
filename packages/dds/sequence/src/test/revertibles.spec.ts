@@ -274,7 +274,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection2 = sharedString2.getIntervalCollection("test");
 	});
 
-	it("interval change, range remove, ack, revert range remove", () => {
+	it("interval change, range remove, ack, revert change interval", () => {
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
 			appendChangeIntervalToRevertibles(
 				sharedString,
@@ -293,6 +293,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		containerRuntimeFactory.processAllMessages();
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
 	});
 
@@ -310,10 +311,10 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString.removeRange(0, 5);
-		collection.change(id, 6, 8);
+		collection.change(id, 1, 2);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 	});
 
 	it("remote string remove interacting with reverting an interval remove", () => {

@@ -408,14 +408,16 @@ function revertLocalChange(
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
+	const startSlide = collection.getSlideToSegment(revertible.start);
 	const startSlidePos: number =
-		revertible.start.getSegment() === undefined
-			? collection.getSlideToSegment(revertible.start)?.offset
+		startSlide !== undefined && string.getPosition(startSlide.segment) !== -1
+			? string.getPosition(startSlide.segment) + (startSlide.offset as number)
 			: start;
 	const end = string.localReferencePositionToPosition(revertible.end);
+	const endSlide = collection.getSlideToSegment(revertible.end);
 	const endSlidePos: number =
-		revertible.end.getSegment() === undefined
-			? collection.getSlideToSegment(revertible.end)?.offset
+		endSlide !== undefined && string.getPosition(endSlide.segment) !== -1
+			? string.getPosition(endSlide.segment) + (endSlide.offset as number)
 			: end;
 	collection.change(id, startSlidePos, endSlidePos);
 
