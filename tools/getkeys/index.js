@@ -16,8 +16,9 @@ const appendFile = util.promisify(fs.appendFile);
 
 // Wraps the given string in quotes, escaping any quotes already present in the string
 // with '\"', which is compatible with cmd, bash, and zsh.
+// Also, backticks in the middle of a string break the string and cause shells to complain about unmatched " characters.
 function quote(str) {
-	return `"${str.split('"').join('\\"')}"`;
+	return `"${str.split('"').join('\\"').replace('`', '\\`')}"`;
 }
 
 // Converts the given 'entries' [key, value][] array into export statements for bash
