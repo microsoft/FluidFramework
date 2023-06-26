@@ -455,12 +455,17 @@ export class Loader implements IHostLoader {
 		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
 			| string
 			| undefined;
+		const shouldFreeze = request.headers[LoaderHeader.loadMode]?.freezeAfterLoad === true;
+
 		if (opsBeforeReturn === "sequenceNumber" && fromSequenceNumber < 0) {
 			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
 			// If it is negative it was either left undefined or set to a negative value. Either way we should throw an error.
 			throw new Error("sequenceNumber must be set to a non-negative integer");
+		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== -1) {
+			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be set to -1 (default value).
+			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
+			throw new Error("opsBeforeReturn must be set to \"sequenceNumber\"");
 		}
-		const shouldFreeze = request.headers[LoaderHeader.loadMode]?.freezeAfterLoad === true;
 
 		let container: Container;
 		if (canCache) {
