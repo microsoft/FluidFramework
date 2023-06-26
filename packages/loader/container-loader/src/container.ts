@@ -2319,10 +2319,10 @@ export class Container
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
 			() => this.serviceConfiguration,
-			() => this.connected,
 			() => this.attachState,
 			this._deltaManager.clientDetails,
 			existing,
+			this.connected,
 			this.subLogger,
 			pendingLocalState,
 		);

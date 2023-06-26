@@ -69,10 +69,10 @@ export class ContainerContext implements IContainerContext {
 		getContainerDiagnosticId: () => string | undefined,
 		getClientId: () => string | undefined,
 		getServiceConfiguration: () => IClientConfiguration | undefined,
-		getConnected: () => boolean,
 		getAttachState: () => AttachState,
 		clientDetails: IClientDetails,
 		existing: boolean,
+		connected: boolean,
 		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
@@ -98,10 +98,10 @@ export class ContainerContext implements IContainerContext {
 			getContainerDiagnosticId,
 			getClientId,
 			getServiceConfiguration,
-			getConnected,
 			getAttachState,
 			clientDetails,
 			existing,
+			connected,
 			taggedLogger,
 			pendingLocalState,
 		);
@@ -126,7 +126,6 @@ export class ContainerContext implements IContainerContext {
 		return this._clientDetails;
 	}
 
-	private _connected: boolean;
 	/**
 	 * When true, ops are free to flow
 	 * When false, ops should be kept as pending or rejected
@@ -248,14 +247,13 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getContainerDiagnosticId: () => string | undefined,
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
-		private readonly _getConnected: () => boolean,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _clientDetails: IClientDetails,
 		public readonly existing: boolean,
+		private _connected: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
-		this._connected = this._getConnected();
 		this._quorum = quorum;
 
 		this.supportedFeatures = new Map([
