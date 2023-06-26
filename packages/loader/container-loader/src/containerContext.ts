@@ -67,6 +67,7 @@ export class ContainerContext implements IContainerContext {
 		disposeFn: (error?: ICriticalContainerError) => void,
 		closeFn: (error?: ICriticalContainerError) => void,
 		updateDirtyContainerState: (dirty: boolean) => void,
+		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		existing: boolean,
 		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
@@ -90,6 +91,7 @@ export class ContainerContext implements IContainerContext {
 			disposeFn,
 			closeFn,
 			updateDirtyContainerState,
+			getAbsoluteUrl,
 			existing,
 			taggedLogger,
 			pendingLocalState,
@@ -234,6 +236,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
+		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
@@ -311,10 +314,6 @@ export class ContainerContext implements IContainerContext {
 
 	public async request(path: IRequest): Promise<IResponse> {
 		return this.runtime.request(path);
-	}
-
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-		return this.container.getAbsoluteUrl(relativeUrl);
 	}
 
 	public getPendingLocalState(): unknown {

@@ -2329,6 +2329,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
+			async (relativeUrl: string) => this.getAbsoluteUrl(relativeUrl),
 			existing,
 			this.subLogger,
 			pendingLocalState,
