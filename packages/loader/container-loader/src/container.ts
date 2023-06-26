@@ -616,7 +616,7 @@ export class Container
 	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
 	 * configuration details returned as part of the initial connection.
 	 */
-	public get serviceConfiguration(): IClientConfiguration | undefined {
+	private get serviceConfiguration(): IClientConfiguration | undefined {
 		return this._deltaManager.serviceConfiguration;
 	}
 
@@ -2331,6 +2331,10 @@ export class Container
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
 			async (relativeUrl: string) => this.getAbsoluteUrl(relativeUrl),
 			() => this.resolvedUrl?.id,
+			() => this.clientId,
+			() => this.serviceConfiguration,
+			() => this.connected,
+			() => this.attachState,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,

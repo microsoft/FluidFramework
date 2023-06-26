@@ -69,6 +69,10 @@ export class ContainerContext implements IContainerContext {
 		updateDirtyContainerState: (dirty: boolean) => void,
 		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		getContainerDiagnosticId: () => string | undefined,
+		getClientId: () => string | undefined,
+		getServiceConfiguration: () => IClientConfiguration | undefined,
+		getConnected: () => boolean,
+		getAttachState: () => AttachState,
 		clientDetails: IClientDetails,
 		existing: boolean,
 		taggedLogger: ITelemetryLoggerExt,
@@ -95,6 +99,10 @@ export class ContainerContext implements IContainerContext {
 			updateDirtyContainerState,
 			getAbsoluteUrl,
 			getContainerDiagnosticId,
+			getClientId,
+			getServiceConfiguration,
+			getConnected,
+			getAttachState,
 			clientDetails,
 			existing,
 			taggedLogger,
@@ -107,7 +115,7 @@ export class ContainerContext implements IContainerContext {
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {
-		return this.container.clientId;
+		return this._getClientId();
 	}
 
 	/**
@@ -135,7 +143,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get serviceConfiguration(): IClientConfiguration | undefined {
-		return this.container.serviceConfiguration;
+		return this._getServiceConfiguration();
 	}
 
 	public get audience(): IAudience {
@@ -242,12 +250,16 @@ export class ContainerContext implements IContainerContext {
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		private readonly _getContainerDiagnosticId: () => string | undefined,
+		private readonly _getClientId: () => string | undefined,
+		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
+		private readonly _getConnected: () => boolean,
+		private readonly _getAttachState: () => AttachState,
 		private readonly _clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
-		this._connected = this.container.connected;
+		this._connected = this._getConnected();
 		this._quorum = quorum;
 
 		this.supportedFeatures = new Map([
@@ -290,7 +302,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get attachState(): AttachState {
-		return this.container.attachState;
+		return this._getAttachState();
 	}
 
 	/**
