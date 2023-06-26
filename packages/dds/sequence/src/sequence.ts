@@ -54,9 +54,9 @@ import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces"
 import {
 	IIntervalCollection,
 	IntervalCollection,
-	SequenceInterval,
 	SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+import { SequenceInterval } from "./intervals";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 

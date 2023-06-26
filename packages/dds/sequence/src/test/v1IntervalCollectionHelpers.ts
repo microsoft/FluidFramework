@@ -18,17 +18,19 @@ import {
 	IValueOperation,
 } from "../defaultMapInterfaces";
 import {
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalCollection,
-	SequenceInterval,
 	ISerializedIntervalCollectionV2,
-	IIntervalHelpers,
 	makeOpsMap,
-	createSequenceInterval,
 	compareSequenceIntervalEnds,
 	LocalIntervalCollection,
 } from "../intervalCollection";
+import {
+	ISerializableInterval,
+	ISerializedInterval,
+	SequenceInterval,
+	IIntervalHelpers,
+	createSequenceInterval,
+} from "../intervals";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
 
@@ -62,6 +64,7 @@ class V1SequenceIntervalCollectionFactory
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
 		return Array.from(value, (interval) =>
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}

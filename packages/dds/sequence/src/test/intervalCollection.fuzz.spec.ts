@@ -14,8 +14,9 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { createDDSFuzzSuite, DDSFuzzModel } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalStickiness, SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -144,9 +145,7 @@ function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			stickiness: state.random.pick(
-				Object.values(IntervalStickiness) as IntervalStickiness[],
-			),
+			stickiness: state.random.pick(Object.values(IntervalStickiness)),
 		};
 	}
 

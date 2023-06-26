@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { Interval } from "../intervalCollection";
+import { Interval } from "../intervals";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -43,7 +43,7 @@ export function assertPlainNumberIntervals(
 export function createTestInterval(start: number, end: number): Interval {
 	const props: PropertySet = {};
 	props[reservedIntervalIdKey] = [uuid()];
-
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return new Interval(start, end, props);
 }
 
@@ -52,7 +52,7 @@ export function createTestInterval(start: number, end: number): Interval {
  * @param options - The options for generating random intervals.
  * @returns An array of generated Interval objects.
  */
-export function generateRandomIntervals(options: RandomIntervalOptions) {
+export function generateRandomIntervals(options: RandomIntervalOptions): Interval[] {
 	const intervals: Interval[] = [];
 	const { random, count, min, max } = options;
 

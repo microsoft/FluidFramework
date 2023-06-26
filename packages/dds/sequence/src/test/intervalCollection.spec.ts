@@ -16,14 +16,13 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IIntervalCollection, IntervalIndex } from "../intervalCollection";
 import {
-	IIntervalCollection,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
-	IntervalIndex,
 	ISerializableInterval,
-} from "../intervalCollection";
+} from "../intervals";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -47,6 +46,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 	}
 
 	public get(idx: number): TInterval {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.intervals[idx];
 	}
 

@@ -19,7 +19,7 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
 } from "@fluidframework/merge-tree";
-import { IntervalOpType, SequenceInterval } from "./intervalCollection";
+import { IntervalOpType, SequenceInterval } from "./intervals";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
