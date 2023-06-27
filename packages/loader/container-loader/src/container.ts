@@ -538,7 +538,6 @@ export class Container
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
-	private _context: ContainerContext | undefined;
 	private _runtime: IRuntime | undefined;
 	private get runtime() {
 		if (this._runtime === undefined) {
@@ -700,18 +699,18 @@ export class Container
 					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
 				);
 				resolve(this._runtime.getEntryPoint?.());
-				this.lifecycleEvents.off("disposed", disposedHandler);
+				this._lifecycleEvents.off("disposed", disposedHandler);
 			};
 			const disposedHandler = () => {
 				reject(new Error("ContainerContext was disposed"));
-				this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+				this._lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
 			};
-			this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
-			this.lifecycleEvents.once("disposed", disposedHandler);
+			this._lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+			this._lifecycleEvents.once("disposed", disposedHandler);
 		});
 	}
 
-	private readonly lifecycleEvents = new TypedEventEmitter<IContainerLifecycleEvents>();
+	private readonly _lifecycleEvents = new TypedEventEmitter<IContainerLifecycleEvents>();
 
 	/**
 	 * @internal
@@ -933,7 +932,6 @@ export class Container
 
 	public dispose(error?: ICriticalContainerError) {
 		this._deltaManager.dispose(error);
-		this.lifecycleEvents.emit("disposed");
 		this.verifyClosed();
 	}
 
@@ -1028,7 +1026,6 @@ export class Container
 
 				const maybeError = error !== undefined ? new Error(error.message) : undefined;
 				this._runtime?.dispose(maybeError);
-				this._context?.dispose(maybeError);
 
 				this.storageAdapter.dispose();
 
@@ -1051,6 +1048,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
+			this._lifecycleEvents.emit("disposed");
 		}
 	}
 
@@ -2283,7 +2281,7 @@ export class Container
 		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
-		assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
+		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
@@ -2342,14 +2340,14 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._context = context;
+		this._lifecycleEvents.once("disposed", () => context.dispose());
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
-		this.lifecycleEvents.emit("runtimeInstantiated");
+		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
 
