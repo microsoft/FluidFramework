@@ -212,7 +212,6 @@ export class ContainerContext implements IContainerContext {
 		}
 		this._disposed = true;
 
-		// this.runtime.dispose(error);
 		this._quorum.dispose();
 		this.deltaManager.dispose();
 	}
