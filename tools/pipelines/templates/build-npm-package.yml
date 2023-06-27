@@ -393,6 +393,7 @@ stages:
               PACKAGE_MANAGER: ${{ parameters.packageManager }}
               PUBLISH_NON_SCOPED: ${{ variables.publishNonScopedPackages }}
               RELEASE_GROUP: ${{ parameters.tagName }}
+              STAGING_PATH: $(Build.ArtifactStagingDirectory)
             inputs:
               targetType: 'filePath'
               workingDirectory: ${{ parameters.buildDirectory }}
