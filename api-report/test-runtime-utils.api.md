@@ -117,6 +117,8 @@ export class MockContainerRuntime {
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
+    protected get referenceSequenceNumber(): number;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
@@ -189,7 +191,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
-    protected readonly pendingRemoteMessages: ISequencedDocumentMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)

@@ -145,7 +145,7 @@ export class MockContainerRuntime {
 			clientId: this.clientId,
 			clientSequenceNumber,
 			contents: messageContent,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
 		};
 		this.factory.pushMessage(msg);
@@ -192,6 +192,10 @@ export class MockContainerRuntime {
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
+	}
+
+	protected get referenceSequenceNumber() {
+		return this.deltaManager.lastSequenceNumber;
 	}
 }
 

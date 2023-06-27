@@ -56,7 +56,7 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReco
 			clientId: this.clientId,
 			clientSequenceNumber: this.clientSequenceNumber,
 			contents: message.content,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
 			metadata,
 		});
