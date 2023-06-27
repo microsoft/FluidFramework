@@ -7,6 +7,7 @@ import React from "react";
 import { IMessageRelay } from "@fluid-experimental/devtools-core";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
+import { useLogger } from "./LoggerContext";
 
 /**
  * {@link DevtoolsPanel} input props.
@@ -28,6 +29,9 @@ export interface DevtoolsPanelProps {
  * Initializes the message relay context required by internal components.
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
+	const logger = useLogger();
+	logger?.send({ eventName: "DevtoolsPanelRendered", category: "generic" });
+
 	return (
 		<MessageRelayContext.Provider value={props.messageRelay}>
 			<DevtoolsView />

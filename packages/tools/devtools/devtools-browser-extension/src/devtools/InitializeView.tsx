@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel } from "@fluid-experimental/devtools-view";
+import { DevtoolsPanel, LoggerContext } from "@fluid-experimental/devtools-view";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
+
+const myLogger: ITelemetryBaseLogger = {
+	send: (event: ITelemetryBaseEvent) => {
+		console.log(`MYLOGGER_EXTENSION: ${JSON.stringify(event)}`);
+	},
+};
 
 /**
  * Renders the Fluid Devtools view into the provided target element.
@@ -18,9 +24,10 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
-
 	ReactDOM.render(
-		React.createElement(DevtoolsPanel, { messageRelay: connection }),
+		<LoggerContext.Provider value={myLogger}>
+			<DevtoolsPanel messageRelay={connection} />
+		</LoggerContext.Provider>,
 		target,
 		() => {
 			console.log(

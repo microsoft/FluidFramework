@@ -7,6 +7,7 @@
 import { IDevtoolsMessage } from '@fluid-experimental/devtools-core';
 import { IMessageRelay } from '@fluid-experimental/devtools-core';
 import { IMessageRelayEvents } from '@fluid-experimental/devtools-core';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -19,6 +20,9 @@ export interface DevtoolsPanelProps {
 }
 
 export { IMessageRelay }
+
+// @public
+export const LoggerContext: React_2.Context<ITelemetryBaseLogger | undefined>;
 
 // @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
