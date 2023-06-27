@@ -57,16 +57,18 @@ describe("Rebasing", () => {
 			assert.strictEqual(map2.get(`${i}`), i);
 		}
 
-		const threshold = 5;
-		for (let i = 0; i < threshold; i++) {
+		const deleteThreshold = 5;
+		for (let i = 0; i < deleteThreshold - 1; i++) {
 			map2.delete(`${i}`);
 		}
+
+		map1.delete(`${deleteThreshold - 1}`);
 
 		containerRuntime2.rebase();
 		containerRuntimeFactory.processAllMessages();
 
 		for (let i = 0; i < 10; i++) {
-			const expected = i < threshold ? undefined : i;
+			const expected = i < deleteThreshold ? undefined : i;
 			assert.strictEqual(map1.get(`${i}`), expected);
 			assert.strictEqual(map2.get(`${i}`), expected);
 		}

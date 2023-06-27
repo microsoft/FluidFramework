@@ -28,9 +28,12 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReco
 	}
 
 	public process(message: ISequencedDocumentMessage) {
-		super.process(message);
+		// Processing ops will happen in a separate JS turn, so by then, we'd increase
+		// the sequence number and flush the current batch.
 		this.clientSequenceNumber++;
 		this.currentBatch.splice(0);
+
+		super.process(message);
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {
@@ -43,6 +46,7 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReco
 		this.submitInternal(message);
 		this.currentBatch.push(message);
 
+		// Messages in the same batch will have the same clientSequenceNumber
 		return this.clientSequenceNumber;
 	}
 
@@ -89,5 +93,44 @@ export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntime
 		);
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
+	}
+
+	private processMessage() {
+		if (this.messages.length === 0) {
+			throw new Error("Tried to process a message that did not exist");
+		}
+
+		let msg = this.messages.shift();
+
+		// Explicitly JSON clone the value to match the behavior of going thru the wire.
+		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+
+		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		// Messages from the same batch have the same sequence number
+		msg.sequenceNumber = this.sequenceNumber;
+		msg.minimumSequenceNumber = this.getMinSeq();
+		for (const runtime of this.runtimes) {
+			runtime.process(msg);
+		}
+	}
+
+	public processOneMessage() {
+		// Increase the sequence number between batches
+		this.sequenceNumber++;
+		this.processMessage();
+	}
+
+	public processSomeMessages(count: number) {
+		// Increase the sequence number between batches
+		this.sequenceNumber++;
+		for (let i = 0; i < count; i++) {
+			this.processMessage();
+		}
+	}
+
+	public processAllMessages() {
+		// Increase the sequence number between batches
+		this.sequenceNumber++;
+		this.processSomeMessages(this.messages.length);
 	}
 }

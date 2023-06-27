@@ -145,6 +145,20 @@ export class MockContainerRuntimeFactory {
 }
 
 // @public
+export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactoryForReconnection {
+    // (undocumented)
+    createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
+        minimumSequenceNumber?: number;
+    }): MockContainerRuntimeForRebasing;
+    // (undocumented)
+    processAllMessages(): void;
+    // (undocumented)
+    processOneMessage(): void;
+    // (undocumented)
+    processSomeMessages(count: number): void;
+}
+
+// @public
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
     // (undocumented)
     clearOutstandingClientMessages(clientId: string): void;
@@ -152,6 +166,19 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
     }): MockContainerRuntimeForReconnection;
+}
+
+// @public
+export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReconnection {
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForRebasing, overrides?: {
+        minimumSequenceNumber?: number;
+    });
+    // (undocumented)
+    process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    rebase(): void;
+    // (undocumented)
+    submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
