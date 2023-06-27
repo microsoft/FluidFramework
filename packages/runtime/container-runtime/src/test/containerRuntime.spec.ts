@@ -437,12 +437,14 @@ describe("Runtime", () => {
 					getMockContext() as IContainerContext,
 					[],
 					undefined, // requestHandler
-					{}, // runtimeOptions
+					{
+						flushMode: FlushMode.Immediate,
+					}, // runtimeOptions
 				);
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() => {
-						(containerRuntime as any).flush();
+						containerRuntime.orderSequentially(() => {});
 					}),
 				);
 			});

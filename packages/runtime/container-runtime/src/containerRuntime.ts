@@ -948,15 +948,7 @@ export class ContainerRuntime
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		if (this.ensureNoDataModelChangesCalls++ > 100) {
-			const error = getLongStack(
-				() => new UsageError("Op reentrancy detected with a recursion depth of 100"),
-				Number.POSITIVE_INFINITY,
-			);
-			this.closeFn(error);
-			throw error;
-		}
-
+		this.ensureNoDataModelChangesCalls++;
 		try {
 			return callback();
 		} finally {
