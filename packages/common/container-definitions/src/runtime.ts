@@ -137,7 +137,7 @@ export interface IBatchMessage {
  * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
  * and the Container has created a new ContainerContext.
  */
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
 	/** @deprecated Please pass in existing directly in instantiateRuntime */
 	readonly existing: boolean | undefined;
 	readonly options: ILoaderOptions;
@@ -171,6 +171,9 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
+	/**
+	 * @deprecated get off delta manager
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
@@ -202,8 +205,18 @@ export interface IContainerContext extends IDisposable {
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
+	 * @deprecated not used
 	 */
 	readonly id: string;
+
+	/**
+	 * @deprecated not used
+	 * */
+	readonly disposed: boolean;
+	/**
+	 * @deprecated not used
+	 * */
+	dispose(error?: Error): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
