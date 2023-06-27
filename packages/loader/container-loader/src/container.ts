@@ -116,6 +116,9 @@ import {
 
 const detachedContainerRefSeqNumber = 0;
 
+const dirtyContainerEvent = "dirty";
+const savedContainerEvent = "saved";
+
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
@@ -859,6 +862,10 @@ export class Container
 			this.deltaManager,
 			pendingLocalState?.clientId,
 		);
+
+		this.on(savedContainerEvent, () => {
+			this.connectionStateHandler.containerSaved();
+		});
 
 		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
 		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
@@ -2307,6 +2314,7 @@ export class Container
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
+			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
@@ -2320,18 +2328,17 @@ export class Container
 		);
 
 		this._loadedCodeDetails = codeDetails;
-		this._context.on("dirty", () => {
-			this._dirtyContainer = true;
-			this.emit("dirty");
-		});
-		this._context.on("saved", () => {
-			this._dirtyContainer = false;
-			this.connectionStateHandler.containerSaved();
-			this.emit("saved");
-		});
 
 		this.emit("contextChanged", codeDetails);
 	}
+
+	private readonly updateDirtyContainerState = (dirty: boolean) => {
+		if (this._dirtyContainer === dirty) {
+			return;
+		}
+		this._dirtyContainer = dirty;
+		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+	};
 
 	/**
 	 * Set the connected state of the ContainerContext
