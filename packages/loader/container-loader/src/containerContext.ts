@@ -3,22 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IAudience,
 	IContainerContext,
 	IDeltaManager,
 	ILoader,
-	IRuntime,
 	ICriticalContainerError,
 	AttachState,
 	ILoaderOptions,
-	IRuntimeFactory,
 	IFluidCodeDetails,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -27,30 +24,16 @@ import {
 	IQuorum,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISignalMessage,
 	ISnapshotTree,
-	ISummaryTree,
 	IVersion,
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/container-utils";
-
-/**
- * Events that {@link ContainerContext} can emit through its lifecycle.
- *
- * "runtimeInstantiated" - When an {@link @fluidframework/container-definitions#IRuntime} has been instantiated (by
- * calling instantiateRuntime() on the runtime factory), and this._runtime is set.
- *
- * "disposed" - When its dispose() method is called. The {@link ContainerContext} is no longer usable at that point.
- */
-type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 
 export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
 		options: ILoaderOptions,
 		scope: FluidObject,
-		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
 		version: IVersion | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -79,7 +62,6 @@ export class ContainerContext implements IContainerContext {
 		const context = new ContainerContext(
 			options,
 			scope,
-			runtimeFactory,
 			baseSnapshot,
 			version,
 			deltaManager,
@@ -105,11 +87,18 @@ export class ContainerContext implements IContainerContext {
 			taggedLogger,
 			pendingLocalState,
 		);
-		await context.instantiateRuntime(existing);
+		// await context.instantiateRuntime(existing);
 		return context;
 	}
 
-	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
+	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
+		/**
+		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
+		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
+		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
+		 */
+		["referenceSequenceNumbers", true],
+	]);
 
 	public get clientId(): string | undefined {
 		return this._getClientId();
@@ -134,10 +123,6 @@ export class ContainerContext implements IContainerContext {
 		return this._getConnected();
 	}
 
-	public get canSummarize(): boolean {
-		return "summarize" in this.runtime;
-	}
-
 	public get serviceConfiguration(): IClientConfiguration | undefined {
 		return this._getServiceConfiguration();
 	}
@@ -158,70 +143,24 @@ export class ContainerContext implements IContainerContext {
 		return this._storage;
 	}
 
-	private _runtime: IRuntime | undefined;
-	private get runtime() {
-		if (this._runtime === undefined) {
-			throw new Error("Attempted to access runtime before it was defined");
-		}
-		return this._runtime;
-	}
-
 	private _disposed = false;
 
 	public get disposed() {
 		return this._disposed;
 	}
 
-	private readonly _quorum: IQuorum;
 	public get quorum(): IQuorumClients {
 		return this._quorum;
 	}
 
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	public async getEntryPoint(): Promise<FluidObject | undefined> {
-		if (this._disposed) {
-			throw new UsageError("The context is already disposed");
-		}
-		if (this._runtime !== undefined) {
-			return this._runtime.getEntryPoint?.();
-		}
-		return new Promise<FluidObject | undefined>((resolve, reject) => {
-			const runtimeInstantiatedHandler = () => {
-				assert(
-					this._runtime !== undefined,
-					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
-				);
-				resolve(this._runtime.getEntryPoint?.());
-				this.lifecycleEvents.off("disposed", disposedHandler);
-			};
-			const disposedHandler = () => {
-				reject(new Error("ContainerContext was disposed"));
-				this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
-			};
-			this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
-			this.lifecycleEvents.once("disposed", disposedHandler);
-		});
-	}
-
-	/**
-	 * Emits events about the container context's lifecycle.
-	 * Use it to coordinate things inside the ContainerContext class.
-	 */
-	private readonly lifecycleEvents = new TypedEventEmitter<ContextLifecycleEvents>();
-
 	constructor(
 		private readonly _options: ILoaderOptions,
 		public readonly scope: FluidObject,
-		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly _storage: IDocumentStorageService,
-		quorum: IQuorum,
+		private readonly _quorum: IQuorum,
 		private readonly _audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
@@ -253,18 +192,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
-	) {
-		this._quorum = quorum;
-
-		this.supportedFeatures = new Map([
-			/**
-			 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
-			 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
-			 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
-			 */
-			["referenceSequenceNumbers", true],
-		]);
-	}
+	) { }
 
 	/**
 	 * @deprecated Temporary migratory API, to be removed when customers no longer need it.
@@ -284,8 +212,7 @@ export class ContainerContext implements IContainerContext {
 		}
 		this._disposed = true;
 
-		this.lifecycleEvents.emit("disposed");
-		this.runtime.dispose(error);
+		// this.runtime.dispose(error);
 		this._quorum.dispose();
 		this.deltaManager.dispose();
 	}
@@ -297,56 +224,4 @@ export class ContainerContext implements IContainerContext {
 	public get attachState(): AttachState {
 		return this._getAttachState();
 	}
-
-	/**
-	 * Create a summary. Used when attaching or serializing a detached container.
-	 *
-	 * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
-	 * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
-	 * new storage IDs so requests can be redirected.
-	 */
-	public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
-		return this.runtime.createSummary(blobRedirectTable);
-	}
-
-	public setConnectionState(connected: boolean, clientId?: string) {
-		this.runtime.setConnectionState(connected, clientId);
-	}
-
-	public process(message: ISequencedDocumentMessage, local: boolean) {
-		this.runtime.process(message, local);
-	}
-
-	public processSignal(message: ISignalMessage, local: boolean) {
-		this.runtime.processSignal(message, local);
-	}
-
-	public async request(path: IRequest): Promise<IResponse> {
-		return this.runtime.request(path);
-	}
-
-	public getPendingLocalState(): unknown {
-		return this.runtime.getPendingLocalState();
-	}
-
-	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
-		return this.runtime.notifyOpReplay?.(message);
-	}
-
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
-		this.runtime.setAttachState(attachState);
-	}
-
-	// #region private
-
-	private async instantiateRuntime(existing: boolean) {
-		this._runtime = await PerformanceEvent.timedExecAsync(
-			this.taggedLogger,
-			{ eventName: "InstantiateRuntime" },
-			async () => this._runtimeFactory.instantiateRuntime(this, existing),
-		);
-		this.lifecycleEvents.emit("runtimeInstantiated");
-	}
-
-	// #endregion
 }
