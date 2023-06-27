@@ -103,8 +103,6 @@ export class MockContainerRuntime {
     // (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
-    protected readonly deltaManager: MockDeltaManager;
-    // (undocumented)
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;

@@ -106,7 +106,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class MockContainerRuntime {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
-	protected readonly deltaManager: MockDeltaManager;
+	private readonly deltaManager: MockDeltaManager;
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
