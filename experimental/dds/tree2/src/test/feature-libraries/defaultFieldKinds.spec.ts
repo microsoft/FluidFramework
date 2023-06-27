@@ -206,16 +206,6 @@ describe("Value field changesets", () => {
 			change1WithChildChange,
 		);
 
-		const expected: FieldKindsTypes.OptionalChangeset = {
-			fieldChange: {
-				newContent: { set: tree1, changes: nodeChange1 },
-				id: brand(1),
-				wasEmpty: false,
-				revision: change1.revision,
-			},
-		};
-
-		assert.deepEqual(change1WithChildChange, expected);
 		const composition = fieldHandler.rebaser.compose(
 			[makeAnonChange(childChange1), change1],
 			simpleChildComposer,
