@@ -7,8 +7,17 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import { IEvent, ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import {
+	IEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+} from "@fluidframework/common-definitions";
+import {
+	TypedEventEmitter,
+	assert,
+	performance,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -1051,7 +1060,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 
-				const maybeError = error !== undefined ? new Error(error.message) : undefined
+				const maybeError = error !== undefined ? new Error(error.message) : undefined;
 				this._runtime?.dispose(maybeError);
 				this._context?.dispose(maybeError);
 

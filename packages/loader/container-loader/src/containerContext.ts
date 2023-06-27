@@ -192,7 +192,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
-	) { }
+	) {}
 
 	/**
 	 * @deprecated Temporary migratory API, to be removed when customers no longer need it.
