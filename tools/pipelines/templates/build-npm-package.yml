@@ -389,28 +389,14 @@ stages:
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
             displayName: npm pack
+            env:
+              PACKAGE_MANAGER: ${{ parameters.packageManager }}
+              PUBLISH_NON_SCOPED: ${{ variables.publishNonScopedPackages }}
+              RELEASE_GROUP: ${{ parameters.tagName }}
             inputs:
-              targetType: 'inline'
+              targetType: 'filePath'
               workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                mkdir $(Build.ArtifactStagingDirectory)/pack/
-                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
-                mkdir $(Build.ArtifactStagingDirectory)/test-files/
-                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
-                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
-                fi
-                if [ -f "lerna.json" ]; then
-                  flub exec --no-private --concurrency=1 --releaseGroup ${{ parameters.tagName }} -- ${{ parameters.packageManager }} pack && \
-                  flub exec --no-private --concurrency=1 --releaseGroup ${{ parameters.tagName }} -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
-                  flub exec --no-private --releaseGroup ${{ parameters.tagName }} -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
-
-                  # This saves a list of the packages in the working directory in topological order to a temporary file.
-                  # Each package name is modified to match the packed tar files.
-                  flub list --no-private --releaseGroup ${{ parameters.tagName }} --tarball > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
-                else
-                  ${{ parameters.packageManager }} pack && \
-                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
-                fi
+              filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
           - ${{ if eq(variables.publishNonScopedPackages, true) }}:
             - ${{ each parameter in parameters.nonScopedPackages }}:
