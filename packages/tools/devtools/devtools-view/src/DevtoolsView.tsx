@@ -12,7 +12,7 @@ import {
 	Tooltip,
 	Divider,
 } from "@fluentui/react-components";
-import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -434,6 +434,13 @@ function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
+		<MenuSection header="Home" key="home-menu-section">
+			<MenuItem
+				isActive={currentSelection?.type === "homeMenuSelection"}
+				text="Home"
+				onClick={onHomeClicked}
+			/>
+		</MenuSection>,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -459,16 +466,19 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 
+	menuSections.push(
+		<MenuSection header="Settings" key="settings-menu-section">
+			<MenuItem
+				isActive={currentSelection?.type === "settingsMenuSelection"}
+				text="Settings"
+				onClick={onSettingsClicked}
+			/>
+		</MenuSection>,
+	);
+
 	return (
 		<div className={styles.root}>
-			<div className={styles.button} onClick={onHomeClicked}>
-				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
-			</div>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div className={styles.button} onClick={onSettingsClicked}>
-				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
-				<Settings20Regular />
-			</div>
 		</div>
 	);
 }
