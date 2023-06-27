@@ -378,7 +378,7 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-export function getSlidePosition(
+function getSlidePosition(
 	collection: IIntervalCollection<SequenceInterval>,
 	string: SharedString,
 	lref: LocalReferencePosition,
