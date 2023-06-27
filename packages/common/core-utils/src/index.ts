@@ -4,5 +4,4 @@
  */
 
 export { compareArrays } from "./compare";
-export { Lazy } from "./lazy";
-export { Deferred, LazyPromise } from "./promises";
+export { Lazy, LazyPromise } from "./lazy";

@@ -38,7 +38,7 @@ export class Buffer extends Uint8Array {
 // @public
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
-// @public @deprecated
+// @public
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
