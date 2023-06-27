@@ -1,10 +1,11 @@
 /**
- * Escapes all the characters in the given string that match the list of characters to escape, by prepeding the escapeChar
- * to them, and returns the resulting string wrapped in double quotes.
+ * Surrounds the given string with double quotes, and escapes double quotes in the original string with the specified
+ * escapeChar.
+ * Also escapes characters from the specified additionalCharsToEscape array with the same escapeChar.
  *
  * @param {string} str - The original string.
- * @param {string[]} charsToEscape - An array with the list of characters to escape.
  * @param {string} escapeChar - The character to use for escaping. Defaults to backslash.
+ * @param {string[]} additionalCharsToEscape - An array with the list of characters to escape besides double quotes.
  *
  * @remarks
  * For the logic we use in Windows environments (setx to set the user's environment variables), we only need to escape
@@ -15,8 +16,9 @@
  * @returns
  * The given string with the specified characters escaped appropriately.
  */
-export function escapeString(str, charsToEscape, escapeChar = "\\") {
+export function quoteStringAndEscape(str, escapeChar = "\\", additionalCharsToEscape = []) {
 	let escapedStr = str;
+	const charsToEscape = additionalCharsToEscape.includes('"') ? additionalCharsToEscape : [...additionalCharsToEscape, '"'];
 	for (const c of charsToEscape) {
 		escapedStr = escapedStr.replace(new RegExp(c, "g"), `${escapeChar}${c}`);
 	}
