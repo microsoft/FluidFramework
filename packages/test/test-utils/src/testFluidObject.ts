@@ -145,6 +145,11 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * sharedString = testFluidObject.getSharedObject<SharedString>("sharedString");
  * sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
  * ```
+ *
+ * @privateRemarks - Beware that using this class generally forfeits some compatibility coverage
+ * `describeCompat` aims to provide:
+ * `SharedMap`s always reference the current version of SharedMap.
+ * AB#4670 tracks improving this situation.
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory() {
