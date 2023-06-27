@@ -103,6 +103,8 @@ export class MockContainerRuntime {
     // (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
+    protected readonly deltaManager: MockDeltaManager;
+    // (undocumented)
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
@@ -160,6 +162,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
+    protected readonly pendingRemoteMessages: ISequencedDocumentMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
