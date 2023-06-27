@@ -411,8 +411,13 @@ function revertLocalDelete(
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	let endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	// This is to avoid removing the last character in the string, which causes the interval
+	// to slide back to a removed segment.
 	const type = revertible.interval.intervalType;
+	if (startSlidePos === 0 && endSlidePos === string.getLength()) {
+		endSlidePos--;
+	}
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
 	const int = collection.add(startSlidePos, endSlidePos, type, props);
@@ -438,7 +443,10 @@ function revertLocalChange(
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	let endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	if (startSlidePos === 0 && endSlidePos === string.getLength()) {
+		endSlidePos--;
+	}
 	collection.change(id, startSlidePos, endSlidePos);
 
 	string.removeLocalReferencePosition(revertible.start);
