@@ -31,66 +31,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class ContainerContext implements IContainerContext {
-	public static async createOrLoad(
-		options: ILoaderOptions,
-		scope: FluidObject,
-		baseSnapshot: ISnapshotTree | undefined,
-		version: IVersion | undefined,
-		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		storage: IDocumentStorageService,
-		quorum: IQuorum,
-		audience: IAudience,
-		loader: ILoader,
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-		submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number,
-		submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number,
-		submitSignalFn: (contents: any) => void,
-		disposeFn: (error?: ICriticalContainerError) => void,
-		closeFn: (error?: ICriticalContainerError) => void,
-		updateDirtyContainerState: (dirty: boolean) => void,
-		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
-		getContainerDiagnosticId: () => string | undefined,
-		getClientId: () => string | undefined,
-		getServiceConfiguration: () => IClientConfiguration | undefined,
-		getAttachState: () => AttachState,
-		getConnected: () => boolean,
-		clientDetails: IClientDetails,
-		existing: boolean,
-		taggedLogger: ITelemetryLoggerExt,
-		pendingLocalState?: unknown,
-	): Promise<ContainerContext> {
-		const context = new ContainerContext(
-			options,
-			scope,
-			baseSnapshot,
-			version,
-			deltaManager,
-			storage,
-			quorum,
-			audience,
-			loader,
-			submitFn,
-			submitSummaryFn,
-			submitBatchFn,
-			submitSignalFn,
-			disposeFn,
-			closeFn,
-			updateDirtyContainerState,
-			getAbsoluteUrl,
-			getContainerDiagnosticId,
-			getClientId,
-			getServiceConfiguration,
-			getAttachState,
-			getConnected,
-			clientDetails,
-			existing,
-			taggedLogger,
-			pendingLocalState,
-		);
-		// await context.instantiateRuntime(existing);
-		return context;
-	}
-
 	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
 		/**
 		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,

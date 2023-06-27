@@ -2309,7 +2309,7 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const context = await ContainerContext.createOrLoad(
+		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
