@@ -10,15 +10,17 @@ echo STAGING_PATH=$STAGING_PATH
 mkdir $STAGING_PATH/pack/
 mkdir $STAGING_PATH/pack/scoped/
 mkdir $STAGING_PATH/test-files/
-if [[ "$(PUBLISH_NON_SCOPED)" == "True" ]]; then
+
+if [[ "$PUBLISH_NON_SCOPED" == "True" ]]; then
   mkdir $STAGING_PATH/pack/non-scoped/
 fi
+
 if [ -f ".releaseGroup" ]; then
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$(PACKAGE_MANAGER) pack"
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack"
 
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $(STAGING_PATH)/pack/scoped/ ./*.tgz"
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/scoped/ ./*.tgz"
 
-  flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(STAGING_PATH)/test-files/ ./*test-files.tar)"
+  flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
   # This saves a list of the packages in the working directory in topological order to a temporary file.
   # Each package name is modified to match the packed tar files.
