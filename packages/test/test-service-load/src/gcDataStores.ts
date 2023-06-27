@@ -780,6 +780,9 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		return "MultiCollabDataObject";
 	}
 
+	// A map of partner activity objects that are running in this client.
+	private readonly partnerActivityObjectsRunning: Map<string, IGCActivityObject> = new Map();
+
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
 		if (this.running) {
 			return true;
@@ -805,6 +808,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 			local: boolean,
 			activityObjectMap: SharedMap,
 			partnerIds: string[],
+			isBlob: boolean = false,
 		) => {
 			if (local) {
 				return;
@@ -818,14 +822,21 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 			// If a new object was referenced, run our corresponding local data object.
 			// If an object was unreferenced, stop running our corresponding local data object.
 			if (activityObjectMap.has(changed.key)) {
-				const activityObjectHandle = activityObjectMap.get<IFluidHandle<IGCActivityObject>>(
-					changed.key,
-				);
-				assert(
-					activityObjectHandle !== undefined,
-					`Could not find handle for ${changed.key}`,
-				);
-				const activityObject = await activityObjectHandle.get();
+				// If we this activity object is already running, skip it.
+				if (this.partnerActivityObjectsRunning.has(changed.key)) {
+					return;
+				}
+
+				const handle = activityObjectMap.get(changed.key);
+				assert(handle !== undefined, `Could not find handle for ${changed.key}`);
+				// For attachment blobs, the handle is to the blob contents. So, create an attachment blob object.
+				// For data stores, the handle is to the data store itself.
+				const activityObject = isBlob
+					? new AttachmentBlobObject(handle as IFluidHandle<ArrayBufferLike>)
+					: await (handle as IFluidHandle<IGCActivityObject>).get();
+
+				// Add the object to the partner activity object map and run it.
+				this.partnerActivityObjectsRunning.set(changed.key, activityObject);
 				const result = await activityObject.run(
 					this.childRunConfig,
 					`${this.nodeId}/${changed.key}`,
@@ -834,10 +845,12 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 					this.activityFailed = true;
 				}
 			} else {
-				const activityObjectHandle =
-					changed.previousValue as IFluidHandle<IGCActivityObject>;
-				const activityObject = await activityObjectHandle.get();
-				activityObject.stop();
+				const activityObject = this.partnerActivityObjectsRunning.get(changed.key);
+				// Stop running the activity object and delete it from the partner activity object map.
+				if (activityObject !== undefined) {
+					activityObject.stop();
+					this.partnerActivityObjectsRunning.delete(changed.key);
+				}
 			}
 		};
 
@@ -860,17 +873,25 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		// For attachment blobs, collaborate with one partner client. Blob requests are more sensitive to being
 		// throttled. Collaborating with one client will keep the number of requests less while giving coverage.
 		this.blobMap.on("valueChanged", (changed, local) => {
-			partnerActivityRunner(changed, local, this.blobMap, [partnerId1]).catch((error) => {
-				config.logger.sendErrorEvent({
-					eventName: "PartnerBlobActivityRunFailedError",
-					id,
-					error,
-				});
-				this.activityFailed = true;
-			});
+			partnerActivityRunner(changed, local, this.blobMap, [partnerId1], true).catch(
+				(error) => {
+					config.logger.sendErrorEvent({
+						eventName: "PartnerBlobActivityRunFailedError",
+						id,
+						error,
+					});
+					this.activityFailed = true;
+				},
+			);
 		});
 
 		return super.run(config, id);
+	}
+
+	public stop() {
+		this.partnerActivityObjectsRunning.forEach((activityObject) => {
+			activityObject.stop();
+		});
 	}
 }
 
