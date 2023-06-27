@@ -132,3 +132,4 @@ extends:
     - syncpack:versions
     - prettier
     - check:versions
+    - generate:upcoming
