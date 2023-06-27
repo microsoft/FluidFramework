@@ -5,8 +5,6 @@
 
 /**
  * A rate limiter to make sure that a client can only request help for one task within a time window.
- *
- * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export class RateLimiter {
 	private readonly requestMap = new Map<string, number>();

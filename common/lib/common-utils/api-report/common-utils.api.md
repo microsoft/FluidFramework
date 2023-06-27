@@ -38,7 +38,7 @@ export class Buffer extends Uint8Array {
 // @public
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
-// @public
+// @public @deprecated
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
@@ -50,7 +50,7 @@ export class Deferred<T> {
 // @public
 export const delay: (timeMs: number) => Promise<void>;
 
-// @public
+// @public @deprecated
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
 
 // @public
@@ -166,14 +166,14 @@ export interface ITraceEvent {
     readonly totalTimeElapsed: number;
 }
 
-// @public
+// @public @deprecated
 export class Lazy<T> {
     constructor(valueGenerator: () => T);
     get evaluated(): boolean;
     get value(): T;
 }
 
-// @public
+// @public @deprecated
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -244,7 +244,7 @@ export class RangeTracker {
     updateBase(primary: number): void;
 }
 
-// @public
+// @public @deprecated
 export class RateLimiter {
     constructor(windowMSec: number);
     filter(clientId: string, messages: string[]): string[];

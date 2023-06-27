@@ -4,8 +4,40 @@
 
 ```ts
 
+// @public
+export function assert(condition: boolean, message: string | number): asserts condition;
+
 // @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
+
+// @public
+export class Deferred<T> {
+    constructor();
+    get isCompleted(): boolean;
+    get promise(): Promise<T>;
+    reject(error: any): void;
+    resolve(value: T | PromiseLike<T>): void;
+}
+
+// @public
+export class Lazy<T> {
+    constructor(valueGenerator: () => T);
+    get evaluated(): boolean;
+    get value(): T;
+}
+
+// @public
+export class LazyPromise<T> implements Promise<T> {
+    // (undocumented)
+    get [Symbol.toStringTag](): string;
+    constructor(execute: () => Promise<T>);
+    // (undocumented)
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined): Promise<T | TResult>;
+    // (undocumented)
+    finally(onfinally?: (() => void) | null | undefined): Promise<T>;
+    // (undocumented)
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
+}
 
 // (No @packageDocumentation comment for this package)
 

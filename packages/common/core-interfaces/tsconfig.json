@@ -6,5 +6,5 @@
 		"outDir": "./dist",
 		"composite": true,
 	},
-	"include": ["src/**/*", "../core-utils/src/promises.ts"],
+	"include": ["src/**/*"],
 }
