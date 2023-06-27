@@ -10609,7 +10609,7 @@ importers:
 
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
-      '@fluentui/react': ^8.109.3
+      '@fluentui/react': ^8.109.4
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluidframework/build-common': ^1.2.0
