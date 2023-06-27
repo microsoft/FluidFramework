@@ -23,5 +23,9 @@ export {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 } from "./mocksForReconnection";
+export {
+	MockContainerRuntimeFactoryForRebasing,
+	MockContainerRuntimeForRebasing,
+} from "./mocksForRebasing";
 export { MockStorage } from "./mockStorage";
 export { validateAssertionError } from "./validateAssertionError";
