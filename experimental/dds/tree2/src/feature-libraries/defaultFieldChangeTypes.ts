@@ -20,11 +20,6 @@ export type NodeUpdate =
 			changes?: NodeChangeset;
 	  };
 
-export interface ValueChangeset {
-	value?: NodeUpdate;
-	changes?: NodeChangeset;
-}
-
 export interface OptionalFieldChange {
 	/**
 	 * Uniquely identifies, in the scope of the changeset, the change made to the field.

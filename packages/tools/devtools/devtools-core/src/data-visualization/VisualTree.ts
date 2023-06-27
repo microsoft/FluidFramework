@@ -7,7 +7,7 @@ import { FluidObjectId } from "../CommonInterfaces";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
- * tree format that can be broadcast by the debugger for external tools to consume.
+ * tree format that can be broadcast by the devtools for external tools to consume.
  */
 
 /**
@@ -120,7 +120,7 @@ export interface VisualValueNode extends ValueNodeBase {
 }
 
 /**
- * Terminal node indicating the debugger encountered data of a kind it did not recognize.
+ * Terminal node indicating the devtools encountered data of a kind it did not recognize.
  *
  * @remarks I.e. it is not a {@link @fluidframework/shared-object-base#ISharedObject}.
  *
@@ -245,7 +245,7 @@ export type VisualChildNode =
 	| UnknownObjectNode;
 
 /**
- * A visual tree node representing a root data object provided to the debugger at initialization time.
+ * A visual tree node representing a root data object provided to the devtools at initialization time.
  *
  * @public
  */
