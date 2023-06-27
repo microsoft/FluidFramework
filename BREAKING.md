@@ -24,7 +24,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
 -   [Upgraded Typescript target to ES2020](#Upgraded-Typescript-target-to-ES2020)
 -   [IRootSummaryTreeWithStats removed from container-runtime package](#IRootSummaryTreeWithStats-removed-from-container-runtime-package)
--   [Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match](#Loader.resolve()-throws-if-LoaderHeader.sequenceNumber-and-IContainerLoadMode.opsBeforeReturn-do-not-match)
+-   [Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match](<#Loader.resolve()-throws-if-LoaderHeader.sequenceNumber-and-IContainerLoadMode.opsBeforeReturn-do-not-match>)
 
 ### FluidDataStoreRuntime.getChannel throws for channels that do not exist
 
