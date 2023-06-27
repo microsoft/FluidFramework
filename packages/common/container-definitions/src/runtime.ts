@@ -204,13 +204,6 @@ export interface IContainerContext extends IDisposable {
 	 * and scenarios which can change in the future.
 	 */
 	readonly id: string;
-
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

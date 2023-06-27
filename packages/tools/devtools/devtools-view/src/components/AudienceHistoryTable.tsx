@@ -81,6 +81,8 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableBody>
 				{audienceHistoryItems.map((item, itemIndex) => (
 					<TableRow
+						// The list of items here is never reordered, and is strictly appended to,
+						// so using the index as the key here is safe.
 						key={itemIndex}
 						style={{
 							backgroundColor:

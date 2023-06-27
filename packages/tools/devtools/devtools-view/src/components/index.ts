@@ -9,6 +9,7 @@
 
 export * from "./data-visualization";
 
+export * from "./AudienceHistoryTable";
 export * from "./AudienceView";
 export * from "./ContainerDevtoolsView";
 export * from "./ContainerHistoryView";

@@ -224,6 +224,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	private async execCommand(): Promise<ExecAsyncResult> {
+		if (this.command === "") {
+			return { error: null, stdout: "", stderr: "" };
+		}
 		return execAsync(this.command, {
 			cwd: this.node.pkg.directory,
 			env: {
@@ -479,6 +482,10 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 
 export class UnknownLeafTask extends LeafTask {
 	protected async checkLeafIsUpToDate() {
+		if (this.command === "") {
+			// Empty command is always up to date.
+			return true;
+		}
 		// Because we don't know, it is always out of date and need to rebuild
 		return false;
 	}

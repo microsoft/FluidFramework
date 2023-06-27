@@ -12,7 +12,7 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-v] [-r <value>]
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-v | --quiet] [-r <value>]
 
 FLAGS
   -a, --auth=<value>       (required) GitHub authentication token. For security reasons, this value should be passed
@@ -22,8 +22,9 @@ FLAGS
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Sync branches depending on the batch size passed
@@ -35,14 +36,17 @@ Get info about the merge status of branches in the repo. Uses "main" and "next" 
 
 ```
 USAGE
-  $ flub merge info [-v] [--json] [-b <value>]
+  $ flub merge info [-v | --quiet] [--json] [-b <value>]
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
   Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.

@@ -50,17 +50,19 @@ export interface IPendingLocalState {
 	pendingStates: IPendingState[];
 }
 
+export interface IPendingBatchMessage {
+	content: string;
+	localOpMetadata: unknown;
+	opMetadata: Record<string, unknown> | undefined;
+}
+
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
-	reSubmit(
-		content: string | undefined,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	): void;
-	orderSequentially(callback: () => void): void;
+	reSubmit(message: IPendingBatchMessage): void;
+	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 }
 
 /**
@@ -379,35 +381,37 @@ export class PendingStateManager implements IDisposable {
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
-				this.stateHandler.orderSequentially(() => {
-					while (pendingMessagesCount >= 0) {
-						// check is >= because batch end may be last pending message
-						this.stateHandler.reSubmit(
-							pendingMessage.content,
-							pendingMessage.localOpMetadata,
-							pendingMessage.opMetadata,
-						);
+				const batch: IPendingBatchMessage[] = [];
 
-						if (pendingMessage.opMetadata?.batch === false) {
-							break;
-						}
-						assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
+				// check is >= because batch end may be last pending message
+				while (pendingMessagesCount >= 0) {
+					batch.push({
+						content: pendingMessage.content,
+						localOpMetadata: pendingMessage.localOpMetadata,
+						opMetadata: pendingMessage.opMetadata,
+					});
 
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						pendingMessage = this.pendingMessages.shift()!;
-						pendingMessagesCount--;
-						assert(
-							pendingMessage.opMetadata?.batch !== true,
-							0x556 /* Batch start needs a corresponding batch end */,
-						);
+					if (pendingMessage.opMetadata?.batch === false) {
+						break;
 					}
-				});
+					assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
+
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pendingMessage = this.pendingMessages.shift()!;
+					pendingMessagesCount--;
+					assert(
+						pendingMessage.opMetadata?.batch !== true,
+						0x556 /* Batch start needs a corresponding batch end */,
+					);
+				}
+
+				this.stateHandler.reSubmitBatch(batch);
 			} else {
-				this.stateHandler.reSubmit(
-					pendingMessage.content,
-					pendingMessage.localOpMetadata,
-					pendingMessage.opMetadata,
-				);
+				this.stateHandler.reSubmit({
+					content: pendingMessage.content,
+					localOpMetadata: pendingMessage.localOpMetadata,
+					opMetadata: pendingMessage.opMetadata,
+				});
 			}
 		}
 	}
