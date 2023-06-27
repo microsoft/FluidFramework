@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { tokens } from "@fluentui/react-components";
+// import { tokens } from "@fluentui/react-components";
 import Color from "color";
 import React, { useState } from "react";
 import {
@@ -23,6 +23,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { ThemeContext } from "../../ThemeHelper";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -78,13 +79,81 @@ interface Props {
 	yAxisUnitDisplayName?: string;
 }
 
-const GRAPH_COLOR_PALETTE = [
-	tokens.colorPaletteBerryForeground1,
-	tokens.colorPaletteForestForeground2,
-	tokens.colorPaletteMarigoldForeground1,
-	tokens.colorPaletteRoyalBlueForeground2,
-	tokens.colorPaletteLavenderForeground2,
-];
+// const GRAPH_COLOR_PALETTE = [
+// 	tokens.colorPaletteBerryForeground1,
+// 	tokens.colorPaletteForestForeground2,
+// 	tokens.colorPaletteMarigoldForeground1,
+// 	tokens.colorPaletteRoyalBlueForeground2,
+// 	tokens.colorPaletteLavenderForeground2,
+// ];
+
+// Colors sourced from Fluent Ui React color palette
+// https://react.fluentui.dev/?path=/docs/theme-colors--page
+const MASTER_GRAPH_COLOR_PALETTE = {
+	// colorNeutralStroke1
+	gray: {
+		light: "#d1d1d1",
+		dark: "#666666",
+		highContrast: "#ffffff",
+	},
+	graphColors: [
+		// colorPaletteRedForeground1
+		{
+			light: "#bc2f32",
+			dark: "#e37d80",
+			highContrast: "#ffff00", // Neon yellow
+		},
+		// colorPaletteGreenForeground1
+		{
+			light: "#0e700e",
+			dark: "#54b054",
+			highContrast: "#3ff23f", // Neon green
+		},
+		// colorBrandForeground1 (blue)
+		{
+			light: "#0f6cbd",
+			dark: "#479ef5",
+			highContrast: "#1aebff", // Neon blue
+		},
+		// colorPaletteBerryForeground1
+		{
+			light: "#0f6cbd",
+			dark: "#da7ed0",
+			highContrast: "#ffffff", // White
+		},
+	],
+};
+
+interface GraphColorPalette {
+	gray: string;
+	graphColors: string[];
+}
+
+const getGraphColorPalette = (themeMode: string): GraphColorPalette => {
+	const basePalette = MASTER_GRAPH_COLOR_PALETTE;
+	switch (themeMode) {
+		case "light":
+			return {
+				gray: basePalette.gray.light,
+				graphColors: basePalette.graphColors.map((color) => color.light),
+			};
+		case "dark":
+			return {
+				gray: basePalette.gray.dark,
+				graphColors: basePalette.graphColors.map((color) => color.dark),
+			};
+		case "highContrast":
+			return {
+				gray: basePalette.gray.highContrast,
+				graphColors: basePalette.graphColors.map((color) => color.highContrast),
+			};
+		default:
+			return {
+				gray: basePalette.gray.light,
+				graphColors: basePalette.graphColors.map((color) => color.light),
+			};
+	}
+};
 
 /**
  * This component is a wrapper over Recharts ComposedChart component that provides
@@ -92,7 +161,11 @@ const GRAPH_COLOR_PALETTE = [
  */
 export function DynamicComposedChart(props: Props): React.ReactElement {
 	const [activeIndex, setActiveIndex] = useState<string | undefined>();
-	const graphGrayColor = tokens.colorPaletteSteelForeground2;
+	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+
+	console.log("themeInfo", themeInfo);
+	const graphColorPalette = getGraphColorPalette(themeInfo.name);
+	console.log("graphColorPalette", graphColorPalette);
 
 	const handleLegendClick = (e): void => {
 		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
@@ -163,7 +236,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					y={0}
 					dy={16}
 					textAnchor="end"
-					fill={graphGrayColor}
+					fill={graphColorPalette.gray}
 					transform="rotate(-35)"
 					fontSize={16}
 				>
@@ -181,7 +254,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 		const { x, y, payload } = yAxisProps;
 		return (
 			<g>
-				<text x={x} y={y} textAnchor="end" fill={graphGrayColor} fontSize={16}>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.gray} fontSize={16}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
@@ -249,7 +322,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 		const graphComponents: React.ReactElement[] = [];
 		let currColorPaletteIndex = 0;
 		for (const dataSet of dataSets) {
-			if (currColorPaletteIndex > GRAPH_COLOR_PALETTE.length - 1) {
+			if (currColorPaletteIndex > graphColorPalette.graphColors.length - 1) {
 				currColorPaletteIndex = 0;
 			}
 
@@ -257,7 +330,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 				renderChartData(
 					dataSet.graphType,
 					dataSet.schema.displayName,
-					GRAPH_COLOR_PALETTE[currColorPaletteIndex],
+					graphColorPalette.graphColors[currColorPaletteIndex],
 					dataSet.schema.uuid,
 				),
 			);
