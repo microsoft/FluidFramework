@@ -20,7 +20,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
 	 * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
 	 */
-	private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
+	protected readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
 	public get connected(): boolean {
 		return this._connected;
