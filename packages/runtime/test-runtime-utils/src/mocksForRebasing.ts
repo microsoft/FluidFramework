@@ -12,9 +12,9 @@ import {
 } from "./mocksForReconnection";
 
 /**
- * Specialized implementation of MockContainerRuntime for testing op rebasing, when the
- * runtime will resend ops to the datastores and all ops within the same batch will have
- * the same sequence number. Also supports reconnection.
+ * Specialized implementation of MockContainerRuntime for testing op rebasing, when the runtime will resend
+ * ops to the datastores and all ops within the same batch will have the same sequence number.
+ * Also supports reconnection as, it extends `MockContainerRuntimeForReconnection`.
  */
 export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReconnection {
 	private readonly currentBatch: ITrackableMessage[] = [];
