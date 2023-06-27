@@ -111,10 +111,6 @@ export class ContainerContext implements IContainerContext {
 		return this._getContainerDiagnosticId() ?? "";
 	}
 
-	public get clientDetails(): IClientDetails {
-		return this._clientDetails;
-	}
-
 	/**
 	 * When true, ops are free to flow
 	 * When false, ops should be kept as pending or rejected
@@ -125,22 +121,6 @@ export class ContainerContext implements IContainerContext {
 
 	public get serviceConfiguration(): IClientConfiguration | undefined {
 		return this._getServiceConfiguration();
-	}
-
-	public get audience(): IAudience {
-		return this._audience;
-	}
-
-	public get options(): ILoaderOptions {
-		return this._options;
-	}
-
-	public get baseSnapshot() {
-		return this._baseSnapshot;
-	}
-
-	public get storage(): IDocumentStorageService {
-		return this._storage;
 	}
 
 	private _disposed = false;
@@ -154,14 +134,14 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	constructor(
-		private readonly _options: ILoaderOptions,
+		public readonly options: ILoaderOptions,
 		public readonly scope: FluidObject,
-		private readonly _baseSnapshot: ISnapshotTree | undefined,
+		public readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly _storage: IDocumentStorageService,
+		public readonly storage: IDocumentStorageService,
 		private readonly _quorum: IQuorum,
-		private readonly _audience: IAudience,
+		public readonly audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,
@@ -188,7 +168,7 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
-		private readonly _clientDetails: IClientDetails,
+		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
