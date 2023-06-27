@@ -687,41 +687,6 @@ export class Container
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint(): Promise<FluidObject | undefined> {
-		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
-		// allow it since they mean a kind of read-only state for the Container.
-		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
-		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
-			throw new UsageError("The container is disposing or disposed");
-		}
-		if (this._context === undefined) {
-			await new Promise<void>((resolve, reject) => {
-				const contextChangedHandler = () => {
-					resolve();
-					this.off("disposed", disposedHandler);
-				};
-				const disposedHandler = (error) => {
-					reject(error ?? "The Container is disposed");
-					this.off("contextChanged", contextChangedHandler);
-				};
-				this.once("contextChanged", contextChangedHandler);
-				this.once("disposed", disposedHandler);
-			});
-			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
-			// should have set this._context; making sure.
-			assert(
-				this._context !== undefined,
-				0x5a2 /* Context still not defined after contextChanged event */,
-			);
-		}
-		return this.contextGetEntryPoint();
-	}
-
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	public async contextGetEntryPoint(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
