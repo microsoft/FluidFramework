@@ -2324,9 +2324,9 @@ export class Container
 			this._dirtyContainer = true;
 			this.emit("dirty");
 		});
-		this._context.on("saved", () => this.connectionStateHandler.containerSaved());
 		this._context.on("saved", () => {
 			this._dirtyContainer = false;
+			this.connectionStateHandler.containerSaved();
 			this.emit("saved");
 		});
 
