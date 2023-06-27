@@ -5985,6 +5985,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
+      '@types/sinon': ^7.0.13
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -5997,6 +5998,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
+      sinon: ^7.4.2
       source-map-support: ^0.5.16
       typescript: ~4.5.5
     devDependencies:
@@ -6009,6 +6011,7 @@ importers:
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
       '@types/mocha': 9.1.1
       '@types/node': 14.18.47
+      '@types/sinon': 7.5.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6021,6 +6024,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
+      sinon: 7.5.0
       source-map-support: 0.5.21
       typescript: 4.5.5
 
