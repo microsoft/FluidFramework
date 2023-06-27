@@ -2321,9 +2321,9 @@ export class Container
 			() => this.clientId,
 			() => this.serviceConfiguration,
 			() => this.attachState,
+			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			this.connected,
 			this.subLogger,
 			pendingLocalState,
 		);

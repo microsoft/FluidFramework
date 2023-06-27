@@ -70,9 +70,9 @@ export class ContainerContext implements IContainerContext {
 		getClientId: () => string | undefined,
 		getServiceConfiguration: () => IClientConfiguration | undefined,
 		getAttachState: () => AttachState,
+		getConnected: () => boolean,
 		clientDetails: IClientDetails,
 		existing: boolean,
-		connected: boolean,
 		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
@@ -99,9 +99,9 @@ export class ContainerContext implements IContainerContext {
 			getClientId,
 			getServiceConfiguration,
 			getAttachState,
+			getConnected,
 			clientDetails,
 			existing,
-			connected,
 			taggedLogger,
 			pendingLocalState,
 		);
@@ -131,7 +131,7 @@ export class ContainerContext implements IContainerContext {
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this._connected;
+		return this._getConnected();
 	}
 
 	public get canSummarize(): boolean {
@@ -248,9 +248,9 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
 		private readonly _getAttachState: () => AttachState,
+		private readonly _getConnected: () => boolean,
 		private readonly _clientDetails: IClientDetails,
 		public readonly existing: boolean,
-		private _connected: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
@@ -310,7 +310,6 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		this._connected = connected;
 		this.runtime.setConnectionState(connected, clientId);
 	}
 
