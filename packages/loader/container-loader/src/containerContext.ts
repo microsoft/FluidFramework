@@ -320,9 +320,8 @@ export class ContainerContext
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		const runtime = this.runtime;
 		this._connected = connected;
-		runtime.setConnectionState(connected, clientId);
+		this.runtime.setConnectionState(connected, clientId);
 	}
 
 	public process(message: ISequencedDocumentMessage, local: boolean) {
