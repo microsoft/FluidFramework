@@ -15836,6 +15836,9 @@ importers:
 
   packages/tools/devtools/devtools-view:
     dependencies:
+      '@fluentui/react':
+        specifier: ^8.109.4
+        version: 8.109.4(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)
       '@fluentui/react-components':
         specifier: ~9.19.1
         version: 9.19.1(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)(scheduler@0.20.2)
@@ -18526,6 +18529,7 @@ packages:
   /@colors/colors@1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+    requiresBuild: true
 
   /@dabh/diagnostics@2.0.3:
     resolution: {integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==}
@@ -45903,7 +45907,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.87.0(webpack-cli@4.10.0)
+      webpack: 5.87.0
     dev: true
 
   /terser@4.8.1:

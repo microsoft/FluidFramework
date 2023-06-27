@@ -12,6 +12,8 @@ import {
 	Tooltip,
 	Divider,
 } from "@fluentui/react-components";
+import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
+
 import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
@@ -118,6 +120,11 @@ const useDevtoolsStyles = makeStyles({
 			textOverflow: "ellipsis",
 		},
 	},
+	icon: {
+		"& .ms-MessageBar-icon": {
+			marginTop: "10px",
+		},
+	},
 });
 
 /**
@@ -138,9 +145,10 @@ export function DevtoolsView(): React.ReactElement {
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
-
+	const [showMessage, setShowMessage] = React.useState(true);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
+	const styles = useDevtoolsStyles();
 
 	React.useEffect(() => {
 		/**
@@ -191,6 +199,7 @@ export function DevtoolsView(): React.ReactElement {
 		setQueryTimedOut(false);
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 	}
+	initializeIcons();
 
 	return (
 		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
@@ -198,13 +207,41 @@ export function DevtoolsView(): React.ReactElement {
 				{supportedFeatures === undefined ? (
 					queryTimedOut ? (
 						<>
-							<div>Devtools not found. Timeout exceeded.</div>
-							<Tooltip
-								content="Retry searching for Devtools"
-								relationship="description"
-							>
-								<Button onClick={retryQuery}>Search again</Button>
-							</Tooltip>
+							{showMessage && (
+								<MessageBar
+									messageBarType={MessageBarType.error}
+									isMultiline={true}
+									onDismiss={(): void => setShowMessage(false)}
+									dismissButtonAriaLabel="Close"
+									className={styles.icon}
+								>
+									DevTools was not found. Timeout exceeded.
+									<Tooltip
+										content="Retry searching for Devtools"
+										relationship="description"
+									>
+										<Button
+											style={{ marginLeft: "5px" }}
+											size="small"
+											onClick={retryQuery}
+										>
+											Search again
+										</Button>
+									</Tooltip>
+									<br />
+									<h4 style={{ fontWeight: "normal", margin: 0 }}>
+										{" "}
+										Need help? Please refer to our
+										<Link
+											href="https://aka.ms/fluid/devtool/docs"
+											target="_blank"
+										>
+											documentation page
+										</Link>{" "}
+										for guidance on getting the extension working.{" "}
+									</h4>
+								</MessageBar>
+							)}
 						</>
 					) : (
 						<>
