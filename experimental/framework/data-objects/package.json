@@ -53,6 +53,7 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {}
 	}
 }

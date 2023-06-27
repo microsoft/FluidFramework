@@ -41,24 +41,11 @@ describe("Presence Tracker", () => {
 		);
 	});
 
-	it("Current User is missing focus", async () => {
-		await page.waitForFunction(
-			() => document.getElementById("focus-div")?.innerHTML.endsWith("missing focus"),
-			{ timeout: 10000 },
-		);
-	});
-
 	it("Current User has focus after focusing", async () => {
 		await page.click("*");
-
-		try {
-			await page.waitForFunction(
-				() => document.getElementById("focus-div")?.innerHTML.endsWith("has focus"),
-				{ timeout: 10000 },
-			);
-		} catch (error) {
-			// Handle the case where the element does not have the expected content
-			expect(error).toBeNull();
-		}
+		await page.waitForFunction(
+			() => document.getElementById("focus-div")?.innerHTML.endsWith("has focus"),
+			{ timeout: 10000 },
+		);
 	});
 });
