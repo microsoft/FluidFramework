@@ -78,7 +78,7 @@ const idAllocator: IdAllocator = unexpectedDelegate;
 
 const crossFieldManager = {
 	get: unexpectedDelegate,
-	getOrCreate: unexpectedDelegate,
+	set: unexpectedDelegate,
 	addDependency: unexpectedDelegate,
 	invalidate: unexpectedDelegate,
 };

@@ -150,7 +150,7 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
-	getOrCreate: unexpectedDelegate,
+	set: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {
