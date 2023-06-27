@@ -10924,6 +10924,7 @@ importers:
 
   packages/tools/devtools/devtools-view:
     specifiers:
+      '@fluentui/react': ^8.109.4
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
       '@fluid-experimental/devtools-core': workspace:~
@@ -10966,6 +10967,7 @@ importers:
       ts-jest: ^26.4.4
       typescript: ~4.5.5
     dependencies:
+      '@fluentui/react': 8.109.4_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-components': 9.19.1_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-icons': 2.0.201_react@17.0.2
       '@fluid-experimental/devtools-core': link:../devtools-core
@@ -14816,7 +14818,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tslib: 2.3.1
+      tslib: 2.5.0
     dev: false
 
   /@fluentui/set-version/8.2.9:
