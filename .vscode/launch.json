@@ -38,7 +38,7 @@
 			"type": "node",
 			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
-    {
+		{
 			"name": "flub generate bundleStats",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",

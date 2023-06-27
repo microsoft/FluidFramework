@@ -39,7 +39,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
-    const pnpmListResults = await pnpmList(releaseGroup.repoPath);
+		const pnpmListResults = await pnpmList(releaseGroup.repoPath);
 		const filtered = filterPackages(pnpmListResults, filterOptions)
 			.reverse()
 			.map((item) => {
