@@ -121,16 +121,6 @@ parameters:
   type: string
   default: ci:build
 
-- name: taskTest
-  type: object
-  default:
-  - ci:test:mocha
-  - ci:test:jest
-  - ci:test:realsvc:local
-  - ci:test:realsvc:tinylicious
-  - ci:test:stress:tinylicious
-  - test:copyresults
-
 - name: checkoutSubmodules
   type: boolean
   default: true
@@ -162,10 +152,23 @@ stages:
       jobs:
       - template: templates/include-test-stability.yml
         parameters:
+          packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+          packageManager: pnpm
           buildDirectory: .
           poolBuild: ${{ parameters.poolBuild }}
           checkoutSubmodules: ${{ parameters.checkoutSubmodules }}
           timeoutInMinutes: 360
           taskBuild : ${{ parameters.taskBuild }}
-          taskTest: ${{ parameters.taskTest }}
+          taskLint: false
+          taskTest: 
+          - ci:test:mocha
+          - ci:test:jest
+          - ${{ if eq(variables['System.TeamProject'], 'public') }}:
+            - ci:test:realsvc:local
+            - ci:test:realsvc:tinylicious
+          - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+            - ci:test:realsvc:local:full
+            - ci:test:realsvc:tinylicious:full
+          - ci:test:stress:tinylicious
+          - test:copyresults
           stageName: ${{ stageName }}

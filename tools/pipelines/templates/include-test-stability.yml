@@ -15,6 +15,10 @@ parameters:
   type: boolean
   default: true
 
+- name: taskLintName
+  type: string
+  default: lint
+
 - name: taskTest
   type: object
   default:
@@ -38,6 +42,14 @@ parameters:
 
 - name: stageName
   type: string
+
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
 
 jobs:
   # Job - Build
@@ -81,11 +93,10 @@ jobs:
       inputs:
         version: 16.x
 
-    - template: include-install-pnpm.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        # This pipeline experiences a high failure rate when the cache is enabled, so we disable it
-        enableCache: false
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - template: include-install-pnpm.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
 
     - task: Bash@3
       displayName: Install dependencies
@@ -93,7 +104,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          pnpm i --frozen-lockfile
+          ${{ parameters.packageManagerInstallCommand }}
 
     # Build
     - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -139,27 +150,25 @@ jobs:
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ${{ taskTestStep }}'
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-        # Rename the tinylicious log file, only if tests failed
+        # Verify if the tinylicious log exists
         - task: Bash@3
-          displayName: Rename tinylicious log
+          displayName: Validate Tinylicious Log 
           inputs: 
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
-              oldname=${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
-              stageName=${{ parameters.stageName }}
-              newname=$(echo $oldname | sed 's/\.log$/'"_$stageName.log"/)
-              mv $oldname $newname
+              logFile=${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
+              echo "##vso[task.setvariable variable=LogExists]$(if [ -f "$logFile" ]; then echo "true"; else echo "false"; fi)"
           condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
-        # Publish tinylicious log for troubleshooting
+        # Publish tinylicious log for troubleshooting (only run when the tinylicious log is verified existing)
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Tinylicious Log
           inputs:
-            targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious_${{ parameters.stageName }}.log'
+            targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
             artifactName: 'tinyliciousLog_${{ parameters.stageName }}'
             publishLocation: 'pipeline'
-          condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
-          continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+          condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
+          continueOnError: true
 
       # Test - Upload results
       - task: PublishTestResults@2
