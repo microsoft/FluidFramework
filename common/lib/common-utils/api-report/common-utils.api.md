@@ -193,7 +193,7 @@ export const NumberComparer: IComparer<number>;
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
-// @public
+// @public @deprecated
 export class PromiseCache<TKey, TResult> {
     constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
@@ -205,7 +205,7 @@ export class PromiseCache<TKey, TResult> {
     remove(key: TKey): boolean;
 }
 
-// @public
+// @public @deprecated
 export type PromiseCacheExpiry = {
     policy: "indefinite";
 } | {
@@ -213,7 +213,7 @@ export type PromiseCacheExpiry = {
     durationMs: number;
 };
 
-// @public
+// @public @deprecated
 export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
     removeOnError?: (e: any) => boolean;
