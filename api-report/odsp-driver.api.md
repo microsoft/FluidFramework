@@ -61,7 +61,7 @@ export function getApiRoot(origin: string): string;
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
-export function getJoinSessionInfo(factory: IDocumentServiceFactory, resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+export function getJoinSessionInfo(factory: OdspDocumentServiceFactory, resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 
 // @public
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
