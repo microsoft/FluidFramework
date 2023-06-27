@@ -111,6 +111,7 @@ export function validateMessages(
 	messages: ISequencedDocumentMessage[],
 	from: number,
 	logger: ITelemetryLoggerExt,
+	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
 		const start = messages[0].sequenceNumber;
@@ -128,6 +129,26 @@ export function validateMessages(
 			messages.length = 0;
 		}
 		if (last + 1 !== from + length) {
+			// If not strict, then return the first consecutive sub-block.
+			if (strict) {
+				messages.length = 0;
+			} else {
+				let validOpsCount = 1;
+				while (
+					validOpsCount < messages.length &&
+					messages[validOpsCount].sequenceNumber ===
+						messages[validOpsCount - 1].sequenceNumber + 1
+				) {
+					validOpsCount += 1;
+				}
+				messages.length = Math.min(messages.length, validOpsCount);
+			}
+			let firstValidOpSeqNumber: number | undefined;
+			let lastValidOpSeqNumber: number | undefined;
+			if (messages.length > 0) {
+				firstValidOpSeqNumber = messages[0].sequenceNumber;
+				lastValidOpSeqNumber = messages[messages.length - 1].sequenceNumber;
+			}
 			logger.sendErrorEvent({
 				eventName: "OpsFetchViolation",
 				reason,
@@ -135,9 +156,11 @@ export function validateMessages(
 				start,
 				last,
 				length,
+				details: JSON.stringify({
+					firstValidOpSeqNumber,
+					lastValidOpSeqNumber,
+				}),
 			});
-			// we can do better here by finding consecutive sub-block and return it
-			messages.length = 0;
 		}
 	}
 }
