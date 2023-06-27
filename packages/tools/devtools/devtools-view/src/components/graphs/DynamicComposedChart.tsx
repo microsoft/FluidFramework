@@ -1,4 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+// Recharts does not have types for many objects at this time. For now, these eslint disable directive should be active until we create our own types for recharts
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { tokens } from "@fluentui/react-components";
 import Color from "color";
@@ -15,11 +24,6 @@ import {
 	YAxis,
 } from "recharts";
 
-interface DataPoint {
-	x: string;
-	[key: string]: number | string;
-}
-
 /**
  * Data To be rendered with Op Latency Graph
  */
@@ -35,10 +39,16 @@ export interface GraphDataSet {
 }
 
 /**
+ * The final shape of the data points passed to the recharts component
+ */
+interface DataPoint {
+	x: string;
+	[key: string]: number | string;
+}
+
+/**
  * Merges multiple {@link GraphDataSet}'s into singular objects by their y-axis (timestamp) value.
  * This method is necessary for showing composed graphs beacause Recharts expects data to be in a merged object format
- *
- * TODO: We will have to update this method as we learn more about the actual schema of the data
  */
 const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 	const xAxisDataPointToYAxisDataPointMap: Record<string, Record<string, number | string>> = {};
@@ -84,19 +94,15 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 	const [activeIndex, setActiveIndex] = useState<string | undefined>();
 	const graphGrayColor = tokens.colorPaletteSteelForeground2;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleLegendClick = (e: any): void => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		setActiveIndex(activeIndex === e.dataKey ? undefined : e.dataKey);
+	const handleLegendClick = (e): void => {
+		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
 	};
 
 	/**
 	 * Renders a custom component for the graph legend
 	 */
 	// Recharts doesn't have a type for this
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const renderLegend = (legendProps: any): React.ReactElement => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { payload } = legendProps;
 
 		return (
@@ -108,9 +114,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					justifyContent: "center",
 				}}
 			>
-				{/* eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */}
 				{payload.map((entry: any, index: number) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const legendColor: string =
 						activeIndex === entry.dataKey || activeIndex === undefined
 							? entry.color
@@ -119,7 +123,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					return (
 						<div
 							key={`item-${index}`}
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 							onClick={(): void => legendProps.onClick(entry)}
 							style={{ color: legendColor, width: "33%", fontSize: 16 }}
 						>
@@ -150,9 +154,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 	 * Renders a custom view for the X Axis displayed on the Rechart chart
 	 */
 	// Recharts doesn't have a type for this
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const CustomizedXAxisTick = (xAxisProps: any): React.ReactElement => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { x, y, payload } = xAxisProps;
 		return (
 			<g transform={`translate(${x},${y})`}>
@@ -175,13 +177,10 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 	 * Renders a custom view for the Y Axis displayed on the Rechart chart
 	 */
 	// Recharts doesn't have a type for this
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { x, y, payload } = yAxisProps;
 		return (
 			<g>
-				{/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
 				<text x={x} y={y} textAnchor="end" fill={graphGrayColor} fontSize={16}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
