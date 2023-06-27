@@ -77,8 +77,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	public rebase() {}
-
 	public submit(messageContent: any, localOpMetadata: unknown) {
 		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
 		if (this.connected) {
