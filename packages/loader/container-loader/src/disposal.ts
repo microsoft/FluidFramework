@@ -10,8 +10,6 @@ import { IDisposable } from "@fluidframework/common-definitions";
  * {@link @fluidframework/common-definitions#IDisposable | disposable} object has not yet been disposed.
  *
  * @throws Will throw an error if the item has already been disposed.
- *
- * @deprecated Moved to the `@fluidframework/container-loader` package.
  */
 export function doIfNotDisposed<T>(
 	disposable: IDisposable,
