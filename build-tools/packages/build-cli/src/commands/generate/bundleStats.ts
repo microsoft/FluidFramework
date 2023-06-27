@@ -57,6 +57,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					this.error(`${reportPath} is missing; bundle analysis may not be accurate.`);
 				}
 
+				// eslint-disable-next-line no-await-in-loop
 				const report = await readJson(reportPath);
 				if (report.assets?.length === undefined || report.assets?.length === 0) {
 					this.error(`${reportPath} doesn't have any assets info`);
