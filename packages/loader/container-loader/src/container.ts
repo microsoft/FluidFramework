@@ -2363,7 +2363,7 @@ export class Container
 			{ eventName: "InstantiateRuntime" },
 			async () =>
 				runtimeFactory.instantiateRuntime(
-					new Proxy(this.context, { get: Reflect.get }),
+					new Proxy<IContainerContext>(this.context, { get: Reflect.get }),
 					existing,
 				),
 		);
