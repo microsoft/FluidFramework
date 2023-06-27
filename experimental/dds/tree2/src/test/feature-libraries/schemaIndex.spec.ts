@@ -7,11 +7,14 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { getSchemaString, parseSchemaString } from "../../feature-libraries/schemaIndexFormat";
+import { makeSchemaCodec } from "../../feature-libraries/schemaIndexFormat";
 
 import { SchemaData } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 import { jsonSchema, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
+
+const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 describe("SchemaIndex", () => {
 	it("roundtrip", () => {
@@ -20,9 +23,9 @@ describe("SchemaIndex", () => {
 		const data: SchemaData = new SchemaBuilder("roundtrip", jsonSchema).intoDocumentSchema(
 			SchemaBuilder.fieldOptional(...jsonRoot),
 		);
-		const s = getSchemaString(data);
-		const parsed = parseSchemaString(s);
-		const s2 = getSchemaString(parsed);
+		const s = codec.encode(data);
+		const parsed = codec.decode(s);
+		const s2 = codec.encode(parsed);
 		assert.equal(s, s2);
 		assert(allowsRepoSuperset(defaultSchemaPolicy, data, parsed));
 		assert(allowsRepoSuperset(defaultSchemaPolicy, parsed, data));
@@ -32,7 +35,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = ['{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": []}'];
 		for (const data of cases) {
-			parseSchemaString(data);
+			codec.decode(data);
 		}
 	});
 
@@ -49,7 +52,7 @@ describe("SchemaIndex", () => {
 			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [], "extraField": 0}',
 		];
 		for (const data of badCases) {
-			assert.throws(() => parseSchemaString(data));
+			assert.throws(() => codec.decode(data));
 		}
 	});
 

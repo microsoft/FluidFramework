@@ -90,6 +90,7 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
+	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -102,7 +103,7 @@ export async function createSummarizerFromFactory(
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-		configProvider: mockConfigProvider(),
+		configProvider,
 		logger,
 	});
 	return createSummarizerCore(container, loader, summaryVersion);
@@ -169,6 +170,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
+		submitResult.error.data = submitResult.data;
 		throw submitResult.error;
 	}
 	assert(

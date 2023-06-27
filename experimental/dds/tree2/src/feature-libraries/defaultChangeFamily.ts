@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -42,8 +42,8 @@ const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor() {
-		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
+	public constructor(codecOptions: ICodecOptions) {
+		this.modularFamily = new ModularChangeFamily(defaultFieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -65,9 +65,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return new DefaultEditBuilder(this, changeReceiver, anchorSet);
 	}
 }
-
-export const defaultChangeFamily = new DefaultChangeFamily();
-export const defaultIntoDelta = (change: DefaultChangeset) => defaultChangeFamily.intoDelta(change);
 
 /**
  * Default editor for transactions.
@@ -162,8 +159,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent),
+					valueFieldKind.changeHandler.editor.set(newContent, id),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -173,8 +171,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					optional.changeHandler.editor.set(newContent, wasEmpty),
+					optional.changeHandler.editor.set(newContent, wasEmpty, id),
 				);
 				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
@@ -188,7 +187,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId();
+		const moveId = this.modularBuilder.generateId(count);
 		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
@@ -234,7 +233,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId();
+				const moveId = this.modularBuilder.generateId(count);
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,

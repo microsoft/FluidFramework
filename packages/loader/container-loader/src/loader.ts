@@ -79,8 +79,7 @@ export class RelativeLoader implements ILoader {
 				return this.container;
 			} else {
 				ensureResolvedUrlDefined(this.container.resolvedUrl);
-				const container = await Container.clone(
-					this.container,
+				const container = await this.container.clone(
 					{
 						resolvedUrl: { ...this.container.resolvedUrl },
 						version: request.headers?.[LoaderHeader.version] ?? undefined,
@@ -308,28 +307,41 @@ export class Loader implements IHostLoader {
 	private readonly mc: MonitoringContext;
 
 	constructor(loaderProps: ILoaderProps) {
-		const scope: FluidObject<ILoader> = { ...loaderProps.scope };
-		if (loaderProps.options?.provideScopeLoader !== false) {
-			scope.ILoader = this;
-		}
+		const {
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			logger,
+			detachedBlobStorage,
+			configProvider,
+			protocolHandlerBuilder,
+		} = loaderProps;
+
 		const telemetryProps = {
 			loaderId: uuid(),
 			loaderVersion: pkgVersion,
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, {
+			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
 				all: telemetryProps,
 			}),
 			sessionStorageConfigProvider.value,
-			loaderProps.configProvider,
+			configProvider,
 		);
 
 		this.services = {
-			...loaderProps,
-			scope,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options: options ?? {},
+			scope:
+				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+			detachedBlobStorage,
+			protocolHandlerBuilder,
 			subLogger: subMc.logger,
-			options: loaderProps.options ?? {},
 		};
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
 	}
@@ -431,11 +443,18 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
+		request.headers ??= {};
+		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
+		request.headers[LoaderHeader.version] =
+			parsed.version ?? request.headers[LoaderHeader.version];
+		const canCache =
+			this.cachingEnabled &&
+			request.headers[LoaderHeader.cache] !== false &&
+			pendingLocalState === undefined;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
 		let container: Container;
-		if (shouldCache) {
+		if (canCache) {
 			const key = this.getKeyForContainerCache(request, parsed);
 			const maybeContainer = await this.containers.get(key);
 			if (maybeContainer !== undefined) {
@@ -467,32 +486,6 @@ export class Loader implements IHostLoader {
 
 	private get cachingEnabled() {
 		return this.services.options.cache !== false;
-	}
-
-	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
-	}
-
-	private parseHeader(parsed: IParsedUrl, request: IRequest) {
-		let fromSequenceNumber = -1;
-
-		request.headers = request.headers ?? {};
-
-		const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-		if (headerSeqNum !== undefined) {
-			fromSequenceNumber = headerSeqNum;
-		}
-
-		// If set in both query string and headers, use query string
-		request.headers[LoaderHeader.version] =
-			parsed.version ?? request.headers[LoaderHeader.version];
-
-		const canCache = this.canCacheForRequest(request.headers);
-
-		return {
-			canCache,
-			fromSequenceNumber,
-		};
 	}
 
 	private async loadContainer(

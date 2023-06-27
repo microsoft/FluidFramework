@@ -15,6 +15,7 @@ export {
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	defaultDDSFuzzSuiteOptions,
+	DDSFuzzHarnessEvents,
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";

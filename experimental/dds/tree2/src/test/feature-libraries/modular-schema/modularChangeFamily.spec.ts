@@ -34,13 +34,14 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail } from "../../../util";
+import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { typeboxValidator } from "../../../external-utilities";
 import {
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
-import { makeCodecFamily, makeValueCodec } from "../../../codec";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
@@ -102,7 +103,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds);
+const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -789,7 +790,9 @@ describe("ModularChangeFamily", () => {
 			(a, b) => false,
 			new Set(),
 		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
+			jsonValidator: noopValidator,
+		});
 
 		const changeA: ModularChangeset = {
 			fieldChanges: new Map([

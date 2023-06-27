@@ -21,7 +21,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.19.0
+@fluid-tools/build-cli/1.0.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -42,6 +42,7 @@ USAGE
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
 * [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
