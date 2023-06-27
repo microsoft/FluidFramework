@@ -644,19 +644,21 @@ export function configureWebSocketServices(
 					getLumberBaseProperties(connection.documentId, connection.tenantId),
 				);
 
-				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
-				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
-				clientIdConnectionsDisconnected.add(clientId);
-				connection.disconnect().catch((error) => {
-					const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
-					// Reset disconnection status so we can retry if handling race-condition.
-					clientIdConnectionsDisconnected.delete(clientId);
-					Lumberjack.error(
-						errorMsg,
-						getLumberBaseProperties(connection.documentId, connection.tenantId),
-						error,
-					);
-				});
+				connection
+					.disconnect()
+					.then(() => {
+						// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
+						// for the same clientId if retrying when connectDocument completes after disconnectDocument.
+						clientIdConnectionsDisconnected.add(clientId);
+					})
+					.catch((error) => {
+						const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(connection.documentId, connection.tenantId),
+							error,
+						);
+					});
 				if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
 					const connectionTimestamp = connectionTimeMap.get(clientId);
 					if (connectionTimestamp) {
@@ -678,9 +680,6 @@ export function configureWebSocketServices(
 					// We already removed this clientId once. Skip it.
 					continue;
 				}
-				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
-				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
-				clientIdClientsDisconnected.add(clientId);
 				const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
 				// excluding summarizer for total client count.
 				if (connectionTimeMap.has(clientId)) {
@@ -692,7 +691,13 @@ export function configureWebSocketServices(
 					getLumberBaseProperties(room.documentId, room.tenantId),
 				);
 				removeAndStoreP.push(
-					clientManager.removeClient(room.tenantId, room.documentId, clientId),
+					clientManager
+						.removeClient(room.tenantId, room.documentId, clientId)
+						.then(() => {
+							// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
+							// for the same clientId if retrying when connectDocument completes after disconnectDocument.
+							clientIdClientsDisconnected.add(clientId);
+						}),
 				);
 				socket
 					.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))
@@ -700,8 +705,6 @@ export function configureWebSocketServices(
 						const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(
 							room,
 						)}.`;
-						// Reset disconnection status so we can retry if handling race-condition.
-						clientIdClientsDisconnected.delete(clientId);
 						Lumberjack.error(
 							errorMsg,
 							getLumberBaseProperties(room.documentId, room.tenantId),
