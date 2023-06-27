@@ -486,40 +486,6 @@ const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
-const valueFieldEditor: ValueFieldEditor = {
-	...optionalFieldEditor,
-	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
-		optionalFieldEditor.set(newContent, false, id),
-};
-
-const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
-	rebaser: optionalChangeRebaser,
-	codecsFactory: makeOptionalFieldCodecFamily,
-	editor: valueFieldEditor,
-
-	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
-		optionalFieldIntoDelta(change, deltaFromChild),
-	isEmpty: (change: OptionalChangeset) =>
-		change.childChange === undefined && change.fieldChange === undefined,
-};
-
-/**
- * Exactly one item.
- */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
-	brandedFieldKind(
-		"Value",
-		Multiplicity.Value,
-		valueChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeKey.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set(),
-	);
-
 function deltaFromInsertAndChange(
 	insertedContent: ITreeCursorSynchronous | undefined,
 	nodeChange: NodeChangeset | undefined,
@@ -612,7 +578,35 @@ export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, Optio
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === optional.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set([value.identifier]),
+		new Set([]),
+	);
+
+const valueFieldEditor: ValueFieldEditor = {
+	...optionalFieldEditor,
+	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
+		optionalFieldEditor.set(newContent, false, id),
+};
+
+const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
+	...optional.changeHandler,
+	editor: valueFieldEditor,
+};
+
+/**
+ * Exactly one item.
+ */
+export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
+	brandedFieldKind(
+		"Value",
+		Multiplicity.Value,
+		valueChangeHandler,
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier ||
+				other.kind.identifier === nodeKey.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set(),
 	);
 
 /**
