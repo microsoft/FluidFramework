@@ -9,6 +9,12 @@ import { ISocketStorageDiscovery } from "./contractsPublic";
 import { getJoinSessionCacheKey, getOdspResolvedUrl } from "./odspUtils";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 
+/**
+ * Api which returns the current join session response stored in non persistent cache, if present
+ * @param factory - odsp driver factory
+ * @param resolvedUrl - resolved url for container
+ * @returns - Current join session response stored in cache. Undefined if not present.
+ */
 export async function getJoinSessionInfo(
 	factory: IDocumentServiceFactory,
 	resolvedUrl: IResolvedUrl,

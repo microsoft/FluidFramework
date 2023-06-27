@@ -60,7 +60,7 @@ export function getApiRoot(origin: string): string;
 // @public (undocumented)
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
-// @public (undocumented)
+// @public
 export function getJoinSessionInfo(factory: IDocumentServiceFactory, resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 
 // @public
