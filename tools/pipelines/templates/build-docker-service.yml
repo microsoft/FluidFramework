@@ -290,7 +290,12 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm flub exec --releaseGroup ${{ parameters.tagName }} --no-private -- "mv `npm pack` /usr/src/pack"'
+            customCommand:
+              run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) \
+              flub exec --no-private --concurrency=1 --releaseGroup ${{ parameters.tagName }} -- \
+              ${{ parameters.packageManager }} pack && \
+              flub exec --no-private --concurrency=1 --releaseGroup ${{ parameters.tagName }} -- \
+              mv -t /usr/src/pack ./*.tgz
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
