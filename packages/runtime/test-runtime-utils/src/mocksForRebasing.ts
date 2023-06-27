@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
 	IMockContainerRuntimePendingMessage,
@@ -14,12 +14,11 @@ import {
 } from "./mocks";
 
 /**
- * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntime for testing op rebasing, when the
+ * runtime will resend ops to the datastores and all ops within the same batch will have
+ * the same sequence number. Also supports reconnection.
  */
-export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
-	/**
-	 * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
-	 */
+export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
 	public get connected(): boolean {
@@ -47,7 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// On reconnection, ask the DDSes to resubmit pending messages.
 			this.reSubmitMessages();
 		} else {
-			const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
+			const factory = this.factory as MockContainerRuntimeFactoryForRebasing;
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
 			factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
@@ -63,7 +62,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		factory: MockContainerRuntimeFactoryForReconnection,
+		factory: MockContainerRuntimeFactoryForRebasing,
 		overrides?: { minimumSequenceNumber?: number },
 	) {
 		super(dataStoreRuntime, factory, overrides);
@@ -75,18 +74,25 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		} else {
 			this.pendingRemoteMessages.push(message);
 		}
+
+		this.clientSequenceNumber++;
 	}
 
-	public rebase() {}
-
 	public submit(messageContent: any, localOpMetadata: unknown) {
-		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
-		if (this.connected) {
-			return super.submit(messageContent, localOpMetadata);
+		if (!this.connected) {
+			this.addPendingMessage(messageContent, localOpMetadata, -1);
+			return -1;
 		}
 
-		this.addPendingMessage(messageContent, localOpMetadata, -1);
-		return -1;
+		this.factory.pushMessage({
+			clientId: this.clientId,
+			clientSequenceNumber: this.clientSequenceNumber,
+			contents: messageContent,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			type: MessageType.Operation,
+		});
+		this.addPendingMessage(messageContent, localOpMetadata, this.clientSequenceNumber);
+		return this.clientSequenceNumber;
 	}
 
 	private reSubmitMessages() {
@@ -107,14 +113,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 }
 
 /**
- * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntimeFactory for testing op rebasing.
  */
-export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
+export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactory {
 	public createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		overrides?: { minimumSequenceNumber?: number },
-	): MockContainerRuntimeForReconnection {
-		const containerRuntime = new MockContainerRuntimeForReconnection(
+	): MockContainerRuntimeForRebasing {
+		const containerRuntime = new MockContainerRuntimeForRebasing(
 			dataStoreRuntime,
 			this,
 			overrides,
