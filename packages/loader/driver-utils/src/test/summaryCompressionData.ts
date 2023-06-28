@@ -94,7 +94,7 @@ export const snapshotTree = {
 	blobs: {
 		".electedSummarizer": "1779e5eec3d53d36c476f7e365fe09d5eadb5cb7",
 		".metadata": "43a9378e44336b39fc8f86f0511a655511922f11",
-		".summary-blob-compression.enabled": "1",
+		".metadata.blobHeaders": "1",
 	},
 	trees: {
 		".channels": {

@@ -33,6 +33,7 @@ import {
 	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	blobHeadersBlobName,
 } from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
 import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
@@ -256,7 +257,7 @@ describe("Summary Compression Test", () => {
 		});
 		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
 		assert(
-			uploadedSummary?.tree[".summary-blob-compression.enabled"] !== undefined,
+			uploadedSummary?.tree[blobHeadersBlobName] !== undefined,
 			"The summary-blob markup is not added",
 		);
 	});

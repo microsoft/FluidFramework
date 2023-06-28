@@ -9,3 +9,4 @@ export {
 	DefaultCompressionStorageConfig,
 } from "./compressionTypes";
 export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactoryCompressionAdapter";
+export { blobHeadersBlobName } from "./summaryblob";

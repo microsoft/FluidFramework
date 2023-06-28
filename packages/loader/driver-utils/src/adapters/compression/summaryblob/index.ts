@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { DocumentStorageServiceCompressionAdapter } from "./documentStorageServiceSummaryBlobCompressionAdapter";
+export {
+	DocumentStorageServiceCompressionAdapter,
+	blobHeadersBlobName,
+} from "./documentStorageServiceSummaryBlobCompressionAdapter";

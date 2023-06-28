@@ -71,6 +71,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly tenantId: string | undefined;
 }
 
+// @public (undocumented)
+export const blobHeadersBlobName = ".metadata.blobHeaders";
+
 // @public
 export class BlobTreeEntry {
     constructor(path: string, contents: string, encoding?: "utf-8" | "base64");

@@ -7,6 +7,7 @@ export {
 	SummaryCompressionAlgorithm,
 	ICompressionStorageConfig,
 	DefaultCompressionStorageConfig,
+	blobHeadersBlobName,
 } from "./compression";
 
 export { applyStorageCompression } from "./predefinedAdapters";

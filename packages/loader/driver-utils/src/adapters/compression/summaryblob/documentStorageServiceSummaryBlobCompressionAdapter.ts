@@ -18,6 +18,9 @@ import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
+export const blobHeadersBlobName = ".metadata.blobHeaders";
+const metadataBlobName = ".metadata";
+
 /**
  * This class is a proxy for the IDocumentStorageService that compresses and decompresses blobs in the summary.
  * The identification of the compressed blobs is done by adding a compression markup blob to the summary.
@@ -31,7 +34,6 @@ import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
 	private _isCompressionEnabled: boolean = false;
-	public static readonly compressionMarkupBlob = ".summary-blob-compression.enabled";
 
 	constructor(
 		service: IDocumentStorageService,
@@ -285,7 +287,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					return found;
 				}
 			}
-			if (Boolean(value) && key === ".metadata" && value.type === SummaryType.Blob) {
+			if (Boolean(value) && key === metadataBlobName && value.type === SummaryType.Blob) {
 				return summary;
 			}
 		}
@@ -312,7 +314,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static putCompressionMarkup(summary: ISummaryTree): void {
 		const metadataHolderTree =
 			DocumentStorageServiceCompressionAdapter.getMetadataHolderTree(summary);
-		metadataHolderTree[DocumentStorageServiceCompressionAdapter.compressionMarkupBlob] = {
+		metadataHolderTree[blobHeadersBlobName] = {
 			type: 2,
 			content: "",
 		};
@@ -328,9 +330,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
 		assert(typeof snapshot === "object", "snapshot must be a non-null object");
 		for (const key of Object.keys(snapshot.blobs)) {
-			if (key === ".metadata") {
-				const value =
-					snapshot.blobs[DocumentStorageServiceCompressionAdapter.compressionMarkupBlob];
+			if (key === metadataBlobName) {
+				const value = snapshot.blobs[blobHeadersBlobName];
 				if (value !== undefined) {
 					return true;
 				}
