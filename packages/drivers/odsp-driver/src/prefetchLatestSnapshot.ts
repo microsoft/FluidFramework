@@ -141,10 +141,15 @@ export async function prefetchLatestSnapshot(
 					});
 					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
 					await cacheP;
-					// Schedule it to remove from cache after 5s, so that if this snapshot is going to be used on load,
-					// and we don't find it in this cache, then we will make a network call again to fetch this
-					// snapshot which is redundant. So don't clear this cache immediately. We also clear this cache,
-					// if this cached snapshot is used on load.
+					// Schedule it to remove from cache after 5s.
+					// 1. While it's in snapshotNonPersistentCache: Load flow will use this value and will not attempt
+					// to fetch snapshot from network again. That's the best from perf POV, but cache will not be
+					// updated if we keep it in this cache, thus we want to eventually remove snapshot from this cache.
+					// 2. After it's removed from snapshotNonPersistentCache: snapshot is present in persistent cache,
+					// so we sill still use it (in accordance with cache policy controlled by host). But load flow will
+					// also fetch snapshot (in parallel) from storage and update cache. This is fine long term,
+					// but is an extra cost (unneeded network call). However since it is 5s older, new network call
+					// will update the snapshot in cache.
 					setTimeout(() => {
 						snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					}, 5000);
