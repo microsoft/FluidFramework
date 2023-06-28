@@ -4,7 +4,7 @@
  */
 
 /**
- * The message {@link ISourcedDevtoolsMessage.source} for all messages posted by the Client Debugger.
+ * The message {@link ISourcedDevtoolsMessage.source} for all messages posted by the devtools.
  *
  * @internal
  */
