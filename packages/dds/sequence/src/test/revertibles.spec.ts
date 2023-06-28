@@ -241,7 +241,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 	});
-	it.only("attempt to remove entire string", () => {
+	it("attempt to remove entire string", () => {
 		sharedString.insertText(0, "hello");
 		sharedString.on("sequenceDelta", (op) => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -254,7 +254,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
 	});
-	it.only("attempt to remove entire string and revert change", () => {
+	it("attempt to remove entire string and revert change", () => {
 		sharedString.insertText(0, "hello");
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
 			appendChangeIntervalToRevertibles(

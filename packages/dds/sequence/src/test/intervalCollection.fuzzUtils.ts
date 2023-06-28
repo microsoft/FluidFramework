@@ -186,8 +186,7 @@ export function makeReducer(
 			channel.insertText(index, content);
 		},
 		removeRange: async ({ channel }, { start, end }) => {
-			const endPos = start === 0 && end === channel.getLength() ? end - 1 : end;
-			channel.removeRange(start, endPos);
+			channel.removeRange(start, end);
 		},
 		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
 			const collection = channel.getIntervalCollection(collectionName);

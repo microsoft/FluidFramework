@@ -53,8 +53,10 @@ export function makeOperationGenerator(
 	}
 
 	function exclusiveRange(state: ClientOpState): RangeSpec {
-		const start = startPosition(state);
-		const end = state.random.integer(start + 1, state.channel.getLength());
+		let max = state.channel.getLength() - 2 < 0 ? 0 : state.channel.getLength() - 2;
+		const start = state.random.integer(0, max);
+		max = state.channel.getLength() - 1 < start + 1 ? start + 1 : state.channel.getLength() - 1;
+		const end = state.random.integer(start + 1, max);
 		return { start, end };
 	}
 
@@ -181,7 +183,13 @@ export function makeOperationGenerator(
 	const usableWeights = optionsParam?.weights ?? defaultOptions.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
-		[removeRange, usableWeights.removeRange, hasNonzeroLength],
+		[
+			removeRange,
+			usableWeights.removeRange,
+			lengthSatisfies((length) => {
+				return length > 1;
+			}),
+		],
 		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
