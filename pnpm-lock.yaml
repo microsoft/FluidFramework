@@ -7892,7 +7892,6 @@ importers:
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -7926,7 +7925,6 @@ importers:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8939,6 +8937,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
+      lz4js: ^0.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8960,6 +8959,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 0.26.1
+      lz4js: 0.2.0
       url: 0.11.0
       uuid: 8.3.2
     devDependencies:
@@ -10611,7 +10611,7 @@ importers:
 
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
-      '@fluentui/react': ^8.109.3
+      '@fluentui/react': ^8.109.4
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluidframework/build-common': ^1.2.0
@@ -10926,6 +10926,7 @@ importers:
 
   packages/tools/devtools/devtools-view:
     specifiers:
+      '@fluentui/react': ^8.109.4
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
       '@fluid-experimental/devtools-core': workspace:~
@@ -10968,6 +10969,7 @@ importers:
       ts-jest: ^26.4.4
       typescript: ~4.5.5
     dependencies:
+      '@fluentui/react': 8.109.4_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-components': 9.19.1_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-icons': 2.0.201_react@17.0.2
       '@fluid-experimental/devtools-core': link:../devtools-core
@@ -13345,6 +13347,7 @@ packages:
   /@colors/colors/1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+    requiresBuild: true
 
   /@dabh/diagnostics/2.0.3:
     resolution: {integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==}
@@ -14817,7 +14820,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tslib: 2.3.1
+      tslib: 2.5.0
     dev: false
 
   /@fluentui/set-version/8.2.9:
