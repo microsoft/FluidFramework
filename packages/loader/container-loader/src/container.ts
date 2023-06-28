@@ -2309,14 +2309,17 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
+		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
+		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
 			this._loadedFromVersion,
-			new DeltaManagerProxy(this._deltaManager),
+			deltaManagerProxy,
 			this.storageAdapter,
-			new QuorumProxy(this.protocolHandler.quorum),
+			quorumProxy,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2340,7 +2343,11 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => context.dispose());
+		this._lifecycleEvents.once("disposed", () => {
+			context.dispose();
+			quorumProxy.dispose();
+			deltaManagerProxy.dispose();
+		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
