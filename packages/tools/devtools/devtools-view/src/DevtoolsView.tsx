@@ -126,12 +126,12 @@ const useDevtoolsStyles = makeStyles({
 		},
 	},
 	retryButton: {
-		"marginLeft": "5px",
+		marginLeft: "5px",
 	},
 	debugNote: {
-		"fontWeight": "normal",
-		"marginTop": "0px",
-		"marginBottom": "0px",
+		fontWeight: "normal",
+		marginTop: "0px",
+		marginBottom: "0px",
 	},
 });
 
