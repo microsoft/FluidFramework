@@ -219,7 +219,7 @@ export function DevtoolsView(): React.ReactElement {
 								<MessageBar
 									messageBarType={MessageBarType.error}
 									isMultiline={true}
-									onDismiss={(): void => setIsMessageDismissed(false)}
+									onDismiss={(): void => setIsMessageDismissed(true)}
 									dismissButtonAriaLabel="Close"
 									className={styles.icon}
 								>
