@@ -507,7 +507,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("resends batched ops", async function () {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).context.runtime.orderSequentially(() => {
+			(c as any).runtime.orderSequentially(() => {
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 			});
 		});
@@ -537,7 +537,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("doesn't resend successful batched ops", async function () {
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).context.runtime.orderSequentially(() => {
+			(c as any).runtime.orderSequentially(() => {
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 			});
 		});
