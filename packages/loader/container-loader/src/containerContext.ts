@@ -35,7 +35,6 @@ import {
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { Container } from "./container";
 
 /**
  * Events that {@link ContainerContext} can emit through its lifecycle.
@@ -49,12 +48,15 @@ type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 
 export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
-		container: Container,
+		options: ILoaderOptions,
 		scope: FluidObject,
 		runtimeFactory: IRuntimeFactory,
 		baseSnapshot: ISnapshotTree | undefined,
+		version: IVersion | undefined,
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		storage: IDocumentStorageService,
 		quorum: IQuorum,
+		audience: IAudience,
 		loader: ILoader,
 		submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
 		submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number,
@@ -62,18 +64,28 @@ export class ContainerContext implements IContainerContext {
 		submitSignalFn: (contents: any) => void,
 		disposeFn: (error?: ICriticalContainerError) => void,
 		closeFn: (error?: ICriticalContainerError) => void,
-		version: string,
 		updateDirtyContainerState: (dirty: boolean) => void,
+		getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
+		getContainerDiagnosticId: () => string | undefined,
+		getClientId: () => string | undefined,
+		getServiceConfiguration: () => IClientConfiguration | undefined,
+		getAttachState: () => AttachState,
+		clientDetails: IClientDetails,
 		existing: boolean,
+		connected: boolean,
+		taggedLogger: ITelemetryLoggerExt,
 		pendingLocalState?: unknown,
 	): Promise<ContainerContext> {
 		const context = new ContainerContext(
-			container,
+			options,
 			scope,
 			runtimeFactory,
 			baseSnapshot,
+			version,
 			deltaManager,
+			storage,
 			quorum,
+			audience,
 			loader,
 			submitFn,
 			submitSummaryFn,
@@ -81,34 +93,39 @@ export class ContainerContext implements IContainerContext {
 			submitSignalFn,
 			disposeFn,
 			closeFn,
-			version,
 			updateDirtyContainerState,
+			getAbsoluteUrl,
+			getContainerDiagnosticId,
+			getClientId,
+			getServiceConfiguration,
+			getAttachState,
+			clientDetails,
 			existing,
+			connected,
+			taggedLogger,
 			pendingLocalState,
 		);
 		await context.instantiateRuntime(existing);
 		return context;
 	}
 
-	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {
-		return this.container.clientId;
+		return this._getClientId();
 	}
 
 	/**
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.container.resolvedUrl?.id ?? "";
+		return this._getContainerDiagnosticId() ?? "";
 	}
 
 	public get clientDetails(): IClientDetails {
-		return this.container.clientDetails;
+		return this._clientDetails;
 	}
 
-	private _connected: boolean;
 	/**
 	 * When true, ops are free to flow
 	 * When false, ops should be kept as pending or rejected
@@ -122,15 +139,15 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get serviceConfiguration(): IClientConfiguration | undefined {
-		return this.container.serviceConfiguration;
+		return this._getServiceConfiguration();
 	}
 
 	public get audience(): IAudience {
-		return this.container.audience;
+		return this._audience;
 	}
 
 	public get options(): ILoaderOptions {
-		return this.container.options;
+		return this._options;
 	}
 
 	public get baseSnapshot() {
@@ -138,7 +155,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public get storage(): IDocumentStorageService {
-		return this.container.storage;
+		return this._storage;
 	}
 
 	private _runtime: IRuntime | undefined;
@@ -197,12 +214,15 @@ export class ContainerContext implements IContainerContext {
 	private readonly lifecycleEvents = new TypedEventEmitter<ContextLifecycleEvents>();
 
 	constructor(
-		private readonly container: Container,
+		private readonly _options: ILoaderOptions,
 		public readonly scope: FluidObject,
 		private readonly _runtimeFactory: IRuntimeFactory,
 		private readonly _baseSnapshot: ISnapshotTree | undefined,
+		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly _storage: IDocumentStorageService,
 		quorum: IQuorum,
+		private readonly _audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,
@@ -222,14 +242,19 @@ export class ContainerContext implements IContainerContext {
 		public readonly submitSignalFn: (contents: any) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
-		public readonly version: string,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
+		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
+		private readonly _getContainerDiagnosticId: () => string | undefined,
+		private readonly _getClientId: () => string | undefined,
+		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
+		private readonly _getAttachState: () => AttachState,
+		private readonly _clientDetails: IClientDetails,
 		public readonly existing: boolean,
+		private _connected: boolean,
+		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {
-		this._connected = this.container.connected;
 		this._quorum = quorum;
-		this.taggedLogger = container.subLogger;
 
 		this.supportedFeatures = new Map([
 			/**
@@ -239,7 +264,6 @@ export class ContainerContext implements IContainerContext {
 			 */
 			["referenceSequenceNumbers", true],
 		]);
-		this.attachListener();
 	}
 
 	/**
@@ -267,11 +291,11 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
-		return this.container.loadedFromVersion;
+		return this._version;
 	}
 
 	public get attachState(): AttachState {
-		return this.container.attachState;
+		return this._getAttachState();
 	}
 
 	/**
@@ -286,9 +310,8 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		const runtime = this.runtime;
 		this._connected = connected;
-		runtime.setConnectionState(connected, clientId);
+		this.runtime.setConnectionState(connected, clientId);
 	}
 
 	public process(message: ISequencedDocumentMessage, local: boolean) {
@@ -303,16 +326,16 @@ export class ContainerContext implements IContainerContext {
 		return this.runtime.request(path);
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-		return this.container.getAbsoluteUrl(relativeUrl);
-	}
-
 	public getPendingLocalState(): unknown {
 		return this.runtime.getPendingLocalState();
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
 		return this.runtime.notifyOpReplay?.(message);
+	}
+
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
+		this.runtime.setAttachState(attachState);
 	}
 
 	// #region private
@@ -326,13 +349,5 @@ export class ContainerContext implements IContainerContext {
 		this.lifecycleEvents.emit("runtimeInstantiated");
 	}
 
-	private attachListener() {
-		this.container.once("attaching", () => {
-			this.runtime.setAttachState(AttachState.Attaching);
-		});
-		this.container.once("attached", () => {
-			this.runtime.setAttachState(AttachState.Attached);
-		});
-	}
 	// #endregion
 }
