@@ -49,8 +49,15 @@ export class Counter<T> {
 	}
 }
 
+/**
+ * Returns true iff a given item `t` (of which there are `count` usages) is worth substituting with the number `value`.
+ */
 export type CounterFilter<T> = (t: T, value: number, count: number) => boolean;
 
+/**
+ * Table for dictionary compression.
+ * See {@link Counter}.
+ */
 export interface DeduplicationTable<T> {
 	/**
 	 * Lookup table derived from indexToValue,
@@ -92,38 +99,64 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
 	return lengthUsingTable < lengthWithoutTable;
 }
 
+/**
+ * Read from an array, but error if index is not valid.
+ */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
 	return data[index];
 }
 
+/**
+ * A readable stream.
+ */
+export interface StreamCursor {
+	/**
+	 * The data to read.
+	 */
+	readonly data: readonly TreeValue[];
+	/**
+	 * Location in the data.
+	 */
+	offset: number;
+}
+
+/**
+ * Read one item from the stream, advancing the stream offset.
+ */
 export function readStream(stream: StreamCursor): TreeValue {
 	const content = getChecked(stream.data, stream.offset);
 	stream.offset++;
 	return content;
 }
 
+/**
+ * Read one number from the stream, advancing the stream offset.
+ */
 export function readStreamNumber(stream: StreamCursor): number {
 	const content = readStream(stream);
 	assert(typeof content === "number", "expected number in stream");
 	return content;
 }
 
-export function readStreamStream(stream: StreamCursor): StreamCursor {
-	const content = readStream(stream);
-	assert(Array.isArray(content), "expected Array in stream");
-	return { data: content, offset: 0 };
-}
-
+/**
+ * Read one boolean from the stream, advancing the stream offset.
+ */
 export function readStreamBoolean(stream: StreamCursor): boolean {
 	const content = readStream(stream);
 	assert(typeof content === "boolean", "expected boolean in stream");
 	return content;
 }
 
-export interface StreamCursor {
-	readonly data: readonly TreeValue[];
-	offset: number;
+/**
+ * Read one nested array from the stream, advancing the stream offset.
+ *
+ * @returns the nested array as a stream.
+ */
+export function readStreamStream(stream: StreamCursor): StreamCursor {
+	const content = readStream(stream);
+	assert(Array.isArray(content), "expected Array in stream");
+	return { data: content, offset: 0 };
 }
 
 export interface ChunkDecoder {
@@ -151,6 +184,7 @@ export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends a
 		keyof TUnion,
 		(value: unknown, ...args: TArgs) => TResult
 	>;
+
 	public constructor(
 		library: [
 			{

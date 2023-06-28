@@ -186,3 +186,4 @@ export const testTrees: readonly TestTree[] = [
 
 // TODO: integrate data sources for wide and deep trees from ops size testing and large data generators for cursor performance testing.
 // TODO: whiteboard like data with near term and eventual schema approaches
+// TODO: randomized schema generator
