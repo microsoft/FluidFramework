@@ -137,7 +137,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 
 		const data = readStream(stream);
 		if (typeof data === "number") {
-			// This case means that the array contained 0 sized items, and was thus encoded as the length instead of the array.
+			// This case means that the array contained only 0-sized items, and was thus encoded as the length of the array.
 			const inner = { data: [], offset: 0 };
 			for (let index = 0; index < data; index++) {
 				chunks.push(decoder.decode(decoders, inner));

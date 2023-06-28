@@ -17,7 +17,7 @@ export type ShapeIndex = Static<typeof ShapeIndex>;
 export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 
 /**
- * Encoding of a discriminated union that is simply to validate data against.
+ * Encoding of a discriminated union that is simple to validate data against.
  *
  * See DiscriminatedUnionDispatcher for more information on this pattern.
  */
