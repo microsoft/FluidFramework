@@ -184,7 +184,7 @@ export const shortCodeMap = {
 	"0x0d3": "Should only be called in detached container",
 	"0x0d6": "Inbound queue should be empty when attaching",
 	"0x0d9": "Attempting to connect() a closed DeltaManager",
-	"0x0dd": "Existing context not disposed",
+	"0x0dd": "Existing runtime not disposed",
 	"0x0df": "Missing active connection",
 	"0x0e0": "lost minBlobSize policy",
 	"0x0e2": "DeltaManager already has attached op handler!",
