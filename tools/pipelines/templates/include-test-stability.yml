@@ -118,12 +118,12 @@ jobs:
 
     # Lint
     - ${{ if ne(parameters.taskLint, false) }}:
-        - task: Npm@1
-          displayName: npm run ${{ parameters.taskLintName }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ${{ parameters.taskLintName }}'
+      - task: Npm@1
+        displayName: npm run ${{ parameters.taskLintName }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.buildDirectory }}
+          customCommand: 'run ${{ parameters.taskLintName }}'
 
     # Test
     - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
