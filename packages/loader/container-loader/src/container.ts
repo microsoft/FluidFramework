@@ -27,6 +27,10 @@ import {
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IHostLoader,
+	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
+	IProvideFluidCodeDetailsComparer,
+	IFluidCodeDetailsComparer,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -44,6 +48,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
+	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -113,6 +118,8 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
+
+const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
  * @internal
@@ -340,8 +347,6 @@ export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer, IContainerExperimental
 {
-	public static version = "^0.1.0";
-
 	/**
 	 * Load an existing container.
 	 * @internal
@@ -353,6 +358,10 @@ export class Container
 		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
 		const container = new Container(createProps, loadProps);
+
+		const disableRecordHeapSize = container.mc.config.getBoolean(
+			"Fluid.Loader.DisableRecordHeapSize",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -395,6 +404,7 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
+			disableRecordHeapSize !== true /* recordHeapSize */,
 		);
 	}
 
@@ -447,9 +457,9 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	public readonly options: ILoaderOptions;
+	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	public subLogger: TelemetryLogger;
+	private readonly subLogger: TelemetryLogger;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
@@ -509,9 +519,6 @@ export class Container
 	private _attachState = AttachState.Detached;
 
 	private readonly storageAdapter: ContainerStorageAdapter;
-	public get storage(): IDocumentStorageService {
-		return this.storageAdapter;
-	}
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
@@ -546,6 +553,7 @@ export class Container
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
+	private readonly clientsWhoShouldHaveLeft = new Set<string>();
 
 	private setAutoReconnectTime = performance.now();
 
@@ -574,16 +582,8 @@ export class Container
 		return this.service?.resolvedUrl;
 	}
 
-	public get loadedFromVersion(): IVersion | undefined {
-		return this._loadedFromVersion;
-	}
-
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
-	}
-
-	public get closeSignal(): AbortSignal {
-		return this._deltaManager.closeAbortController.signal;
 	}
 
 	/**
@@ -601,7 +601,7 @@ export class Container
 		return this.connectionStateHandler.connectionState;
 	}
 
-	public get connected(): boolean {
+	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
 	}
 
@@ -609,7 +609,7 @@ export class Container
 	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
 	 * configuration details returned as part of the initial connection.
 	 */
-	public get serviceConfiguration(): IClientConfiguration | undefined {
+	private get serviceConfiguration(): IClientConfiguration | undefined {
 		return this._deltaManager.serviceConfiguration;
 	}
 
@@ -623,24 +623,12 @@ export class Container
 		return this._clientId;
 	}
 
-	/**
-	 * The server provided claims of the client.
-	 * Set once this.connected is true, otherwise undefined
-	 */
-	public get scopes(): string[] | undefined {
-		return this._deltaManager.connectionManager.scopes;
-	}
-
-	public get clientDetails(): IClientDetails {
-		return this._deltaManager.clientDetails;
-	}
-
 	private get offlineLoadEnabled(): boolean {
 		const enabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
 			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return enabled && this.clientDetails.capabilities.interactive;
+		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -651,14 +639,17 @@ export class Container
 		return this.getCodeDetailsFromQuorum();
 	}
 
+	private _loadedCodeDetails: IFluidCodeDetails | undefined;
 	/**
 	 * Get the code details that were used to load the container.
 	 * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
 	 * loaded.
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
-		return this._context?.codeDetails;
+		return this._loadedCodeDetails;
 	}
+
+	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
 	 * Retrieves the audience associated with the document
@@ -679,14 +670,14 @@ export class Container
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
 		// allow it since they mean a kind of read-only state for the Container.
 		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
 		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
 			throw new UsageError("The container is disposing or disposed");
 		}
-		while (this._context === undefined) {
+		if (this._context === undefined) {
 			await new Promise<void>((resolve, reject) => {
 				const contextChangedHandler = () => {
 					resolve();
@@ -706,9 +697,7 @@ export class Container
 				0x5a2 /* Context still not defined after contextChanged event */,
 			);
 		}
-		// Disable lint rule for the sake of more complete stack traces
-		// eslint-disable-next-line no-return-await
-		return await this._context.getEntryPoint?.();
+		return this._context.getEntryPoint();
 	}
 
 	/**
@@ -795,8 +784,8 @@ export class Container
 				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
 				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
 				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-				containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
-				containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+				containerLoadedFromVersionId: () => this._loadedFromVersion?.id,
+				containerLoadedFromVersionDate: () => this._loadedFromVersion?.date,
 				// message information to associate errors with the specific execution state
 				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
@@ -865,6 +854,9 @@ export class Container
 						this.disconnect();
 						this.connect();
 					}
+				},
+				clientShouldHaveLeft: (clientId: string) => {
+					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
 			},
 			this.deltaManager,
@@ -1005,7 +997,8 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						category: "generic",
+						// Only log error if container isn't closed
+						category: !this.closed && error !== undefined ? "error" : "generic",
 					},
 					error,
 				);
@@ -1148,6 +1141,7 @@ export class Container
 						// starting to attach the container to storage.
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
+						this.context.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1176,7 +1170,7 @@ export class Container
 							"containerAttach",
 							this.mc.logger,
 							{
-								cancel: this.closeSignal,
+								cancel: this._deltaManager.closeAbortController.signal,
 							}, // progress
 						);
 					}
@@ -1210,6 +1204,7 @@ export class Container
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 						this._attachState = AttachState.Attaching;
+						this.context.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1226,6 +1221,7 @@ export class Container
 					}
 
 					this._attachState = AttachState.Attached;
+					this.context.setAttachState(AttachState.Attached);
 					this.emit("attached");
 
 					if (!this.closed) {
@@ -1335,7 +1331,7 @@ export class Container
 		this.connectToDeltaStream(args);
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+	public readonly getAbsoluteUrl = async (relativeUrl: string): Promise<string | undefined> => {
 		if (this.resolvedUrl === undefined) {
 			return undefined;
 		}
@@ -1343,9 +1339,9 @@ export class Container
 		return this.urlResolver.getAbsoluteUrl(
 			this.resolvedUrl,
 			relativeUrl,
-			getPackageName(this._context?.codeDetails),
+			getPackageName(this._loadedCodeDetails),
 		);
-	}
+	};
 
 	public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
 		if (!isFluidCodeDetails(codeDetails)) {
@@ -1376,7 +1372,7 @@ export class Container
 			this.deltaManager.inboundSignal.pause(),
 		]);
 
-		if ((await this.context.satisfies(codeDetails)) === true) {
+		if ((await this.satisfies(codeDetails)) === true) {
 			this.deltaManager.inbound.resume();
 			this.deltaManager.inboundSignal.resume();
 			return;
@@ -1385,6 +1381,47 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
+	}
+
+	/**
+	 * Determines if the currently loaded module satisfies the incoming constraint code details
+	 */
+	private async satisfies(constraintCodeDetails: IFluidCodeDetails) {
+		// If we have no module, it can't satisfy anything.
+		if (this._loadedModule === undefined) {
+			return false;
+		}
+
+		const comparers: IFluidCodeDetailsComparer[] = [];
+
+		const maybeCompareCodeLoader = this.codeLoader;
+		if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
+		}
+
+		const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
+			this._loadedModule?.module.fluidExport;
+		if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+			comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
+		}
+
+		// If there are no comparers, then it's impossible to know if the currently loaded package satisfies
+		// the incoming constraint, so we return false. Assuming it does not satisfy is safer, to force a reload
+		// rather than potentially running with incompatible code.
+		if (comparers.length === 0) {
+			return false;
+		}
+
+		for (const comparer of comparers) {
+			const satisfies = await comparer.satisfies(
+				this._loadedModule?.details,
+				constraintCodeDetails,
+			);
+			if (satisfies === false) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1464,7 +1501,10 @@ export class Container
 			if (this.offlineLoadEnabled) {
 				this.baseSnapshot = snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
-				this.baseSnapshotBlobs = await getBlobContentsFromTree(snapshot, this.storage);
+				this.baseSnapshotBlobs = await getBlobContentsFromTree(
+					snapshot,
+					this.storageAdapter,
+				);
 			}
 		}
 
@@ -2112,6 +2152,28 @@ export class Container
 		}
 		const local = this.clientId === message.clientId;
 
+		// Check and report if we're getting messages from a clientId that we previously
+		// flagged should have left, or from a client that's not in the quorum but should be
+		if (message.clientId != null) {
+			const client = this.protocolHandler.quorum.getMember(message.clientId);
+
+			if (client === undefined && message.type !== MessageType.ClientJoin) {
+				// pre-0.58 error message: messageClientIdMissingFromQuorum
+				throw new Error("Remote message's clientId is missing from the quorum");
+			}
+
+			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
+			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
+			// document we don't need to blow up aggressively.
+			if (
+				this.clientsWhoShouldHaveLeft.has(message.clientId) &&
+				!canBeCoalescedByService(message)
+			) {
+				// pre-0.58 error message: messageClientIdShouldHaveLeft
+				throw new Error("Remote message's clientId already should have left");
+			}
+		}
+
 		// Allow the protocol handler to process the message
 		const result = this.protocolHandler.processMessage(message, local);
 
@@ -2202,7 +2264,7 @@ export class Container
 	private async instantiateContext(
 		existing: boolean,
 		codeDetails: IFluidCodeDetails,
-		snapshot?: ISnapshotTree,
+		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
 		assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
@@ -2211,14 +2273,38 @@ export class Container
 		// are set. Global requests will still go directly to the loader
 		const maybeLoader: FluidObject<IHostLoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
+
+		const loadCodeResult = await PerformanceEvent.timedExecAsync(
+			this.subLogger,
+			{ eventName: "CodeLoad" },
+			async () => this.codeLoader.load(codeDetails),
+		);
+
+		this._loadedModule = {
+			module: loadCodeResult.module,
+			// An older interface ICodeLoader could return an IFluidModule which didn't have details.
+			// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
+			// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
+			details: loadCodeResult.details ?? codeDetails,
+		};
+
+		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+			this._loadedModule.module.fluidExport;
+		const runtimeFactory = fluidExport?.IRuntimeFactory;
+		if (runtimeFactory === undefined) {
+			throw new Error(packageNotFactoryError);
+		}
+
 		this._context = await ContainerContext.createOrLoad(
-			this,
+			this.options,
 			this.scope,
-			this.codeLoader,
-			codeDetails,
+			runtimeFactory,
 			snapshot,
+			this._loadedFromVersion,
 			new DeltaManagerProxy(this._deltaManager),
+			this.storageAdapter,
 			new QuorumProxy(this.protocolHandler.quorum),
+			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
@@ -2229,22 +2315,31 @@ export class Container
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
-			Container.version,
-			(dirty: boolean) => this.updateDirtyContainerState(dirty),
+			this.updateDirtyContainerState,
+			this.getAbsoluteUrl,
+			() => this.resolvedUrl?.id,
+			() => this.clientId,
+			() => this.serviceConfiguration,
+			() => this.attachState,
+			this._deltaManager.clientDetails,
 			existing,
+			this.connected,
+			this.subLogger,
 			pendingLocalState,
 		);
+
+		this._loadedCodeDetails = codeDetails;
 
 		this.emit("contextChanged", codeDetails);
 	}
 
-	private updateDirtyContainerState(dirty: boolean) {
+	private readonly updateDirtyContainerState = (dirty: boolean) => {
 		if (this._dirtyContainer === dirty) {
 			return;
 		}
 		this._dirtyContainer = dirty;
 		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-	}
+	};
 
 	/**
 	 * Set the connected state of the ContainerContext

@@ -12,15 +12,32 @@ import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IFluidFileConverter } from "../../codeLoaderBundle";
 
+// If the test collateral includes code proposals, the code loader must implement IFluidCodeDetailsComparer, or else
+// the container will immediately be closed.  This implementation is a naive approach that claims all code details are
+// equivalent and are satisfied by the currently loaded module.  This may be appropriate in some cases (e.g. for truly
+// static-loaded modules like this is doing with no-dynamic-package), but it's not a good representation of what ODSP
+// and Loop do in practice.
+// TODO:  Evaluate whether this naive comparison approach is appropriate for the scenario we are trying to test.
+export class SampleCodeLoader implements ICodeDetailsLoader {
+	public get IFluidCodeDetailsComparer() {
+		return this;
+	}
+	public async load(): Promise<IFluidModuleWithDetails> {
+		return {
+			module: { fluidExport: new BaseContainerRuntimeFactory(new Map()) },
+			details: { package: "no-dynamic-package", config: {} },
+		};
+	}
+	public async satisfies() {
+		return true;
+	}
+	public async compare() {
+		return 0;
+	}
+}
+
 async function getCodeLoader(_logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader> {
-	return {
-		load: async (): Promise<IFluidModuleWithDetails> => {
-			return {
-				module: { fluidExport: new BaseContainerRuntimeFactory(new Map()) },
-				details: { package: "no-dynamic-package", config: {} },
-			};
-		},
-	};
+	return new SampleCodeLoader();
 }
 
 export const executeResult = "result";

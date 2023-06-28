@@ -49,6 +49,26 @@
 			"args": ["release", "report", "-g", "build-tools", "-v"],
 		},
 		{
+			// Runs the `flub list --private` command with a debugger attached.
+			"name": "flub list",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["list", "--private", "-g", "build-tools", "-v"],
+		},
+		{
+			// Runs the `flub generate upcoming` command with a debugger attached.
+			"name": "flub generate upcoming",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "upcoming", "-g", "client", "-v"],
+		},
+		{
 			// Runs the `flub generate changeset` command with a debugger attached.
 			"name": "flub generate changeset",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
@@ -57,6 +77,16 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["generate", "changeset", "-v", "-b", "main"],
+		},
+		{
+			// Runs the `flub exec` command with a debugger attached.
+			"name": "flub exec",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}/build-tools",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["exec", "--releaseGroup", "build-tools", "--no-private", "--", "pwd"],
 		},
 		{
 			"name": "flub bump deps",

@@ -11,6 +11,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
+import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
 import type { TAnySchema } from '@sinclair/typebox';
@@ -267,6 +268,9 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 // @alpha
+export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
+
+// @alpha
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T>;
 
 // @alpha
@@ -336,8 +340,8 @@ export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy,
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
-    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeEntry<T> | undefined;
+    set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
 }
 
 // @alpha (undocumented)
@@ -648,7 +652,7 @@ export const FieldKinds: {
     readonly value: ValueFieldKind;
     readonly optional: Optional;
     readonly sequence: Sequence;
-    readonly nodeIdentifier: NodeIdentifierFieldKind;
+    readonly nodeKey: NodeKeyFieldKind;
     readonly forbidden: Forbidden;
 };
 
@@ -1087,9 +1091,13 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
-    generateNodeIdentifier(): NodeIdentifier;
-    readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
     merge(view: SharedTreeView): void;
+    readonly nodeKey: {
+        generate(): LocalNodeKey;
+        stabilize(key: LocalNodeKey): StableNodeKey;
+        localize(key: StableNodeKey): LocalNodeKey;
+        map: ReadonlyMap<LocalNodeKey, EditableTree>;
+    };
     rebase(view: SharedTreeView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
@@ -1278,6 +1286,12 @@ interface LocalFields {
 }
 
 // @alpha
+export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
+
+// @alpha
+export const localNodeKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
 interface MakeNominal {
 }
 
@@ -1433,19 +1447,16 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-export type NodeIdentifier = Brand<StableId, "Node Identifier">;
+export const nodeKeyFieldKey: GlobalFieldKey;
 
 // @alpha (undocumented)
-export interface NodeIdentifierFieldKind extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {
+export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {
 }
 
 // @alpha
-export const nodeIdentifierKey: GlobalFieldKey;
-
-// @alpha
-export function nodeIdentifierSchema(): {
+export function nodeKeySchema(): {
     schema: SchemaLibrary;
-    field: GlobalFieldSchema<NodeIdentifierFieldKind>;
+    field: GlobalFieldSchema<NodeKeyFieldKind>;
     type: TreeSchemaIdentifier;
 };
 
@@ -1562,6 +1573,16 @@ type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
+
+// @alpha
+export interface RangeEntry<T> {
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    start: number;
+    // (undocumented)
+    value: T;
+}
 
 // @alpha
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
@@ -1795,13 +1816,11 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     fork(): SharedTreeView;
     // (undocumented)
-    generateNodeIdentifier(): NodeIdentifier;
-    // (undocumented)
-    get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree>;
-    // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
     merge(fork: SharedTreeView): void;
+    // (undocumented)
+    readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
     rebase(fork: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
@@ -1853,6 +1872,9 @@ export interface Sourced {
     // (undocumented)
     readonly builder: Named<string>;
 }
+
+// @alpha
+export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
