@@ -109,11 +109,27 @@ function invertMark<TNodeChange>(
 			return [mark];
 		}
 		case "Insert": {
-			const inverse = withNodeChange(
-				{ type: "Delete", count: mark.content.length },
-				invertNodeChange(mark.changes, inputIndex, invertChild),
-			);
-			return [inverse];
+			if (mark.isTransient ?? false) {
+				assert(revision !== undefined, "Unable to revert to undefined revision");
+				return [
+					withNodeChange(
+						{
+							type: "Revive",
+							detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
+							content: reviver(revision, inputIndex, mark.content.length),
+							count: mark.content.length,
+							inverseOf: mark.revision ?? revision,
+						},
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					),
+				];
+			} else {
+				const inverse = withNodeChange(
+					{ type: "Delete", count: mark.content.length },
+					invertNodeChange(mark.changes, inputIndex, invertChild),
+				);
+				return [inverse];
+			}
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -136,24 +152,58 @@ function invertMark<TNodeChange>(
 		}
 		case "Revive": {
 			if (!isReattachConflicted(mark)) {
-				const inverse = withNodeChange(
-					{
-						type: "Delete",
-						count: mark.count,
-					},
-					invertNodeChange(mark.changes, inputIndex, invertChild),
-				);
-				return [inverse];
+				if (mark.isTransient ?? false) {
+					assert(revision !== undefined, "Unable to revert to undefined revision");
+					return [
+						withNodeChange(
+							{
+								type: "Revive",
+								detachEvent: {
+									revision: mark.revision ?? revision,
+									index: inputIndex,
+								},
+								content: reviver(revision, inputIndex, mark.count),
+								count: mark.count,
+								inverseOf: mark.revision ?? revision,
+							},
+							invertNodeChange(mark.changes, inputIndex, invertChild),
+						),
+					];
+				} else {
+					const inverse = withNodeChange(
+						{
+							type: "Delete",
+							count: mark.count,
+						},
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					);
+					return [inverse];
+				}
+			} else {
+				return mark.isTransient ?? false
+					? invertMark(
+							{
+								type: "Delete",
+								count: mark.count,
+								revision: mark.revision,
+								changes: mark.changes,
+							},
+							inputIndex,
+							revision,
+							reviver,
+							invertChild,
+							crossFieldManager,
+					  )
+					: [
+							invertModifyOrSkip(
+								mark.count,
+								mark.changes,
+								inputIndex,
+								invertChild,
+								mark.detachEvent,
+							),
+					  ];
 			}
-			return [
-				invertModifyOrSkip(
-					mark.count,
-					mark.changes,
-					inputIndex,
-					invertChild,
-					mark.detachEvent,
-				),
-			];
 		}
 		case "Modify": {
 			if (mark.detachEvent === undefined) {

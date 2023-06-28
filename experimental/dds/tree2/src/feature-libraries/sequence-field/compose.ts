@@ -22,6 +22,8 @@ import {
 	DetachEvent,
 	Modify,
 	MoveId,
+	Revive,
+	Insert,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -57,6 +59,7 @@ import {
 	withRevision,
 	markEmptiesCells,
 	splitMark,
+	markIsTransient,
 } from "./utils";
 
 /**
@@ -173,6 +176,20 @@ function composeMarks<TNodeChange>(
 		composeChild,
 	);
 
+	const baseMarkIsTransient = markIsTransient(baseMark);
+	const newMarkIsTransient = markIsTransient(newMark);
+	if (baseMarkIsTransient || newMarkIsTransient) {
+		if (newMarkIsTransient) {
+			return withNodeChange(baseMark, nodeChange);
+		}
+		// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
+		const nonTransient = withNodeChange(baseMark, nodeChange) as
+			| Insert<TNodeChange>
+			| Revive<TNodeChange>;
+		delete nonTransient.isTransient;
+		return nonTransient;
+	}
+
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
 		if (isNoopMark(baseMark)) {
 			return withNodeChange(newMark, nodeChange);
@@ -273,8 +290,9 @@ function composeMarks<TNodeChange>(
 			);
 			return { count: 0 };
 		}
-		// TODO: Create modify mark for transient node.
-		return { count: 0 };
+
+		assert(baseMark.type === "Insert" || baseMark.type === "Revive", "Unexpected mark type");
+		return withNodeChange({ ...baseMark, isTransient: true as const }, nodeChange);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.

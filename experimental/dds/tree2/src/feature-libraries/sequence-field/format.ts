@@ -223,9 +223,18 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
+export interface CanBeTransient {
+	/**
+	 * When true, the content is both inserted/revived and deleted in the same changeset.
+	 */
+	isTransient?: true;
+}
+export const CanBeTransient = Type.Object({ isTransient: OptionalTrue });
+
 export interface Insert<TNodeChange = NodeChangeType>
 	extends HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
@@ -240,6 +249,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		Type.Object({
 			type: Type.Literal("Insert"),
@@ -314,6 +324,7 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 export interface Revive<TNodeChange = NodeChangeType>
 	extends HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "Revive";
@@ -324,6 +335,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		CellTargetingMark,
 		Type.Object({

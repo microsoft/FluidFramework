@@ -182,6 +182,10 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
+export function markIsTransient(mark: Mark<unknown>): mark is Insert | Revive {
+	return areInputCellsEmpty(mark) && areOutputCellsEmpty(mark);
+}
+
 export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T> {
 	const type = mark.type;
 	switch (type) {
@@ -214,8 +218,9 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-		case "Insert":
 			return false;
+		case "Insert":
+			return mark.isTransient ?? false;
 		case "MoveIn":
 			return mark.isSrcConflicted ?? false;
 		case "Delete":
@@ -232,7 +237,11 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 				((mark.isSrcConflicted ?? false) || isReattachConflicted(mark))
 			);
 		case "Revive":
-			return mark.detachEvent !== undefined && isReattachConflicted(mark);
+			return (
+				mark.detachEvent !== undefined &&
+				isReattachConflicted(mark) &&
+				mark.isTransient !== true
+			);
 		default:
 			unreachableCase(type);
 	}

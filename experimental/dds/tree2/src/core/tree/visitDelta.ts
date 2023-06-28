@@ -241,7 +241,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					break;
 				case Delta.MarkType.Insert:
 					visitModify(index, mark, visitor, config);
-					if (mark.isTransient === true) {
+					if (mark.isTransient ?? false) {
 						visitor.onDelete(index, mark.content.length);
 					} else {
 						index += mark.content.length;
