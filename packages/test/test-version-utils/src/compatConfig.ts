@@ -164,7 +164,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 		version = codeVersion;
 	}
 
-	const [_, semverInternal, __] = fromInternalScheme(version, true, true);
+	const [, semverInternal] = fromInternalScheme(version, true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
