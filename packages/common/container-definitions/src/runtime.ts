@@ -168,6 +168,10 @@ export interface IContainerContext {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - This property is redundant, and is unused by the runtime. The same information can be found via
+	 * deltaManager.serviceConfiguration on this object if it is necessary.
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
