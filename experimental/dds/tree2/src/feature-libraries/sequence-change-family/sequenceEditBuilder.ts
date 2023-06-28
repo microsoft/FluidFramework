@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditBuilder, ITreeCursor, AnchorSet, UpPath, Value, getDepth } from "../../core";
+import { EditBuilder, ITreeCursor, AnchorSet, UpPath, getDepth } from "../../core";
 import { fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Transposed as T } from "./changeset";
