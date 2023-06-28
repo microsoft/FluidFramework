@@ -10,7 +10,7 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ITokenRevocationManager } from "@fluidframework/server-services-core";
+import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -39,8 +39,15 @@ export function handleResponse<T>(
 			} else if (allowClientCache === false) {
 				response.setHeader("Cache-Control", "no-store, max-age=0");
 			}
-
+			// Make sure the browser will expose specific headers for performance analysis.
+			response.setHeader(
+				"Access-Control-Expose-Headers",
+				"Content-Encoding, Content-Length, Content-Type",
+			);
+			// In order to report W3C timings, Time-Allow-Origin needs to be set.
+			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
+			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
 		},
 		(error) => {
@@ -60,34 +67,55 @@ export function handleResponse<T>(
 	);
 }
 
-export async function createGitService(
-	config: nconf.Provider,
-	tenantId: string,
-	authorization: string,
-	tenantService: ITenantService,
-	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
-	allowDisabledTenant = false,
-): Promise<RestGitService> {
+export class createGitServiceArgs {
+	config: nconf.Provider;
+	tenantId: string;
+	authorization: string;
+	tenantService: ITenantService;
+	storageNameRetriever: IStorageNameRetriever;
+	cache?: ICache;
+	asyncLocalStorage?: AsyncLocalStorage<string>;
+	initialUpload?: boolean = false;
+	storageName?: string;
+	allowDisabledTenant?: boolean = false;
+}
+
+export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
+	const {
+		config,
+		tenantId,
+		authorization,
+		tenantService,
+		storageNameRetriever,
+		cache,
+		asyncLocalStorage,
+		initialUpload,
+		storageName,
+		allowDisabledTenant,
+	} = createArgs;
 	const token = parseToken(tenantId, authorization);
+	const decoded = decode(token) as ITokenClaims;
+	const documentId = decoded.documentId;
+	if (containsPathTraversal(documentId)) {
+		// Prevent attempted directory traversal.
+		throw new NetworkError(400, `Invalid document id: ${documentId}`);
+	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
-	const storageName = customData?.storageName;
-	const decoded = decode(token) as ITokenClaims;
 	const storageUrl = config.get("storageUrl") as string | undefined;
-	if (containsPathTraversal(decoded.documentId)) {
-		// Prevent attempted directory traversal.
-		throw new NetworkError(400, `Invalid document id: ${decoded.documentId}`);
-	}
+	const calculatedStorageName =
+		initialUpload && storageName
+			? storageName
+			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
 		tenantId,
-		decoded.documentId,
+		documentId,
 		cache,
 		asyncLocalStorage,
-		storageName,
+		calculatedStorageName,
 		storageUrl,
 	);
 	return service;
@@ -139,11 +167,11 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 }
 
 export function verifyTokenNotRevoked(
-	tokenRevocationManager: ITokenRevocationManager | undefined,
+	revokedTokenChecker: IRevokedTokenChecker | undefined,
 ): RequestHandler {
 	return async (request, response, next) => {
 		try {
-			if (tokenRevocationManager) {
+			if (revokedTokenChecker) {
 				const tenantId = request.params.tenantId;
 				const authorization = request.get("Authorization");
 				const token = parseToken(tenantId, authorization);
@@ -151,7 +179,7 @@ export function verifyTokenNotRevoked(
 
 				let isTokenRevoked = false;
 				if (claims.jti) {
-					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(
+					isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 						tenantId,
 						claims.documentId,
 						claims.jti,

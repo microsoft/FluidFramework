@@ -20,10 +20,6 @@ export interface IPartition {
 	offset: number;
 }
 
-export interface IPartitionWithEpoch extends IPartition {
-	leaderEpoch: number;
-}
-
 export interface IConsumer {
 	readonly groupId: string;
 
@@ -69,7 +65,7 @@ export interface IConsumer {
 	): this;
 	on(event: "data", listener: (message: IQueuedMessage) => void): this;
 	on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
-	on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
+	on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
 	on(event: string, listener: (...args: any[]) => void): this;
 	once(
 		event: "connected" | "disconnected" | "closed" | "paused" | "resumed",

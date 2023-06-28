@@ -87,13 +87,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		};
 
 		return executeApiWithMetric(
-					async () => this.internalHandler(params, onRepoNotExists, "create"),
-					GitRestLumberEventName.RepositoryManagerFactory,
-					GitRestRepositoryApiCategory.CreateRepo,
-					this.enableRepositoryManagerMetrics,
-					this.apiMetricsSamplingPeriod,
-					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
-			  );
+			async () => this.internalHandler(params, onRepoNotExists, "create"),
+			GitRestLumberEventName.RepositoryManagerFactory,
+			GitRestRepositoryApiCategory.CreateRepo,
+			this.enableRepositoryManagerMetrics,
+			this.apiMetricsSamplingPeriod,
+			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+		);
 	}
 
 	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -112,13 +112,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		};
 
 		return executeApiWithMetric(
-					async () => this.internalHandler(params, onRepoNotExists, "open"),
-					GitRestLumberEventName.RepositoryManagerFactory,
-					GitRestRepositoryApiCategory.OpenRepo,
-					this.enableRepositoryManagerMetrics,
-					this.apiMetricsSamplingPeriod,
-					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
-			  );
+			async () => this.internalHandler(params, onRepoNotExists, "open"),
+			GitRestLumberEventName.RepositoryManagerFactory,
+			GitRestRepositoryApiCategory.OpenRepo,
+			this.enableRepositoryManagerMetrics,
+			this.apiMetricsSamplingPeriod,
+			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+		);
 	}
 
 	private async repoPerDocInternalHandler(

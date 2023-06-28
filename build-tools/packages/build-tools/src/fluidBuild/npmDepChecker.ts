@@ -45,7 +45,7 @@ export class NpmDepChecker {
 
 	constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
 		if (checkFiles.length !== 0) {
-			for (const name of Object.keys(pkg.packageJson.dependencies)) {
+			for (const name of Object.keys(pkg.packageJson.dependencies!)) {
 				if (this.ignored.indexOf(name) !== -1) {
 					continue;
 				}
@@ -107,13 +107,13 @@ export class NpmDepChecker {
 			} else if (!depCheckRecord.found) {
 				if (this.dev.indexOf(name) != -1) {
 					console.warn(`${this.pkg.nameColored}: warning: misplaced dependency ${name}`);
-					this.pkg.packageJson.devDependencies[name] =
-						this.pkg.packageJson.dependencies[name];
+					this.pkg.packageJson.devDependencies![name] =
+						this.pkg.packageJson.dependencies?.[name];
 				} else {
 					console.warn(`${this.pkg.nameColored}: warning: unused dependency ${name}`);
 				}
 				changed = true;
-				delete this.pkg.packageJson.dependencies[name];
+				delete this.pkg.packageJson.dependencies?.[name];
 			}
 		}
 		changed = this.depcheckTypes() || changed;

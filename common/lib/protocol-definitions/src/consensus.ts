@@ -22,9 +22,7 @@ export interface IProposal {
 	/**
 	 * The value of the proposal.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
+	value: unknown;
 }
 
 /**
@@ -60,9 +58,7 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
 		listener: (
 			sequenceNumber: number,
 			key: string,
-			// TODO: use `unknown` instead.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			value: any,
+			value: unknown,
 			approvalSequenceNumber: number,
 		) => void,
 	);
@@ -86,15 +82,11 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, ID
  * Interface for tracking proposals in the Quorum.
  */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	propose(key: string, value: any): Promise<void>;
+	propose(key: string, value: unknown): Promise<void>;
 
 	has(key: string): boolean;
 
-	// TODO: return `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	get(key: string): any;
+	get(key: string): unknown;
 }
 
 /**

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { EditLog } from '../EditLog';
 import {
 	CachingLogViewer,
@@ -15,7 +17,7 @@ import {
 	SequencedEditResultCallback,
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
-import { assert, copyPropertyIfDefined, fail } from '../Common';
+import { copyPropertyIfDefined, fail } from '../Common';
 import { initialTree } from '../InitialTree';
 import {
 	ChangeInternal,
@@ -296,21 +298,27 @@ describe('CachingLogViewer', () => {
 	runLogViewerCorrectnessTests(getCachingLogViewerAssumeAppliedEdits);
 
 	it('detects non-integer revisions when setting revision views', async () => {
-		expect(() => {
-			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-				2.4,
-				simpleLogInitialView,
-			]);
-		}).to.throw('revision must be an integer');
+		assert.throws(
+			() => {
+				return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
+					2.4,
+					simpleLogInitialView,
+				]);
+			},
+			(e) => validateAssertionError(e, 'revision must be an integer')
+		);
 	});
 
 	it('detects out-of-bounds revisions when setting revision views', async () => {
-		expect(() => {
-			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-				1000,
-				simpleLogInitialView,
-			]);
-		}).to.throw('revision must correspond to the result of a SequencedEdit');
+		assert.throws(
+			() => {
+				return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
+					1000,
+					simpleLogInitialView,
+				]);
+			},
+			(e) => validateAssertionError(e, 'revision must correspond to the result of a SequencedEdit')
+		);
 	});
 
 	it('can be created with an initial revision', async () => {

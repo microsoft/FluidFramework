@@ -20,6 +20,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -28,6 +29,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
+import { IDocumentDeleteService } from "./services";
 
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
@@ -53,11 +55,13 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
-		private readonly tokenManager?: ITokenRevocationManager,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
+		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -76,7 +80,9 @@ export class AlfredRunner implements IRunner {
 			this.deltaService,
 			this.producer,
 			this.documentRepository,
-			this.tokenManager,
+			this.documentDeleteService,
+			this.tokenRevocationManager,
+			this.revokedTokenChecker,
 		);
 		alfred.set("port", this.port);
 
@@ -118,6 +124,7 @@ export class AlfredRunner implements IRunner {
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
 			this.socketTracker,
+			this.revokedTokenChecker,
 		);
 
 		// Listen on provided port, on all network interfaces.
@@ -126,9 +133,10 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("listening", () => this.onListening());
 
 		// Start token manager
-		if (this.tokenManager) {
-			this.tokenManager.start().catch((error) => {
-				this.runningDeferred.reject(error);
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
+				// Prevent service crash if token revocation manager fails to start
+				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 			});
 		}
 

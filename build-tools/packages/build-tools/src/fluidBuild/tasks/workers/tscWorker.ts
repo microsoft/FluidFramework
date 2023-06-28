@@ -5,7 +5,7 @@
 import type { Diagnostic, SortedReadonlyArray } from "typescript";
 import * as tsLib from "typescript";
 
-import { getTscUtil } from "../../tscUtils";
+import { getTscUtil } from "../../../common/tscUtils";
 import type { WorkerExecResult, WorkerMessage } from "./worker";
 
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {

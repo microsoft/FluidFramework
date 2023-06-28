@@ -29,9 +29,8 @@ import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { LocalReferencePosition } from "../localReference";
-import { InternalRevertDriver } from "../revertibles";
 import { DetachedReferencePosition } from "../referencePositions";
+import { MergeTreeRevertibleDriver } from "../revertibles";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -522,19 +521,14 @@ function elapsedMicroseconds(trace: Trace) {
 }
 
 // the client doesn't submit ops, so this adds a callback to capture them
-export type TestClientRevertibleDriver = InternalRevertDriver &
+export type TestClientRevertibleDriver = MergeTreeRevertibleDriver &
 	Partial<{ submitOpCallback?: (op: IMergeTreeOp | undefined) => void }>;
 
 export const createRevertDriver = (client: TestClient): TestClientRevertibleDriver => {
 	return {
-		createLocalReferencePosition: client.createLocalReferencePosition.bind(client),
-
 		removeRange(start: number, end: number) {
 			const op = client.removeRangeLocal(start, end);
 			this.submitOpCallback?.(op);
-		},
-		getPosition(segment: ISegment): number {
-			return client.getPosition(segment);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
 			const op = client.annotateRangeLocal(start, end, props, undefined);
@@ -544,10 +538,6 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			const op = client.insertSegmentLocal(pos, client.specToSegment(spec));
 			this.submitOpCallback?.(op);
 		},
-		localReferencePositionToPosition(lref: LocalReferencePosition): number {
-			return client.localReferencePositionToPosition(lref);
-		},
-		getContainingSegment: client.getContainingSegment.bind(client),
 	};
 };
 

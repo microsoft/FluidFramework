@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-triangle-view",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.5.2.0",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -15,12 +15,10 @@
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "concurrently npm:build:esnext npm:build:copy",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -43,14 +41,14 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/multiview-coordinate-interface": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-example/multiview-coordinate-interface": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluid-tools/webpack-fluid-loader": "workspace:~",
+		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/test-tools": "^0.2.3074",
+		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "22.2.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
@@ -73,7 +71,7 @@
 		"ts-jest": "^26.4.4",
 		"ts-loader": "^9.3.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2",
+		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.6.0",
 		"webpack-merge": "^5.8.0"
@@ -86,6 +84,16 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			],
+			"build:esnext": [
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			]
 		}
 	},
 	"jest-junit": {

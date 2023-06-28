@@ -31,6 +31,7 @@ import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
+	getOptionOverride,
 } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
@@ -163,20 +164,12 @@ export async function initialize(
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = `${testDriver.type}${
-		testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""
-	}`;
-	const loaderOptions = random.pick(
-		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
-	);
-	const containerOptions = random.pick(
-		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
-	);
+	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+
+	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
+	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
 	const configurations = random.pick(
-		generateConfigurations(
-			seed,
-			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-		),
+		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
 	const logger = await createLogger({
@@ -220,7 +213,7 @@ export async function initialize(
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.close();
+	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

@@ -39,7 +39,7 @@ export class MongoDocumentRepository implements IDocumentRepository {
 	async create(document: IDocument): Promise<any> {
 		return this.collection.insertOne(document);
 	}
-	
+
 	async exists(filter: any): Promise<boolean> {
 		return this.collection.findOne(filter, { projection: { _id: 1 } }).then((doc) => !!doc);
 	}

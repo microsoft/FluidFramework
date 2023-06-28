@@ -10,6 +10,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
 
@@ -22,8 +23,13 @@ describe("LocalChannelContext Tests", () => {
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();
 		sharedObjectRegistry = {
-			get(name: string) {
-				throw new Error("Not implemented");
+			get(type: string) {
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: () => ({} as any as IChannel),
+					load: async () => Promise.resolve({} as any as IChannel),
+				};
 			},
 		};
 	});

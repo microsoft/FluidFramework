@@ -19,8 +19,6 @@ export {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
-	IMapAttributionOptions,
-	IMapOptions,
 } from "./interfaces";
 export { LocalValueMaker, ILocalValue } from "./localValues";
 export { MapFactory, AttributableMap } from "./map";

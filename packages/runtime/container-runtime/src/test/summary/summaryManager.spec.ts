@@ -40,6 +40,19 @@ class MockRuntime {
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {}
+	public on(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
+
+	public off(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
 }
 
 describe("Summary Manager", () => {
@@ -77,7 +90,8 @@ describe("Summary Manager", () => {
 		minimumSequenceNumber: 5,
 		referenceSequenceNumber: 5,
 		sequenceNumber: 6,
-		term: 0,
+		// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+		term: 1,
 		timestamp: 6,
 		type: MessageType.Summarize,
 		contents: {
@@ -153,13 +167,11 @@ describe("Summary Manager", () => {
 				},
 				async (options) => {},
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
-				() => {},
 				summaryCollection,
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
 				mockRuntime as any as ISummarizerRuntime,
-				true /* listenToDeltaManagerOps */,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);

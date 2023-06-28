@@ -168,3 +168,4 @@ stages:
           timeoutInMinutes: 360
           taskBuild : ${{ parameters.taskBuild }}
           taskTest: ${{ parameters.taskTest }}
+          stageName: ${{ stageName }}

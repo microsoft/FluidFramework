@@ -10,12 +10,11 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
-import { renderApiModelAsMarkdown, transformApiModel } from "../MarkdownDocumenter";
+import { renderApiModelAsMarkdown } from "../RenderMarkdown";
 import {
 	ApiItemTransformationConfiguration,
-	apiModelToDocument,
-	apiPackageToDocument,
 	getApiItemTransformationConfigurationWithDefaults,
+	transformApiModel,
 } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
 import {
@@ -141,18 +140,6 @@ function apiTestSuite(
 					renderConfig = getMarkdownRenderConfigurationWithDefaults(
 						configProps.renderConfig,
 					);
-				});
-
-				it("Render Model document (smoke test)", () => {
-					const result = apiModelToDocument(transformConfig.apiModel, transformConfig);
-					expect(result.filePath).to.equal("index.md");
-				});
-
-				it("Render Package document (smoke test)", () => {
-					const packageItem = transformConfig.apiModel.packages[0];
-
-					const result = apiPackageToDocument(packageItem, transformConfig);
-					expect(result.filePath).to.equal(`${modelName}.md`);
 				});
 
 				it("Ensure no duplicate file paths", () => {

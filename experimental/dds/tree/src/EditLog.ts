@@ -4,10 +4,11 @@
  */
 
 import BTree from 'sorted-btree';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
+import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
+import type { IEvent } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { compareArrays } from '@fluidframework/core-utils';
-import { assert, fail } from './Common';
+import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
@@ -257,7 +258,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public constructor(
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
-		private readonly logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLoggerExt,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
 		private readonly evictionFrequency = targetLength * 2,
@@ -289,7 +290,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 					const id = editIds[editIndex];
 					this.sequencedEdits.push({ id, ...edit });
 					const encounteredEditId = this.allEditIds.get(id);
-					assert(encounteredEditId === undefined, 'Duplicate acked edit.');
+					assert(encounteredEditId === undefined, 0x60a /* Duplicate acked edit. */);
 					this.allEditIds.set(id, { isLocal: false, index: editIndex });
 				}
 			} else {
@@ -387,7 +388,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		if (orderedEdit.isLocal) {
 			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail('edit not found');
-			assert(firstLocal.isLocal);
+			assert(firstLocal.isLocal, 0x60b /* local edit should be local */);
 			return (
 				this._earliestAvailableEditIndex +
 				this.numberOfSequencedEdits +
@@ -480,7 +481,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	): void {
 		assert(
 			minSequenceNumber >= this._minSequenceNumber,
-			'Sequenced edits should carry a monotonically increasing min number'
+			0x60c /* Sequenced edits should carry a monotonically increasing min number */
 		);
 		this._minSequenceNumber = minSequenceNumber;
 
@@ -492,10 +493,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		const encounteredEditId = this.allEditIds.get(id);
 		if (encounteredEditId !== undefined) {
 			// New edit already exits: it must have been a local edit.
-			assert(encounteredEditId.isLocal, 'Duplicate acked edit.');
+			assert(encounteredEditId.isLocal, 0x60d /* Duplicate acked edit. */);
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
 			const oldLocalEditId = this.localEdits.shift()?.id ?? fail('Local edit should exist');
-			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
+			assert(oldLocalEditId === id, 0x60e /* Causal ordering should be upheld */);
 		}
 
 		this.sequencedEdits.push(edit);
@@ -537,7 +538,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private evictEdits(): void {
 		assert(
 			this.sequenceNumberToIndex !== undefined,
-			'Edits should never be evicted if the target length is set to infinity'
+			0x60f /* Edits should never be evicted if the target length is set to infinity */
 		);
 
 		const minSequenceIndex =

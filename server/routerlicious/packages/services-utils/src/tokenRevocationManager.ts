@@ -6,6 +6,7 @@ import {
 	IWebSocket,
 	IWebSocketTracker,
 	ITokenRevocationManager,
+	IRevokedTokenChecker,
 	ITokenRevocationResponse,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -79,32 +80,37 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 }
 
-export class DummyTokenRevocationManager implements ITokenRevocationManager {
-	public async start() {
-		Lumberjack.info(`DummyTokenManager started`);
-	}
-
-	public async initialize(): Promise<void> {
-		Lumberjack.info(`DummyTokenManager initialize called`);
-	}
-
-	public async close(): Promise<void> {
-		Lumberjack.info(`DummyTokenManager closed`);
-	}
-
-	// Revoke the access of a token given its jwtId
-	public async revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<ITokenRevocationResponse> {
-		Lumberjack.info(`DummyTokenManager revokeToken called`);
-		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
-	}
-
-	// Check if a given token id is revoked
+export class DummyRevokedTokenChecker implements IRevokedTokenChecker {
 	public async isTokenRevoked(
 		tenantId: string,
 		documentId: string,
 		jwtId: string,
 	): Promise<boolean> {
-		Lumberjack.info(`DummyTokenManager isTokenRevoked called`);
+		Lumberjack.info(`DummyRevokedTokenChecker isTokenRevoked called`);
 		return false;
+	}
+}
+
+export class DummyTokenRevocationManager implements ITokenRevocationManager {
+	public async start() {
+		Lumberjack.info(`DummyTokenRevocationManager started`);
+	}
+
+	public async initialize(): Promise<void> {
+		Lumberjack.info(`DummyTokenRevocationManager initialize called`);
+	}
+
+	public async close(): Promise<void> {
+		Lumberjack.info(`DummyTokenRevocationManager closed`);
+	}
+
+	// Revoke the access of a token given its jwtId
+	public async revokeToken(
+		tenantId: string,
+		documentId: string,
+		jwtId: string,
+	): Promise<ITokenRevocationResponse> {
+		Lumberjack.info(`DummyTokenRevocationManager revokeToken called`);
+		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}
 }

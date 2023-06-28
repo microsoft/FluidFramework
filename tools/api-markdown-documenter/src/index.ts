@@ -48,6 +48,7 @@ export {
 	isStatic,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
+	transformApiModel,
 	transformDocNode,
 } from "./api-item-transforms";
 
@@ -66,9 +67,7 @@ export {
 	renderNodeAsMarkdown,
 	renderNodesAsMarkdown,
 } from "./markdown-renderer";
-
-export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
-
+export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
 export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";

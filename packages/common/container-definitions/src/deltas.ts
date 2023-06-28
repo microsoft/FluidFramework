@@ -9,6 +9,7 @@ import {
 	IEvent,
 	IErrorEvent,
 } from "@fluidframework/common-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -43,24 +44,41 @@ export interface IConnectionDetails {
 
 /**
  * Internal version of IConnectionDetails with props are only exposed internally
+ * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
  */
 export interface IConnectionDetailsInternal extends IConnectionDetails {
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	mode: ConnectionMode;
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	version: string;
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
 	initialClients: ISignalClient[];
+	/**
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
+	 */
+	reason: string;
 }
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
+ * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
  */
 export interface IDeltaHandlerStrategy {
 	/**
 	 * Processes the message.
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
 	 */
 	process: (message: ISequencedDocumentMessage) => void;
 
 	/**
 	 * Processes the signal.
+	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
 	 */
 	processSignal: (message: ISignalMessage) => void;
 }
@@ -143,8 +161,9 @@ export interface IDeltaManagerEvents extends IEvent {
 	 * @remarks Listener parameters:
 	 *
 	 * - `reason`: Describes the reason for which the delta manager was disconnected.
+	 * - `error` : error if any for the disconnect.
 	 */
-	(event: "disconnect", listener: (reason: string) => void);
+	(event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void);
 
 	/**
 	 * Emitted when read/write permissions change.
@@ -317,4 +336,7 @@ export type ReadOnlyInfo =
 			readonly permissions: boolean | undefined;
 			/** read-only with no delta stream connection */
 			readonly storageOnly: boolean;
+			/** extra info on why connection to delta stream is not possible. This info might be provided
+			 * if storageOnly is set to true */
+			readonly storageOnlyReason?: string;
 	  };

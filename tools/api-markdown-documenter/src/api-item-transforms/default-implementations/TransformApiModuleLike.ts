@@ -64,7 +64,7 @@ export function transformApiModuleLike(
 ): SectionNode[] {
 	const children: SectionNode[] = [];
 
-	const hasAnyChildren = apiItem.members.length > 0;
+	const hasAnyChildren = childItems.length > 0;
 
 	if (hasAnyChildren) {
 		// Accumulate child items

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { LoaderHeader } from '@fluidframework/container-definitions';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
@@ -121,8 +122,9 @@ export function runSharedTreeVersioningTests(
 
 			// Process an edit and expect it to throw
 			applyNoop(newerTree);
-			expect(() => containerRuntimeFactory.processAllMessages()).to.throw(
-				'Newer op version received by a client that has yet to be updated.'
+			assert.throws(
+				() => containerRuntimeFactory.processAllMessages(),
+				(e) => validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
 			);
 		});
 
@@ -365,13 +367,6 @@ export function runSharedTreeVersioningTests(
 				expect(stableIds.has(tree.convertToStableNodeId(id))).to.be.false;
 			}
 			expect(tree.equals(tree)).to.be.true;
-
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-			);
 		});
 
 		it('converts IDs correctly after upgrading from 0.0.2', async () => {
@@ -569,7 +564,10 @@ export function runSharedTreeVersioningTests(
 					event.error === 'Simulated issue in update';
 
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(false);
-				expect(() => containerRuntimeFactory.processAllMessages()).to.throw(/Simulated issue in update/);
+				assert.throws(
+					() => containerRuntimeFactory.processAllMessages(),
+					(e) => validateAssertionError(e, /Simulated issue in update/)
+				);
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(true);
 			});
 		});

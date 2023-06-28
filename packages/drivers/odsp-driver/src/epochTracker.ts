@@ -5,7 +5,14 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+	normalizeError,
+	loggerToMonitoringContext,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
 	RateLimiter,
@@ -23,12 +30,6 @@ import {
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-	PerformanceEvent,
-	isFluidError,
-	normalizeError,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,
@@ -88,7 +89,7 @@ export class EpochTracker implements IPersistedFileCache {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		// Limits the max number of concurrent requests to 24.
@@ -443,11 +444,13 @@ export class EpochTracker implements IPersistedFileCache {
 			// If it was categorized as epoch error but the epoch returned in response matches with the client epoch
 			// then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
 			// time is 1s.
-			throw new ThrottlingError(
-				`Coherency 409: ${error.message}`,
-				1 /* retryAfterSeconds */,
-				{ [Odsp409Error]: true, driverVersion },
-			);
+			const newError = wrapError(error, (message: string) => {
+				return new ThrottlingError(`Coherency 409: ${message}`, 1 /* retryAfterSeconds */, {
+					[Odsp409Error]: true,
+					driverVersion,
+				});
+			});
+			throw newError;
 		}
 	}
 
@@ -477,7 +480,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
 		super(cache, fileEntry, logger, clientIsSummarizer);
@@ -601,7 +604,7 @@ export function createOdspCacheAndTracker(
 	persistedCacheArg: IPersistedCache,
 	nonpersistentCache: INonPersistentCache,
 	fileEntry: IFileEntry,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	clientIsSummarizer?: boolean,
 ): ICacheAndTracker {
 	const epochTracker = new EpochTrackerWithRedemption(

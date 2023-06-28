@@ -348,12 +348,12 @@ describe("Error Logging", () => {
 			errorAsAny.p1 = "one";
 			errorAsAny.p4 = 4;
 			errorAsAny.p5 = { value: 5, tag: "CodeArtifact" };
-			errorAsAny.pii6 = { value: 5, tag: "UserData" };
+			errorAsAny.userData6 = { value: 5, tag: "UserData" };
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "one");
 			assert.strictEqual(props.p4, 4);
 			assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
-			assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
+			assert.deepStrictEqual(props.userData6, { value: 5, tag: "UserData" });
 		});
 		it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
@@ -561,6 +561,39 @@ describe("Error Logging", () => {
 				extractLogSafeErrorProperties(42, false /* sanitizeStack */).stack,
 				undefined,
 			);
+		});
+	});
+	describe("normalizeError", () => {
+		describe("preserves properties", () => {
+			it("missing properties are not set", () => {
+				const unknownError = new Error();
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, undefined, "canRetry not undefined");
+				assert.strictEqual(
+					newError.retryAfterSeconds,
+					undefined,
+					"retryAfterSeconds not undefined",
+				);
+			});
+			it("existing retry properties are present in normalized error", () => {
+				const unknownError: { canRetry?: boolean; retryAfterSeconds?: number } & Error =
+					new Error();
+				unknownError.canRetry = true;
+				unknownError.retryAfterSeconds = 100;
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, true, "canRetry not true");
+				assert.strictEqual(newError.retryAfterSeconds, 100, "retryAfterSeconds not 100");
+			});
 		});
 	});
 });

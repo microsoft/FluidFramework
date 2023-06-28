@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
@@ -42,16 +42,39 @@ export interface IFetchSnapshotResult {
 	snapshotRefSeq: number;
 }
 
+/**
+ * Return type of validateSummary function. In case of success, the object returned should have success: true.
+ * In case of failure, the object returned should have success: false and additional properties to indicate what
+ * the failure was, where it was, can it be retried, etc.
+ */
+export type ValidateSummaryResult =
+	| {
+			success: true;
+	  }
+	| {
+			success: false;
+			/** The failure reason */
+			reason: string;
+			/** id of the node that failed during validation */
+			id: {
+				tag: TelemetryDataTag.CodeArtifact;
+				value: string | undefined;
+			};
+			/** If the error can be retried, time to wait before retrying */
+			retryAfterSeconds?: number;
+	  };
+
 export interface ISummarizerNodeRootContract {
-	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
-	completeSummary(proposalHandle: string): void;
+	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt): void;
+	validateSummary(): ValidateSummaryResult;
+	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;
 	refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
 		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 	): Promise<RefreshSummaryResult>;
 }
 

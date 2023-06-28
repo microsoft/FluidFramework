@@ -130,12 +130,9 @@ export interface IBatchMessage {
 }
 
 /**
- * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
- * This allows the Container to terminate the connection to the IRuntime.
- *
- * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
- * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and the Container has created a new ContainerContext.
+ * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
+ * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
+ * if you intend them to be consumed/called from the runtime layer.
  */
 export interface IContainerContext extends IDisposable {
 	/** @deprecated Please pass in existing directly in instantiateRuntime */
@@ -204,13 +201,6 @@ export interface IContainerContext extends IDisposable {
 	 * and scenarios which can change in the future.
 	 */
 	readonly id: string;
-
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

@@ -17,26 +17,16 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager";
+import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-
-const waitForContainerConnectionWriteMode = async (container: IContainer) => {
-	const resolveIfActive = (res: () => void) => {
-		if (container.deltaManager.active) {
-			res();
-		}
-	};
-	if (!container.deltaManager.active) {
-		await new Promise<void>((resolve) =>
-			container.on("connected", () => resolveIfActive(resolve)),
-		);
-	}
-};
+} from "../mockDetachedBlobStorage.js";
+import {
+	getGCStateFromSummary,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
@@ -264,7 +254,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
 			// Make sure we are connected or we may get a local ID handle
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Upload the same blob. This will get de-duped and we will get back a handle with another localId. Both of
 			// these blobs should be mapped to the same storageId.
@@ -343,7 +333,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
 			// Make sure we are connected or we may get a local ID handle
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Upload the same blob. This will get de-duped and we will get back a handle with another localId. This and
 			// the blobs uploaded in detached mode should map to the same storageId.
@@ -427,7 +417,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// GC requires at least one op to have been processed. It needs a server timestamp and
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Summarize once before uploading the blob in disconnected container. This will make sure that when GC
 			// runs next, it has GC data from previous run to do reference validation.
