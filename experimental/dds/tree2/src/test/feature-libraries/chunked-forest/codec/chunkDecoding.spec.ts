@@ -13,7 +13,7 @@ import {
 	readValue,
 	NestedArrayDecoder,
 	InlineArrayDecoder,
-	AnyDecoder,
+	anyDecoder,
 	TreeDecoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
@@ -242,16 +242,15 @@ describe("chunkDecoding", () => {
 		});
 	});
 
-	it("AnyDecoder", () => {
-		const decoder = AnyDecoder.instance;
+	it("anyDecoder", () => {
 		const log: string[] = [];
 		const basic0 = new BasicChunk(brand("0"), new Map());
 		const basic1 = new BasicChunk(brand("1"), new Map());
 		const decoders = [makeLoggingDecoder(log, basic0), makeLoggingDecoder(log, basic1)];
 		const stream = { data: [0, "a", 0, "b", 1, "c"], offset: 0 };
-		assert.equal(decoder.decode(decoders, stream), basic0);
-		assert.equal(decoder.decode(decoders, stream), basic0);
-		assert.equal(decoder.decode(decoders, stream), basic1);
+		assert.equal(anyDecoder.decode(decoders, stream), basic0);
+		assert.equal(anyDecoder.decode(decoders, stream), basic0);
+		assert.equal(anyDecoder.decode(decoders, stream), basic1);
 		assert.deepEqual(log, ["a", "b", "c"]);
 	});
 

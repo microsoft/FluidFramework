@@ -47,7 +47,7 @@ export function decode(chunk: EncodedChunk): TreeChunk {
 		decoderLibrary,
 		new DecoderCache(chunk.identifiers, chunk.shapes),
 		chunk,
-		AnyDecoder.instance,
+		anyDecoder,
 	);
 }
 
@@ -66,7 +66,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		return new TreeDecoder(shape, cache);
 	},
 	d(shape: EncodedAnyShape): ChunkDecoder {
-		return AnyDecoder.instance;
+		return anyDecoder;
 	},
 });
 
@@ -167,15 +167,13 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	}
 }
 
-export class AnyDecoder implements ChunkDecoder {
-	public static readonly instance = new AnyDecoder();
-	private constructor() {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+export const anyDecoder: ChunkDecoder = {
+	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
 		const decoder = getChecked(decoders, shapeIndex);
 		return decoder.decode(decoders, stream);
-	}
-}
+	},
+};
 
 type BasicFieldDecoder = (
 	decoders: readonly ChunkDecoder[],
