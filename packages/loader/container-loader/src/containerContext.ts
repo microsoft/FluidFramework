@@ -30,6 +30,9 @@ import {
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
+ */
 export class ContainerContext implements IContainerContext {
 	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
 		/**
