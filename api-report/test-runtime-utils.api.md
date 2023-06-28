@@ -145,7 +145,7 @@ export class MockContainerRuntimeFactory {
 }
 
 // @public
-export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactoryForReconnection {
+export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactory {
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
@@ -169,7 +169,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 }
 
 // @public
-export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReconnection {
+export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForRebasing, overrides?: {
         minimumSequenceNumber?: number;
     });
