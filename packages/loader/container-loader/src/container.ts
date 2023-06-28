@@ -63,7 +63,6 @@ import {
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
-	IClientConfiguration,
 	IClientDetails,
 	ICommittedProposal,
 	IDocumentAttributes,
@@ -618,14 +617,6 @@ export class Container
 
 	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
-	}
-
-	/**
-	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
-	 * configuration details returned as part of the initial connection.
-	 */
-	private get serviceConfiguration(): IClientConfiguration | undefined {
-		return this._deltaManager.serviceConfiguration;
 	}
 
 	private _clientId: string | undefined;
@@ -2197,12 +2188,13 @@ export class Container
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
 			if (this.collabWindowTracker === undefined) {
+				const serviceConfiguration = this.deltaManager.serviceConfiguration;
 				// Note that config from first connection will be used for this container's lifetime.
 				// That means that if relay service changes settings, such changes will impact only newly booted
 				// clients.
 				// All existing will continue to use settings they got earlier.
 				assert(
-					this.serviceConfiguration !== undefined,
+					serviceConfiguration !== undefined,
 					0x2e4 /* "there should be service config for active connection" */,
 				);
 				this.collabWindowTracker = new CollabWindowTracker(
@@ -2213,8 +2205,8 @@ export class Container
 						);
 						this.submitMessage(type);
 					},
-					this.serviceConfiguration.noopTimeFrequency,
-					this.serviceConfiguration.noopCountFrequency,
+					serviceConfiguration.noopTimeFrequency,
+					serviceConfiguration.noopCountFrequency,
 				);
 			}
 			this.collabWindowTracker.scheduleSequenceNumberUpdate(
@@ -2335,7 +2327,7 @@ export class Container
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this.serviceConfiguration,
+			() => deltaManagerProxy.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			this._deltaManager.clientDetails,

@@ -445,3 +445,7 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 	const time = performance.now() - start;
 	return [result, time];
 }
+
+export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
+	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
+}
