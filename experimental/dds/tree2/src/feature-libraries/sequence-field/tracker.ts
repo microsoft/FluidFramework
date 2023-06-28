@@ -9,12 +9,14 @@ import { RevisionIndexer } from "../modular-schema";
 import { Mark } from "./format";
 import {
 	getInputLength,
+	getMarkLength,
 	getOutputLength,
 	isAttach,
 	isDetachMark,
 	isModify,
 	isNoopMark,
 	markHasCellEffect,
+	markIsTransient,
 } from "./utils";
 
 export class IndexTracker {
@@ -27,6 +29,12 @@ export class IndexTracker {
 		const inLength = getInputLength(mark);
 		const outLength = getOutputLength(mark);
 		this.inputIndex += inLength;
+		if (markIsTransient(mark)) {
+			const markLength = getMarkLength(mark);
+			this.advanceForRevision(markLength, mark.revision);
+			this.advanceForRevision(-markLength, mark.detachedBy.revision);
+			return;
+		}
 		if (!markHasCellEffect(mark)) {
 			return;
 		}
@@ -37,6 +45,10 @@ export class IndexTracker {
 		// If you hit this assert, then you probably need to add a check for it in `isNetZeroNodeCountChange`.
 		assert(netLength !== 0, 0x501 /* Unknown mark type with net-zero node count change */);
 		const revision = mark.revision;
+		this.advanceForRevision(netLength, revision);
+	}
+
+	private advanceForRevision(netLength: number, revision: RevisionTag | undefined): void {
 		// TODO: Remove this early return. It is only needed because some tests use anonymous changes.
 		// These tests will fail (i.e., produce the wrong result) if they rely the index tracking performed here.
 		if (revision === undefined) {

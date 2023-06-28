@@ -45,6 +45,7 @@ import {
 	EmptyInputCellMark,
 	ExistingCellMark,
 	NoopMarkType,
+	Transient,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { applyMoveEffectsToMark, isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -55,6 +56,12 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
 
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
 	return mark.type === "Insert" || mark.type === "MoveIn";
+}
+
+export function isGenerativeMark<TNodeChange>(
+	mark: Mark<TNodeChange>,
+): mark is Insert<TNodeChange> | Revive<TNodeChange> {
+	return mark.type === "Insert" || mark.type === "Revive";
 }
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
@@ -182,8 +189,8 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function markIsTransient(mark: Mark<unknown>): mark is Insert | Revive {
-	return areInputCellsEmpty(mark) && areOutputCellsEmpty(mark);
+export function markIsTransient(mark: Mark<unknown>): mark is (Insert | Revive) & Transient {
+	return isGenerativeMark(mark) && mark.detachedBy !== undefined;
 }
 
 export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T> {
@@ -220,7 +227,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case NoopMarkType:
 			return false;
 		case "Insert":
-			return mark.isTransient ?? false;
+			return mark.detachedBy !== undefined;
 		case "MoveIn":
 			return mark.isSrcConflicted ?? false;
 		case "Delete":
@@ -238,9 +245,8 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			);
 		case "Revive":
 			return (
-				mark.detachEvent !== undefined &&
-				isReattachConflicted(mark) &&
-				mark.isTransient !== true
+				(mark.detachEvent !== undefined && isReattachConflicted(mark)) ||
+				mark.detachedBy !== undefined
 			);
 		default:
 			unreachableCase(type);
@@ -302,6 +308,18 @@ export function isDeleteMark<TNodeChange>(
 	return mark?.type === "Delete";
 }
 
+function areMergeableDetachEvents(
+	lhs: DetachEvent | undefined,
+	lhsCount: number,
+	rhs: DetachEvent | undefined,
+): boolean {
+	if (lhs === undefined || rhs === undefined) {
+		return lhs === undefined && rhs === undefined;
+	}
+
+	return lhs.revision === rhs.revision && lhs.index + lhsCount === rhs.index;
+}
+
 /**
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
@@ -348,7 +366,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			const lhsInsert = lhs as Insert;
 			if (
 				isEqualPlace(lhsInsert, rhs) &&
-				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id
+				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
+				areMergeableDetachEvents(lhsInsert.detachedBy, getMarkLength(lhs), rhs.detachedBy)
 			) {
 				lhsInsert.content.push(...rhs.content);
 				return true;
@@ -384,7 +403,10 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		}
 		case "Revive": {
 			const lhsRevive = lhs as Revive;
-			if (lhsRevive.inverseOf === rhs.inverseOf) {
+			if (
+				lhsRevive.inverseOf === rhs.inverseOf &&
+				areMergeableDetachEvents(lhsRevive.detachedBy, getMarkLength(lhs), rhs.detachedBy)
+			) {
 				lhsRevive.content.push(...rhs.content);
 				lhsRevive.count += rhs.count;
 				return true;

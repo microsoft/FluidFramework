@@ -683,6 +683,44 @@ describe("visit", () => {
 		testVisit(delta, expected);
 	});
 
+	it("transient insert", () => {
+		const mark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content,
+			isTransient: true,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([[fooKey, [42, mark]]]),
+					},
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onInsert", 42, content],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onDelete", 42, 1],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
+		testVisit(delta, expected);
+	});
+
 	it("move-out under transient", () => {
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {

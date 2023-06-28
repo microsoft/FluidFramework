@@ -24,6 +24,7 @@ import {
 	MoveId,
 	Revive,
 	Insert,
+	NewAttach,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -121,6 +122,7 @@ function composeMarkLists<TNodeChange>(
 		revisionMetadata,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
+	const inputIndex = new IndexTracker(revisionMetadata.getIndex);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
@@ -130,6 +132,7 @@ function composeMarkLists<TNodeChange>(
 			);
 			factory.push(baseMark);
 		} else if (baseMark === undefined) {
+			inputIndex.advance(newMark);
 			factory.push(composeMark(newMark, newRev, composeChild));
 		} else {
 			// Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
@@ -139,12 +142,14 @@ function composeMarkLists<TNodeChange>(
 				baseMark,
 				newRev,
 				newMark,
+				inputIndex,
 				composeChild,
 				genId,
 				moveEffects,
 				revisionMetadata,
 			);
 			factory.push(composedMark);
+			inputIndex.advance(newMark);
 		}
 	}
 
@@ -164,6 +169,7 @@ function composeMarks<TNodeChange>(
 	baseMark: Mark<TNodeChange>,
 	newRev: RevisionTag | undefined,
 	newMark: Mark<TNodeChange>,
+	inputIndex: IndexTracker,
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
@@ -186,7 +192,7 @@ function composeMarks<TNodeChange>(
 		const nonTransient = withNodeChange(baseMark, nodeChange) as
 			| Insert<TNodeChange>
 			| Revive<TNodeChange>;
-		delete nonTransient.isTransient;
+		delete nonTransient.detachedBy;
 		return nonTransient;
 	}
 
@@ -216,15 +222,7 @@ function composeMarks<TNodeChange>(
 		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
-		const moveInId = getMarkMoveId(baseMark);
-		const moveOutId = getMarkMoveId(newMark);
-
-		if (moveInId !== undefined && moveOutId !== undefined) {
-			assert(
-				isMoveMark(baseMark) && isMoveMark(newMark),
-				0x68f /* Only move marks have move IDs */,
-			);
-
+		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
@@ -262,8 +260,7 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		if (moveInId !== undefined) {
-			assert(isMoveMark(baseMark), 0x690 /* Only move marks have move IDs */);
+		if (isMoveMark(baseMark)) {
 			setReplacementMark(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -275,9 +272,7 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		if (moveOutId !== undefined) {
-			assert(isMoveMark(newMark), 0x691 /* Only move marks have move IDs */);
-
+		if (isMoveMark(newMark)) {
 			// The nodes attached by `baseMark` have been moved by `newMark`.
 			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
 			setReplacementMark(
@@ -291,8 +286,19 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		assert(baseMark.type === "Insert" || baseMark.type === "Revive", "Unexpected mark type");
-		return withNodeChange({ ...baseMark, isTransient: true as const }, nodeChange);
+		assert(isDeleteMark(newMark), "Unexpected mark type");
+		const newMarkRevision = newMark.revision ?? newRev;
+		assert(newMarkRevision !== undefined, "Unable to compose anonymous marks");
+		return withNodeChange(
+			{
+				...(baseMark as Insert<TNodeChange> | Revive<TNodeChange>),
+				detachedBy: {
+					revision: newMarkRevision,
+					index: inputIndex.getIndex(newMarkRevision),
+				},
+			},
+			nodeChange,
+		);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
@@ -533,48 +539,61 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
-			// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
-			assert(
-				isExistingCellMark(baseMark),
-				0x693 /* Only existing cell mark can have empty output */,
-			);
 			let baseCellId: DetachEvent;
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
-				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
-				if (baseRevision === undefined || baseIntention === undefined) {
-					// The base revision always be defined except when squashing changes into a transaction.
-					// In the future, we want to support reattaches in the new change here.
-					// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
-					// (which will be obtained by rebasing the reattach over interim changes
-					// (which requires the local changes to have a revision tag))
-					assert(
-						isNewAttach(newMark),
-						0x695 /* TODO: Assign revision tags to each change in a transaction */,
-					);
-					return this.dequeueNew();
-				}
-				baseCellId = {
-					revision: baseIntention,
-					index: this.baseIndex.getIndex(baseRevision),
-				};
+			let cmp: number;
+			if (markIsTransient(baseMark)) {
+				// cmp = compareCellPositions(
+				// 	baseMark.detachedBy,
+				// 	baseMark,
+				// 	newMark,
+				// 	this.newRevision,
+				// 	this.cancelledInserts,
+				// 	this.baseGap,
+				// );
+				cmp = Infinity;
 			} else {
+				// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
+				// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
 				assert(
-					areInputCellsEmpty(baseMark),
-					0x696 /* Mark with empty output must either be a detach or also have input empty */,
+					isExistingCellMark(baseMark),
+					0x693 /* Only existing cell mark can have empty output */,
 				);
-				baseCellId = baseMark.detachEvent;
+				if (markEmptiesCells(baseMark)) {
+					assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
+					const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+					const baseIntention = getIntention(baseRevision, this.revisionMetadata);
+					if (baseRevision === undefined || baseIntention === undefined) {
+						// The base revision always be defined except when squashing changes into a transaction.
+						// In the future, we want to support reattaches in the new change here.
+						// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
+						// (which will be obtained by rebasing the reattach over interim changes
+						// (which requires the local changes to have a revision tag))
+						assert(
+							isNewAttach(newMark),
+							0x695 /* TODO: Assign revision tags to each change in a transaction */,
+						);
+						return this.dequeueNew();
+					}
+					baseCellId = {
+						revision: baseIntention,
+						index: this.baseIndex.getIndex(baseRevision),
+					};
+				} else {
+					assert(
+						areInputCellsEmpty(baseMark),
+						0x696 /* Mark with empty output must either be a detach or also have input empty */,
+					);
+					baseCellId = baseMark.detachEvent;
+				}
+				cmp = compareCellPositions(
+					baseCellId,
+					baseMark,
+					newMark,
+					this.newRevision,
+					this.cancelledInserts,
+					this.baseGap,
+				);
 			}
-			const cmp = compareCellPositions(
-				baseCellId,
-				baseMark,
-				newMark,
-				this.newRevision,
-				this.cancelledInserts,
-				this.baseGap,
-			);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
 			} else if (cmp > 0) {

@@ -223,13 +223,17 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface CanBeTransient {
+export interface Transient {
 	/**
-	 * When true, the content is both inserted/revived and deleted in the same changeset.
+	 * When populated, the content is inserted/revived then deleted.
+	 * The contents of the `DetachEvent` describe deletion.
 	 */
-	isTransient?: true;
+	detachedBy: DetachEvent;
 }
-export const CanBeTransient = Type.Object({ isTransient: OptionalTrue });
+export const Transient = Type.Object({ detachedBy: DetachEvent });
+
+export type CanBeTransient = Partial<Transient>;
+export const CanBeTransient = Type.Partial(Transient);
 
 export interface Insert<TNodeChange = NodeChangeType>
 	extends HasTiebreakPolicy,

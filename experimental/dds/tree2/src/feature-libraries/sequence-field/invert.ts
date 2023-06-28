@@ -109,7 +109,7 @@ function invertMark<TNodeChange>(
 			return [mark];
 		}
 		case "Insert": {
-			if (mark.isTransient ?? false) {
+			if (mark.detachedBy !== undefined) {
 				assert(revision !== undefined, "Unable to revert to undefined revision");
 				return [
 					withNodeChange(
@@ -152,7 +152,7 @@ function invertMark<TNodeChange>(
 		}
 		case "Revive": {
 			if (!isReattachConflicted(mark)) {
-				if (mark.isTransient ?? false) {
+				if (mark.detachedBy !== undefined) {
 					assert(revision !== undefined, "Unable to revert to undefined revision");
 					return [
 						withNodeChange(
@@ -180,7 +180,7 @@ function invertMark<TNodeChange>(
 					return [inverse];
 				}
 			} else {
-				return mark.isTransient ?? false
+				return mark.detachedBy !== undefined
 					? invertMark(
 							{
 								type: "Delete",

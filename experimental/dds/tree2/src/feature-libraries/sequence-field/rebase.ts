@@ -179,7 +179,7 @@ function rebaseMarkList<TNodeChange>(
 					} else {
 						factory.pushOffset(getOutputLength(baseMark));
 					}
-				} else if (!baseMark.isTransient) {
+				} else if (baseMark.detachedBy === undefined) {
 					factory.pushOffset(getOutputLength(baseMark));
 				}
 			}

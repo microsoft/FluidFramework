@@ -166,7 +166,7 @@ function visitModify(
 }
 
 function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
-	let containsMoves = false;
+	let containsMovesOrDeletes = false;
 	let index = 0;
 	for (const mark of delta) {
 		if (typeof mark === "number") {
@@ -204,6 +204,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					visitor.onInsert(index, mark.content);
 					result = visitModify(index, mark, visitor, config);
 					index += mark.content.length;
+					result ||= mark.isTransient ?? false;
 					break;
 				case Delta.MarkType.MoveIn:
 					// Handled in the second pass
@@ -212,10 +213,10 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 				default:
 					unreachableCase(type);
 			}
-			containsMoves ||= result;
+			containsMovesOrDeletes ||= result;
 		}
 	}
-	return containsMoves;
+	return containsMovesOrDeletes;
 }
 
 function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {

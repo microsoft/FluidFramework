@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, isDeltaVisible } from "../../utils";
 import {
 	checkDeltaEquality,
 	compose,
@@ -200,7 +200,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(isDeltaVisible(delta), false);
 			});
 		}
 	});
@@ -221,7 +221,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const changes = [inv, updatedChange];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(isDeltaVisible(delta), false);
 			});
 		}
 	});
