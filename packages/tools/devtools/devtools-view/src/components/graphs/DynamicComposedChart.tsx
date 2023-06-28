@@ -74,8 +74,18 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 };
 
 interface Props {
+	/**
+	 * Renders the data as either an Stacked Area or Stacked Bar chart.
+	 * Note that this overrides individually set graphTypes for each dataset.
+	 */
 	stackedGraphType?: "area" | "bar";
+	/**
+	 * The datasets to be rendered onto the chart
+	 */
 	dataSets: GraphDataSet[];
+	/**
+	 * The unit that will be displayed on the y axis
+	 */
 	yAxisUnitDisplayName?: string;
 }
 
