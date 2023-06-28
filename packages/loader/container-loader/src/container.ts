@@ -11,26 +11,25 @@ import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/co
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
-	IAudience,
-	IConnectionDetailsInternal,
-	IContainer,
-	IContainerEvents,
-	IDeltaManager,
-	ICriticalContainerError,
-	ContainerWarning,
 	AttachState,
-	IThrottlingWarning,
-	ReadOnlyInfo,
-	IContainerLoadMode,
-	IFluidCodeDetails,
-	isFluidCodeDetails,
+	ContainerWarning,
+	IAudience,
 	IBatchMessage,
 	ICodeDetailsLoader,
+	IContainer,
+	IContainerEvents,
+	IContainerLoadMode,
+	ICriticalContainerError,
+	IDeltaManager,
+	IFluidCodeDetails,
 	IHostLoader,
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
+	isFluidCodeDetails,
+	IThrottlingWarning,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -45,7 +44,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	canBeCoalescedByService,
@@ -86,7 +84,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
+import {
+	ReconnectMode,
+	IConnectionManagerFactoryArgs,
+	getPackageName,
+	IConnectionDetailsInternal,
+} from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
@@ -98,7 +101,11 @@ import {
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
-import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import {
+	combineAppAndProtocolSummary,
+	getProtocolSnapshotTree,
+	getSnapshotTreeFromSerializedContainer,
+} from "./utils";
 import {
 	initQuorumValuesFromCodeDetails,
 	getCodeDetailsFromQuorumValues,
