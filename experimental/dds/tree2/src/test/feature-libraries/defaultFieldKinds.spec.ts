@@ -30,6 +30,7 @@ import {
 	ValueSchema,
 	tagChange,
 	tagRollbackInverse,
+	FieldKey,
 } from "../../core";
 import { JsonCompatibleReadOnly, brand } from "../../util";
 import {
@@ -69,9 +70,40 @@ const tree1 = jsonableTreeFromCursor(
 );
 
 const tree2 = { type: nodeSchema.name, value: "value2" };
-const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
-const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
-const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
+const fooKey: FieldKey = brand("foo");
+const nodeChange1: NodeChangeset = {
+	fieldChanges: new Map([
+		[
+			fooKey,
+			{
+				fieldKind: FieldKinds.optional.identifier,
+				change: brand({ type: nodeSchema.name, value: "value3" }),
+			},
+		],
+	]),
+};
+const nodeChange2: NodeChangeset = {
+	fieldChanges: new Map([
+		[
+			fooKey,
+			{
+				fieldKind: FieldKinds.optional.identifier,
+				change: brand({ type: nodeSchema.name, value: "value4" }),
+			},
+		],
+	]),
+};
+const nodeChange3: NodeChangeset = {
+	fieldChanges: new Map([
+		[
+			fooKey,
+			{
+				fieldKind: FieldKinds.optional.identifier,
+				change: brand({ type: nodeSchema.name, value: "value5" }),
+			},
+		],
+	]),
+};
 
 const unexpectedDelegate = () => assert.fail("Should not be called");
 const idAllocator: IdAllocator = unexpectedDelegate;
@@ -85,12 +117,40 @@ const crossFieldManager = {
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
-	return { type: Delta.MarkType.Modify, setValue: "value3" };
+	return {
+		type: Delta.MarkType.Modify,
+		fields: new Map([
+			[
+				fooKey,
+				[
+					{ type: Delta.MarkType.Delete, count: 1 },
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor({ type: nodeSchema.name, value: "value3" })],
+					},
+				],
+			],
+		]),
+	};
 };
 
 const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
 	assert.deepEqual(child, nodeChange2);
-	return { type: Delta.MarkType.Modify, setValue: "value4" };
+	return {
+		type: Delta.MarkType.Modify,
+		fields: new Map([
+			[
+				fooKey,
+				[
+					{ type: Delta.MarkType.Delete, count: 1 },
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor({ type: nodeSchema.name, value: "value4" })],
+					},
+				],
+			],
+		]),
+	};
 };
 
 const encodedChild = "encoded child";
@@ -260,20 +320,6 @@ describe("Value field changesets", () => {
 			),
 			childChange3,
 		);
-	});
-
-	it("can be converted to a delta when overwriting content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{
-				type: Delta.MarkType.Insert,
-				content: [singleTextCursor(tree1)],
-				setValue: "value3",
-			},
-		];
-
-		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
-		assertMarkListEqual(delta, expected);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
@@ -532,20 +578,24 @@ describe("Optional field changesets", () => {
 			{
 				type: Delta.MarkType.Insert,
 				content: [singleTextCursor(tree1)],
-				setValue: "value3",
+				fields: new Map([
+					[
+						fooKey,
+						[
+							{ type: Delta.MarkType.Delete, count: 1 },
+							{
+								type: Delta.MarkType.Insert,
+								content: [
+									singleTextCursor({ type: nodeSchema.name, value: "value3" }),
+								],
+							},
+						],
+					],
+				]),
 			},
 		];
 
 		assertMarkListEqual(fieldHandler.intoDelta(change1.change, deltaFromChild1), expected);
-	});
-
-	it("can be converted to a delta when replacing content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
-		];
-
-		assertMarkListEqual(fieldHandler.intoDelta(change2.change, deltaFromChild1), expected);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
@@ -559,7 +609,25 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can be converted to a delta with only child changes", () => {
-		const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
+		const expected: Delta.MarkList = [
+			{
+				type: Delta.MarkType.Modify,
+				fields: new Map([
+					[
+						fooKey,
+						[
+							{ type: Delta.MarkType.Delete, count: 1 },
+							{
+								type: Delta.MarkType.Insert,
+								content: [
+									singleTextCursor({ type: nodeSchema.name, value: "value4" }),
+								],
+							},
+						],
+					],
+				]),
+			},
+		];
 
 		assertMarkListEqual(fieldHandler.intoDelta(change4.change, deltaFromChild2), expected);
 	});
