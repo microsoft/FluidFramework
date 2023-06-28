@@ -19,7 +19,6 @@ export {
 export { Interval, createInterval, intervalHelpers } from "./interval";
 export {
 	SequenceInterval,
-	createPositionReference,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,

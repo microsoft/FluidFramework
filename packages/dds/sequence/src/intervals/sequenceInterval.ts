@@ -372,7 +372,7 @@ export function createPositionReferenceFromSegoff(
 	return createDetachedLocalReferencePosition(refType);
 }
 
-export function createPositionReference(
+function createPositionReference(
 	client: Client,
 	pos: number,
 	refType: ReferenceType,
