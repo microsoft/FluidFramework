@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
-import { FieldKey, Value } from "./types";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import {
+	RangeMap,
+	brand,
+	extractFromOpaque,
+	getFirstFromRangeMap,
+	setInRangeMap,
+} from "../../util";
 import * as Delta from "./delta";
+import { FieldKey, Value } from "./types";
 
 /**
  * Implementation notes:
@@ -63,21 +70,29 @@ import * as Delta from "./delta";
  * Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied
  * to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls
  * will pass indices 0 and 1 respectively.
+ *
+ * Note a node may be moved more than once while visiting a delta.
+ * This is because the delta may move-out a single block of adjacent nodes which are not all moved to the same destination.
+ * To avoid the need for the visitor to support moving-in a subrange of a moved-out block, this function will instead
+ * move-in the entire block and then move-out the unused portions with new move IDs.
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
+	const movedOutNodes: RangeMap<Delta.MoveId> = [];
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
 		func: firstPass,
 		applyValueChanges: true,
 		modsToMovedTrees,
+		movedOutRanges: movedOutNodes,
 	});
 	if (containsMovesOrDeletes) {
 		visitFieldMarks(delta, visitor, {
 			func: secondPass,
 			applyValueChanges: false,
 			modsToMovedTrees,
+			movedOutRanges: movedOutNodes,
 		});
 	}
 }
@@ -101,7 +116,9 @@ export interface DeltaVisitor {
 interface PassConfig {
 	readonly func: Pass;
 	readonly applyValueChanges: boolean;
+
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
+	readonly movedOutRanges: RangeMap<Delta.MoveId>;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
@@ -172,6 +189,12 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
 					visitor.onMoveOut(index, mark.count, mark.moveId);
+					setInRangeMap(
+						config.movedOutRanges,
+						extractFromOpaque(mark.moveId),
+						mark.count,
+						mark.moveId,
+					);
 					break;
 				case Delta.MarkType.Modify:
 					result = visitModify(index, mark, visitor, config);
@@ -225,14 +248,66 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					}
 					break;
 				case Delta.MarkType.MoveIn: {
-					visitor.onMoveIn(index, mark.count, mark.moveId);
+					let entry = getFirstFromRangeMap(
+						config.movedOutRanges,
+						extractFromOpaque(mark.moveId),
+						mark.count,
+					);
+					assert(entry !== undefined, "Expected a move out for this move in");
+					visitor.onMoveIn(index, entry.length, entry.value);
+					let endIndex = index + entry.length;
+
+					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.start;
+					if (lengthBeforeMark > 0) {
+						visitor.onMoveOut(index, lengthBeforeMark, entry.value);
+						endIndex -= lengthBeforeMark;
+						setInRangeMap(
+							config.movedOutRanges,
+							entry.start,
+							lengthBeforeMark,
+							entry.value,
+						);
+					}
+
+					const lastMarkId = (extractFromOpaque(mark.moveId) as number) + mark.count - 1;
+					let lastEntryId = entry.start + entry.length - 1;
+					let lengthAfterEntry = lastMarkId - lastEntryId;
+					while (lengthAfterEntry > 0) {
+						const nextId = lastEntryId + 1;
+						entry = getFirstFromRangeMap(config.movedOutRanges, nextId, mark.count);
+
+						assert(
+							entry !== undefined && entry.start === nextId,
+							"Expected a move out for the remaining portion of this move in",
+						);
+
+						lastEntryId = entry.start + entry.length - 1;
+						lengthAfterEntry = lastMarkId - lastEntryId;
+
+						visitor.onMoveIn(endIndex, entry.length, brand(entry.start));
+						endIndex += entry.length;
+					}
+
+					const lengthAfterMark = -lengthAfterEntry;
+					if (lengthAfterMark > 0) {
+						const nextMoveId: Delta.MoveId = brand(lastMarkId + 1);
+						visitor.onMoveOut(endIndex - lengthAfterMark, lengthAfterMark, nextMoveId);
+						endIndex -= lengthAfterMark;
+						setInRangeMap(
+							config.movedOutRanges,
+							extractFromOpaque(nextMoveId),
+							lengthAfterMark,
+							nextMoveId,
+						);
+					}
+
 					if (mark.count === 1) {
 						const modify = config.modsToMovedTrees.get(mark.moveId);
 						if (modify !== undefined) {
 							visitModify(index, modify, visitor, config);
 						}
 					}
-					index += mark.count;
+					index = endIndex;
 					break;
 				}
 				default:
