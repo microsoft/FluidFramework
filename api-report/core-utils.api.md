@@ -53,6 +53,12 @@ export interface PromiseCacheOptions {
     removeOnError?: (e: any) => boolean;
 }
 
+// @public
+export class RateLimiter {
+    constructor(windowMSec: number);
+    filter(clientId: string, messages: string[]): string[];
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```
