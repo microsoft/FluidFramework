@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Lazy, assert } from "@fluidframework/common-utils";
-import { fromInternalScheme } from "@fluid-tools/version-tools";
+import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -157,10 +157,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	let version: string = pkgVersion;
 	// This grabs the code version to find the backwards compatible options.
 	const codeVersion = process.env.SETVERSION_CODEVERSION;
-	if (
-		codeVersion !== undefined &&
-		(codeVersion.startsWith("2.0.0-internal.") || codeVersion.startsWith("2.0.0-dev."))
-	) {
+	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion)) {
 		version = codeVersion;
 	}
 
