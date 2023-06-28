@@ -19,7 +19,7 @@ module.exports = {
 		node: true,
 	},
 	extends: [
-		"./eslint7",
+		"./eslint7.js",
 		"plugin:eslint-comments/recommended",
 		"plugin:import/errors",
 		"plugin:import/warnings",
