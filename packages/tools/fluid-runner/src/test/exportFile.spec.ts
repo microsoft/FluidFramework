@@ -12,6 +12,7 @@ import { getSnapshotFileContent } from "../utils";
 /* eslint-disable import/no-internal-modules */
 import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";
+import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
 /* eslint-enable import/no-internal-modules */
 
 describe("exportFile", () => {
@@ -23,6 +24,9 @@ describe("exportFile", () => {
 
 	beforeEach(() => {
 		fs.mkdirSync(outputFolder);
+		global.fetch = (async () => {
+			return undefined;
+		}) as any;
 	});
 
 	afterEach(() => {
@@ -78,6 +82,40 @@ describe("exportFile", () => {
 			result.error?.message.toLowerCase().includes("timed out"),
 			`error message does not contain "timed out" [${result.error?.message}]`,
 		);
+	});
+
+	it("fails on disallowed network fetch", async () => {
+		const result = await exportFile(
+			networkFetchFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			true,
+		);
+
+		assert(!result.success, "result should not be successful");
+		assert(
+			result.error?.message.toLowerCase().includes("network fetch"),
+			`error message does not contain "network fetch" [${result.error?.message}]`,
+		);
+	});
+
+	it("succeeds when allowed network fetch occurs", async () => {
+		const result = await exportFile(
+			networkFetchFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			false,
+		);
+
+		assert(result.success, "result should be successful");
 	});
 
 	describe("Validate arguments", () => {

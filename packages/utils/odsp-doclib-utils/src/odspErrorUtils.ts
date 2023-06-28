@@ -274,7 +274,10 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 423: // File locked
-			if (innerMostErrorCode === "resourceLocked") {
+			if (
+				innerMostErrorCode === "resourceLocked" ||
+				innerMostErrorCode === "resourceCheckedOut"
+			) {
 				error = new NonRetryableError(
 					errorMessage,
 					DriverErrorType.fileIsLocked,

@@ -61,7 +61,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	}
 
 	public get isAttached(): boolean {
-		return this.attached;
+		return this.routeContext.isAttached && this.attached;
 	}
 
 	public readonly absolutePath: string;

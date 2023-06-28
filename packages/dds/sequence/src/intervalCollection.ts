@@ -29,6 +29,7 @@ import {
 	createDetachedLocalReferencePosition,
 	DetachedReferencePosition,
 	SlidingPreference,
+	PropertyAction,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -65,7 +66,7 @@ export enum IntervalType {
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
 	 * they reference is removed and acked.
-	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md` for details
+	 * See `packages\dds\merge-tree\docs\REFERENCEPOSITIONS.md` for details
 	 * SlideOnRemove is the default interval behavior and does not need to be specified.
 	 */
 	SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
@@ -207,14 +208,18 @@ export interface ISerializableInterval extends IInterval {
 	getIntervalId(): string | undefined;
 }
 
+/**
+ * @sealed
+ */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	compareEnds(a: TInterval, b: TInterval): number;
+	compareStarts?(a: TInterval, b: TInterval): number;
 	/**
 	 *
 	 * @param label - label of the interval collection this interval is being added to. This parameter is
 	 * irrelevant for transient intervals.
 	 * @param start - numerical start position of the interval
-	 * @param end - numberical end position of the interval
+	 * @param end - numerical end position of the interval
 	 * @param client - client creating the interval
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
@@ -470,7 +475,7 @@ export class Interval implements ISerializableInterval {
 }
 
 /**
- * Interval impelmentation whose ends are associated with positions in a mutatable sequence.
+ * Interval implementation whose ends are associated with positions in a mutatable sequence.
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
@@ -1156,6 +1161,223 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements Interval
 	}
 }
 
+/**
+ * Collection of intervals.
+ *
+ * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
+ */
+export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
+	/**
+	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
+	 */
+	findIntervalsWithEndpointInRange(start: number, end: number);
+}
+
+/**
+ * Collection of intervals.
+ *
+ * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
+ */
+export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
+	/**
+	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (includes both ends)
+	 */
+	findIntervalsWithStartpointInRange(start: number, end: number);
+}
+
+/**
+ * Interface for intervals that have comparison override properties.
+ */
+const forceCompare = Symbol();
+
+interface HasComparisonOverride {
+	[forceCompare]: number;
+}
+
+/**
+ * Compares two objects based on their comparison override properties.
+ * @returns A number indicating the order of the intervals (negative for a is lower than b, 0 for tie, positive for a is greater than b).
+ */
+function compareOverrideables(
+	a: Partial<HasComparisonOverride>,
+	b: Partial<HasComparisonOverride>,
+): number {
+	const forceCompareA = a[forceCompare] ?? 0;
+	const forceCompareB = b[forceCompare] ?? 0;
+
+	return forceCompareA - forceCompareB;
+}
+
+class EndpointInRangeIndex<TInterval extends ISerializableInterval>
+	implements IEndpointInRangeIndex<TInterval>
+{
+	private readonly intervalTree;
+
+	constructor(
+		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly client: Client,
+	) {
+		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
+			const compareEndsResult = helpers.compareEnds(a, b);
+			if (compareEndsResult !== 0) {
+				return compareEndsResult;
+			}
+
+			const overrideablesComparison = compareOverrideables(
+				a as Partial<HasComparisonOverride>,
+				b as Partial<HasComparisonOverride>,
+			);
+			if (overrideablesComparison !== 0) {
+				return overrideablesComparison;
+			}
+
+			const aId = a.getIntervalId();
+			const bId = b.getIntervalId();
+			if (aId !== undefined && bId !== undefined) {
+				return aId.localeCompare(bId);
+			}
+			return 0;
+		});
+	}
+
+	public add(interval: TInterval): void {
+		this.intervalTree.put(interval, interval);
+	}
+
+	public remove(interval: TInterval): void {
+		this.intervalTree.remove(interval);
+	}
+
+	public findIntervalsWithEndpointInRange(start: number, end: number) {
+		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
+			return [];
+		}
+		const results: TInterval[] = [];
+		const action: PropertyAction<TInterval, TInterval> = (node) => {
+			results.push(node.data);
+			return true;
+		};
+
+		const transientStartInterval = this.helpers.create(
+			"transient",
+			start,
+			start,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		const transientEndInterval = this.helpers.create(
+			"transient",
+			end,
+			end,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		// Add comparison overrides to the transient intervals
+		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
+		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
+
+		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
+		return results;
+	}
+}
+
+class StartpointInRangeIndex<TInterval extends ISerializableInterval>
+	implements IStartpointInRangeIndex<TInterval>
+{
+	private readonly intervalTree;
+
+	constructor(
+		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly client: Client,
+	) {
+		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
+			assert(
+				typeof helpers.compareStarts === "function",
+				"compareStarts does not exist in the helpers",
+			);
+
+			const compareStartsResult = helpers.compareStarts(a, b);
+			if (compareStartsResult !== 0) {
+				return compareStartsResult;
+			}
+
+			const overrideablesComparison = compareOverrideables(
+				a as Partial<HasComparisonOverride>,
+				b as Partial<HasComparisonOverride>,
+			);
+			if (overrideablesComparison !== 0) {
+				return overrideablesComparison;
+			}
+			const aId = a.getIntervalId();
+			const bId = b.getIntervalId();
+			if (aId !== undefined && bId !== undefined) {
+				return aId.localeCompare(bId);
+			}
+			return 0;
+		});
+	}
+
+	public add(interval: TInterval): void {
+		this.intervalTree.put(interval, interval);
+	}
+
+	public remove(interval: TInterval): void {
+		this.intervalTree.remove(interval);
+	}
+
+	public findIntervalsWithStartpointInRange(start: number, end: number) {
+		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
+			return [];
+		}
+		const results: TInterval[] = [];
+		const action: PropertyAction<TInterval, TInterval> = (node) => {
+			results.push(node.data);
+			return true;
+		};
+
+		const transientStartInterval = this.helpers.create(
+			"transient",
+			start,
+			start,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		const transientEndInterval = this.helpers.create(
+			"transient",
+			end,
+			end,
+			this.client,
+			IntervalType.Transient,
+		);
+
+		// Add comparison overrides to the transient intervals
+		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
+		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
+
+		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
+		return results;
+	}
+}
+
+export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
+	helpers: IIntervalHelpers<TInterval>,
+	client: Client,
+): IEndpointInRangeIndex<TInterval> {
+	return new EndpointInRangeIndex<TInterval>(helpers, client);
+}
+
+export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
+	helpers: IIntervalHelpers<TInterval>,
+	client: Client,
+): IStartpointInRangeIndex<TInterval> {
+	return new StartpointInRangeIndex<TInterval>(helpers, client);
+}
+
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	private static readonly legacyIdPrefix = "legacy";
 	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
@@ -1383,6 +1605,21 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.end, b.end);
 
+export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
+	compareReferencePositions(a.start, b.start);
+
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
+	compareEnds: compareSequenceIntervalEnds,
+	compareStarts: compareSequenceIntervalStarts,
+	create: createSequenceInterval,
+};
+
+export const intervalHelpers: IIntervalHelpers<Interval> = {
+	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
+	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
+	create: createInterval,
+};
+
 class SequenceIntervalCollectionFactory
 	implements IValueFactory<IntervalCollection<SequenceInterval>>
 {
@@ -1391,11 +1628,13 @@ class SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 		options?: Partial<SequenceOptions>,
 	): IntervalCollection<SequenceInterval> {
-		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: compareSequenceIntervalEnds,
-			create: createSequenceInterval,
-		};
-		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw, options);
+		return new IntervalCollection<SequenceInterval>(
+			sequenceIntervalHelpers,
+			true,
+			emitter,
+			raw,
+			options,
+		);
 	}
 
 	public store(

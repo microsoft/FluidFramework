@@ -6,14 +6,14 @@
 
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @public
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
 
 // @public
-export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryLoggerExt): Promise<T>;
+export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, baseLogger?: ITelemetryBaseLogger): Promise<T>;
 
 // (No @packageDocumentation comment for this package)
 
