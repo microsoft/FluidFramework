@@ -37,7 +37,12 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {
-		const message = { content: messageContent, localOpMetadata, opId: uuid() };
+		const message = {
+			content: messageContent,
+			localOpMetadata,
+			opId: uuid(),
+			timesSubmitted: 0,
+		};
 		this.submitInternal(message);
 		this.currentBatch.push(message);
 
@@ -46,7 +51,9 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	private submitInternal(message: ITrackableMessage) {
-		const metadata = { opId: message.opId };
+		message.timesSubmitted++;
+
+		const metadata = { opId: message.opId, timesSubmitted: message.timesSubmitted };
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber: this.clientSequenceNumber,
@@ -71,6 +78,7 @@ interface ITrackableMessage {
 	content: any;
 	localOpMetadata: unknown;
 	opId: string;
+	timesSubmitted: number;
 }
 
 /**
