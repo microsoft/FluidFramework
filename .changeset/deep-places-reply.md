@@ -6,7 +6,7 @@
 
 IContainerContext members deprecated
 
-IContainerContext members disposed, dispose(), serviceConfiguration and id have been deprecated and will be removed in an upcoming release.
+IContainerContext members disposed, dispose(), serviceConfiguration, and id have been deprecated and will be removed in an upcoming release.
 
 disposed - The disposed state on the IContainerContext is not meaningful to the runtime.
 
