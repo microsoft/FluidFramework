@@ -542,14 +542,7 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			let cmp: number;
 			if (markIsTransient(baseMark)) {
-				// cmp = compareCellPositions(
-				// 	baseMark.detachedBy,
-				// 	baseMark,
-				// 	newMark,
-				// 	this.newRevision,
-				// 	this.cancelledInserts,
-				// 	this.baseGap,
-				// );
+				// TODO: call on `compareCellPositions` to determine ordering and overlap once it is fixed.
 				cmp = Infinity;
 			} else {
 				// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
