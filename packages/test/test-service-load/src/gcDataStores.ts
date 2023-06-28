@@ -133,23 +133,23 @@ class AttachmentBlobObject implements IGCActivityObject {
 		if (this.running) {
 			return { done: true };
 		}
-
 		this.running = true;
-		let done = true;
-		let error: any;
+
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
+		let activityFailed = false;
+		let error: any;
 		while (this.running) {
 			try {
 				await this.runActivity(config);
 			} catch (e) {
-				done = false;
+				activityFailed = true;
 				error = e;
 				break;
 			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(delayBetweenBlobGetMs * config.random.real(1, 1.5));
 		}
-		return { done, error, nodeId };
+		return { done: !activityFailed, error, nodeId };
 	}
 
 	public stop() {
@@ -239,21 +239,24 @@ export class LeafDataObject extends BaseDataObject implements IGCActivityObject 
 		if (this.running) {
 			return { done: true };
 		}
-
 		this.running = true;
+
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
+		let activityFailed = false;
 		let error: any;
 		while (this.running && !this.runtime.disposed) {
 			try {
 				this.runActivity(config);
 			} catch (e) {
 				error = e;
-				this.running = false;
+				activityFailed = true;
+				break;
 			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
-		return { done: !this.runtime.disposed, error, nodeId };
+		const notDone = activityFailed || this.runtime.disposed;
+		return { done: !notDone, error, nodeId };
 	}
 
 	public stop() {
@@ -324,6 +327,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	}
 	protected _nodeId: string | undefined;
 	protected running: boolean = false;
+	private activityFailed: boolean = false;
 	protected activityFailedError: any;
 
 	/** Prefix used for content for blobs uploaded. This is unique per data store per client. */
@@ -418,6 +422,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		activityFn()
 			.then((result) => {
 				if (!result.done) {
+					this.activityFailed = true;
 					if (result.error !== undefined) {
 						this.activityFailedError = result.error;
 						this.logger.sendErrorEvent(
@@ -432,6 +437,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 				}
 			})
 			.catch((error) => {
+				this.activityFailed = true;
 				this.activityFailedError = error;
 				this.logger.sendErrorEvent(
 					{
@@ -621,7 +627,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			this.running &&
 			this.counter.value < totalSendCount &&
 			!this.runtime.disposed &&
-			this.activityFailedError === undefined
+			!this.activityFailed
 		) {
 			// After every activityThresholdOpCount ops, run activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
@@ -635,7 +641,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
 		this.stop();
-		const notDone = this.runtime.disposed || this.activityFailedError === undefined;
+		const notDone = this.runtime.disposed || this.activityFailed;
 		return { done: !notDone, error: this.activityFailedError, nodeId };
 	}
 
