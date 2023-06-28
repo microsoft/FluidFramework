@@ -248,8 +248,8 @@ export class LeafDataObject extends BaseDataObject implements IGCActivityObject 
 			try {
 				this.runActivity(config);
 			} catch (e) {
-				error = e;
 				activityFailed = true;
+				error = e;
 				break;
 			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
