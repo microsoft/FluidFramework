@@ -157,7 +157,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 // @public
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
     readonly audience: IAudience | undefined;
@@ -173,16 +173,20 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated (undocumented)
+    dispose(error?: Error): void;
+    // @deprecated (undocumented)
+    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    // @deprecated
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;

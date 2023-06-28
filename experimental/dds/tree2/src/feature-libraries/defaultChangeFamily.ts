@@ -159,8 +159,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent),
+					valueFieldKind.changeHandler.editor.set(newContent, id),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -186,7 +187,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId();
+		const moveId = this.modularBuilder.generateId(count);
 		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
@@ -232,7 +233,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId();
+				const moveId = this.modularBuilder.generateId(count);
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,

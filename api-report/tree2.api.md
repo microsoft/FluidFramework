@@ -340,8 +340,8 @@ export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy,
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
-    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeEntry<T> | undefined;
+    set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
 }
 
 // @alpha (undocumented)
@@ -1573,6 +1573,16 @@ type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
+
+// @alpha
+export interface RangeEntry<T> {
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    start: number;
+    // (undocumented)
+    value: T;
+}
 
 // @alpha
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
