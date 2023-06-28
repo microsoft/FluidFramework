@@ -134,7 +134,7 @@ export interface IBatchMessage {
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
  */
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
 	/** @deprecated Please pass in existing directly in instantiateRuntime */
 	readonly existing: boolean | undefined;
 	readonly options: ILoaderOptions;
@@ -201,6 +201,17 @@ export interface IContainerContext extends IDisposable {
 	 * and scenarios which can change in the future.
 	 */
 	readonly id: string;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The disposed state on the IContainerContext is not meaningful to the runtime.
+	 * This member will be removed in an upcoming release.
+	 */
+	readonly disposed: boolean;
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The runtime is not permitted to dispose the IContainerContext, this results
+	 * in an inconsistent system state.  This member will be removed in an upcoming release.
+	 */
+	dispose(error?: Error): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
