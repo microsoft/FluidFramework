@@ -103,6 +103,7 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 		"eqeqeq": ["error", "smart"],
+		"import/no-deprecated": "error",
 		"max-len": [
 			"error",
 			{
