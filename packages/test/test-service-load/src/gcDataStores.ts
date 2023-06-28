@@ -30,10 +30,25 @@ const maxRunningLeafDataObjects = 3;
  */
 const maxRunningAttachmentBlobs = 3;
 
+/**
+ * The result of running an activity on an object.
+ * If activity succeeds, done is true.
+ * If activity fails, done is false and the failing node's id and an error is returned.
+ */
+type ActivityRunResult =
+	| {
+			done: true;
+	  }
+	| {
+			done: false;
+			nodeId: string;
+			error: any;
+	  };
+
 /** An object (data objects or attachment blob based) that can run / stop activity in the test. */
 export interface IGCActivityObject {
 	readonly handle: IFluidHandle<ArrayBufferLike | DataObject>;
-	run: (config: IRunConfig, id?: string) => Promise<boolean>;
+	run: (config: IRunConfig, nodeId: string) => Promise<ActivityRunResult>;
 	stop: () => void;
 }
 
@@ -114,25 +129,27 @@ class AttachmentBlobObject implements IGCActivityObject {
 
 	constructor(public handle: IFluidHandle<ArrayBufferLike>) {}
 
-	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+	public async run(config: IRunConfig, nodeId: string): Promise<ActivityRunResult> {
 		if (this.running) {
-			return true;
+			return { done: true };
 		}
-
 		this.running = true;
-		let done = true;
+
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
+		let activityFailed = false;
+		let error: any;
 		while (this.running) {
 			try {
 				await this.runActivity(config);
-			} catch (error) {
-				done = false;
+			} catch (e) {
+				activityFailed = true;
+				error = e;
 				break;
 			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(delayBetweenBlobGetMs * config.random.real(1, 1.5));
 		}
-		return done;
+		return { done: !activityFailed, error, nodeId };
 	}
 
 	public stop() {
@@ -218,19 +235,28 @@ export class LeafDataObject extends BaseDataObject implements IGCActivityObject 
 		this._counter2 = await handle.get();
 	}
 
-	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+	public async run(config: IRunConfig, nodeId: string): Promise<ActivityRunResult> {
 		if (this.running) {
-			return true;
+			return { done: true };
 		}
-
 		this.running = true;
+
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
+		let activityFailed = false;
+		let error: any;
 		while (this.running && !this.runtime.disposed) {
-			this.runActivity(config);
+			try {
+				this.runActivity(config);
+			} catch (e) {
+				activityFailed = true;
+				error = e;
+				break;
+			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
-		return !this.runtime.disposed;
+		const notDone = activityFailed || this.runtime.disposed;
+		return { done: !notDone, error, nodeId };
 	}
 
 	public stop() {
@@ -301,7 +327,8 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	}
 	protected _nodeId: string | undefined;
 	protected running: boolean = false;
-	protected activityFailed: boolean = false;
+	private activityFailed: boolean = false;
+	protected activityFailedError: any;
 
 	/** Prefix used for content for blobs uploaded. This is unique per data store per client. */
 	private get blobContentPrefix(): string {
@@ -386,65 +413,110 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	}
 
 	/**
+	 * Activity runner that will report any error during the activity run.
+	 */
+	protected activityRunnerReporterSync(
+		activityFn: () => Promise<ActivityRunResult>,
+		failureEventName: string,
+	) {
+		activityFn()
+			.then((result) => {
+				if (!result.done) {
+					this.activityFailed = true;
+					if (result.error !== undefined) {
+						this.activityFailedError = result.error;
+						this.logger.sendErrorEvent(
+							{
+								eventName: failureEventName,
+								id: this.nodeId,
+								failedId: result.nodeId,
+							},
+							result.error,
+						);
+					}
+				}
+			})
+			.catch((error) => {
+				this.activityFailed = true;
+				this.activityFailedError = error;
+				this.logger.sendErrorEvent(
+					{
+						eventName: failureEventName,
+						id: this.nodeId,
+						failedId: this.nodeId,
+					},
+					error,
+				);
+			});
+	}
+
+	/**
 	 * Set up an event listener that would run / stop activity based on the activities of the previous run of this
 	 * client. For example, a client could have referenced / unreferenced data objects, then closed and re-loaded
 	 * before those ops were summarizer. So, it would receive those ops after the load and should start / stop
 	 * activity accordingly.
 	 */
-	private setupEventHandlers(config: IRunConfig, id?: string) {
-		const activityRunner = async (
+	private setupEventHandlers() {
+		const runActivity = async (
 			changed: IValueChanged,
 			local: boolean,
-			activityObjectMap: SharedMap,
-		) => {
-			if (local || !changed.key.startsWith(this.nodeId)) {
-				return;
+			isBlob: boolean,
+		): Promise<ActivityRunResult> => {
+			const changedKey = changed.key;
+			if (local || !changedKey.startsWith(this.nodeId)) {
+				return { done: true };
 			}
 
-			if (activityObjectMap.has(changed.key)) {
-				const activityObjectHandle = activityObjectMap.get<IFluidHandle<IGCActivityObject>>(
-					changed.key,
-				);
-				assert(
-					activityObjectHandle !== undefined,
-					`Could not find handle for ${changed.key}`,
-				);
-				const activityObject = await activityObjectHandle.get();
-				const result = await activityObject.run(
-					this.childRunConfig,
-					`${this.nodeId}/${changed.key}`,
-				);
-				if (result === false) {
-					this.activityFailed = true;
-				}
+			let activityObjectMap: SharedMap;
+			let activityObjectDetailsList: IActivityObjectDetails[];
+			if (isBlob) {
+				activityObjectMap = this.blobMap;
+				activityObjectDetailsList = this.referencedAttachmentBlobs;
 			} else {
-				const activityObjectHandle =
-					changed.previousValue as IFluidHandle<IGCActivityObject>;
-				const activityObject = await activityObjectHandle.get();
-				activityObject.stop();
+				activityObjectMap = this.dataObjectMap;
+				activityObjectDetailsList = this.referencedDataObjects;
+			}
+
+			// If the activity map has the changed key, a new object was added.
+			if (activityObjectMap.has(changedKey)) {
+				const handle = activityObjectMap.get(changedKey);
+				assert(handle !== undefined, `Could not find handle for ${changedKey}`);
+
+				// For attachment blobs, the handle is to the blob contents. So, create an attachment blob object.
+				// For data stores, the handle is to the data store itself.
+				const activityObject = isBlob
+					? new AttachmentBlobObject(handle as IFluidHandle<ArrayBufferLike>)
+					: await (handle as IFluidHandle<IGCActivityObject>).get();
+
+				// Push the object to the list of activity objects.
+				activityObjectDetailsList.push({ id: changedKey, object: activityObject });
+				return activityObject.run(this.childRunConfig, `${this.nodeId}/${changedKey}`);
+			} else {
+				// Find the activity object, remove it from the list and stop running it.
+				const index = activityObjectDetailsList.findIndex(
+					(objectDetails) => objectDetails.id === changedKey,
+				);
+				if (index > -1) {
+					const activityObjectDetails = activityObjectDetailsList.splice(index, 1);
+					const activityObject = activityObjectDetails[0].object;
+					activityObject.stop();
+				}
+				return { done: true };
 			}
 		};
 
 		this.dataObjectMap.on("valueChanged", (changed, local) => {
-			activityRunner(changed, local, this.dataObjectMap).catch((error) => {
-				config.logger.sendErrorEvent({
-					eventName: "DSActivityRunFailedError",
-					id,
-					error,
-				});
-				this.activityFailed = true;
-			});
+			this.activityRunnerReporterSync(
+				async () => runActivity(changed, local, false /* isBlob */),
+				"TrailingOpDSActivityFailed",
+			);
 		});
 
 		this.blobMap.on("valueChanged", (changed, local) => {
-			activityRunner(changed, local, this.blobMap).catch((error) => {
-				config.logger.sendErrorEvent({
-					eventName: "BlobActivityRunFailedError",
-					id,
-					error,
-				});
-				this.activityFailed = true;
-			});
+			this.activityRunnerReporterSync(
+				async () => runActivity(changed, local, true /* isBlob */),
+				"TrailingOpBlobActivityFailed",
+			);
 		});
 	}
 
@@ -492,24 +564,28 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	 * of error or session expiry, it can have referenced objects that should now run.
 	 * @returns A set of promises of each object's run result.
 	 */
-	private async runInitialActivity(): Promise<boolean[]> {
-		const runP: Promise<boolean>[] = [];
+	private runInitialActivity(): void {
 		// Run the data objects and blobs that are in the referenced list.
 		for (const dataObjectDetails of this.referencedDataObjects) {
-			runP.push(dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id));
+			this.activityRunnerReporterSync(
+				async () => dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id),
+				"InitialDSActivityFailed",
+			);
 		}
 		for (const blobDetails of this.referencedAttachmentBlobs) {
-			runP.push(blobDetails.object.run(this.childRunConfig, blobDetails.id));
+			this.activityRunnerReporterSync(
+				async () => blobDetails.object.run(this.childRunConfig, blobDetails.id),
+				"InitialBlobActivityFailed",
+			);
 		}
-		return Promise.all(runP);
 	}
 
-	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+	public async run(config: IRunConfig, nodeId: string): Promise<ActivityRunResult> {
 		if (this.running) {
-			return true;
+			return { done: true };
 		}
 
-		this._nodeId = id;
+		this._nodeId = nodeId;
 		this._logger = config.logger;
 		this.running = true;
 		this._blobContentPrefix = `${this.id}-client${config.runId}`;
@@ -540,35 +616,12 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		let localSendCount = 0;
 
 		// Set up the listener that would run / stop activity from previous run of this client.
-		this.setupEventHandlers(config, id);
+		this.setupEventHandlers();
 
 		// Initialize referenced objects, if any and run activity on them.
 		await this.initialize();
 
-		const activityRunner = (
-			activityFn: (config?: IRunConfig) => Promise<boolean[]>,
-			activityName: string,
-		) => {
-			activityFn(config)
-				.then((results) => {
-					for (const result of results) {
-						if (result === false) {
-							this.activityFailed = true;
-							break;
-						}
-					}
-				})
-				.catch((error) => {
-					config.logger.sendErrorEvent({
-						eventName: `${activityName}RunFailedError`,
-						id,
-						error,
-					});
-					this.activityFailed = true;
-				});
-		};
-
-		activityRunner(async () => this.runInitialActivity(), "InitialActivity");
+		this.runInitialActivity();
 
 		while (
 			this.running &&
@@ -578,7 +631,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		) {
 			// After every activityThresholdOpCount ops, run activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
-				activityRunner(async () => this.runActivity(config), "Activity");
+				this.runActivity(config);
 			}
 
 			this.counter.increment(1);
@@ -589,7 +642,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		}
 		this.stop();
 		const notDone = this.runtime.disposed || this.activityFailed;
-		return !notDone;
+		return { done: !notDone, error: this.activityFailedError, nodeId };
 	}
 
 	public stop() {
@@ -602,7 +655,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		});
 	}
 
-	private async runActivity(config: IRunConfig) {
+	private runActivity(config: IRunConfig): void {
 		// If it's possible to run a new data object and a new blob, all activities can be performed upto Revive.
 		// If not, only activities upto Unreference can be performed.
 		const maxActivityIndex =
@@ -611,10 +664,15 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 				? ReferenceActivityType.Count - 1
 				: ReferenceActivityType.Unreference;
 		const activityType = config.random.integer(0, maxActivityIndex);
-		return Promise.all([
-			this.runDataObjectActivity(activityType),
-			this.runBlobActivity(activityType),
-		]);
+
+		this.activityRunnerReporterSync(
+			async () => this.runDataObjectActivity(activityType),
+			"DSActivityFailed",
+		);
+		this.activityRunnerReporterSync(
+			async () => this.runBlobActivity(activityType),
+			"BlobActivityFailed",
+		);
 	}
 
 	/**
@@ -625,7 +683,9 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 * 5. AnotherNone - Same as None. This is added to increase the changes of doing nothing.
 	 */
-	private async runDataObjectActivity(activityType: ReferenceActivityType): Promise<boolean> {
+	private async runDataObjectActivity(
+		activityType: ReferenceActivityType,
+	): Promise<ActivityRunResult> {
 		switch (activityType) {
 			case ReferenceActivityType.CreateAndReference: {
 				const dataObject = await leafDataObjectFactory.createChildInstance(this.context);
@@ -682,7 +742,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			default:
 				break;
 		}
-		return true;
+		return { done: true };
 	}
 
 	/**
@@ -692,7 +752,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	 * 3. Revive - Re-reference the oldest unreferenced attachment blob.
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
-	private async runBlobActivity(activityType: ReferenceActivityType): Promise<boolean> {
+	private async runBlobActivity(activityType: ReferenceActivityType): Promise<ActivityRunResult> {
 		switch (activityType) {
 			case ReferenceActivityType.CreateAndReference: {
 				const blobContents = `Content: ${this.blobContentPrefix}-${this.blobCount++}`;
@@ -758,7 +818,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			default:
 				break;
 		}
-		return true;
+		return { done: true };
 	}
 }
 
@@ -783,12 +843,12 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 	// A map of partner activity objects that are running in this client.
 	private readonly partnerActivityObjectsRunning: Map<string, IGCActivityObject> = new Map();
 
-	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+	public async run(config: IRunConfig, nodeId: string): Promise<ActivityRunResult> {
 		if (this.running) {
-			return true;
+			return { done: true };
 		}
 
-		this._nodeId = id;
+		this._nodeId = nodeId;
 
 		// Just some weird math to get the ids of two other clients to collaborate with.
 		const halfClients = Math.floor(config.testConfig.numClients / 2);
@@ -803,32 +863,34 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		 * If a partner referenced a data store or attachment blob, run activity on the corresponding local object.
 		 * If a partner unreferenced a data store or attachment blob, stop activity on the corresponding local object.
 		 */
-		const partnerActivityRunner = async (
+		const runPartnerActivity = async (
 			changed: IValueChanged,
 			local: boolean,
 			activityObjectMap: SharedMap,
 			partnerIds: string[],
-			isBlob: boolean = false,
-		) => {
+			isBlob: boolean,
+		): Promise<ActivityRunResult> => {
 			if (local) {
-				return;
+				return { done: true };
 			}
 
+			const changedKey = changed.key;
+
 			// Collaborate with the partners clients specified in partnerIds.
-			if (!partnerIds.some((partnerId) => changed.key.startsWith(partnerId))) {
-				return;
+			if (!partnerIds.some((partnerId) => changedKey.startsWith(partnerId))) {
+				return { done: true };
 			}
 
 			// If a new object was referenced, run our corresponding local data object.
 			// If an object was unreferenced, stop running our corresponding local data object.
-			if (activityObjectMap.has(changed.key)) {
+			if (activityObjectMap.has(changedKey)) {
 				// If we this activity object is already running, skip it.
-				if (this.partnerActivityObjectsRunning.has(changed.key)) {
-					return;
+				if (this.partnerActivityObjectsRunning.has(changedKey)) {
+					return { done: true };
 				}
 
-				const handle = activityObjectMap.get(changed.key);
-				assert(handle !== undefined, `Could not find handle for ${changed.key}`);
+				const handle = activityObjectMap.get(changedKey);
+				assert(handle !== undefined, `Could not find handle for ${changedKey}`);
 				// For attachment blobs, the handle is to the blob contents. So, create an attachment blob object.
 				// For data stores, the handle is to the data store itself.
 				const activityObject = isBlob
@@ -836,56 +898,52 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 					: await (handle as IFluidHandle<IGCActivityObject>).get();
 
 				// Add the object to the partner activity object map and run it.
-				this.partnerActivityObjectsRunning.set(changed.key, activityObject);
-				const result = await activityObject.run(
-					this.childRunConfig,
-					`${this.nodeId}/${changed.key}`,
-				);
-				if (result === false) {
-					this.activityFailed = true;
-				}
+				this.partnerActivityObjectsRunning.set(changedKey, activityObject);
+				return activityObject.run(this.childRunConfig, `${this.nodeId}/${changedKey}`);
 			} else {
-				const activityObject = this.partnerActivityObjectsRunning.get(changed.key);
+				const activityObject = this.partnerActivityObjectsRunning.get(changedKey);
 				// Stop running the activity object and delete it from the partner activity object map.
 				if (activityObject !== undefined) {
 					activityObject.stop();
-					this.partnerActivityObjectsRunning.delete(changed.key);
+					this.partnerActivityObjectsRunning.delete(changedKey);
 				}
+				return { done: true };
 			}
 		};
 
 		// For data stores, collaborate with two partner clients. This will keep the number of ops to a reasonable
 		// number so as to not get throttled.
 		this.dataObjectMap.on("valueChanged", (changed, local) => {
-			partnerActivityRunner(changed, local, this.dataObjectMap, [
-				partnerId1,
-				partnerId2,
-			]).catch((error) => {
-				config.logger.sendErrorEvent({
-					eventName: "PartnerDSActivityRunFailedError",
-					id,
-					error,
-				});
-				this.activityFailed = true;
-			});
+			this.activityRunnerReporterSync(
+				async () =>
+					runPartnerActivity(
+						changed,
+						local,
+						this.dataObjectMap,
+						[partnerId1, partnerId2],
+						false /* isBlob */,
+					),
+				"PartnerDSActivityFailed",
+			);
 		});
 
 		// For attachment blobs, collaborate with one partner client. Blob requests are more sensitive to being
 		// throttled. Collaborating with one client will keep the number of requests less while giving coverage.
 		this.blobMap.on("valueChanged", (changed, local) => {
-			partnerActivityRunner(changed, local, this.blobMap, [partnerId1], true).catch(
-				(error) => {
-					config.logger.sendErrorEvent({
-						eventName: "PartnerBlobActivityRunFailedError",
-						id,
-						error,
-					});
-					this.activityFailed = true;
-				},
+			this.activityRunnerReporterSync(
+				async () =>
+					runPartnerActivity(
+						changed,
+						local,
+						this.blobMap,
+						[partnerId1],
+						true /* isBlob */,
+					),
+				"PartnerBlobActivityFailed",
 			);
 		});
 
-		return super.run(config, id);
+		return super.run(config, nodeId);
 	}
 
 	public stop() {
@@ -906,7 +964,7 @@ export const multiCollabDataObjectFactory = new DataObjectFactory(
 /**
  * Root data object that creates a single collab and a multi collab data object and runs them.
  */
-export class RootDataObject extends DataObject implements IGCActivityObject {
+export class RootDataObject extends DataObject {
 	public static get type(): string {
 		return "RootDataObject";
 	}
@@ -976,7 +1034,7 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 		);
 
 		return Promise.all([child1RunP, child2RunP]).then(([child1Result, child2Result]) => {
-			return child1Result && child2Result;
+			return child1Result.done && child2Result.done;
 		});
 	}
 
