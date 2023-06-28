@@ -2344,6 +2344,7 @@ export class Container
 			pendingLocalState,
 		);
 		this._lifecycleEvents.once("disposed", () => {
+			context.dispose();
 			quorumProxy.dispose();
 			deltaManagerProxy.dispose();
 		});
