@@ -434,13 +434,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
-		<MenuSection header="Home" key="home-menu-section">
-			<MenuItem
-				isActive={currentSelection?.type === "homeMenuSelection"}
-				text="Home"
-				onClick={onHomeClicked}
-			/>
-		</MenuSection>,
+		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -467,19 +461,15 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	menuSections.push(
-		<MenuSection header="Settings" key="settings-menu-section">
-			<MenuItem
-				isActive={currentSelection?.type === "settingsMenuSelection"}
-				text="Settings"
-				onClick={onSettingsClicked}
-			/>
-		</MenuSection>,
+		<MenuSection
+			header="Settings"
+			key="settings-menu-section"
+			onHeaderClick={onSettingsClicked}
+		/>,
 	);
 
 	return (
-		<div className={styles.root}>
-			{menuSections.length === 0 ? <Waiting /> : menuSections}
-		</div>
+		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
 	);
 }
 
