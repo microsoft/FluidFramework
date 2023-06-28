@@ -61,7 +61,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	/**
 	 * This function would return info about relay service session only if this factory established (or attempted to
 	 * establish) connection very recently. Otherwise, it will return undefined.
-	 * @param factory - odsp driver factory
 	 * @param resolvedUrl - resolved url for container
 	 * @returns - Current join session response stored in cache. Undefined if not present.
 	 */
@@ -73,10 +72,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			getJoinSessionCacheKey(odspResolvedUrl),
 		);
 		return joinSessionResponse?.joinSessionResponse;
-	}
-
-	public get joinSessionCache() {
-		return this.nonPersistentCache.sessionJoinCache;
 	}
 
 	public async createContainer(
