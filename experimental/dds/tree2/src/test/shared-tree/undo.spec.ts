@@ -89,6 +89,23 @@ const testCases: {
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "B", "C", "D"],
 	},
+	{
+		name: "a delete of content that is concurrently edited",
+		edit: (undoRedoBranch, otherBranch) => {
+			otherBranch.editor.setValue(
+				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 },
+				"B",
+			);
+			undoRedoBranch.editor
+				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
+				.delete(0, 1);
+		},
+		initialState: ["A"],
+		editedState: [],
+		// Undoing the setValue on the parent branch is a no-op because the node was deleted
+		parentUndoState: [],
+		forkUndoState: ["B"],
+	},
 ];
 
 describe("Undo and redo", () => {
