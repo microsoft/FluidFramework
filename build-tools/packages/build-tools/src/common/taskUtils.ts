@@ -4,6 +4,7 @@
  */
 import * as path from "path";
 import { existsSync } from "fs";
+import { lookUpDirSync, readFileAsync } from "./utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
@@ -15,4 +16,18 @@ export function getEsLintConfigFilePath(dir: string) {
 		}
 	}
 	return undefined;
+}
+
+export async function getInstalledPackageVersion(packageName: string, cwd: string) {
+	const tsPath = require.resolve(packageName, { paths: [cwd] });
+	const tsPackageJsonPath = await lookUpDirSync(tsPath, (currentDir) => {
+		return existsSync(path.join(currentDir, "package.json"));
+	});
+	if (tsPackageJsonPath === undefined) {
+		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
+	}
+	const packageJson = JSON.parse(
+		await readFileAsync(path.join(tsPackageJsonPath, "package.json"), "utf8"),
+	);
+	return packageJson.version;
 }

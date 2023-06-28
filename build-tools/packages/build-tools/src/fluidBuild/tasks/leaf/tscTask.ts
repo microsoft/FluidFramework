@@ -9,6 +9,7 @@ import * as ts from "typescript";
 
 import { defaultLogger } from "../../../common/logging";
 import { existsSync, readFileAsync } from "../../../common/utils";
+import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import * as TscUtils from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -23,6 +24,7 @@ interface ITsBuildInfo {
 		semanticDiagnosticsPerFile?: any[];
 		options: any;
 	};
+	version: string;
 }
 
 export class TscTask extends LeafTask {
@@ -102,6 +104,21 @@ export class TscTask extends LeafTask {
 			// New files that are not in the previous build, we are not up to date.
 			this.traceTrigger(`new file detected ${[...configFileNames.values()].join(",")}`);
 			return false;
+		}
+		try {
+			const tsVersion = await getInstalledPackageVersion(
+				"typescript",
+				this.node.pkg.directory,
+			);
+
+			if (tsVersion !== tsBuildInfo.version) {
+				this.traceTrigger("previous build error");
+				return false;
+			}
+		} catch (e) {
+			this.traceTrigger(
+				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
+			);
 		}
 
 		// Check tsconfig.json
@@ -316,6 +333,9 @@ export class TscTask extends LeafTask {
 					);
 					if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
 						this._tsBuildInfo = tsBuildInfo;
+						this.traceTrigger(
+							`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
+						);
 					} else {
 						verbose(
 							`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`,
@@ -384,11 +404,16 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				config = await readFileAsync(this.configFileFullPath, "utf8");
 			}
 
-			return JSON.stringify({ tsBuildInfoFiles, config });
+			return JSON.stringify({
+				version: await this.getToolVersion(),
+				config,
+				tsBuildInfoFiles,
+			});
 		} catch (e) {
 			this.traceExec(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}
 	protected abstract get configFileFullPath(): string;
+	protected abstract getToolVersion(): Promise<string>;
 }
