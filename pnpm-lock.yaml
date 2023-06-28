@@ -4698,7 +4698,7 @@ importers:
       buffer: 6.0.3
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
-      lz4js: 0.2.0
+      lz4js: ^0.2.0
       msgpackr: 1.9.2
       pako: 2.1.0
       uuid: 8.3.2
