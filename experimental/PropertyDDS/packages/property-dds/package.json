@@ -62,7 +62,7 @@
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../../common/build/eslint-config-fluid",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",

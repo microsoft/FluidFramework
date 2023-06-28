@@ -91,7 +91,7 @@
 		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",

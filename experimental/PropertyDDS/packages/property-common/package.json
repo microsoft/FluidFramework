@@ -67,7 +67,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../../common/build/eslint-config-fluid",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/chai": "^4.0.0",

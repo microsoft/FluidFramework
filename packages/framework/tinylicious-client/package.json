@@ -60,7 +60,7 @@
 		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",

@@ -46,7 +46,7 @@
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/build-tools": "^0.20.0-169245",
 		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.5.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

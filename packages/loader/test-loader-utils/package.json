@@ -38,7 +38,7 @@
 		"@fluid-tools/build-cli": "^0.20.0-169245",
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/build-tools": "^0.20.0-169245",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",

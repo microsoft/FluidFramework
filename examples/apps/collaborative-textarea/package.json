@@ -54,7 +54,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.20.0-169245",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/expect-puppeteer": "2.2.1",

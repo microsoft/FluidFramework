@@ -44,7 +44,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@graphql-codegen/cli": "1.20.1",

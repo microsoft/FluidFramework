@@ -52,7 +52,7 @@
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "file:../../../common/build/eslint-config-fluid",
 		"@types/react": "^17.0.44",
 		"concurrently": "^7.6.0",
 		"css-loader": "^1.0.0",
