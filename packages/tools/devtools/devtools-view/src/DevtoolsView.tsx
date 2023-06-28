@@ -125,6 +125,14 @@ const useDevtoolsStyles = makeStyles({
 			marginTop: "10px",
 		},
 	},
+	retryButton: {
+		"marginLeft": "5px",
+	},
+	debugNote: {
+		"fontWeight": "normal",
+		"marginTop": "0px",
+		"marginBottom": "0px",
+	},
 });
 
 /**
@@ -145,7 +153,7 @@ export function DevtoolsView(): React.ReactElement {
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
-	const [showMessage, setShowMessage] = React.useState(true);
+	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 	const styles = useDevtoolsStyles();
@@ -207,30 +215,30 @@ export function DevtoolsView(): React.ReactElement {
 				{supportedFeatures === undefined ? (
 					queryTimedOut ? (
 						<>
-							{showMessage && (
+							{!isMessageDismissed && (
 								<MessageBar
 									messageBarType={MessageBarType.error}
 									isMultiline={true}
-									onDismiss={(): void => setShowMessage(false)}
+									onDismiss={(): void => setIsMessageDismissed(false)}
 									dismissButtonAriaLabel="Close"
 									className={styles.icon}
 								>
-									DevTools was not found. Timeout exceeded.
+									It seems that Fluid Devtools has not been initialized in the
+									current tab, or it did not respond in a timely manner.
 									<Tooltip
-										content="Retry searching for Devtools"
+										content="Retry communicating with Fluid Devtools in the current tab."
 										relationship="description"
 									>
 										<Button
-											style={{ marginLeft: "5px" }}
+											className={styles.retryButton}
 											size="small"
 											onClick={retryQuery}
 										>
-											Search again
+											Try again
 										</Button>
 									</Tooltip>
 									<br />
-									<h4 style={{ fontWeight: "normal", margin: 0 }}>
-										{" "}
+									<h4 className={styles.debugNote}>
 										Need help? Please refer to our
 										<Link
 											href="https://aka.ms/fluid/devtool/docs"
