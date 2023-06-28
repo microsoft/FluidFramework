@@ -32,6 +32,7 @@ importers:
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       danger: ^10.9.0
+      eslint: ~8.6.0
       jest: ^26.6.3
       mocha: ^10.2.0
       prettier: ~2.6.2
@@ -43,10 +44,10 @@ importers:
     devDependencies:
       '@changesets/cli': 2.26.1
       '@fluid-internal/changelog-generator-wrapper': file:tools/changelog-generator-wrapper
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
-      '@fluidframework/eslint-config-fluid': 2.0.0_typescript@4.5.5
+      '@fluidframework/build-tools': 0.20.0-171385
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
       '@microsoft/api-documenter': 7.22.5
       '@microsoft/api-extractor': 7.34.9
@@ -57,6 +58,7 @@ importers:
       concurrently: 7.6.0
       copyfiles: 2.4.1
       danger: 10.9.0_@octokit+core@4.2.0
+      eslint: 8.6.0
       jest: 26.6.3
       mocha: 10.2.0
       prettier: 2.6.2
@@ -126,12 +128,12 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       axios: 0.26.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/2.0.0-internal.5.0.0
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/counter': link:../../../packages/dds/counter
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
@@ -209,10 +211,10 @@ importers:
       jsrsasign: 10.8.6
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/2.0.0-internal.5.0.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
       '@types/jsrsasign': 8.0.13
@@ -461,9 +463,9 @@ importers:
       tinylicious: 0.7.2
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/js-yaml': 4.0.5
       '@types/mocha': 9.1.1
@@ -531,7 +533,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -621,7 +623,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.83.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -708,7 +710,7 @@ importers:
       style-loader: 1.3.0_webpack@5.83.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -824,7 +826,7 @@ importers:
       react-grid-layout: 0.18.3_sfoxds7t5ydpegc3knd667wn6m
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -902,7 +904,7 @@ importers:
       '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
       fluid-framework: link:../../../packages/framework/fluid-framework
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -987,7 +989,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -1139,7 +1141,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
@@ -1451,9 +1453,9 @@ importers:
       nconf: 0.12.0
       webpack-dev-server: 4.6.0_nwcuyijzf6l5chuh7xhtrzgjly
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluidframework/build-tools': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/express': 4.17.17
       '@types/fs-extra': 9.0.13
@@ -1540,7 +1542,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluidframework/build-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@testing-library/dom': 8.20.0
@@ -2341,7 +2343,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/expect-puppeteer': 2.2.1
@@ -2916,7 +2918,7 @@ importers:
       debug: 4.3.4
     devDependencies:
       '@fluid-internal/test-version-utils': link:../../../packages/test/test-version-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
@@ -3417,7 +3419,7 @@ importers:
     devDependencies:
       '@cerner/duplicate-package-checker-webpack-plugin': 2.3.0_webpack@5.83.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/bundle-size-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluidframework/bundle-size-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@mixer/webpack-bundle-compare': 0.1.1
       '@types/node': 14.18.47
@@ -3495,7 +3497,7 @@ importers:
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -3568,7 +3570,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -3691,7 +3693,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -3826,7 +3828,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -3926,7 +3928,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -4004,7 +4006,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -4089,7 +4091,7 @@ importers:
       style-loader: 1.3.0_webpack@5.83.0
       vue: 2.6.14
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
@@ -5226,9 +5228,9 @@ importers:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
@@ -5412,9 +5414,9 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
@@ -5674,9 +5676,9 @@ importers:
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-internal/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -5739,7 +5741,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       events: 3.3.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -5787,7 +5789,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-summary-block': link:../../../packages/dds/shared-summary-block
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
@@ -5831,7 +5833,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -5880,9 +5882,9 @@ importers:
       react: 17.0.2
     devDependencies:
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
@@ -5932,9 +5934,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       events: 3.3.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/container-definitions-previous': /@fluidframework/container-definitions/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
@@ -5962,9 +5964,9 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/core-interfaces-previous': /@fluidframework/core-interfaces/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -6003,9 +6005,9 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -6048,9 +6050,9 @@ importers:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/protocol-definitions': 1.2.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
@@ -6103,9 +6105,9 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/cell-previous': /@fluidframework/cell/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6166,9 +6168,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/counter-previous': /@fluidframework/counter/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6230,9 +6232,9 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/ink-previous': /@fluidframework/ink/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6307,9 +6309,9 @@ importers:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/map-previous': /@fluidframework/map/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6395,9 +6397,9 @@ importers:
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/matrix-previous': /@fluidframework/matrix/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6481,9 +6483,9 @@ importers:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-pairwise-generator': link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/merge-tree-previous': /@fluidframework/merge-tree/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6551,9 +6553,9 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/ordered-collection-previous': /@fluidframework/ordered-collection/2.0.0-internal.5.0.0
@@ -6683,9 +6685,9 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/register-collection-previous': /@fluidframework/register-collection/2.0.0-internal.5.0.0
@@ -6768,9 +6770,9 @@ importers:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.47.0
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/gitresources': 0.1039.1000
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6852,9 +6854,9 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/shared-object-base-previous': /@fluidframework/shared-object-base/2.0.0-internal.5.0.0
@@ -6920,9 +6922,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/shared-summary-block-previous': /@fluidframework/shared-summary-block/2.0.0-internal.5.0.0
@@ -7000,9 +7002,9 @@ importers:
       '@fluid-experimental/task-manager-previous': /@fluid-experimental/task-manager/2.0.0-internal.2.1.1
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/task-manager-previous': /@fluidframework/task-manager/2.0.0-internal.5.0.0
@@ -7058,7 +7060,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -7108,9 +7110,9 @@ importers:
       '@fluidframework/replay-driver': link:../replay-driver
       jsonschema: 1.4.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/debugger-previous': /@fluidframework/debugger/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -7154,9 +7156,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/driver-base-previous': /@fluidframework/driver-base/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -7199,9 +7201,9 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       idb: 6.1.5
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/driver-web-cache-previous': /@fluidframework/driver-web-cache/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -7245,9 +7247,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/replay-driver': link:../replay-driver
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/file-driver-previous': /@fluidframework/file-driver/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -7291,10 +7293,10 @@ importers:
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluid-tools/fluidapp-odsp-urlresolver-previous': /@fluid-tools/fluidapp-odsp-urlresolver/2.0.0-internal.5.0.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@types/mocha': 9.1.1
@@ -7373,9 +7375,9 @@ importers:
       url: 0.11.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -7458,9 +7460,9 @@ importers:
       socket.io-client: 4.6.1
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-driver-previous': /@fluidframework/odsp-driver/2.0.0-internal.5.0.0
@@ -7504,9 +7506,9 @@ importers:
     dependencies:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/odsp-driver-definitions-previous': /@fluidframework/odsp-driver-definitions/2.0.0-internal.5.0.0
       '@fluidframework/protocol-definitions': 1.2.0
@@ -7549,9 +7551,9 @@ importers:
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-urlresolver-previous': /@fluidframework/odsp-urlresolver/2.0.0-internal.5.0.0
@@ -7601,9 +7603,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/replay-driver-previous': /@fluidframework/replay-driver/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -7681,9 +7683,9 @@ importers:
       url-parse: 1.5.10
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/routerlicious-driver-previous': /@fluidframework/routerlicious-driver/2.0.0-internal.5.0.0
@@ -7746,9 +7748,9 @@ importers:
       nconf: 0.12.0
       url: 0.11.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/routerlicious-urlresolver-previous': /@fluidframework/routerlicious-urlresolver/2.0.0-internal.5.0.0
@@ -7805,9 +7807,9 @@ importers:
       jsrsasign: 10.8.6
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-tools': 0.2.158186
@@ -7868,10 +7870,10 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/agent-scheduler-previous': /@fluidframework/agent-scheduler/2.0.0-internal.5.0.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.47
@@ -7938,10 +7940,10 @@ importers:
       '@fluidframework/view-interfaces': link:../view-interfaces
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/aqueduct-previous': /@fluidframework/aqueduct/2.0.0-internal.5.0.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -8014,9 +8016,9 @@ importers:
       lz4js: 0.2.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/merge-tree': link:../../dds/merge-tree
@@ -8130,9 +8132,9 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/data-object-base-previous': /@fluidframework/data-object-base/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -8187,9 +8189,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/dds-interceptions-previous': /@fluidframework/dds-interceptions/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8244,9 +8246,9 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
       '@types/mocha': 9.1.1
@@ -8310,9 +8312,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static-previous': /@fluidframework/fluid-static/2.0.0-internal.5.0.0
       '@fluidframework/map': link:../../dds/map
@@ -8366,9 +8368,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../../dds/test-dds-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -8425,9 +8427,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/request-handler-previous': /@fluidframework/request-handler/2.0.0-internal.5.0.0
@@ -8481,9 +8483,9 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -8530,9 +8532,9 @@ importers:
       sillyname: 0.1.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils-previous': /@fluidframework/test-client-utils/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9
@@ -8595,10 +8597,10 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/aqueduct': link:../aqueduct
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -8658,9 +8660,9 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       events: 3.3.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -8712,9 +8714,9 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/view-adapters-previous': /@fluidframework/view-adapters/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9
@@ -8747,9 +8749,9 @@ importers:
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/view-interfaces-previous': /@fluidframework/view-interfaces/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9
@@ -8826,9 +8828,9 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-internal/test-loader-utils': link:../test-loader-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8889,9 +8891,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/container-utils-previous': /@fluidframework/container-utils/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8963,9 +8965,9 @@ importers:
       url: 0.11.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/driver-utils-previous': /@fluidframework/driver-utils/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -9021,9 +9023,9 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/location-redirection-utils-previous': /@fluidframework/location-redirection-utils/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -9067,9 +9069,9 @@ importers:
       '@fluidframework/driver-utils': link:../driver-utils
       '@fluidframework/protocol-definitions': 1.2.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       concurrently: 7.6.0
       eslint: 8.6.0
@@ -9147,9 +9149,9 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.46.133527
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/container-runtime-previous': /@fluidframework/container-runtime/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -9202,9 +9204,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/container-runtime-definitions-previous': /@fluidframework/container-runtime-definitions/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
@@ -9272,9 +9274,9 @@ importers:
       lodash: 4.17.21
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/datastore-previous': /@fluidframework/datastore/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -9324,9 +9326,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/datastore-definitions-previous': /@fluidframework/datastore-definitions/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
@@ -9365,9 +9367,9 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.2.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/runtime-definitions-previous': /@fluidframework/runtime-definitions/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9
@@ -9425,9 +9427,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/runtime-utils-previous': /@fluidframework/runtime-utils/2.0.0-internal.5.0.0
@@ -9508,9 +9510,9 @@ importers:
       jsrsasign: 10.8.6
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils-previous': /@fluidframework/test-runtime-utils/2.0.0-internal.5.0.0
@@ -9568,7 +9570,7 @@ importers:
       events: 3.3.0
     devDependencies:
       '@fluid-internal/test-loader-utils': link:../../loader/test-loader-utils
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-loader': link:../../loader/container-loader
@@ -9744,9 +9746,9 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       mocha: 10.2.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup-previous': /@fluidframework/mocha-test-setup/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -9825,7 +9827,7 @@ importers:
       '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/test-utils': link:../test-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
@@ -9917,7 +9919,7 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       applicationinsights: 2.6.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
@@ -9962,9 +9964,9 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.5.0.0
       '@microsoft/api-extractor': 7.34.9
@@ -10037,9 +10039,9 @@ importers:
       semver: 7.5.1
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
       '@types/mocha': 9.1.1
@@ -10176,7 +10178,7 @@ importers:
       url: 0.11.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
@@ -10217,9 +10219,9 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       random-js: 1.0.8
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
@@ -10304,9 +10306,9 @@ importers:
       start-server-and-test: 1.15.5
       tinylicious: 0.7.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
@@ -10401,9 +10403,9 @@ importers:
       debug: 4.3.4
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/test-utils-previous': /@fluidframework/test-utils/2.0.0-internal.5.0.0
@@ -10517,9 +10519,9 @@ importers:
       proper-lockfile: 4.1.2
       semver: 7.5.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluidframework/build-tools': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
@@ -10584,9 +10586,9 @@ importers:
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
     devDependencies:
       '@fluid-experimental/devtools-previous': /@fluid-experimental/devtools/2.0.0-internal.5.0.0
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
@@ -10668,7 +10670,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluidframework/build-tools': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -10773,9 +10775,9 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
       '@fluid-experimental/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.5.0.0
-      '@fluid-tools/build-cli': 0.20.0-171206
+      '@fluid-tools/build-cli': 0.20.0-171385
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -10892,7 +10894,7 @@ importers:
       scheduler: 0.20.2
     devDependencies:
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluidframework/build-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9
       '@testing-library/dom': 8.20.0
@@ -10984,7 +10986,7 @@ importers:
       scheduler: 0.20.2
     devDependencies:
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206
+      '@fluidframework/build-tools': 0.20.0-171385
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -11057,7 +11059,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/tool-utils': link:../../utils/tool-utils
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluid-tools/fetch-tool-previous': /@fluid-tools/fetch-tool/2.0.0-internal.5.0.0
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -11114,9 +11116,9 @@ importers:
       json2csv: 5.0.7
       yargs: 13.2.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-runner-previous': /@fluidframework/fluid-runner/2.0.0-internal.5.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -11209,7 +11211,7 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       json-stable-stringify: 1.0.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
@@ -11306,10 +11308,10 @@ importers:
       uuid: 8.3.2
       webpack-dev-server: 4.6.0_nwcuyijzf6l5chuh7xhtrzgjly
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluid-tools/build-cli': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluid-tools/webpack-fluid-loader-previous': /@fluid-tools/webpack-fluid-loader/2.0.0-internal.5.0.0_nwcuyijzf6l5chuh7xhtrzgjly
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluidframework/build-tools': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@types/express': 4.17.17
@@ -11371,9 +11373,9 @@ importers:
       '@fluidframework/telemetry-utils': link:../telemetry-utils
       node-fetch: 2.6.11
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-doclib-utils-previous': /@fluidframework/odsp-doclib-utils/2.0.0-internal.5.0.0
@@ -11431,9 +11433,9 @@ importers:
       events: 3.3.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/telemetry-utils-previous': /@fluidframework/telemetry-utils/2.0.0-internal.5.0.0
@@ -11500,9 +11502,9 @@ importers:
       jwt-decode: 2.2.0
       proper-lockfile: 4.1.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.20.0-171206_@types+node@14.18.47
+      '@fluid-tools/build-cli': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/tool-utils-previous': /@fluidframework/tool-utils/2.0.0-internal.5.0.0
@@ -15011,14 +15013,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluid-tools/build-cli/0.20.0-171206:
-    resolution: {integrity: sha512-EvSnhghVjEbe7pjQAomASbeXEYaBRGxGUsIiXDRXBE2OyxoQHEbytwauElfD5V3H3CJyYOpIJYEG7B7aMM7nhw==}
+  /@fluid-tools/build-cli/0.20.0-171385:
+    resolution: {integrity: sha512-g1lsY8LZrWJZn62ktDPRlOSLQsTaIfL30pWeVBXyR/BoVUc9LNoscMLfYqkPgUcohkJSSCmsOJiSxx8WuXQzZA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/build-tools': 0.20.0-171206
-      '@fluidframework/bundle-size-tools': 0.20.0-171206
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/build-tools': 0.20.0-171385
+      '@fluidframework/bundle-size-tools': 0.20.0-171385
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
@@ -15066,14 +15068,14 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli/0.20.0-171206_@types+node@14.18.47:
-    resolution: {integrity: sha512-EvSnhghVjEbe7pjQAomASbeXEYaBRGxGUsIiXDRXBE2OyxoQHEbytwauElfD5V3H3CJyYOpIJYEG7B7aMM7nhw==}
+  /@fluid-tools/build-cli/0.20.0-171385_@types+node@14.18.47:
+    resolution: {integrity: sha512-g1lsY8LZrWJZn62ktDPRlOSLQsTaIfL30pWeVBXyR/BoVUc9LNoscMLfYqkPgUcohkJSSCmsOJiSxx8WuXQzZA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/build-tools': 0.20.0-171206_@types+node@14.18.47
-      '@fluidframework/bundle-size-tools': 0.20.0-171206
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
+      '@fluidframework/bundle-size-tools': 0.20.0-171385
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
@@ -15121,14 +15123,14 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli/0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq:
-    resolution: {integrity: sha512-EvSnhghVjEbe7pjQAomASbeXEYaBRGxGUsIiXDRXBE2OyxoQHEbytwauElfD5V3H3CJyYOpIJYEG7B7aMM7nhw==}
+  /@fluid-tools/build-cli/0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq:
+    resolution: {integrity: sha512-g1lsY8LZrWJZn62ktDPRlOSLQsTaIfL30pWeVBXyR/BoVUc9LNoscMLfYqkPgUcohkJSSCmsOJiSxx8WuXQzZA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/build-tools': 0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq
-      '@fluidframework/bundle-size-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/build-tools': 0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq
+      '@fluidframework/bundle-size-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.0
       '@oclif/plugin-commands': 2.2.15
@@ -15220,8 +15222,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools/0.20.0-171206:
-    resolution: {integrity: sha512-vp2P2HsH4mx54x+yqVwG/rQQbrl6osyz17XJL5bqTs6+qkxBk1/UWlias3vQjDqTU1r+KNvd2lZy8jdMCEDWbw==}
+  /@fluid-tools/version-tools/0.20.0-171385:
+    resolution: {integrity: sha512-qx5w4egTKwvycN43qE1zVr4A5FKjXs/guVsKYoVlSmudTPtKEibzUUF0OV53Cjrszn+sduiKcyRbsUwaN87EWg==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -15387,13 +15389,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.20.0-171206:
-    resolution: {integrity: sha512-9y4KGKPSnvMAdZWBVEnEDjJyoCtcm2B3ptu+5jLdYwkNT0oEQXABr/7c+FmdJj0ofjFfCm3yYw283IgYEA07tg==}
+  /@fluidframework/build-tools/0.20.0-171385:
+    resolution: {integrity: sha512-iICuYaP5T2VIYb1v7+LtbEvmPH77AJG20iTFB7tzdmFKvoO0vzsgzanbK/FuGUXYm9l0a3Yf3u3ewnTF32b5rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/bundle-size-tools': 0.20.0-171206
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/bundle-size-tools': 0.20.0-171385
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.4
@@ -15433,13 +15435,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools/0.20.0-171206_@types+node@14.18.47:
-    resolution: {integrity: sha512-9y4KGKPSnvMAdZWBVEnEDjJyoCtcm2B3ptu+5jLdYwkNT0oEQXABr/7c+FmdJj0ofjFfCm3yYw283IgYEA07tg==}
+  /@fluidframework/build-tools/0.20.0-171385_@types+node@14.18.47:
+    resolution: {integrity: sha512-iICuYaP5T2VIYb1v7+LtbEvmPH77AJG20iTFB7tzdmFKvoO0vzsgzanbK/FuGUXYm9l0a3Yf3u3ewnTF32b5rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/bundle-size-tools': 0.20.0-171206
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/bundle-size-tools': 0.20.0-171385
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.4_@types+node@14.18.47
@@ -15479,13 +15481,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools/0.20.0-171206_aaj3xo5wh3dcbnhbyxbrutbslq:
-    resolution: {integrity: sha512-9y4KGKPSnvMAdZWBVEnEDjJyoCtcm2B3ptu+5jLdYwkNT0oEQXABr/7c+FmdJj0ofjFfCm3yYw283IgYEA07tg==}
+  /@fluidframework/build-tools/0.20.0-171385_aaj3xo5wh3dcbnhbyxbrutbslq:
+    resolution: {integrity: sha512-iICuYaP5T2VIYb1v7+LtbEvmPH77AJG20iTFB7tzdmFKvoO0vzsgzanbK/FuGUXYm9l0a3Yf3u3ewnTF32b5rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/bundle-size-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/bundle-size-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.4_@types+node@14.18.47
@@ -15525,13 +15527,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools/0.20.0-171206_webpack-cli@4.10.0:
-    resolution: {integrity: sha512-9y4KGKPSnvMAdZWBVEnEDjJyoCtcm2B3ptu+5jLdYwkNT0oEQXABr/7c+FmdJj0ofjFfCm3yYw283IgYEA07tg==}
+  /@fluidframework/build-tools/0.20.0-171385_webpack-cli@4.10.0:
+    resolution: {integrity: sha512-iICuYaP5T2VIYb1v7+LtbEvmPH77AJG20iTFB7tzdmFKvoO0vzsgzanbK/FuGUXYm9l0a3Yf3u3ewnTF32b5rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.20.0-171206
-      '@fluidframework/bundle-size-tools': 0.20.0-171206_webpack-cli@4.10.0
+      '@fluid-tools/version-tools': 0.20.0-171385
+      '@fluidframework/bundle-size-tools': 0.20.0-171385_webpack-cli@4.10.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.4
@@ -15571,8 +15573,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.20.0-171206:
-    resolution: {integrity: sha512-7nLSbghYbKWnrQY+my+iSC+oiOY/1eUKBLLeBMQ0ybmVv15PHagK4Il/2GTtbG5+ttWxAjgud+v+K9p8bvVhOw==}
+  /@fluidframework/bundle-size-tools/0.20.0-171385:
+    resolution: {integrity: sha512-5YKEyMUYUmntKM+emHUSmQX2s27kGMy/lA0rYUSgAeSGjXynTMcgPYi250eN0ZvKLvpKk6b5aM0Pi8EWwI+gJA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -15587,8 +15589,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.20.0-171206_webpack-cli@4.10.0:
-    resolution: {integrity: sha512-7nLSbghYbKWnrQY+my+iSC+oiOY/1eUKBLLeBMQ0ybmVv15PHagK4Il/2GTtbG5+ttWxAjgud+v+K9p8bvVhOw==}
+  /@fluidframework/bundle-size-tools/0.20.0-171385_webpack-cli@4.10.0:
+    resolution: {integrity: sha512-5YKEyMUYUmntKM+emHUSmQX2s27kGMy/lA0rYUSgAeSGjXynTMcgPYi250eN0ZvKLvpKk6b5aM0Pi8EWwI+gJA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -16296,32 +16298,6 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 40.0.0_eslint@8.6.0
       eslint-plugin-unused-imports: 2.0.0_fhnxgfsp6r3qynjxjvskmntitm
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-      - typescript
-    dev: true
-
-  /@fluidframework/eslint-config-fluid/2.0.0_typescript@4.5.5:
-    resolution: {integrity: sha512-/az5CybW5XUZUOk9HMH0nUMtKx5AK+CRfHg35UyygTK+V2OmNRes/yCAbmxoQ1J1Vn2iow3Y/Sgw/oJygciugQ==}
-    dependencies:
-      '@rushstack/eslint-patch': 1.1.4
-      '@rushstack/eslint-plugin': 0.8.6_typescript@4.5.5
-      '@rushstack/eslint-plugin-security': 0.2.6_typescript@4.5.5
-      '@typescript-eslint/eslint-plugin': 5.9.1_4x3vxi7gdq53yv6dpzqqqrxppq
-      '@typescript-eslint/parser': 5.9.1_typescript@4.5.5
-      eslint-config-prettier: 8.5.0
-      eslint-plugin-editorconfig: 3.2.0_4x3vxi7gdq53yv6dpzqqqrxppq
-      eslint-plugin-eslint-comments: 3.2.0
-      eslint-plugin-import: 2.25.4_wlqcdreolgitljyk6jsqltyur4
-      eslint-plugin-jsdoc: 39.3.25
-      eslint-plugin-promise: 6.0.1
-      eslint-plugin-react: 7.28.0
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 40.0.0
-      eslint-plugin-unused-imports: 2.0.0_zqmhfhuhraqzshwotp5u7f4hhi
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-typescript
@@ -20134,18 +20110,6 @@ packages:
       - typescript
     dev: true
 
-  /@rushstack/eslint-plugin-security/0.2.6_typescript@4.5.5:
-    resolution: {integrity: sha512-gicwYhbc3Q5U43U2qmhePLedfF6+mSEjcQ/D+Bq4zQLP7zo9MGTKAeYPnLTq0M7hqoCEeQUFQZvNav+kjue6Nw==}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-    dependencies:
-      '@rushstack/tree-pattern': 0.2.3
-      '@typescript-eslint/experimental-utils': 5.6.0_typescript@4.5.5
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
   /@rushstack/eslint-plugin-security/0.3.1_kufnqfq7tb5rpdawkdb6g5smma:
     resolution: {integrity: sha512-LOBJj7SLPkeonBq2CD9cKqujwgc84YXJP18UXmGYl8xE3OM+Fwgnav7GzsakyvkeWJwq7EtpZjjSW8DTpwfA4w==}
     peerDependencies:
@@ -20167,18 +20131,6 @@ packages:
       '@rushstack/tree-pattern': 0.2.3
       '@typescript-eslint/experimental-utils': 5.6.0_kufnqfq7tb5rpdawkdb6g5smma
       eslint: 8.6.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
-  /@rushstack/eslint-plugin/0.8.6_typescript@4.5.5:
-    resolution: {integrity: sha512-R0gbPI3nz1vRUZddOiwpGtBSQ6FXrnsUpKvKoVkADWhkYmtdi6cU/gpQ6amOa5LhLPhSdQNtkhCB+yhUINKgEg==}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-    dependencies:
-      '@rushstack/tree-pattern': 0.2.3
-      '@typescript-eslint/experimental-utils': 5.6.0_typescript@4.5.5
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -22597,32 +22549,6 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/eslint-plugin/5.9.1_4x3vxi7gdq53yv6dpzqqqrxppq:
-    resolution: {integrity: sha512-Xv9tkFlyD4MQGpJgTo6wqDqGvHIRmRgah/2Sjz1PUnJTawjHWIwBivUE9x0QtU2WVii9baYgavo/bHjrZJkqTw==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      '@typescript-eslint/parser': ^5.0.0
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@typescript-eslint/experimental-utils': 5.9.1_typescript@4.5.5
-      '@typescript-eslint/parser': 5.9.1_typescript@4.5.5
-      '@typescript-eslint/scope-manager': 5.9.1
-      '@typescript-eslint/type-utils': 5.9.1_typescript@4.5.5
-      debug: 4.3.4
-      functional-red-black-tree: 1.0.1
-      ignore: 5.2.4
-      regexpp: 3.2.0
-      semver: 7.5.1
-      tsutils: 3.21.0_typescript@4.5.5
-      typescript: 4.5.5
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /@typescript-eslint/eslint-plugin/5.9.1_i37r4pxnuonvhfobrnldva5ppi:
     resolution: {integrity: sha512-Xv9tkFlyD4MQGpJgTo6wqDqGvHIRmRgah/2Sjz1PUnJTawjHWIwBivUE9x0QtU2WVii9baYgavo/bHjrZJkqTw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -22681,23 +22607,6 @@ packages:
       - typescript
     dev: true
 
-  /@typescript-eslint/experimental-utils/5.6.0_typescript@4.5.5:
-    resolution: {integrity: sha512-VDoRf3Qj7+W3sS/ZBXZh3LBzp0snDLEgvp6qj0vOAIiAPM07bd5ojQ3CTzF/QFl5AKh7Bh1ycgj6lFBJHUt/DA==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: '*'
-    dependencies:
-      '@types/json-schema': 7.0.11
-      '@typescript-eslint/scope-manager': 5.6.0
-      '@typescript-eslint/types': 5.6.0
-      '@typescript-eslint/typescript-estree': 5.6.0_typescript@4.5.5
-      eslint-scope: 5.1.1
-      eslint-utils: 3.0.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
   /@typescript-eslint/experimental-utils/5.9.1_kufnqfq7tb5rpdawkdb6g5smma:
     resolution: {integrity: sha512-cb1Njyss0mLL9kLXgS/eEY53SZQ9sT519wpX3i+U457l2UXRDuo87hgKfgRazmu9/tQb0x2sr3Y0yrU+Zz0y+w==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -22711,23 +22620,6 @@ packages:
       eslint: 8.6.0
       eslint-scope: 5.1.1
       eslint-utils: 3.0.0_eslint@8.6.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
-  /@typescript-eslint/experimental-utils/5.9.1_typescript@4.5.5:
-    resolution: {integrity: sha512-cb1Njyss0mLL9kLXgS/eEY53SZQ9sT519wpX3i+U457l2UXRDuo87hgKfgRazmu9/tQb0x2sr3Y0yrU+Zz0y+w==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-    dependencies:
-      '@types/json-schema': 7.0.11
-      '@typescript-eslint/scope-manager': 5.9.1
-      '@typescript-eslint/types': 5.9.1
-      '@typescript-eslint/typescript-estree': 5.9.1_typescript@4.5.5
-      eslint-scope: 5.1.1
-      eslint-utils: 3.0.0
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -22768,25 +22660,6 @@ packages:
       '@typescript-eslint/typescript-estree': 5.9.1_typescript@4.5.5
       debug: 4.3.4
       eslint: 8.6.0
-      typescript: 4.5.5
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@typescript-eslint/parser/5.9.1_typescript@4.5.5:
-    resolution: {integrity: sha512-PLYO0AmwD6s6n0ZQB5kqPgfvh73p0+VqopQQLuNfi7Lm0EpfKyDalchpVwkE+81k5HeiRrTV/9w1aNHzjD7C4g==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@typescript-eslint/scope-manager': 5.9.1
-      '@typescript-eslint/types': 5.9.1
-      '@typescript-eslint/typescript-estree': 5.9.1_typescript@4.5.5
-      debug: 4.3.4
       typescript: 4.5.5
     transitivePeerDependencies:
       - supports-color
@@ -22856,24 +22729,6 @@ packages:
       '@typescript-eslint/experimental-utils': 5.9.1_kufnqfq7tb5rpdawkdb6g5smma
       debug: 4.3.4
       eslint: 8.6.0
-      tsutils: 3.21.0_typescript@4.5.5
-      typescript: 4.5.5
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@typescript-eslint/type-utils/5.9.1_typescript@4.5.5:
-    resolution: {integrity: sha512-tRSpdBnPRssjlUh35rE9ug5HrUvaB9ntREy7gPXXKwmIx61TNN7+l5YKgi1hMKxo5NvqZCfYhA5FvyuJG6X6vg==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: '*'
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@typescript-eslint/experimental-utils': 5.9.1_typescript@4.5.5
-      debug: 4.3.4
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -28376,13 +28231,6 @@ packages:
       source-map: 0.6.1
     dev: true
 
-  /eslint-config-prettier/8.5.0:
-    resolution: {integrity: sha512-obmWKLUNCnhtQRKc+tmnYuQl0pFU1ibYJQ5BGhTVB08bHe9wC8qUeG7c08dj9XX+AuPj1YSGSQIHl1pnDHZR0Q==}
-    hasBin: true
-    peerDependencies:
-      eslint: '>=7.0.0'
-    dev: true
-
   /eslint-config-prettier/8.5.0_eslint@8.6.0:
     resolution: {integrity: sha512-obmWKLUNCnhtQRKc+tmnYuQl0pFU1ibYJQ5BGhTVB08bHe9wC8qUeG7c08dj9XX+AuPj1YSGSQIHl1pnDHZR0Q==}
     hasBin: true
@@ -28425,34 +28273,6 @@ packages:
     dependencies:
       debug: 3.2.7
       eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /eslint-module-utils/2.8.0_hsfbi4hb7xtgnod5yuol3ycoi4:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      '@typescript-eslint/parser': 5.9.1_typescript@4.5.5
-      debug: 3.2.7
       eslint-import-resolver-node: 0.3.7
     transitivePeerDependencies:
       - supports-color
@@ -28507,16 +28327,6 @@ packages:
       - '@typescript-eslint/parser'
       - supports-color
       - typescript
-    dev: true
-
-  /eslint-plugin-eslint-comments/3.2.0:
-    resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
-    engines: {node: '>=6.5.0'}
-    peerDependencies:
-      eslint: '>=4.19.1'
-    dependencies:
-      escape-string-regexp: 1.0.5
-      ignore: 5.2.4
     dev: true
 
   /eslint-plugin-eslint-comments/3.2.0_eslint@8.6.0:
@@ -28603,36 +28413,6 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-import/2.25.4_wlqcdreolgitljyk6jsqltyur4:
-    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-    dependencies:
-      '@typescript-eslint/parser': 5.9.1_typescript@4.5.5
-      array-includes: 3.1.6
-      array.prototype.flat: 1.3.1
-      debug: 2.6.9
-      doctrine: 2.1.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-module-utils: 2.8.0_hsfbi4hb7xtgnod5yuol3ycoi4
-      has: 1.0.3
-      is-core-module: 2.12.1
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      object.values: 1.1.6
-      resolve: 1.22.2
-      tsconfig-paths: 3.14.2
-    transitivePeerDependencies:
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
   /eslint-plugin-jest/27.1.7_e7w73bdyuoy63spbnf7wdyrtai:
     resolution: {integrity: sha512-0QVzf+og4YI1Qr3UoprkqqhezAZjFffdi62b0IurkCXMqPtRW84/UT4CKsYT80h/D82LA9avjO/80Ou1LdgbaQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -28672,23 +28452,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    dev: true
-
-  /eslint-plugin-jsdoc/39.3.25:
-    resolution: {integrity: sha512-7JiFOOaipz7Z7lNQ9sMJ6cdvclmVUwNYtFWGS3a0k0uEFcdZPPD64WOfENuyNHpl86C0AKIEPgOpZby5kd+pew==}
-    engines: {node: ^14 || ^16 || ^17 || ^18 || ^19}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
-    dependencies:
-      '@es-joy/jsdoccomment': 0.33.4
-      comment-parser: 1.3.1
-      debug: 4.3.4
-      escape-string-regexp: 4.0.0
-      esquery: 1.5.0
-      semver: 7.5.1
-      spdx-expression-parse: 3.0.1
-    transitivePeerDependencies:
-      - supports-color
     dev: true
 
   /eslint-plugin-jsdoc/39.3.25_eslint@8.6.0:
@@ -28737,13 +28500,6 @@ packages:
       eslint: 8.6.0
     dev: true
 
-  /eslint-plugin-promise/6.0.1:
-    resolution: {integrity: sha512-uM4Tgo5u3UWQiroOyDEsYcVMOo7re3zmno0IZmB5auxoaQNIceAbXEkSt8RNrKtaYehARHG06pYK6K1JhtP0Zw==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
-    dev: true
-
   /eslint-plugin-promise/6.0.1_eslint@8.6.0:
     resolution: {integrity: sha512-uM4Tgo5u3UWQiroOyDEsYcVMOo7re3zmno0IZmB5auxoaQNIceAbXEkSt8RNrKtaYehARHG06pYK6K1JhtP0Zw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -28785,28 +28541,6 @@ packages:
       string.prototype.matchall: 4.0.8
     dev: true
 
-  /eslint-plugin-react/7.28.0:
-    resolution: {integrity: sha512-IOlFIRHzWfEQQKcAD4iyYDndHwTQiCMcJVJjxempf203jnNLUnW34AXLrV33+nEXoifJE2ZEGmcjKPL8957eSw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flatmap: 1.3.1
-      doctrine: 2.1.0
-      estraverse: 5.3.0
-      jsx-ast-utils: 3.3.3
-      minimatch: 3.1.2
-      object.entries: 1.1.6
-      object.fromentries: 2.0.6
-      object.hasown: 1.1.2
-      object.values: 1.1.6
-      prop-types: 15.8.1
-      resolve: 2.0.0-next.4
-      semver: 6.3.0
-      string.prototype.matchall: 4.0.8
-    dev: true
-
   /eslint-plugin-react/7.28.0_eslint@8.6.0:
     resolution: {integrity: sha512-IOlFIRHzWfEQQKcAD4iyYDndHwTQiCMcJVJjxempf203jnNLUnW34AXLrV33+nEXoifJE2ZEGmcjKPL8957eSw==}
     engines: {node: '>=4'}
@@ -28835,28 +28569,6 @@ packages:
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-    dev: true
-
-  /eslint-plugin-unicorn/40.0.0:
-    resolution: {integrity: sha512-5GRXISfBk8jMmYk1eeNDw8zSRnWTxBjWkzx2Prre6E2/yLu2twozZ3EomLWCBu9nWms/ZE361BItyMQwfnG1qA==}
-    engines: {node: '>=12'}
-    peerDependencies:
-      eslint: '>=7.32.0'
-    dependencies:
-      '@babel/helper-validator-identifier': 7.19.1
-      ci-info: 3.8.0
-      clean-regexp: 1.0.0
-      eslint-utils: 3.0.0
-      esquery: 1.5.0
-      indent-string: 4.0.0
-      is-builtin-module: 3.2.1
-      lodash: 4.17.21
-      pluralize: 8.0.0
-      read-pkg-up: 7.0.1
-      regexp-tree: 0.1.27
-      safe-regex: 2.1.1
-      semver: 7.5.1
-      strip-indent: 3.0.0
     dev: true
 
   /eslint-plugin-unicorn/40.0.0_eslint@8.6.0:
@@ -28911,20 +28623,6 @@ packages:
       eslint-rule-composer: 0.3.0
     dev: true
 
-  /eslint-plugin-unused-imports/2.0.0_zqmhfhuhraqzshwotp5u7f4hhi:
-    resolution: {integrity: sha512-3APeS/tQlTrFa167ThtP0Zm0vctjr4M44HMpeg1P4bK6wItarumq0Ma82xorMKdFsWpphQBlRPzw/pxiVELX1A==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      '@typescript-eslint/eslint-plugin': ^5.0.0
-      eslint: ^8.0.0
-    peerDependenciesMeta:
-      '@typescript-eslint/eslint-plugin':
-        optional: true
-    dependencies:
-      '@typescript-eslint/eslint-plugin': 5.9.1_4x3vxi7gdq53yv6dpzqqqrxppq
-      eslint-rule-composer: 0.3.0
-    dev: true
-
   /eslint-rule-composer/0.3.0:
     resolution: {integrity: sha512-bt+Sh8CtDmn2OajxvNO+BX7Wn4CIWMpTRm3MaiKPCQcnnlm0CS2mhui6QaoeQugs+3Kj2ESKEEGJUdVafwhiCg==}
     engines: {node: '>=4.0.0'}
@@ -28951,15 +28649,6 @@ packages:
     dependencies:
       esrecurse: 4.3.0
       estraverse: 5.3.0
-    dev: true
-
-  /eslint-utils/3.0.0:
-    resolution: {integrity: sha512-uuQC43IGctw68pJA1RgbQS8/NP7rch6Cwd4j3ZBtgo4/8Flj4eGE7ZYSZRN3iq5pVUv6GPdW5Z1RFleo84uLDA==}
-    engines: {node: ^10.0.0 || ^12.0.0 || >= 14.0.0}
-    peerDependencies:
-      eslint: '>=5'
-    dependencies:
-      eslint-visitor-keys: 2.1.0
     dev: true
 
   /eslint-utils/3.0.0_eslint@8.6.0:
