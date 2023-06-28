@@ -20,14 +20,14 @@ import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format";
 import {
-	NodeEncoderShape,
+	NodeEncoder,
 	FieldShape,
-	FieldEncoderShape,
+	FieldEncoder,
 	EncoderCache,
 	encodeValue,
 } from "./compressedEncode";
 
-export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderShape {
+export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
 	private readonly fields: FieldShape<FieldKey>[];
 	private readonly explicitKeys: Set<FieldKey>;
@@ -37,8 +37,8 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoderSh
 		public readonly value: EncodedValueShape,
 		public readonly local: readonly FieldShape<LocalFieldKey>[],
 		public readonly global: readonly FieldShape<GlobalFieldKey>[],
-		public readonly extraLocal: undefined | FieldEncoderShape,
-		public readonly extraGlobal: undefined | FieldEncoderShape,
+		public readonly extraLocal: undefined | FieldEncoder,
+		public readonly extraGlobal: undefined | FieldEncoder,
 	) {
 		super();
 
@@ -165,7 +165,7 @@ function encodeOptionalIdentifier(
 }
 
 function encodeOptionalFieldShape(
-	shape: FieldEncoderShape | undefined,
+	shape: FieldEncoder | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ) {
 	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);

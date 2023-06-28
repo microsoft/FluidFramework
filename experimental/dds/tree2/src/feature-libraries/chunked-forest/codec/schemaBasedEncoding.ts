@@ -21,7 +21,7 @@ import { getFieldKind } from "../../contextuallyTyped";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
-	FieldEncoderShape,
+	FieldEncoder,
 	FieldShape,
 	FieldShaper,
 	TreeShaper,
@@ -61,7 +61,7 @@ export function fieldShaper(
 	treeHandler: TreeShaper,
 	field: FieldStoredSchema,
 	cache: EncoderCache,
-): FieldEncoderShape {
+): FieldEncoder {
 	const kind = getFieldKind(field);
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;

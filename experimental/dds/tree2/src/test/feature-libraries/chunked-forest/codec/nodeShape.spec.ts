@@ -8,7 +8,7 @@ import { strict as assert, fail } from "assert";
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 import {
 	EncoderCache,
-	FieldEncoderShape,
+	FieldEncoder,
 	asFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
@@ -122,7 +122,7 @@ describe("nodeShape", () => {
 			);
 
 			// Shape which encodes to nothing.
-			const fieldShape1: FieldEncoderShape = asFieldEncoder(
+			const fieldShape1: FieldEncoder = asFieldEncoder(
 				new NodeShape(brand("1"), false, [], [], undefined, undefined),
 			);
 			// Shape which encodes to just the value.

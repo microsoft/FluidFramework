@@ -19,8 +19,8 @@ import {
 import {
 	AnyShape,
 	EncoderCache,
-	FieldEncoderShape,
-	NodeEncoderShape,
+	FieldEncoder,
+	NodeEncoder,
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
@@ -63,7 +63,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoderShape {
+					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -89,7 +89,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoderShape {
+					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -111,7 +111,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoderShape {
+					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -152,7 +152,7 @@ describe("schemaBasedEncoding", () => {
 			const shape = treeShaper(
 				library,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoderShape {
+					shapeFromField(field: FieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
@@ -188,7 +188,7 @@ describe("schemaBasedEncoding", () => {
 			const shape = treeShaper(
 				library,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoderShape {
+					shapeFromField(field: FieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},

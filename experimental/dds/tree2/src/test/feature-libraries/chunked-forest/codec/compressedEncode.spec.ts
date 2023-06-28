@@ -17,11 +17,11 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 import {
 	EncoderCache,
-	FieldEncoderShape,
+	FieldEncoder,
 	FieldShaper,
 	InlineArrayShape,
 	NestedArrayShape,
-	NodeEncoderShape,
+	NodeEncoder,
 	TreeShaper,
 	anyFieldEncoder,
 	anyNodeEncoder,
@@ -64,11 +64,9 @@ describe("compressedEncode", () => {
 			it(name, () => {
 				const input = fieldCursorFromJsonableTrees([jsonable]);
 				const cache = new EncoderCache(
-					(
-						fieldShaper: FieldShaper,
-						schemaName: TreeSchemaIdentifier,
-					): NodeEncoderShape => anyNodeShape,
-					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoderShape =>
+					(fieldShaper: FieldShaper, schemaName: TreeSchemaIdentifier): NodeEncoder =>
+						anyNodeShape,
+					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 				);
 				const result = compressedEncode(input, cache);

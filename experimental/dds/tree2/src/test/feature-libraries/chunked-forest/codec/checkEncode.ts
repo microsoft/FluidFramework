@@ -7,8 +7,8 @@ import { strict as assert, fail } from "assert";
 import {
 	BufferFormat,
 	EncoderCache,
-	FieldEncoderShape,
-	NodeEncoderShape,
+	FieldEncoder,
+	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 // eslint-disable-next-line import/no-internal-modules
@@ -24,7 +24,7 @@ import { singleTextCursor } from "../../../../feature-libraries";
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 
 export function checkNodeEncode(
-	shape: NodeEncoderShape,
+	shape: NodeEncoder,
 	cache: EncoderCache,
 	tree: JsonableTree,
 ): BufferFormat {
@@ -39,7 +39,7 @@ export function checkNodeEncode(
 }
 
 export function checkFieldEncode(
-	shape: FieldEncoderShape,
+	shape: FieldEncoder,
 	cache: EncoderCache,
 	tree: JsonableTree[],
 ): BufferFormat {
