@@ -15,7 +15,7 @@ import { TreeChunk } from "../chunk";
 /**
  * Counts usages of some `T`, then generates tables for replacing those `T` values with small numbers.
  *
- * Can be used to deduplicate objects when encoding.
+ * Can be used to deduplicate objects when encoding via {@link https://go-compression.github.io/algorithms/dictionary/ | Dictionary Coding}.
  */
 export class Counter<T> {
 	private readonly counts: Map<T, number> = new Map();
