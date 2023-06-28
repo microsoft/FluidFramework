@@ -51,5 +51,3 @@ export {
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
-
-export { getJoinSessionInfo } from "./exposeJoinSessionInfo";

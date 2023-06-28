@@ -61,9 +61,6 @@ export function getApiRoot(origin: string): string;
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
-export function getJoinSessionInfo(factory: OdspDocumentServiceFactory, resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
-
-// @public
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
 
 // @public
@@ -144,6 +141,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     get joinSessionCache(): PromiseCache<string, {
     entryTime: number;

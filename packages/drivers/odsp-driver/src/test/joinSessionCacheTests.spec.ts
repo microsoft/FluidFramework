@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "../contractsPublic";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { getJoinSessionInfo } from "../exposeJoinSessionInfo";
 import { getJoinSessionCacheKey } from "../odspUtils";
 
 describe("expose joinSessionInfo Tests", () => {
@@ -36,7 +35,7 @@ describe("expose joinSessionInfo Tests", () => {
 	);
 
 	it("Response missing in join session cache", async () => {
-		const info = await getJoinSessionInfo(odspDocumentServiceFactory, resolvedUrl);
+		const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
 		assert(info === undefined, "no cached response");
 	});
 
@@ -47,14 +46,14 @@ describe("expose joinSessionInfo Tests", () => {
 				return { entryTime: Date.now(), joinSessionResponse };
 			},
 		);
-		const info = await getJoinSessionInfo(odspDocumentServiceFactory, resolvedUrl);
+		const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
 		assert.deepStrictEqual(info, joinSessionResponse, "cached response should be present");
 	});
 
 	it("should throw error is resolved url is not odspResolvedUrl", async () => {
 		let failed = false;
 		try {
-			await getJoinSessionInfo(odspDocumentServiceFactory, {
+			await odspDocumentServiceFactory.getRelayServiceSessionInfo({
 				...resolvedUrl,
 				odspResolvedUrl: false,
 			} as any);
