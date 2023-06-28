@@ -51,7 +51,7 @@ export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	const styles = useMenuSectionStyles();
 
 	return (
-		<div className={styles.root} >
+		<div className={styles.root}>
 			<div className={styles.header} onClick={onHeaderClick}>
 				{header}
 				{icon}
