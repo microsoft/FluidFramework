@@ -43,8 +43,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 
 		for (const pkg of pkgList) {
 			if (pkg.path === undefined) {
-				this.exit(-1);
-				this.error("missing location in lerna package entry");
+				this.error(`Missing path in pnpm list results for ${pkg.name}`, { exit: -1 });
 			}
 
 			const packageAnalysisPath = path.join(pkg.path, "bundleAnalysis");
@@ -70,7 +69,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					}
 
 					if (asset.size < flags.smallestAssetSize) {
-						this.warn(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
+						this.warning(
+							`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`,
+						);
 						hasSmallAssetError = true;
 					}
 				}
