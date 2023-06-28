@@ -37,6 +37,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluentui/react": "^8.109.4",
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
