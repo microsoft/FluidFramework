@@ -130,13 +130,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public dispose(error?: Error): void {
-		if (this._disposed) {
-			return;
-		}
 		this._disposed = true;
-
-		this._quorum.dispose();
-		this.deltaManager.dispose();
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
