@@ -10610,22 +10610,19 @@ importers:
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.109.4
+      '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
-      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
-      '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
       '@microsoft/api-extractor': ^7.34.4
@@ -10677,18 +10674,14 @@ importers:
     devDependencies:
       '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
-      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.20.0-169245_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
-      '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
