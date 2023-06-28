@@ -399,7 +399,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Rebase the changes that have been applied to this branch over any divergent changes in the given branch.
+	 * Rebase the changes that have been applied to this branch over divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
