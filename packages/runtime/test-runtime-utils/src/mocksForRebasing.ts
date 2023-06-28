@@ -5,18 +5,18 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { MockFluidDataStoreRuntime } from "./mocks";
 import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-} from "./mocksForReconnection";
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+} from "./mocks";
 
 /**
  * Specialized implementation of MockContainerRuntime for testing op rebasing, when the runtime will resend
  * ops to the datastores and all ops within the same batch will have the same sequence number.
  * Also supports reconnection as, it extends `MockContainerRuntimeForReconnection`.
  */
-export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReconnection {
+export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	private readonly currentBatch: ITrackableMessage[] = [];
 
 	constructor(
@@ -37,11 +37,6 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntimeForReco
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {
-		if (!this.connected) {
-			this.addPendingMessage(messageContent, localOpMetadata, -1);
-			return -1;
-		}
-
 		const message = { content: messageContent, localOpMetadata, opId: uuid() };
 		this.submitInternal(message);
 		this.currentBatch.push(message);
@@ -81,7 +76,7 @@ interface ITrackableMessage {
 /**
  * Specialized implementation of MockContainerRuntimeFactory for testing op rebasing.
  */
-export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactoryForReconnection {
+export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntimeFactory {
 	public createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		overrides?: { minimumSequenceNumber?: number },
@@ -100,17 +95,17 @@ export class MockContainerRuntimeFactoryForRebasing extends MockContainerRuntime
 			throw new Error("Tried to process a message that did not exist");
 		}
 
-		let msg = this.messages.shift();
-
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
-		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+		const message = JSON.parse(
+			JSON.stringify(this.messages.shift()),
+		) as ISequencedDocumentMessage;
 
-		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		this.minSeq.set(message.clientId, message.referenceSequenceNumber);
 		// Messages from the same batch have the same sequence number
-		msg.sequenceNumber = this.sequenceNumber;
-		msg.minimumSequenceNumber = this.getMinSeq();
+		message.sequenceNumber = this.sequenceNumber;
+		message.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {
-			runtime.process(msg);
+			runtime.process(message);
 		}
 	}
 
