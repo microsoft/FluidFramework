@@ -57,8 +57,8 @@ export class BatchManager {
 
 	public push(
 		message: BatchMessage,
+		reentrant: boolean,
 		currentClientSequenceNumber?: number,
-		reentrant: boolean = false,
 	): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;

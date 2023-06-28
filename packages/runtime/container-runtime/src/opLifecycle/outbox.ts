@@ -167,8 +167,8 @@ export class Outbox {
 		if (
 			!this.mainBatch.push(
 				message,
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 				this.isContextReentrant(),
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -186,8 +186,8 @@ export class Outbox {
 		if (
 			!this.attachFlowBatch.push(
 				message,
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 				this.isContextReentrant(),
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 			)
 		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
@@ -197,8 +197,8 @@ export class Outbox {
 			if (
 				!this.attachFlowBatch.push(
 					message,
-					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 					this.isContextReentrant(),
+					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 				)
 			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
