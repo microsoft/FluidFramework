@@ -9,13 +9,13 @@ packages.
 
 #### Moved to @fluidframework/core-utils
 
-- class Lazy<T>
-- class LazyPromise<T>
-- class PromiseCache<TKey, TResult>
-- type PromiseCacheExpiry
-- interface PromiseCacheOptions
-- class RateLimiter
+-   class Lazy<T>
+-   class LazyPromise<T>
+-   class PromiseCache<TKey, TResult>
+-   type PromiseCacheExpiry
+-   interface PromiseCacheOptions
+-   class RateLimiter
 
 #### Moved to @fluidframework/container-loader
 
-- function doIfNotDisposed
+-   function doIfNotDisposed
