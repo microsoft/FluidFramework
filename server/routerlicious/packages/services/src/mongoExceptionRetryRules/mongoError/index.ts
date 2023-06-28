@@ -35,7 +35,7 @@ class InternalBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 		return (
 			error.code === 1 &&
 			error.name &&
-			(error.name as string) === InternalBulkWriteErrorRule.errorName
+			(error.name as string).includes(InternalBulkWriteErrorRule.errorName)
 		);
 	}
 }
@@ -373,7 +373,6 @@ export function createMongoErrorRetryRuleset(
 	const mongoErrorRetryRuleset: IMongoExceptionRetryRule[] = [
 		// The rules are using exactly equal
 		new InternalErrorRule(retryRuleOverride),
-		new InternalBulkWriteErrorRule(retryRuleOverride),
 		new NoPrimaryInReplicasetRule(retryRuleOverride),
 		new RequestTimedNoRateLimitInfo(retryRuleOverride),
 		new RequestTimedOutWithRateLimitTrue(retryRuleOverride),
@@ -393,6 +392,7 @@ export function createMongoErrorRetryRuleset(
 		// The rules are using string contains
 		new ServiceUnavailableRule(retryRuleOverride),
 		new RequestTimedOutBulkWriteErrorRule(retryRuleOverride),
+		new InternalBulkWriteErrorRule(retryRuleOverride),
 
 		// The rules are using regex
 		new ConnectionClosedMongoErrorRule(retryRuleOverride),
