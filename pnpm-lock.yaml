@@ -10944,13 +10944,11 @@ importers:
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
       '@testing-library/user-event': ^14.4.3
-      '@types/color': ^3.0.3
       '@types/jest': 22.2.3
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/recharts': ^1.8.24
       '@types/testing-library__jest-dom': ^5.14.5
-      color: ^4.2.3
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -10978,7 +10976,6 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.2.0
-      color: 4.2.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-split-pane: 0.1.92_sfoxds7t5ydpegc3knd667wn6m
@@ -10997,7 +10994,6 @@ importers:
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 14.4.3_yxlyej73nftwmh2fiao7paxmlm
-      '@types/color': 3.0.3
       '@types/jest': 22.2.3
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -21900,22 +21896,6 @@ packages:
       '@types/tern': 0.23.4
     dev: true
 
-  /@types/color-convert/2.0.0:
-    resolution: {integrity: sha512-m7GG7IKKGuJUXvkZ1qqG3ChccdIM/qBBo913z+Xft0nKCX4hAU/IxKwZBU4cpRZ7GS5kV4vOblUkILtSShCPXQ==}
-    dependencies:
-      '@types/color-name': 1.1.1
-    dev: true
-
-  /@types/color-name/1.1.1:
-    resolution: {integrity: sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==}
-    dev: true
-
-  /@types/color/3.0.3:
-    resolution: {integrity: sha512-X//qzJ3d3Zj82J9sC/C18ZY5f43utPbAJ6PhYt/M7uG6etcF6MRpKdN880KBy43B0BMzSfeT96MzrsNjFI3GbA==}
-    dependencies:
-      '@types/color-convert': 2.0.0
-    dev: true
-
   /@types/connect/3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
@@ -26178,6 +26158,7 @@ packages:
     dependencies:
       color-convert: 2.0.1
       color-string: 1.9.1
+    dev: true
 
   /colorette/1.4.0:
     resolution: {integrity: sha512-Y2oEozpomLn7Q3HFP7dpww7AtMJplbM9lGZP6RDfHqmbeRjiwRg4n6VM6j4KLmRke85uWEI7JqF17f3pqdRA0g==}

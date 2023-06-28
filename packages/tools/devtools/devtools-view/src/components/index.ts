@@ -8,6 +8,7 @@
 /* eslint-disable no-restricted-syntax */
 
 export * from "./data-visualization";
+export * from "./graphs";
 
 export * from "./AudienceHistoryTable";
 export * from "./AudienceView";

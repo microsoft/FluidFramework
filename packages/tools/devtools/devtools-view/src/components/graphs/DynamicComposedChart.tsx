@@ -9,11 +9,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// import { tokens } from "@fluentui/react-components";
-import Color from "color";
+import { Theme } from "@fluentui/react-components";
 import React, { useState } from "react";
 import {
 	Area,
+	Bar,
 	CartesianGrid,
 	ComposedChart,
 	Legend,
@@ -29,7 +29,7 @@ import { ThemeContext } from "../../ThemeHelper";
  * Data To be rendered with Op Latency Graph
  */
 export interface GraphDataSet {
-	graphType: "line" | "area";
+	graphType: "line" | "area" | "bar";
 	schema: {
 		displayName: string;
 		uuid: string;
@@ -74,83 +74,50 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 };
 
 interface Props {
-	stackedAreaChart?: boolean;
+	stackedGraphType?: "area" | "bar";
 	dataSets: GraphDataSet[];
 	yAxisUnitDisplayName?: string;
 }
 
-// const GRAPH_COLOR_PALETTE = [
-// 	tokens.colorPaletteBerryForeground1,
-// 	tokens.colorPaletteForestForeground2,
-// 	tokens.colorPaletteMarigoldForeground1,
-// 	tokens.colorPaletteRoyalBlueForeground2,
-// 	tokens.colorPaletteLavenderForeground2,
-// ];
-
-// Colors sourced from Fluent Ui React color palette
-// https://react.fluentui.dev/?path=/docs/theme-colors--page
-const MASTER_GRAPH_COLOR_PALETTE = {
-	// colorNeutralStroke1
-	gray: {
-		light: "#d1d1d1",
-		dark: "#666666",
-		highContrast: "#ffffff",
-	},
-	graphColors: [
-		// colorPaletteRedForeground1
-		{
-			light: "#bc2f32",
-			dark: "#e37d80",
-			highContrast: "#ffff00", // Neon yellow
-		},
-		// colorPaletteGreenForeground1
-		{
-			light: "#0e700e",
-			dark: "#54b054",
-			highContrast: "#3ff23f", // Neon green
-		},
-		// colorBrandForeground1 (blue)
-		{
-			light: "#0f6cbd",
-			dark: "#479ef5",
-			highContrast: "#1aebff", // Neon blue
-		},
-		// colorPaletteBerryForeground1
-		{
-			light: "#0f6cbd",
-			dark: "#da7ed0",
-			highContrast: "#ffffff", // White
-		},
-	],
-};
-
-interface GraphColorPalette {
+/**
+ * Creates a palette of colors to be used by the DynamicComposedChart.
+ * Because this is using colors from the Fluent ui theme object,
+ * they will automatically update based on the selected theme mode.
+ * The one exception is that for high contrast we override the graph colors because
+ * Fluent defaults many of them to the same color.
+ *
+ * High contrast colors sourced from Fluent Ui React color palette
+ * https://react.fluentui.dev/?path=/docs/theme-colors--page
+ */
+const createGraphColorPalette = (
+	themeMode: string,
+	theme: Theme,
+): {
 	gray: string;
 	graphColors: string[];
-}
-
-const getGraphColorPalette = (themeMode: string): GraphColorPalette => {
-	const basePalette = MASTER_GRAPH_COLOR_PALETTE;
+} => {
 	switch (themeMode) {
 		case "light":
-			return {
-				gray: basePalette.gray.light,
-				graphColors: basePalette.graphColors.map((color) => color.light),
-			};
 		case "dark":
+		default:
 			return {
-				gray: basePalette.gray.dark,
-				graphColors: basePalette.graphColors.map((color) => color.dark),
+				gray: theme.colorNeutralForeground2,
+				graphColors: [
+					theme.colorPaletteBerryForeground1,
+					theme.colorPaletteMarigoldForeground1,
+					theme.colorPaletteLightGreenForeground1,
+					theme.colorPaletteLavenderForeground2,
+				],
 			};
 		case "highContrast":
 			return {
-				gray: basePalette.gray.highContrast,
-				graphColors: basePalette.graphColors.map((color) => color.highContrast),
-			};
-		default:
-			return {
-				gray: basePalette.gray.light,
-				graphColors: basePalette.graphColors.map((color) => color.light),
+				gray: theme.colorNeutralForeground2,
+				graphColors: [
+					"#3ff23f", // Neon green
+					"#ffff00", // Neon yellow
+					"#1aebff", // Neon blue
+					"#ffffff", // pure white
+				],
 			};
 	}
 };
@@ -164,8 +131,8 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 	const { themeInfo } = React.useContext(ThemeContext) ?? {};
 
 	console.log("themeInfo", themeInfo);
-	const graphColorPalette = getGraphColorPalette(themeInfo.name);
-	console.log("graphColorPalette", graphColorPalette);
+
+	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
 	const handleLegendClick = (e): void => {
 		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
@@ -191,7 +158,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					const legendColor: string =
 						activeIndex === entry.dataKey || activeIndex === undefined
 							? entry.color
-							: "#666";
+							: themeInfo.theme.colorNeutralStroke1;
 
 					return (
 						<div
@@ -270,32 +237,19 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 	 * @returns A Rechart graph component to be placed as a child within a Rechart chart component
 	 */
 	const renderChartData = (
-		graphType: "line" | "area",
+		graphType: "line" | "area" | "bar",
 		name: string,
 		hexColor: string,
 		dataKey: string,
 	): React.ReactElement => {
-		if (graphType === "line" && props.stackedAreaChart !== true) {
-			return (
-				<Line
-					name={name}
-					key={dataKey}
-					type="monotone"
-					dataKey={dataKey}
-					stroke={hexColor}
-					strokeWidth={3}
-					activeDot={{ r: 6 }}
-					strokeOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
-				/>
-			);
-		} else {
-			let fillOpacity = 0.55;
-			if (activeIndex === dataKey) {
-				fillOpacity = 1;
-			} else if (activeIndex !== undefined) {
-				fillOpacity = 0.15;
-			}
+		let fillOpacity = 0.45;
+		if (activeIndex === dataKey) {
+			fillOpacity = 0.85;
+		} else if (activeIndex !== undefined) {
+			fillOpacity = 0.15;
+		}
 
+		if (props.stackedGraphType === "area") {
 			return (
 				<Area
 					name={name}
@@ -303,13 +257,70 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					type="monotone"
 					dataKey={dataKey}
 					stroke={hexColor}
-					fill={Color(hexColor).lighten(0.5).hex()}
+					fill={hexColor}
 					activeDot={{ r: 6 }}
 					strokeOpacity={fillOpacity}
 					fillOpacity={fillOpacity}
-					stackId={props.stackedAreaChart === true ? "1" : undefined}
+					stackId={"1"}
 				/>
 			);
+		}
+		if (props.stackedGraphType === "bar") {
+			return (
+				<Bar
+					name={name}
+					key={dataKey}
+					type="monotone"
+					dataKey={dataKey}
+					fill={hexColor}
+					fillOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
+					stackId={"1"}
+				/>
+			);
+		}
+
+		switch (graphType) {
+			case "line":
+			default:
+				return (
+					<Line
+						name={name}
+						key={dataKey}
+						type="monotone"
+						dataKey={dataKey}
+						stroke={hexColor}
+						strokeWidth={3}
+						activeDot={{ r: 6 }}
+						strokeOpacity={
+							activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2
+						}
+					/>
+				);
+			case "area":
+				return (
+					<Area
+						name={name}
+						key={dataKey}
+						type="monotone"
+						dataKey={dataKey}
+						stroke={hexColor}
+						fill={hexColor}
+						activeDot={{ r: 6 }}
+						strokeOpacity={fillOpacity}
+						fillOpacity={fillOpacity}
+					/>
+				);
+			case "bar":
+				return (
+					<Bar
+						name={name}
+						key={dataKey}
+						type="monotone"
+						dataKey={dataKey}
+						fill={hexColor}
+						fillOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
+					/>
+				);
 		}
 	};
 
@@ -345,7 +356,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 			<ComposedChart
 				data={mergeDataSets(props.dataSets)}
 				margin={{
-					top: 5,
+					top: 15,
 					right: 30,
 					left: 50,
 					bottom: 40,
@@ -354,7 +365,12 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 				<CartesianGrid strokeDasharray="2 2" />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
 				<YAxis tick={<CustomizedYAxisTick />} />
-				<Tooltip contentStyle={{ fontSize: "14px" }} />
+				<Tooltip
+					contentStyle={{
+						fontSize: "14px",
+						backgroundColor: themeInfo.theme.colorNeutralBackground1,
+					}}
+				/>
 				<Legend
 					wrapperStyle={{ bottom: "-10px", fontSize: "16px" }}
 					onClick={handleLegendClick}
