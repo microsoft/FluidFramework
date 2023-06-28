@@ -1,0 +1,13 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"module": "esnext",
+		"outDir": "dist/e2e-tests",
+		"composite": true,
+		"types": ["chai", "chrome", "mocha", "node"],
+		"jsx": "react-jsx",
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+	},
+	"include": ["./**/*"],
+}
