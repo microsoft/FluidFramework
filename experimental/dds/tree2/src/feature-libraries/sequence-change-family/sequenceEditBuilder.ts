@@ -17,16 +17,6 @@ export class SequenceEditBuilder extends EditBuilder<SequenceChangeset> {
 		super(sequenceChangeFamily, changeReceiver, anchorSet);
 	}
 
-	public setValue(node: NodePath, value: Value) {
-		const modify: T.Modify & { value: T.SetValue } = { type: "Modify", value: { id: 0 } };
-		// Only set the `SetValue.value` field if the given `value` is defined.
-		// This ensures the object properly round-trips through JSON.
-		if (value !== undefined) {
-			modify.value.value = value;
-		}
-		this.applyMarkAtPath(modify, node);
-	}
-
 	public insert(place: PlacePath, cursor: ITreeCursor) {
 		const id = this.opId++;
 		const content = jsonableTreeFromCursor(cursor);
