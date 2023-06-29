@@ -114,7 +114,6 @@ describe("compressedEncode", () => {
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, [], []]);
 	});
 
-	// TODO: populate these tests
 	describe("InlineArrayShape", () => {
 		it("empty", () => {
 			const cache = new EncoderCache(
