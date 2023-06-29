@@ -32,7 +32,8 @@ export interface DevtoolsPanelProps {
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	const externalLogger = useExternalLogger();
-	const topLevelLogger = externalLogger !== undefined ? ChildLogger.create(externalLogger) : undefined;
+	const topLevelLogger =
+		externalLogger !== undefined ? ChildLogger.create(externalLogger) : undefined;
 	topLevelLogger?.send({ eventName: "DevtoolsPanelRendered", category: "generic" });
 
 	return (
