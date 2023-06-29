@@ -329,7 +329,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected
 					}
-					isContainerClosed={containerState.closed}
+					containerState={containerState}
 					tryConnect={tryConnect}
 					forceDisconnect={forceDisconnect}
 					closeContainer={closeContainer}
@@ -375,11 +375,11 @@ const useActionBarStyles = makeStyles({
 
 interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
-	isContainerClosed: boolean;
+	containerState: ContainerStateMetadata;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
+	const { isContainerConnected, containerState, tryConnect, forceDisconnect, closeContainer } =
 		props;
 
 	const styles = useActionBarStyles();
@@ -389,7 +389,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			size="small"
 			icon={<PlugDisconnected20Regular />}
 			onClick={forceDisconnect}
-			disabled={forceDisconnect === undefined || isContainerClosed}
+			disabled={forceDisconnect === undefined || containerState.closed}
 		>
 			Disconnect Container
 		</Button>
@@ -398,7 +398,11 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			size="small"
 			icon={<PlugConnected20Regular />}
 			onClick={tryConnect}
-			disabled={tryConnect === undefined || isContainerClosed}
+			disabled={
+				tryConnect === undefined ||
+				containerState.closed ||
+				containerState.attachState === "Detached"
+			}
 		>
 			Connect Container
 		</Button>
@@ -409,7 +413,11 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			size="small"
 			icon={<Delete20Regular />}
 			onClick={closeContainer}
-			disabled={closeContainer === undefined || isContainerClosed}
+			disabled={
+				closeContainer === undefined ||
+				containerState.closed ||
+				containerState.attachState === "Detached"
+			}
 		>
 			Close Container
 		</Button>
