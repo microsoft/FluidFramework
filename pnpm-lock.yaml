@@ -7908,6 +7908,7 @@ importers:
       '@fluidframework/synthesize': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@microsoft/api-extractor': ^7.34.4
+      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
@@ -7947,6 +7948,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
+      '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.47
       concurrently: 7.6.0
