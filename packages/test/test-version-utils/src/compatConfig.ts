@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
-import {Lazy} from "@fluidframework/core-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
