@@ -134,7 +134,6 @@ describe("Garbage Collection configurations", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
-			getContainerDiagnosticId: () => "someDocId",
 		});
 	}
 
