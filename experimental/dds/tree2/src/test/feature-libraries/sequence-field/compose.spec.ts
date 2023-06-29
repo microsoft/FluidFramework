@@ -52,8 +52,33 @@ describe("SequenceField - Compose", () => {
 						title.startsWith("((move, insert), revive)") ||
 						!SF.areComposable([taggedA, taggedB, taggedC])
 					) {
+						// These changes do not form a valid sequence of composable changes
+					} else if (
+						title.startsWith("((insert, move), delete)") ||
+						title.startsWith("((revive, move), delete)") ||
+						title.startsWith("((modify_insert, move), delete)") ||
+						title.startsWith("((insert, return), delete)")
+					) {
 						it.skip(title, () => {
-							// These changes do not form a valid sequence of composable changes
+							// These cases fail because when composing an insert/revive with a move and a delete,
+							// we lose any trace of the move and represent the transient insert/revive at inconsistent
+							// locations:
+							// - It ends up at the destination of the move when composing ((A B) C)
+							// - It ends up at the source of the move when composing (A (B C))
+							// It is problematic for the transient (or even a simple deletion) to be represented at the
+							// source of the move, because that does not match up where the content would be if it
+							// were revived.
+							// At the same time, we cannot simply represent a deletion at the destination of a move
+							// without keeping a trace of the move, because composing that with an earlier change,
+							// such as nested changes under the moved/deleted content, would not work.
+							// If the changesets are being composed need to be independently rebasable (i.e., one can
+							// be considered conflicted without necessarily affecting the others) in their composed
+							// form, then all move information needs to be preserved.
+							// If, on the other hand, such independent rebasing is not needed (either because the
+							// output of the composition is not rebased, or because the output forms a single
+							// transaction that is rebased as a whole) then *intermediate* moves can be discarded.
+							// E.g., Moving a node from fields A to B and B to C can be represented as a single move
+							// from A to C.
 						});
 					} else {
 						it(title, () => {
