@@ -22,7 +22,7 @@ import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
 	FieldEncoder,
-	FieldShape,
+	KeyedFieldEncoder,
 	FieldShaper,
 	TreeShaper,
 	anyFieldEncoder,
@@ -87,12 +87,12 @@ export function treeShaper(
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty
 	// to reduce encoded size.
 
-	const local: FieldShape<LocalFieldKey>[] = [];
+	const local: KeyedFieldEncoder<LocalFieldKey>[] = [];
 	for (const [key, field] of schema.localFields) {
 		local.push({ key, shape: fieldHandler.shapeFromField(field) });
 	}
 
-	const global: FieldShape<GlobalFieldKey>[] = [];
+	const global: KeyedFieldEncoder<GlobalFieldKey>[] = [];
 	for (const key of schema.globalFields) {
 		const field = lookupGlobalFieldSchema(fullSchema, key);
 		global.push({ key, shape: fieldHandler.shapeFromField(field) });

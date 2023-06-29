@@ -15,6 +15,9 @@ import {
 	readStream,
 } from "./chunkCodecUtilities";
 
+/**
+ * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
+ */
 export function decode<TEncodedShape extends object, TCache>(
 	decoderLibrary: DiscriminatedUnionDispatcher<TEncodedShape, [cache: TCache], ChunkDecoder>,
 	cache: TCache,
@@ -50,6 +53,9 @@ export class DecoderCache<TEncodedShape = unknown> {
 	}
 }
 
+/**
+ * Read one identifier from the stream, advancing the stream offset.
+ */
 export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
 	stream: StreamCursor,
 	cache: DecoderCache,

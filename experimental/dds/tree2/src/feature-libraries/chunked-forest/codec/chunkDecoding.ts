@@ -42,6 +42,9 @@ import {
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric";
 
+/**
+ * Decode `chunk` into a TreeChunk.
+ */
 export function decode(chunk: EncodedChunk): TreeChunk {
 	return genericDecode(
 		decoderLibrary,
@@ -70,6 +73,9 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 });
 
+/**
+ * Decode a node's value from `stream` using its shape.
+ */
 export function readValue(stream: StreamCursor, shape: EncodedValueShape): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStream(stream) : undefined;
@@ -88,6 +94,11 @@ export function readValue(stream: StreamCursor, shape: EncodedValueShape): Value
 	}
 }
 
+/**
+ * Normalize a {@link TreeChunk} into an array.
+ *
+ * Unwraps {@link SequenceChunk}s, and wraps other chunks.
+ */
 export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 	if (chunk === emptyChunk) {
 		return [];
@@ -115,6 +126,11 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 	}
 }
 
+/**
+ * Normalize a {@link TreeChunk}[] into a single TreeChunk.
+ *
+ * Avoids creating nested or less than 2 child {@link SequenceChunk}s.
+ */
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 	const chunks = input.flatMap(deaggregateChunks);
 	switch (chunks.length) {
@@ -127,6 +143,9 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 	}
 }
 
+/**
+ * Decoder for {@link EncodedNestedArray}s.
+ */
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
@@ -154,6 +173,9 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	}
 }
 
+/**
+ * Decoder for {@link EncodedInlineArray}s.
+ */
 export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
@@ -167,6 +189,9 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	}
 }
 
+/**
+ * Decoder for {@link EncodedAnyShape}s.
+ */
 export const anyDecoder: ChunkDecoder = {
 	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
@@ -175,11 +200,17 @@ export const anyDecoder: ChunkDecoder = {
 	},
 };
 
+/**
+ * Decoder for field.
+ */
 type BasicFieldDecoder = (
 	decoders: readonly ChunkDecoder[],
 	stream: StreamCursor,
 ) => [FieldKey, TreeChunk];
 
+/**
+ * Get a decoder for fields of a provided (via `shape` and `cache`) {@link EncodedChunkShape}.
+ */
 function fieldDecoder(
 	cache: DecoderCache<EncodedChunkShape>,
 	key: FieldKey,
@@ -189,6 +220,9 @@ function fieldDecoder(
 	return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
 }
 
+/**
+ * Decoder for {@link EncodedTreeShape}s.
+ */
 export class TreeDecoder implements ChunkDecoder {
 	private readonly type?: TreeSchemaIdentifier;
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];

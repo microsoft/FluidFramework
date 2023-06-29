@@ -49,7 +49,10 @@ export function compressedEncode(
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
 export type Shape = ShapeGeneric<EncodedChunkShape>;
 
-export interface FieldShape<TKey> {
+/**
+ * Like {@link FieldEncoder}, except data will be prefixed with the key.
+ */
+export interface KeyedFieldEncoder<TKey> {
 	readonly key: TKey;
 	readonly shape: FieldEncoder;
 }
@@ -109,6 +112,10 @@ export interface FieldEncoder extends Encoder {
 	): void;
 }
 
+/**
+ * Makes a {@link FieldEncoder} which runs `encoder` on every node in the field.
+ * This does not encode the number nodes: the user of this may need to encode that elsewhere.
+ */
 export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 	return {
 		encodeField(
@@ -122,6 +129,9 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 	};
 }
 
+/**
+ * Adapt a {@link NodeEncoder} to a {@link NodesEncoder} which invokes `encoder` once.
+ */
 export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 	return {
 		encodeNodes(
@@ -362,6 +372,11 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 	}
 }
 
+/**
+ * Encode `value` with `shape` into `outputBuffer`.
+ *
+ * Requires that `value` is compatible with `shape`.
+ */
 export function encodeValue(
 	value: Value,
 	shape: EncodedValueShape,

@@ -21,7 +21,7 @@ import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format";
 import {
 	NodeEncoder,
-	FieldShape,
+	KeyedFieldEncoder,
 	FieldEncoder,
 	EncoderCache,
 	encodeValue,
@@ -29,14 +29,14 @@ import {
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
-	private readonly fields: FieldShape<FieldKey>[];
+	private readonly fields: KeyedFieldEncoder<FieldKey>[];
 	private readonly explicitKeys: Set<FieldKey>;
 
 	public constructor(
 		public readonly type: undefined | TreeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
-		public readonly local: readonly FieldShape<LocalFieldKey>[],
-		public readonly global: readonly FieldShape<GlobalFieldKey>[],
+		public readonly local: readonly KeyedFieldEncoder<LocalFieldKey>[],
+		public readonly global: readonly KeyedFieldEncoder<GlobalFieldKey>[],
 		public readonly extraLocal: undefined | FieldEncoder,
 		public readonly extraGlobal: undefined | FieldEncoder,
 	) {
@@ -143,7 +143,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 }
 
 export function encodeFieldShapes(
-	fields: readonly FieldShape<string>[],
+	fields: readonly KeyedFieldEncoder<string>[],
 	identifiers: DeduplicationTable<string>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): EncodedFieldShape[] {
