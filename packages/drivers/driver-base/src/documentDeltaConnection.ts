@@ -166,11 +166,10 @@ export class DocumentDeltaConnection
 					// Garbage so we don't subscribe to any event coming from socket
 					this.trackedListeners.set("pong", () => {});
 
-					// log latency every minute
-					this.trackLatencyTimer = setInterval(() => {
+					const sendPingFn = () => {
 						const start = Date.now();
 
-						// Emit ping event every minute. Log if latency is longer than 1 min
+						// Log if latency is longer than 1 min
 						this.socket.volatile?.emit("ping", () => {
 							const latency = Date.now() - start;
 							if (latency > 1000 * 60) {
@@ -183,6 +182,14 @@ export class DocumentDeltaConnection
 
 							this.emit("pong", latency);
 						});
+					};
+
+					// Run once immediately
+					sendPingFn();
+
+					// Emit ping event every minute
+					this.trackLatencyTimer = setInterval(() => {
+						sendPingFn();
 					}, 1000 * 60);
 				} else {
 					this.addTrackedListener(event, (...args: any[]) => {
