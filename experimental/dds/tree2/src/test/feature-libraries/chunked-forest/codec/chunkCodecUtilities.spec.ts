@@ -134,7 +134,7 @@ describe("chunkEncodingUtilities", () => {
 		it("2 instances replaced iff long enough", () => {
 			// Check that small string is not replaced
 			check("", 0, 2, false);
-			// Check that long string is not replaced
+			// Check that long string is replaced
 			check("aaaaaaaa", 0, 2, true);
 			// Check that various lengths behave as expected
 			let s = "";
