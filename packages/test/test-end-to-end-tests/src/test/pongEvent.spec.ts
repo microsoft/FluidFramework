@@ -4,37 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { useFakeTimers, SinonFakeTimers } from "sinon";
+import sinon from "sinon";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
 import {
 	LocalCodeLoader,
-	TestObjectProvider,
 	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import {
-	getDataStoreFactory,
-	TestDataObjectType,
-	describeNoCompat,
-} from "@fluid-internal/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
-const id = "fluid-test://localhost/containerTest";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 describe.skip("Pong", () => {
-	let clock: SinonFakeTimers;
+	let clock: sinon.SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = sinon.useFakeTimers();
 	});
 
 	after(() => {
@@ -44,7 +35,6 @@ describe.skip("Pong", () => {
 	describeNoCompat("Pong", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
-		const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider();
@@ -52,6 +42,7 @@ describe.skip("Pong", () => {
 			if (provider.driver.type === "local") {
 				this.skip();
 			}
+
 			const loader = new Loader({
 				logger: provider.logger,
 				urlResolver: provider.urlResolver,
@@ -59,8 +50,6 @@ describe.skip("Pong", () => {
 				codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 			});
 			loaderContainerTracker.add(loader);
-			const container = await loader.createDetachedContainer(codeDetails);
-			await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 		});
 
 		afterEach(() => {
@@ -68,19 +57,7 @@ describe.skip("Pong", () => {
 		});
 
 		async function createConnectedContainer(): Promise<IContainer> {
-			const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-				runtime.IFluidHandleContext.resolveHandle(request);
-			const runtimeFactory = (_?: unknown) =>
-				new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-					innerRequestHandler,
-				]);
-			const localTestObjectProvider = new TestObjectProvider(
-				Loader,
-				provider.driver,
-				runtimeFactory,
-			);
-
-			const container = await localTestObjectProvider.makeTestContainer();
+			const container = await provider.makeTestContainer();
 			await waitForContainerConnection(container, true, {
 				durationMs: timeoutMs,
 				errorMsg: "Container initial connection timeout",
@@ -90,19 +67,20 @@ describe.skip("Pong", () => {
 				ConnectionState.Connected,
 				"Container should be connected after creation",
 			);
+
 			return container;
 		}
 
 		it("Delta manager receives pong event", async () => {
 			const container = await createConnectedContainer();
+
 			let run = 0;
 			container.deltaManager.on("pong", () => {
 				run++;
 			});
 
-			clock.tick(60 * 1000);
 			await timeoutPromise((resolve) => container.deltaManager.once("pong", () => resolve()));
 			assert.strictEqual(run, 1);
-		}).timeout(100 * 1000);
+		}).timeout(100 * 1000); // TODO: Remove timeout after done testing
 	});
 });
