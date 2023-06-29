@@ -73,10 +73,27 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 }
 
+/**
+ * To help debugging eventual consistency tests, all ops produced by this mock
+ * can be tracked using an unique id. The tracking information will also be included
+ * in the message metadata and local op metadata.
+ */
 interface ITrackableMessage {
+	/**
+	 * Message content
+	 */
 	content: any;
+	/**
+	 * local op metadata
+	 */
 	localOpMetadata: unknown;
+	/**
+	 * Unique identifier
+	 */
 	opId: string;
+	/**
+	 * How many times has this op been resubmitted
+	 */
 	timesSubmitted: number;
 }
 
