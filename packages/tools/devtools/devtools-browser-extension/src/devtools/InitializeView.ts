@@ -18,10 +18,9 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
+
 	ReactDOM.render(
-		React.createElement(DevtoolsPanel, {
-			messageRelay: connection,
-		}),
+		React.createElement(DevtoolsPanel, { messageRelay: connection }),
 		target,
 		() => {
 			console.log(
