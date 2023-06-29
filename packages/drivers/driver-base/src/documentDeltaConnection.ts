@@ -73,7 +73,7 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
-	private trackLatencyTimer: number | undefined;
+	private trackLatencyTimeout: number | undefined;
 
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -166,7 +166,7 @@ export class DocumentDeltaConnection
 					// Garbage so we don't subscribe to any event coming from socket
 					this.trackedListeners.set("pong", () => {});
 
-					const sendPingFn = () => {
+					const sendPingLoop = () => {
 						const start = Date.now();
 
 						// Log if latency is longer than 1 min
@@ -182,15 +182,14 @@ export class DocumentDeltaConnection
 
 							this.emit("pong", latency);
 						});
+
+						// Schedule another ping event in 1 minute
+						this.trackLatencyTimeout = setTimeout(() => {
+							sendPingLoop();
+						}, 1000 * 60);
 					};
 
-					// Run once immediately
-					sendPingFn();
-
-					// Emit ping event every minute
-					this.trackLatencyTimer = setInterval(() => {
-						sendPingFn();
-					}, 1000 * 60);
+					sendPingLoop();
 				} else {
 					this.addTrackedListener(event, (...args: any[]) => {
 						this.emit(event, ...args);
@@ -394,9 +393,9 @@ export class DocumentDeltaConnection
 			return;
 		}
 
-		if (this.trackLatencyTimer !== undefined) {
-			clearInterval(this.trackLatencyTimer);
-			this.trackLatencyTimer = undefined;
+		if (this.trackLatencyTimeout !== undefined) {
+			clearTimeout(this.trackLatencyTimeout);
+			this.trackLatencyTimeout = undefined;
 		}
 
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
