@@ -117,20 +117,10 @@ export function validateMessages(
 		const start = messages[0].sequenceNumber;
 		const length = messages.length;
 		const last = messages[length - 1].sequenceNumber;
-		if (start !== from) {
-			logger.sendErrorEvent({
-				eventName: "OpsFetchViolation",
-				reason,
-				from,
-				start,
-				last,
-				length,
-			});
-			messages.length = 0;
-		}
 		if (last + 1 !== from + length) {
-			// If not strict, then return the first consecutive sub-block.
-			if (strict) {
+			// If not strict, then return the first consecutive sub-block. If strict or start
+			// seq number is not what we expected, then return no ops.
+			if (strict || from !== start) {
 				messages.length = 0;
 			} else {
 				let validOpsCount = 1;
@@ -139,15 +129,9 @@ export function validateMessages(
 					messages[validOpsCount].sequenceNumber ===
 						messages[validOpsCount - 1].sequenceNumber + 1
 				) {
-					validOpsCount += 1;
+					validOpsCount++;
 				}
 				messages.length = Math.min(messages.length, validOpsCount);
-			}
-			let firstValidOpSeqNumber: number | undefined;
-			let lastValidOpSeqNumber: number | undefined;
-			if (messages.length > 0) {
-				firstValidOpSeqNumber = messages[0].sequenceNumber;
-				lastValidOpSeqNumber = messages[messages.length - 1].sequenceNumber;
 			}
 			logger.sendErrorEvent({
 				eventName: "OpsFetchViolation",
@@ -157,8 +141,12 @@ export function validateMessages(
 				last,
 				length,
 				details: JSON.stringify({
-					firstValidOpSeqNumber,
-					lastValidOpSeqNumber,
+					validLength: messages.length,
+					lastValidOpSeqNumber:
+						messages.length > 0
+							? messages[messages.length - 1].sequenceNumber
+							: undefined,
+					strict,
 				}),
 			});
 		}
