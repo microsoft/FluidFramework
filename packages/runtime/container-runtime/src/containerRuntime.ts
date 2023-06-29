@@ -1378,7 +1378,7 @@ export class ContainerRuntime
 		});
 
 		this.summaryStateUpdateMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod",
+			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
 		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",

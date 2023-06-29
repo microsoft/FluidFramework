@@ -189,7 +189,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings = [];
-		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2"] = "restart";
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
 	});
 

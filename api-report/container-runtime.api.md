@@ -655,8 +655,6 @@ export enum RuntimeMessage {
 
 // @public
 export interface SubmitSummaryFailureData {
-    // Warning: (ae-forgotten-export) The symbol "SummaryStage" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     stage: SummaryStage;
 }
@@ -751,6 +749,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
+
+// @public
+export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";
