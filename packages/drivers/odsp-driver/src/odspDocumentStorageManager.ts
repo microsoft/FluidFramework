@@ -5,8 +5,10 @@
 
 import { default as AbortController } from "abort-controller";
 import {
+	generateStack,
 	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
+	LoggingError,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, performance } from "@fluidframework/common-utils";
@@ -307,13 +309,29 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							if (retrievedSnapshot === undefined) {
 								// if network failed -> wait for cache ( then return network failure)
 								// If cache returned empty or failed -> wait for network (success of failure)
-								if (promiseRaceWinner.index === 1) {
-									retrievedSnapshot = await cachedSnapshotP;
-									method = "cache";
-								}
-								if (retrievedSnapshot === undefined) {
-									retrievedSnapshot = await networkSnapshotP;
-									method = "network";
+								try {
+									if (promiseRaceWinner.index === 1) {
+										retrievedSnapshot = await cachedSnapshotP;
+										method = "cache";
+									}
+									if (retrievedSnapshot === undefined) {
+										retrievedSnapshot = await networkSnapshotP;
+										method = "network";
+									}
+								} catch (err: any) {
+									// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
+									// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
+									// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
+									// linked there. https://v8.dev/blog/fast-async#await-under-the-hood may also be helpful for context on internals.
+									// Regenerating the stack at this level provides more information for logged errors.
+									// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
+									// get similar quality stacks with less hand-crafted code.
+									if (err instanceof LoggingError) {
+										const originalStack = err.stack;
+										err.addTelemetryProperties({ originalStack });
+										err.stack = generateStack();
+									}
+									throw err;
 								}
 							}
 						} else {
