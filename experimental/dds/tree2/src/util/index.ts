@@ -91,3 +91,5 @@ export {
 	getOrCreateSlotContent,
 	brandedSlot,
 } from "./brandedMap";
+
+export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
