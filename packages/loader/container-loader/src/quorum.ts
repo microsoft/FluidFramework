@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, EventForwarder, doIfNotDisposed } from "@fluidframework/common-utils";
+import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
 	ICommittedProposal,
@@ -10,6 +10,7 @@ import {
 	IQuorumEvents,
 	ISequencedClient,
 } from "@fluidframework/protocol-definitions";
+import { doIfNotDisposed } from "./disposal";
 
 /**
  * Proxies Quorum events.
