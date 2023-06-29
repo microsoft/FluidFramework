@@ -49,6 +49,7 @@ describe("Rebasing", () => {
 			map1.set(`${i}`, map1.size);
 		}
 
+		containerRuntimeFactory.processOneMessage();
 		containerRuntime1.rebase();
 		containerRuntimeFactory.processAllMessages();
 
@@ -64,7 +65,8 @@ describe("Rebasing", () => {
 
 		map1.delete(`${deleteThreshold - 1}`);
 
-		containerRuntime2.rebase();
+		containerRuntimeFactory.processOneMessage();
+		containerRuntime1.rebase();
 		containerRuntimeFactory.processAllMessages();
 
 		for (let i = 0; i < 10; i++) {
