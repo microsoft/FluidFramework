@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -414,7 +415,8 @@ export function spyOnMethod(
 export function isDeltaVisible(delta: Delta.MarkList): boolean {
 	for (const mark of delta) {
 		if (typeof mark === "object") {
-			switch (mark.type) {
+			const type = mark.type;
+			switch (type) {
 				case Delta.MarkType.Modify: {
 					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
 						return true;
@@ -437,8 +439,9 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				case Delta.MarkType.MoveOut:
 				case Delta.MarkType.MoveIn:
 				case Delta.MarkType.Delete:
-				case Delta.MarkType.Modify:
 					break;
+				default:
+					unreachableCase(type);
 			}
 			return false;
 		}

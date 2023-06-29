@@ -24,7 +24,6 @@ import {
 	MoveId,
 	Revive,
 	Insert,
-	NewAttach,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
