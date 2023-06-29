@@ -403,6 +403,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': workspace:~
@@ -441,6 +442,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/core-utils': link:../../../../packages/common/core-utils
       '@fluidframework/counter': link:../../../../packages/dds/counter
       '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/map': link:../../../../packages/dds/map
@@ -8099,6 +8101,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/data-object-base-previous': npm:@fluidframework/data-object-base@2.0.0-internal.5.0.0
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
@@ -8125,6 +8128,7 @@ importers:
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/request-handler': link:../request-handler
@@ -8461,6 +8465,7 @@ importers:
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -8482,6 +8487,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-utils': link:../../common/core-utils
     devDependencies:
       '@fluid-tools/build-cli': 0.20.0-169245_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
@@ -9093,6 +9099,7 @@ importers:
       '@fluidframework/container-runtime-previous': npm:@fluidframework/container-runtime@2.0.0-internal.5.0.0
       '@fluidframework/container-utils': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
@@ -9134,6 +9141,7 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore': link:../datastore
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -9227,6 +9235,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-utils': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/datastore-previous': npm:@fluidframework/datastore@2.0.0-internal.5.0.0
       '@fluidframework/driver-definitions': workspace:~
@@ -9263,6 +9272,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -10250,6 +10260,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -10289,6 +10300,7 @@ importers:
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/counter': link:../../dds/counter
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -11399,6 +11411,7 @@ importers:
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-internal.5.0.0
@@ -11427,6 +11440,7 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-utils': link:../../common/core-utils
       debug: 4.3.4
       events: 3.3.0
       uuid: 8.3.2

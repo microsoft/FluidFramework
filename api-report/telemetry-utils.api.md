@@ -17,7 +17,7 @@ import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { Lazy } from '@fluidframework/common-utils';
+import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/common-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
