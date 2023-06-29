@@ -4,7 +4,7 @@
  */
 
 import { MessageLoggingOptions } from "@fluid-experimental/devtools-core";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluid-experimental/devtools-view";
 
 /**
  * Devtools Script context label for console logging.

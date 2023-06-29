@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
 import ReactDOM from "react-dom";
 
 import { DevtoolsPanel } from "@fluid-experimental/devtools-view";
@@ -17,9 +18,15 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
-	ReactDOM.render(<DevtoolsPanel messageRelay={connection} />, target, () => {
-		console.log(
-			formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
-		);
-	});
+	ReactDOM.render(
+		React.createElement(DevtoolsPanel, {
+			messageRelay: connection,
+		}),
+		target,
+		() => {
+			console.log(
+				formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
+			);
+		},
+	);
 }

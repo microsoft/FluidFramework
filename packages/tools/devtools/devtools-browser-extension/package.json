@@ -61,7 +61,6 @@
 		"@fluentui/react": "^8.109.3",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
