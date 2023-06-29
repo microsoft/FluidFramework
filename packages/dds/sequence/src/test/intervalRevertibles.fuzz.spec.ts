@@ -191,7 +191,7 @@ describe("IntervalCollection fuzz testing", () => {
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 0,
+						changeProperties: 2,
 					},
 				}),
 			),

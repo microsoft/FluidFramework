@@ -53,10 +53,8 @@ export function makeOperationGenerator(
 	}
 
 	function exclusiveRange(state: ClientOpState): RangeSpec {
-		let max = state.channel.getLength() - 2 < 0 ? 0 : state.channel.getLength() - 2;
-		const start = state.random.integer(0, max);
-		max = state.channel.getLength() - 1 < start + 1 ? start + 1 : state.channel.getLength() - 1;
-		const end = state.random.integer(start + 1, max);
+		const start = state.random.integer(0, state.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
 		return { start, end };
 	}
 
