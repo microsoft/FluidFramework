@@ -77,7 +77,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 		this.pendingOffset = message;
 
-		if (this.telemetryEnabled) {
+		if (this.telemetryEnabled && this.pending.size > 0) {
 			if (this.pendingMetric === undefined) {
 				// create a new metric for processing the current kafka batch
 				this.pendingMetric = Lumberjack.newLumberMetric(

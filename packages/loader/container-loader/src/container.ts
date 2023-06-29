@@ -7,8 +7,17 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
-import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import {
+	IEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+} from "@fluidframework/common-definitions";
+import {
+	TypedEventEmitter,
+	assert,
+	performance,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -31,6 +40,7 @@ import {
 	IProvideRuntimeFactory,
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
+	IRuntime,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -48,12 +58,12 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
+	MessageType2,
 	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
-	IClientConfiguration,
 	IClientDetails,
 	ICommittedProposal,
 	IDocumentAttributes,
@@ -104,7 +114,7 @@ import {
 	getCodeDetailsFromQuorumValues,
 	QuorumProxy,
 } from "./quorum";
-import { CollabWindowTracker } from "./collabWindowTracker";
+import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
@@ -343,6 +353,11 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
+interface IContainerLifecycleEvents extends IEvent {
+	(event: "runtimeInstantiated", listener: () => void): void;
+	(event: "disposed", listener: () => void): void;
+}
+
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer, IContainerExperimental
@@ -523,12 +538,12 @@ export class Container
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
-	private _context: ContainerContext | undefined;
-	private get context() {
-		if (this._context === undefined) {
-			throw new GenericError("Attempted to access context before it was defined");
+	private _runtime: IRuntime | undefined;
+	private get runtime() {
+		if (this._runtime === undefined) {
+			throw new Error("Attempted to access runtime before it was defined");
 		}
-		return this._context;
+		return this._runtime;
 	}
 	private _protocolHandler: IProtocolHandler | undefined;
 	private get protocolHandler() {
@@ -557,7 +572,7 @@ export class Container
 
 	private setAutoReconnectTime = performance.now();
 
-	private collabWindowTracker: CollabWindowTracker | undefined;
+	private noopHeuristic: NoopHeuristic | undefined;
 
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
@@ -603,14 +618,6 @@ export class Container
 
 	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
-	}
-
-	/**
-	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
-	 * configuration details returned as part of the initial connection.
-	 */
-	private get serviceConfiguration(): IClientConfiguration | undefined {
-		return this._deltaManager.serviceConfiguration;
 	}
 
 	private _clientId: string | undefined;
@@ -671,34 +678,31 @@ export class Container
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint(): Promise<FluidObject | undefined> {
-		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
-		// allow it since they mean a kind of read-only state for the Container.
-		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
-		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
-			throw new UsageError("The container is disposing or disposed");
+		if (this._disposed) {
+			throw new UsageError("The context is already disposed");
 		}
-		if (this._context === undefined) {
-			await new Promise<void>((resolve, reject) => {
-				const contextChangedHandler = () => {
-					resolve();
-					this.off("disposed", disposedHandler);
-				};
-				const disposedHandler = (error) => {
-					reject(error ?? "The Container is disposed");
-					this.off("contextChanged", contextChangedHandler);
-				};
-				this.once("contextChanged", contextChangedHandler);
-				this.once("disposed", disposedHandler);
-			});
-			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
-			// should have set this._context; making sure.
-			assert(
-				this._context !== undefined,
-				0x5a2 /* Context still not defined after contextChanged event */,
-			);
+		if (this._runtime !== undefined) {
+			return this._runtime.getEntryPoint?.();
 		}
-		return this._context.getEntryPoint();
+		return new Promise<FluidObject | undefined>((resolve, reject) => {
+			const runtimeInstantiatedHandler = () => {
+				assert(
+					this._runtime !== undefined,
+					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
+				);
+				resolve(this._runtime.getEntryPoint?.());
+				this._lifecycleEvents.off("disposed", disposedHandler);
+			};
+			const disposedHandler = () => {
+				reject(new Error("ContainerContext was disposed"));
+				this._lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+			};
+			this._lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+			this._lifecycleEvents.once("disposed", disposedHandler);
+		});
 	}
+
+	private readonly _lifecycleEvents = new TypedEventEmitter<IContainerLifecycleEvents>();
 
 	/**
 	 * @internal
@@ -1012,7 +1016,8 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 
-				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+				const maybeError = error !== undefined ? new Error(error.message) : undefined;
+				this._runtime?.dispose(maybeError);
 
 				this.storageAdapter.dispose();
 
@@ -1035,6 +1040,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
+			this._lifecycleEvents.emit("disposed");
 		}
 	}
 
@@ -1062,7 +1068,7 @@ export class Container
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
 		const pendingState: IPendingContainerState = {
-			pendingRuntimeState: this.context.getPendingLocalState(),
+			pendingRuntimeState: this.runtime.getPendingLocalState(),
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
@@ -1086,7 +1092,7 @@ export class Container
 			0x0d3 /* "Should only be called in detached container" */,
 		);
 
-		const appSummary: ISummaryTree = this.context.createSummary();
+		const appSummary: ISummaryTree = this.runtime.createSummary();
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -1132,7 +1138,7 @@ export class Container
 					if (!hasAttachmentBlobs) {
 						// Get the document state post attach - possibly can just call attach but we need to change the
 						// semantics around what the attach means as far as async code goes.
-						const appSummary: ISummaryTree = this.context.createSummary();
+						const appSummary: ISummaryTree = this.runtime.createSummary();
 						const protocolSummary = this.captureProtocolSummary();
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -1141,7 +1147,7 @@ export class Container
 						// starting to attach the container to storage.
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
-						this.context.setAttachState(AttachState.Attaching);
+						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1199,12 +1205,12 @@ export class Container
 						}
 
 						// take summary and upload
-						const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
+						const appSummary: ISummaryTree = this.runtime.createSummary(redirectTable);
 						const protocolSummary = this.captureProtocolSummary();
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 						this._attachState = AttachState.Attaching;
-						this.context.setAttachState(AttachState.Attaching);
+						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1221,7 +1227,7 @@ export class Container
 					}
 
 					this._attachState = AttachState.Attached;
-					this.context.setAttachState(AttachState.Attached);
+					this.runtime.setAttachState(AttachState.Attached);
 					this.emit("attached");
 
 					if (!this.closed) {
@@ -1246,7 +1252,7 @@ export class Container
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "Request" },
-			async () => this.context.request(path),
+			async () => this.runtime.request(path),
 			{ end: true, cancel: "error" },
 		);
 	}
@@ -1560,7 +1566,7 @@ export class Container
 				this.processRemoteMessage(message);
 
 				// allow runtime to apply stashed ops at this op's sequence number
-				await this.context.notifyOpReplay(message);
+				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
 
@@ -1912,7 +1918,7 @@ export class Container
 		});
 
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {
-			this.collabWindowTracker?.stopSequenceNumberUpdate();
+			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
 				this.connectionStateHandler.receivedDisconnectEvent(reason, error);
 			}
@@ -2135,7 +2141,7 @@ export class Container
 		}
 
 		this.messageCountAfterDisconnection += 1;
-		this.collabWindowTracker?.stopSequenceNumberUpdate();
+		this.noopHeuristic?.notifyMessageSent();
 		return this._deltaManager.submit(
 			type,
 			contents,
@@ -2178,35 +2184,41 @@ export class Container
 		const result = this.protocolHandler.processMessage(message, local);
 
 		// Forward messages to the loaded runtime for processing
-		this.context.process(message, local);
+		this.runtime.process(message, local);
 
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
-			if (this.collabWindowTracker === undefined) {
+			if (this.noopHeuristic === undefined) {
+				const serviceConfiguration = this.deltaManager.serviceConfiguration;
 				// Note that config from first connection will be used for this container's lifetime.
 				// That means that if relay service changes settings, such changes will impact only newly booted
 				// clients.
 				// All existing will continue to use settings they got earlier.
 				assert(
-					this.serviceConfiguration !== undefined,
+					serviceConfiguration !== undefined,
 					0x2e4 /* "there should be service config for active connection" */,
 				);
-				this.collabWindowTracker = new CollabWindowTracker(
-					(type) => {
-						assert(
-							this.activeConnection(),
-							0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */,
-						);
-						this.submitMessage(type);
-					},
-					this.serviceConfiguration.noopTimeFrequency,
-					this.serviceConfiguration.noopCountFrequency,
+				this.noopHeuristic = new NoopHeuristic(
+					serviceConfiguration.noopTimeFrequency,
+					serviceConfiguration.noopCountFrequency,
 				);
+				this.noopHeuristic.on("wantsNoop", () => {
+					// On disconnect we notify the heuristic which should prevent it from wanting a noop.
+					// Hitting this assert would imply we lost activeConnection between notifying the heuristic of a processed message and
+					// running the microtask that the heuristic queued in response.
+					assert(
+						this.activeConnection(),
+						0x241 /* "Trying to send noop without active connection" */,
+					);
+					this.submitMessage(MessageType.NoOp);
+				});
 			}
-			this.collabWindowTracker.scheduleSequenceNumberUpdate(
-				message,
-				result.immediateNoOp === true,
-			);
+			this.noopHeuristic.notifyMessageProcessed(message);
+			// The contract with the protocolHandler is that returning "immediateNoOp" is equivalent to "please immediately accept the proposal I just processed".
+			if (result.immediateNoOp === true) {
+				// ADO:1385: Remove cast and use MessageType once definition changes propagate
+				this.submitMessage(MessageType2.Accept as unknown as MessageType);
+			}
 		}
 
 		this.emit("op", message);
@@ -2222,7 +2234,7 @@ export class Container
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
-			this.context.processSignal(message, local);
+			this.runtime.processSignal(message, local);
 		}
 	}
 
@@ -2267,7 +2279,7 @@ export class Container
 		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
-		assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
+		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
@@ -2295,15 +2307,17 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		this._context = await ContainerContext.createOrLoad(
+		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
+		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+
+		const context = new ContainerContext(
 			this.options,
 			this.scope,
-			runtimeFactory,
 			snapshot,
 			this._loadedFromVersion,
-			new DeltaManagerProxy(this._deltaManager),
+			deltaManagerProxy,
 			this.storageAdapter,
-			new QuorumProxy(this.protocolHandler.quorum),
+			quorumProxy,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2319,14 +2333,26 @@ export class Container
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this.serviceConfiguration,
+			() => deltaManagerProxy.serviceConfiguration,
 			() => this.attachState,
+			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			this.connected,
 			this.subLogger,
 			pendingLocalState,
 		);
+		this._lifecycleEvents.once("disposed", () => {
+			context.dispose();
+			quorumProxy.dispose();
+			deltaManagerProxy.dispose();
+		});
+
+		this._runtime = await PerformanceEvent.timedExecAsync(
+			this.subLogger,
+			{ eventName: "InstantiateRuntime" },
+			async () => runtimeFactory.instantiateRuntime(context, existing),
+		);
+		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
 
@@ -2348,14 +2374,14 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(state: boolean, readonly: boolean): void {
-		if (this._context?.disposed === false) {
+		if (this._runtime?.disposed === false) {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.
 			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
 			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
 			 */
-			this.context.setConnectionState(state && !readonly, this.clientId);
+			this.runtime.setConnectionState(state && !readonly, this.clientId);
 		}
 	}
 }
