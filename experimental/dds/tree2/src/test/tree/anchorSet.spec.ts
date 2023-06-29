@@ -14,12 +14,12 @@ import {
 	JsonableTree,
 	PathVisitor,
 	UpPath,
-	Value,
 	clonePath,
 	rootFieldKeySymbol,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
+import { jsonString } from "../../domains";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -245,37 +245,32 @@ describe("AnchorSet", () => {
 
 		node0.on("childrenChanging", log.logger("childrenChange"));
 		node0.on("subtreeChanging", log.logger("subtreeChange"));
-		node0.on("valueChanging", log.logger("valueChange"));
 		node0.on("afterDelete", log.logger("afterDelete"));
 
 		log.expect([]);
 
-		const valueMark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: "x",
+		const insertMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [singleTextCursor({ type: jsonString.name, value: "x" })],
 		};
-		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, valueMark]]]));
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark, 0, insertMark]]]));
 
 		log.expect([
+			["afterDelete", 1],
+			["root childrenChange", 2],
 			["root treeChange", 1],
-			["valueChange", 1],
-			["subtreeChange", 1],
 		]);
 		log.clear();
 
-		anchors.applyDelta(makeDelta(valueMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
+		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
 
-		log.expect([
-			["root treeChange", 1],
-			["subtreeChange", 1],
-		]);
+		log.expect([["root treeChange", 1]]);
 		log.clear();
 
 		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark]]]));
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
-			["afterDelete", 1],
 		]);
 	});
 
@@ -288,9 +283,9 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Delete,
 			count: 1,
 		};
-		const valueMark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: "xyz",
+		const insertXYZMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [singleTextCursor({ type: jsonString.name, value: "xyz" })],
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -310,9 +305,6 @@ describe("AnchorSet", () => {
 					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
 				)();
 			},
-			onSetValue(path: UpPath, value: Value): void {
-				log.logger(`visitSubtreeChange.onSetValue-${value}`)();
-			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 4])));
@@ -321,8 +313,14 @@ describe("AnchorSet", () => {
 		anchors.applyDelta(makeDelta(deleteMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
 		log.expect([["visitSubtreeChange.onDelete-foo-5-1", 1]]);
 		log.clear();
-		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, valueMark]]]));
-		log.expect([["visitSubtreeChange.onSetValue-xyz", 1]]);
+		anchors.applyDelta(makeDelta(deleteMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 0])));
+		anchors.applyDelta(
+			makeDelta(insertXYZMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 0])),
+		);
+		log.expect([
+			["visitSubtreeChange.onDelete-foo-0-1", 1],
+			["visitSubtreeChange.onInsert-foo-0", 1],
+		]);
 		log.clear();
 		unsubscribePathVisitor();
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 4])));
