@@ -58,12 +58,12 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
+	MessageType2,
 	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
-	IClientConfiguration,
 	IClientDetails,
 	ICommittedProposal,
 	IDocumentAttributes,
@@ -114,7 +114,7 @@ import {
 	getCodeDetailsFromQuorumValues,
 	QuorumProxy,
 } from "./quorum";
-import { CollabWindowTracker } from "./collabWindowTracker";
+import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
@@ -572,7 +572,7 @@ export class Container
 
 	private setAutoReconnectTime = performance.now();
 
-	private collabWindowTracker: CollabWindowTracker | undefined;
+	private noopHeuristic: NoopHeuristic | undefined;
 
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
@@ -618,14 +618,6 @@ export class Container
 
 	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
-	}
-
-	/**
-	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
-	 * configuration details returned as part of the initial connection.
-	 */
-	private get serviceConfiguration(): IClientConfiguration | undefined {
-		return this._deltaManager.serviceConfiguration;
 	}
 
 	private _clientId: string | undefined;
@@ -1926,7 +1918,7 @@ export class Container
 		});
 
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {
-			this.collabWindowTracker?.stopSequenceNumberUpdate();
+			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
 				this.connectionStateHandler.receivedDisconnectEvent(reason, error);
 			}
@@ -2149,7 +2141,7 @@ export class Container
 		}
 
 		this.messageCountAfterDisconnection += 1;
-		this.collabWindowTracker?.stopSequenceNumberUpdate();
+		this.noopHeuristic?.notifyMessageSent();
 		return this._deltaManager.submit(
 			type,
 			contents,
@@ -2196,31 +2188,37 @@ export class Container
 
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
-			if (this.collabWindowTracker === undefined) {
+			if (this.noopHeuristic === undefined) {
+				const serviceConfiguration = this.deltaManager.serviceConfiguration;
 				// Note that config from first connection will be used for this container's lifetime.
 				// That means that if relay service changes settings, such changes will impact only newly booted
 				// clients.
 				// All existing will continue to use settings they got earlier.
 				assert(
-					this.serviceConfiguration !== undefined,
+					serviceConfiguration !== undefined,
 					0x2e4 /* "there should be service config for active connection" */,
 				);
-				this.collabWindowTracker = new CollabWindowTracker(
-					(type) => {
-						assert(
-							this.activeConnection(),
-							0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */,
-						);
-						this.submitMessage(type);
-					},
-					this.serviceConfiguration.noopTimeFrequency,
-					this.serviceConfiguration.noopCountFrequency,
+				this.noopHeuristic = new NoopHeuristic(
+					serviceConfiguration.noopTimeFrequency,
+					serviceConfiguration.noopCountFrequency,
 				);
+				this.noopHeuristic.on("wantsNoop", () => {
+					// On disconnect we notify the heuristic which should prevent it from wanting a noop.
+					// Hitting this assert would imply we lost activeConnection between notifying the heuristic of a processed message and
+					// running the microtask that the heuristic queued in response.
+					assert(
+						this.activeConnection(),
+						0x241 /* "Trying to send noop without active connection" */,
+					);
+					this.submitMessage(MessageType.NoOp);
+				});
 			}
-			this.collabWindowTracker.scheduleSequenceNumberUpdate(
-				message,
-				result.immediateNoOp === true,
-			);
+			this.noopHeuristic.notifyMessageProcessed(message);
+			// The contract with the protocolHandler is that returning "immediateNoOp" is equivalent to "please immediately accept the proposal I just processed".
+			if (result.immediateNoOp === true) {
+				// ADO:1385: Remove cast and use MessageType once definition changes propagate
+				this.submitMessage(MessageType2.Accept as unknown as MessageType);
+			}
 		}
 
 		this.emit("op", message);
@@ -2309,14 +2307,17 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
+		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
+		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
 			this._loadedFromVersion,
-			new DeltaManagerProxy(this._deltaManager),
+			deltaManagerProxy,
 			this.storageAdapter,
-			new QuorumProxy(this.protocolHandler.quorum),
+			quorumProxy,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2332,7 +2333,7 @@ export class Container
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this.serviceConfiguration,
+			() => deltaManagerProxy.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			this._deltaManager.clientDetails,
@@ -2340,7 +2341,11 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => context.dispose());
+		this._lifecycleEvents.once("disposed", () => {
+			context.dispose();
+			quorumProxy.dispose();
+			deltaManagerProxy.dispose();
+		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
