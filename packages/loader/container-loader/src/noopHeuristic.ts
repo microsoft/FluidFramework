@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Timer } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+import { assert, Timer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 
 const defaultNoopTimeFrequency = 2000;
 const defaultNoopCountFrequency = 50;
+
+export interface INoopSenderEvents extends IEvent {
+	(event: "wantsNoop", listener: () => void);
+}
 
 // Here are key considerations when deciding conditions for when to send non-immediate noops:
 // 1. Sending them too often results in increase in file size and bandwidth, as well as catch up performance
@@ -29,21 +34,21 @@ const defaultNoopCountFrequency = 50;
 //    server timeout of 2000ms should be reconsidered to be increased.
 // 2. If there are more than 50 ops received without sending any ops, send noop to keep collab window small.
 //    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
-export class CollabWindowTracker {
-	private opsCountSinceNoop = 0;
+export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
+	private opsProcessedSinceOpSent = 0;
 	private readonly timer: Timer | undefined;
 
 	constructor(
-		private readonly submit: (type: MessageType) => void,
 		NoopTimeFrequency: number = defaultNoopTimeFrequency,
 		private readonly NoopCountFrequency: number = defaultNoopCountFrequency,
 	) {
+		super();
 		if (NoopTimeFrequency !== Infinity) {
 			this.timer = new Timer(NoopTimeFrequency, () => {
-				// Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
-				// Also timer callback can fire even after timer cancellation if it was queued before cancellation.
-				if (this.opsCountSinceNoop !== 0) {
-					this.submitNoop(false /* immediate */);
+				// We allow the timer to expire even if an op is sent or we disconnect.
+				// This condition is to guard against trying to send a noop anyway in that case.
+				if (this.opsProcessedSinceOpSent !== 0) {
+					this.emit("wantsNoop");
 				}
 			});
 		}
@@ -52,17 +57,7 @@ export class CollabWindowTracker {
 	/**
 	 * Schedules as ack to the server to update the reference sequence number
 	 */
-	public scheduleSequenceNumberUpdate(
-		message: ISequencedDocumentMessage,
-		immediateNoOp: boolean,
-	): void {
-		// While processing a message, an immediate no-op can be requested.
-		// i.e. to expedite approve or commit phase of quorum.
-		if (immediateNoOp) {
-			this.submitNoop(true /* immediate */);
-			return;
-		}
-
+	public notifyMessageProcessed(message: ISequencedDocumentMessage): void {
 		// We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
 		// update, which updates the MSN, then ack the update, etc...).
 		// Intent here is for runtime (and DDSes) not to keep too much tracking state / memory
@@ -71,22 +66,27 @@ export class CollabWindowTracker {
 			return;
 		}
 
-		this.opsCountSinceNoop++;
-		if (this.opsCountSinceNoop === this.NoopCountFrequency) {
-			// Ensure we only send noop after a batch of many ops is processed
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			Promise.resolve().then(() => {
-				if (this.opsCountSinceNoop >= this.NoopCountFrequency) {
-					this.submitNoop(false /* immediate */);
-					// reset count now that all ops are processed
-					this.opsCountSinceNoop = 0;
+		this.opsProcessedSinceOpSent++;
+		if (this.opsProcessedSinceOpSent === this.NoopCountFrequency) {
+			// Wait to send a noop if we are still synchronously processing ops.  This guards against two things:
+			// 1. If we're processing many ops, we may pass the frequency threshold many times.  We only need to send one noop at the very end in this case.
+			// 2. We may send another (non-noop) op in response to processing those ops, e.g. an Accept op.
+			queueMicrotask(() => {
+				if (this.opsProcessedSinceOpSent >= this.NoopCountFrequency) {
+					this.emit("wantsNoop");
+					assert(
+						this.opsProcessedSinceOpSent === 0,
+						0x243 /* "Expected a noop to be synchronously sent" */,
+					);
 				}
 				return;
 			});
 		}
 
 		if (this.timer !== undefined) {
-			if (this.opsCountSinceNoop === 1) {
+			// Start the timer if we newly have ops that want a noop.
+			// If the timer was already running (e.g. we surpassed the op count and sent a noop) this will reset it to its full duration.
+			if (this.opsProcessedSinceOpSent === 1) {
 				this.timer.restart();
 			}
 
@@ -94,23 +94,13 @@ export class CollabWindowTracker {
 		}
 	}
 
-	private submitNoop(immediate: boolean) {
-		// Anything other than null is immediate noop
-		// ADO:1385: Remove cast and use MessageType once definition changes propagate
-		this.submit(immediate ? (MessageType2.Accept as unknown as MessageType) : MessageType.NoOp);
-		assert(
-			this.opsCountSinceNoop === 0,
-			0x243 /* "stopSequenceNumberUpdate should be called as result of sending any op!" */,
-		);
+	public notifyDisconnect(): void {
+		// No need to noop for any ops processed prior to disconnect - we are already removed from MSN calculation.
+		this.opsProcessedSinceOpSent = 0;
 	}
 
-	public stopSequenceNumberUpdate(): void {
-		this.opsCountSinceNoop = 0;
-		// Ideally, we cancel timer here. But that will result in too often set/reset cycle if this client
-		// keeps sending ops. In most cases it's actually better to let it expire (at most - 4 times per second)
-		// for nothing, then have a ton of set/reset cycles.
-		// Note that Timer.restart() is smart and will not change timer expiration if we keep extending timer
-		// expiration - it will restart the timer instead when it fires with adjusted expiration.
-		// this.timer.clear();
+	public notifyMessageSent(): void {
+		// Sending any message is as good as a noop for updating MSN.
+		this.opsProcessedSinceOpSent = 0;
 	}
 }
