@@ -23,23 +23,30 @@ describe("driver utils tests", () => {
 
 		beforeEach(() => {
 			mockLogger.clear();
-		})
+		});
 
 		it("from not equal to start", () => {
 			const ops = generateOps(1, 5);
 			validateMessages("test1", ops, 0, mockLogger, true);
 			assert(ops.length === 0, "no ops should be returned");
-			assert(mockLogger.matchEventStrict([
-				{
-					eventName: "OpsFetchViolation",
-					reason: "test1",
-					from: 0,
-					start: 1,
-					last: 5,
-					length: 5,
-					details: JSON.stringify({ validLength: 0, lastValidOpSeqNumber: undefined, strict: true }),
-				},
-			]), "Ops fetch violation event not correctly recorded");
+			assert(
+				mockLogger.matchEventStrict([
+					{
+						eventName: "OpsFetchViolation",
+						reason: "test1",
+						from: 0,
+						start: 1,
+						last: 5,
+						length: 5,
+						details: JSON.stringify({
+							validLength: 0,
+							lastValidOpSeqNumber: undefined,
+							strict: true,
+						}),
+					},
+				]),
+				"Ops fetch violation event not correctly recorded",
+			);
 		});
 
 		it("contiguous ops", () => {
@@ -55,17 +62,24 @@ describe("driver utils tests", () => {
 			ops[4].sequenceNumber = 7;
 			validateMessages("test", ops, 1, mockLogger, true);
 			assert(ops.length === 0, "no ops should be returned as strict == true");
-			assert(mockLogger.matchEventStrict([
-				{
-					eventName: "OpsFetchViolation",
-					reason: "test",
-					from: 1,
-					start: 1,
-					last: 7,
-					length: 5,
-					details: JSON.stringify({ validLength: 0, lastValidOpSeqNumber: undefined, strict: true }),
-				},
-			]), "Ops fetch violation event not correctly recorded");
+			assert(
+				mockLogger.matchEventStrict([
+					{
+						eventName: "OpsFetchViolation",
+						reason: "test",
+						from: 1,
+						start: 1,
+						last: 7,
+						length: 5,
+						details: JSON.stringify({
+							validLength: 0,
+							lastValidOpSeqNumber: undefined,
+							strict: true,
+						}),
+					},
+				]),
+				"Ops fetch violation event not correctly recorded",
+			);
 		});
 
 		it("non contiguous ops: strict = false", () => {
@@ -74,17 +88,24 @@ describe("driver utils tests", () => {
 			ops[4].sequenceNumber = 7;
 			validateMessages("test", ops, 1, mockLogger, false);
 			assert(ops.length === 4, "some should be returned as strict == false");
-			assert(mockLogger.matchEventStrict([
-				{
-					eventName: "OpsFetchViolation",
-					reason: "test",
-					from: 1,
-					start: 1,
-					last: 7,
-					length: 5,
-					details: JSON.stringify({ validLength: 4, lastValidOpSeqNumber: 4, strict: false }),
-				},
-			]), "Ops fetch violation event not correctly recorded");
+			assert(
+				mockLogger.matchEventStrict([
+					{
+						eventName: "OpsFetchViolation",
+						reason: "test",
+						from: 1,
+						start: 1,
+						last: 7,
+						length: 5,
+						details: JSON.stringify({
+							validLength: 4,
+							lastValidOpSeqNumber: 4,
+							strict: false,
+						}),
+					},
+				]),
+				"Ops fetch violation event not correctly recorded",
+			);
 		});
 	});
 });
