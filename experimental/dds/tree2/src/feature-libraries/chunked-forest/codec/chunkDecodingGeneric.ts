@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { BrandedType } from "../../../util";
 import { TreeChunk } from "../chunk";
-import { EncodedChunkGeneric } from "./formatGeneric";
+import { EncodedChunkGeneric, IdentifierOrIndex } from "./formatGeneric";
 import {
 	ChunkDecoder,
 	DiscriminatedUnionDispatcher,
@@ -45,7 +45,9 @@ export class DecoderCache<TEncodedShape = unknown> {
 		public readonly shapes: readonly TEncodedShape[],
 	) {}
 
-	public identifier<T extends string & BrandedType<string, string>>(encoded: string | number): T {
+	public identifier<T extends string & BrandedType<string, string>>(
+		encoded: IdentifierOrIndex,
+	): T {
 		if (typeof encoded === "string") {
 			return encoded as T;
 		}

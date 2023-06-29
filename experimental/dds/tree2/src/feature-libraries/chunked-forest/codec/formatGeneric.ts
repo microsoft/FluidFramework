@@ -5,12 +5,20 @@
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
 
-// Identifier OR Index of an identifier in the identifier list.
+/**
+ * Identifier OR Index of an identifier in the identifier list.
+ */
 export const IdentifierOrIndex = Type.Union([
 	Type.String(),
 	Type.Number({ multipleOf: 1, minimum: 0 }),
 ]);
+export type IdentifierOrIndex = Static<typeof IdentifierOrIndex>;
 
+/**
+ * Reference to a shape, by index.
+ *
+ * Shapes use a dictionary encoding where they are referenced by their index in a shape array.
+ */
 export const ShapeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
 export type ShapeIndex = Static<typeof ShapeIndex>;
 

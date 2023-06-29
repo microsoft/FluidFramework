@@ -26,7 +26,9 @@ export const EncodedNestedArray = ShapeIndex;
 export const EncodedInlineArray = Type.Object(
 	{
 		length: Count,
-		// All entries are this shape.
+		/**
+		 * All entries are this shape.
+		 */
 		shape: ShapeIndex,
 	},
 	{ additionalProperties: false },
@@ -43,8 +45,16 @@ export const EncodedAnyShape = Type.Literal(0);
 // [shape if not provided in fieldShape], [data for one chunk of specified shape]
 // If data is in multiple chunks needs to be converted into a single chunk, for example via an array chunk.
 export const EncodedFieldShape = Type.Object(
-	// If shape is not provided here, it will be provided in the data array.
-	{ key: IdentifierOrIndex, shape: ShapeIndex },
+	{
+		/**
+		 * Field key for this field.
+		 */
+		key: IdentifierOrIndex,
+		/**
+		 * Shape of data in this field.
+		 */
+		shape: ShapeIndex,
+	},
 	{ additionalProperties: false },
 );
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
@@ -74,8 +84,10 @@ export const EncodedCounter = Type.Object(
 	{ additionalProperties: false },
 );
 
-// If not specified, encoded data will contain a boolean to indicate if there is a value or not.
-// If array, content is the value on the node.
+/**
+ * If not specified, encoded data will contain a boolean to indicate if there is a value or not.
+ * If array, content is the value on the node.
+ */
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
 	Type.Array(Type.Any(), { minItems: 1, maxItems: 1 }),
@@ -86,14 +98,20 @@ export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 
 export const EncodedTreeShape = Type.Object(
 	{
-		// If not provided, inline in data.
+		/**
+		 * If not provided, inline in data.
+		 */
 		type: Type.Optional(IdentifierOrIndex),
 		value: Type.Optional(EncodedValueShape),
 		local: Type.Array(EncodedFieldShape),
 		global: Type.Array(EncodedFieldShape),
-		// If undefined, no data. Otherwise, nested array of `[key, ...data]*`
+		/**
+		 * If undefined, no data. Otherwise, nested array of `[key, ...data]*`
+		 */
 		extraLocal: Type.Optional(ShapeIndex),
-		// If undefined, no data. Otherwise, nested array of `[key, ...data]*`
+		/**
+		 * If undefined, no data. Otherwise, nested array of `[key, ...data]*`
+		 */
 		extraGlobal: Type.Optional(ShapeIndex),
 	},
 	{ additionalProperties: false },
@@ -106,9 +124,21 @@ export const EncodedTreeShape = Type.Object(
  */
 export const EncodedChunkShape = Type.Object(
 	{
+		/**
+		 * {@link EncodedNestedArray} union member.
+		 */
 		a: Type.Optional(EncodedNestedArray),
+		/**
+		 * {@link EncodedInlineArray} union member.
+		 */
 		b: Type.Optional(EncodedInlineArray),
+		/**
+		 * {@link EncodedTreeShape} union member.
+		 */
 		c: Type.Optional(EncodedTreeShape),
+		/**
+		 * {@link EncodedAnyShape} union member.
+		 */
 		d: Type.Optional(EncodedAnyShape),
 	},
 	unionOptions,
