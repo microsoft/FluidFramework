@@ -119,6 +119,7 @@ export class TscTask extends LeafTask {
 			this.traceTrigger(
 				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
 			);
+			return false;
 		}
 
 		// Check tsconfig.json
@@ -333,9 +334,6 @@ export class TscTask extends LeafTask {
 					);
 					if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
 						this._tsBuildInfo = tsBuildInfo;
-						this.traceTrigger(
-							`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
-						);
 					} else {
 						verbose(
 							`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`,
