@@ -19,15 +19,15 @@ export function getEsLintConfigFilePath(dir: string) {
 }
 
 export async function getInstalledPackageVersion(packageName: string, cwd: string) {
-	const tsPath = require.resolve(packageName, { paths: [cwd] });
-	const tsPackageJsonPath = await lookUpDirSync(tsPath, (currentDir) => {
+	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
+	const packageJsonPath = await lookUpDirSync(resolvedPath, (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
 	});
-	if (tsPackageJsonPath === undefined) {
+	if (packageJsonPath === undefined) {
 		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
 	}
 	const packageJson = JSON.parse(
-		await readFileAsync(path.join(tsPackageJsonPath, "package.json"), "utf8"),
+		await readFileAsync(path.join(packageJsonPath, "package.json"), "utf8"),
 	);
 	return packageJson.version;
 }
