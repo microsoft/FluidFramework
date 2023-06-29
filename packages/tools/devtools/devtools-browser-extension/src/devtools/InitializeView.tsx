@@ -13,7 +13,7 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const myLogger: ITelemetryBaseLogger = {
 	send: (event: ITelemetryBaseEvent) => {
-		console.log(`MYLOGGER_EXTENSION: ${JSON.stringify(event)}`);
+		alert(JSON.stringify(event));
 	},
 };
 

@@ -5,9 +5,11 @@
 import React from "react";
 
 import { IMessageRelay } from "@fluid-experimental/devtools-core";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { useLogger } from "./LoggerContext";
+import { useExternalLogger } from "./LoggerContext";
+import { InternalLoggerContext } from "./InternalLoggerContext";
 
 /**
  * {@link DevtoolsPanel} input props.
@@ -29,12 +31,15 @@ export interface DevtoolsPanelProps {
  * Initializes the message relay context required by internal components.
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
-	const logger = useLogger();
-	logger?.send({ eventName: "DevtoolsPanelRendered", category: "generic" });
+	const externalLogger = useExternalLogger();
+	const topLevelLogger = externalLogger !== undefined ? ChildLogger.create(externalLogger) : undefined;
+	topLevelLogger?.send({ eventName: "DevtoolsPanelRendered", category: "generic" });
 
 	return (
 		<MessageRelayContext.Provider value={props.messageRelay}>
-			<DevtoolsView />
+			<InternalLoggerContext.Provider value={topLevelLogger}>
+				<DevtoolsView />
+			</InternalLoggerContext.Provider>
 		</MessageRelayContext.Provider>
 	);
 }
