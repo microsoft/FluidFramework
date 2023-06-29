@@ -31,8 +31,8 @@ export class IndexTracker {
 		this.inputIndex += inLength;
 		if (markIsTransient(mark)) {
 			const markLength = getMarkLength(mark);
-			this.advanceForRevision(markLength, mark.revision);
-			this.advanceForRevision(-markLength, mark.detachedBy.revision);
+			this.advanceForRevision(markLength - inLength, mark.revision);
+			this.advanceForRevision(outLength - markLength, mark.detachedBy.revision);
 			return;
 		}
 		if (!markHasCellEffect(mark)) {
