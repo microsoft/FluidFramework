@@ -4,8 +4,7 @@
 
 ### Deprecated interface
 
-The following interface is deprecated in this release. The implementations have been moved to other
-packages.
+The following interface is deprecated in this release. Its replacement has been moved to another package.
 
 #### Moved to @fluidframework/core-interfaces
 
