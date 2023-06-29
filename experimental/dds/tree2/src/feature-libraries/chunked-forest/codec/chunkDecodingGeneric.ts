@@ -32,13 +32,11 @@ export function decode<TEncodedShape extends object, TCache>(
 }
 
 /**
- * Caches shared data for use in constructing decoders.
+ * Shared data for use in constructing decoders.
  */
-export class DecoderCache<TEncodedShape = unknown> {
+export class DecoderContext<TEncodedShape = unknown> {
 	/**
 	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 *
-	 * Unlike the other data stored in this object, identifiers and shapes are not really a cache since the decoders don't any any other way to access this information.
 	 */
 	public constructor(
 		public readonly identifiers: readonly string[],
@@ -60,7 +58,7 @@ export class DecoderCache<TEncodedShape = unknown> {
  */
 export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
 	stream: StreamCursor,
-	cache: DecoderCache,
+	cache: DecoderContext,
 ): T {
 	const content = readStream(stream);
 	assert(

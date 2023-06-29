@@ -7,7 +7,7 @@ import { strict as assert, fail } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
 import {
-	DecoderCache,
+	DecoderContext,
 	decode,
 	readStreamIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
@@ -89,7 +89,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderCache<EncodedChunkShape>],
+	[cache: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: Constant, cache): ChunkDecoder {
@@ -117,15 +117,15 @@ const rootDecoder: ChunkDecoder = {
 };
 
 describe("chunkDecodingGeneric", () => {
-	it("DecoderCache", () => {
-		const cache = new DecoderCache(["a", "b"], []);
+	it("DecoderContext", () => {
+		const cache = new DecoderContext(["a", "b"], []);
 		assert.equal(cache.identifier("X"), "X");
 		assert.equal(cache.identifier(0), "a");
 		assert.equal(cache.identifier(1), "b");
 	});
 
 	it("readStreamIdentifier", () => {
-		const cache = new DecoderCache(["a", "b"], []);
+		const cache = new DecoderContext(["a", "b"], []);
 		const stream: StreamCursor = { data: ["X", 0, 1], offset: 0 };
 		assert.equal(readStreamIdentifier(stream, cache), "X");
 		assert.equal(stream.offset, 1);
@@ -142,7 +142,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ a: 0 }],
 			data: [0, 5],
 		};
-		const cache = new DecoderCache(encoded.identifiers, encoded.shapes);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
 		const chunk = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunk instanceof TestChunk2);
 		assert.equal(chunk.value, 5);
@@ -155,7 +155,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ b: "content" }],
 			data: [0],
 		};
-		const cache = new DecoderCache(encoded.identifiers, encoded.shapes);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
 		const chunk = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunk instanceof TestChunk1);
 		assert.equal(chunk.value, "content");

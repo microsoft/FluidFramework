@@ -39,7 +39,7 @@ import { ReferenceCountedBase, brand } from "../../../../util";
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk";
 import { TreeChunk } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { DecoderCache } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
+import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
@@ -256,7 +256,7 @@ describe("chunkDecoding", () => {
 
 	describe("TreeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderCache([], []);
+			const cache = new DecoderContext([], []);
 			const decoder = new TreeDecoder(
 				{
 					value: false,
@@ -271,7 +271,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderCache([], []);
+			const cache = new DecoderContext([], []);
 			const decoder = new TreeDecoder(
 				{
 					type: "baz",
@@ -287,7 +287,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderCache(["b", "d"], []);
+			const cache = new DecoderContext(["b", "d"], []);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const globalChunk = new BasicChunk(brand("global"), new Map());
@@ -334,7 +334,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("fixed fields", () => {
-			const cache = new DecoderCache(
+			const cache = new DecoderContext(
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
 				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
