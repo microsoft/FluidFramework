@@ -353,6 +353,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly enableBatchRebasing?: boolean;
     readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
     readonly enableRuntimeIdCompressor?: boolean;

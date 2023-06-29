@@ -134,7 +134,7 @@ export interface IBatchMessage {
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
  */
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
 	/** @deprecated Please pass in existing directly in instantiateRuntime */
 	readonly existing: boolean | undefined;
 	readonly options: ILoaderOptions;
@@ -168,6 +168,10 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - This property is redundant, and is unused by the runtime. The same information can be found via
+	 * deltaManager.serviceConfiguration on this object if it is necessary.
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
@@ -199,8 +203,22 @@ export interface IContainerContext extends IDisposable {
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
+	 * @deprecated - 2.0.0-internal.5.2.0 - The docId is already logged by the IContainerContext.taggedLogger for
+	 * telemetry purposes, so this is generally unnecessary for telemetry.  If the id is needed for other purposes
+	 * it should be passed to the consumer explicitly.  This member will be removed in an upcoming release.
 	 */
 	readonly id: string;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The disposed state on the IContainerContext is not meaningful to the runtime.
+	 * This member will be removed in an upcoming release.
+	 */
+	readonly disposed: boolean;
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The runtime is not permitted to dispose the IContainerContext, this results
+	 * in an inconsistent system state.  This member will be removed in an upcoming release.
+	 */
+	dispose(error?: Error): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
