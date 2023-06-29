@@ -99,7 +99,6 @@ export function rebaseBranch<TChange>(
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param intoDelta - a utility for converting changes into deltas
  * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is must be passed in
  * in order to update the repair data of the rebased commits. A branch may not have an {@link IRepairDataStoreProvider} if it
  * does not need to maintain repair data.
