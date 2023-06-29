@@ -80,14 +80,32 @@ class SocketIoServer implements core.IWebSocketServer {
 		});
 		this.io.engine.on("connection_error", (error) => {
 			if (isSocketIoConnectionError(error) && error.req.url !== undefined) {
-				const url = new URL(error.req.url);
-				const telemetryProperties = {
-					protocolVersion: url.searchParams.get("EIO"), // '2', '3', or '4'
-					transport: url.searchParams.get("transport"), // 'websocket' or 'polling'
+				const telemetryProperties: Record<string, any> = {
 					reason: JSON.stringify({ code: error.code, message: error.message }), // e.g. { code: 1, message: "Session ID unknown" }
-					[BaseTelemetryProperties.tenantId]: url.searchParams.get("tenantId") ?? "",
-					[BaseTelemetryProperties.documentId]: url.searchParams.get("documentId") ?? "",
 				};
+				// req.url can be just "/socket.io/?documentId=..." without protocol or host.
+				// We can prepend a dummy protocol+host in those situations since we only care about parsing query string.
+				const urlString = error.req.url.startsWith("/")
+					? `http://alfred:3000${error.req.url}`
+					: error.req.url;
+				try {
+					const url = new URL(urlString);
+					telemetryProperties.protocolVersion = url.searchParams.get("EIO"); // '2', '3', or '4'
+					telemetryProperties.transport = url.searchParams.get("transport"); // 'websocket' or 'polling'
+					telemetryProperties[BaseTelemetryProperties.tenantId] =
+						url.searchParams.get("tenantId") ?? "";
+					telemetryProperties[BaseTelemetryProperties.documentId] =
+						url.searchParams.get("documentId") ?? "";
+				} catch (e) {
+					Lumberjack.error(
+						"Unable to parse connection_error req.url",
+						{
+							...telemetryProperties,
+							url: urlString,
+						},
+						e,
+					);
+				}
 				Lumberjack.error("Socket.io Connection Error", telemetryProperties, error);
 			}
 		});

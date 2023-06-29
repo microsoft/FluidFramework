@@ -202,6 +202,22 @@ export class Package {
 		return path.dirname(this.packageJsonFileName);
 	}
 
+	/**
+	 * Get the full path for the lock file.
+	 * @returns full path for the lock file, or undefined if one doesn't exist
+	 */
+	public getLockFilePath() {
+		const directory = this.monoRepo ? this.monoRepo.repoPath : this.directory;
+		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
+		for (const lockFileName of lockFileNames) {
+			const full = path.join(directory, lockFileName);
+			if (fs.existsSync(full)) {
+				return full;
+			}
+		}
+		return undefined;
+	}
+
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
