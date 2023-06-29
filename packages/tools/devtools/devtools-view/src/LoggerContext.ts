@@ -4,25 +4,24 @@
  */
 
 import React from "react";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
- * Context that optionally provides a logger implementation to process usage telemetry.
+ * Context that provides a logger for Devtools to generate usage telemetry internally.
  *
  * @remarks
- * This is not intended to be used (define a provider for this context) by the package that defines it, but by the
- * Fluid DevTools browser extension, to provide a logger that will process the usage telemetry.
- * It's also not supposed to be used in other places where we render the Devtools view, such as when we display it
- * inline in a sample application.
+ * The logger provided through this context is not supposed to be the final handler for the telemetry events it
+ * receives; it should only pass them to the logger provided via {@link DevtoolsPanelProps.usageTelemetryLogger | the
+ * usageTelemetryLogger prop for DevtoolsPanel} instead (if any).
  */
-export const LoggerContext = React.createContext<ITelemetryBaseLogger | undefined>(undefined);
+export const LoggerContext = React.createContext<ITelemetryLoggerExt | undefined>(undefined);
 
 /**
- * Gets the {@link @fluidframework/common-definitions#ITelemetryBaseLogger} provided through a {@link LoggerContext}.
+ * Gets the {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} provided through an {@link LoggerContext}.
  *
  * @returns
  * The logger from the context, or undefined is no logger was provided.
  */
-export function useExternalLogger(): ITelemetryBaseLogger | undefined {
+export function useLogger(): ITelemetryLoggerExt | undefined {
 	return React.useContext(LoggerContext);
 }

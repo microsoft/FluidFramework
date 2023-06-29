@@ -18,7 +18,7 @@
 
 export { DevtoolsPanel, DevtoolsPanelProps } from "./DevtoolsPanel";
 export { WindowMessageRelay } from "./WindowMessageRelay";
-export { LoggerContext } from "./LoggerContext";
 
 // Convenience re-exports
 export { IMessageRelay } from "@fluid-experimental/devtools-core";
+export { ITelemetryBaseLogger } from "@fluidframework/common-definitions";

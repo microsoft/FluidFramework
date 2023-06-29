@@ -17,12 +17,12 @@ export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 // @public
 export interface DevtoolsPanelProps {
     messageRelay: IMessageRelay;
+    usageTelemetryLogger?: ITelemetryBaseLogger;
 }
 
 export { IMessageRelay }
 
-// @public
-export const LoggerContext: React_2.Context<ITelemetryBaseLogger | undefined>;
+export { ITelemetryBaseLogger }
 
 // @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
