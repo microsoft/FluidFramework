@@ -118,7 +118,7 @@ export const EncodedTreeShape = Type.Object(
 );
 
 /**
- * Encoding of a discriminated union that is simply to validate data against.
+ * Discriminated union of chunk shapes.
  *
  * See DiscriminatedUnionDispatcher for more information on this pattern.
  */

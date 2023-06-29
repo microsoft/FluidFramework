@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema, Type } from "@sinclair/typebox";
+import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
@@ -25,11 +25,11 @@ export type ShapeIndex = Static<typeof ShapeIndex>;
 export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 
 /**
- * Encoding of a discriminated union that is simple to validate data against.
+ * Options to configure a TypeBox schema as a discriminated union that is simple to validate data against.
  *
  * See DiscriminatedUnionDispatcher for more information on this pattern.
  */
-export const unionOptions = {
+export const unionOptions: ObjectOptions = {
 	additionalProperties: false,
 	minProperties: 1,
 	maxProperties: 1,
