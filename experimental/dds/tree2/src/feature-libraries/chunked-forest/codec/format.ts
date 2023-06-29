@@ -85,8 +85,29 @@ export const EncodedCounter = Type.Object(
 );
 
 /**
- * If not specified, encoded data will contain a boolean to indicate if there is a value or not.
- * If array, content is the value on the node.
+ * Shape of a value on a node.
+ *
+ * Due to limitations of TypeBox and differences between JavaScript objects, TypeScript types and JSON,
+ * the case where no information about the value is captured in the shape is a bit confusing.
+ * In TypeBox this is allowed by the user of this type putting it in an optional property.
+ * In TypeScript it is modeled using `undefined`.
+ * In JavaScript the property may be missing or explicitly `undefined`.
+ * In JSON this will serialize as the property being omitted.
+ * In this case, the value will be encoded as either:
+ * - `false` (when there is no value) OR
+ * - `true, value` when there is a value.
+ *
+ * For a more compact encoding, there are three options for the shape:
+ * - `true`: there is a value, and it will simple be encoded by putting it in the output buffer (so `value`).
+ * - `false`: there is never a value, and it takes up no space in the output buffer.
+ * - `[value]`: there is a value, and its always the same.
+ * Takes up no space in the output buffer: the value comes from the shape arrays's content.
+ * It is wrapped in an array to differentiate value shape types.
+ *
+ * In the future other value shape formats may be added, likely as objects.
+ *
+ * @remarks
+ * See {@link EncodedTreeShape} for usage.
  */
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
