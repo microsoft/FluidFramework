@@ -7,8 +7,17 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
-import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import {
+	IEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+} from "@fluidframework/common-definitions";
+import {
+	TypedEventEmitter,
+	assert,
+	performance,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -31,6 +40,7 @@ import {
 	IProvideRuntimeFactory,
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
+	IRuntime,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -53,7 +63,6 @@ import {
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
-	IClientConfiguration,
 	IClientDetails,
 	ICommittedProposal,
 	IDocumentAttributes,
@@ -343,12 +352,15 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
+interface IContainerLifecycleEvents extends IEvent {
+	(event: "runtimeInstantiated", listener: () => void): void;
+	(event: "disposed", listener: () => void): void;
+}
+
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer, IContainerExperimental
 {
-	public static version = "^0.1.0";
-
 	/**
 	 * Load an existing container.
 	 * @internal
@@ -459,9 +471,9 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	public readonly options: ILoaderOptions;
+	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	public subLogger: TelemetryLogger;
+	private readonly subLogger: TelemetryLogger;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
@@ -521,19 +533,16 @@ export class Container
 	private _attachState = AttachState.Detached;
 
 	private readonly storageAdapter: ContainerStorageAdapter;
-	public get storage(): IDocumentStorageService {
-		return this.storageAdapter;
-	}
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
-	private _context: ContainerContext | undefined;
-	private get context() {
-		if (this._context === undefined) {
-			throw new GenericError("Attempted to access context before it was defined");
+	private _runtime: IRuntime | undefined;
+	private get runtime() {
+		if (this._runtime === undefined) {
+			throw new Error("Attempted to access runtime before it was defined");
 		}
-		return this._context;
+		return this._runtime;
 	}
 	private _protocolHandler: IProtocolHandler | undefined;
 	private get protocolHandler() {
@@ -587,16 +596,8 @@ export class Container
 		return this.service?.resolvedUrl;
 	}
 
-	public get loadedFromVersion(): IVersion | undefined {
-		return this._loadedFromVersion;
-	}
-
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
-	}
-
-	public get closeSignal(): AbortSignal {
-		return this._deltaManager.closeAbortController.signal;
 	}
 
 	/**
@@ -614,16 +615,8 @@ export class Container
 		return this.connectionStateHandler.connectionState;
 	}
 
-	public get connected(): boolean {
+	private get connected(): boolean {
 		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
-	}
-
-	/**
-	 * Service configuration details. If running in offline mode will be undefined otherwise will contain service
-	 * configuration details returned as part of the initial connection.
-	 */
-	public get serviceConfiguration(): IClientConfiguration | undefined {
-		return this._deltaManager.serviceConfiguration;
 	}
 
 	private _clientId: string | undefined;
@@ -636,24 +629,12 @@ export class Container
 		return this._clientId;
 	}
 
-	/**
-	 * The server provided claims of the client.
-	 * Set once this.connected is true, otherwise undefined
-	 */
-	public get scopes(): string[] | undefined {
-		return this._deltaManager.connectionManager.scopes;
-	}
-
-	public get clientDetails(): IClientDetails {
-		return this._deltaManager.clientDetails;
-	}
-
 	private get offlineLoadEnabled(): boolean {
 		const enabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
 			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return enabled && this.clientDetails.capabilities.interactive;
+		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -696,34 +677,31 @@ export class Container
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint(): Promise<FluidObject | undefined> {
-		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
-		// allow it since they mean a kind of read-only state for the Container.
-		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
-		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
-			throw new UsageError("The container is disposing or disposed");
+		if (this._disposed) {
+			throw new UsageError("The context is already disposed");
 		}
-		if (this._context === undefined) {
-			await new Promise<void>((resolve, reject) => {
-				const contextChangedHandler = () => {
-					resolve();
-					this.off("disposed", disposedHandler);
-				};
-				const disposedHandler = (error) => {
-					reject(error ?? "The Container is disposed");
-					this.off("contextChanged", contextChangedHandler);
-				};
-				this.once("contextChanged", contextChangedHandler);
-				this.once("disposed", disposedHandler);
-			});
-			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
-			// should have set this._context; making sure.
-			assert(
-				this._context !== undefined,
-				0x5a2 /* Context still not defined after contextChanged event */,
-			);
+		if (this._runtime !== undefined) {
+			return this._runtime.getEntryPoint?.();
 		}
-		return this._context.getEntryPoint();
+		return new Promise<FluidObject | undefined>((resolve, reject) => {
+			const runtimeInstantiatedHandler = () => {
+				assert(
+					this._runtime !== undefined,
+					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
+				);
+				resolve(this._runtime.getEntryPoint?.());
+				this._lifecycleEvents.off("disposed", disposedHandler);
+			};
+			const disposedHandler = () => {
+				reject(new Error("ContainerContext was disposed"));
+				this._lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+			};
+			this._lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+			this._lifecycleEvents.once("disposed", disposedHandler);
+		});
 	}
+
+	private readonly _lifecycleEvents = new TypedEventEmitter<IContainerLifecycleEvents>();
 
 	/**
 	 * @internal
@@ -809,8 +787,8 @@ export class Container
 				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
 				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
 				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-				containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
-				containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+				containerLoadedFromVersionId: () => this._loadedFromVersion?.id,
+				containerLoadedFromVersionDate: () => this._loadedFromVersion?.date,
 				// message information to associate errors with the specific execution state
 				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
@@ -1037,7 +1015,8 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 
-				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+				const maybeError = error !== undefined ? new Error(error.message) : undefined;
+				this._runtime?.dispose(maybeError);
 
 				this.storageAdapter.dispose();
 
@@ -1060,6 +1039,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
+			this._lifecycleEvents.emit("disposed");
 		}
 	}
 
@@ -1087,7 +1067,7 @@ export class Container
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
 		const pendingState: IPendingContainerState = {
-			pendingRuntimeState: this.context.getPendingLocalState(),
+			pendingRuntimeState: this.runtime.getPendingLocalState(),
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
@@ -1111,7 +1091,7 @@ export class Container
 			0x0d3 /* "Should only be called in detached container" */,
 		);
 
-		const appSummary: ISummaryTree = this.context.createSummary();
+		const appSummary: ISummaryTree = this.runtime.createSummary();
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -1157,7 +1137,7 @@ export class Container
 					if (!hasAttachmentBlobs) {
 						// Get the document state post attach - possibly can just call attach but we need to change the
 						// semantics around what the attach means as far as async code goes.
-						const appSummary: ISummaryTree = this.context.createSummary();
+						const appSummary: ISummaryTree = this.runtime.createSummary();
 						const protocolSummary = this.captureProtocolSummary();
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -1166,6 +1146,7 @@ export class Container
 						// starting to attach the container to storage.
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
+						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1194,7 +1175,7 @@ export class Container
 							"containerAttach",
 							this.mc.logger,
 							{
-								cancel: this.closeSignal,
+								cancel: this._deltaManager.closeAbortController.signal,
 							}, // progress
 						);
 					}
@@ -1223,11 +1204,12 @@ export class Container
 						}
 
 						// take summary and upload
-						const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
+						const appSummary: ISummaryTree = this.runtime.createSummary(redirectTable);
 						const protocolSummary = this.captureProtocolSummary();
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 						this._attachState = AttachState.Attaching;
+						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
@@ -1244,6 +1226,7 @@ export class Container
 					}
 
 					this._attachState = AttachState.Attached;
+					this.runtime.setAttachState(AttachState.Attached);
 					this.emit("attached");
 
 					if (!this.closed) {
@@ -1268,7 +1251,7 @@ export class Container
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "Request" },
-			async () => this.context.request(path),
+			async () => this.runtime.request(path),
 			{ end: true, cancel: "error" },
 		);
 	}
@@ -1353,7 +1336,7 @@ export class Container
 		this.connectToDeltaStream(args);
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+	public readonly getAbsoluteUrl = async (relativeUrl: string): Promise<string | undefined> => {
 		if (this.resolvedUrl === undefined) {
 			return undefined;
 		}
@@ -1363,7 +1346,7 @@ export class Container
 			relativeUrl,
 			getPackageName(this._loadedCodeDetails),
 		);
-	}
+	};
 
 	public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
 		if (!isFluidCodeDetails(codeDetails)) {
@@ -1523,7 +1506,10 @@ export class Container
 			if (this.offlineLoadEnabled) {
 				this.baseSnapshot = snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
-				this.baseSnapshotBlobs = await getBlobContentsFromTree(snapshot, this.storage);
+				this.baseSnapshotBlobs = await getBlobContentsFromTree(
+					snapshot,
+					this.storageAdapter,
+				);
 			}
 		}
 
@@ -1579,7 +1565,7 @@ export class Container
 				this.processRemoteMessage(message);
 
 				// allow runtime to apply stashed ops at this op's sequence number
-				await this.context.notifyOpReplay(message);
+				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
 
@@ -2197,17 +2183,18 @@ export class Container
 		const result = this.protocolHandler.processMessage(message, local);
 
 		// Forward messages to the loaded runtime for processing
-		this.context.process(message, local);
+		this.runtime.process(message, local);
 
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
 			if (this.collabWindowTracker === undefined) {
+				const serviceConfiguration = this.deltaManager.serviceConfiguration;
 				// Note that config from first connection will be used for this container's lifetime.
 				// That means that if relay service changes settings, such changes will impact only newly booted
 				// clients.
 				// All existing will continue to use settings they got earlier.
 				assert(
-					this.serviceConfiguration !== undefined,
+					serviceConfiguration !== undefined,
 					0x2e4 /* "there should be service config for active connection" */,
 				);
 				this.collabWindowTracker = new CollabWindowTracker(
@@ -2218,8 +2205,8 @@ export class Container
 						);
 						this.submitMessage(type);
 					},
-					this.serviceConfiguration.noopTimeFrequency,
-					this.serviceConfiguration.noopCountFrequency,
+					serviceConfiguration.noopTimeFrequency,
+					serviceConfiguration.noopCountFrequency,
 				);
 			}
 			this.collabWindowTracker.scheduleSequenceNumberUpdate(
@@ -2241,7 +2228,7 @@ export class Container
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
-			this.context.processSignal(message, local);
+			this.runtime.processSignal(message, local);
 		}
 	}
 
@@ -2283,10 +2270,10 @@ export class Container
 	private async instantiateContext(
 		existing: boolean,
 		codeDetails: IFluidCodeDetails,
-		snapshot?: ISnapshotTree,
+		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
-		assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
+		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
@@ -2314,13 +2301,18 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		this._context = await ContainerContext.createOrLoad(
-			this,
+		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
+		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+
+		const context = new ContainerContext(
+			this.options,
 			this.scope,
-			runtimeFactory,
 			snapshot,
-			new DeltaManagerProxy(this._deltaManager),
-			new QuorumProxy(this.protocolHandler.quorum),
+			this._loadedFromVersion,
+			deltaManagerProxy,
+			this.storageAdapter,
+			quorumProxy,
+			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
@@ -2331,24 +2323,43 @@ export class Container
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
-			Container.version,
-			(dirty: boolean) => this.updateDirtyContainerState(dirty),
+			this.updateDirtyContainerState,
+			this.getAbsoluteUrl,
+			() => this.resolvedUrl?.id,
+			() => this.clientId,
+			() => deltaManagerProxy.serviceConfiguration,
+			() => this.attachState,
+			() => this.connected,
+			this._deltaManager.clientDetails,
 			existing,
+			this.subLogger,
 			pendingLocalState,
 		);
+		this._lifecycleEvents.once("disposed", () => {
+			context.dispose();
+			quorumProxy.dispose();
+			deltaManagerProxy.dispose();
+		});
+
+		this._runtime = await PerformanceEvent.timedExecAsync(
+			this.subLogger,
+			{ eventName: "InstantiateRuntime" },
+			async () => runtimeFactory.instantiateRuntime(context, existing),
+		);
+		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
 
 		this.emit("contextChanged", codeDetails);
 	}
 
-	private updateDirtyContainerState(dirty: boolean) {
+	private readonly updateDirtyContainerState = (dirty: boolean) => {
 		if (this._dirtyContainer === dirty) {
 			return;
 		}
 		this._dirtyContainer = dirty;
 		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-	}
+	};
 
 	/**
 	 * Set the connected state of the ContainerContext
@@ -2357,14 +2368,14 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(state: boolean, readonly: boolean): void {
-		if (this._context?.disposed === false) {
+		if (this._runtime?.disposed === false) {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.
 			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
 			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
 			 */
-			this.context.setConnectionState(state && !readonly, this.clientId);
+			this.runtime.setConnectionState(state && !readonly, this.clientId);
 		}
 	}
 }
