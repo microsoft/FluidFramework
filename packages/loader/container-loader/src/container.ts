@@ -2310,6 +2310,10 @@ export class Container
 		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
 		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
 
+		const getSpecifiedCodeDetails = () =>
+			(this.protocolHandler.quorum.get("code") ??
+				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
+
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
@@ -2336,6 +2340,7 @@ export class Container
 			() => deltaManagerProxy.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
+			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
