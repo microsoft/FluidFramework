@@ -2,32 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, EventForwarder, doIfNotDisposed } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import {
-	ICommittedProposal,
-	IQuorumClients,
-	IQuorumClientsEvents,
-	ISequencedClient,
-} from "@fluidframework/protocol-definitions";
-
-/**
- * Proxies Quorum events.
- */
-export class QuorumProxy extends EventForwarder<IQuorumClientsEvents> implements IQuorumClients {
-	public readonly getMembers: () => Map<string, ISequencedClient>;
-	public readonly getMember: (clientId: string) => ISequencedClient | undefined;
-
-	constructor(quorum: IQuorumClients) {
-		super(quorum);
-
-		// This is heavily used object, increase limit at which Node prints warnings.
-		super.setMaxListeners(50);
-
-		this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
-		this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
-	}
-}
+import { ICommittedProposal } from "@fluidframework/protocol-definitions";
 
 export function getCodeDetailsFromQuorumValues(
 	quorumValues: [string, ICommittedProposal][],
