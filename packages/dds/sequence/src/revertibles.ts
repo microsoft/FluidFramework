@@ -388,7 +388,7 @@ function getSlidePosition(
 	return slide?.segment !== undefined &&
 		slide.offset !== undefined &&
 		string.getPosition(slide.segment) !== -1 &&
-		(pos < 0 || pos > string.getLength())
+		(pos < 0 || pos >= string.getLength())
 		? string.getPosition(slide.segment) + slide.offset
 		: pos;
 }
@@ -396,9 +396,9 @@ function getSlidePosition(
 function isValidRange(start: number, end: number, string: SharedString) {
 	return (
 		start >= 0 &&
-		start <= string.getLength() - 1 &&
+		start < string.getLength() &&
 		end >= 0 &&
-		end <= string.getLength() - 1 &&
+		end < string.getLength() &&
 		start <= end
 	);
 }
