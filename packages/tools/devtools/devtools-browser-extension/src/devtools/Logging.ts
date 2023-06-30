@@ -26,16 +26,19 @@ export function formatDevtoolsScriptMessageForLogging(text: string): string {
 }
 
 /**
- * Logger that can be passed to the extension via a {@link @fluid-experimental/devtools-view#LoggerContext} to display
- * usage telemetry events from the extension with alert popups in the browser.
+ * Logger that writes any events it receives to the browser console and forwards them to a base logger.
  *
  * @remarks
- * Only intended for testing the extension during development. Since the extension runs in a separate context than the
- * current browser tab, console.log() does not display the messages anywhere we can use them for troubleshooting.
- * The current workaround is to use alert() to display them.
+ * Inside the extension, the console where these events are displayed is not the same one that displays messages from
+ * the current tab. The extension's console can be accessed by right-clicking somewhere on the rendered extension
+ * in the brower's devtools panel, selecting "Inspect", and switching to the Console tab.
  */
-export const alertTelemetryLogger: ITelemetryBaseLogger = {
-	send: (event: ITelemetryBaseEvent) => {
-		alert(JSON.stringify(event));
-	},
-};
+export class ConsoleLogger implements ITelemetryBaseLogger {
+
+	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) { }
+
+	public send(event: ITelemetryBaseEvent): void {
+		console.log(JSON.stringify(event));
+		this.baseLogger?.send(event);
+	}
+}
