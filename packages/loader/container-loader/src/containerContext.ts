@@ -71,10 +71,6 @@ export class ContainerContext implements IContainerContext {
 		return this._disposed;
 	}
 
-	public get quorum(): IQuorumClients {
-		return this._quorum;
-	}
-
 	constructor(
 		public readonly options: ILoaderOptions,
 		public readonly scope: FluidObject,
@@ -82,7 +78,7 @@ export class ContainerContext implements IContainerContext {
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		public readonly storage: IDocumentStorageService,
-		private readonly _quorum: IQuorumClients,
+		public readonly quorum: IQuorumClients,
 		public readonly audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
