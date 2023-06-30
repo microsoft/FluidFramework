@@ -29,7 +29,7 @@ describe("Rebasing", () => {
 		dataStoreRuntime.local = false;
 		const containerRuntime = factory.createContainerRuntime(dataStoreRuntime);
 		const services = {
-			deltaConnection: dataStoreRuntime.createDeltaConnection(),
+			deltaConnection: containerRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
