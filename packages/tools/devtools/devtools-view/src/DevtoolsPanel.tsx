@@ -9,7 +9,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { LoggerContext } from "./LoggerContext";
+import { ConsoleVerboseLogger, LoggerContext } from "./LoggerContext";
 
 /**
  * {@link DevtoolsPanel} input props.
@@ -43,8 +43,8 @@ export interface DevtoolsPanelProps {
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	const { usageTelemetryLogger, messageRelay } = props;
-	const topLevelLogger =
-		usageTelemetryLogger !== undefined ? ChildLogger.create(usageTelemetryLogger) : undefined;
+	const consoleLogger = new ConsoleVerboseLogger(usageTelemetryLogger);
+	const topLevelLogger = ChildLogger.create(consoleLogger);
 	topLevelLogger?.send({ eventName: "DevtoolsPanelRendered", category: "generic" });
 
 	return (

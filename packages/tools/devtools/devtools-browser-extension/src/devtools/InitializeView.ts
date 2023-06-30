@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import { DevtoolsPanel } from "@fluid-experimental/devtools-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
-import { formatDevtoolsScriptMessageForLogging, ConsoleLogger } from "./Logging";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 /**
  * Renders the Fluid Devtools view into the provided target element.
@@ -20,10 +20,7 @@ export async function initializeDevtoolsView(target: HTMLElement): Promise<void>
 	const connection = await BackgroundConnection.Initialize();
 
 	ReactDOM.render(
-		React.createElement(DevtoolsPanel, {
-			messageRelay: connection,
-			usageTelemetryLogger: new ConsoleLogger(),
-		}),
+		React.createElement(DevtoolsPanel, { messageRelay: connection }),
 		target,
 		() => {
 			console.log(
