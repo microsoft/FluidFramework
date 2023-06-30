@@ -25,6 +25,17 @@ export enum ThemeOption {
 	HighContrast = "High Contrast",
 }
 
+/**
+ * A map to convert selected theme property to more user friendly displayed value.
+ */
+type ThemeName = "light" | "dark" | "highContrast";
+
+const themeNameDisplayMap: Record<ThemeName, ThemeOption> = {
+	light: ThemeOption.Light,
+	dark: ThemeOption.Dark,
+	highContrast: ThemeOption.HighContrast,
+};
+
 const useStyles = makeStyles({
 	root: {
 		...shorthands.gap("10px"),
@@ -57,12 +68,11 @@ const useStyles = makeStyles({
 		fontWeight: "bold",
 	},
 });
-
 /**
  * Settings page for the devtools.
  */
 export function SettingsView(): React.ReactElement {
-	const { setTheme } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
 
 	const styles = useStyles();
 
@@ -107,7 +117,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					placeholder="Theme"
+					placeholder={themeNameDisplayMap[themeInfo.name as ThemeName]}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
