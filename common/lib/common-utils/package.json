@@ -76,6 +76,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@types/events": "^3.0.0",
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",

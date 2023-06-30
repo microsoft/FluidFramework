@@ -7196,6 +7196,7 @@ importers:
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-web-cache-previous': npm:@fluidframework/driver-web-cache@2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7215,6 +7216,7 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       idb: 6.1.5
@@ -7650,6 +7652,7 @@ importers:
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-base': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
@@ -7691,6 +7694,7 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -8069,6 +8073,7 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@microsoft/applicationinsights-web': ^2.8.11
@@ -8090,6 +8095,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@microsoft/applicationinsights-web': 2.8.13_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 1.2.0
@@ -8582,6 +8588,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -8611,6 +8618,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/fluid-static': link:../fluid-static
@@ -9753,6 +9761,7 @@ importers:
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0-169245
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup-previous': npm:@fluidframework/mocha-test-setup@2.0.0-internal.5.0.0
       '@fluidframework/test-driver-definitions': workspace:~
@@ -9769,6 +9778,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       mocha: 10.2.0
     devDependencies:
@@ -9925,6 +9935,7 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0-169245
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/test-driver-definitions': workspace:~
       '@types/mocha': ^9.1.1
@@ -9942,6 +9953,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       applicationinsights: 2.6.0
     devDependencies:
