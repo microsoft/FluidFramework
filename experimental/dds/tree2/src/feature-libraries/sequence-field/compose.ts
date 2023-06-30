@@ -24,6 +24,8 @@ import {
 	MoveId,
 	Revive,
 	Insert,
+	LineageEvent,
+	NoopMarkType,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -60,6 +62,10 @@ import {
 	markEmptiesCells,
 	splitMark,
 	markIsTransient,
+	GenerativeMark,
+	isGenerativeMark,
+	EmptyOutputCellMark,
+	TransientMark,
 } from "./utils";
 
 /**
@@ -181,18 +187,34 @@ function composeMarks<TNodeChange>(
 		composeChild,
 	);
 
-	const baseMarkIsTransient = markIsTransient(baseMark);
-	const newMarkIsTransient = markIsTransient(newMark);
-	if (baseMarkIsTransient || newMarkIsTransient) {
-		if (newMarkIsTransient) {
-			return withNodeChange(baseMark, nodeChange);
+	if (markIsTransient(newMark)) {
+		return withNodeChange(baseMark, nodeChange);
+	}
+	if (markIsTransient(baseMark)) {
+		if (isGenerativeMark(newMark)) {
+			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
+			const nonTransient = withNodeChange(
+				baseMark,
+				nodeChange,
+			) as GenerativeMark<TNodeChange>;
+			delete nonTransient.detachedBy;
+			return nonTransient;
 		}
-		// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
-		const nonTransient = withNodeChange(baseMark, nodeChange) as
-			| Insert<TNodeChange>
-			| Revive<TNodeChange>;
-		delete nonTransient.detachedBy;
-		return nonTransient;
+		// Modify and Placeholder marks must be muted because the node they target has been deleted.
+		// Detach marks must be muted because the cell is empty.
+		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
+			assert(
+				newMark.detachEvent !== undefined,
+				"Invalid node-targeting mark after transient",
+			);
+			return baseMark;
+		}
+		// - MoveIn marks are invalid in an existing cell.
+		assert(newMark.type !== "MoveIn", "Invalid MoveIn after transient");
+		// - ReturnTo marks are invalid in for a cell whose node has not been moved out.
+		assert(newMark.type !== "ReturnTo", "Invalid ReturnTo after transient");
+		assert(newMark.type === NoopMarkType, "Unexpected mark type after transient");
+		return baseMark;
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
@@ -286,11 +308,12 @@ function composeMarks<TNodeChange>(
 		}
 
 		assert(isDeleteMark(newMark), "Unexpected mark type");
+		assert(isGenerativeMark(baseMark), "Expected generative mark");
 		const newMarkRevision = newMark.revision ?? newRev;
 		assert(newMarkRevision !== undefined, "Unable to compose anonymous marks");
 		return withNodeChange(
 			{
-				...(baseMark as Insert<TNodeChange> | Revive<TNodeChange>),
+				...baseMark,
 				detachedBy: {
 					revision: newMarkRevision,
 					index: inputIndex.getIndex(newMarkRevision),
@@ -541,8 +564,17 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			let cmp: number;
 			if (markIsTransient(baseMark)) {
-				// TODO: call on `compareCellPositions` to determine ordering and overlap once it is fixed.
-				cmp = Infinity;
+				// Compiler seems to have trouble inferring that `baseMark` is a TransientMark<T>
+				const baseTransientMark = baseMark as TransientMark<T>;
+				cmp = compareCellPositions(
+					baseTransientMark.detachedBy,
+					baseTransientMark.lineage,
+					isNewAttach(baseTransientMark),
+					newMark,
+					this.newRevision,
+					this.cancelledInserts,
+					this.baseGap,
+				);
 			} else {
 				// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
 				// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
@@ -579,7 +611,8 @@ export class ComposeQueue<T> {
 				}
 				cmp = compareCellPositions(
 					baseCellId,
-					baseMark,
+					baseMark.lineage,
+					isNewAttach(baseMark),
 					newMark,
 					this.newRevision,
 					this.cancelledInserts,
@@ -819,7 +852,8 @@ function areInverseMovesAtIntermediateLocation(
  */
 function compareCellPositions(
 	baseCellId: DetachEvent,
-	baseMark: ExistingCellMark<unknown>,
+	baseLineage: readonly LineageEvent[] | undefined,
+	baseIsNewAttach: boolean,
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
@@ -843,7 +877,7 @@ function compareCellPositions(
 	}
 
 	if (newCellId !== undefined) {
-		const baseOffset = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
+		const baseOffset = getOffsetAtRevision(baseLineage, newCellId.revision);
 		if (baseOffset !== undefined) {
 			// BUG: `newCellId.revision` may not be the revision of a change in the composition.
 			const newOffset = gapTracker.getOffset(newCellId.revision);
@@ -866,7 +900,7 @@ function compareCellPositions(
 		}
 	}
 
-	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
+	const cmp = compareLineages(baseLineage, newMark.lineage);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
 	}
@@ -891,7 +925,7 @@ function compareCellPositions(
 	// because otherwise `baseMark` would have lineage refering to the emptying of the cell.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.
-	if (isNewAttach(baseMark)) {
+	if (baseIsNewAttach) {
 		return -Infinity;
 	}
 

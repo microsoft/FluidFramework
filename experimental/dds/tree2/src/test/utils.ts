@@ -439,6 +439,7 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				case Delta.MarkType.MoveOut:
 				case Delta.MarkType.MoveIn:
 				case Delta.MarkType.Delete:
+					return true;
 					break;
 				default:
 					unreachableCase(type);

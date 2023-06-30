@@ -58,9 +58,15 @@ export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAt
 	return mark.type === "Insert" || mark.type === "MoveIn";
 }
 
+export type GenerativeMark<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChange>;
+
+export type TransientMark<TNodeChange> = GenerativeMark<TNodeChange> & Transient;
+
+export type EmptyOutputCellMark<TNodeChange> = TransientMark<TNodeChange> | Detach<TNodeChange>;
+
 export function isGenerativeMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
-): mark is Insert<TNodeChange> | Revive<TNodeChange> {
+): mark is GenerativeMark<TNodeChange> {
 	return mark.type === "Insert" || mark.type === "Revive";
 }
 
@@ -189,7 +195,7 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function markIsTransient(mark: Mark<unknown>): mark is (Insert | Revive) & Transient {
+export function markIsTransient<T>(mark: Mark<T>): mark is TransientMark<T> {
 	return isGenerativeMark(mark) && mark.detachedBy !== undefined;
 }
 
@@ -279,7 +285,7 @@ export function isNoopMark(mark: Mark<unknown>): mark is NoopMark {
 }
 
 export function getOffsetAtRevision(
-	lineage: LineageEvent[] | undefined,
+	lineage: readonly LineageEvent[] | undefined,
 	reattachRevision: RevisionTag | undefined,
 ): number | undefined {
 	if (lineage === undefined || reattachRevision === undefined) {
@@ -812,15 +818,21 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			return [{ count: length }, { count: remainder }] as [TMark, TMark];
 		case "Modify":
 			fail("Unable to split Modify mark of length 1");
-		case "Insert":
-			return [
-				{ ...mark, content: mark.content.slice(0, length) },
-				{
-					...mark,
-					content: mark.content.slice(length),
-					id: (mark.id as number) + length,
-				},
-			];
+		case "Insert": {
+			const mark1: TMark = { ...mark, content: mark.content.slice(0, length) };
+			const mark2: TMark = {
+				...mark,
+				content: mark.content.slice(length),
+				id: (mark.id as number) + length,
+			};
+			if (mark.detachedBy !== undefined) {
+				(mark2 as Transient).detachedBy = {
+					revision: mark.detachedBy.revision,
+					index: mark.detachedBy.index + length,
+				};
+			}
+			return [mark1, mark2];
+		}
 		case "MoveIn":
 		case "ReturnTo": {
 			const mark1: TMark = { ...mark, count: length };
@@ -835,8 +847,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			return [mark1, mark2];
 		}
 		case "Revive": {
-			const mark1 = { ...mark, content: mark.content.slice(0, length), count: length };
-			const mark2 = {
+			const mark1: TMark = { ...mark, content: mark.content.slice(0, length), count: length };
+			const mark2: TMark = {
 				...mark,
 				content: mark.content.slice(length),
 				count: remainder,
@@ -845,7 +857,12 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			if (mark.detachEvent !== undefined) {
 				(mark2 as Revive).detachEvent = splitDetachEvent(mark.detachEvent, length);
 			}
-
+			if (mark.detachedBy !== undefined) {
+				(mark2 as Transient).detachedBy = {
+					revision: mark.detachedBy.revision,
+					index: mark.detachedBy.index + length,
+				};
+			}
 			return [mark1, mark2];
 		}
 		case "Delete": {
@@ -887,8 +904,8 @@ function splitDetachEvent(detachEvent: DetachEvent, length: number): DetachEvent
 }
 
 export function compareLineages(
-	lineage1: LineageEvent[] | undefined,
-	lineage2: LineageEvent[] | undefined,
+	lineage1: readonly LineageEvent[] | undefined,
+	lineage2: readonly LineageEvent[] | undefined,
 ): number {
 	if (lineage1 === undefined || lineage2 === undefined) {
 		return 0;

@@ -7,7 +7,17 @@ import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
-import { Changeset, Mark, MoveId, NodeChangeType, Reattach, ReturnFrom, ReturnTo } from "./format";
+import {
+	Changeset,
+	DetachEvent,
+	Insert,
+	Mark,
+	MoveId,
+	NodeChangeType,
+	Reattach,
+	ReturnFrom,
+	ReturnTo,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -53,34 +63,44 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-	): Changeset<never> =>
-		markAtIndex(index, {
+		detachedBy?: DetachEvent,
+	): Changeset<never> => {
+		const mark: Insert<never> = {
 			type: "Insert",
 			content: cursors.map(jsonableTreeFromCursor),
 			id,
-		}),
+		};
+		if (detachedBy !== undefined) {
+			mark.detachedBy = detachedBy;
+		}
+		return markAtIndex(index, mark);
+	},
 	delete: (index: number, count: number): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count }),
 	revive: (
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
+		detachEventRev: RevisionTag,
 		reviver: NodeReviver,
 		detachIndex?: number,
 		isIntention: boolean = false,
+		detachedBy?: DetachEvent,
 	): Changeset<never> => {
 		// Revives are typically created to undo a delete from the prior revision.
 		// When that's the case, we know the content used to be at the index at which it is being revived.
 		const computedDetachIndex = detachIndex ?? index;
-		const detachEvent = { revision: detachedBy, index: computedDetachIndex };
+		const detachEvent = { revision: detachEventRev, index: computedDetachIndex };
 		const mark: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachedBy, computedDetachIndex, count),
+			content: reviver(detachEventRev, computedDetachIndex, count),
 			count,
 			detachEvent,
 		};
 		if (!isIntention) {
-			mark.inverseOf = detachedBy;
+			mark.inverseOf = detachEventRev;
+		}
+		if (detachedBy !== undefined) {
+			mark.detachedBy = detachedBy;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},

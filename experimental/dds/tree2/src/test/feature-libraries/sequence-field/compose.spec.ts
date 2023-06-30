@@ -125,6 +125,81 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("transient insert ○ modify", () => {
+		const detach = {
+			revision: tag2,
+			index: 0,
+		};
+		const insert: SF.Insert<never> = {
+			type: "Insert",
+			content: [
+				{ type, value: 0 },
+				{ type, value: 1 },
+			],
+			id: brand(0),
+			detachedBy: detach,
+		};
+		const modify: SF.Modify<TestChange> = {
+			type: "Modify",
+			changes: TestChange.mint([], 42),
+			detachEvent: detach,
+		};
+		const actual = compose([makeAnonChange([insert]), makeAnonChange([modify])], revInfos);
+		assert.deepEqual(actual, [insert]);
+	});
+
+	it("transient revive ○ modify", () => {
+		const detach = {
+			revision: tag2,
+			index: 0,
+		};
+		const revive: SF.Revive<never> = {
+			type: "Revive",
+			detachEvent: {
+				revision: tag1,
+				index: 0,
+			},
+			count: 2,
+			content: [],
+			detachedBy: detach,
+		};
+		const modify: SF.Modify<TestChange> = {
+			type: "Modify",
+			changes: TestChange.mint([], 42),
+			detachEvent: detach,
+		};
+		const actual = compose([makeAnonChange([revive]), makeAnonChange([modify])], revInfos);
+		assert.deepEqual(actual, [revive]);
+	});
+
+	it("transient insert ○ revive & modify", () => {
+		const detach = {
+			revision: tag2,
+			index: 0,
+		};
+		const insert: SF.Insert<never> = {
+			type: "Insert",
+			content: [{ type, value: 0 }],
+			id: brand(0),
+			detachedBy: detach,
+		};
+		const revive: SF.Revive<TestChange> = {
+			type: "Revive",
+			changes: TestChange.mint([], 42),
+			detachEvent: detach,
+			count: 1,
+			content: fakeRepair(tag2, 0, 1),
+		};
+		const expected: SF.Insert<TestChange> = {
+			type: "Insert",
+			id: brand(0),
+			changes: TestChange.mint([], 42),
+			content: [{ type, value: 0 }],
+		};
+		const actual = compose([makeAnonChange([insert]), makeAnonChange([revive])], revInfos);
+		assert.deepEqual(actual, [expected]);
+	});
+
 	it("modify insert ○ modify", () => {
 		const childChangeA = TestChange.mint([0], 1);
 		const childChangeB = TestChange.mint([0, 1], 2);
