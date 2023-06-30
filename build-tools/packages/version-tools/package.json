@@ -74,7 +74,7 @@
 		"@oclif/plugin-not-found": "^2.3.25",
 		"@oclif/plugin-plugins": "^3.1.2",
 		"chalk": "^2.4.2",
-		"semver": "^7.5.1",
+		"semver": "^7.5.3",
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
