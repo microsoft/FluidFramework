@@ -18,10 +18,22 @@ There are some circumstances where a consumer may wish to know if a segment is s
 
 Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
 
-## Deprecate ISegment.parent
+## slide parameter in changeInterval event
 
-This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
+The changeInterval event listener has a new parameter "slide" that is true if the event was caused by the interval endpoint sliding from a removed range.
 
-There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
+## IContainerContext members deprecated
 
-Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
+IContainerContext members disposed, dispose(), serviceConfiguration, and id have been deprecated and will be removed in an upcoming release.
+
+disposed - The disposed state on the IContainerContext is not meaningful to the runtime.
+
+dispose() - The runtime is not permitted to dispose the IContainerContext, this results in an inconsistent system state.
+
+serviceConfiguration - This property is redundant, and is unused by the runtime. The same information can be found via `deltaManager.serviceConfiguration` on this object if it is necessary.
+
+id - The docId is already logged by the IContainerContext.taggedLogger for telemetry purposes, so this is generally unnecessary for telemetry. If the id is needed for other purposes it should be passed to the consumer explicitly.
+
+## EventForwarder and IDisposable members deprecated from PureDataObject
+
+The EventForwarder and IDisposable members have been deprecated from PureDataObject and will be removed in an upcoming release. The EventForwarder pattern was mostly unused by the current implementation, and is also recommended against generally (instead, register and forward events explicitly). The disposal implementation was incomplete and likely to cause poor behavior as the disposal was not observable by default. Inheritors of the PureDataObject can of course still implement their own disposal logic.

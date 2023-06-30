@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
