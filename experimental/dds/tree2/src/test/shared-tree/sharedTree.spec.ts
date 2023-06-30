@@ -1817,7 +1817,10 @@ describe("SharedTree", () => {
 				parentField: rootFieldKeySymbol,
 				parentIndex: 0,
 			};
-			const foo2Editor = tree1.editor.sequenceField({ parent: rootPath, field: brand("foo2") });
+			const foo2Editor = tree1.editor.sequenceField({
+				parent: rootPath,
+				field: brand("foo2"),
+			});
 			// edit 1
 			let readCursor = tree1.forest.allocateCursor();
 			moveToDetachedField(tree1.forest, readCursor);
@@ -1825,7 +1828,10 @@ describe("SharedTree", () => {
 			readCursor.free();
 			runSynchronous(tree1, () => {
 				foo2Editor.delete(1, 1);
-				foo2Editor.insert(1, singleTextCursor({ type: brand("Number"), value: 7419365656138425 }));
+				foo2Editor.insert(
+					1,
+					singleTextCursor({ type: brand("Number"), value: 7419365656138425 }),
+				);
 			});
 			readCursor = tree1.forest.allocateCursor();
 			moveToDetachedField(tree1.forest, readCursor);
@@ -1924,7 +1930,10 @@ describe("SharedTree", () => {
 			readCursor.free();
 			runSynchronous(tree2, () => {
 				foo2Editor.delete(0, 1);
-				foo2Editor.insert(0, singleTextCursor({ type: brand("Number"), value: -3697253287396999 }));
+				foo2Editor.insert(
+					0,
+					singleTextCursor({ type: brand("Number"), value: -3697253287396999 }),
+				);
 			});
 			readCursor = tree2.forest.allocateCursor();
 			moveToDetachedField(tree2.forest, readCursor);
