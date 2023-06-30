@@ -5,8 +5,6 @@
 
 /**
  * Base interface for objects that require lifetime management via explicit disposal.
- *
- * @deprecated Moved to the `@fluidframework/core-interfaces` package.
  */
 export interface IDisposable {
 	/**
