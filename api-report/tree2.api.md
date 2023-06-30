@@ -1289,16 +1289,16 @@ interface LocalFields {
 }
 
 // @alpha
-export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
-
-// @alpha
-export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
-
-// @alpha
 export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
 
 // @alpha
 export const localNodeKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
+
+// @alpha
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
 // @alpha
 interface MakeNominal {
