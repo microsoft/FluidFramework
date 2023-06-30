@@ -96,6 +96,15 @@
 			},
 			"EnumDeclaration_MessageType": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IQuorum": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IQuorumClients": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IQuorumProposals": {
+				"backCompat": false
 			}
 		}
 	}
