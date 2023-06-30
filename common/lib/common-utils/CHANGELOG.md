@@ -4,8 +4,8 @@
 
 ### Deprecated classes and functions
 
-The following classes, functions, and types are deprecated in this release. The implementations have been moved to other
-packages.
+The following classes, functions, and types are deprecated in this release. In some cases, the implementations have been
+moved to other packages.
 
 #### Moved to @fluidframework/core-utils
 
@@ -14,8 +14,8 @@ packages.
 -   class PromiseCache<TKey, TResult>
 -   type PromiseCacheExpiry
 -   interface PromiseCacheOptions
--   class RateLimiter
 
-#### Moved to @fluidframework/container-loader
+#### Deprecated with no replacement
 
 -   function doIfNotDisposed
+-   class RateLimiter

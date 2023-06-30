@@ -11,7 +11,11 @@ import { IDisposable } from "@fluidframework/common-definitions";
  *
  * @throws Will throw an error if the item has already been disposed.
  *
- * @deprecated Moved to the `@fluidframework/container-loader` package.
+ * @deprecated This function has no replacement.
+ *
+ * @privateremarks
+ * This function is used in the container-loader package, so the implementation was moved there but it is no longer
+ * exported.
  */
 export function doIfNotDisposed<T>(
 	disposable: IDisposable,
