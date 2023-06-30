@@ -546,7 +546,6 @@ export function findRootMergeBlock(
 }
 
 /**
- * @remarks Must only be used by client.
  * @param segment - The segment to slide from.
  * @param cache - Optional cache mapping segments to their sliding destinations.
  * Excursions will be avoided for segments in the cache, and the cache will be populated with
@@ -557,7 +556,7 @@ export function findRootMergeBlock(
  * valid segment (i.e. the tree is empty).
  * @internal
  */
-export function _getSlideToSegment(
+export function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
