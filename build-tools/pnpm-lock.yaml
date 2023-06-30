@@ -81,7 +81,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.51
       '@types/prompts': ^2.4.4
-      '@types/semver': 7.5.0
+      '@types/semver': ^7.5.0
       '@types/semver-utils': ^1.1.1
       '@types/sort-json': ^2.0.1
       async: ^3.2.4
@@ -221,7 +221,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.51
       '@types/rimraf': ^2.0.5
-      '@types/semver': 7.5.0
+      '@types/semver': ^7.5.0
       '@types/shelljs': ^0.8.12
       async: ^3.2.4
       chalk: ^2.4.2
@@ -364,7 +364,7 @@ importers:
       '@types/chai-arrays': ^2.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.51
-      '@types/semver': 7.5.0
+      '@types/semver': ^7.5.0
       chai: ^4.3.7
       chai-arrays: ^2.2.0
       concurrently: ^7.6.0
@@ -437,7 +437,7 @@ importers:
       '@types/chai': ^4.3.5
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.51
-      '@types/semver': 7.5.0
+      '@types/semver': ^7.5.0
       chai: ^4.3.7
       chalk: ^2.4.2
       concurrently: ^7.6.0

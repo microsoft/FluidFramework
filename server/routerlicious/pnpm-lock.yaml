@@ -117,7 +117,7 @@ importers:
       '@types/mocha': ^10.0.1
       '@types/nconf': ^0.10.2
       '@types/node': ^16.18.16
-      '@types/semver': 7.5.0
+      '@types/semver': ^7.5.0
       '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
       assert: ^2.0.0
