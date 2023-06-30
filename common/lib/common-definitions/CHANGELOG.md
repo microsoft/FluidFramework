@@ -8,15 +8,15 @@ The following interfaces and types are deprecated in this release. Its replaceme
 
 #### Moved to @fluidframework/core-interfaces
 
--	interface IDisposable
--	interface ILoggingError
--	interface ITaggedTelemetryPropertyType
--	interface ITelemetryBaseEvent
--	interface ITelemetryBaseLogger
--	interface ITelemetryErrorEvent
--	interface ITelemetryGenericEvent
--	interface ITelemetryLogger
--	interface ITelemetryPerformanceEvent
--	interface ITelemetryProperties
--	type TelemetryEventCategory
--	type TelemetryEventPropertyType
+-   interface IDisposable
+-   interface ILoggingError
+-   interface ITaggedTelemetryPropertyType
+-   interface ITelemetryBaseEvent
+-   interface ITelemetryBaseLogger
+-   interface ITelemetryErrorEvent
+-   interface ITelemetryGenericEvent
+-   interface ITelemetryLogger
+-   interface ITelemetryPerformanceEvent
+-   interface ITelemetryProperties
+-   type TelemetryEventCategory
+-   type TelemetryEventPropertyType
