@@ -107,7 +107,7 @@ export class ADOSizeComparator {
 			if (baselineBuild === undefined) {
 				baselineCommit = fallbackGen?.next().value;
 				console.log(
-					`Trying backup baseline commit when baseline build is undefined ${baselineCommit}`,
+					`Trying backup baseline commit when baseline build is "UNDEFINED": ${baselineCommit}`,
 				);
 				continue;
 			}
@@ -162,7 +162,7 @@ export class ADOSizeComparator {
 				return undefined;
 			});
 
-			console.log(`Baseline Zip === undefined: ${baselineZip === undefined}`);
+			console.log(`Baseline Zip === "UNDEFINED": ${baselineZip === undefined}`);
 
 			// Successful baseline build does not have the needed build artifacts
 			if (baselineZip === undefined) {
@@ -185,7 +185,7 @@ export class ADOSizeComparator {
 		}
 
 		const comparison: BundleComparison[] = await this.createComparisonFromZip(
-			baselineCommit,
+			// baselineCommit,
 			baselineZip,
 		);
 		console.log(JSON.stringify(comparison));
@@ -213,7 +213,7 @@ export class ADOSizeComparator {
 	}
 
 	private async createComparisonFromZip(
-		baselineCommit: string,
+		// baselineCommit: string,
 		baselineZip: JSZip,
 	): Promise<BundleComparison[]> {
 		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
