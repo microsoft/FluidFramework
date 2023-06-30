@@ -14,19 +14,19 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 		);
 	}
 
-	const matchingAsset = stats.assets.find((asset) => {
+	const matchingAssets = stats.assets.filter((asset) => {
 		// Make sure to only look at js files and not source maps (assumes source maps don't end in .js)
 		if (asset.name.endsWith(".js")) {
-			// Assumes only a single chunk per asset, this may not hold for all apps.
-			return asset.chunks?.[0] === chunkId;
+			return asset.chunks?.includes(chunkId);
 		}
 
 		return false;
 	});
 
-	if (matchingAsset === undefined) {
+	if (matchingAssets.length === 0) {
 		throw new Error(`Could not find asset for chunk with id '${chunkId}' in the webpack stats`);
 	}
 
-	return matchingAsset.size;
+	const totalSize = matchingAssets.reduce((acc, asset) => acc + asset.size, 0);
+	return totalSize;
 }
