@@ -386,7 +386,9 @@ function getSlidePosition(
 	pos: number,
 ): number {
 	const slide = _getSlideToSegment(lref.getSegment(), lref.slidingPreference);
-	return slide !== undefined && string.getPosition(slide) !== -1
+	return slide !== undefined &&
+		string.getPosition(slide) !== -1 &&
+		(pos < 0 || pos >= string.getLength())
 		? string.getPosition(slide)
 		: pos;
 }
