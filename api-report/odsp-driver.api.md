@@ -27,7 +27,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
-import { PromiseCache } from '@fluidframework/common-utils';
+import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';

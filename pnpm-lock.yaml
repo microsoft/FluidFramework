@@ -10467,6 +10467,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -10520,6 +10521,7 @@ importers:
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/counter': link:../../dds/counter
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
