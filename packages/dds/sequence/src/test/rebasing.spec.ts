@@ -10,9 +10,9 @@ import {
 	MockContainerRuntimeForRebasing,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForRebasing;
@@ -53,13 +53,12 @@ describe("Rebasing", () => {
 	it("Rebasing ops maintains eventual consistency", async () => {
 		sharedString1.insertText(0, "ad");
 		sharedString1.insertText(1, "c");
-		containerRuntimeFactory.processOneMessage();
-		containerRuntime2.rebase();
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 				sharedString2.insertText(3, "x");
+				containerRuntimeFactory.processOneMessage();
 				containerRuntime2.rebase();
 			}
 		});
@@ -67,12 +66,13 @@ describe("Rebasing", () => {
 		sharedString1.insertText(1, "b");
 		sharedString2.insertText(0, "y");
 		containerRuntime2.rebase();
+
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString2.insertText(0, "z");
 		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(sharedString1.getText(), "zyaxbcd");
+		assert.strictEqual(sharedString1.getText(), "zyabxcd");
 		assert.strictEqual(
 			sharedString1.getText(),
 			sharedString2.getText(),

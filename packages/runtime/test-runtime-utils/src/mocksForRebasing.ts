@@ -16,7 +16,8 @@ import {
  * ops to the datastores and all ops within the same batch will have the same sequence number.
  */
 export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
-	private readonly currentBatch: ITrackableMessage[] = [];
+	private submitted: number = 0;
+	private processed: number = 0;
 
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -27,12 +28,13 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	public process(message: ISequencedDocumentMessage) {
-		// Processing ops will happen in a separate JS turn, so by then, we'd increase
-		// the sequence number and flush the current batch.
+		// We've processed something, therefore the current batch has ended
 		this.clientSequenceNumber++;
-		this.currentBatch.splice(0);
 
 		super.process(message);
+		if (this.clientId === message.clientId) {
+			this.processed++;
+		}
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {
@@ -43,7 +45,7 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 			timesSubmitted: 0,
 		};
 		this.submitInternal(message);
-		this.currentBatch.push(message);
+		this.submitted++;
 
 		// Messages in the same batch will have the same clientSequenceNumber
 		return this.clientSequenceNumber;
@@ -69,9 +71,11 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	public rebase() {
-		this.currentBatch.forEach((message) =>
-			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
-		);
+		this.pendingMessages
+			.slice(this.submitted - this.processed)
+			.forEach((message) =>
+				this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
+			);
 	}
 }
 
