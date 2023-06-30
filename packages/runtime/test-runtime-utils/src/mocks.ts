@@ -124,17 +124,14 @@ export class MockContainerRuntime {
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
+		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
-				this.submit(messageContent, localOpMetadata),
-			() => this.dirty(),
-		);
+		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
@@ -165,6 +162,7 @@ export class MockContainerRuntime {
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
+		this.dataStoreRuntime.process(message, local, localOpMetadata);
 	}
 
 	protected addPendingMessage(
@@ -434,6 +432,17 @@ export class MockFluidDataStoreRuntime
 		"fluid:MockFluidDataStoreRuntime",
 	);
 	public quorum = new MockQuorumClients();
+	public containerRuntime?: MockContainerRuntime;
+	private readonly deltaConnections: MockDeltaConnection[] = [];
+	public createDeltaConnection(): MockDeltaConnection {
+		const deltaConnection = new MockDeltaConnection(
+			(messageContent: any, localOpMetadata: unknown) =>
+				this.submitMessage(messageContent, localOpMetadata),
+			() => this.setChannelDirty(),
+		);
+		this.deltaConnections.push(deltaConnection);
+		return deltaConnection;
+	}
 
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
@@ -522,16 +531,22 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	public submitMessage(type: MessageType, content: any) {
-		return null;
+	private submitMessage(messageContent: any, localOpMetadata: unknown): number {
+		return this.containerRuntime?.submit(messageContent, localOpMetadata) ?? 0;
+	}
+
+	private setChannelDirty(): void {
+		return this.containerRuntime?.dirty();
 	}
 
 	public submitSignal(type: string, content: any) {
 		return null;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean): void {
-		return;
+	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+		this.deltaConnections.forEach((dc) => {
+			dc.process(message, local, localOpMetadata);
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {
@@ -608,7 +623,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.submit(content, localOpMetadata);
+		});
 	}
 
 	public async applyStashedOp(content: any) {

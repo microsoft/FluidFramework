@@ -69,7 +69,9 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	public rebase() {
-		this.currentBatch.forEach((message) => this.submitInternal(message));
+		this.currentBatch.forEach((message) =>
+			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
+		);
 	}
 }
 

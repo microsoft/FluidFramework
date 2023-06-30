@@ -99,6 +99,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			this.deltaConnections.forEach((dc) => {
 				dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			});
+			this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			messageCount--;
 		}
 	}
