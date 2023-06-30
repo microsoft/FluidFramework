@@ -88,7 +88,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
-	isEmpty: (change) => change.fieldChanges === undefined && change.valueChange === undefined,
+	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
 const singleNodeField = new FieldKind(
@@ -163,10 +163,6 @@ const nodeChange3: NodeChangeset = {
 	fieldChanges: new Map([
 		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
 	]),
-	valueConstraint: {
-		value: "a",
-		violated: false,
-	},
 };
 
 const rootChange1a: ModularChangeset = {
@@ -268,40 +264,6 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
-			},
-		],
-	]),
-};
-
-const testValue = "Test Value";
-const nodeValueOverwrite: ModularChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(
-					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { value: testValue },
-					}),
-				),
-			},
-		],
-	]),
-};
-
-const detachedBy = mintRevisionTag();
-const nodeValueRevert: ModularChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(
-					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { value: testValue },
-					}),
-				),
 			},
 		],
 	]),
@@ -444,22 +406,9 @@ describe("ModularChangeFamily", () => {
 				change: brand(valueChange1a),
 			};
 
-			const value1 = "Value 1";
-			const nodeChange1: NodeChangeset = {
-				valueChange: { value: value1 },
-			};
-
-			const change1B: FieldChange = {
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeChange1),
-			};
-
 			const change1: TaggedChange<ModularChangeset> = tagChange(
 				{
-					fieldChanges: new Map([
-						[fieldA, change1A],
-						[fieldB, change1B],
-					]),
+					fieldChanges: new Map([[fieldA, change1A]]),
 				},
 				tag1,
 			);
@@ -494,7 +443,6 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expectedNodeChange: NodeChangeset = {
-				valueChange: { revision: change1.revision, value: value1 },
 				fieldChanges: new Map([
 					[
 						fieldA,
@@ -614,14 +562,14 @@ describe("ModularChangeFamily", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
 					type: Delta.MarkType.Modify,
-					setValue: 1,
+					// setValue: 1,
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
 					type: Delta.MarkType.Modify,
-					setValue: 2,
+					// setValue: 2,
 				},
 			];
 
@@ -638,29 +586,6 @@ describe("ModularChangeFamily", () => {
 			]);
 
 			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
-		});
-
-		it("value overwrite", () => {
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					setValue: testValue,
-				},
-			];
-			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
-			assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
-		});
-
-		it("value revert", () => {
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					setValue: testValue,
-				},
-			];
-			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
-			const actual = family.intoDelta(nodeValueRevert);
-			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 
@@ -702,20 +627,6 @@ describe("ModularChangeFamily", () => {
 		};
 
 		assert.deepEqual(changes, [expectedChange]);
-	});
-
-	it("build value change", () => {
-		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver, new AnchorSet());
-		const path: UpPath = {
-			parent: undefined,
-			parentField: fieldA,
-			parentIndex: 0,
-		};
-
-		editor.setValue(path, testValue);
-		const changes = getChanges();
-		assert.deepEqual(changes, [nodeValueOverwrite]);
 	});
 
 	it("Revision metadata", () => {
