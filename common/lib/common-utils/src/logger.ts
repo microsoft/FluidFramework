@@ -10,7 +10,7 @@ import {
 	ITelemetryGenericEvent,
 	ITelemetryLogger,
 	ITelemetryPerformanceEvent,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/common-definitions";
 
 /**
  * Null logger
