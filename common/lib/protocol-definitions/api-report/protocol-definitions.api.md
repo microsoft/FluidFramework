@@ -212,10 +212,6 @@ export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Om
 
 // @public
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
@@ -235,10 +231,6 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 // @public
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     get(key: string): unknown;
     // (undocumented)
