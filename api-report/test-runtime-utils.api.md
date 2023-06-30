@@ -420,7 +420,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly connected = true;
     // (undocumented)
+    containerRuntime?: MockContainerRuntime;
+    // (undocumented)
     createChannel(id: string, type: string): IChannel;
+    // (undocumented)
+    createDeltaConnection?(): MockDeltaConnection;
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
@@ -473,7 +477,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly path = "";
     // (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)

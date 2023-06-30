@@ -131,7 +131,13 @@ export class MockContainerRuntime {
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
+		const deltaConnection =
+			this.dataStoreRuntime.createDeltaConnection?.() ??
+			new MockDeltaConnection(
+				(messageContent: any, localOpMetadata: unknown) =>
+					this.submit(messageContent, localOpMetadata),
+				() => this.dirty(),
+			);
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
@@ -434,10 +440,10 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
-	public createDeltaConnection(): MockDeltaConnection {
+	public createDeltaConnection?(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
-				this.submitMessage(messageContent, localOpMetadata),
+				this.submitMessageInternal(messageContent, localOpMetadata),
 			() => this.setChannelDirty(),
 		);
 		this.deltaConnections.push(deltaConnection);
@@ -531,8 +537,12 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	private submitMessage(messageContent: any, localOpMetadata: unknown): number {
+	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
 		return this.containerRuntime?.submit(messageContent, localOpMetadata) ?? 0;
+	}
+
+	public submitMessage(type: MessageType, content: any) {
+		return null;
 	}
 
 	private setChannelDirty(): void {
