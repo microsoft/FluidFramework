@@ -17,6 +17,7 @@ import {
 	TableColumnSizingOptions,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
+	TableBody,
 } from "@fluentui/react-components";
 import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
@@ -105,6 +106,8 @@ interface DataRowProps {
 
 /**
  * Displays a row with basic stats about the Container.
+ *
+ * @remarks {@link DataRowProps.value} will be wrapped in a <TableCell /> so it shouldn't have one itself.
  */
 function DataRow(props: DataRowProps): React.ReactElement {
 	const { label, infoTooltipContent, value, columnProps } = props;
@@ -132,42 +135,40 @@ function DataRow(props: DataRowProps): React.ReactElement {
 
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	return (
-		<TableCell>
-			<TableCellLayout
-				media={((): JSX.Element => {
-					switch (statusComponents[0]) {
-						case AttachState.Attaching:
-							return (
-								<Badge shape="rounded" color="warning">
-									{statusComponents[0]}
-								</Badge>
-							);
-						case AttachState.Detached:
-							return (
-								<Badge shape="rounded" color="danger">
-									{statusComponents[0]}
-								</Badge>
-							);
-						default:
-							return (
-								<Badge shape="rounded" color="success">
-									{statusComponents[0]}
-								</Badge>
-							);
-					}
-				})()}
-			>
-				{statusComponents[1] === "Connected" ? (
-					<Badge shape="rounded" color="success">
-						{statusComponents[1]}
-					</Badge>
-				) : (
-					<Badge shape="rounded" color="danger">
-						{statusComponents[1]}
-					</Badge>
-				)}
-			</TableCellLayout>
-		</TableCell>
+		<TableCellLayout
+			media={((): JSX.Element => {
+				switch (statusComponents[0]) {
+					case AttachState.Attaching:
+						return (
+							<Badge shape="rounded" color="warning">
+								{statusComponents[0]}
+							</Badge>
+						);
+					case AttachState.Detached:
+						return (
+							<Badge shape="rounded" color="danger">
+								{statusComponents[0]}
+							</Badge>
+						);
+					default:
+						return (
+							<Badge shape="rounded" color="success">
+								{statusComponents[0]}
+							</Badge>
+						);
+				}
+			})()}
+		>
+			{statusComponents[1] === "Connected" ? (
+				<Badge shape="rounded" color="success">
+					{statusComponents[1]}
+				</Badge>
+			) : (
+				<Badge shape="rounded" color="danger">
+					{statusComponents[1]}
+				</Badge>
+			)}
+		</TableCellLayout>
 	);
 }
 
@@ -304,24 +305,26 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			</div>
 			<div>
 				<Table size="extra-small" ref={tableRef}>
-					<DataRow
-						label="Status"
-						infoTooltipContent={containerStatusTooltipText}
-						value={containerStatusValueCell(statusComponents)}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="Client ID"
-						infoTooltipContent={clientIdTooltipText}
-						value={containerState.clientId}
-						columnProps={columnSizing_unstable}
-					/>
-					<DataRow
-						label="User ID"
-						infoTooltipContent={userIdTooltipText}
-						value={containerState.userId}
-						columnProps={columnSizing_unstable}
-					/>
+					<TableBody>
+						<DataRow
+							label="Status"
+							infoTooltipContent={containerStatusTooltipText}
+							value={containerStatusValueCell(statusComponents)}
+							columnProps={columnSizing_unstable}
+						/>
+						<DataRow
+							label="Client ID"
+							infoTooltipContent={clientIdTooltipText}
+							value={containerState.clientId}
+							columnProps={columnSizing_unstable}
+						/>
+						<DataRow
+							label="User ID"
+							infoTooltipContent={userIdTooltipText}
+							value={containerState.userId}
+							columnProps={columnSizing_unstable}
+						/>
+					</TableBody>
 				</Table>
 			</div>
 			<div className={styles.actions}>
