@@ -42,7 +42,12 @@ export {
 	LocalReferencePosition,
 	SlidingPreference,
 } from "./localReference";
-export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
+export {
+	AttributionPolicy,
+	IMergeTreeAttributionOptions,
+	IMergeTreeOptions,
+	_getSlideToSegment,
+} from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,

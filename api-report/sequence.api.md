@@ -136,11 +136,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
-    // (undocumented)
-    getSlideToSegment(lref: LocalReferencePosition): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    } | undefined;
     map(fn: (interval: TInterval) => void): void;
     // (undocumented)
     nextInterval(pos: number): TInterval | undefined;

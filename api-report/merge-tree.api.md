@@ -297,6 +297,11 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
+// @internal (undocumented)
+export function _getSlideToSegment(segment: ISegment | undefined, slidingPreference?: SlidingPreference, cache?: Map<ISegment, {
+    seg?: ISegment;
+}>): ISegment | undefined;
+
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
     // @internal (undocumented)

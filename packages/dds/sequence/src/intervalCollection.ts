@@ -1882,10 +1882,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	previousInterval(pos: number): TInterval | undefined;
 
 	nextInterval(pos: number): TInterval | undefined;
-
-	getSlideToSegment(
-		lref: LocalReferencePosition,
-	): { segment: ISegment | undefined; offset: number | undefined } | undefined;
 }
 
 /**
@@ -2535,7 +2531,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	public getSlideToSegment(
+	private getSlideToSegment(
 		lref: LocalReferencePosition,
 	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
 		if (!this.client) {

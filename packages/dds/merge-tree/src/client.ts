@@ -60,7 +60,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { MergeTree, _getSlideToSegment } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
@@ -1084,7 +1084,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (segoff.segment === undefined) {
 			return segoff;
 		}
-		const segment = this._mergeTree._getSlideToSegment(segoff.segment);
+		const segment = _getSlideToSegment(segoff.segment);
 		if (segment === segoff.segment) {
 			return segoff;
 		}
