@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.20.0",
+	"version": "0.21.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"minimatch": "^7.4.6",
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.1",
-		"semver": "^7.5.1",
+		"semver": "^7.5.3",
 		"shelljs": "^0.8.5",
 		"sort-package-json": "1.57.0",
 		"ts-morph": "^17.0.1",

@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { tokens } from "@fluentui/react-components";
-
+import { ThemeContext } from "../../ThemeHelper";
 import { HasLabel } from "./CommonInterfaces";
 
 /**
@@ -31,15 +31,26 @@ export interface TreeHeaderProps extends HasLabel {
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, inlineValue, metadata } = props;
 
+	const { themeInfo } = React.useContext(ThemeContext);
+
 	return (
 		<div style={{ width: "auto" }}>
 			{`${label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
+			<span
+				style={{
+					color:
+						themeInfo.name === "highContrast" ? "" : tokens.colorPaletteRedBorderActive,
+					fontSize: "10px",
+				}}
+			>
 				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
 			<span
 				style={{
-					color: tokens.colorPalettePlatinumBorderActive,
+					color:
+						themeInfo.name === "highContrast"
+							? ""
+							: tokens.colorPalettePlatinumBorderActive,
 					fontStyle: "oblique",
 					fontSize: "10px",
 				}}

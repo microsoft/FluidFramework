@@ -4,11 +4,11 @@
  */
 
 import {
-	IDisposable,
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,

@@ -39,17 +39,8 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
-import {
-	makeOptionalFieldCodecFamily,
-	makeValueFieldCodecFamily,
-	noChangeCodecFamily,
-} from "./defaultFieldChangeCodecs";
-import {
-	ValueChangeset,
-	NodeUpdate,
-	OptionalChangeset,
-	OptionalFieldChange,
-} from "./defaultFieldChangeTypes";
+import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
+import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
 /**
  * @alpha
@@ -152,136 +143,12 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	isEmpty: (change: 0) => true,
 };
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
-	compose: (
-		changes: TaggedChange<ValueChangeset>[],
-		composeChildren: NodeChangeComposer,
-	): ValueChangeset => {
-		if (changes.length === 0) {
-			return {};
-		}
-		let newValue: NodeUpdate | undefined;
-		const childChanges: TaggedChange<NodeChangeset>[] = [];
-		for (const { change, revision } of changes) {
-			if (change.value !== undefined) {
-				newValue = change.value;
-
-				// The previous changes applied to a different value, so we discard them.
-				// TODO: Consider if we should represent muted changes
-				childChanges.length = 0;
-			}
-
-			if (change.changes !== undefined) {
-				childChanges.push(tagChange(change.changes, revision));
-			}
-		}
-
-		const composed: ValueChangeset = {};
-		if (newValue !== undefined) {
-			composed.value = newValue;
-		}
-
-		if (childChanges.length > 0) {
-			composed.changes = composeChildren(childChanges);
-		}
-
-		return composed;
-	},
-
-	amendCompose: () => fail("Not implemented"),
-
-	invert: (
-		{ revision, change }: TaggedChange<ValueChangeset>,
-		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
-	): ValueChangeset => {
-		const inverse: ValueChangeset = {};
-		if (change.changes !== undefined) {
-			inverse.changes = invertChild(change.changes, 0);
-		}
-		if (change.value !== undefined) {
-			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
-			inverse.value = {
-				revert: reviver(revision, 0, 1)[0],
-				// KLUDGE: Value field changes don't have local IDs so we use an arbitrary value.
-				// TODO: Either delete the value field implementation or give its changes some local IDs.
-				changeId: { revision, localId: brand(42) },
-			};
-		}
-		return inverse;
-	},
-
-	amendInvert: () => fail("Not implemnted"),
-
-	rebase: (
-		change: ValueChangeset,
-		over: TaggedChange<ValueChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	): ValueChangeset => {
-		if (change.changes === undefined || over.change.changes === undefined) {
-			return change;
-		}
-		return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
-	},
-
-	amendRebase: (
-		change: ValueChangeset,
-		over: TaggedChange<ValueChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	) => ({ ...change, changes: rebaseChild(change.changes, over.change.changes) }),
-};
-
-export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 */
-	set(newValue: ITreeCursor): ValueChangeset;
+	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
 }
-
-const valueFieldEditor: ValueFieldEditor = {
-	buildChildChange: (index, change) => {
-		assert(index === 0, 0x3b6 /* Value fields only support a single child node */);
-		return { changes: change };
-	},
-
-	set: (newValue: ITreeCursor) => ({ value: { set: jsonableTreeFromCursor(newValue) } }),
-};
-
-const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
-	rebaser: valueRebaser,
-	codecsFactory: makeValueFieldCodecFamily,
-	editor: valueFieldEditor,
-
-	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
-		if (change.value !== undefined) {
-			const newValue: ITreeCursorSynchronous =
-				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
-			const insertDelta = deltaFromInsertAndChange(newValue, change.changes, deltaFromChild);
-			return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
-		}
-
-		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
-	},
-
-	isEmpty: (change: ValueChangeset) => change.changes === undefined && change.value === undefined,
-};
-
-/**
- * Exactly one item.
- */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
-	brandedFieldKind(
-		"Value",
-		Multiplicity.Value,
-		valueChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeKey.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set(),
-	);
 
 const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
@@ -590,6 +457,35 @@ function deltaForDelete(
 	return [deleteDelta];
 }
 
+function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
+	if (change.fieldChange === undefined) {
+		if (change.deletedBy === undefined && change.childChange !== undefined) {
+			return [deltaFromChild(change.childChange)];
+		}
+		return [];
+	}
+
+	const deleteDelta = deltaForDelete(
+		!change.fieldChange.wasEmpty,
+		change.deletedBy === undefined ? change.childChange : undefined,
+		deltaFromChild,
+	);
+
+	const update = change.fieldChange?.newContent;
+	let content: ITreeCursorSynchronous | undefined;
+	if (update === undefined) {
+		content = undefined;
+	} else if ("set" in update) {
+		content = singleTextCursor(update.set);
+	} else {
+		content = update.revert;
+	}
+
+	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
+
+	return [...deleteDelta, ...insertDelta];
+}
+
 /**
  * 0 or 1 items.
  */
@@ -602,39 +498,8 @@ export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, Optio
 			codecsFactory: makeOptionalFieldCodecFamily,
 			editor: optionalFieldEditor,
 
-			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
-				if (change.fieldChange === undefined) {
-					if (change.deletedBy === undefined && change.childChange !== undefined) {
-						return [deltaFromChild(change.childChange)];
-					}
-					return [];
-				}
-
-				const deleteDelta = deltaForDelete(
-					!change.fieldChange.wasEmpty,
-					change.deletedBy === undefined ? change.childChange : undefined,
-					deltaFromChild,
-				);
-
-				const update = change.fieldChange?.newContent;
-				let content: ITreeCursorSynchronous | undefined;
-				if (update === undefined) {
-					content = undefined;
-				} else if ("set" in update) {
-					content = singleTextCursor(update.set);
-				} else {
-					content = update.revert;
-				}
-
-				const insertDelta = deltaFromInsertAndChange(
-					content,
-					update?.changes,
-					deltaFromChild,
-				);
-
-				return [...deleteDelta, ...insertDelta];
-			},
-
+			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
+				optionalFieldIntoDelta(change, deltaFromChild),
 			isEmpty: (change: OptionalChangeset) =>
 				change.childChange === undefined && change.fieldChange === undefined,
 		},
@@ -642,7 +507,35 @@ export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, Optio
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === optional.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set([value.identifier]),
+		new Set([]),
+	);
+
+const valueFieldEditor: ValueFieldEditor = {
+	...optionalFieldEditor,
+	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
+		optionalFieldEditor.set(newContent, false, id),
+};
+
+const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
+	...optional.changeHandler,
+	editor: valueFieldEditor,
+};
+
+/**
+ * Exactly one item.
+ */
+export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
+	brandedFieldKind(
+		"Value",
+		Multiplicity.Value,
+		valueChangeHandler,
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier ||
+				other.kind.identifier === nodeKey.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set(),
 	);
 
 /**

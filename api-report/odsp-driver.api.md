@@ -91,6 +91,23 @@ export interface ISnapshotContents {
 }
 
 // @public
+export interface ISocketStorageDiscovery {
+    // (undocumented)
+    deltaStorageUrl: string;
+    deltaStreamSocketUrl: string;
+    // (undocumented)
+    id: string;
+    refreshSessionDurationSeconds?: number;
+    // (undocumented)
+    runtimeTenantId?: string;
+    // (undocumented)
+    snapshotStorageUrl: string;
+    socketToken?: string;
+    // (undocumented)
+    tenantId: string;
+}
+
+// @public
 export function isOdcOrigin(origin: string): boolean;
 
 // @public
@@ -124,6 +141,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts

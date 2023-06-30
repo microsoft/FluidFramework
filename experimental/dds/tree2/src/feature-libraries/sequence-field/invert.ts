@@ -7,13 +7,23 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
-import { Changeset, DetachEvent, Mark, MarkList, Modify, ReturnFrom, NoopMarkType } from "./format";
+import {
+	Changeset,
+	DetachEvent,
+	Mark,
+	MarkList,
+	Modify,
+	ReturnFrom,
+	NoopMarkType,
+	MoveOut,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
 	getInputLength,
 	isConflictedReattach,
 	isReattachConflicted,
+	splitMark,
 	withNodeChange,
 } from "./utils";
 
@@ -53,12 +63,11 @@ export function amendInvert<TNodeChange>(
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
-	transferMovedChanges(
+	return amendMarkList(
 		invertedChange,
 		originalRevision,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
 	);
-	return invertedChange;
 }
 
 function invertMarkList<TNodeChange>(
@@ -169,10 +178,12 @@ function invertMark<TNodeChange>(
 				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 			}
 			if (mark.changes !== undefined) {
-				crossFieldManager.getOrCreate(
+				assert(mark.count === 1, "Mark with changes can only target a single cell");
+				crossFieldManager.set(
 					CrossFieldTarget.Destination,
 					mark.revision ?? revision,
 					mark.id,
+					mark.count,
 					invertChild(mark.changes, inputIndex),
 					true,
 				);
@@ -212,41 +223,59 @@ function invertMark<TNodeChange>(
 				count: mark.count,
 			};
 
-			const movedChanges = crossFieldManager.get(
-				CrossFieldTarget.Destination,
-				mark.revision ?? revision,
-				mark.id,
-				true,
-			);
-
-			if (movedChanges !== undefined) {
-				invertedMark.changes = movedChanges;
-			}
-			return [invertedMark];
+			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}
 		default:
 			fail("Not implemented");
 	}
 }
 
-function transferMovedChanges<TNodeChange>(
+function amendMarkList<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
-): void {
+): MarkList<TNodeChange> {
+	const factory = new MarkListFactory<TNodeChange>();
+
 	for (const mark of marks) {
 		if (mark.type === "MoveOut" || mark.type === "ReturnFrom") {
-			const change = crossFieldManager.get(
-				CrossFieldTarget.Destination,
-				mark.revision ?? revision,
-				mark.id,
-				true,
-			);
-
-			if (change !== undefined) {
-				mark.changes = change;
-			}
+			factory.push(...applyMovedChanges(mark, revision, crossFieldManager));
+		} else {
+			factory.push(mark);
 		}
+	}
+
+	return factory.list;
+}
+
+function applyMovedChanges<TNodeChange>(
+	mark: MoveOut<TNodeChange> | ReturnFrom<TNodeChange>,
+	revision: RevisionTag | undefined,
+	manager: CrossFieldManager<TNodeChange>,
+): Mark<TNodeChange>[] {
+	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
+	const entry = manager.get(
+		CrossFieldTarget.Destination,
+		mark.revision ?? revision,
+		mark.id,
+		mark.count,
+		true,
+	);
+	if (entry === undefined) {
+		return [mark];
+	}
+
+	if (entry.start > mark.id) {
+		// The entry does not apply to the first cell in the mark.
+		const [mark1, mark2] = splitMark(mark, entry.start - mark.id);
+		return [mark1, ...applyMovedChanges(mark2, revision, manager)];
+	} else if (entry.start + entry.length < (mark.id as number) + mark.count) {
+		// The entry applies to the first cell in the mark, but not the mark's entire range.
+		const [mark1, mark2] = splitMark(mark, entry.start + entry.length - mark.id);
+		return [withNodeChange(mark1, entry.value), ...applyMovedChanges(mark2, revision, manager)];
+	} else {
+		// The entry applies to all cells in the mark.
+		return [withNodeChange(mark, entry.value)];
 	}
 }
 

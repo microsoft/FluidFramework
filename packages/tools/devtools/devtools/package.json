@@ -59,13 +59,14 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-utils": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.5.0.0",
-		"@fluid-tools/build-cli": "^0.20.0-169245",
+		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0-169245",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -87,6 +88,14 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"broken": {}
