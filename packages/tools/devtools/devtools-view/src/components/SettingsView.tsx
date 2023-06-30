@@ -30,7 +30,7 @@ export enum ThemeOption {
  */
 type ThemeName = "light" | "dark" | "highContrast";
 
-const themeNameDisplayMap: Record<ThemeName, ThemeOption> = {
+const themeReadableOption: Record<ThemeName, ThemeOption> = {
 	light: ThemeOption.Light,
 	dark: ThemeOption.Dark,
 	highContrast: ThemeOption.HighContrast,
@@ -117,7 +117,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					placeholder={themeNameDisplayMap[themeInfo.name as ThemeName]}
+					placeholder={themeReadableOption[themeInfo.name as ThemeName]}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
