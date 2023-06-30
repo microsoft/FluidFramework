@@ -624,7 +624,7 @@ export class MockFluidDataStoreRuntime
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
 		this.deltaConnections.forEach((dc) => {
-			dc.submit(content, localOpMetadata);
+			dc.reSubmit(content, localOpMetadata);
 		});
 	}
 
