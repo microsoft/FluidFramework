@@ -135,8 +135,6 @@ export interface IBatchMessage {
  * if you intend them to be consumed/called from the runtime layer.
  */
 export interface IContainerContext {
-	/** @deprecated Please pass in existing directly in instantiateRuntime */
-	readonly existing: boolean | undefined;
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
