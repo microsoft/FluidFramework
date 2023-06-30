@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IErrorEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ISequencedClient } from "./clients";
 
 /**
@@ -72,21 +72,45 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 /**
  * Interface for tracking clients in the Quorum.
  */
-export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
 	getMembers(): Map<string, ISequencedClient>;
 
 	getMember(clientId: string): ISequencedClient | undefined;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The IQuorumClients's dispose state is not recommended for observation
+	 * and will be removed in an upcoming release.
+	 */
+	readonly disposed: boolean;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - Disposing the IQuorumClients results in inconsistent system state.
+	 * This member will be removed in an upcoming release.
+	 */
+	dispose(error?: Error): void;
 }
 
 /**
  * Interface for tracking proposals in the Quorum.
  */
-export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
 	propose(key: string, value: unknown): Promise<void>;
 
 	has(key: string): boolean;
 
 	get(key: string): unknown;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - The IQuorumProposals's dispose state is not recommended for observation
+	 * and will be removed in an upcoming release.
+	 */
+	readonly disposed: boolean;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - Disposing the IQuorumProposals results in inconsistent system state.
+	 * This member will be removed in an upcoming release.
+	 */
+	dispose(error?: Error): void;
 }
 
 /**
