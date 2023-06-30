@@ -7,6 +7,7 @@ import React from "react";
 import {
 	Dropdown,
 	Option,
+	Switch,
 	makeStyles,
 	teamsHighContrastTheme,
 	webDarkTheme,
@@ -14,6 +15,7 @@ import {
 } from "@fluentui/react-components";
 
 import { ThemeContext } from "../ThemeHelper";
+import { useTelemetryOptIn } from "../TelemetryUtils";
 
 /**
  * An enum with options for the DevTools themes.
@@ -68,6 +70,7 @@ export function SettingsView(): React.ReactElement {
 	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
 
 	const styles = useStyles();
+	const [optedIn, setOptedIn] = useTelemetryOptIn();
 
 	function handleThemeChange(
 		_event,
@@ -118,6 +121,14 @@ export function SettingsView(): React.ReactElement {
 					<Option value={ThemeOption.Dark}>Dark</Option>
 					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
 				</Dropdown>
+			</div>
+			<div className={styles.section}>
+				<h4 className={styles.sectionHeader}>Usage telemetry</h4>
+				<Switch
+					label="Send usage telemetry to Microsoft"
+					checked={optedIn}
+					onChange={(ev, data): void => setOptedIn(data.checked)}
+				/>
 			</div>
 		</div>
 	);

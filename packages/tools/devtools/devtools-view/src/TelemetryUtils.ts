@@ -48,3 +48,46 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 		this.baseLogger?.send(event);
 	}
 }
+
+/**
+ * Key for the local storage entry that stores the usage telemetry opt-in setting.
+ */
+const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
+
+/**
+ * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.
+ * @returns A tuple (React state) with the current value and a setter for the value.
+ */
+export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
+	const [value, setValue] = React.useState(() => {
+		return getStorageValue(telemetryOptInKey, true);
+	});
+
+	React.useEffect(() => {
+		localStorage.setItem(telemetryOptInKey, value.toString());
+	}, [value]);
+
+	return [value, setValue];
+};
+
+/**
+ * Logger that forwards events to another logger only when the setting to opt-in to usage telemetry is enabled.
+ */
+export class TelemetryOptInLogger implements ITelemetryBaseLogger {
+	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
+
+	public send(event: ITelemetryBaseEvent): void {
+		const optIn = getStorageValue(telemetryOptInKey, true);
+		if (optIn === null || Boolean(optIn)) {
+			this.baseLogger?.send(event);
+		}
+	}
+}
+
+function getStorageValue(key: string, defaultValue: boolean): boolean {
+	const saved = localStorage.getItem(key);
+	if (saved === null) {
+		return defaultValue;
+	}
+	return saved === "true";
+}
