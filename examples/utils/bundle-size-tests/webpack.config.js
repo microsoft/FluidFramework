@@ -48,16 +48,17 @@ module.exports = {
 			},
 			{
 				test: /\.js$/,
-				use: [require.resolve("source-map-loader")],
-				enforce: "pre",
+				loader: "string-replace-loader",
+				options: {
+					search: versionToReplace,
+					replace: newVersion,
+					strict: false,
+				},
 			},
 			{
 				test: /\.js$/,
-				loader: require.resolve("string-replace-loader"),
-				options: {
-					search: new RegExp(versionToReplace, "g"),
-					replace: newVersion,
-				},
+				use: [require.resolve("source-map-loader")],
+				enforce: "pre",
 			},
 		],
 	},
