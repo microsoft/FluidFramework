@@ -7137,13 +7137,21 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
+      '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
+      cross-env: ^7.0.3
       eslint: ~8.6.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
@@ -7161,11 +7169,19 @@ importers:
       '@fluidframework/build-tools': 0.20.0-171385_@types+node@14.18.47
       '@fluidframework/driver-base-previous': /@fluidframework/driver-base/2.0.0-internal.5.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
+      '@types/mocha': 9.1.1
       '@types/node': 14.18.47
       concurrently: 7.6.0
       copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.6.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       socket.io-client: 4.6.1
