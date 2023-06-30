@@ -5044,59 +5044,43 @@ importers:
       sinon: 7.5.0
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
+    specifiers:
+      '@fluid-experimental/property-changeset': workspace:~
+      '@fluid-experimental/property-properties': workspace:~
+      '@fluid-experimental/tree2': workspace:~
+      '@fluidframework/build-common': ^1.2.0
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@types/jest': 22.2.3
+      '@types/node': ^14.18.38
+      concurrently: ^7.6.0
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      ts-jest: ^26.4.4
+      typescript: ~4.5.5
     dependencies:
-      '@fluid-experimental/property-changeset':
-        specifier: workspace:~
-        version: link:../property-changeset
-      '@fluid-experimental/property-properties':
-        specifier: workspace:~
-        version: link:../property-properties
-      '@fluid-experimental/tree2':
-        specifier: workspace:~
-        version: link:../../../dds/tree2
-      '@fluidframework/common-utils':
-        specifier: ^1.1.1
-        version: 1.1.1
+      '@fluid-experimental/property-changeset': link:../property-changeset
+      '@fluid-experimental/property-properties': link:../property-properties
+      '@fluid-experimental/tree2': link:../../../dds/tree2
+      '@fluidframework/common-utils': 1.1.1
     devDependencies:
-      '@fluidframework/build-common':
-        specifier: ^1.2.0
-        version: 1.2.0
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
-      '@types/jest':
-        specifier: 22.2.3
-        version: 22.2.3
-      '@types/node':
-        specifier: ^14.18.38
-        version: 14.18.47
-      concurrently:
-        specifier: ^7.6.0
-        version: 7.6.0
-      eslint:
-        specifier: ~8.6.0
-        version: 8.6.0
-      eslint-config-prettier:
-        specifier: ~8.5.0
-        version: 8.5.0(eslint@8.6.0)
-      jest:
-        specifier: ^26.6.3
-        version: 26.6.3
-      jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
-      prettier:
-        specifier: ~2.6.2
-        version: 2.6.2
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      ts-jest:
-        specifier: ^26.4.4
-        version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
+      '@fluidframework/build-common': 1.2.0
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
+      '@types/jest': 22.2.3
+      '@types/node': 14.18.47
+      concurrently: 7.6.0
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      prettier: 2.6.2
+      rimraf: 4.4.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      typescript: 4.5.5
 
   experimental/PropertyDDS/services/property-query-service:
     specifiers:
