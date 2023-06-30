@@ -982,7 +982,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Events", () => {
-		it.skip("triggers events for local and subtree changes", () => {
+		it("triggers events for local and subtree changes", () => {
 			const view = testTreeView();
 			const root = view.context.root.getNode(0);
 			const log: string[] = [];
@@ -1016,7 +1016,7 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		it.skip("propagates path and value args for local and subtree changes", () => {
+		it("propagates path and value args for local and subtree changes", () => {
 			const view = testTreeView();
 			const root = view.context.root.getNode(0);
 			const log: string[] = [];
