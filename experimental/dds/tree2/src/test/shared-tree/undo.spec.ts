@@ -9,7 +9,7 @@ import { jsonSchema, jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol, fieldSchema, rootFieldKey, SchemaData } from "../../core";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({});
 const runtime = new MockFluidDataStoreRuntime();
 // For now, require tree to be a list of strings.
 const schema: SchemaData = {

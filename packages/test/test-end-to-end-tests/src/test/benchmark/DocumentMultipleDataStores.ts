@@ -24,7 +24,11 @@ import {
 	isDocumentMultipleDataStoresInfo,
 } from "@fluid-internal/test-version-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -57,7 +61,7 @@ class TestDataObject extends DataObject {
 		this.map = await mapHandle.get();
 
 		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+		assert(sharedStringHandle !== undefined, "SharedString not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
 }

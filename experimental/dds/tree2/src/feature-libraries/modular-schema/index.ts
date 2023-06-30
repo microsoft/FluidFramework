@@ -12,40 +12,45 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
-	ChangesetLocalId,
-	ChangesetLocalIdSchema,
+	addCrossFieldQuery,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
+	setInCrossFieldMap,
 } from "./crossFieldQueries";
+export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
+export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	FieldChange,
 	FieldChangeHandler,
-	FieldChangeMap,
 	FieldChangeRebaser,
-	FieldChangeset,
 	FieldEditor,
 	getIntention,
-	HasFieldChanges,
-	ModularChangeset,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
 	RevisionMetadataSource,
 	RevisionIndexer,
-	RevisionInfo,
 	ToDelta,
+	NodeExistenceState,
+} from "./fieldChangeHandler";
+export {
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	RevisionInfo,
 	ValueChange,
 	ValueConstraint,
 	NodeExistsConstraint,
-	NodeExistenceState,
-} from "./fieldChangeHandler";
+} from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
 export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 export {

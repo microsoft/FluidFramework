@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
@@ -21,53 +16,58 @@ import {
 	createSummarizerWithTestConfig,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly sharedMapKey = "map";
-	public map!: SharedMap;
-
-	private readonly sharedCellKey = "sharedCell";
-	public sharedCell!: SharedCell;
-
-	protected async initializingFirstTime() {
-		const sharedMap = SharedMap.create(this.runtime);
-		this.root.set(this.sharedMapKey, sharedMap.handle);
-
-		const sharedCell = SharedCell.create(this.runtime);
-		this.root.set(this.sharedCellKey, sharedCell.handle);
-	}
-
-	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
-		assert(mapHandle !== undefined, "SharedMap not found");
-		this.map = await mapHandle.get();
-
-		const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
-		assert(sharedCellHandle !== undefined, "SharedCell not found");
-		this.sharedCell = await sharedCellHandle.get();
-	}
-}
-
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
+describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+		dds: { SharedMap, SharedCell },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+
+		private readonly sharedMapKey = "map";
+		public map!: SharedMap;
+
+		private readonly sharedCellKey = "sharedCell";
+		public sharedCell!: SharedCell;
+
+		protected async initializingFirstTime() {
+			const sharedMap = SharedMap.create(this.runtime);
+			this.root.set(this.sharedMapKey, sharedMap.handle);
+
+			const sharedCell = SharedCell.create(this.runtime);
+			this.root.set(this.sharedCellKey, sharedCell.handle);
+		}
+
+		protected async hasInitialized() {
+			const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
+			assert(mapHandle !== undefined, "SharedMap not found");
+			this.map = await mapHandle.get();
+
+			const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
+			assert(sharedCellHandle !== undefined, "SharedCell not found");
+			this.sharedCell = await sharedCellHandle.get();
+		}
+	}
+
 	let provider: ITestObjectProvider;
 	const factory = new DataObjectFactory(
 		"TestDataObject",
@@ -613,7 +613,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) => {
+describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -625,7 +625,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) =
 	it("Compressors sync after detached container attaches and sends an op", async () => {
 		const testConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", SharedCell.getFactory()]],
+			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
 			runtimeOptions: {
 				enableRuntimeIdCompressor: true,
 			},

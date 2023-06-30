@@ -219,5 +219,14 @@ function mapContainerProps(
 	};
 }
 
-// Convenience re-exports
-export { DevtoolsLogger } from "@fluid-experimental/devtools-core";
+// Convenience re-exports. Need to cover the things we export form this package,
+// so consumers don't need to import from this one *and* devtools-core.
+// DevtoolsLogger is necessary for consumers to set up Devtools.
+// DevtoolsProps and ContainerDevtoolsProps both use VisualizeSharedObject.
+// ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
+export {
+	DevtoolsLogger,
+	VisualizeSharedObject,
+	ContainerKey,
+	HasContainerKey,
+} from "@fluid-experimental/devtools-core";

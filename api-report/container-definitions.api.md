@@ -115,15 +115,15 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public
+// @public @deprecated
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
+    // @deprecated (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
+    // @deprecated (undocumented)
     reason: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     version: string;
 }
 
@@ -157,7 +157,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 // @public
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
     readonly audience: IAudience | undefined;
@@ -173,16 +173,20 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated (undocumented)
+    dispose(error?: Error): void;
+    // @deprecated (undocumented)
+    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    // @deprecated
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
@@ -193,7 +197,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -242,9 +246,11 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public
+// @public @deprecated
 export interface IDeltaHandlerStrategy {
+    // @deprecated
     process: (message: ISequencedDocumentMessage) => void;
+    // @deprecated
     processSignal: (message: ISignalMessage) => void;
 }
 
