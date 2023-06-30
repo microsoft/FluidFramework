@@ -20,7 +20,7 @@ import {
 	ArrowJoinRegular,
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
-
+import { ThemeContext } from "../ThemeHelper";
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
@@ -41,6 +41,11 @@ export interface AudienceHistoryTableProps {
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
+
+	const highContrastStyle = {
+		color: themeInfo.name === "highContrast" ? "#FFF" : "",
+	};
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
@@ -95,17 +100,17 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							<LabelCellLayout
 								icon={
 									item.changeKind === "joined" ? (
-										<ArrowJoinRegular />
+										<ArrowJoinRegular style={highContrastStyle} />
 									) : (
-										<ArrowExitRegular />
+										<ArrowExitRegular style={highContrastStyle} />
 									)
 								}
 							>
 								{item.changeKind}
 							</LabelCellLayout>
 						</TableCell>
-						<TableCell>{item.clientId}</TableCell>
-						<TableCell>{item.time}</TableCell>
+						<TableCell style={highContrastStyle}>{item.clientId}</TableCell>
+						<TableCell style={highContrastStyle}>{item.time}</TableCell>
 					</TableRow>
 				))}
 			</TableBody>

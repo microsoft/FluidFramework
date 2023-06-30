@@ -14,6 +14,7 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
+import { ThemeContext } from "../ThemeHelper";
 import {
 	clientIdTooltipText,
 	userIdTooltipText,
@@ -39,6 +40,7 @@ export interface AudienceStateTableProps {
  */
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
 
 	// Columns for rendering audience state
 	const audienceStateColumns = [
@@ -103,6 +105,10 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 								backgroundColor: isCurrentUser
 									? tokens.colorPaletteGreenBackground2
 									: "",
+								color:
+									themeInfo.name === "highContrast" && isCurrentUser
+										? "#FFF"
+										: "",
 							}}
 						>
 							<TableCell>
