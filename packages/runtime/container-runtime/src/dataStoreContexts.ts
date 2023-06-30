@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils";
 import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";

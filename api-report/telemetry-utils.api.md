@@ -7,7 +7,7 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDebugger } from 'debug';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/common-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';

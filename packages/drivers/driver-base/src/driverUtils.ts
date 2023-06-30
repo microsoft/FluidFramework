@@ -131,7 +131,7 @@ export function validateMessages(
 				) {
 					validOpsCount++;
 				}
-				messages.length = Math.min(messages.length, validOpsCount);
+				messages.length = validOpsCount;
 			}
 			logger.sendErrorEvent({
 				eventName: "OpsFetchViolation",
