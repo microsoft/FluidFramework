@@ -73,7 +73,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
-				validateMessages("snapshotOps", messages, from, this.logger);
+				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
@@ -83,7 +83,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 			}
 
 			const ops = await this.deltaStorageService.get(this.tenantId, this.id, from, to);
-			validateMessages("storage", ops.messages, from, this.logger);
+			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
 			opsFromStorage += ops.messages.length;
 			return ops;
 		};
