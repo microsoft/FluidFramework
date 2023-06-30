@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import React from "react";
 import {
 	tokens,
@@ -24,7 +23,32 @@ import {
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
+import { ThemeContext } from "../ThemeHelper";
 import { LabelCellLayout } from "./utility-components";
+
+/**
+ * Returns the text color based on the current color theme of the devtools.
+ */
+function setThemeStyle(themeName: string, state: string): string {
+	if (themeName === "highContrast") {
+		switch (state) {
+			case "attached":
+				return "#FFF";
+			case "closed":
+				return "#000";
+			case "connected":
+				return "#FFF";
+			case "disconnected":
+				return "#000";
+			case "disposed":
+				return "#000";
+			default:
+				console.log("Unknown state type for container!");
+				return "";
+		}
+	}
+	return "";
+}
 
 /**
  * Represents container state history data which is rendered in {@link ContainerHistoryLog}.
@@ -41,6 +65,7 @@ export interface ContainerHistoryLogProps {
  */
 export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.ReactElement {
 	const { containerHistory } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
 
 	// Columns for rendering container state history.
 	const containerHistoryColumns = [
@@ -121,12 +146,24 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
 								<LabelCellLayout icon={getStateIcon(item.newState)}>
-									{item.newState}
+									<span
+										style={{
+											color: setThemeStyle(themeInfo.name, item.newState),
+										}}
+									>
+										{item.newState}
+									</span>
 								</LabelCellLayout>
 							</TableCell>
-							<TableCell>{timestampDisplay}</TableCell>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
+								{timestampDisplay}
+							</TableCell>
 						</TableRow>
 					);
 				})}

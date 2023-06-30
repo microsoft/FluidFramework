@@ -26,6 +26,13 @@ import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
 
 /**
+ * Returns the text color based on the current color theme of the devtools.
+ */
+function setThemeStyle(themeName: string): string {
+	return themeName === "highContrast" ? "#FFF" : "";
+}
+
+/**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
  */
 export interface AudienceHistoryTableProps {
@@ -42,10 +49,6 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
-
-	const highContrastStyle = {
-		color: themeInfo.name === "highContrast" ? "#FFF" : "",
-	};
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
@@ -100,17 +103,25 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							<LabelCellLayout
 								icon={
 									item.changeKind === "joined" ? (
-										<ArrowJoinRegular style={highContrastStyle} />
+										<ArrowJoinRegular
+											style={{ color: setThemeStyle(themeInfo.name) }}
+										/>
 									) : (
-										<ArrowExitRegular style={highContrastStyle} />
+										<ArrowExitRegular
+											style={{ color: setThemeStyle(themeInfo.name) }}
+										/>
 									)
 								}
 							>
 								{item.changeKind}
 							</LabelCellLayout>
 						</TableCell>
-						<TableCell style={highContrastStyle}>{item.clientId}</TableCell>
-						<TableCell style={highContrastStyle}>{item.time}</TableCell>
+						<TableCell style={{ color: setThemeStyle(themeInfo.name) }}>
+							{item.clientId}
+						</TableCell>
+						<TableCell style={{ color: setThemeStyle(themeInfo.name) }}>
+							{item.time}
+						</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
