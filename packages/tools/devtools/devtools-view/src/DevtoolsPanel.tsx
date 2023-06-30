@@ -9,7 +9,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { ConsoleVerboseLogger, LoggerContext } from "./LoggerContext";
+import { ConsoleVerboseLogger, LoggerContext } from "./TelemetryUtils";
 
 /**
  * {@link DevtoolsPanel} input props.
