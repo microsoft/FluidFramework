@@ -121,8 +121,8 @@ export class AgentScheduler
 		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
 	) {
 		super();
-		// We are expecting this class to have many listeners, so setting a higher limit will suppress noisy "MaxListenersExceededWarning" logging.
-		super.setMaxListeners(1000);
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}
 

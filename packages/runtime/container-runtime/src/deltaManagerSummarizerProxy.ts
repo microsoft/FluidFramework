@@ -41,8 +41,8 @@ export class DeltaManagerSummarizerProxy
 
 	constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
 		super(deltaManager);
-		// We are expecting this class to sometimes have many listeners, so setting a higher limit will suppress noisy "MaxListenersExceededWarning" logging.
-		super.setMaxListeners(1000);
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
 }
