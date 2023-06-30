@@ -4525,7 +4525,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
       typescript: ~4.5.5
@@ -4536,7 +4536,7 @@ importers:
       async: 3.2.4
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
-      semver: 7.5.1
+      semver: 7.5.3
       traverse: 0.6.6
     devDependencies:
       '@fluidframework/build-common': 1.2.0
@@ -4571,7 +4571,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      '@types/semver': ^7.3.6
+      '@types/semver': ^7.5.0
       ajv: 7.1.1
       async: ^3.2.2
       base64-js: 1.3.0
@@ -4592,7 +4592,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
       typescript: ~4.5.5
@@ -4604,7 +4604,7 @@ importers:
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
       murmurhash3js: 3.0.1
-      semver: 7.5.1
+      semver: 7.5.3
       traverse: 0.6.6
     devDependencies:
       '@fluidframework/build-common': 1.2.0
@@ -4904,7 +4904,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
       typescript: ~4.5.5
@@ -4916,7 +4916,7 @@ importers:
       async: 3.2.4
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
-      semver: 7.5.1
+      semver: 7.5.3
       traverse: 0.6.6
       underscore: 1.13.6
     devDependencies:
@@ -5013,7 +5013,7 @@ importers:
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      semver: ^7.3.4
+      semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
     dependencies:
@@ -5027,7 +5027,7 @@ importers:
       lodash: 4.17.21
       long: 4.0.0
       lru-cache: 6.0.0
-      semver: 7.5.1
+      semver: 7.5.3
       traverse: 0.6.6
     devDependencies:
       '@fluid-experimental/property-properties': link:../property-properties
@@ -10040,7 +10040,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -10062,7 +10062,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       axios: 0.26.1
-      semver: 7.5.1
+      semver: 7.5.3
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.20.0_@types+node@14.18.47
@@ -10143,7 +10143,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       sinon: ^7.4.2
       source-map-support: ^0.5.16
       start-server-and-test: ^1.11.7
@@ -10196,7 +10196,7 @@ importers:
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       cross-env: 7.0.3
       mocha: 10.2.0
-      semver: 7.5.1
+      semver: 7.5.3
       sinon: 7.5.0
       source-map-support: 0.5.21
       start-server-and-test: 1.15.5
@@ -10495,7 +10495,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.38
-      '@types/semver': ^7.3.6
+      '@types/semver': ^7.5.0
       '@types/uuid': ^8.3.0
       concurrently: ^7.6.0
       cross-env: ^7.0.3
@@ -10510,7 +10510,7 @@ importers:
       prettier: ~2.6.2
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
-      semver: ^7.3.4
+      semver: ^7.5.3
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -10545,7 +10545,7 @@ importers:
       '@fluidframework/test-utils': link:../test-utils
       nconf: 0.12.0
       proper-lockfile: 4.1.2
-      semver: 7.5.1
+      semver: 7.5.3
     devDependencies:
       '@fluid-tools/build-cli': 0.20.0_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
@@ -15280,7 +15280,7 @@ packages:
       '@oclif/plugin-not-found': 2.3.26
       '@oclif/plugin-plugins': 3.1.3
       chalk: 2.4.2
-      semver: 7.5.1
+      semver: 7.5.3
       table: 6.8.1
     transitivePeerDependencies:
       - supports-color
@@ -19379,7 +19379,7 @@ packages:
       read-package-json-fast: 2.0.3
       readdir-scoped-modules: 1.1.0
       rimraf: 3.0.2
-      semver: 7.5.1
+      semver: 7.5.3
       ssri: 8.0.1
       treeverse: 1.0.4
       walk-up-path: 1.0.0
@@ -19392,7 +19392,7 @@ packages:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /@npmcli/fs/2.1.2:
@@ -19400,14 +19400,14 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /@npmcli/fs/3.1.0:
     resolution: {integrity: sha512-7kZUAaLscfgbwBQRbvdMYaZOWyMEcPTH/tJjnyAWJ/dvvs9Ef+CERx/qJb9GExJpl1qipaDGn7KqHnFGGixd0w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /@npmcli/git/2.1.0:
@@ -19419,7 +19419,7 @@ packages:
       npm-pick-manifest: 6.1.1
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.1
+      semver: 7.5.3
       which: 2.0.2
     transitivePeerDependencies:
       - bluebird
@@ -19435,7 +19435,7 @@ packages:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.1
+      semver: 7.5.3
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -19476,7 +19476,7 @@ packages:
       cacache: 15.3.0
       json-parse-even-better-errors: 2.3.1
       pacote: 12.0.3
-      semver: 7.5.1
+      semver: 7.5.3
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -19592,7 +19592,7 @@ packages:
       natural-orderby: 2.0.3
       object-treeify: 1.1.33
       password-prompt: 1.1.2
-      semver: 7.5.1
+      semver: 7.5.3
       string-width: 4.2.3
       strip-ansi: 6.0.1
       supports-color: 8.1.1
@@ -19652,7 +19652,7 @@ packages:
       load-json-file: 5.3.0
       npm: 9.7.1
       npm-run-path: 4.0.1
-      semver: 7.5.1
+      semver: 7.5.3
       shelljs: 0.8.5
       tslib: 2.5.0
       validate-npm-package-name: 5.0.0
@@ -19671,7 +19671,7 @@ packages:
       fs-extra: 9.1.0
       http-call: 5.3.0
       lodash: 4.17.21
-      semver: 7.5.1
+      semver: 7.5.3
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -19997,7 +19997,7 @@ packages:
     dependencies:
       '@opentelemetry/api': 1.4.1
       require-in-the-middle: 5.2.0
-      semver: 7.5.1
+      semver: 7.5.3
       shimmer: 1.2.1
     transitivePeerDependencies:
       - supports-color
@@ -22588,7 +22588,7 @@ packages:
       functional-red-black-tree: 1.0.1
       ignore: 5.2.4
       regexpp: 3.2.0
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22615,7 +22615,7 @@ packages:
       functional-red-black-tree: 1.0.1
       ignore: 5.2.4
       regexpp: 3.2.0
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22815,7 +22815,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22836,7 +22836,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22857,7 +22857,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22878,7 +22878,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.1
+      semver: 7.5.3
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -22917,7 +22917,7 @@ packages:
       '@typescript-eslint/typescript-estree': 5.59.6_typescript@4.5.5
       eslint: 8.6.0
       eslint-scope: 5.1.1
-      semver: 7.5.1
+      semver: 7.5.3
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -24158,7 +24158,7 @@ packages:
       handlebars: 4.7.7
       node-fetch: 2.6.11
       parse-github-url: 1.0.2
-      semver: 7.5.1
+      semver: 7.5.3
     transitivePeerDependencies:
       - encoding
     dev: true
@@ -24775,7 +24775,7 @@ packages:
     dependencies:
       arg-parser: 1.2.0
       commander: 9.5.0
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /bfj/7.0.2:
@@ -25173,7 +25173,7 @@ packages:
   /builtins/5.0.1:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /bytes/3.0.0:
@@ -26662,7 +26662,7 @@ packages:
     resolution: {integrity: sha512-cllzD6IU/mzXBs5OdQVWL3+ne5Elpu3Wdm7h5OldMbGXk76yr9XzHlQXWJ4zfs0ZAibe26rkbs4KvMAJm7fIZA==}
     engines: {node: '>=14.x'}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /create-hash/1.2.0:
@@ -26845,7 +26845,7 @@ packages:
       postcss-modules-values: 4.0.0_postcss@8.4.23
       postcss-value-parser: 4.2.0
       schema-utils: 3.3.0
-      semver: 7.5.1
+      semver: 7.5.3
       webpack: 5.87.0_webpack-cli@4.10.0
     dev: true
 
@@ -29771,7 +29771,7 @@ packages:
       memfs: 3.5.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.5.1
+      semver: 7.5.3
       tapable: 1.1.3
       typescript: 4.5.5
       webpack: 5.87.0_webpack-cli@4.10.0
@@ -29803,7 +29803,7 @@ packages:
       memfs: 3.5.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.5.1
+      semver: 7.5.3
       tapable: 1.1.3
       typescript: 4.5.5
       webpack: 4.46.0_webpack-cli@4.10.0
@@ -32991,7 +32991,7 @@ packages:
       jest-resolve: 26.6.2
       natural-compare: 1.4.0
       pretty-format: 26.6.2
-      semver: 7.5.1
+      semver: 7.5.3
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -33448,7 +33448,7 @@ packages:
       jws: 3.2.2
       lodash: 4.17.21
       ms: 2.1.3
-      semver: 7.5.1
+      semver: 7.5.3
 
   /jsprim/1.4.2:
     resolution: {integrity: sha512-P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==}
@@ -35616,7 +35616,7 @@ packages:
     resolution: {integrity: sha512-zNy02qivjjRosswoYmPi8hIKJRr8MpQyeKT6qlcq/OnOgA3Rhoae+IYOqsM9V5+JnHWmxKnWOT2GxvtqdtOCXA==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /node-addon-api/5.1.0:
@@ -35671,7 +35671,7 @@ packages:
       nopt: 5.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.5.1
+      semver: 7.5.3
       tar: 6.1.15
       which: 2.0.2
     transitivePeerDependencies:
@@ -35691,7 +35691,7 @@ packages:
       nopt: 6.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.5.1
+      semver: 7.5.3
       tar: 6.1.15
       which: 2.0.2
     transitivePeerDependencies:
@@ -35736,7 +35736,7 @@ packages:
     dependencies:
       growly: 1.3.0
       is-wsl: 2.2.0
-      semver: 7.5.1
+      semver: 7.5.3
       shellwords: 0.1.1
       uuid: 8.3.2
       which: 2.0.2
@@ -35798,7 +35798,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.12.1
-      semver: 7.5.1
+      semver: 7.5.3
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -35808,7 +35808,7 @@ packages:
     dependencies:
       hosted-git-info: 6.1.1
       is-core-module: 2.12.1
-      semver: 7.5.1
+      semver: 7.5.3
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -35889,7 +35889,7 @@ packages:
       rc-config-loader: 4.1.2
       remote-git-tags: 3.0.0
       rimraf: 5.0.0
-      semver: 7.5.1
+      semver: 7.5.3
       semver-utils: 1.1.4
       source-map-support: 0.5.21
       spawn-please: 2.0.1
@@ -35905,14 +35905,14 @@ packages:
     resolution: {integrity: sha512-09OmyDkNLYwqKPOnbI8exiOZU2GVVmQp7tgez2BPi5OZC8M82elDAps7sxC4l//uSUtotWqoEIDwjRvWH4qz8w==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /npm-install-checks/6.1.1:
     resolution: {integrity: sha512-dH3GmQL4vsPtld59cOn8uY0iOqRmqKvV+DLGwNXV/Q7MDgD2QfOADWd/mFXcIE5LVhYYGjA3baz6W9JneqnuCw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /npm-normalize-package-bin/1.0.1:
@@ -35935,7 +35935,7 @@ packages:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.5.1
+      semver: 7.5.3
       validate-npm-package-name: 5.0.0
     dev: true
 
@@ -35944,7 +35944,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       hosted-git-info: 4.1.0
-      semver: 7.5.1
+      semver: 7.5.3
       validate-npm-package-name: 3.0.0
     dev: true
 
@@ -35972,7 +35972,7 @@ packages:
       npm-install-checks: 4.0.0
       npm-normalize-package-bin: 1.0.1
       npm-package-arg: 8.1.5
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /npm-pick-manifest/8.0.1:
@@ -35982,7 +35982,7 @@ packages:
       npm-install-checks: 6.1.1
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /npm-registry-fetch/12.0.2:
@@ -36334,7 +36334,7 @@ packages:
       got: 11.8.6
       lodash: 4.17.21
       normalize-package-data: 3.0.3
-      semver: 7.5.1
+      semver: 7.5.3
       shelljs: 0.8.5
       tslib: 2.5.0
       yeoman-environment: 3.17.0
@@ -36759,7 +36759,7 @@ packages:
       got: 12.6.0
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /pacote/12.0.3:
@@ -37261,7 +37261,7 @@ packages:
       loader-utils: 2.0.4
       postcss: 7.0.39
       schema-utils: 3.3.0
-      semver: 7.5.1
+      semver: 7.5.3
       webpack: 4.46.0_webpack-cli@4.10.0
     dev: true
 
@@ -39543,7 +39543,7 @@ packages:
     resolution: {integrity: sha512-0Ju4+6A8iOnpL/Thra7dZsSlOHYAHIeMxfhWQRI1/VLcT3WDBZKKtQt/QkBOsiIN9ZpuvHE6cGZ0x4glCMmfiA==}
     engines: {node: '>=12'}
     dependencies:
-      semver: 7.5.1
+      semver: 7.5.3
     dev: true
 
   /semver-utils/1.1.4:
@@ -39576,6 +39576,14 @@ packages:
 
   /semver/7.5.1:
     resolution: {integrity: sha512-Wvss5ivl8TMRZXXESstBA4uR5iXgEN/VC5/sOcuXdVLzcdkz4HWetIoRfG5gb5X+ij/G9rw9YoGn3QoQ8OCSpw==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: true
+
+  /semver/7.5.3:
+    resolution: {integrity: sha512-QBlUtyVk/5EeHbi7X0fw6liDZc7BBmEaSYn01fMU1OUYbf6GPsbTtd8WmnqbI20SeycoHSeiybkE/q1Q+qlThQ==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
@@ -39726,7 +39734,7 @@ packages:
       detect-libc: 2.0.1
       node-addon-api: 5.1.0
       prebuild-install: 7.1.1
-      semver: 7.5.1
+      semver: 7.5.3
       simple-get: 4.0.1
       tar-fs: 2.1.1
       tunnel-agent: 0.6.0
@@ -42253,7 +42261,7 @@ packages:
       is-yarn-global: 0.4.1
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.5.1
+      semver: 7.5.3
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
     dev: true
@@ -44057,7 +44065,7 @@ packages:
       pacote: 12.0.3
       preferred-pm: 3.0.3
       pretty-bytes: 5.6.0
-      semver: 7.5.1
+      semver: 7.5.3
       slash: 3.0.0
       strip-ansi: 6.0.1
       text-table: 0.2.0
@@ -44087,7 +44095,7 @@ packages:
       minimist: 1.2.8
       read-pkg-up: 7.0.1
       run-async: 2.4.1
-      semver: 7.5.1
+      semver: 7.5.3
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
