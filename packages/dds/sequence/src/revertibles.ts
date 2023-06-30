@@ -18,7 +18,7 @@ import {
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
-	_getSlideToSegment,
+	getSlideToSegment,
 } from "@fluidframework/merge-tree";
 import { IIntervalCollection, IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
@@ -385,7 +385,7 @@ function getSlidePosition(
 	lref: LocalReferencePosition,
 	pos: number,
 ): number {
-	const slide = _getSlideToSegment(lref.getSegment(), lref.slidingPreference);
+	const slide = getSlideToSegment(lref.getSegment(), lref.slidingPreference);
 	return slide !== undefined &&
 		string.getPosition(slide) !== -1 &&
 		(pos < 0 || pos >= string.getLength())

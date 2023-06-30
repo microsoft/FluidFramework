@@ -984,7 +984,7 @@ export class MergeTree {
 				return;
 			}
 
-			const slideToSegment = _getSlideToSegment(segment, slidingPreference, segmentCache);
+			const slideToSegment = getSlideToSegment(segment, slidingPreference, segmentCache);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 
