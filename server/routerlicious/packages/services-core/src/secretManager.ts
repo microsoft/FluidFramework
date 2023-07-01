@@ -14,16 +14,10 @@ export interface ISecretManager {
 	/**
 	 * Encrypts secret.
 	 */
-	encryptSecret(
-		secret: string,
-		encryptionKeyVersion?: EncryptionKeyVersion,
-	): string;
+	encryptSecret(secret: string, encryptionKeyVersion?: EncryptionKeyVersion): string;
 
 	/**
 	 * Decrypts secret.
 	 */
-	decryptSecret(
-		encryptedSecret: string,
-		encryptionKeyVersion?: EncryptionKeyVersion,
-	): string;
+	decryptSecret(encryptedSecret: string, encryptionKeyVersion?: EncryptionKeyVersion): string;
 }
