@@ -8,7 +8,7 @@ import * as api from '@fluidframework/protocol-definitions';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';

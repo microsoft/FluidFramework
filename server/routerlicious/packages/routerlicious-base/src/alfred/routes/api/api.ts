@@ -43,7 +43,7 @@ export function create(
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -94,7 +94,7 @@ export function create(
 				isTokenExpiryEnabled,
 				enableJwtTokenCache,
 				jwtTokenCache,
-				tokenManager,
+				revokedTokenChecker,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -213,7 +213,7 @@ const verifyRequest = async (
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) =>
 	Promise.all([
 		verifyTokenWrapper(
@@ -223,7 +223,7 @@ const verifyRequest = async (
 			isTokenExpiryEnabled,
 			tokenCacheEnabled,
 			tokenCache,
-			tokenManager,
+			revokedTokenChecker,
 		),
 		checkDocumentExistence(request, storage),
 	]);
@@ -235,7 +235,7 @@ async function verifyTokenWrapper(
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -254,8 +254,12 @@ async function verifyTokenWrapper(
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
 
-	if (tokenManager && claims.jti) {
-		const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
+		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
+			tenantId,
+			documentId,
+			claims.jti,
+		);
 		if (tokenRevoked) {
 			return Promise.reject(new Error("Permission denied. Token is revoked."));
 		}
@@ -268,8 +272,9 @@ async function verifyTokenWrapper(
 			maxTokenLifetimeSec,
 			ensureSingleUseToken: false,
 			singleUseTokenCache: undefined,
-			enableTokenCache: true,
+			enableTokenCache: tokenCacheEnabled,
 			tokenCache,
+			revokedTokenChecker,
 		};
 		return verifyToken(tenantId, documentId, token, tenantManager, options);
 	}

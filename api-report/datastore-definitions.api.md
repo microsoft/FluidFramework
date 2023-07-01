@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -37,7 +37,7 @@ export interface IChannel extends IFluidLoadable {
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly owner?: string;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }

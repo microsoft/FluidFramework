@@ -4,7 +4,8 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
@@ -385,8 +386,6 @@ export class ConnectionManager implements IConnectionManager {
 		}
 		this._disposed = true;
 
-		this.pendingConnection = undefined;
-
 		// Ensure that things like triggerConnect() will short circuit
 		this._reconnectMode = ReconnectMode.Never;
 
@@ -501,7 +500,7 @@ export class ConnectionManager implements IConnectionManager {
 		let pendingConnectionMode;
 		if (this.pendingConnection !== undefined) {
 			pendingConnectionMode = this.pendingConnection.connectionMode;
-			this.cancelConnection(); // Throw out in-progress connection attempt in favor of new attempt
+			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
 			assert(
 				this.pendingConnection === undefined,
 				0x344 /* this.pendingConnection should be undefined */,
@@ -545,6 +544,7 @@ export class ConnectionManager implements IConnectionManager {
 			connectionMode: requestedMode,
 		};
 
+		this.props.establishConnectionHandler(reason);
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -601,6 +601,7 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				if (retryDelayFromError !== undefined) {
 					// If the error told us to wait, then we wait.
@@ -621,6 +622,14 @@ export class ConnectionManager implements IConnectionManager {
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
 				await waitForOnline();
+				this.logger.sendPerformanceEvent({
+					eventName: "WaitBetweenConnectionAttempts",
+					duration: performance.now() - waitStartTime,
+					details: JSON.stringify({
+						retryDelayFromError,
+						delayMs,
+					}),
+				});
 			}
 		}
 
@@ -682,7 +691,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (this.connection === undefined) {
 			if (this.pendingConnection !== undefined) {
-				this.cancelConnection();
+				this.cancelConnection(reason);
 				return true;
 			}
 			return false;
@@ -720,7 +729,7 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Cancel in-progress connection attempt.
 	 */
-	private cancelConnection() {
+	private cancelConnection(reason: string) {
 		assert(
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
@@ -728,6 +737,7 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
+		this.props.cancelConnectionHandler(`Cancel Pending Connection due to ${reason}`);
 	}
 
 	/**
@@ -949,7 +959,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.triggerConnect(
 			error !== undefined
-				? "Reconnect on Error"
+				? "Reconnecting due to Error"
 				: `Reconnecting due to: ${disconnectMessage}`,
 			requestedMode,
 		);
