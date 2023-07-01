@@ -245,7 +245,7 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch();
 		if (rawBatch.hasReentrantOps === true && this.params.config.enableBatchRebasing) {
-			assert(!this.rebasing, "A rebased batch should never have reentrant ops");
+			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
@@ -266,7 +266,7 @@ export class Outbox {
 	 * @param rawBatch - the batch to be rebased
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
-		assert(!this.rebasing, "Reentrancy");
+		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
