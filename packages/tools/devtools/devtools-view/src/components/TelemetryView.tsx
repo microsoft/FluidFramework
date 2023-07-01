@@ -537,6 +537,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
 				paddingTop: "10px",
 				width: "100%",
+				overflowX: "scroll",
 			}}
 			pane1Style={{ overflowY: "auto" }}
 			pane2Style={{ margin: "10px" }}
