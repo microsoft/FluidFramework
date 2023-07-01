@@ -40,7 +40,6 @@ import {
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
-import { useLogger } from "./TelemetryUtils";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -466,25 +465,20 @@ function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
 	const styles = useMenuStyles();
-	const logger = useLogger();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
-		logger?.sendTelemetryEvent({ eventName: "containerClicked", containerKey });
 		setSelection({ type: "containerMenuSelection", containerKey });
 	}
 
 	function onTelemetryClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "telemetryClicked" });
 		setSelection({ type: "telemetryMenuSelection" });
 	}
 
 	function onSettingsClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "settingsClicked" });
 		setSelection({ type: "settingsMenuSelection" });
 	}
 
 	function onHomeClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "homeClicked" });
 		setSelection({ type: "homeMenuSelection" });
 	}
 
