@@ -14,11 +14,11 @@ export class SecretManager implements core.ISecretManager {
 		return undefined;
 	}
 
-	public decryptSecret(encryptedSecret: string): string {
+	public decryptSecret(encryptedSecret: string, encryptionKeyVersion?: core.EncryptionKeyVersion): string {
 		return encryptedSecret;
 	}
 
-	public encryptSecret(secret: string): string {
+	public encryptSecret(secret: string, encryptionKeyVersion?: core.EncryptionKeyVersion): string {
 		return secret;
 	}
 }
