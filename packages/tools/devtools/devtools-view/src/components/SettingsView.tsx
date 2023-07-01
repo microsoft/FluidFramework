@@ -8,7 +8,6 @@ import {
 	Dropdown,
 	Option,
 	makeStyles,
-	shorthands,
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
@@ -27,17 +26,28 @@ export enum ThemeOption {
 
 const useStyles = makeStyles({
 	root: {
-		...shorthands.gap("10px"),
-		alignItems: "start",
-		display: "grid",
 		justifyItems: "start",
 		height: "100%",
 		width: "100%",
 	},
 
 	/**
-	 * Styles to apply to option entries
-	 * (container around label and value)
+	 * Styles to apply to sections (groupings of related options, with a header)
+	 */
+	section: {
+		display: "flex",
+		flexDirection: "column",
+	},
+
+	/**
+	 * Styles to apply to section headers
+	 */
+	sectionHeader: {
+		fontWeight: "bold",
+	},
+
+	/**
+	 * Styles to apply to option entries within a section (container around label and value)
 	 */
 	option: {
 		display: "flex",
@@ -45,16 +55,10 @@ const useStyles = makeStyles({
 	},
 
 	/**
-	 * Styles to apply to settings option labels
-	 */
-	label: { fontSize: "12px" },
-
-	/**
 	 * Styles to apply to settings option drop-downs
 	 */
 	dropdown: {
-		minWidth: "150px",
-		fontWeight: "bold",
+		width: "180px",
 	},
 });
 
@@ -104,10 +108,10 @@ export function SettingsView(): React.ReactElement {
 
 	return (
 		<div className={styles.root}>
-			<div className={styles.option}>
-				<label className={styles.label}>Select theme</label>
+			<div className={styles.section}>
+				<h4 className={styles.sectionHeader}>Theme</h4>
 				<Dropdown
-					placeholder="Theme"
+					placeholder="Select a theme"
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
