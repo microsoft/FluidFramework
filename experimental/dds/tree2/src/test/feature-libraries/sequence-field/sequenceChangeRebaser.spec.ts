@@ -221,7 +221,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const changes = [inv, updatedChange];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(isDeltaVisible(delta), false);
+				assert.deepEqual(delta, []);
 			});
 		}
 	});

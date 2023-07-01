@@ -30,7 +30,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else if (
 			areInputCellsEmpty(mark) &&
 			areOutputCellsEmpty(mark) &&
-			!markIsTransient(mark)
+			(!markIsTransient(mark) || mark.changes === undefined)
 		) {
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
