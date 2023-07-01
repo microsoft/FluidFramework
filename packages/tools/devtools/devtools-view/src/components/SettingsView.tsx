@@ -117,7 +117,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					placeholder={themeReadableOption[themeInfo.name as ThemeName]}
+					value={themeReadableOption[themeInfo.name as ThemeName]}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
