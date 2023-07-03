@@ -10,7 +10,7 @@ const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker
 const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
 const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-tools");
 
-// We need to replace the version string in the bundled code; otherwise the bundle we build in CI for PRs will have the
+// We need to replace the version string in the bundled code (in the packageVersion.ts files); otherwise the bundle we build in CI for PRs will have the
 // updated version string, which will not match the one in the main bundle. This will cause the bundle comparison to be
 // incorrect.
 const pkg = require("./package.json");
