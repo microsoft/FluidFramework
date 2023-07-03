@@ -19,7 +19,7 @@ import { ThemeContext } from "../ThemeHelper";
 /**
  * An enum with options for the DevTools themes.
  */
-export enum ThemeOption {
+export const enum ThemeOption {
 	Light = "Light",
 	Dark = "Dark",
 	HighContrast = "High Contrast",
@@ -106,7 +106,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					value={themeInfo.name === "dark" ? "Dark" : themeInfo.name}
+					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
