@@ -3402,6 +3402,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
+      string-replace-loader: ^3.1.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       webpack: ^5.82.0
@@ -3431,6 +3432,7 @@ importers:
       eslint: 8.6.0
       prettier: 2.6.2
       rimraf: 4.4.1
+      string-replace-loader: 3.1.0_webpack@5.83.0
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -40511,6 +40513,16 @@ packages:
     dependencies:
       char-regex: 1.0.2
       strip-ansi: 6.0.1
+    dev: true
+
+  /string-replace-loader/3.1.0_webpack@5.83.0:
+    resolution: {integrity: sha512-5AOMUZeX5HE/ylKDnEa/KKBqvlnFmRZudSOjVJHxhoJg9QYTwl1rECx7SLR8BBH7tfxb4Rp7EM2XVfQFxIhsbQ==}
+    peerDependencies:
+      webpack: ^5 || ^5.82.0
+    dependencies:
+      loader-utils: 2.0.4
+      schema-utils: 3.3.0
+      webpack: 5.83.0_webpack-cli@4.10.0
     dev: true
 
   /string-width/1.0.2:
