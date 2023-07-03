@@ -16,7 +16,7 @@ const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-t
 const pkg = require("./package.json");
 
 // Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
-const versionToReplace = process.env.SETVERSION_VERSION ?? pkg.version; // ?? "2.0.0-dev.5.2.0.171706";
+const versionToReplace = new RegExp(process.env.SETVERSION_VERSION ?? pkg.version, "g");
 const [publicVer, { major, minor, patch }] = fromInternalScheme(versionToReplace, true, true);
 const internalVersionNoPrerelease = [major, minor, patch].join(".");
 const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
