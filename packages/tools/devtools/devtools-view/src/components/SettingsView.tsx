@@ -25,17 +25,6 @@ export enum ThemeOption {
 	HighContrast = "High Contrast",
 }
 
-/**
- * A map to convert selected theme property to more user friendly displayed value.
- */
-type ThemeName = "light" | "dark" | "highContrast";
-
-const themeReadableOption: Record<ThemeName, ThemeOption> = {
-	light: ThemeOption.Light,
-	dark: ThemeOption.Dark,
-	highContrast: ThemeOption.HighContrast,
-};
-
 const useStyles = makeStyles({
 	root: {
 		...shorthands.gap("10px"),
@@ -77,7 +66,7 @@ export function SettingsView(): React.ReactElement {
 	const styles = useStyles();
 
 	function handleThemeChange(
-		event,
+		_event,
 		option: {
 			optionValue: string | undefined;
 			optionText: string | undefined;
@@ -87,25 +76,25 @@ export function SettingsView(): React.ReactElement {
 		switch (option.optionValue) {
 			case ThemeOption.Light:
 				setTheme({
-					name: "light",
+					name: ThemeOption.Light,
 					theme: webLightTheme,
 				});
 				break;
 			case ThemeOption.Dark:
 				setTheme({
-					name: "dark",
+					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
 			case ThemeOption.HighContrast:
 				setTheme({
-					name: "highContrast",
+					name: ThemeOption.HighContrast,
 					theme: teamsHighContrastTheme,
 				});
 				break;
 			default:
 				setTheme({
-					name: "dark",
+					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
@@ -117,7 +106,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					value={themeReadableOption[themeInfo.name as ThemeName]}
+					value={themeInfo.name === "dark" ? "Dark" : themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
