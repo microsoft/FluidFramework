@@ -189,6 +189,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
+
 [initialize-devtools-docs]: https://fluidframework.com/docs/apis/devtools#initializedevtools-function
 [devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
 [container-loader-package]: https://www.npmjs.com/package/@fluidframework/container-loader

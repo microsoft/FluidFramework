@@ -53,8 +53,8 @@ const devtoolsLogger = new DevtoolsLogger();
 
 // Pass the logger when instantiating the Loader
 const loader = new Loader({
-    logger: devtoolsLogger,
-    // Other necessary properties ...
+	logger: devtoolsLogger,
+	// Other necessary properties ...
 });
 
 // Use the Loader to create (and optionally, attach) a Container
@@ -64,13 +64,13 @@ await container.attach(/* params */);
 // Initialize the Devtools passing the logger and your Container.
 // The Container could be added later as well with devtools.registerContainerDevtools().
 const devtools = initializeDevtools({
-    logger: devtoolsLogger,
-    initialContainers: [
-        {
-            container,
-            containerKey: "My Container",
-        },
-    ],
+	logger: devtoolsLogger,
+	initialContainers: [
+		{
+			container,
+			containerKey: "My Container",
+		},
+	],
 });
 ```
 
@@ -196,6 +196,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
+
 [initialize-devtools-docs]: https://fluidframework.com/docs/apis/devtools-core#initializedevtools-function
 [devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
 [devtools-package]: https://www.npmjs.com/package/@fluid-experimental/devtools
