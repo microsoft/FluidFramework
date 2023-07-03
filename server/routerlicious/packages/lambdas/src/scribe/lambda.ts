@@ -88,6 +88,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 	// Used to checkpoint if no active clients
 	private noActiveClients: boolean = false;
+	private globalCheckpointOnly: boolean = false;
 
 	constructor(
 		protected readonly context: IContext,
@@ -328,6 +329,7 @@ export class ScribeLambda implements IPartitionLambda {
 							}
 						}
 					}
+					// eslint-disable-next-line unicorn/prefer-switch
 				} else if (value.operation.type === MessageType.NoClient) {
 					assert(
 						value.operation.referenceSequenceNumber === value.operation.sequenceNumber,
@@ -338,6 +340,7 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
+					this.globalCheckpointOnly = true;
 					const enableServiceSummaryForTenant =
 						this.disableTransientTenantFiltering ||
 						!this.transientTenants.has(this.tenantId);
@@ -423,6 +426,8 @@ export class ScribeLambda implements IPartitionLambda {
 							content.summaryProposal.summarySequenceNumber,
 						);
 					}
+				} else if (value.operation.type === MessageType.ClientJoin) {
+					this.globalCheckpointOnly = false;
 				}
 			}
 		}
@@ -435,6 +440,7 @@ export class ScribeLambda implements IPartitionLambda {
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
 			this.noActiveClients = false;
 		} else {
+			this.globalCheckpointOnly = false;
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state
@@ -610,6 +616,7 @@ export class ScribeLambda implements IPartitionLambda {
 			this.protocolHead,
 			inserts,
 			this.noActiveClients,
+			this.globalCheckpointOnly,
 		);
 		if (inserts.length > 0) {
 			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB

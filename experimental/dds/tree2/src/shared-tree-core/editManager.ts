@@ -16,7 +16,6 @@ import {
 	GraphCommit,
 	IRepairDataStoreProvider,
 	mintCommit,
-	rebaseBranch,
 	rebaseChange,
 	RevisionTag,
 	SessionId,
@@ -69,7 +68,9 @@ export class EditManager<
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly peerLocalBranches: Map<SessionId, GraphCommit<TChangeset>> = new Map();
+	// TODO:#4593: Add test to ensure that peer branches are never initialized with a repairDataStoreProvider
+	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
+		new Map();
 
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
@@ -245,22 +246,13 @@ export class EditManager<
 		// The new tail of the trunk is the commit at or just past the new minimum trunk sequence number
 		const searchResult = this.sequenceMap.getPairOrNextHigher(trunkTailSearchKey);
 		if (searchResult !== undefined) {
-			const [_, newTrunkTail] = searchResult;
+			const [, newTrunkTail] = searchResult;
 			// Don't do any work if the commit found by the search is already the tail of the trunk
 			if (newTrunkTail.parent !== this.trunkBase) {
 				// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 				// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
-				for (const [sessionId, branch] of this.peerLocalBranches) {
-					const [rebasedBranch] = rebaseBranch(
-						this.changeFamily.rebaser,
-						// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
-						// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
-						undefined,
-						branch,
-						newTrunkTail,
-						this.trunk.getHead(),
-					);
-					this.peerLocalBranches.set(sessionId, rebasedBranch);
+				for (const [, branch] of this.peerLocalBranches) {
+					branch.rebaseOnto(this.trunk, newTrunkTail);
 				}
 
 				// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
@@ -341,7 +333,7 @@ export class EditManager<
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
-					findCommonAncestor([branch, branchPath], this.trunk.getHead()) ??
+					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
 					fail("Expected branch to be based on trunk");
 
 				return [
@@ -389,7 +381,10 @@ export class EditManager<
 				findAncestor(this.trunk.getHead(), (r) => r.revision === branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
 
-			this.peerLocalBranches.set(sessionId, branch.commits.reduce(mintCommit, commit));
+			this.peerLocalBranches.set(
+				sessionId,
+				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+			);
 		}
 	}
 
@@ -451,30 +446,27 @@ export class EditManager<
 
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-		const [rebasedBranch] = rebaseBranch(
-			this.changeFamily.rebaser,
-			// Peer branches do not need to track repair data, so passing undefined will skip the repair data update process
-			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
-			undefined,
-			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
-			baseRevisionInTrunk,
-			this.trunk.getHead(),
+		const peerLocalBranch = getOrCreate(
+			this.peerLocalBranches,
+			newCommit.sessionId,
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
-		if (rebasedBranch === this.trunk.getHead()) {
+		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
 			this.pushToTrunk(sequenceNumber, newCommit);
-			this.peerLocalBranches.set(newCommit.sessionId, this.trunk.getHead());
+			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
+			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
 			const newChangeFullyRebased = rebaseChange(
 				this.changeFamily.rebaser,
 				newCommit.change,
-				rebasedBranch,
+				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
 			);
 
-			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
-
+			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushToTrunk(sequenceNumber, {
 				...newCommit,
 				change: newChangeFullyRebased,

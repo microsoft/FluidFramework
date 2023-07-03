@@ -26,7 +26,11 @@ export class CheckpointContext {
 	 * Checkpoints to the database & kafka
 	 * Note: This is an async method, but you should not await this
 	 */
-	public async checkpoint(checkpoint: ICheckpointParams, restartOnCheckpointFailure?: boolean) {
+	public async checkpoint(
+		checkpoint: ICheckpointParams,
+		restartOnCheckpointFailure?: boolean,
+		globalCheckpointOnly?: boolean,
+	) {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
@@ -40,7 +44,7 @@ export class CheckpointContext {
 
 		// Database checkpoint
 		try {
-			this.pendingUpdateP = this.checkpointCore(checkpoint);
+			this.pendingUpdateP = this.checkpointCore(checkpoint, globalCheckpointOnly);
 			await this.pendingUpdateP;
 		} catch (ex) {
 			// TODO flag context as error / use this.context.error() instead?
@@ -103,7 +107,7 @@ export class CheckpointContext {
 		this.closed = true;
 	}
 
-	private checkpointCore(checkpoint: ICheckpointParams) {
+	private checkpointCore(checkpoint: ICheckpointParams, globalCheckpointOnly: boolean = false) {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
@@ -114,7 +118,10 @@ export class CheckpointContext {
 		const localCheckpointEnabled = this.checkpointService.localCheckpointEnabled;
 
 		// determine if checkpoint is local
-		const isLocal = localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
+		const isLocal =
+			globalCheckpointOnly === true
+				? false
+				: localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);

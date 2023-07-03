@@ -5,7 +5,7 @@
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
 import { EncodedJsonableTree, RevisionTagSchema } from "../core";
-import { ChangesetLocalIdSchema } from "./modular-schema";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modular-schema";
 
 export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([
@@ -18,7 +18,7 @@ export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =
 			 * The node being restored.
 			 */
 			revert: EncodedJsonableTree,
-			revision: Type.Optional(RevisionTagSchema),
+			changeId: EncodedChangeAtomId,
 			changes: Type.Optional(tNodeChange),
 		}),
 	]);
@@ -34,9 +34,6 @@ class Wrapper<T extends TSchema> {
 	public encodedNodeUpdate(e: T) {
 		return EncodedNodeUpdate<T>(e);
 	}
-	public encodedValueChangeset(e: T) {
-		return EncodedValueChangeset<T>(e);
-	}
 	public encodedOptionalFieldChange(e: T) {
 		return EncodedOptionalFieldChange<T>(e);
 	}
@@ -49,22 +46,19 @@ export type EncodedNodeUpdate<Schema extends TSchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedNodeUpdate"]>
 >;
 
-export const EncodedValueChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Object({
-		value: Type.Optional(EncodedNodeUpdate(tNodeChange)),
-		changes: Type.Optional(tNodeChange),
-	});
-
-export type EncodedValueChangeset<Schema extends TSchema> = Static<
-	ReturnType<Wrapper<Schema>["encodedValueChangeset"]>
->;
-
 export const EncodedOptionalFieldChange = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object({
 		/**
 		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+		 * Globally unique across all changesets when paired with the changeset's revision tag.
 		 */
 		id: ChangesetLocalIdSchema,
+		/**
+		 * When populated, indicates the revision that this field change is associated with.
+		 * Is left undefined when the revision is the same as that of the whole changeset
+		 * (which would also be undefined in the case of an anonymous changeset).
+		 */
+		revision: Type.Optional(RevisionTagSchema),
 		/**
 		 * The new content for the trait. If undefined, the trait will be cleared.
 		 */
@@ -83,7 +77,7 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object({
 		fieldChange: Type.Optional(EncodedOptionalFieldChange(tNodeChange)),
 		childChange: Type.Optional(tNodeChange),
-		deletedBy: Type.Optional(RevisionTagSchema),
+		deletedBy: Type.Optional(EncodedChangeAtomId),
 	});
 
 export type EncodedOptionalChangeset<Schema extends TSchema> = Static<

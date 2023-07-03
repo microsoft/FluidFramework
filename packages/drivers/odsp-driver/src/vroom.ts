@@ -10,7 +10,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { ISocketStorageDiscovery } from "./contractsPublic";
 import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";

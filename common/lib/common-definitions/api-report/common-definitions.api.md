@@ -7,7 +7,7 @@
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @public
+// @public @deprecated
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
