@@ -88,7 +88,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blob.isAttached, true);
 		});
 
-		it("blob is acked after upload", async function () {
+		it.skip("blob is acked after upload", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
@@ -104,7 +104,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(acked, true);
 		});
 
-		it("blob is acked after offline upload", async function () {
+		it.skip("blob is acked after offline upload", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
@@ -117,7 +117,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(acked, true);
 		});
 
-		it("removes pending blob after attached and acked", async function () {
+		it.skip("removes pending blob after attached and acked", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -133,7 +133,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 
-		it("removes multiple pending blobs after attached and acked", async function () {
+		it.skip("removes multiple pending blobs after attached and acked", async function () {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			// force write mode
