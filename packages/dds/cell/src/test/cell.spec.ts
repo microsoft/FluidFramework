@@ -40,8 +40,8 @@ function createConnectedCell(
 function createDetachedCell(id: string, options?: CellOptions): ISharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
-	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
-	return subCell;
+	const factory = SharedCell.getFactory(options);
+	return new SharedCell(id, dataStoreRuntime, factory.attributes);
 }
 
 function createCellForReconnection(

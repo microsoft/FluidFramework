@@ -51,7 +51,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
     // @alpha
-    static getFactory(options: CellOptions): IChannelFactory;
+    static getFactory(options?: CellOptions): IChannelFactory;
     protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;

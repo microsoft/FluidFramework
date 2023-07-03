@@ -85,7 +85,7 @@ export class SharedCell<T = any>
 	 * time and do not apply to subsequent loads.
 	 * @alpha
 	 */
-	public static getFactory(options: CellOptions): IChannelFactory;
+	public static getFactory(options?: CellOptions): IChannelFactory;
 	public static getFactory(options?: CellOptions): IChannelFactory {
 		return new CellFactory(options);
 	}
