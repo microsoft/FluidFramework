@@ -14,19 +14,29 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 		);
 	}
 
-	const matchingAsset = stats.assets.find((asset) => {
-		// Make sure to only look at js files and not source maps (assumes source maps don't end in .js)
+	// An asset may contain more than one chunk. In that case the size of
+	const matchingAssets = stats.assets.filter((asset) => {
+		// Only look at js files and not source maps (assumes source maps don't end in .js)
 		if (asset.name.endsWith(".js")) {
-			// Assumes only a single chunk per asset, this may not hold for all apps.
-			return asset.chunks?.[0] === chunkId;
+			// If the asset contains the chunk, it should be considered when calculating the total size.
+			return asset.chunks?.includes(chunkId);
 		}
-
 		return false;
 	});
 
-	if (matchingAsset === undefined) {
-		throw new Error(`Could not find asset for chunk with id '${chunkId}' in the webpack stats`);
+	if (matchingAssets.length === 0) {
+		throw new Error(
+			`Could not find an asset for chunk with id '${chunkId}' in the webpack stats`,
+		);
 	}
 
-	return matchingAsset.size;
+	if (matchingAssets.length > 1) {
+		console.warn(
+			`${matchingAssets.length} assets contain chunk with id '${chunkId}'; will return total size of all matching assets.`,
+		);
+	}
+
+	// The total size is the sum of the sizes of all assets with the chunk.
+	const totalSize = matchingAssets.reduce((acc, asset) => acc + asset.size, 0);
+	return totalSize;
 }
