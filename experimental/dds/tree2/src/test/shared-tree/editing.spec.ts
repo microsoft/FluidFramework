@@ -318,7 +318,7 @@ describe("Editing", () => {
 			expectJsonTree(tree2, expectedState);
 		});
 
-		it("can concurrently move node and change node's value", () => {
+		it("can concurrently edit and move a subtree (Move first)", () => {
 			const tree1 = makeTreeFromJson(["A", { foo: "B" }]);
 			const tree2 = tree1.fork();
 
