@@ -33,10 +33,6 @@
 				"packages": ["@fluidframework/common-utils"],
 				"deps": ["Base-Definitions"]
 			},
-			"Core-Utils": {
-				"packages": ["@fluidframework/core-utils"],
-				"deps": []
-			},
 			"Protocol-Utils": {
 				"packages": ["@fluidframework/protocol-base"],
 				"deps": ["Base-Utils", "Protocol-Definitions"]
@@ -82,7 +78,7 @@
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Container-Utils", "Core-Utils", "Driver-Utils"]
+				"deps": ["Container-Definitions", "Container-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
