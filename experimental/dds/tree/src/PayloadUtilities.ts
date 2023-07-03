@@ -4,7 +4,8 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { compareArrays } from '@fluidframework/core-utils';
+// eslint-disable-next-line import/no-internal-modules
+import { compareArrays } from '../../../../packages/common/core-utils';
 import { Payload } from './persisted-types';
 
 /**

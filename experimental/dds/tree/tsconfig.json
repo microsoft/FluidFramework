@@ -9,5 +9,6 @@
 		"rootDir": "./src",
 		"types": ["mocha"]
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
+	"references": [{ "path": "../../../packages/common/core-utils" }]
 }

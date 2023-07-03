@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { compareArrays } from "@fluidframework/core-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { compareArrays } from "../../../../../../packages/common/core-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,

@@ -5450,7 +5450,6 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -5494,7 +5493,6 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
@@ -5617,7 +5615,6 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -5661,7 +5658,6 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions

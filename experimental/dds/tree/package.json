@@ -44,7 +44,6 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
