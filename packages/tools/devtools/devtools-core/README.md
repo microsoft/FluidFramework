@@ -102,7 +102,7 @@ That singleton is automatically cleaned up prior to the Window's "unload" event.
 So typical application flows likely won't need to worry about cleanup.
 That said, if you wish to have tighter control over when the Devtools are torn down, you can simply call the `dispose` method on the handle returned by [initialization](#initialization).
 
-## Working in the package
+## Contributing to the package
 
 ### Build
 
