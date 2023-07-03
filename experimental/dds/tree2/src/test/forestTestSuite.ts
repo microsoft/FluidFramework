@@ -400,7 +400,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					moveToDetachedField(forest, cursor);
 
 					const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-					const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
+					const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
 					assert.throws(() => forest.applyDelta(delta));
 				});
 			}
