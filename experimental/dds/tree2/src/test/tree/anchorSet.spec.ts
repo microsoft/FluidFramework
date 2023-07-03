@@ -253,7 +253,7 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Insert,
 			content: [singleTextCursor({ type: jsonString.name, value: "x" })],
 		};
-		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark, 0, insertMark]]]));
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [deleteMark, insertMark]]]));
 
 		log.expect([
 			["afterDelete", 1],
