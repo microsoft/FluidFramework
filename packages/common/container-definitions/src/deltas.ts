@@ -226,13 +226,13 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	submitSignal(content: any): void;
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - The IDeltaManager's dispose state is not recommended for observation
+	 * @deprecated - 2.0.0-internal.5.3.0 - The IDeltaManager's dispose state is not recommended for observation
 	 * and will be removed in an upcoming release.
 	 */
 	readonly disposed: boolean;
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - Disposing the IDeltaManager results in inconsistent system state.
+	 * @deprecated - 2.0.0-internal.5.3.0 - Disposing the IDeltaManager results in inconsistent system state.
 	 * This member will be removed in an upcoming release.
 	 */
 	dispose(error?: Error): void;
