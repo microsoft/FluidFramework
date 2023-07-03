@@ -14,7 +14,7 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 		);
 	}
 
-	// An asset may contain more than one chunk. In that case the size of
+	// An asset may contain more than one chunk, so we filter to all the assets that contain the chunk.
 	const matchingAssets = stats.assets.filter((asset) => {
 		// Only look at js files and not source maps (assumes source maps don't end in .js)
 		if (asset.name.endsWith(".js")) {
@@ -31,6 +31,9 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 	}
 
 	if (matchingAssets.length > 1) {
+		// Typically we expect a single asset to be found per chunk (this is maybe not typical of all webpack projects, but
+		// it seems to be the case in our usage here), so if we find more than one, log a warning so we can investigate more
+		// easily if needed.
 		console.warn(
 			`${matchingAssets.length} assets contain chunk with id '${chunkId}'; will return total size of all matching assets.`,
 		);
