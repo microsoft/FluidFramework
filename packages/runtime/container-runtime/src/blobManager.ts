@@ -422,7 +422,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				pending.attached = true;
 				this.deletePendingBlobMaybe(id);
 			}
-		}
+		};
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
 			this.routeContext,
@@ -668,13 +668,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				this.opsInFlight.delete(blobId);
 			}
 			// offline flow does not resolve the handle (since it was already resolved)
-			// but we still need to delete the entry in case is acked and attached. 
+			// but we still need to delete the entry in case is acked and attached.
 			const localEntry = this.pendingBlobs.get(localId);
-			if(localEntry) {
+			if (localEntry) {
 				localEntry.acked = true;
 				this.deletePendingBlobMaybe(localId);
 			}
-
 		}
 	}
 
