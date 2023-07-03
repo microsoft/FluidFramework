@@ -36,6 +36,10 @@ import {
 	CompatApis,
 } from "./testApi.js";
 
+type Mutable<T> = {
+	-readonly [P in keyof T]: T[P];
+};
+
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 export interface ITestDataObject extends IFluidLoadable {
@@ -65,7 +69,9 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	const copyAttributesBesidesPackageVersion = (
 		attributes: IChannelAttributes,
 	): Omit<IChannelAttributes, "packageVersion"> => {
-		const remainingAttributes = JSON.parse(JSON.stringify(attributes));
+		const remainingAttributes: Mutable<IChannelAttributes> = JSON.parse(
+			JSON.stringify(attributes),
+		);
 		delete remainingAttributes.packageVersion;
 		return remainingAttributes;
 	};
@@ -101,7 +107,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 				 * });
 				 * ```
 				 *
-				 * This ensures that the factory you create depends on the correct fluid runtime version for compat purposes,
+				 * This ensures that the factory you create depends on the correct Fluid runtime version for compat purposes,
 				 * and so the test data object's registry (which is being built here) can use your factory directly.
 				 */
 				assert.deepEqual(
