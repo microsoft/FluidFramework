@@ -70,7 +70,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<any>,
-		private readonly onAttachGraph: () => void,
+		private readonly onAttachGraph?: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
@@ -78,7 +78,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	public attachGraph() {
 		if (!this.attached) {
 			this.attached = true;
-			this.onAttachGraph();
+			this.onAttachGraph?.();
 		}
 	}
 
@@ -140,8 +140,8 @@ interface PendingBlob {
 	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
-	attached: boolean;
-	acked: boolean;
+	attached?: boolean;
+	acked?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -149,8 +149,8 @@ export interface IPendingBlobs {
 		blob: string;
 		uploadTime?: number;
 		minTTLInSeconds?: number;
-		attached: boolean;
-		acked: boolean;
+		attached?: boolean;
+		acked?: boolean;
 	};
 }
 
@@ -415,18 +415,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.redirectTable.has(id) || this.pendingBlobs.has(id),
 			0x384 /* requesting handle for unknown blob */,
 		);
-		const entry = this.pendingBlobs.get(id) as PendingBlob;
+		const pending = this.pendingBlobs.get(id);
+		const callback = () => {
+			// in detached container case, there is no pending entry
+			if (pending) {
+				pending.attached = true;
+				this.deletePendingBlobMaybe(id);
+			}
+		}
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
 			this.routeContext,
 			async () => this.getBlob(id),
-			() => {
-				// in detached container case, there is no pending entry
-				if (entry) {
-					entry.attached = true;
-					this.deletePendingBlobMaybe(id);
-				}
-			},
+			pending ? callback : () => {},
 		);
 	}
 
@@ -666,6 +667,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				});
 				this.opsInFlight.delete(blobId);
 			}
+			// offline flow does not resolve the handle (since it was already resolved)
+			// but we still need to delete the entry in case is acked and attached. 
+			const localEntry = this.pendingBlobs.get(localId);
+			if(localEntry) {
+				localEntry.acked = true;
+				this.deletePendingBlobMaybe(localId);
+			}
+
 		}
 	}
 

@@ -90,7 +90,6 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("blob is acked after upload", async function () {
 			const testString = "this is a test string";
-			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -98,6 +97,19 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as any)
+				.pendingAttachmentBlobs;
+			const acked = Object.values<any>(pendingBlobs)[0].acked;
+			assert.strictEqual(blob.isAttached, false);
+			assert.strictEqual(acked, true);
+		});
+
+		it("blob is acked after offline upload", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+
+			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+			await provider.ensureSynchronized();
 			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as any)
 				.pendingAttachmentBlobs;
 			const acked = Object.values<any>(pendingBlobs)[0].acked;
@@ -116,6 +128,22 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as any)
+				.pendingAttachmentBlobs;
+			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+		});
+
+		it("removes multiple pending blobs after attached and acked", async function () {
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			// force write mode
+			await forceWriteMode(map, dataStore1);
+
+			const lots = 10;
+			for (let i = 0; i < lots; i++) {
+				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
+				map.set(`${i}`, blob);
+			}
 			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as any)
 				.pendingAttachmentBlobs;
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
