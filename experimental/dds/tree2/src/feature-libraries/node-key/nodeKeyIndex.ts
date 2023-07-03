@@ -50,7 +50,7 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 			this.nodes.clear();
 			for (let i = 0; i < context.root.length; i++) {
 				for (const [id, node] of this.findKeys(context.root.getNode(i))) {
-					assert(!this.nodes.has(id), "Encountered duplicate node key");
+					assert(!this.nodes.has(id), 0x6e1 /* Encountered duplicate node key */);
 					this.nodes.set(id, node);
 				}
 			}
@@ -107,12 +107,12 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 			assert(
 				node[typeSymbol].extraGlobalFields ||
 					node[typeSymbol].globalFields.has(this.fieldKey),
-				"Found node key that is not in schema",
+				0x6e2 /* Found node key that is not in schema */,
 			);
 		} else {
 			assert(
 				!node[typeSymbol].globalFields.has(this.fieldKey),
-				"Node key absent but required by schema",
+				0x6e3 /* Node key absent but required by schema */,
 			);
 		}
 
