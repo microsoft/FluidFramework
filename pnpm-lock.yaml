@@ -3382,6 +3382,7 @@ importers:
     specifiers:
       '@cerner/duplicate-package-checker-webpack-plugin': ^2.3.0
       '@fluid-experimental/tree2': workspace:~
+      '@fluid-tools/version-tools': ^0.20.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/bundle-size-tools': ^0.20.0
@@ -3418,6 +3419,7 @@ importers:
       source-map-loader: 2.0.2_webpack@5.83.0
     devDependencies:
       '@cerner/duplicate-package-checker-webpack-plugin': 2.3.0_webpack@5.83.0
+      '@fluid-tools/version-tools': 0.20.0
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/bundle-size-tools': 0.20.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
