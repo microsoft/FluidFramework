@@ -1,7 +1,7 @@
 # @fluidframework/fluid-runner
 
-This package contains utility for running various functionality inside an offline Fluid Framework environment.
-Currently, the only function of the fluid-runner tool is `exportFile`. The tool may be expanded for futher functionality.
+This package contains a tool called "fluid-runner" which can run various functionality inside an offline Fluid Framework environment.
+Currently, the only function of the fluid-runner tool is `exportFile`. We'll be adding more functionality in the future.
 
 ## Export File
 

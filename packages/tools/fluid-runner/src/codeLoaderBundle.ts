@@ -36,6 +36,7 @@ export interface IFluidFileConverter {
 
 	/**
 	 * Executes code on container and returns the result
+	 * The meaning of "execution" is generalized and it is up to implementation of this interface to determine what it means
 	 * @param container - container created by this application
 	 * @param options - additional options
 	 */
