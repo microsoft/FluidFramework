@@ -52,8 +52,8 @@ module.exports = {
 				options: {
 					search: versionToReplace,
 					replace: newVersion,
-          // If true, webpack will fail if the search string is not found in the file. Since we have some files that
-          // don't have the version numbers, we need to set this to false.
+					// If true, webpack will fail if the search string is not found in the file. Since we have some files that
+					// don't have the version numbers, we need to set this to false.
 					strict: false,
 				},
 			},
