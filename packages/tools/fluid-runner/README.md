@@ -1,10 +1,11 @@
 # @fluidframework/fluid-runner
 
 This package contains utility for running various functionality inside an offline Fluid Framework environment.
+Currently, the only function of the fluid-runner tool is `exportFile`. The tool may be expanded for futher functionality.
 
 ## Export File
 
-Allows some offline execution to be made on a container given a provided ODSP snapshot. The meaning of "execution" is generalized and it is up to consumer of this tool to determine what it means for their specific scenario.
+Loads a Fluid container given a provided ODSP snapshot and code loader bundle, and allows some offline execution to be made on this container. The meaning of "execution" is generalized and it is up to consumer of this tool to determine what it means for their specific scenario.
 Examples of "execution" could be:
 
 -   writing all the content of a document to the `outputFile`
