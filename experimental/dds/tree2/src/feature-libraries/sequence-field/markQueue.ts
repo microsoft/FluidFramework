@@ -75,14 +75,7 @@ export class MarkQueue<T> {
 			return mark;
 		}
 
-		const [mark1, mark2] = splitMark(
-			mark,
-			this.revision,
-			length,
-			this.genId,
-			this.moveEffects,
-			!this.consumeEffects,
-		);
+		const [mark1, mark2] = splitMark(mark, length);
 		this.stack.push(mark2);
 		return mark1;
 	}

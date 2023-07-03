@@ -40,3 +40,4 @@ export {
 } from "./fluidPackage";
 
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export type { IDisposable } from "./disposable";

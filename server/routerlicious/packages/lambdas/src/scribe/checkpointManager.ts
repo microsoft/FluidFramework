@@ -45,7 +45,9 @@ export class CheckpointManager implements ICheckpointManager {
 		protocolHead: number,
 		pending: ISequencedOperationMessage[],
 		noActiveClients: boolean,
+		globalCheckpointOnly: boolean,
 	) {
+		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
 		if (this.getDeltasViaAlfred) {
 			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
@@ -103,7 +105,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				!noActiveClients,
+				isLocalCheckpoint,
 			);
 		} else {
 			// The order of the three operations below is important.
@@ -139,7 +141,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				!noActiveClients,
+				isLocalCheckpoint,
 			);
 
 			// And then delete messagses that were already summarized.

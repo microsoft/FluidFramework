@@ -290,7 +290,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			const fieldKey: FieldKey = brand(key);
 			if (fieldKey === localNodeKeySymbol) {
 				// TODO: this is not very type safe. Can we do better?
-				assert(typeof key === "number", "Invalid local node key");
+				assert(typeof key === "number", 0x6d9 /* Invalid local node key */);
 				const localNodeKey = key as unknown as LocalNodeKey;
 				const stableNodeKey = target.context.nodeKeys.stabilizeNodeKey(localNodeKey);
 				target.getField(fieldKey).content = stableNodeKey;
