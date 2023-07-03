@@ -34,7 +34,6 @@ describe("EditManagerSummarizer", () => {
 				[
 					"3",
 					{
-						isDivergent: false,
 						base: tag1,
 						commits: [
 							{
@@ -48,7 +47,6 @@ describe("EditManagerSummarizer", () => {
 				[
 					"4",
 					{
-						isDivergent: true,
 						base: tag2,
 						commits: [
 							{

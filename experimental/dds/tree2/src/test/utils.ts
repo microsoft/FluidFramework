@@ -82,7 +82,7 @@ import {
 	TaggedChange,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
@@ -692,6 +692,8 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
  */
 export function makeEncodingTestSuite<TDecoded>(
 	family: ICodecFamily<TDecoded>,
@@ -700,17 +702,26 @@ export function makeEncodingTestSuite<TDecoded>(
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
+			// A common pattern to avoid validating the same portion of encoded data multiple times
+			// is for a codec to either validate its data is in schema itself and not return `encodedSchema`,
+			// or for it to not validate its own data but return an `encodedSchema` and let the caller use that.
+			// This block makes sure we still validate the encoded data schema for codecs following the latter
+			// pattern.
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					: codec.json;
 			for (const [name, data] of encodingTestData) {
 				describe(name, () => {
 					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
+						const encoded = jsonCodec.encode(data);
+						const decoded = jsonCodec.decode(encoded);
 						assert.deepEqual(decoded, data);
 					});
 
 					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
+						const encoded = JSON.stringify(jsonCodec.encode(data));
+						const decoded = jsonCodec.decode(JSON.parse(encoded));
 						assert.deepEqual(decoded, data);
 					});
 
