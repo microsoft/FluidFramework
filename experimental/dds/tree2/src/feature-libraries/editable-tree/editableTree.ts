@@ -207,20 +207,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
-				return () => {
-					unsubscribeFromValueChange();
-					unsubscribeFromChildrenChange();
-				};
+				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
 			}

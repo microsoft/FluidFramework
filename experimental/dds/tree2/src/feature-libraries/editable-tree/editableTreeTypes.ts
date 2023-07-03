@@ -88,11 +88,11 @@ export const on: unique symbol = Symbol("editable-tree:on");
 export interface EditableTreeEvents {
 	/**
 	 * Raised when a specific EditableTree node is changing.
-	 * This includes its values and fields.
+	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
 	 * @param value - the new value stored in the node.
 	 */
-	changing(upPath: UpPath, value: Value): void;
+	changing(upPath: UpPath): void;
 
 	/**
 	 * Raised when something in the tree is changing, including this node and its descendants.

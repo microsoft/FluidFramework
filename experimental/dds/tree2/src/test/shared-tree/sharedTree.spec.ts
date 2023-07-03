@@ -984,30 +984,35 @@ describe("SharedTree", () => {
 	describe("Events", () => {
 		it("triggers events for local and subtree changes", () => {
 			const view = testTreeView();
-			const root = view.context.root.getNode(0);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
 			const log: string[] = [];
-			const unsubscribe = root[on]("changing", () => log.push("change"));
-			const unsubscribeSubtree = root[on]("subtreeChanging", () => {
+			const unsubscribe = rootNode[on]("changing", () => log.push("change"));
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
-			// root[valueSymbol] = 5;
+			root.x = 5;
 			log.push("editStart");
-			// root[valueSymbol] = 6;
+			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
 			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
-			// root[valueSymbol] = 7;
+			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
 				"change",
+				"subtree",
+				"change",
 				"after",
 				"editStart",
+				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -1016,36 +1021,41 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		it("propagates path and value args for local and subtree changes", () => {
+		it("propagates path args for local and subtree changes", () => {
 			const view = testTreeView();
-			const root = view.context.root.getNode(0);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
 			const log: string[] = [];
-			const unsubscribe = root[on]("changing", (upPath, val) =>
-				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${val}`),
+			const unsubscribe = rootNode[on]("changing", (upPath) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
-			// root[valueSymbol] = 5;
+			root.x = 5;
 			log.push("editStart");
-			// root[valueSymbol] = 6;
+			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
 			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
-			// root[valueSymbol] = 7;
+			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-Symbol(rootFieldKey)-0",
-				"change-Symbol(rootFieldKey)-0-5",
+				"change-Symbol(rootFieldKey)-0",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0",
 				"after",
 				"editStart",
 				"subtree-Symbol(rootFieldKey)-0",
-				"change-Symbol(rootFieldKey)-0-6",
+				"change-Symbol(rootFieldKey)-0",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -2144,12 +2154,19 @@ function initializeTestTree(
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
-	const treeSchema = builder.object("root", { value: ValueSchema.Number });
+	const numberSchema = builder.primitive("number", ValueSchema.Number);
+	const treeSchema = builder.object("root", {
+		local: {
+			x: SchemaBuilder.fieldValue(numberSchema),
+		},
+	});
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: 24,
+		initialTree: {
+			x: 24,
+		},
 		schema,
 	});
 }
