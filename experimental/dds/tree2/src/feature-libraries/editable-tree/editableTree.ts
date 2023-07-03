@@ -268,6 +268,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		value: NewFieldContent,
 		receiver: NodeProxyTarget,
 	): boolean => {
+		assert(
+			key !== valueSymbol,
+			"The value of a node can only be changed by replacing the node",
+		);
 		if (typeof key === "string" || symbolIsFieldKey(key)) {
 			const fieldKey: FieldKey = brand(key);
 			if (fieldKey === localNodeKeySymbol) {
@@ -281,8 +285,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			}
 
 			return true;
-		} else if (key === valueSymbol) {
-			fail("Cannot set value of a node");
 		}
 		return false;
 	},
