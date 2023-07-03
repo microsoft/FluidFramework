@@ -81,6 +81,7 @@ export function rebase<TNodeChange>(
 	genId: IdAllocator,
 	manager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
+	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset<TNodeChange> {
 	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
 	const baseInfo =
@@ -94,6 +95,7 @@ export function rebase<TNodeChange>(
 		rebaseChild,
 		genId,
 		manager as MoveEffectTable<TNodeChange>,
+		nodeExistenceState,
 	);
 }
 
@@ -111,6 +113,7 @@ function rebaseMarkList<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
+	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new RebaseQueue(
@@ -201,6 +204,7 @@ function rebaseMarkList<TNodeChange>(
 				baseInputIndex,
 				rebaseChild,
 				moveEffects,
+				nodeExistenceState,
 			);
 			factory.push(rebasedMark);
 
@@ -339,6 +343,7 @@ function rebaseMark<TNodeChange>(
 	baseInputOffset: number,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Mark<TNodeChange> {
 	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
@@ -392,7 +397,10 @@ function rebaseMark<TNodeChange>(
 			0x69e /* Only an ExistingCellMark can target an empty cell */,
 		);
 		if (isMoveMark(rebasedMark)) {
-			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
+			if (
+				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+				nodeExistenceState === NodeExistenceState.Alive
+			) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
@@ -413,6 +421,31 @@ function rebaseMark<TNodeChange>(
 			}
 		}
 		rebasedMark = withoutDetachEvent(rebasedMark);
+	} else if (
+		nodeExistenceState === NodeExistenceState.Alive &&
+		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+		rebasedMark.detachEvent === undefined
+	) {
+		setPairedMarkStatus(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			rebasedMark.revision,
+			rebasedMark.id,
+			rebasedMark.count,
+			PairedMarkUpdate.Reactivated,
+		);
+	} else if (
+		nodeExistenceState === NodeExistenceState.Dead &&
+		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom")
+	) {
+		setPairedMarkStatus(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			rebasedMark.revision,
+			rebasedMark.id,
+			rebasedMark.count,
+			PairedMarkUpdate.Deactivated,
+		);
 	}
 	return rebasedMark;
 }

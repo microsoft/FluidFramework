@@ -489,6 +489,288 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
 		});
 
+		it("destination of move's ancestor deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete destination's ancestor concurrently
+			sequence.delete(1, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("source of move's ancestor deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("source of move's ancestor deleted then revived", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+			// Revive the ancestor
+			tree.undo();
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
+		});
+
+		it("node being concurrently moved and deleted with source ancestor revived", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+			// Revive source's ancestor
+			tree.undo();
+			// Delete "a"
+			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, {}]);
+		});
+
+		it("node being concurrently moved and revived with source ancestor deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete "a"
+			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+			// Revive "a"
+			tree.undo();
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("delete source ancestor of return mark", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			// Move to bar: [{}, { bar: ["a"] }}]
+			tree.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			const tree2 = tree.fork();
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete ancestor of "a"
+			sequence.delete(1, 1);
+			// Undo move to bar
+			tree2.undo();
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("delete destination ancestor of return mark", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			// Move to bar: [{}, { bar: ["a"] }}]
+			tree.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			const tree2 = tree.fork();
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete destination ancestor
+			sequence.delete(0, 1);
+			// Undo move to bar
+			tree2.undo();
+
+			tree.merge(tree2);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
 		it("rebase changes to field untouched by base", () => {
 			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, "B"] });
 			const tree1 = tree.fork();
