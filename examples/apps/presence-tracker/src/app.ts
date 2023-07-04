@@ -2,28 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode";
+import { IFocusTracker } from "./FocusTracker";
+import { IMouseTracker } from "./MouseTracker";
 
-import { Signaler } from "@fluid-experimental/data-objects";
-import { IFluidContainer, ContainerSchema } from "fluid-framework";
-import {
-	TinyliciousClient,
-	TinyliciousContainerServices,
-	TinyliciousMember,
-} from "@fluidframework/tinylicious-client";
-import { FocusTracker } from "./FocusTracker";
-import { MouseTracker } from "./MouseTracker";
-
-// Define the schema of our Container.
-// This includes the DataObjects we support and any initial DataObjects we want created
-// when the container is first created.
-const containerSchema: ContainerSchema = {
-	initialObjects: {
-		/* [id]: DataObject */
-		signaler: Signaler,
-	},
-};
-
-export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+export function renderFocusPresence(focusTracker: IFocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "70px";
@@ -33,10 +17,10 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
+	console.log("render", focusTracker);
+
 	const onFocusChanged = () => {
-		focusDiv.innerHTML = `Current user: ${
-			(focusTracker.audience.getMyself() as TinyliciousMember)?.userName
-		}</br>
+		focusDiv.innerHTML = `Current user: ${focusTracker.getName()}</br>
             ${getFocusPresencesString("</br>", focusTracker)}`;
 	};
 
@@ -46,28 +30,9 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusDiv);
 }
 
-function getFocusPresencesString(
-	newLineSeparator: string = "\n",
-	focusTracker: FocusTracker,
-): string {
-	const focusString: string[] = [];
-
-	focusTracker.getFocusPresences().forEach((focus, userName) => {
-		const prefix = `User ${userName}:`;
-		if (focus === undefined) {
-			focusString.push(`${prefix} unknown focus`);
-		} else if (focus === true) {
-			focusString.push(`${prefix} has focus`);
-		} else {
-			focusString.push(`${prefix} missing focus`);
-		}
-	});
-	return focusString.join(newLineSeparator);
-}
-
 export function renderMousePresence(
-	mouseTracker: MouseTracker,
-	focusTracker: FocusTracker,
+	mouseTracker: IMouseTracker,
+	focusTracker: IFocusTracker,
 	div: HTMLDivElement,
 ) {
 	const onPositionChanged = () => {
@@ -90,43 +55,56 @@ export function renderMousePresence(
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
 
-export async function start(): Promise<void> {
-	// Get or create the document depending if we are running through the create new flow
-	const client = new TinyliciousClient();
-	let container: IFluidContainer;
-	let services: TinyliciousContainerServices;
-	let containerId: string;
+function getFocusPresencesString(
+	newLineSeparator: string = "\n",
+	focusTracker: IFocusTracker,
+): string {
+	const focusString: string[] = [];
 
-	// Get or create the document depending if we are running through the create new flow
-	const createNew = !location.hash;
-	if (createNew) {
-		// The client will create a new container using the schema
-		({ container, services } = await client.createContainer(containerSchema));
-		containerId = await container.attach();
-		// The new container has its own unique ID that can be used to access it in another session
-		location.hash = containerId;
+	focusTracker.getFocusPresences().forEach((focus, userName) => {
+		const prefix = `User ${userName}:`;
+		console.log("focus presence string", focus);
+		if (focus === undefined) {
+			focusString.push(`${prefix} unknown focus`);
+		} else if (focus === true) {
+			focusString.push(`${prefix} has focus`);
+		} else {
+			focusString.push(`${prefix} missing focus`);
+		}
+	});
+	return focusString.join(newLineSeparator);
+}
+
+export async function start(): Promise<void> {
+	const tinyliciousModelLoader = new TinyliciousModelLoader<ITrackerAppModel>(
+		new StaticCodeLoader(new TrackerContainerRuntimeFactory()),
+	);
+
+	let id: string;
+	let model: ITrackerAppModel;
+
+	if (location.hash.length === 0) {
+		// Normally our code loader is expected to match up with the version passed here.
+		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+		// the version doesn't actually matter.
+		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
+		model = createResponse.model;
+		id = await createResponse.attach();
 	} else {
-		containerId = location.hash.substring(1);
-		// Use the unique container ID to fetch the container created earlier
-		({ container, services } = await client.getContainer(containerId, containerSchema));
+		id = location.hash.substring(1);
+		model = await tinyliciousModelLoader.loadExisting(id);
 	}
-	// create/get container API returns a combination of the container and associated container services
-	document.title = containerId;
+
+	// update the browser URL and the window title with the actual container ID
+	location.hash = id;
+	document.title = id;
 
 	// Render page focus information for audience members
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
-	const focusTracker = new FocusTracker(
-		container,
-		services.audience,
-		container.initialObjects.signaler as Signaler,
-	);
-	const mouseTracker = new MouseTracker(
-		services.audience,
-		container.initialObjects.signaler as Signaler,
-	);
-	renderFocusPresence(focusTracker, contentDiv);
-	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+
+	renderFocusPresence(model.focusTracker, contentDiv);
+	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
 }
 
 start().catch(console.error);

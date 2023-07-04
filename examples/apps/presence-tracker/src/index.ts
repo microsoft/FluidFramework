@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { FocusTracker, IFocusSignalPayload, IFocusTrackerEvents } from "./FocusTracker";
+export { FocusTracker, IFocusSignalPayload } from "./FocusTracker";

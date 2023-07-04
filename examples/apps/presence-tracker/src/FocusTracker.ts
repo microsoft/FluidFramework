@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
-import { IFluidContainer, IMember } from "fluid-framework";
+import { EventEmitter } from "events";
+import { ISignaler, SignalListener } from "@fluid-experimental/data-objects";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { assert } from "@fluidframework/common-utils";
+import { InternalSignaler } from "./InternalSignaler";
 
-export interface IFocusTrackerEvents extends IEvent {
-	(event: "focusChanged", listener: () => void): void;
+export interface IFocusTracker extends EventEmitter, ISignaler {
+	getFocusPresences(): Map<string, boolean>;
+	getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined;
+	on(event: "focusChanged", listener: () => void);
+	getName(): unknown | undefined;
 }
 
 export interface IFocusSignalPayload {
@@ -18,7 +21,7 @@ export interface IFocusSignalPayload {
 	focus: boolean;
 }
 
-export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+export class FocusTracker extends DataObject implements IFocusTracker {
 	private static readonly focusSignalType = "changedFocus";
 	private static readonly focusRequestType = "focusRequest";
 
@@ -45,14 +48,21 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		this.emit("focusChanged");
 	};
 
-	constructor(
-		container: IFluidContainer,
-		public readonly audience: ITinyliciousAudience,
-		private readonly signaler: Signaler,
-	) {
-		super();
+	private _signaler: InternalSignaler | undefined;
+	private get signaler(): InternalSignaler {
+		assert(this._signaler !== undefined, "internal signaler should be defined");
+		return this._signaler;
+	}
 
-		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
+	public static get Name() {
+		return "focusTracker";
+	}
+
+	protected async hasInitialized() {
+		this._signaler = new InternalSignaler(this.runtime);
+
+		const audience = this.runtime.getAudience();
+		audience.on("removeMember", (clientId: string, member: any) => {
 			const focusClientIdMap = this.focusMap.get(member.userId);
 			if (focusClientIdMap !== undefined) {
 				focusClientIdMap.delete(clientId);
@@ -82,10 +92,34 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		window.addEventListener("blur", () => {
 			this.sendFocusSignal(false);
 		});
-		container.on("connected", () => {
+		this.runtime.on("connected", () => {
 			this.signaler.submitSignal(FocusTracker.focusRequestType);
 		});
 		this.signaler.submitSignal(FocusTracker.focusRequestType);
+	}
+
+	// ISignaler methods  Note these are all passthroughs
+
+	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+		this.signaler.onSignal(signalName, listener);
+		return this;
+	}
+
+	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+		this.signaler.offSignal(signalName, listener);
+		return this;
+	}
+
+	public submitSignal(signalName: string, payload?: any) {
+		this.signaler.submitSignal(signalName, payload);
+	}
+
+	public getName(): unknown | undefined {
+		const audience = this.runtime.getAudience();
+		for (const [_, values] of audience.getMembers()) {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			return values.user["name"];
+		}
 	}
 
 	/**
@@ -93,21 +127,23 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 */
 	private sendFocusSignal(hasFocus: boolean) {
 		this.signaler.submitSignal(FocusTracker.focusSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.runtime.clientId as any,
 			focus: hasFocus,
 		});
 	}
 
 	public getFocusPresences(): Map<string, boolean> {
 		const statuses: Map<string, boolean> = new Map<string, boolean>();
-		this.audience.getMembers().forEach((member, userId) => {
-			member.connections.forEach((connection) => {
-				const focus = this.getFocusPresenceForUser(userId, connection.id);
-				if (focus !== undefined) {
-					statuses.set((member as any).userName, focus);
-				}
-			});
-		});
+		const audience = this.runtime.getAudience();
+
+		for (const [key, values] of audience.getMembers()) {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			const focus = this.getFocusPresenceForUser(this.runtime.clientId as any, key);
+			if (focus !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				statuses.set(values.user["name"], focus);
+			}
+		}
 		return statuses;
 	}
 
@@ -118,3 +154,10 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		return this.focusMap.get(userId)?.get(clientId);
 	}
 }
+
+export const FocusTrackerInstantiationFactory = new DataObjectFactory(
+	"focusTracker",
+	FocusTracker,
+	[],
+	{},
+);

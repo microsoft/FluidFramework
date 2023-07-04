@@ -3,64 +3,70 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-import { Signaler } from "@fluid-experimental/data-objects";
-import { IFluidContainer, ContainerSchema } from "fluid-framework";
-import {
-	TinyliciousClient,
-	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
-import { FocusTracker } from "../src/FocusTracker";
-import { MouseTracker } from "../src/MouseTracker";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+
+import { TrackerContainerRuntimeFactory, ITrackerAppModel } from "../src/containerCode";
 import { renderFocusPresence, renderMousePresence } from "../src/app";
 
-const containerSchema: ContainerSchema = {
-	initialObjects: {
-		/* [id]: DataObject */
-		signaler: Signaler,
-	},
-};
+/**
+ * This is a helper function for loading the page. It's required because getting the Fluid Container
+ * requires making async calls.
+ */
+async function createContainerAndRenderInElement(element: HTMLDivElement) {
+	const sessionStorageModelLoader = new SessionStorageModelLoader<ITrackerAppModel>(
+		new StaticCodeLoader(new TrackerContainerRuntimeFactory()),
+	);
 
-async function setup() {
-	// Get or create the document depending if we are running through the create new flow
-	const client = new TinyliciousClient();
-	let container: IFluidContainer;
-	let services: TinyliciousContainerServices;
-	let containerId: string;
+	let id: string;
+	let model: ITrackerAppModel;
 
-	// Get or create the document depending if we are running through the create new flow
-	const createNew = !location.hash;
-	if (createNew) {
-		// The client will create a new container using the schema
-		({ container, services } = await client.createContainer(containerSchema));
-		containerId = await container.attach();
-		// The new container has its own unique ID that can be used to access it in another session
-		location.hash = containerId;
+	if (location.hash.length === 0) {
+		// Normally our code loader is expected to match up with the version passed here.
+		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+		// the version doesn't actually matter.
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+		model = createResponse.model;
+		id = await createResponse.attach();
 	} else {
-		containerId = location.hash.substring(1);
-		// Use the unique container ID to fetch the container created earlier
-		({ container, services } = await client.getContainer(containerId, containerSchema));
+		id = location.hash.substring(1);
+		model = await sessionStorageModelLoader.loadExisting(id);
 	}
 
-	// create/get container API returns a combination of the container and associated container services
-	document.title = containerId;
+	// update the browser URL and the window title with the actual container ID
+	location.hash = id;
+	document.title = id;
 
 	// Render page focus information for audience members
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const divider = document.createElement("hr");
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
-	const focusTracker = new FocusTracker(
-		container,
-		services.audience,
-		container.initialObjects.signaler as Signaler,
-	);
-	const mouseTracker = new MouseTracker(
-		services.audience,
-		container.initialObjects.signaler as Signaler,
-	);
-	renderFocusPresence(focusTracker, contentDiv);
-	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+
+	// Render it
+	renderFocusPresence(model.focusTracker, contentDiv);
+	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
+
+	element.append(contentDiv, divider, mouseContentDiv);
+
+	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
 	window["fluidStarted"] = true;
+}
+
+/**
+ * For local testing we have two div's that we are rendering into independently.
+ */
+async function setup() {
+	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+	if (leftElement === null) {
+		throw new Error("sbs-left does not exist");
+	}
+	await createContainerAndRenderInElement(leftElement);
+	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+	if (rightElement === null) {
+		throw new Error("sbs-right does not exist");
+	}
+	// The second time we don't need to createNew because we know a Container exists.
+	await createContainerAndRenderInElement(rightElement);
 }
 
 setup().catch((e) => {

@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { EventEmitter } from "events";
+import { ISignaler, SignalListener } from "@fluid-experimental/data-objects";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { assert } from "@fluidframework/common-utils";
+import { InternalSignaler } from "./InternalSignaler";
 
-import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IMember, IServiceAudience } from "fluid-framework";
-
-export interface IMouseTrackerEvents extends IEvent {
-	(event: "mousePositionChanged", listener: () => void): void;
+export interface IMouseTracker extends EventEmitter, ISignaler {
+	getMousePresences(): Map<string, IMousePosition>;
+	on(event: "mousePositionChanged", listener: () => void);
 }
 
 export interface IMousePosition {
@@ -22,7 +23,7 @@ export interface IMouseSignalPayload {
 	pos: IMousePosition;
 }
 
-export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+export class MouseTracker extends DataObject implements IMouseTracker {
 	private static readonly mouseSignalType = "positionChanged";
 
 	/**
@@ -47,21 +48,30 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		this.emit("mousePositionChanged");
 	};
 
-	constructor(
-		public readonly audience: IServiceAudience<IMember>,
-		private readonly signaler: Signaler,
-	) {
-		super();
+	private _signaler: InternalSignaler | undefined;
+	private get signaler(): InternalSignaler {
+		assert(this._signaler !== undefined, "internal signaler should be defined");
+		return this._signaler;
+	}
 
-		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-			const clientIdMap = this.posMap.get(member.userId);
-			if (clientIdMap !== undefined) {
-				clientIdMap.delete(clientId);
-				if (clientIdMap.size === 0) {
+	public static get Name() {
+		return "mouseTracker";
+	}
+
+	protected async hasInitialized() {
+		this._signaler = new InternalSignaler(this.runtime);
+
+		const audience = this.runtime.getAudience();
+
+		audience.on("removeMember", (clientId: string, member: any) => {
+			const focusClientIdMap = this.posMap.get(member.userId);
+			if (focusClientIdMap !== undefined) {
+				focusClientIdMap.delete(clientId);
+				if (focusClientIdMap.size === 0) {
 					this.posMap.delete(member.userId);
 				}
 			}
-			this.emit("mousePositionChanged");
+			this.emit("focusChanged");
 		});
 
 		this.signaler.on("error", (error) => {
@@ -82,26 +92,43 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		});
 	}
 
+	// ISignaler methods  Note these are all passthroughs
+
+	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+		this.signaler.onSignal(signalName, listener);
+		return this;
+	}
+
+	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+		this.signaler.offSignal(signalName, listener);
+		return this;
+	}
+
+	public submitSignal(signalName: string, payload?: any) {
+		this.signaler.submitSignal(signalName, payload);
+	}
+
 	/**
 	 * Alert all connected clients that there has been a change to a client's mouse position
 	 */
 	private sendMouseSignal(position: IMousePosition) {
 		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.runtime.clientId as any,
 			pos: position,
 		});
 	}
 
 	public getMousePresences(): Map<string, IMousePosition> {
 		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
-		this.audience.getMembers().forEach((member, userId) => {
-			member.connections.forEach((connection) => {
-				const position = this.getMousePresenceForUser(userId, connection.id);
-				if (position !== undefined) {
-					statuses.set((member as any).userName, position);
-				}
-			});
-		});
+		const audience = this.runtime.getAudience();
+
+		for (const [key, values] of audience.getMembers()) {
+			const focus = this.getMousePresenceForUser(this.runtime.clientId as any, key);
+			if (focus !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				statuses.set(values.user["name"], focus);
+			}
+		}
 		return statuses;
 	}
 
@@ -109,3 +136,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		return this.posMap.get(userId)?.get(clientId);
 	}
 }
+
+export const MouseTrackerInstantiationFactory = new DataObjectFactory(
+	"mouseTracker",
+	MouseTracker,
+	[],
+	{},
+);
