@@ -19,7 +19,7 @@ import { ThemeContext } from "../ThemeHelper";
 /**
  * An enum with options for the DevTools themes.
  */
-export enum ThemeOption {
+export const enum ThemeOption {
 	Light = "Light",
 	Dark = "Dark",
 	HighContrast = "High Contrast",
@@ -57,17 +57,16 @@ const useStyles = makeStyles({
 		fontWeight: "bold",
 	},
 });
-
 /**
  * Settings page for the devtools.
  */
 export function SettingsView(): React.ReactElement {
-	const { setTheme } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
 
 	const styles = useStyles();
 
 	function handleThemeChange(
-		event,
+		_event,
 		option: {
 			optionValue: string | undefined;
 			optionText: string | undefined;
@@ -77,25 +76,25 @@ export function SettingsView(): React.ReactElement {
 		switch (option.optionValue) {
 			case ThemeOption.Light:
 				setTheme({
-					name: "light",
+					name: ThemeOption.Light,
 					theme: webLightTheme,
 				});
 				break;
 			case ThemeOption.Dark:
 				setTheme({
-					name: "dark",
+					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
 			case ThemeOption.HighContrast:
 				setTheme({
-					name: "highContrast",
+					name: ThemeOption.HighContrast,
 					theme: teamsHighContrastTheme,
 				});
 				break;
 			default:
 				setTheme({
-					name: "dark",
+					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
@@ -107,7 +106,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.option}>
 				<label className={styles.label}>Select theme</label>
 				<Dropdown
-					placeholder="Theme"
+					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
