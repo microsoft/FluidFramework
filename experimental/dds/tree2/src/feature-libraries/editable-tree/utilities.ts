@@ -90,13 +90,13 @@ export function getStableNodeKey(
 		const field = node[getField](nodeKeyFieldKeySymbol);
 		assert(
 			field.fieldSchema.kind.identifier === FieldKinds.nodeKey.identifier,
-			"Invalid node key field kind",
+			0x6df /* Invalid node key field kind */,
 		);
 		const nodeKeyNode = field.getNode(0);
 		const id = nodeKeyNode[valueSymbol];
 		assert(
 			typeof id === "string" && isStableId(id),
-			"Malformed value encountered in node key field",
+			0x6e0 /* Malformed value encountered in node key field */,
 		);
 		return brand(id);
 	}

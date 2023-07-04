@@ -253,7 +253,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						extractFromOpaque(mark.moveId),
 						mark.count,
 					);
-					assert(entry !== undefined, "Expected a move out for this move in");
+					assert(entry !== undefined, 0x6d7 /* Expected a move out for this move in */);
 					visitor.onMoveIn(index, entry.length, entry.value);
 					let endIndex = index + entry.length;
 
@@ -278,7 +278,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 
 						assert(
 							entry !== undefined && entry.start === nextId,
-							"Expected a move out for the remaining portion of this move in",
+							0x6d8 /* Expected a move out for the remaining portion of this move in */,
 						);
 
 						lastEntryId = entry.start + entry.length - 1;
