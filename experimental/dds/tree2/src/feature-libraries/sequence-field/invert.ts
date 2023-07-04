@@ -115,10 +115,14 @@ function invertMark<TNodeChange>(
 					withNodeChange(
 						{
 							type: "Revive",
-							detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
+							detachEvent: {
+								revision: mark.detachedBy.revision ?? revision,
+								index: mark.detachedBy.index,
+							},
 							content: reviver(revision, inputIndex, mark.content.length),
 							count: mark.content.length,
 							inverseOf: mark.revision ?? revision,
+							detachedBy: { revision: mark.revision ?? revision, index: inputIndex },
 						},
 						invertNodeChange(mark.changes, inputIndex, invertChild),
 					),
@@ -159,12 +163,16 @@ function invertMark<TNodeChange>(
 							{
 								type: "Revive",
 								detachEvent: {
-									revision: mark.revision ?? revision,
-									index: inputIndex,
+									revision: mark.detachedBy.revision ?? revision,
+									index: mark.detachedBy.index,
 								},
 								content: reviver(revision, inputIndex, mark.count),
 								count: mark.count,
 								inverseOf: mark.revision ?? revision,
+								detachedBy: {
+									revision: mark.revision ?? revision,
+									index: inputIndex,
+								},
 							},
 							invertNodeChange(mark.changes, inputIndex, invertChild),
 						),

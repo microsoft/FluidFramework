@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+	mintRevisionTag,
+	RevisionTag,
+	tagChange,
+	tagRollbackInverse,
+	TreeSchemaIdentifier,
+} from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
 import {
@@ -19,7 +25,9 @@ import {
 	toDelta,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
+import { brand } from "../../..";
 
+const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -37,8 +45,33 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
+	[
+		"TransientInsert",
+		(i) => [
+			{ count: i },
+			{
+				type: "Insert",
+				content: [singleTextCursor({ type, value: 1 })],
+				id: brand(0),
+				detachedBy: { revision: tag1, index: 1 },
+			},
+		],
+	],
 	["Delete", (i) => Change.delete(i, 2)],
 	["Revive", (i) => Change.revive(2, 2, tag1, i)],
+	[
+		"TransientRevive",
+		(i) => [
+			{ count: i },
+			{
+				type: "Revive",
+				count: 1,
+				detachEvent: { revision: tag1, index: i },
+				content: [singleTextCursor({ type, value: 1 })],
+				detachedBy: { revision: tag1, index: 1 },
+			},
+		],
+	],
 	["ConflictedRevive", (i) => Change.redundantRevive(2, 2, tag2, i, undefined)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
@@ -55,6 +88,13 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, B⁻¹] === A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
+				if (
+					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+					(name1.startsWith("Return") || name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
 					for (let offset1 = 1; offset1 <= 4; ++offset1) {
 						for (let offset2 = 1; offset2 <= 4; ++offset2) {
@@ -136,6 +176,13 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
+				if (
+					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+					(name1.startsWith("Return") || name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				if (name2 === "Revive") {
 					it.skip(title, () => {
 						/**
