@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { brand } from "../../../util";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import {
 	mintRevisionTag,
@@ -25,7 +26,6 @@ import {
 	toDelta,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
-import { brand } from "../../..";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

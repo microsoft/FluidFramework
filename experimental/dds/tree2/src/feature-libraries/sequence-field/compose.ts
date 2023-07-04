@@ -17,13 +17,10 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ExistingCellMark,
 	EmptyInputCellMark,
 	DetachEvent,
 	Modify,
 	MoveId,
-	Revive,
-	Insert,
 	LineageEvent,
 	NoopMarkType,
 } from "./format";
@@ -64,8 +61,6 @@ import {
 	markIsTransient,
 	GenerativeMark,
 	isGenerativeMark,
-	EmptyOutputCellMark,
-	TransientMark,
 } from "./utils";
 
 /**
@@ -564,12 +559,10 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			let cmp: number;
 			if (markIsTransient(baseMark)) {
-				// Compiler seems to have trouble inferring that `baseMark` is a TransientMark<T>
-				const baseTransientMark = baseMark as TransientMark<T>;
 				cmp = compareCellPositions(
-					baseTransientMark.detachedBy,
-					baseTransientMark.lineage,
-					isNewAttach(baseTransientMark),
+					baseMark.detachedBy,
+					baseMark.lineage,
+					isNewAttach(baseMark),
 					newMark,
 					this.newRevision,
 					this.cancelledInserts,
