@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.20.0",
+	"version": "0.21.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,7 +98,7 @@
 		"prettier": "~2.6.2",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
-		"semver": "^7.5.1",
+		"semver": "^7.5.3",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.19.0",
 		"sort-json": "^2.0.1",

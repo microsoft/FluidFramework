@@ -17,6 +17,12 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @internal
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @public
+export interface IDisposable {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
+
 // @public @deprecated
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;

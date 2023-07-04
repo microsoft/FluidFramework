@@ -1,5 +1,21 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.5.2.0
+
+### Minor Changes
+
+-   Deprecate unnecessary exports ([#16097](https://github.com/microsoft/FluidFramework/issues/16097)) [9486bec0ea](https://github.com/microsoft/FluidFramework/commits/9486bec0ea2f9f1dd3e40fc3b4c42af6b6a44697)
+
+    This change deprecates a number of interfaces in the merge tree package that are not used in the exported apis surface and therefore should not be used.
+
+-   Deprecate ISegment.parent ([#16097](https://github.com/microsoft/FluidFramework/issues/16097)) [9486bec0ea](https://github.com/microsoft/FluidFramework/commits/9486bec0ea2f9f1dd3e40fc3b4c42af6b6a44697)
+
+    This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
+
+    There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
+
+    Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
+
 ## 2.0.0-internal.5.1.0
 
 ### Minor Changes
