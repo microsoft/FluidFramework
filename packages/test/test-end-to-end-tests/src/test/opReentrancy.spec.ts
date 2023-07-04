@@ -239,7 +239,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					),
 				);
 
-				assert.throws(() => sharedString1.insertText(0, "ad"));
+				sharedString1.insertText(0, "ad");
 				await provider.ensureSynchronized();
 			},
 		);

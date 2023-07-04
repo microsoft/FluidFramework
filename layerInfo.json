@@ -138,7 +138,6 @@
 					"@fluid-internal/test-dds-utils",
 					"@fluidframework/local-driver",
 					"@fluidframework/test-runtime-utils",
-					"@fluidframework/test-client-utils",
 					"@fluid-tools/webpack-fluid-loader"
 				]
 			},

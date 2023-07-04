@@ -11,13 +11,11 @@ import {
 	ITelemetryErrorEvent,
 } from "@fluidframework/common-definitions";
 import {
-	IDeltaHandlerStrategy,
+	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -48,7 +46,11 @@ import {
 	DataProcessingError,
 	UsageError,
 } from "@fluidframework/container-utils";
-import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+import {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
 
@@ -68,6 +70,21 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
 	(event: "establishingConnection", listener: (reason: string) => void);
 	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
+}
+
+/**
+ * Interface used to define a strategy for handling incoming delta messages
+ */
+export interface IDeltaHandlerStrategy {
+	/**
+	 * Processes the message.
+	 */
+	process: (message: ISequencedDocumentMessage) => void;
+
+	/**
+	 * Processes the signal.
+	 */
+	processSignal: (message: ISignalMessage) => void;
 }
 
 /**
