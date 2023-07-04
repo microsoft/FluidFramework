@@ -1,6 +1,6 @@
 # Schema 2
 
-Proposal for changes to the schema system.
+Proposal for changes to the [schema system](../src/core/schema-stored/Stored%20and%20View%20Schema.md).
 
 ## Motivation
 
@@ -25,48 +25,49 @@ Instead of one kind of node in view schema, have 4, each with a subset of our cu
 3. Map Node: single field type which must permit empty.
    Allows all string field keys.
    Provides the functionality currently done by making a node schema with extra local fields.
-4. Field Node: Implicitly unwraps to field in the schema aware tree API.
-   Provides the functionality currently done by making a node schema with a primary field (empty field key).
+4. Field Node: Has a single unnamed filed (using the empty field key).
+   When reading in the editable tree API implicitly, unwraps to the field.
+   This provides the functionality currently done by making a node schema with a primary field (empty field key), which used for "array nodes".
 
-Each of these will get a seperate API to declare (similar to SchemaBuilder.object and SchemaBuilder.primative, except we will have 4 options).
+Each of these will get a separate API to declare (similar to SchemaBuilder.object and SchemaBuilder.primitive, except we will have 4 options).
 Each will also get its own API for accessing it in editable tree, though all will extend a common generic tree traversal API as well.
 
 This will mirror how field kinds work, where we have a small collection of supported kinds in schema, and each gets its own editable tree API.
 
-Struct Nodes will also get an addational feature: custom field names.
-Custom field names allow the view schema to delcare the string to be used for the name of the field in schmea-aware APIs insread of just using the field key.
+Struct Nodes will also get an additional feature: custom field names.
+Custom field names allow the view schema to declare the string to be used for the name of the field in schema-aware APIs instead of just using the field key.
 This can default to the field key, but can optionally be a distinct string.
 
-Custiomizable field names are great for app maintainability: a field in coded can be renamed as used in code without breakign existing data.
-There are also some further benifits:
+Customizable field names are great for app maintainability: a field in coded can be renamed as used in code without breaking existing data.
+There are also some further benefits:
 it makes it practical to ban specific field names for use in APIs if they collide with our framework APIs.
-Since an app can rename the field without changing how data is persisted, requiring them to do this renamining if a framework update causes a name collision will be ok.
-This means Struct Nodes can have schem-aware APIs that don't have to use symbols to avoid field name collosions.
+Since an app can rename the field without changing how data is persisted, requiring them to do this remaining if a framework update causes a name collision will be ok.
+This means Struct Nodes can have scheme-aware APIs that don't have to use symbols to avoid field name collisions.
 We will keep a method to look up fields by their keys to cover generic code as well.
 
-Custom field names make it practical to to use long collision resistant names for fields, and this ussage pattern can replace most of the need for global field keys.
+Custom field names make it practical to to use long collision resistant names for fields, and this usage pattern can replace most of the need for global field keys.
 The other use case, where the same field is desired on multiple schema can be handled in other ways, like putting it on a reused child node, or just putting the field directly on each schema its desired on.
 
 ### Annotation Pattern
 
-ExtraGlobalFields in the previous design existed to support an "annotations pattern" where a an app could opt some or all of their schema into alowing annotation subtrees to be placed on nodes.
-This addressed usecases where multiple users of the same tree (might be different applications entirly, or just different views withing the same app, different versions of an app etc.) want to store extra data ("annodations") on a tree, without interfearing with eachother.
+ExtraGlobalFields in the previous design existed to support an "annotations pattern" where a an app could opt some or all of their schema into allowing annotation subtrees to be placed on nodes.
+This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views withing the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
 
 ExtraGlobalFields isn't really a full solution to this.
-The real challance is that different applications may have different view schema, each with a different set of known annotations.
+The real challenge is that different applications may have different view schema, each with a different set of known annotations.
 Our stored vs view schema already can model this, even without ExtraGlobalFields:
 each application can add their annotations as optional fields to the stored schema.
 
-The only thing thats really missing is how the applications should handle opening documents with exexpected stored fields like these.
+The only thing thats really missing is how the applications should handle opening documents with expected stored fields like these.
 This an be addressed by doing either one or both of the following:
 
 1.  Allow field in the schema (stored and view) to indicate how applications which do not understand the field should tret the type.
     Some options:
-    1.  read+write, preserve where posible
+    1.  read+write, preserve where possible
     1.  read+write, clear on mutation
     1.  readonly
-    1.  Treat as outof schema / unsupported
-2.  Allow nodes to delcare if they support unrecognized fields (in the view schema only).
+    1.  Treat as out of schema / unsupported
+2.  Allow nodes to declare if they support unrecognized fields (in the view schema only).
     This would generate an API that could enumerate unexpected fields in the schema-aware API.
 
 ## Schedule
@@ -75,17 +76,16 @@ This an be addressed by doing either one or both of the following:
 
 Workstream 1
 
-1. Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primative)
+1. Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive)
 2. Update all schema to use new API.
-3. Remove old API.
+3. Remove old schema builder API.
 4. Capture which kind of node schema the view schema are in the data and type produced by the schema builder.
-5. Update editiable tree (and schema aware APIs) to leverage node kinds.
 
 Workstream 2
 
-1. Replace existing ussages of global field keys with string constants.
+1. Replace existing usages of global field keys with string constants.
 2. Remove support for global fields
-3. Cleanup code now that it can assume only local fields (ex: extra objects to seperate local and global can be renamed or removed).
+3. Cleanup code now that it can assume only local fields (ex: extra objects to separate local and global can be renamed or removed).
 
 Workstream 3
 
@@ -95,8 +95,12 @@ Workstream 3
 ### Mid term
 
 -   Add support for custom field names for struct fields.
--   Remove unneeded use of symbols.
--   Remove support for "undefined" values.
+-   Update editable tree (and schema aware APIs) to leverage node kinds.
+-   Define base node API and implementation
+-   Extend base for each kind.
+-   Remove use of symbols on editable tree APIs
+-   Remove use of proxies for nodes: dynamically generate custom struct node subclasses from schema.
+-   Remove support for "undefined" values from terminal nodes.
 
 ### Longer term
 
@@ -104,9 +108,9 @@ Full support for "annotation pattern".
 
 More unified Nodes vs Fields:
 Since will have a clear answer for what to do when you want to use a node as a field (Use a Value Field) or a field as a node (Use a Field Node).
-If desired we could make the schema language more tolerant, impllicitly handling fields as nodes and nodes as fields.
-Doing this properly would still need a type for the Field Nodes, so it may depend on having proper generic type support and thus not be viable initally.
-Alternativly (or addationally) in the even longer term we can revisite the whole alternatiting map like and and sequence like data model:
-this new schema setup gets us closer to having a single unifying abstraction for both nodes and fields, though a lot would still neewd to be worked out in this area if truly combined
-(how lifetime/identity would work, how to handle paths, generic access APIs and stree storage etc.).
-Details about how if if we would do this are out of scope for this document other than noting that such a change would likley be easuer with this new schema system than the old one.
+If desired we could make the schema language more tolerant, implicitly handling fields as nodes and nodes as fields.
+Doing this properly would still need a type for the Field Nodes, so it may depend on having proper generic type support and thus not be viable initially.
+Alternatively (or additionally) in the even longer term we can revisit the whole alternating map like and and sequence like data model:
+this new schema setup gets us closer to having a single unifying abstraction for both nodes and fields, though a lot would still need to be worked out in this area if truly combined
+(how lifetime/identity would work, how to handle paths, generic access APIs and tree storage etc.).
+Details about how if if we would do this are out of scope for this document other than noting that such a change would likely be easier with this new schema system than the old one.
