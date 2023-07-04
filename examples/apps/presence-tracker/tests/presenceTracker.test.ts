@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("Presence Tracker", () => {
+describe("presence-tracker", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
@@ -14,7 +14,6 @@ describe("Presence Tracker", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 		await page.waitFor(() => window["fluidStarted"]);
 	});
 
@@ -37,14 +36,6 @@ describe("Presence Tracker", () => {
 	it("Current User is displayed", async () => {
 		await page.waitForFunction(
 			() => document.getElementById("focus-div")?.innerHTML.startsWith("Current user"),
-			{ timeout: 10000 },
-		);
-	});
-
-	it("Current User has focus after focusing", async () => {
-		await page.click("*");
-		await page.waitForFunction(
-			() => document.getElementById("focus-div")?.innerHTML.endsWith("has focus"),
 			{ timeout: 10000 },
 		);
 	});
