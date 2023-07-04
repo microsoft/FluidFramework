@@ -401,7 +401,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			disabled={
 				tryConnect === undefined ||
 				containerState.closed ||
-				containerState.attachState === "Detached"
+				containerState.attachState === AttachState.Detached
 			}
 		>
 			Connect Container
@@ -416,7 +416,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			disabled={
 				closeContainer === undefined ||
 				containerState.closed ||
-				containerState.attachState === "Detached"
+				containerState.attachState === AttachState.Detached
 			}
 		>
 			Close Container
