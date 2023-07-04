@@ -45,12 +45,7 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				test: /\.tsx?$/,
-				use: "ts-loader",
-				exclude: /node_modules/,
-			},
-			{
-				test: /\.js$/,
+				test: /packageVersion\.js$/,
 				loader: "string-replace-loader",
 				options: {
 					search: versionToReplace,
@@ -59,6 +54,11 @@ module.exports = {
 					// don't have the version numbers, we need to set this to false.
 					strict: false,
 				},
+			},
+			{
+				test: /\.tsx?$/,
+				use: "ts-loader",
+				exclude: /node_modules/,
 			},
 			{
 				test: /\.js$/,
