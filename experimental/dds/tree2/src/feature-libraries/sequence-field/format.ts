@@ -225,8 +225,7 @@ export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagS
 
 export interface Transient {
 	/**
-	 * When populated, the content is inserted/revived then deleted.
-	 * The contents of the `DetachEvent` describe deletion.
+	 * The details of the change that deletes the transient content.
 	 */
 	detachedBy: DetachEvent;
 }
