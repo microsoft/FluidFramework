@@ -28,13 +28,13 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 
 	public process(message: ISequencedDocumentMessage) {
-		// We've processed something, therefore the current batch has ended
-		this.clientSequenceNumber++;
-
 		super.process(message);
 		if (this.clientId === message.clientId) {
 			this.processed++;
 		}
+
+		// We've processed something, therefore the current batch has ended
+		this.clientSequenceNumber++;
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {

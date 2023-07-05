@@ -165,9 +165,6 @@ export class MockContainerRuntime {
 		this.deltaManager.lastMessage = message;
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
-		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
-		});
 		this.dataStoreRuntime.process(message, local, localOpMetadata);
 	}
 
