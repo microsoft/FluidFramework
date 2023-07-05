@@ -80,14 +80,18 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: (progress.cancel as any).reason,
 					},
 					err,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
 					DriverErrorType.genericError,
-					{ driverVersion: pkgVersion, fetchCallName, reason: progress.cancel.reason },
+					{
+						driverVersion: pkgVersion,
+						fetchCallName,
+						reason: (progress.cancel as any).reason,
+					},
 				);
 			}
 
