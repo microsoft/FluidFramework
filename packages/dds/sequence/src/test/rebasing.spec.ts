@@ -67,6 +67,8 @@ describe("Rebasing", () => {
 		sharedString1.insertText(1, "b");
 		sharedString2.insertText(0, "y");
 		sharedString2.insertText(1, "w");
+		containerRuntime1.flush();
+		containerRuntimeFactory.processOneMessage();
 		sharedString2.insertText(2, "v");
 
 		containerRuntime2.rebase();
@@ -79,7 +81,7 @@ describe("Rebasing", () => {
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(sharedString1.getText(), "zywvuabcd");
+		assert.strictEqual(sharedString1.getText(), "zywvaubcd");
 		assert.strictEqual(
 			sharedString1.getText(),
 			sharedString2.getText(),
