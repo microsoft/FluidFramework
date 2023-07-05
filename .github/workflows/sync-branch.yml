@@ -1,0 +1,27 @@
+name: Sync branches
+
+on:
+  schedule:
+    - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
+
+env:
+  TARGET_BRANCH: test-next
+  SOURCE_BRANCH: main
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'microsoft'
+    steps: 
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Install dependencies
+        run: npm install @fluidframework/build-tools
+      
+      - name: Run merge command
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            execSync(`flub merge branch -a ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s ${process.env.SOURCE_BRANCH} -t ${process.env.TARGET_BRANCH} -b 10`);
