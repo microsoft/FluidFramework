@@ -10,10 +10,6 @@ import {
 import { DirectoryFactory } from "@fluidframework/map";
 import { SharedStringFactory } from "@fluidframework/sequence";
 
-import { cloneDeep } from "lodash";
-
-const foo = { a: 1, b: 2 };
-export const bar = cloneDeep(foo);
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}
 	const doFactory = new DataObjectFactory(

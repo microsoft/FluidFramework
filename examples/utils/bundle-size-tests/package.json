@@ -36,7 +36,6 @@
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"lodash": "^4.17.21",
 		"source-map-loader": "^2.0.0"
 	},
 	"devDependencies": {
