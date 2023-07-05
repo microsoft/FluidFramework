@@ -5,8 +5,6 @@
 
 import nconf from "nconf";
 import { RouterliciousEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { resolveVersion } from "./versionUtils.js";
-import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Different kind of compat version config
@@ -25,7 +23,7 @@ export enum CompatKind {
 }
 
 /*
- * Parse the command line argument and environment variables.  Arguments take precedent over environment variable
+ * Parse the command line argument and environment variables. Arguments take precedent over environment variable
  * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
 const options = {
@@ -111,7 +109,6 @@ nconf
 		fluid: {
 			test: {
 				driver: "local",
-				baseVersion: pkgVersion,
 				r11sEndpointName: "r11s",
 				tenantIndex: 0,
 			},
@@ -122,6 +119,5 @@ export const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | u
 export const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
 export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as RouterliciousEndpoint;
-export const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
 export const reinstall = nconf.get("fluid:test:reinstall");
 export const tenantIndex = nconf.get("fluid:test:tenantIndex") as number;

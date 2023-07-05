@@ -8,7 +8,7 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.mjs";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";

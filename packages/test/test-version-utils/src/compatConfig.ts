@@ -12,9 +12,9 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	baseVersion,
 	reinstall,
-} from "./compatOptions.js";
+} from "./compatOptions.mjs";
+import { baseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
