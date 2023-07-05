@@ -44,6 +44,7 @@ import {
 } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { singleJsonCursor } from "../../../domains";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -54,7 +55,12 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
-		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+		change === 0
+			? []
+			: [
+					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
+			  ],
 
 	isEmpty: (change) => change === 0,
 };
@@ -561,15 +567,23 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Modify,
-					// setValue: 1,
+					type: Delta.MarkType.Delete,
+					count: 1,
+				},
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleJsonCursor(1)],
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Modify,
-					// setValue: 2,
+					type: Delta.MarkType.Delete,
+					count: 1,
+				},
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleJsonCursor(2)],
 				},
 			];
 
