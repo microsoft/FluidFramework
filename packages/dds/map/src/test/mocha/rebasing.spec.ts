@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { MapFactory, SharedMap } from "../../map";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { IDirectory } from "@fluidframework/map-previous";
+import { IDirectory } from "../../interfaces";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForRebasing;
