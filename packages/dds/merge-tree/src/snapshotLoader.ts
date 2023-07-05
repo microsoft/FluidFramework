@@ -7,13 +7,12 @@
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
@@ -26,13 +25,13 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
 
 export class SnapshotLoader {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly serializer: IFluidSerializer,
 	) {
 		this.logger = ChildLogger.create(logger, "SnapshotLoader");

@@ -93,16 +93,16 @@ jobs:
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
-          --template .changeset/templates/patch-changelog.hbs
+          --template .github/workflows/data/patch-changelog.hbs
       - name: Generate changelog
-        # This changelog is a basically empty one used for everything except client.
-        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
+        # This changelog is a basically empty one used for everything except client patches and build-tools.
+        if: ${{ !(fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'build-tools' }}
         run: |
           echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
 
-      # Only creates GH releases for client releases.
+      # Only creates GH releases for client and build-tools releases.
       - name: Create GH release
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
         uses: ncipollo/release-action@eb05307dcee34deaad054e98128088a30d7980dc # ratchet:ncipollo/release-action@main
         with:
           # Allow updates to existing releases.

@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../../core";
-import { Mark, MarkList, ObjectMark, Skip } from "./format";
-import { MoveEffectTable } from "./moveEffectTable";
-import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
+import { Mark, MarkList, NoopMark } from "./format";
+import { isNoopMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -19,35 +17,30 @@ export class MarkListFactory<TNodeChange> {
 	private offset = 0;
 	public readonly list: MarkList<TNodeChange> = [];
 
-	public constructor(
-		// TODO: Is there a usage of MarkListFactory where we need a non-undefined revision?
-		private readonly revision?: RevisionTag | undefined,
-		private readonly moveEffects?: MoveEffectTable<TNodeChange>,
-		private readonly recordMerges: boolean = false,
-	) {}
+	public constructor() {}
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isSkipMark(item)) {
-				this.pushOffset(item);
+			if (isNoopMark(item)) {
+				this.pushOffset(item.count);
 			} else {
 				this.pushContent(item);
 			}
 		}
 	}
 
-	public pushOffset(offset: Skip): void {
+	public pushOffset(offset: number): void {
 		this.offset += offset;
 	}
 
-	public pushContent(mark: ObjectMark<TNodeChange>): void {
+	public pushContent(mark: Exclude<Mark<TNodeChange>, NoopMark>): void {
 		if (this.offset > 0) {
-			this.list.push(this.offset);
+			this.list.push({ count: this.offset });
 			this.offset = 0;
 		}
 		const prev = this.list[this.list.length - 1];
-		if (isObjMark(prev) && prev.type === mark.type) {
-			if (tryExtendMark(prev, mark, this.revision, this.moveEffects, this.recordMerges)) {
+		if (prev !== undefined && prev.type === mark.type) {
+			if (tryExtendMark(prev, mark)) {
 				return;
 			}
 		}

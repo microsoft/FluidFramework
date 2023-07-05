@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
 
 describe("ChildLogger", () => {

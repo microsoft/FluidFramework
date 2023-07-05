@@ -8,7 +8,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -213,8 +213,8 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @public (undocumented)
-export interface IFluidResolvedUrl extends IResolvedUrlBase {
+// @public @deprecated (undocumented)
+export interface IFluidResolvedUrl {
     // (undocumented)
     endpoints: {
         [name: string]: string;
@@ -247,13 +247,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
-
-// @public @deprecated (undocumented)
-export interface IResolvedUrlBase {
-    // (undocumented)
-    type: string;
-}
+export type IResolvedUrl = IFluidResolvedUrl;
 
 // @public
 export interface IStream<T> {
@@ -290,14 +284,6 @@ export interface IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-}
-
-// @public @deprecated (undocumented)
-export interface IWebResolvedUrl extends IResolvedUrlBase {
-    // (undocumented)
-    data: string;
-    // (undocumented)
-    type: "web";
 }
 
 // @public (undocumented)

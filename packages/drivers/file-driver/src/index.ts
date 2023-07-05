@@ -4,7 +4,6 @@
  */
 
 export { FileDeltaStorageService } from "./fileDeltaStorageService";
-export { FileDocumentService } from "./fileDocumentService";
 export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory";
 export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
 export {

@@ -4,4 +4,4 @@
  */
 
 export { ChangeFamily, ChangeFamilyEditor } from "./changeFamily";
-export { ProgressiveEditBuilder, ProgressiveEditBuilderBase } from "./progressiveEditBuilder";
+export { EditBuilder } from "./editBuilder";

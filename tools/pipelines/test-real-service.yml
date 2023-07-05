@@ -60,7 +60,7 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: false
+          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
         additionalSteps:
 

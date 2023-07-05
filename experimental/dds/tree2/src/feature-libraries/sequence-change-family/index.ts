@@ -9,7 +9,6 @@ export {
 	ClientId,
 	Effects,
 	GapCount,
-	getAttachLength,
 	getInputLength,
 	getOutputLength,
 	HasLength,

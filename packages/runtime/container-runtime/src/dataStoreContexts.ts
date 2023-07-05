@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseLogger,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
@@ -46,7 +43,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 		}
 	});
 
-	private readonly _logger: ITelemetryLogger;
+	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
 		this._logger = ChildLogger.create(baseLogger);

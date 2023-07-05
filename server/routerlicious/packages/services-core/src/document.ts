@@ -145,3 +145,15 @@ export interface IDocument {
 	// name of the storage to save the document durable artifacts
 	storageName?: string;
 }
+
+export interface ICheckpoint {
+	_id: string;
+
+	documentId: string;
+
+	tenantId: string;
+
+	scribe: string;
+
+	deli: string;
+}

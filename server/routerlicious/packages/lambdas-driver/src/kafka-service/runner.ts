@@ -18,6 +18,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
@@ -29,6 +30,7 @@ export class KafkaRunner implements IRunner {
 	constructor(
 		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
+		private readonly config?: Provider,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -51,7 +53,12 @@ export class KafkaRunner implements IRunner {
 			deferred.reject(error);
 		});
 
-		this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
+		this.partitionManager = new PartitionManager(
+			this.factory,
+			this.consumer,
+			logger,
+			this.config,
+		);
 		this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
 			const documentId = errorData?.documentId ?? "";
 			const tenantId = errorData?.tenantId ?? "";
@@ -67,7 +74,7 @@ export class KafkaRunner implements IRunner {
 
 			if (errorData && !errorData.restart) {
 				const errorMsg =
-					"KakfaRunner encountered an error that is not configured to trigger restart";
+					"KafkaRunner encountered an error that is not configured to trigger restart";
 				logger?.error(errorMsg, metadata);
 				logger?.error(inspect(error), metadata);
 				if (!this.runnerMetric.isCompleted()) {
@@ -76,7 +83,7 @@ export class KafkaRunner implements IRunner {
 					Lumberjack.error(errorMsg, lumberProperties, error);
 				}
 			} else {
-				const errorMsg = "KakfaRunner encountered an error that will trigger a restart";
+				const errorMsg = "KafkaRunner encountered an error that will trigger a restart";
 				logger?.error(errorMsg, metadata);
 				logger?.error(inspect(error), metadata);
 				if (!this.runnerMetric.isCompleted()) {
@@ -118,6 +125,8 @@ export class KafkaRunner implements IRunner {
 		// Mark ourselves done once the partition manager has stopped
 		this.deferred.resolve();
 		this.deferred = undefined;
-		this.runnerMetric.success("Kafka runner stopped");
+		if (!this.runnerMetric.isCompleted()) {
+			this.runnerMetric.success("Kafka runner stopped");
+		}
 	}
 }

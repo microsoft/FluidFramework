@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/common-utils';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
 import { fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
@@ -52,7 +52,7 @@ export enum HistoryEditFactoryEvents {
 export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryLoggerExt,
 	emit?: (event: string | symbol, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];

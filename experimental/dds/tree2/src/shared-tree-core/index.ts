@@ -15,14 +15,7 @@ export {
 
 export { TransactionStack } from "./transactionStack";
 
-export { EditManagerSummarizer, parseSummary, stringifySummary } from "./editManagerSummarizer";
-
-export {
-	Commit,
-	EditManager,
-	minimumPossibleSequenceNumber,
-	SeqNumber,
-	SequencedCommit,
-	SummarySessionBranch,
-	SummaryData,
-} from "./editManager";
+export { makeEditManagerCodec } from "./editManagerCodecs";
+export { EditManagerSummarizer } from "./editManagerSummarizer";
+export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
+export { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";

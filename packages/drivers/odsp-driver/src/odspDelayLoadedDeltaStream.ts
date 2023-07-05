@@ -28,10 +28,14 @@ import {
 	OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import { ISocketStorageDiscovery } from "./contracts";
+import { ISocketStorageDiscovery } from "./contractsPublic";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
-import { getWithRetryForTokenRefresh, TokenFetchOptionsEx } from "./odspUtils";
+import {
+	getJoinSessionCacheKey,
+	getWithRetryForTokenRefresh,
+	TokenFetchOptionsEx,
+} from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -79,7 +83,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
-		this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
+		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
 	}
 
 	public get resolvedUrl(): IResolvedUrl {
@@ -181,13 +185,14 @@ export class OdspDelayLoadedDeltaStream {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
 					// If we hit this assert, it means that "disconnect" event is emitted before the connection went through
-					// dispose flow which is not correct and could lead to a bunch of erros.
+					// dispose flow which is not correct and could lead to a bunch of errors.
 					assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
 					this.currentConnection = undefined;
 				});
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
+				this.clearJoinSessionTimer();
 				this.cache.sessionJoinCache.remove(this.joinSessionKey);
 
 				const normalizedError = this.annotateConnectionError(
@@ -217,6 +222,19 @@ export class OdspDelayLoadedDeltaStream {
 		requestSocketToken: boolean,
 		clientId: string | undefined,
 	) {
+		if (this.joinSessionRefreshTimer !== undefined) {
+			this.clearJoinSessionTimer();
+			const originalStackTraceLimit = (Error as any).stackTraceLimit;
+			(Error as any).stackTraceLimit = 50;
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "DuplicateJoinSessionRefresh",
+				},
+				new Error("DuplicateJoinSessionRefresh"),
+			);
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
+
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
@@ -270,14 +288,21 @@ export class OdspDelayLoadedDeltaStream {
 			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
 				for (const code of e.facetCodes) {
 					switch (code) {
+						case "sessionForbidden":
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
+						case "sessionForbiddenOnCheckoutFile":
+						case "sessionForbiddenOnInvisibleMinorVersion":
 							// This document can only be opened in storage-only mode.
 							// DeltaManager will recognize this error
 							// and load without a delta stream connection.
 							this.policies = { ...this.policies, storageOnly: true };
-							throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
+							throw new DeltaStreamConnectionForbiddenError(
+								`Storage-only due to ${code}`,
+								{ driverVersion },
+								code,
+							);
 						default:
 							continue;
 					}
@@ -383,7 +408,7 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	/**
-	 * Creats a connection to the given delta stream endpoint
+	 * Creates a connection to the given delta stream endpoint
 	 *
 	 * @param tenantId - the ID of the tenant
 	 * @param documentId - document ID

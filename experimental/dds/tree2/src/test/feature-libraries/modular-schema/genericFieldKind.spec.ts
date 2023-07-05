@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldKind,
@@ -19,7 +20,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { brand, fail } from "../../../util";
 import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../../../codec";
 
@@ -28,7 +29,7 @@ type ValueChangeset = FieldKinds.ReplaceOp<number>;
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<ValueChangeset & JsonCompatibleReadOnly>()]]),
+		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change) =>
 		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
@@ -149,7 +150,7 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
-	getOrCreate: unexpectedDelegate,
+	set: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {

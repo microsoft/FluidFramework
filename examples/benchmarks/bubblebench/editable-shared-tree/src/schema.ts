@@ -4,65 +4,41 @@
  */
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import {
-	FieldKinds,
-	rootFieldKey,
-	ValueSchema,
-	TypedSchema,
-	SchemaAware,
-} from "@fluid-experimental/tree2";
+import { ValueSchema, SchemaAware, SchemaBuilder } from "@fluid-experimental/tree2";
 
-// Aliases for conciseness
-const { value, sequence } = FieldKinds;
-const { tree, field } = TypedSchema;
+const builder = new SchemaBuilder("bubble-bench");
 
-export const stringSchema = tree("string", { value: ValueSchema.String });
-export const numberSchema = tree("number", { value: ValueSchema.Number });
+export const stringSchema = builder.primitive("string", ValueSchema.String);
+export const numberSchema = builder.primitive("number", ValueSchema.Number);
 
-export const bubbleSchema = tree("BubbleBenchAppStateBubble-1.0.0", {
+export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
 	local: {
-		x: field(value, numberSchema),
-		y: field(value, numberSchema),
-		r: field(value, numberSchema),
-		vx: field(value, numberSchema),
-		vy: field(value, numberSchema),
+		x: SchemaBuilder.fieldValue(numberSchema),
+		y: SchemaBuilder.fieldValue(numberSchema),
+		r: SchemaBuilder.fieldValue(numberSchema),
+		vx: SchemaBuilder.fieldValue(numberSchema),
+		vy: SchemaBuilder.fieldValue(numberSchema),
 	},
 });
 
-export const clientSchema = tree("BubbleBenchAppStateClient-1.0.0", {
+export const clientSchema = builder.object("BubbleBenchAppStateClient-1.0.0", {
 	local: {
-		clientId: field(value, stringSchema),
-		color: field(value, stringSchema),
-		bubbles: field(sequence, bubbleSchema),
+		clientId: SchemaBuilder.fieldValue(stringSchema),
+		color: SchemaBuilder.fieldValue(stringSchema),
+		bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
 	},
 });
 
-export const rootAppStateSchema = field(sequence, clientSchema);
+export const rootAppStateSchema = SchemaBuilder.fieldSequence(clientSchema);
 
-export const appSchemaData = SchemaAware.typedSchemaData(
-	[[rootFieldKey, rootAppStateSchema]],
-	stringSchema,
-	numberSchema,
-	bubbleSchema,
-	clientSchema,
-);
+export const appSchemaData = builder.intoDocumentSchema(rootAppStateSchema);
 
-type Typed<
-	TSchema extends TypedSchema.LabeledTreeSchema,
-	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Editable,
-> = SchemaAware.NodeDataFor<typeof appSchemaData, TMode, TSchema>;
+export type Bubble = SchemaAware.TypedNode<typeof bubbleSchema>;
+export type Client = SchemaAware.TypedNode<typeof clientSchema>;
 
-export type Bubble = Typed<typeof bubbleSchema>;
-export type Client = Typed<typeof clientSchema>;
-
-export type FlexBubble = Typed<typeof bubbleSchema, SchemaAware.ApiMode.Simple>;
-export type FlexClient = Typed<typeof clientSchema, SchemaAware.ApiMode.Simple>;
+export type FlexBubble = SchemaAware.TypedNode<typeof bubbleSchema, SchemaAware.ApiMode.Simple>;
+export type FlexClient = SchemaAware.TypedNode<typeof clientSchema, SchemaAware.ApiMode.Simple>;
 
 // TODO: experiment with this interface pattern. Maybe it makes better intellisense and errors?
 // TODO: Intellisense is pretty bad here if not using interface.
-export interface ClientsField
-	extends SchemaAware.TypedField<
-		typeof appSchemaData,
-		SchemaAware.ApiMode.Editable,
-		typeof rootAppStateSchema
-	> {}
+export interface ClientsField extends SchemaAware.TypedField<typeof rootAppStateSchema> {}

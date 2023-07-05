@@ -27,6 +27,8 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
+
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
@@ -46,7 +48,7 @@ describe("Summary benchmarks", () => {
 			const { summary } = tree.getAttachSummary(true);
 			const summaryString = JSON.stringify(summary);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize < 1000);
+			assert(summarySize < 500);
 		});
 		it("a tree with 1 node.", async () => {
 			const summaryTree = getInsertsSummaryTree(1, TreeShape.Wide);
@@ -60,35 +62,35 @@ describe("Summary benchmarks", () => {
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize > 1000);
-			assert(summarySize < 20000);
+			assert(summarySize < 10000);
 		});
 		it("a wide tree with 100 nodes", async () => {
 			const summaryTree = getInsertsSummaryTree(100, TreeShape.Wide);
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize > 1000);
-			assert(summarySize < 1000000);
+			assert(summarySize < 500000);
 		});
 		it("a deep tree with 10 nodes", async () => {
 			const summaryTree = getInsertsSummaryTree(10, TreeShape.Deep);
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize > 1000);
-			assert(summarySize < 50000);
+			assert(summarySize < 25000);
 		});
 		it("a deep tree with 100 nodes.", async () => {
 			const summaryTree = getInsertsSummaryTree(100, TreeShape.Deep);
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize > 1000);
-			assert(summarySize < 2000000);
+			assert(summarySize < 1000000);
 		});
 		it("a deep tree with 200 nodes.", async () => {
 			const summaryTree = getInsertsSummaryTree(200, TreeShape.Deep);
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize > 1000);
-			assert(summarySize < 10000000);
+			assert(summarySize < 5000000);
 		});
 	});
 
@@ -99,7 +101,7 @@ describe("Summary benchmarks", () => {
 			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
 		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
 				title: `a ${shape} tree with ${numberOfNodes} node${
 					numberOfNodes !== 1 ? "s" : ""

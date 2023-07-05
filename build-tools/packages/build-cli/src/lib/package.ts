@@ -453,17 +453,21 @@ export function getFluidDependencies(
 				continue;
 			}
 
-			const minVer = semver.minVersion(dep.version);
-			if (minVer === null) {
+			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
+			// range. Otherwise pick the minimum version the range represents.
+			const newVersion = dep.version.startsWith("workspace:")
+				? semver.parse(pkg.version)
+				: semver.minVersion(dep.version);
+			if (newVersion === null) {
 				throw new Error(`Failed to parse depVersion: ${dep.version}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
-				releaseGroups[pkg.monoRepo.kind] = minVer.version;
+				releaseGroups[pkg.monoRepo.kind] = newVersion.version;
 				continue;
 			}
 
-			packages[pkg.name] = minVer.version;
+			packages[pkg.name] = newVersion.version;
 		}
 	}
 

@@ -4,8 +4,8 @@
  */
 
 import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob";
 import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
 
 /**

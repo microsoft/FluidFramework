@@ -9,13 +9,17 @@ import {
 	IdAllocator,
 	idAllocatorFromMaxId,
 	RevisionInfo,
-	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
+import {
+	assertMarkListEqual,
+	deepFreeze,
+	defaultRevisionMetadataFromChanges,
+	fakeTaggedRepair as fakeRepair,
+} from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -52,21 +56,6 @@ export function shallowCompose<T>(
 	);
 }
 
-function defaultRevisionMetadataFromChanges(
-	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
-): RevisionMetadataSource {
-	const revInfos: RevisionInfo[] = [];
-	for (const change of changes) {
-		if (change.revision !== undefined) {
-			revInfos.push({
-				revision: change.revision,
-				rollbackOf: change.rollbackOf,
-			});
-		}
-	}
-	return revisionMetadataSourceFromInfo(revInfos);
-}
-
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
@@ -74,7 +63,7 @@ function composeI<T>(
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(
+	let composed = SF.compose(
 		changes,
 		composer,
 		idAllocator,
@@ -86,7 +75,7 @@ function composeI<T>(
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		SF.amendCompose(composed, composer, idAllocator, moveEffects);
+		composed = SF.amendCompose(composed, composer, idAllocator, moveEffects);
 		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;

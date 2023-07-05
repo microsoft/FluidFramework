@@ -27,30 +27,29 @@ import {
 	Delta,
 	IForestSubscription,
 } from "../../../core";
-import { jsonSchemaData } from "../../../domains";
+import { jsonSchema } from "../../../domains";
 import {
+	ForestRepairDataStore,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
-	repairDataStoreFromForest,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
+import { mockIntoDelta } from "../../utils";
 
 describe("ChunkedForest", () => {
 	testForest({
 		suiteName: "ChunkedForest forest suite",
 		factory: () =>
-			buildChunkedForest(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-			),
+			buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema)),
 		skipCursorErrorCheck: true,
 	});
 
 	it("doesn't copy data when capturing and restoring repair data", () => {
 		const initialState: JsonableTree = { type: brand("Node") };
 		const forest = buildChunkedForest(
-			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
 		);
 		const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 
@@ -66,7 +65,7 @@ describe("ChunkedForest", () => {
 		assert(!chunk.isShared());
 		compareForest(forest, [initialState]);
 
-		const repairStore = repairDataStoreFromForest(forest);
+		const repairStore = new ForestRepairDataStore(forest, mockIntoDelta);
 		const delta: Delta.Root = new Map([
 			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
 		]);

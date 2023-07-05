@@ -3,61 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { makeCodecFamily } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../util";
+import { brand, fail } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	NodeChangeset,
 	ToDelta,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	IdAllocator,
-	isolatedFieldChangeRebaser,
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
-
-/**
- * A field-kind-agnostic change to a single node within a field.
- */
-export interface GenericChange {
-	/**
-	 * Index within the field of the changed node.
-	 */
-	index: number;
-	/**
-	 * Change to the node.
-	 */
-	nodeChange: NodeChangeset;
-}
-
-/**
- * Encoded version of {@link GenericChange}
- */
-export interface EncodedGenericChange {
-	index: number;
-	// TODO: this format needs more documentation (ideally in the form of more specific types).
-	nodeChange: JsonCompatibleReadOnly;
-}
-
-/**
- * A field-agnostic set of changes to the elements of a field.
- */
-export type GenericChangeset = GenericChange[];
-
-/**
- * Encoded version of {@link GenericChangeset}
- */
-export type EncodedGenericChangeset = EncodedGenericChange[];
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
+import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { NodeChangeset } from "./modularChangeTypes";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-	rebaser: isolatedFieldChangeRebaser({
+	rebaser: {
 		compose: (
 			changes: TaggedChange<GenericChangeset>[],
 			composeChildren: NodeChangeComposer,
@@ -97,6 +64,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
+		amendCompose: () => fail("Not implemented"),
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,
@@ -108,74 +76,11 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				}),
 			);
 		},
-		rebase: (
-			change: GenericChangeset,
-			{ change: over }: TaggedChange<GenericChangeset>,
-			rebaseChild: NodeChangeRebaser,
-		): GenericChangeset => {
-			const rebased: GenericChangeset = [];
-			let iChange = 0;
-			let iOver = 0;
-			while (iChange < change.length && iOver < over.length) {
-				const a = change[iChange];
-				const b = over[iOver];
-				let nodeChangeA: NodeChangeset | undefined;
-				let nodeChangeB: NodeChangeset | undefined;
-				let index: number;
-				if (a.index === b.index) {
-					index = a.index;
-					nodeChangeA = a.nodeChange;
-					nodeChangeB = b.nodeChange;
-					iChange += 1;
-					iOver += 1;
-				} else if (a.index < b.index) {
-					index = a.index;
-					nodeChangeA = a.nodeChange;
-					iChange += 1;
-				} else {
-					index = b.index;
-					nodeChangeB = b.nodeChange;
-					iOver += 1;
-				}
-
-				const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
-				if (nodeChange !== undefined) {
-					rebased.push({
-						index,
-						nodeChange,
-					});
-				}
-			}
-			rebased.push(...change.slice(iChange));
-			return rebased;
-		},
-	}),
-	codecsFactory: (childCodec) =>
-		makeCodecFamily([
-			[
-				0,
-				{
-					encode: (change: GenericChangeset): JsonCompatibleReadOnly => {
-						const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset =
-							change.map(({ index, nodeChange }) => ({
-								index,
-								nodeChange: childCodec.encode(nodeChange),
-							}));
-						return encoded;
-					},
-					decode: (change: JsonCompatibleReadOnly): GenericChangeset => {
-						const encoded = change as JsonCompatibleReadOnly[] &
-							EncodedGenericChangeset;
-						return encoded.map(
-							({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
-								index,
-								nodeChange: childCodec.decode(nodeChange),
-							}),
-						);
-					},
-				},
-			],
-		]),
+		amendInvert: () => fail("Not implemented"),
+		rebase: rebaseGenericChange,
+		amendRebase: rebaseGenericChange,
+	},
+	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChange(index, change): GenericChangeset {
 			return [{ index, nodeChange: change }];
@@ -197,6 +102,50 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
+
+function rebaseGenericChange(
+	change: GenericChangeset,
+	{ change: over }: TaggedChange<GenericChangeset>,
+	rebaseChild: NodeChangeRebaser,
+): GenericChangeset {
+	const rebased: GenericChangeset = [];
+	let iChange = 0;
+	let iOver = 0;
+	while (iChange < change.length || iOver < over.length) {
+		const a = change[iChange];
+		const b = over[iOver];
+		const aIndex = a?.index ?? Infinity;
+		const bIndex = b?.index ?? Infinity;
+		let nodeChangeA: NodeChangeset | undefined;
+		let nodeChangeB: NodeChangeset | undefined;
+		let index: number;
+		if (aIndex === bIndex) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			nodeChangeB = b.nodeChange;
+			iChange += 1;
+			iOver += 1;
+		} else if (aIndex < bIndex) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			iChange += 1;
+		} else {
+			index = b.index;
+			nodeChangeB = b.nodeChange;
+			iOver += 1;
+		}
+
+		const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+		if (nodeChange !== undefined) {
+			rebased.push({
+				index,
+				nodeChange,
+			});
+		}
+	}
+
+	return rebased;
+}
 
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
@@ -238,7 +187,7 @@ export function convertGenericChange<TChange>(
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");
 const invalidCrossFieldManager: CrossFieldManager = {
-	getOrCreate: invalidFunc,
+	set: invalidFunc,
 	get: invalidFunc,
 };
 

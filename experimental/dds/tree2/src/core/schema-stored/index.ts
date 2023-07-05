@@ -4,11 +4,11 @@
  */
 
 export {
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
 	GlobalFieldKey,
+	TreeStoredSchema,
 	GlobalFieldKeySchema,
-	TreeSchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	LocalFieldKey,

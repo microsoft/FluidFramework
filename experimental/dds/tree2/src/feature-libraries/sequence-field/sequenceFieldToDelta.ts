@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList } from "./format";
-import { isSkipMark } from "./utils";
+import { MarkList, NoopMarkType } from "./format";
+import { areInputCellsEmpty, areOutputCellsEmpty, getMarkLength, getNodeChange } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -19,11 +19,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
-		if (isSkipMark(mark)) {
-			out.pushOffset(mark);
+		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
+			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
+		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
+			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
 			switch (type) {
 				case "Insert": {
 					const cursors = mark.content.map(singleTextCursor);
@@ -78,18 +80,16 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Revive": {
-					if (mark.conflictsWith === undefined) {
-						const insertMark: Mutable<Delta.Insert> = {
-							type: Delta.MarkType.Insert,
-							content: mark.content,
-						};
-						populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
-						out.pushContent(insertMark);
-					} else if (mark.lastDetachedBy === undefined) {
-						out.pushOffset(mark.count);
-					}
+					const insertMark: Mutable<Delta.Insert> = {
+						type: Delta.MarkType.Insert,
+						content: mark.content,
+					};
+					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+					out.pushContent(insertMark);
 					break;
 				}
+				case "Placeholder":
+					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
 					unreachableCase(type);
 			}
@@ -107,4 +107,21 @@ function populateChildModificationsIfAny<TNodeChange>(
 		const modify = deltaFromChild(changes);
 		populateChildModifications(modify, deltaMark);
 	}
+}
+
+function deltaFromNodeChange<TNodeChange>(
+	change: TNodeChange | undefined,
+	length: number,
+	deltaFromChild: ToDelta<TNodeChange>,
+): Delta.Mark {
+	if (change === undefined) {
+		return length;
+	}
+	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
+	const modify = deltaFromChild(change);
+	return isEmptyModify(modify) ? 1 : modify;
+}
+
+function isEmptyModify(modify: Delta.Modify): boolean {
+	return modify.fields === undefined && modify.setValue === undefined;
 }

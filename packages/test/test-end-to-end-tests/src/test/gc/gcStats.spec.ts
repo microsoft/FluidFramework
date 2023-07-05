@@ -18,8 +18,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
