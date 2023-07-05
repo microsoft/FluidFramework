@@ -51,6 +51,30 @@ and verifying that the following expectation changes won't have any effects:
 -   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
+### How to enable
+
+If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
+
+```
+    const runtimeOptions: IContainerRuntimeOptions = {
+        (...)
+        enableGroupedBatching: true,
+        enableBatchRebasing: true,
+        (...)
+    }
+```
+
+**Both features are disabled by default. These features are currently considered experimental and not ready for production usage.**
+
+It is important to also enable batch rebasing (`enableBatchRebasing` option) to allow the runtime to rebase batches which contain reentrant ops. Usually this is the case when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the reentrant op will have a different reference sequence number than the rest of the ops in the batch, resulting in a different view of the state of the data model. Therefore all ops must be rebased to the current reference sequence number and resubmitted to the data stores so that all ops are in agreement about the state of the data model and ensure eventual consistency. `enableBatchRebasing` can be enabled and experimented with independently, but `enableGroupedBatching` should never be enabled without `enableBatchRebasing`.
+
+**Enabling grouped batching without enabling batch rebasing will lead to clients ending up in inconsistent states in the presence of reentrant ops**.
+
+In case of emergency both options can be disabled at runtime, using feature gates:
+
+-   `"Fluid.ContainerRuntime.DisableGroupedBatching"` - if set to `true` disables the grouped batching feature if enabled from `IContainerRuntimeOptions`
+-   `"Fluid.ContainerRuntime.DisableBatchRebasing"` - if set to `true` disables the batch rebasing feature if enabled from `IContainerRuntimeOptions`
+
 ## Chunking for compression
 
 **Op chunking for compression targets payloads which exceed the max batch size after compression.** So, only payloads which are already compressed. By default, the feature is enabled.
