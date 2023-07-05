@@ -109,10 +109,10 @@ export interface IFluidErrorAnnotations {
 
 // @public
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    addTelemetryProperties: (props: ITelemetryProperties_2) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryProperties_2;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;

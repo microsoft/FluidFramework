@@ -9,7 +9,11 @@ import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+	ITaggedTelemetryPropertyType,
+	FluidObject,
+	IFluidHandleContext,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IBlob,

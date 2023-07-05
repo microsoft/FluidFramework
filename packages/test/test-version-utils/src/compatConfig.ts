@@ -2,10 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
-import { ensurePackageInstalled } from "./testApi.js";
-import { pkgVersion } from "./packageVersion.js";
+import { Lazy, assert } from "@fluidframework/common-utils";
 import {
 	CompatKind,
 	compatKind,
@@ -13,9 +10,11 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	baseVersion,
 	reinstall,
-} from "./compatOptions.js";
+} from "../compatOptions.cjs";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
+import { baseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
