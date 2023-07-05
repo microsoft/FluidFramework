@@ -157,7 +157,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	let version: string = pkgVersion;
 	// This grabs the code version to find the backwards compatible options.
 	const codeVersion = process.env.SETVERSION_CODEVERSION;
-	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion)) {
+	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion, true, true)) {
 		version = codeVersion;
 	}
 
