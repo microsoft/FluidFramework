@@ -25,6 +25,7 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver";
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
@@ -383,6 +384,14 @@ export interface IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService>;
+}
+
+export interface IProvideSessionAwareServiceFactory {
+	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
+}
+
+export interface ISessionAwareDriverFactory extends IProvideSessionAwareServiceFactory {
+	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery>;
 }
 
 /**
