@@ -7,8 +7,8 @@ import {
 	ITelemetryGenericEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+	IDisposable,
+} from "@fluidframework/core-interfaces";
 import { performance } from "@fluidframework/common-utils";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
