@@ -88,12 +88,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blob.isAttached, true);
 		});
 
-		it.skip("blob is acked after upload", async function () {
+		it("blob is acked after upload", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode
+			// force write mode to avoid reconnection while uploading the blob
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -104,10 +104,10 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(acked, true);
 		});
 
-		it.skip("blob is acked after offline upload", async function () {
+		it("blob is acked after offline upload", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
-
+			// by not calling forceWriteMode we are actually checking offline flow
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			await provider.ensureSynchronized();
 			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as any)
@@ -117,13 +117,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(acked, true);
 		});
 
-		it.skip("removes pending blob after attached and acked", async function () {
+		it("removes pending blob after attached and acked", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -133,12 +132,10 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 
-		it.skip("removes multiple pending blobs after attached and acked", async function () {
+		it("removes multiple pending blobs after attached and acked", async function () {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode
 			await forceWriteMode(map, dataStore1);
-
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));

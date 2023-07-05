@@ -493,8 +493,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private deletePendingBlobMaybe(id: string) {
 		if (this.pendingBlobs.has(id)) {
-			const entry = this.pendingBlobs.get(id) as PendingBlob;
-			if (entry.attached && entry.acked) {
+			const entry = this.pendingBlobs.get(id);
+			if (entry?.attached && entry?.acked) {
 				this.pendingBlobs.delete(id);
 				if (!this.hasPendingBlobs) {
 					this.emit("noPendingBlobs");
