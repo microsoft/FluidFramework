@@ -27,7 +27,7 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "./mockDetachedBlobStorage";
+} from "./mockDetachedBlobStorage.js";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -265,7 +265,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		dataStore._root.set("my blob", blob);
 		await attachOpP;
 
-		const snapshot1 = (container1 as any).context.runtime.blobManager.summarize();
+		const snapshot1 = (container1 as any).runtime.blobManager.summarize();
 
 		// wait for summarize, then summary ack so the next container will load from snapshot
 		await new Promise<void>((resolve, reject) => {
@@ -294,7 +294,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		});
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const snapshot2 = (container2 as any).context.runtime.blobManager.summarize();
+		const snapshot2 = (container2 as any).runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
 		assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
 	});

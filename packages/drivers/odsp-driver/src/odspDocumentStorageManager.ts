@@ -437,6 +437,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const result = await this.cache.snapshotPrefetchResultCache
 				?.get(prefetchCacheKey)
 				?.then(async (response) => {
+					// Remove it from cache once used.
+					this.cache.snapshotPrefetchResultCache.remove(prefetchCacheKey);
 					// Validate the epoch from the prefetched snapshot result.
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;

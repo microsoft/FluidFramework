@@ -23,8 +23,8 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced

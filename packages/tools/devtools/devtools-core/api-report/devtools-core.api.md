@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';

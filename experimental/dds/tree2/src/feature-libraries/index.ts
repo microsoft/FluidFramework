@@ -30,6 +30,42 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	localNodeKeySymbol,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	SetValueBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
@@ -139,9 +175,16 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
-
-export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export {
+	buildNodeKeySchema,
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	StableNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+} from "./node-key";
 
 export {
 	FieldKinds,
@@ -149,7 +192,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

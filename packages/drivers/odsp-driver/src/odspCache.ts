@@ -11,7 +11,7 @@ import {
 	ICacheEntry,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { ISocketStorageDiscovery } from "./contractsPublic";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /**

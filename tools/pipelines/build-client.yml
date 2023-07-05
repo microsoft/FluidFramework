@@ -131,5 +131,6 @@ extends:
     checks:
     - syncpack:deps
     - syncpack:versions
-    - prettier
     - check:versions
+    - generate:upcoming
+    - prettier

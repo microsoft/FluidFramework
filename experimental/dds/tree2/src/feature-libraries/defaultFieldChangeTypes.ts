@@ -4,7 +4,7 @@
  */
 
 import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../core";
-import { ChangesetLocalId, NodeChangeset } from "./modular-schema";
+import { ChangeAtomId, ChangesetLocalId, NodeChangeset } from "./modular-schema";
 
 export type NodeUpdate =
 	| {
@@ -16,14 +16,9 @@ export type NodeUpdate =
 			 * The node being restored.
 			 */
 			revert: ITreeCursorSynchronous;
-			revision: RevisionTag | undefined;
+			changeId: ChangeAtomId;
 			changes?: NodeChangeset;
 	  };
-
-export interface ValueChangeset {
-	value?: NodeUpdate;
-	changes?: NodeChangeset;
-}
 
 export interface OptionalFieldChange {
 	/**
@@ -62,11 +57,11 @@ export interface OptionalChangeset {
 	childChange?: NodeChangeset;
 
 	/**
-	 * The revision the node `childChange` is referring to was deleted in.
+	 * The change that the node `childChange` is referring to was deleted by.
 	 * If undefined, `childChange` refers to the node currently in this field.
 	 *
 	 * This representation is sufficient for representing changes to the node present before this changeset and
 	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
 	 */
-	deletedBy?: RevisionTag;
+	deletedBy?: ChangeAtomId;
 }
