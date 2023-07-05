@@ -23,7 +23,12 @@ import {
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-services-client";
+import {
+	IAlfredTenant,
+	ISession,
+	NetworkError,
+	convertWholeSummaryTreeToSummaryTree,
+} from "@fluidframework/server-services-client";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
@@ -131,9 +136,11 @@ export function create(
 				? uuid()
 				: (request.body.id as string) || uuid();
 
+			Lumberjack.info(`Whole summary length= ${JSON.stringify(request.body.summary).length}.`);
 			// Summary information
-			const summary = request.body.summary;
+			const summary = convertWholeSummaryTreeToSummaryTree(request.body.summary);
 
+			Lumberjack.info(`SummaryTree length = ${JSON.stringify(summary).length}.`);
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
 

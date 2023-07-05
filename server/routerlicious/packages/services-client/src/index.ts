@@ -63,6 +63,7 @@ export {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+	convertWholeSummaryTreeToSummaryTree,
 } from "./storageUtils";
 export { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
 export { getOrCreateRepository, getRandomInt } from "./utils";

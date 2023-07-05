@@ -4,7 +4,10 @@
  */
 
 import { IDocumentStorage } from "@fluidframework/server-services-core";
-import { defaultHash } from "@fluidframework/server-services-client";
+import {
+	defaultHash,
+	convertWholeSummaryTreeToSummaryTree,
+} from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import { getParam } from "../../utils";
@@ -36,7 +39,7 @@ export function create(storage: IDocumentStorage): Router {
 		const id = request.body.id || uuid();
 
 		// Summary information
-		const summary = request.body.summary;
+		const summary = convertWholeSummaryTreeToSummaryTree(request.body.summary);
 
 		// Protocol state
 		const sequenceNumber = request.body.sequenceNumber;

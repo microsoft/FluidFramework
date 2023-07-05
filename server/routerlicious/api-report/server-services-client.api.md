@@ -53,6 +53,9 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @public
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
+// @public
+export function convertWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree): ISummaryTree;
+
 // @public (undocumented)
 export const CorrelationIdHeaderName = "x-correlation-id";
 
