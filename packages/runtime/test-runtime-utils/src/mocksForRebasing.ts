@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntime,
@@ -16,7 +15,7 @@ import {
  * ops to the datastores and all ops within the same batch will have the same sequence number.
  */
 export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
-	private readonly outbox: ITrackableMessage[] = [];
+	private readonly outbox: InternalMessage[] = [];
 
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -37,8 +36,6 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 		this.outbox.push({
 			content: messageContent,
 			localOpMetadata,
-			opId: uuid(),
-			timesSubmitted: 0,
 		});
 
 		// Messages in the same batch will have the same clientSequenceNumber
@@ -52,17 +49,13 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 		}
 	}
 
-	private submitInternal(message: ITrackableMessage) {
-		message.timesSubmitted++;
-
-		const metadata = { opId: message.opId, timesSubmitted: message.timesSubmitted };
+	private submitInternal(message: InternalMessage) {
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber: this.clientSequenceNumber,
 			contents: message.content,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
-			metadata,
 		});
 		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
 	}
@@ -77,28 +70,9 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 	}
 }
 
-/**
- * To help debugging eventual consistency tests, all ops produced by this mock
- * can be tracked using an unique id. The tracking information will also be included
- * in the message metadata and local op metadata.
- */
-interface ITrackableMessage {
-	/**
-	 * Message content
-	 */
+interface InternalMessage {
 	content: any;
-	/**
-	 * local op metadata
-	 */
 	localOpMetadata: unknown;
-	/**
-	 * Unique identifier
-	 */
-	opId: string;
-	/**
-	 * How many times has this op been resubmitted
-	 */
-	timesSubmitted: number;
 }
 
 /**
