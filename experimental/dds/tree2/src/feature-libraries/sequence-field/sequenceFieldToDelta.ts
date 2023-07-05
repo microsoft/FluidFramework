@@ -43,7 +43,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: cursors,
 					};
-					if (mark.detachedBy !== undefined) {
+					if (mark.transientDetach !== undefined) {
 						insertMark.isTransient = true;
 					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
@@ -97,7 +97,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: mark.content,
 					};
-					if (mark.detachedBy !== undefined) {
+					if (mark.transientDetach !== undefined) {
 						insertMark.isTransient = true;
 					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);

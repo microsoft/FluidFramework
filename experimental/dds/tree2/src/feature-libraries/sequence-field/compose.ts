@@ -192,7 +192,7 @@ function composeMarks<TNodeChange>(
 				baseMark,
 				nodeChange,
 			) as GenerativeMark<TNodeChange>;
-			delete nonTransient.detachedBy;
+			delete nonTransient.transientDetach;
 			return nonTransient;
 		}
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
@@ -309,7 +309,7 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(
 			{
 				...baseMark,
-				detachedBy: {
+				transientDetach: {
 					revision: newMarkRevision,
 					index: inputIndex.getIndex(newMarkRevision),
 				},
@@ -560,7 +560,7 @@ export class ComposeQueue<T> {
 			let cmp: number;
 			if (markIsTransient(baseMark)) {
 				cmp = compareCellPositions(
-					baseMark.detachedBy,
+					baseMark.transientDetach,
 					baseMark.lineage,
 					isNewAttach(baseMark),
 					newMark,

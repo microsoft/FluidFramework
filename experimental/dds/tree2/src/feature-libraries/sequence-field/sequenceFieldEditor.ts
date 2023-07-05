@@ -71,7 +71,7 @@ export const sequenceFieldEditor = {
 			id,
 		};
 		if (detachedBy !== undefined) {
-			mark.detachedBy = detachedBy;
+			mark.transientDetach = detachedBy;
 		}
 		return markAtIndex(index, mark);
 	},
@@ -100,7 +100,7 @@ export const sequenceFieldEditor = {
 			mark.inverseOf = detachEventRev;
 		}
 		if (detachedBy !== undefined) {
-			mark.detachedBy = detachedBy;
+			mark.transientDetach = detachedBy;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},

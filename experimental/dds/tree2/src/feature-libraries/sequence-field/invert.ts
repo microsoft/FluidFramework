@@ -109,20 +109,23 @@ function invertMark<TNodeChange>(
 			return [mark];
 		}
 		case "Insert": {
-			if (mark.detachedBy !== undefined) {
+			if (mark.transientDetach !== undefined) {
 				assert(revision !== undefined, "Unable to revert to undefined revision");
 				return [
 					withNodeChange(
 						{
 							type: "Revive",
 							detachEvent: {
-								revision: mark.detachedBy.revision ?? revision,
-								index: mark.detachedBy.index,
+								revision: mark.transientDetach.revision ?? revision,
+								index: mark.transientDetach.index,
 							},
 							content: reviver(revision, inputIndex, mark.content.length),
 							count: mark.content.length,
 							inverseOf: mark.revision ?? revision,
-							detachedBy: { revision: mark.revision ?? revision, index: inputIndex },
+							transientDetach: {
+								revision: mark.revision ?? revision,
+								index: inputIndex,
+							},
 						},
 						invertNodeChange(mark.changes, inputIndex, invertChild),
 					),
@@ -156,20 +159,20 @@ function invertMark<TNodeChange>(
 		}
 		case "Revive": {
 			if (!isReattachConflicted(mark)) {
-				if (mark.detachedBy !== undefined) {
+				if (mark.transientDetach !== undefined) {
 					assert(revision !== undefined, "Unable to revert to undefined revision");
 					return [
 						withNodeChange(
 							{
 								type: "Revive",
 								detachEvent: {
-									revision: mark.detachedBy.revision ?? revision,
-									index: mark.detachedBy.index,
+									revision: mark.transientDetach.revision ?? revision,
+									index: mark.transientDetach.index,
 								},
 								content: reviver(revision, inputIndex, mark.count),
 								count: mark.count,
 								inverseOf: mark.revision ?? revision,
-								detachedBy: {
+								transientDetach: {
 									revision: mark.revision ?? revision,
 									index: inputIndex,
 								},
@@ -188,7 +191,7 @@ function invertMark<TNodeChange>(
 					return [inverse];
 				}
 			} else {
-				return mark.detachedBy !== undefined
+				return mark.transientDetach !== undefined
 					? invertMark(
 							{
 								type: "Delete",

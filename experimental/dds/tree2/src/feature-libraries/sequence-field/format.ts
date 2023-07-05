@@ -227,7 +227,7 @@ export interface Transient {
 	/**
 	 * The details of the change that deletes the transient content.
 	 */
-	detachedBy: DetachEvent;
+	transientDetach: DetachEvent;
 }
 export const Transient = Type.Object({ detachedBy: DetachEvent });
 

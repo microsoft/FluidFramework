@@ -137,7 +137,7 @@ describe("SequenceField - Compose", () => {
 				{ type, value: 1 },
 			],
 			id: brand(0),
-			detachedBy: detach,
+			transientDetach: detach,
 		};
 		const modify: SF.Modify<TestChange> = {
 			type: "Modify",
@@ -161,7 +161,7 @@ describe("SequenceField - Compose", () => {
 			},
 			count: 2,
 			content: [],
-			detachedBy: detach,
+			transientDetach: detach,
 		};
 		const modify: SF.Modify<TestChange> = {
 			type: "Modify",
@@ -181,7 +181,7 @@ describe("SequenceField - Compose", () => {
 			type: "Insert",
 			content: [{ type, value: 0 }],
 			id: brand(0),
-			detachedBy: detach,
+			transientDetach: detach,
 		};
 		const revive: SF.Revive<TestChange> = {
 			type: "Revive",
@@ -338,7 +338,7 @@ describe("SequenceField - Compose", () => {
 				content: [{ type, value: 2 }],
 				id: brand(2),
 				revision: tag1,
-				detachedBy: { revision: tag2, index: 1 },
+				transientDetach: { revision: tag2, index: 1 },
 			},
 			{
 				type: "Insert",
@@ -418,7 +418,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag1,
 				content: [{ type, value: 2 }],
 				id: brand(2),
-				detachedBy: { revision: tag2, index: 1 },
+				transientDetach: { revision: tag2, index: 1 },
 			},
 			{
 				type: "Insert",
@@ -428,14 +428,14 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 4 },
 				],
 				id: brand(3),
-				detachedBy: { revision: tag2, index: 2 },
+				transientDetach: { revision: tag2, index: 2 },
 			},
 			{
 				type: "Insert",
 				revision: tag1,
 				content: [{ type, value: 5 }],
 				id: brand(5),
-				detachedBy: { revision: tag2, index: 4 },
+				transientDetach: { revision: tag2, index: 4 },
 			},
 			{
 				type: "Insert",
@@ -576,7 +576,7 @@ describe("SequenceField - Compose", () => {
 				count: 1,
 				detachEvent: { revision: tag1, index: 1 },
 				inverseOf: tag1,
-				detachedBy: { revision: tag2, index: 1 },
+				transientDetach: { revision: tag2, index: 1 },
 			},
 			{
 				type: "Revive",
@@ -591,7 +591,7 @@ describe("SequenceField - Compose", () => {
 				count: 2,
 				detachEvent: { revision: tag1, index: 3 },
 				inverseOf: tag1,
-				detachedBy: { revision: tag2, index: 3 },
+				transientDetach: { revision: tag2, index: 3 },
 			},
 			{ type: "Delete", count: 1, revision: tag2 },
 		];
@@ -621,7 +621,7 @@ describe("SequenceField - Compose", () => {
 				detachEvent,
 				changes: nodeChange,
 				revision: tag2,
-				detachedBy: { revision: tag3, index: 0 },
+				transientDetach: { revision: tag3, index: 0 },
 			},
 			{ type: "Delete", revision: tag3, count: 1 },
 		];
