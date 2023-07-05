@@ -24,13 +24,14 @@ import {
 } from "@fluentui/react-icons";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
 import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
 import { LabelCellLayout } from "./utility-components";
 
 /**
  * Returns the text color based on the current color theme of the devtools.
  */
 function setThemeStyle(themeName: string, state: string): string {
-	if (themeName === "highContrast") {
+	if (themeName === ThemeOption.HighContrast) {
 		switch (state) {
 			case "attached":
 				return "#FFF";
