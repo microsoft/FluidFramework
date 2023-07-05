@@ -62,15 +62,6 @@ module.exports = {
 			},
 			{
 				test: /\.js$/,
-				loader: "string-replace-loader",
-				options: {
-					search: versionToReplace,
-					replace: newVersion,
-					strict: false,
-				},
-			},
-			{
-				test: /\.js$/,
 				use: [require.resolve("source-map-loader")],
 				enforce: "pre",
 			},
