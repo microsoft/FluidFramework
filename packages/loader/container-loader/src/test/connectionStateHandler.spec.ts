@@ -18,7 +18,7 @@ import {
 	IDeltaManagerEvents,
 } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import {
 	IConnectionStateHandlerInputs,

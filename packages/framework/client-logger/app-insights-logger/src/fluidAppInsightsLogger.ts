@@ -4,7 +4,7 @@
  */
 
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * An implementation of {@link @fluidframework/common-definitions#ITelemetryBaseLogger | ITelemetryBaseLogger}

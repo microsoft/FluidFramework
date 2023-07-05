@@ -36,7 +36,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {

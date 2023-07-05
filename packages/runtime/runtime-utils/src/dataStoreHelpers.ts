@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import {
-	ITaggedTelemetryPropertyType,
-	FluidObject,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,

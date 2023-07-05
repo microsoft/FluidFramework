@@ -5,13 +5,10 @@
 
 import { strict as assert } from "assert";
 
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-import {
-	ITaggedTelemetryPropertyType,
-	FluidObject,
-	IFluidHandleContext,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IBlob,

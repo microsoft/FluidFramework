@@ -7,7 +7,7 @@ import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitio
 import { UsageError } from "@fluidframework/driver-utils";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { createOdspLogger, getOdspResolvedUrl } from "../odspUtils";
 import { ICacheAndTracker } from "../epochTracker";
 import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore";

@@ -8,7 +8,7 @@ import {
 	ITaggedTelemetryPropertyType,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
 	hasErrorInstanceId,

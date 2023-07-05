@@ -28,7 +28,7 @@ import {
 	IResolvedUrl,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	applyStorageCompression,
 	ICompressionStorageConfig,

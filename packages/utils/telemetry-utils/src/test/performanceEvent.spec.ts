@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 
