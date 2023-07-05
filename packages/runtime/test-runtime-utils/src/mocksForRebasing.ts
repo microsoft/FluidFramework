@@ -16,8 +16,7 @@ import {
  * ops to the datastores and all ops within the same batch will have the same sequence number.
  */
 export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
-	private submitted: number = 0;
-	private processed: number = 0;
+	private readonly outbox: ITrackableMessage[] = [];
 
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -29,26 +28,28 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 
 	public process(message: ISequencedDocumentMessage) {
 		super.process(message);
-		if (this.clientId === message.clientId) {
-			this.processed++;
-		}
 
 		// We've processed something, therefore the current batch has ended
 		this.clientSequenceNumber++;
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown) {
-		const message = {
+		this.outbox.push({
 			content: messageContent,
 			localOpMetadata,
 			opId: uuid(),
 			timesSubmitted: 0,
-		};
-		this.submitInternal(message);
-		this.submitted++;
+		});
 
 		// Messages in the same batch will have the same clientSequenceNumber
 		return this.clientSequenceNumber;
+	}
+
+	public flush() {
+		while (this.outbox.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.submitInternal(this.outbox.shift()!);
+		}
 	}
 
 	private submitInternal(message: ITrackableMessage) {
@@ -63,19 +64,16 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 			type: MessageType.Operation,
 			metadata,
 		});
-		this.addPendingMessage(
-			message.content,
-			{ ...(message.localOpMetadata as object), ...metadata },
-			this.clientSequenceNumber,
-		);
+		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
 	}
 
 	public rebase() {
-		this.pendingMessages
-			.slice(0, this.submitted - this.processed)
-			.forEach((message) =>
-				this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
-			);
+		const messagesToRebase = this.outbox.slice();
+		this.outbox.length = 0;
+
+		messagesToRebase.forEach((message) =>
+			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
+		);
 	}
 }
 

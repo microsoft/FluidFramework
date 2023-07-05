@@ -174,6 +174,8 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
         minimumSequenceNumber?: number;
     });
     // (undocumented)
+    flush(): void;
+    // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     rebase(): void;

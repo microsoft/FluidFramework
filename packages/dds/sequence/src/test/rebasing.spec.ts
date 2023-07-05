@@ -53,25 +53,24 @@ describe("Rebasing", () => {
 	it("Rebasing ops maintains eventual consistency", async () => {
 		sharedString1.insertText(0, "ad");
 		sharedString1.insertText(1, "c");
+		containerRuntime1.flush();
+		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
-
-		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-				sharedString2.insertText(3, "x");
-				containerRuntime2.rebase();
-			}
-		});
 
 		sharedString1.insertText(1, "b");
 		sharedString2.insertText(0, "y");
-		containerRuntime2.rebase();
 
+		containerRuntime2.rebase();
+		containerRuntime1.flush();
+		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString2.insertText(0, "z");
+		containerRuntime1.flush();
+		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(sharedString1.getText(), "zyabxcd");
+		assert.strictEqual(sharedString1.getText(), "zyabcd");
 		assert.strictEqual(
 			sharedString1.getText(),
 			sharedString2.getText(),

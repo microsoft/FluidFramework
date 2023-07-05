@@ -43,7 +43,7 @@ describe("Rebasing", () => {
 		map2.connect(services2);
 	});
 
-	it("Rebasing ops maintains eventual consistency", async () => {
+	it("Rebasing ops maintains eventual consistency", () => {
 		const keyCount = 10;
 		for (let i = 0; i < keyCount; i++) {
 			map1.set(`${i}`, map1.size);
