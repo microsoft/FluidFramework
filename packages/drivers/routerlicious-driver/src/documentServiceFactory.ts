@@ -13,10 +13,8 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-	ISummaryTree,
-} from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
