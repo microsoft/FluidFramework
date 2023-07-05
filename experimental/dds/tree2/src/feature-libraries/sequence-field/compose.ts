@@ -204,10 +204,25 @@ function composeMarks<TNodeChange>(
 			);
 			return baseMark;
 		}
-		// - MoveIn marks are invalid in an existing cell.
+		if (newMark.type === "ReturnTo") {
+			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
+			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
+			// knew about the node, and tried to move it out and return it.
+			// Why muted: until we support replacing a node within a cell, only a single specific node will ever occupy
+			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
+			// attempt to move a deleted node end up being muted.
+			assert(
+				newMark.isSrcConflicted ?? false,
+				"Invalid active ReturnTo mark after transient",
+			);
+			return baseMark;
+		}
+		// Because of the rebase sandwich, it is possible for a MoveIn mark to target an already existing cell.
+		// This occurs when a branch with a move get rebased over some other branch.
+		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
+		// because no concurrent change has the ability to refer to such a cell.
+		// Therefore, a MoveIn mark cannot occur after a transient.
 		assert(newMark.type !== "MoveIn", "Invalid MoveIn after transient");
-		// - ReturnTo marks are invalid in for a cell whose node has not been moved out.
-		assert(newMark.type !== "ReturnTo", "Invalid ReturnTo after transient");
 		assert(newMark.type === NoopMarkType, "Unexpected mark type after transient");
 		return baseMark;
 	}
