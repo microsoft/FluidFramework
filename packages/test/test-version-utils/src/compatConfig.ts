@@ -4,8 +4,6 @@
  */
 import { Lazy, assert } from "@fluidframework/common-utils";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
-import { ensurePackageInstalled } from "./testApi.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	CompatKind,
 	compatKind,
@@ -13,9 +11,11 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	baseVersion,
 	reinstall,
-} from "./compatOptions.js";
+} from "../compatOptions.cjs";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
+import { baseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
