@@ -109,14 +109,11 @@ export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
 	// Signal originates from server
 	if (message.clientId === null) {
 		const innerContent = message.content as { content: unknown; type: string };
-		switch (innerContent.type) {
-			case SignalType.Clear:
-			case SignalType.ClientJoin:
-			case SignalType.ClientLeave:
-				return true;
-			default:
-				return false;
-		}
+		return (
+			innerContent.type === SignalType.Clear ||
+			innerContent.type === SignalType.ClientJoin ||
+			innerContent.type === SignalType.ClientLeave
+		);
 	}
 	return false;
 }

@@ -119,9 +119,9 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
+	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
-	OnlyValidTermValue,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 
