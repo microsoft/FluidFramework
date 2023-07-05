@@ -49,7 +49,7 @@ describe("Editing", () => {
 			insert(tree2, 1, "C");
 			tree3.editor
 				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
-				.insert(0, singleTextCursor({ type: jsonObject.name, value: { foo: [] } }));
+				.insert(0, singleTextCursor({ type: jsonObject.name, fields: { foo: [] } }));
 
 			const rootPath = { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
 			const aEditor = tree3.editor.sequenceField({ parent: rootPath, field: brand("foo") });
