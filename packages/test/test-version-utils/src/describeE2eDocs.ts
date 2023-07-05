@@ -11,9 +11,10 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList } from "./compatConfig.js";
-import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
+import { baseVersion } from "./baseVersion.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 
 /*
