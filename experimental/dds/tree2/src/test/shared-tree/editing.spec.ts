@@ -1035,7 +1035,9 @@ describe("Editing", () => {
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
-				// tree2.editor.setValue(path, "b");
+				tree2.editor
+					.sequenceField({ parent: path, field: brand("bar") })
+					.insert(0, singleJsonCursor(1));
 				tree2.transaction.commit();
 
 				tree.merge(tree2);
@@ -1072,13 +1074,15 @@ describe("Editing", () => {
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
-				// tree2.editor.setValue(path, "b");
+				tree2.editor
+					.sequenceField({ parent: path, field: brand("bar") })
+					.insert(0, singleJsonCursor(1));
 				tree2.transaction.commit();
 
 				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree, tree2], [{ foo: "x" }]);
+				expectJsonTree([tree, tree2], [{ foo: "x", bar: 1 }]);
 			});
 
 			it("existence constraint on node inserted in prior transaction", () => {
