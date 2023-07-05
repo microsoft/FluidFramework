@@ -57,8 +57,17 @@ describe("Rebasing", () => {
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
+		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+				sharedString2.insertText(3, "u");
+				containerRuntime2.rebase();
+			}
+		});
+
 		sharedString1.insertText(1, "b");
 		sharedString2.insertText(0, "y");
+		sharedString2.insertText(1, "w");
+		sharedString2.insertText(2, "v");
 
 		containerRuntime2.rebase();
 		containerRuntime1.flush();
@@ -70,7 +79,7 @@ describe("Rebasing", () => {
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(sharedString1.getText(), "zyabcd");
+		assert.strictEqual(sharedString1.getText(), "zywvuabcd");
 		assert.strictEqual(
 			sharedString1.getText(),
 			sharedString2.getText(),
