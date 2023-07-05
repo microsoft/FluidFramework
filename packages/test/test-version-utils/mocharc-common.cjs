@@ -4,17 +4,7 @@
  */
 
 "use strict";
-require("@babel/register")({
-	only: [
-		function (filename) {
-			console.log(filename);
-			return true;
-		},
-	],
-	plugins: ["@babel/plugin-transform-modules-commonjs"],
-	// only: [/\*(compatOptions|packageVersion|versionUtils)*/],
-});
-const options = require("./dist/compatOptions.mjs");
+const options = require("./compatOptions.cjs");
 const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common.js");
 
 function getFluidTestVariant() {

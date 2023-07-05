@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Lazy, assert } from "@fluidframework/common-utils";
-import { ensurePackageInstalled } from "./testApi.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	CompatKind,
 	compatKind,
@@ -13,7 +11,9 @@ import {
 	r11sEndpointName,
 	tenantIndex,
 	reinstall,
-} from "./compatOptions.mjs";
+} from "../compatOptions.cjs";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
 import { baseVersion } from "./baseVersion.js";
 
 /*

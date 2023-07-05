@@ -9,8 +9,8 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.mjs";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
 import { baseVersion } from "./baseVersion.js";
 import {

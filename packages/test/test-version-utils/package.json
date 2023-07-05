@@ -55,9 +55,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@babel/core": "^7.22.5",
-		"@babel/plugin-transform-modules-commonjs": "^7.22.5",
-		"@babel/register": "^7.22.5",
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-drivers": "workspace:~",
