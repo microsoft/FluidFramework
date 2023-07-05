@@ -72,7 +72,7 @@ export class MockContainerRuntimeForRebasing extends MockContainerRuntime {
 
 	public rebase() {
 		this.pendingMessages
-			.slice(this.submitted - this.processed)
+			.slice(0, this.submitted - this.processed)
 			.forEach((message) =>
 				this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
 			);
