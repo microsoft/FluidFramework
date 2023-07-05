@@ -70,6 +70,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^0.26.0",
+		"lz4js": "^0.2.0",
 		"url": "^0.11.0",
 		"uuid": "^8.3.1"
 	},
@@ -101,6 +102,10 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_combineAppAndProtocolSummary": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}

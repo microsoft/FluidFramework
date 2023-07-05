@@ -37,7 +37,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.109.3",
+		"@fluentui/react": "^8.109.4",
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-hooks": "^8.6.24",
 		"@fluentui/react-icons": "^2.0.201",

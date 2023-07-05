@@ -34,9 +34,6 @@ class Wrapper<T extends TSchema> {
 	public encodedNodeUpdate(e: T) {
 		return EncodedNodeUpdate<T>(e);
 	}
-	public encodedValueChangeset(e: T) {
-		return EncodedValueChangeset<T>(e);
-	}
 	public encodedOptionalFieldChange(e: T) {
 		return EncodedOptionalFieldChange<T>(e);
 	}
@@ -47,16 +44,6 @@ class Wrapper<T extends TSchema> {
 
 export type EncodedNodeUpdate<Schema extends TSchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedNodeUpdate"]>
->;
-
-export const EncodedValueChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Object({
-		value: Type.Optional(EncodedNodeUpdate(tNodeChange)),
-		changes: Type.Optional(tNodeChange),
-	});
-
-export type EncodedValueChangeset<Schema extends TSchema> = Static<
-	ReturnType<Wrapper<Schema>["encodedValueChangeset"]>
 >;
 
 export const EncodedOptionalFieldChange = <Schema extends TSchema>(tNodeChange: Schema) =>

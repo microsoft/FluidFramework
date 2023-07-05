@@ -6,7 +6,10 @@
 import { Spinner } from "@fluentui/react-components";
 import React from "react";
 
-const defaultLabel = "Waiting for data from webpage.";
+/**
+ * Default label displayed by {@link Waiting} when no {@link WaitingProps.label} is specified.
+ */
+export const defaultWaitingLabel = "Waiting for data from webpage.";
 
 /**
  * {@link Waiting} input props.
@@ -14,6 +17,8 @@ const defaultLabel = "Waiting for data from webpage.";
 export interface WaitingProps {
 	/**
 	 * Label text to accompany the spinner.
+	 *
+	 * @defaultValue {@link defaultWaitingLabel}
 	 */
 	label?: string;
 }
@@ -23,5 +28,5 @@ export interface WaitingProps {
  */
 export function Waiting(props: WaitingProps): React.ReactElement {
 	const { label } = props;
-	return <Spinner label={label ?? defaultLabel} />;
+	return <Spinner label={label ?? defaultWaitingLabel} />;
 }
