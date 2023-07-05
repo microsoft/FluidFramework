@@ -58,7 +58,6 @@ describe("Rebasing", () => {
 		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 				sharedString2.insertText(3, "x");
-				containerRuntimeFactory.processOneMessage();
 				containerRuntime2.rebase();
 			}
 		});
