@@ -44,9 +44,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tinylicious-client": "workspace:~",
-		"fluid-framework": "workspace:~"
+		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.20.0",

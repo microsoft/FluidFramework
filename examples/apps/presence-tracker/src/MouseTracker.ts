@@ -7,6 +7,7 @@ import { ISignaler, SignalListener } from "@fluid-experimental/data-objects";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { InternalSignaler } from "./InternalSignaler";
+import { ITinyliciousUser } from "./FocusTracker";
 
 export interface IMouseTracker extends EventEmitter, ISignaler {
 	getMousePresences(): Map<string, IMousePosition>;
@@ -71,7 +72,7 @@ export class MouseTracker extends DataObject implements IMouseTracker {
 					this.posMap.delete(member.userId);
 				}
 			}
-			this.emit("focusChanged");
+			this.emit("mousePositionChanged");
 		});
 
 		this.signaler.on("error", (error) => {
@@ -113,7 +114,7 @@ export class MouseTracker extends DataObject implements IMouseTracker {
 	 */
 	private sendMouseSignal(position: IMousePosition) {
 		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.runtime.clientId as any,
+			userId: this.runtime.clientId,
 			pos: position,
 		});
 	}
@@ -122,11 +123,14 @@ export class MouseTracker extends DataObject implements IMouseTracker {
 		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
 		const audience = this.runtime.getAudience();
 
+		assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+
 		for (const [key, values] of audience.getMembers()) {
-			const focus = this.getMousePresenceForUser(this.runtime.clientId as any, key);
+			const user = JSON.stringify(values.user);
+			const userString = JSON.parse(user) as ITinyliciousUser;
+			const focus = this.getMousePresenceForUser(this.runtime.clientId, key);
 			if (focus !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				statuses.set(values.user["name"], focus);
+				statuses.set(userString.name, focus);
 			}
 		}
 		return statuses;

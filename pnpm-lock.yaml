@@ -879,7 +879,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^0.2.158186
-      '@fluidframework/tinylicious-client': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -888,7 +887,6 @@ importers:
       concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
@@ -913,8 +911,6 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
-      fluid-framework: link:../../../packages/framework/fluid-framework
     devDependencies:
       '@fluid-tools/build-cli': 0.20.0_aaj3xo5wh3dcbnhbyxbrutbslq
       '@fluidframework/build-common': 1.2.0
@@ -5731,7 +5727,6 @@ importers:
     specifiers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/azure-client': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
@@ -5739,52 +5734,37 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      '@types/uuid': ^8.3.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
-      fluid-framework: workspace:~
-      mocha: ^10.2.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../packages/test/test-utils
       events: 3.3.0
-      fluid-framework: link:../../../packages/framework/fluid-framework
     devDependencies:
       '@fluid-tools/build-cli': 0.20.0_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
-      '@types/mocha': 9.1.1
       '@types/node': 14.18.47
-      '@types/uuid': 8.3.4
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
-      uuid: 8.3.2
 
   experimental/framework/last-edited:
     specifiers:

@@ -17,8 +17,6 @@ export function renderFocusPresence(focusTracker: IFocusTracker, div: HTMLDivEle
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
-	console.log("render", focusTracker);
-
 	const onFocusChanged = () => {
 		focusDiv.innerHTML = `Current user: ${focusTracker.getName()}</br>
             ${getFocusPresencesString("</br>", focusTracker)}`;
@@ -63,7 +61,6 @@ function getFocusPresencesString(
 
 	focusTracker.getFocusPresences().forEach((focus, userName) => {
 		const prefix = `User ${userName}:`;
-		console.log("focus presence string", focus);
 		if (focus === undefined) {
 			focusString.push(`${prefix} unknown focus`);
 		} else if (focus === true) {

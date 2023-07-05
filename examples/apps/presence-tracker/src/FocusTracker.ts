@@ -21,6 +21,15 @@ export interface IFocusSignalPayload {
 	focus: boolean;
 }
 
+/**
+ * ITinyliciousUser describes the default format for users created through the Tinylicious server.
+ * However, the specific details for a user may differ depending on the server.
+ */
+export interface ITinyliciousUser {
+	id: string;
+	name: string;
+}
+
 export class FocusTracker extends DataObject implements IFocusTracker {
 	private static readonly focusSignalType = "changedFocus";
 	private static readonly focusRequestType = "focusRequest";
@@ -63,6 +72,7 @@ export class FocusTracker extends DataObject implements IFocusTracker {
 
 		const audience = this.runtime.getAudience();
 		audience.on("removeMember", (clientId: string, member: any) => {
+			console.log("focus remove member", member);
 			const focusClientIdMap = this.focusMap.get(member.userId);
 			if (focusClientIdMap !== undefined) {
 				focusClientIdMap.delete(clientId);
@@ -116,10 +126,10 @@ export class FocusTracker extends DataObject implements IFocusTracker {
 
 	public getName(): unknown | undefined {
 		const audience = this.runtime.getAudience();
-		for (const [_, values] of audience.getMembers()) {
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			return values.user["name"];
-		}
+		assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+		const userString = JSON.stringify(audience.getMember(this.runtime.clientId)?.user);
+		const user = JSON.parse(userString) as ITinyliciousUser;
+		return user.name;
 	}
 
 	/**
@@ -127,7 +137,7 @@ export class FocusTracker extends DataObject implements IFocusTracker {
 	 */
 	private sendFocusSignal(hasFocus: boolean) {
 		this.signaler.submitSignal(FocusTracker.focusSignalType, {
-			userId: this.runtime.clientId as any,
+			userId: this.runtime.clientId,
 			focus: hasFocus,
 		});
 	}
@@ -135,13 +145,14 @@ export class FocusTracker extends DataObject implements IFocusTracker {
 	public getFocusPresences(): Map<string, boolean> {
 		const statuses: Map<string, boolean> = new Map<string, boolean>();
 		const audience = this.runtime.getAudience();
+		assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
 
 		for (const [key, values] of audience.getMembers()) {
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			const focus = this.getFocusPresenceForUser(this.runtime.clientId as any, key);
+			const user = JSON.stringify(values.user);
+			const userString = JSON.parse(user) as ITinyliciousUser;
+			const focus = this.getFocusPresenceForUser(this.runtime.clientId, key);
 			if (focus !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				statuses.set(values.user["name"], focus);
+				statuses.set(userString.name, focus);
 			}
 		}
 		return statuses;

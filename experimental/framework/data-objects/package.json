@@ -27,20 +27,15 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"test": "mocha --unhandled-rejections=strict --recursive dist/signaler/test/*.spec.js --exit --timeout 10000",
 		"tsc": "tsc"
 	},
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
-		"fluid-framework": "workspace:~",
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
@@ -49,17 +44,13 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/node": "^14.18.38",
-		"@types/mocha": "^9.1.1",
-		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
-		"mocha": "^10.2.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5",
-		"uuid": "^8.3.1"
+		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
 		"disabled": true,
