@@ -5,7 +5,7 @@
 
 import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 
@@ -127,6 +127,8 @@ export interface FluidCacheDBSchema extends DBSchema {
 			/**
 			 * The last time the cache entry was used.
 			 * This is initially set to the time the cache entry was created Measured as ms since unix epoch.
+			 * With the recent change, this won't be updated on read as it will not be used anywhere. Only keeping
+			 * so as to not upgrade the schema version.
 			 */
 			lastAccessTimeMs: number;
 		};

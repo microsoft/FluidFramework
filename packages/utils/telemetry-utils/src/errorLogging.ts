@@ -6,10 +6,9 @@
 import {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
-	ITelemetryLogger,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 import {
 	hasErrorInstanceId,
@@ -17,7 +16,11 @@ import {
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase";
-import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+import {
+	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryLoggerExt,
+	TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -121,8 +124,19 @@ export function normalizeError(
 	// Anywhere they are set should be on a valid Fluid Error that would have been returned above,
 	// but we can't prove it with the types, so adding this defensive measure.
 	if (typeof error === "object" && error !== null) {
-		const { canRetry, retryAfterSeconds } = error as any;
-		Object.assign(normalizeError, { canRetry, retryAfterSeconds });
+		const maybeHasRetry: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> = error;
+		let retryProps: Partial<Record<"canRetry" | "retryAfterSeconds", unknown>> | undefined;
+		if ("canRetry" in error) {
+			retryProps ??= {};
+			retryProps.canRetry = maybeHasRetry.canRetry;
+		}
+		if ("retryAfterSeconds" in error) {
+			retryProps ??= {};
+			retryProps.retryAfterSeconds = maybeHasRetry.retryAfterSeconds;
+		}
+		if (retryProps !== undefined) {
+			Object.assign(fluidError, retryProps);
+		}
 	}
 
 	if (typeof error !== "object") {
@@ -220,7 +234,7 @@ export function wrapError<T extends LoggingError>(
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	const newError = wrapError(innerError, newErrorFn);
 

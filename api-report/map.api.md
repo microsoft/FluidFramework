@@ -8,7 +8,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
@@ -36,6 +36,12 @@ export class DirectoryFactory implements IChannelFactory {
     static readonly Type = "https://graph.microsoft.com/types/directory";
     // (undocumented)
     get type(): string;
+}
+
+// @public
+export interface ICreateInfo {
+    ccIds: string[];
+    csn: number;
 }
 
 // @public
@@ -67,6 +73,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 // @public
 export interface IDirectoryDataObject {
+    ci?: ICreateInfo;
     storage?: {
         [key: string]: ISerializableValue;
     };

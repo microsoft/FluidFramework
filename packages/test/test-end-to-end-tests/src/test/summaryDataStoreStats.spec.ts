@@ -9,7 +9,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
@@ -17,12 +16,12 @@ import {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 class TestDataObject extends DataObject {
 	public get _root() {

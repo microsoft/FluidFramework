@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
@@ -149,12 +151,14 @@ describe('EditLog', () => {
 		expect(log.minSequenceNumber).equals(0);
 		log.addSequencedEdit(edit1, { sequenceNumber: 43, referenceSequenceNumber: 42, minimumSequenceNumber: 42 });
 		expect(log.minSequenceNumber).equals(42);
-		expect(() =>
-			log.addSequencedEdit('fake-edit' as unknown as Edit<unknown>, {
-				sequenceNumber: 44,
-				referenceSequenceNumber: 43,
-			})
-		).throws('min number');
+		assert.throws(
+			() =>
+				log.addSequencedEdit('fake-edit' as unknown as Edit<unknown>, {
+					sequenceNumber: 44,
+					referenceSequenceNumber: 43,
+				}),
+			(e) => validateAssertionError(e, /min number/)
+		);
 	});
 
 	it('detects causal ordering violations', () => {
@@ -162,7 +166,10 @@ describe('EditLog', () => {
 
 		log.addLocalEdit(edit0);
 		log.addLocalEdit(edit1);
-		expect(() => log.addSequencedEdit(edit1, { sequenceNumber: 1, referenceSequenceNumber: 0 })).throws('ordering');
+		assert.throws(
+			() => log.addSequencedEdit(edit1, { sequenceNumber: 1, referenceSequenceNumber: 0 }),
+			(e) => validateAssertionError(e, /ordering/)
+		);
 	});
 
 	it('can sequence a local edit', async () => {
@@ -186,10 +193,10 @@ describe('EditLog', () => {
 	it('Throws on duplicate sequenced edits', async () => {
 		const log = new EditLog();
 		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
-		expect(() => log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 }))
-			.to.throw(Error)
-			.that.has.property('message')
-			.which.matches(/Duplicate/);
+		assert.throws(
+			() => log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 }),
+			(e) => validateAssertionError(e, /Duplicate/)
+		);
 	});
 
 	it('can sequence multiple local edits', async () => {

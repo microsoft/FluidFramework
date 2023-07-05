@@ -150,6 +150,31 @@ when you define the test) and `@MemoryUsage` (as opposed to `@ExecutionTime` for
 
 For more details, look at the documentation for `IMemoryTestObject`.
 
+## Release Notes
+
+### 0.48
+
+This release focuses on improving the ability to use this package in more environments.
+It should now be practical to run at least correctness mode tests in browsers and import whats needed to write simple test runners for other testing frameworks like Jest.
+
+-   [Fix qualifiedTitle generation to not insert a seperator when the catagory is `undefined`](https://github.com/microsoft/FluidFramework/commit/81df3860477fa2c968049321b3faf1434e57618e#diff-5f5a68acdfe610a22efc6bf398106145e0002f517d5a01293d2a6c8c94bd5525)
+-   [Remove Top Level Platform Specific Imports](https://github.com/microsoft/FluidFramework/commit/50bf0781cc977213a2b24510da76e0ebff816a09)
+-   [Package export `qualifiedTitle` and `runBenchmark`](https://github.com/microsoft/FluidFramework/commit/32d2397be72ed737a4d151686021fb708cfb3271)
+
+### 0.47
+
+In this version the largest change was [Use custom benchmarking code instead of Benchmark.js](https://github.com/microsoft/FluidFramework/commit/a282e8d173b365d04bf950b860b1342ebcb1513e).
+This included using more modern timing APIs, a new measurement inner loop, removal of all code generation, non-callback based async support and much more.
+This change is likely to have slight impact on times reported from benchmarks:
+across a large suite of benchmarks the new version seems to be about 2% faster results (based on geometric mean), perhaps due to more efficient JITing of the much more modern JavaScript and lower timing overhead from the newer APIs.
+Another significant change was [Use Chalk](https://github.com/microsoft/FluidFramework/commit/996102fcf2bbbfb042c7a504d62708b7ca19f72c) which improved how formatting (mainly coloring) of console output was done.
+The reporter now auto detects support from the console and thus will avoid including formatting escape sequences when redirecting output to a file.
+
+Breaking Changes:
+
+-   `onCycle` renamed to `beforeEachBatch`.
+-   Many renames and a lot of refactoring unlikely to impact users of the mocha test APIs, but likely to break more integrated code, like custom reporters.
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks

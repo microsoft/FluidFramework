@@ -5,20 +5,18 @@
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import {
-	ILocalSequencedClient,
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
 	ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
 import {
 	IDocumentAttributes,
-	IProcessMessageResult,
-	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
-	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
@@ -51,7 +49,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			attributes.term,
+			OnlyValidTermValue,
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,
@@ -66,29 +64,6 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		for (const [clientId, details] of this.quorum.getMembers()) {
 			this.audience.addMember(clientId, details.client);
 		}
-	}
-
-	public processMessage(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-	): IProcessMessageResult {
-		const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
-
-		// Check and report if we're getting messages from a clientId that we previously
-		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-		if (message.clientId != null) {
-			if (client === undefined && message.type !== MessageType.ClientJoin) {
-				// pre-0.58 error message: messageClientIdMissingFromQuorum
-				throw new Error("Remote message's clientId is missing from the quorum");
-			}
-
-			if (client?.shouldHaveLeft === true && !canBeCoalescedByService(message)) {
-				// pre-0.58 error message: messageClientIdShouldHaveLeft
-				throw new Error("Remote message's clientId already should have left");
-			}
-		}
-
-		return super.processMessage(message, local);
 	}
 
 	public processSignal(message: ISignalMessage) {
@@ -123,4 +98,22 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				break;
 		}
 	}
+}
+
+/**
+ * Function to check whether the protocol handler should process the Signal.
+ * The protocol handler should strictly handle only ClientJoin, ClientLeave
+ * and Clear signal types.
+ */
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
+	// Signal originates from server
+	if (message.clientId === null) {
+		const innerContent = message.content as { content: unknown; type: string };
+		return (
+			innerContent.type === SignalType.Clear ||
+			innerContent.type === SignalType.ClientJoin ||
+			innerContent.type === SignalType.ClientLeave
+		);
+	}
+	return false;
 }

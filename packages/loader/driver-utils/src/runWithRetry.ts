@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { delay, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
@@ -45,7 +45,7 @@ export interface IProgress {
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
 	fetchCallName: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progress: IProgress,
 ): Promise<T> {
 	let result: T | undefined;

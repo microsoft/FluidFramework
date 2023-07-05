@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Contract for logger that writes telemetry to a file
@@ -27,7 +27,6 @@ export enum OutputFormat {
 /* eslint-disable tsdoc/syntax */
 /**
  * Options to provide upon creation of IFileLogger
- * @internal
  */
 export interface ITelemetryOptions {
 	/** Desired output format used to create a specific IFileLogger implementation */

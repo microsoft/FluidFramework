@@ -5,18 +5,20 @@
 
 import {
 	ICache,
-	ICollection,
 	IDeltaService,
-	IDocument,
+	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
+	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
@@ -24,14 +26,17 @@ import * as documents from "./documents";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	deltaService: IDeltaService,
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
+	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -39,20 +44,33 @@ export function create(
 		tenantManager,
 		deltaService,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
+		singleUseTokenCache,
+		revokedTokenChecker,
 	);
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		config,
 		tenantManager,
-		documentsCollection,
+		documentRepository,
+		documentDeleteService,
+		tokenRevocationManager,
+		revokedTokenChecker,
 	);
-	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
+	const apiRoute = api.create(
+		config,
+		producer,
+		tenantManager,
+		storage,
+		tenantThrottlers,
+		singleUseTokenCache,
+		revokedTokenChecker,
+	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);

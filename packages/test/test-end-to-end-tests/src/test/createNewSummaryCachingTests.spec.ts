@@ -4,14 +4,9 @@
  */
 
 import assert from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
@@ -20,16 +15,20 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+		public get _context() {
+			return this.context;
+		}
 	}
-	public get _context() {
-		return this.context;
-	}
-}
 
-describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 

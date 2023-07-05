@@ -8,7 +8,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -20,7 +20,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
@@ -161,8 +161,6 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated
-    protocolName: string;
 }
 
 // @public (undocumented)
@@ -215,8 +213,8 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @public (undocumented)
-export interface IFluidResolvedUrl extends IResolvedUrlBase {
+// @public @deprecated (undocumented)
+export interface IFluidResolvedUrl {
     // (undocumented)
     endpoints: {
         [name: string]: string;
@@ -249,13 +247,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
-
-// @public @deprecated (undocumented)
-export interface IResolvedUrlBase {
-    // (undocumented)
-    type: string;
-}
+export type IResolvedUrl = IFluidResolvedUrl;
 
 // @public
 export interface IStream<T> {
@@ -292,14 +284,6 @@ export interface IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-}
-
-// @public @deprecated (undocumented)
-export interface IWebResolvedUrl extends IResolvedUrlBase {
-    // (undocumented)
-    data: string;
-    // (undocumented)
-    type: "web";
 }
 
 // @public (undocumented)

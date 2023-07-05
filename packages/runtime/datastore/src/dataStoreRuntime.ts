@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	generateStack,
+	LoggingError,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	raiseConnectedEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -25,15 +34,6 @@ import {
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import {
-	ChildLogger,
-	generateStack,
-	LoggingError,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	raiseConnectedEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -55,6 +55,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -65,8 +66,10 @@ import {
 	create404Response,
 	createResponseError,
 	exceptionToResponse,
+	GCDataBuilder,
 	requestFluidObject,
 	packagePathToTelemetryProperty,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -74,7 +77,6 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
@@ -162,6 +164,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.IFluidHandleContext;
 	}
 
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.dataStoreContext.idCompressor;
+	}
+
 	public get IFluidHandleContext() {
 		return this;
 	}
@@ -200,7 +206,7 @@ export class FluidDataStoreRuntime
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -272,7 +278,7 @@ export class FluidDataStoreRuntime
 					return;
 				}
 
-				let channelContext: IChannelContext;
+				let channelContext: RemoteChannelContext | RehydratedLocalChannelContext;
 				// If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
@@ -296,12 +302,9 @@ export class FluidDataStoreRuntime
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
 					// that it can be make it visible later with the data store.
 					if (dataStoreContext.attachState !== AttachState.Detached) {
-						(channelContext as LocalChannelContextBase).makeVisible();
+						channelContext.makeVisible();
 					} else {
-						this.localChannelContextQueue.set(
-							path,
-							channelContext as LocalChannelContextBase,
-						);
+						this.localChannelContextQueue.set(path, channelContext);
 					}
 				} else {
 					channelContext = new RemoteChannelContext(
@@ -472,7 +475,6 @@ export class FluidDataStoreRuntime
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 
-		assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
 		return context.channel;
 	}
 
@@ -484,7 +486,7 @@ export class FluidDataStoreRuntime
 	public bindChannel(channel: IChannel): void {
 		assert(
 			this.notBoundedChannelContextSet.has(channel.id),
-			0x17b /* "Channel to be binded should be in not bounded set" */,
+			0x17b /* "Channel to be bound should be in not bounded set" */,
 		);
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.

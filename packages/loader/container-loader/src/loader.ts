@@ -4,8 +4,19 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	DebugLogger,
+	IConfigProviderBase,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+	MonitoringContext,
+	PerformanceEvent,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryBaseLogger,
 	FluidObject,
 	IFluidRouter,
 	IRequest,
@@ -23,23 +34,12 @@ import {
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
-	ChildLogger,
-	DebugLogger,
-	IConfigProviderBase,
-	loggerToMonitoringContext,
-	mixinMonitoringContext,
-	MonitoringContext,
-	PerformanceEvent,
-	sessionStorageConfigProvider,
-} from "@fluidframework/telemetry-utils";
-import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	IFluidResolvedUrl,
+	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -53,8 +53,15 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+function ensureResolvedUrlDefined(
+	resolved: IResolvedUrl | undefined,
+): asserts resolved is IResolvedUrl {
+	if (resolved === undefined) {
+		throw new Error(`Object is not a IResolveUrl.`);
+	}
+}
 /**
- * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
+ * @internal
  */
 export class RelativeLoader implements ILoader {
 	constructor(
@@ -71,15 +78,18 @@ export class RelativeLoader implements ILoader {
 			if (canUseCache(request)) {
 				return this.container;
 			} else {
-				const resolvedUrl = this.container.resolvedUrl;
-				ensureFluidResolvedUrl(resolvedUrl);
-				const container = await Container.load(this.loader as Loader, {
-					canReconnect: request.headers?.[LoaderHeader.reconnect],
-					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-					resolvedUrl: { ...resolvedUrl },
-					version: request.headers?.[LoaderHeader.version] ?? undefined,
-					loadMode: request.headers?.[LoaderHeader.loadMode],
-				});
+				ensureResolvedUrlDefined(this.container.resolvedUrl);
+				const container = await this.container.clone(
+					{
+						resolvedUrl: { ...this.container.resolvedUrl },
+						version: request.headers?.[LoaderHeader.version] ?? undefined,
+						loadMode: request.headers?.[LoaderHeader.loadMode],
+					},
+					{
+						canReconnect: request.headers?.[LoaderHeader.reconnect],
+						clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+					},
+				);
 				return container;
 			}
 		}
@@ -237,12 +247,18 @@ export interface ILoaderServices {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLogger;
+	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Blobs storage for detached containers.
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
+
+	/**
+	 * Optional property for allowing the container to use a custom
+	 * protocol implementation for handling the quorum and/or the audience.
+	 */
+	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 /**
@@ -266,14 +282,17 @@ export async function requestResolvedObjectFromContainer(
 	container: IContainer,
 	headers?: IRequestHeader,
 ): Promise<IResponse> {
-	ensureFluidResolvedUrl(container.resolvedUrl);
+	ensureResolvedUrlDefined(container.resolvedUrl);
 	const parsedUrl = parseUrl(container.resolvedUrl.url);
 
 	if (parsedUrl === undefined) {
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
 
-	return container.request({
+	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
+	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
+
+	return router.request({
 		url: `${parsedUrl.path}${parsedUrl.query}`,
 		headers,
 	});
@@ -286,37 +305,45 @@ export class Loader implements IHostLoader {
 	private readonly containers = new Map<string, Promise<Container>>();
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
 
 	constructor(loaderProps: ILoaderProps) {
-		const scope: FluidObject<ILoader> = { ...loaderProps.scope };
-		if (loaderProps.options?.provideScopeLoader !== false) {
-			scope.ILoader = this;
-		}
+		const {
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			logger,
+			detachedBlobStorage,
+			configProvider,
+			protocolHandlerBuilder,
+		} = loaderProps;
+
 		const telemetryProps = {
 			loaderId: uuid(),
 			loaderVersion: pkgVersion,
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, {
+			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
 				all: telemetryProps,
 			}),
 			sessionStorageConfigProvider.value,
-			loaderProps.configProvider,
+			configProvider,
 		);
 
 		this.services = {
-			urlResolver: loaderProps.urlResolver,
-			documentServiceFactory: loaderProps.documentServiceFactory,
-			codeLoader: loaderProps.codeLoader,
-			options: loaderProps.options ?? {},
-			scope,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options: options ?? {},
+			scope:
+				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+			detachedBlobStorage,
+			protocolHandlerBuilder,
 			subLogger: subMc.logger,
-			detachedBlobStorage: loaderProps.detachedBlobStorage,
 		};
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
-		this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
 	}
 
 	public get IFluidRouter(): IFluidRouter {
@@ -324,15 +351,11 @@ export class Loader implements IHostLoader {
 	}
 
 	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(
-			this,
-			codeDetails,
-			this.protocolHandlerBuilder,
-		);
+		const container = await Container.createDetached(this.services, codeDetails);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
-				ensureFluidResolvedUrl(container.resolvedUrl);
+				ensureResolvedUrlDefined(container.resolvedUrl);
 				const parsedUrl = parseUrl(container.resolvedUrl.url);
 				if (parsedUrl !== undefined) {
 					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
@@ -344,7 +367,7 @@ export class Loader implements IHostLoader {
 	}
 
 	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this, snapshot, this.protocolHandlerBuilder);
+		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -401,7 +424,7 @@ export class Loader implements IHostLoader {
 		pendingLocalState?: IPendingContainerState,
 	): Promise<{ container: Container; parsed: IParsedUrl }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
-		ensureFluidResolvedUrl(resolvedAsFluid);
+		ensureResolvedUrlDefined(resolvedAsFluid);
 
 		// Parse URL into data stores
 		const parsed = parseUrl(resolvedAsFluid.url);
@@ -420,11 +443,18 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
+		request.headers ??= {};
+		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
+		request.headers[LoaderHeader.version] =
+			parsed.version ?? request.headers[LoaderHeader.version];
+		const canCache =
+			this.cachingEnabled &&
+			request.headers[LoaderHeader.cache] !== false &&
+			pendingLocalState === undefined;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
 		let container: Container;
-		if (shouldCache) {
+		if (canCache) {
 			const key = this.getKeyForContainerCache(request, parsed);
 			const maybeContainer = await this.containers.get(key);
 			if (maybeContainer !== undefined) {
@@ -458,48 +488,23 @@ export class Loader implements IHostLoader {
 		return this.services.options.cache !== false;
 	}
 
-	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
-	}
-
-	private parseHeader(parsed: IParsedUrl, request: IRequest) {
-		let fromSequenceNumber = -1;
-
-		request.headers = request.headers ?? {};
-
-		const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-		if (headerSeqNum !== undefined) {
-			fromSequenceNumber = headerSeqNum;
-		}
-
-		// If set in both query string and headers, use query string
-		request.headers[LoaderHeader.version] =
-			parsed.version ?? request.headers[LoaderHeader.version];
-
-		const canCache = this.canCacheForRequest(request.headers);
-
-		return {
-			canCache,
-			fromSequenceNumber,
-		};
-	}
-
 	private async loadContainer(
 		request: IRequest,
-		resolved: IFluidResolvedUrl,
+		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
 		return Container.load(
-			this,
+			{
+				resolvedUrl,
+				version: request.headers?.[LoaderHeader.version] ?? undefined,
+				loadMode: request.headers?.[LoaderHeader.loadMode],
+				pendingLocalState,
+			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
 				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-				resolvedUrl: resolved,
-				version: request.headers?.[LoaderHeader.version] ?? undefined,
-				loadMode: request.headers?.[LoaderHeader.loadMode],
+				...this.services,
 			},
-			pendingLocalState,
-			this.protocolHandlerBuilder,
 		);
 	}
 }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// Driver API
+import { DriverApi } from "@fluid-internal/test-drivers";
+
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
-
-// Driver API
-import { DriverApi } from "@fluidframework/test-drivers";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -32,14 +32,14 @@ import {
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 import * as semver from "semver";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
 	ensureInstalled,
 	getRequestedRange,
 	loadPackage,
 	versionHasMovedSparsedMatrix,
-} from "./versionUtils";
+} from "./versionUtils.js";
 
 // List of package that needs to be install for legacy versions
 const packageList = [
@@ -69,8 +69,23 @@ export const ensurePackageInstalled = async (
 	baseVersion: string,
 	version: number | string,
 	force: boolean,
-): Promise<InstalledPackage | undefined> =>
-	ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
+): Promise<InstalledPackage | undefined> => {
+	const pkg = await ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
+	await Promise.all([
+		loadContainerRuntime(baseVersion, version),
+		loadDataRuntime(baseVersion, version),
+		loadLoader(baseVersion, version),
+		loadDriver(baseVersion, version),
+	]);
+	return pkg;
+};
+
+// This module supports synchronous functions to import packages once their install has been completed.
+// Since dynamic import is async, we thus cache the modules based on their package version.
+const loaderCache = new Map<string, typeof LoaderApi>();
+const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
+const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
+const driverCache = new Map<string, typeof DriverApi>();
 
 // Current versions of the APIs
 const LoaderApi = {
@@ -103,6 +118,166 @@ const DataRuntimeApi = {
 	},
 };
 
+async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
+	const requestedStr = getRequestedRange(baseVersion, requested);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+
+	const { version, modulePath } = checkInstalled(requestedStr);
+	if (!loaderCache.has(version)) {
+		const loader = {
+			version,
+			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader")).Loader,
+		};
+		loaderCache.set(version, loader);
+	}
+}
+
+async function loadContainerRuntime(
+	baseVersion: string,
+	requested?: number | string,
+): Promise<void> {
+	const requestedStr = getRequestedRange(baseVersion, requested);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+
+	const { version, modulePath } = checkInstalled(requestedStr);
+	if (!containerRuntimeCache.has(version)) {
+		const containerRuntime = {
+			version,
+			ContainerRuntime: (await loadPackage(modulePath, "@fluidframework/container-runtime"))
+				.ContainerRuntime,
+			ContainerRuntimeFactoryWithDefaultDataStore: (
+				await loadPackage(modulePath, "@fluidframework/aqueduct")
+			).ContainerRuntimeFactoryWithDefaultDataStore,
+		};
+		containerRuntimeCache.set(version, containerRuntime);
+	}
+}
+
+async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
+	const requestedStr = getRequestedRange(baseVersion, requested);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+	const { version, modulePath } = checkInstalled(requestedStr);
+	if (!dataRuntimeCache.has(version)) {
+		/* eslint-disable @typescript-eslint/no-shadow */
+		const [
+			{ DataObject, DataObjectFactory },
+			{ TestFluidObjectFactory },
+			{ SharedMap, SharedDirectory },
+			{ SharedString },
+			{ SharedCell },
+			{ SharedCounter },
+			{ SharedMatrix },
+			{ Ink },
+			{ ConsensusQueue },
+			{ ConsensusRegisterCollection },
+			{ SparseMatrix },
+		] = await Promise.all([
+			loadPackage(modulePath, "@fluidframework/aqueduct"),
+			loadPackage(modulePath, "@fluidframework/test-utils"),
+			loadPackage(modulePath, "@fluidframework/map"),
+			loadPackage(modulePath, "@fluidframework/sequence"),
+			loadPackage(modulePath, "@fluidframework/cell"),
+			loadPackage(modulePath, "@fluidframework/counter"),
+			loadPackage(modulePath, "@fluidframework/matrix"),
+			loadPackage(modulePath, "@fluidframework/ink"),
+			loadPackage(modulePath, "@fluidframework/ordered-collection"),
+			loadPackage(modulePath, "@fluidframework/register-collection"),
+			loadPackage(
+				modulePath,
+				versionHasMovedSparsedMatrix(version)
+					? "@fluid-experimental/sequence-deprecated"
+					: "@fluidframework/sequence",
+			),
+		]);
+		/* eslint-enable @typescript-eslint/no-shadow */
+
+		const dataRuntime = {
+			version,
+			DataObject,
+			DataObjectFactory,
+			TestFluidObjectFactory,
+			dds: {
+				SharedCell,
+				SharedCounter,
+				Ink,
+				SharedDirectory,
+				SharedMap,
+				SharedMatrix,
+				ConsensusQueue,
+				ConsensusRegisterCollection,
+				SharedString,
+				SparseMatrix,
+			},
+		};
+		dataRuntimeCache.set(version, dataRuntime);
+	}
+}
+
+async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
+	const requestedStr = getRequestedRange(baseVersion, requested);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+
+	const { version, modulePath } = checkInstalled(requestedStr);
+	if (!driverCache.has(version)) {
+		const [
+			{ LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest },
+			{ LocalDeltaConnectionServer },
+			{
+				OdspDocumentServiceFactory,
+				OdspDriverUrlResolver,
+				createOdspCreateContainerRequest,
+				createOdspUrl,
+			},
+			{ RouterliciousDocumentServiceFactory },
+		] = await Promise.all([
+			loadPackage(modulePath, "@fluidframework/local-driver"),
+			loadPackage(modulePath, "@fluidframework/server-local-server"),
+			loadPackage(modulePath, "@fluidframework/odsp-driver"),
+			loadPackage(modulePath, "@fluidframework/routerlicious-driver"),
+		]);
+
+		const LocalDriverApi: typeof DriverApi.LocalDriverApi = {
+			version,
+			LocalDocumentServiceFactory,
+			LocalResolver,
+			LocalDeltaConnectionServer,
+			createLocalResolverCreateNewRequest,
+		};
+
+		const OdspDriverApi: typeof DriverApi.OdspDriverApi = {
+			version,
+			OdspDocumentServiceFactory,
+			OdspDriverUrlResolver,
+			createOdspCreateContainerRequest,
+			createOdspUrl,
+		};
+
+		const RouterliciousDriverApi: typeof DriverApi.RouterliciousDriverApi = {
+			version,
+			modulePath,
+			RouterliciousDocumentServiceFactory,
+		};
+
+		driverCache.set(version, {
+			LocalDriverApi,
+			OdspDriverApi,
+			RouterliciousDriverApi,
+		});
+	}
+}
+
+function throwNotFound(layer: string, version: string): never {
+	throw new Error(`${layer}@${version} not found. Missing install step?`);
+}
+
 export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
 	const requestedStr = getRequestedRange(baseVersion, requested);
 
@@ -111,11 +286,9 @@ export function getLoaderApi(baseVersion: string, requested?: number | string): 
 		return LoaderApi;
 	}
 
-	const { version, modulePath } = checkInstalled(requestedStr);
-	return {
-		version,
-		Loader: loadPackage(modulePath, "@fluidframework/container-loader").Loader,
-	};
+	const { version } = checkInstalled(requestedStr);
+	const loaderApi = loaderCache.get(version);
+	return loaderApi ?? throwNotFound("Loader", version);
 }
 
 export function getContainerRuntimeApi(
@@ -126,16 +299,8 @@ export function getContainerRuntimeApi(
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
-	const { version, modulePath } = checkInstalled(requestedStr);
-	return {
-		version,
-		ContainerRuntime: loadPackage(modulePath, "@fluidframework/container-runtime")
-			.ContainerRuntime,
-		ContainerRuntimeFactoryWithDefaultDataStore: loadPackage(
-			modulePath,
-			"@fluidframework/aqueduct",
-		).ContainerRuntimeFactoryWithDefaultDataStore,
-	};
+	const { version } = checkInstalled(requestedStr);
+	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
 export function getDataRuntimeApi(
@@ -146,35 +311,8 @@ export function getDataRuntimeApi(
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
-	const { version, modulePath } = checkInstalled(requestedStr);
-	return {
-		version,
-		DataObject: loadPackage(modulePath, "@fluidframework/aqueduct").DataObject,
-		DataObjectFactory: loadPackage(modulePath, "@fluidframework/aqueduct").DataObjectFactory,
-		TestFluidObjectFactory: loadPackage(modulePath, "@fluidframework/test-utils")
-			.TestFluidObjectFactory,
-		dds: {
-			SharedCell: loadPackage(modulePath, "@fluidframework/cell").SharedCell,
-			SharedCounter: loadPackage(modulePath, "@fluidframework/counter").SharedCounter,
-			Ink: loadPackage(modulePath, "@fluidframework/ink").Ink,
-			SharedDirectory: loadPackage(modulePath, "@fluidframework/map").SharedDirectory,
-			SharedMap: loadPackage(modulePath, "@fluidframework/map").SharedMap,
-			SharedMatrix: loadPackage(modulePath, "@fluidframework/matrix").SharedMatrix,
-			ConsensusQueue: loadPackage(modulePath, "@fluidframework/ordered-collection")
-				.ConsensusQueue,
-			ConsensusRegisterCollection: loadPackage(
-				modulePath,
-				"@fluidframework/register-collection",
-			).ConsensusRegisterCollection,
-			SharedString: loadPackage(modulePath, "@fluidframework/sequence").SharedString,
-			SparseMatrix: loadPackage(
-				modulePath,
-				versionHasMovedSparsedMatrix(version)
-					? "@fluid-experimental/sequence-deprecated"
-					: "@fluidframework/sequence",
-			).SparseMatrix,
-		},
-	};
+	const { version } = checkInstalled(requestedStr);
+	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
 export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
@@ -185,41 +323,14 @@ export function getDriverApi(baseVersion: string, requested?: number | string): 
 		return DriverApi;
 	}
 
-	const { version, modulePath } = checkInstalled(requestedStr);
-	const localDriverApi: typeof DriverApi.LocalDriverApi = {
-		version,
-		LocalDocumentServiceFactory: loadPackage(modulePath, "@fluidframework/local-driver")
-			.LocalDocumentServiceFactory,
-		LocalResolver: loadPackage(modulePath, "@fluidframework/local-driver").LocalResolver,
-		LocalDeltaConnectionServer: loadPackage(modulePath, "@fluidframework/server-local-server")
-			.LocalDeltaConnectionServer,
-		createLocalResolverCreateNewRequest: loadPackage(modulePath, "@fluidframework/local-driver")
-			.createLocalResolverCreateNewRequest,
-	};
+	const { version } = checkInstalled(requestedStr);
+	return driverCache.get(version) ?? throwNotFound("Driver", version);
+}
 
-	const odspDriverApi: typeof DriverApi.OdspDriverApi = {
-		version,
-		OdspDocumentServiceFactory: loadPackage(modulePath, "@fluidframework/odsp-driver")
-			.OdspDocumentServiceFactory,
-		OdspDriverUrlResolver: loadPackage(modulePath, "@fluidframework/odsp-driver")
-			.OdspDriverUrlResolver,
-		createOdspCreateContainerRequest: loadPackage(modulePath, "@fluidframework/odsp-driver")
-			.createOdspCreateContainerRequest,
-		createOdspUrl: loadPackage(modulePath, "@fluidframework/odsp-driver").createOdspUrl,
-	};
-
-	const routerliciousDriverApi: typeof DriverApi.RouterliciousDriverApi = {
-		version,
-		modulePath,
-		RouterliciousDocumentServiceFactory: loadPackage(
-			modulePath,
-			"@fluidframework/routerlicious-driver",
-		).RouterliciousDocumentServiceFactory,
-	};
-
-	return {
-		LocalDriverApi: localDriverApi,
-		OdspDriverApi: odspDriverApi,
-		RouterliciousDriverApi: routerliciousDriverApi,
-	};
+export interface CompatApis {
+	containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
+	dataRuntime: ReturnType<typeof getDataRuntimeApi>;
+	dds: ReturnType<typeof getDataRuntimeApi>["dds"];
+	driver: ReturnType<typeof getDriverApi>;
+	loader: ReturnType<typeof getLoaderApi>;
 }

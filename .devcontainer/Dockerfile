@@ -43,8 +43,13 @@ RUN rm -rf /tmp/library-scripts/
 
 # Install additional desired packages here
 RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
     && apt-get -y install --no-install-recommends \
         vim
+
+# Note: To minimize security risk, please do not install Azure CLI and Github CLI in Github Codespaces.
+#       Do feel free to manually install 'gh' and 'az' in local dev containers (see "features" section
+#       in devcontainer.json).
 
 # Clean up
 RUN apt-get autoremove -y \

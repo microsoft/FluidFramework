@@ -17,38 +17,18 @@
 // - bundle helper libraries as module (namespace) exports?
 
 export {
-	type ApiItemTransformationConfiguration,
-	type CreateChildContentSections,
-	defaultApiItemTransformations,
-	type TransformApiItemWithChildren,
-	type TransformApiItemWithoutChildren,
-	transformDocNode,
-} from "./api-item-transforms";
-
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain";
-
-export {
-	createDocumentWriter,
-	DocumentWriter,
-	getContextWithDefaults as getMarkdownRenderContextWithDefaults,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
-	renderDocument as renderDocumentAsMarkdown,
-	renderNode as renderNodeAsMarkdown,
-	renderNodes as renderNodesAsMarkdown,
-} from "./markdown-renderer";
-
-export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
-
-export {
 	type ApiFunctionLike,
+	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	type ApiMemberKind,
+	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
-	type ApiModifier,
+	type CreateChildContentSections,
+	type DefaultDocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
+	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
@@ -61,16 +41,34 @@ export {
 	getSeeBlocks,
 	getThrowsBlocks,
 	getUnscopedPackageName,
+	type HierarchyBoundaries,
 	isDeprecated,
 	isOptional,
 	isReadonly,
 	isStatic,
-} from "./utilities";
+	type TransformApiItemWithChildren,
+	type TransformApiItemWithoutChildren,
+	transformApiModel,
+	transformDocNode,
+} from "./api-item-transforms";
+
+// We want to make sure the entirety of this domain is accessible.
+// eslint-disable-next-line no-restricted-syntax
+export * from "./documentation-domain";
 
 export {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "./Configuration";
+	createDocumentWriter,
+	DocumentWriter,
+	type MarkdownRenderContext,
+	type MarkdownRenderers,
+	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
+	type MarkdownRenderConfiguration,
+	renderDocumentAsMarkdown,
+	renderNodeAsMarkdown,
+	renderNodesAsMarkdown,
+} from "./markdown-renderer";
+export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
+export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";
@@ -80,19 +78,6 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
-export {
-	DefaultPolicies,
-	defaultPolicyOptions,
-	type DocumentBoundaries,
-	type FileNamePolicy,
-	type FrontMatterPolicy,
-	type HeadingTitlePolicy,
-	type HierarchyBoundaries,
-	type LinkTextPolicy,
-	type PackageFilterPolicy,
-	type PolicyOptions,
-	type UriBaseOverridePolicy,
-} from "./Policies";
 
 // Conveinence re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

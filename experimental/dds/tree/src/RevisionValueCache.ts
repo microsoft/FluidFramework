@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
-import { assert, fail, compareFiniteNumbers } from './Common';
+import { fail, compareFiniteNumbers } from './Common';
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -68,7 +69,7 @@ export class RevisionValueCache<TValue> {
 		 */
 		retainedRevision?: [Revision, TValue]
 	) {
-		assert(retentionWindowStart >= 0, 'retentionWindowStart must be initialized >= 0');
+		assert(retentionWindowStart >= 0, 0x62c /* retentionWindowStart must be initialized >= 0 */);
 		this.evictableRevisions = new LRU({
 			max: evictableSize,
 			noDisposeOnSet: true,

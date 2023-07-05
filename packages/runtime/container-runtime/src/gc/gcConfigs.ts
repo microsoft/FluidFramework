@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/driver-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
+	currentGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
 	GCFeatureMatrix,
+	gcSweepGenerationOptionName,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
+	gcVersionUpgradeToV3Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -21,8 +24,9 @@ import {
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
+	stableGCVersion,
 } from "./gcDefinitions";
-import { getGCVersion } from "./gcHelpers";
+import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -42,7 +46,6 @@ export function generateGCConfigs(
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean;
-	let sweepEnabled: boolean;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let sweepTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
@@ -60,15 +63,16 @@ export function generateGCConfigs(
 		// Existing documents which did not have createParams.metadata blob or had GC disabled have version as 0. For all
 		// other existing documents, GC is enabled.
 		gcEnabled = gcVersionInBaseSnapshot > 0;
-		sweepEnabled = createParams.metadata?.sweepEnabled ?? false;
 		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
 		sweepTimeoutMs =
 			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
-		// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
-		// scenario but explicitly failing makes it clearer and promotes correct usage.
-		if (createParams.gcOptions.sweepAllowed && createParams.gcOptions.gcAllowed === false) {
+		const tombstoneGeneration = createParams.gcOptions[gcTombstoneGenerationOptionName];
+		const sweepGeneration = createParams.gcOptions[gcSweepGenerationOptionName];
+
+		// Sweep should not be enabled (via sweepGeneration value) without enabling GC mark phase.
+		if (sweepGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
 			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
 		}
 
@@ -80,8 +84,6 @@ export function generateGCConfigs(
 		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
 		// flag in GC options to false.
 		gcEnabled = createParams.gcOptions.gcAllowed !== false;
-		// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-		sweepEnabled = createParams.gcOptions.sweepAllowed === true;
 
 		// Set the Session Expiry if GC is enabled and session expiry flag isn't explicitly set to false.
 		if (gcEnabled && mc.config.getBoolean(runSessionExpiryKey) !== false) {
@@ -90,28 +92,40 @@ export function generateGCConfigs(
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (createParams.gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
+		if (tombstoneGeneration !== undefined || sweepGeneration !== undefined) {
 			persistedGcFeatureMatrix = {
-				tombstoneGeneration: createParams.gcOptions[gcTombstoneGenerationOptionName],
+				tombstoneGeneration,
+				sweepGeneration,
 			};
 		}
 	}
 
+	// Is sweepEnabled for this document?
+	const sweepEnabled = shouldAllowGcSweep(
+		persistedGcFeatureMatrix ?? {} /* persistedGenerations */,
+		createParams.gcOptions[gcSweepGenerationOptionName] /* currentGeneration */,
+	);
+
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	const gcVersionInEffect =
+		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
+
+	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
+	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
+	// should not run as it may produce incorrect / unreliable state.
+	const isGCVersionUpToDate =
+		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
+
 	/**
 	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 *
 	 * 1. GC should be enabled for this container.
-	 *
 	 * 2. GC should not be disabled via disableGC GC option.
-	 *
+	 * 3. The current GC version should be greater of equal to the GC version in the base snapshot.
 	 * These conditions can be overridden via runGCKey feature flag.
 	 */
 	const shouldRunGC =
 		mc.config.getBoolean(runGCKey) ??
-		// GC must be enabled for the document.
-		(gcEnabled &&
-			// GC must not be disabled via GC options.
-			!createParams.gcOptions.disableGC);
+		(gcEnabled && !createParams.gcOptions.disableGC && isGCVersionUpToDate);
 
 	/**
 	 * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -120,7 +134,7 @@ export function generateGCConfigs(
 	 * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
 	 * 3. The driver must implement the policy limiting the age of snapshots used for loading. Otherwise
 	 * the Sweep Timeout calculation is not valid. We use the persisted value to ensure consistency over time.
-	 * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
+	 * 4. Sweep should be enabled for this container. This can be overridden via runSweep
 	 * feature flag.
 	 */
 	const shouldRunSweep =
@@ -160,6 +174,7 @@ export function generateGCConfigs(
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
+		gcVersionInEffect,
 	};
 }
 

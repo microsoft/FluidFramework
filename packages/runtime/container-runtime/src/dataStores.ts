@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	IDisposable,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -32,8 +36,10 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
+	GCDataBuilder,
 	responseToException,
 	SummaryTreeBuilder,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
@@ -46,7 +52,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
 	ContainerRuntime,
@@ -115,7 +120,7 @@ export class DataStores implements IDisposable {
 	constructor(
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly runtime: ContainerRuntime,
-		private readonly submitAttachFn: (attachContent: any) => void,
+		private readonly submitAttachFn: (attachContent: IAttachMessage) => void,
 		private readonly getCreateChildSummarizerNodeFn: (
 			id: string,
 			createParam: CreateChildSummarizerNodeParam,
@@ -398,22 +403,19 @@ export class DataStores implements IDisposable {
 	}
 	public readonly dispose = () => this.disposeOnce.value;
 
-	public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
-		const envelope = content as IEnvelope;
+	public resubmitDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
 		context.reSubmit(envelope.contents, localOpMetadata);
 	}
 
-	public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
-		const envelope = content as IEnvelope;
+	public rollbackDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
 		context.rollback(envelope.contents, localOpMetadata);
 	}
 
-	public async applyStashedOp(content: any): Promise<unknown> {
-		const envelope = content as IEnvelope;
+	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
 		return context.applyStashedOp(envelope.contents);

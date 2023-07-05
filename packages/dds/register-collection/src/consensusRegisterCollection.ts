@@ -227,7 +227,7 @@ export class ConsensusRegisterCollection<T>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op: IIncomingRegisterOperation<T> = message.contents;
+			const op = message.contents as IIncomingRegisterOperation<T>;
 			switch (op.type) {
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq

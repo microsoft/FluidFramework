@@ -13,12 +13,12 @@ import {
 	ISequencedClient,
 } from "@fluidframework/protocol-definitions";
 import {
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IDeltaManager,
 	IDeltaManagerEvents,
 } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { ConnectionState } from "../connectionState";
 import {
 	IConnectionStateHandlerInputs,
@@ -47,16 +47,18 @@ describe("ConnectionStateHandler Tests", () => {
 	let connectionStateHandler: IConnectionStateHandler;
 	let protocolHandler: ProtocolHandler;
 	let shouldClientJoinWrite: boolean;
-	let connectionDetails: IConnectionDetails;
-	let connectionDetails2: IConnectionDetails;
-	let connectionDetails3: IConnectionDetails;
+	let connectionDetails: IConnectionDetailsInternal;
+	let connectionDetails2: IConnectionDetailsInternal;
+	let connectionDetails3: IConnectionDetailsInternal;
 	const expectedTimeout = 90000;
 	const pendingClientId = "pendingClientId";
 	const pendingClientId2 = "pendingClientId2";
 	const pendingClientId3 = "pendingClientId3";
 	let deltaManagerForCatchingUp: MockDeltaManagerForCatchingUp;
 	let connectionStateHandler_receivedAddMemberEvent: (id: string) => void;
-	let connectionStateHandler_receivedJoinSignalEvent: (details: IConnectionDetails) => void;
+	let connectionStateHandler_receivedJoinSignalEvent: (
+		details: IConnectionDetailsInternal,
+	) => void;
 	let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
@@ -100,37 +102,37 @@ describe("ConnectionStateHandler Tests", () => {
 			clientId: pendingClientId,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			claims: {} as ITokenClaims,
-			existing: true,
 			mode: "read",
 			version: "0.1",
 			initialClients: [],
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 		connectionDetails2 = {
 			clientId: pendingClientId2,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			claims: {} as ITokenClaims,
-			existing: true,
 			mode: "write",
 			version: "0.1",
 			initialClients: [],
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 		connectionDetails3 = {
 			clientId: pendingClientId3,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			claims: {} as ITokenClaims,
-			existing: true,
 			mode: "write",
 			version: "0.1",
 			initialClients: [],
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
+			reason: "test",
 		};
 
 		protocolHandler = new ProtocolHandler(
@@ -152,6 +154,7 @@ describe("ConnectionStateHandler Tests", () => {
 			},
 			connectionStateChanged: () => {},
 			logger: new TelemetryNullLogger(),
+			clientShouldHaveLeft: (clientId: string) => {},
 		};
 
 		deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
@@ -167,7 +170,7 @@ describe("ConnectionStateHandler Tests", () => {
 		connectionStateHandler_receivedRemoveMemberEvent = (id: string) => {
 			protocolHandler.quorum.removeMember(id);
 		};
-		connectionStateHandler_receivedJoinSignalEvent = (details: IConnectionDetails) => {
+		connectionStateHandler_receivedJoinSignalEvent = (details: IConnectionDetailsInternal) => {
 			protocolHandler.audience.addMember(details.clientId, {
 				mode: details.mode,
 			} as any as IClient);
@@ -205,6 +208,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -231,6 +235,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -264,6 +269,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -318,6 +324,7 @@ describe("ConnectionStateHandler Tests", () => {
 			true,
 		); // readClientsWaitForJoinSignal
 
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -384,6 +391,8 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,

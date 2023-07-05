@@ -34,10 +34,12 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
     - lts
-    - release/*
+    - release/azure/*
+    - release/v2int/1*
+    - release/v2int/2*
+    - release/v2int/3*
+    - release/v2int/4.0
   paths:
     include:
     - azure
@@ -45,6 +47,7 @@ trigger:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -61,10 +64,12 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
     - lts
-    - release/*
+    - release/azure/*
+    - release/v2int/1*
+    - release/v2int/2*
+    - release/v2int/3*
+    - release/v2int/4.0
   paths:
     include:
     - azure
@@ -72,6 +77,7 @@ pr:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml

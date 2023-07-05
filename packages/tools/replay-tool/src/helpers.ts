@@ -8,13 +8,9 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IDocumentServiceFactory,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -111,7 +107,7 @@ export async function loadContainer(
 	logger?: TelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
-	const resolved: IFluidResolvedUrl = {
+	const resolved: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: "example.com",
 			ordererUrl: "example.com",
@@ -166,6 +162,15 @@ export async function loadContainer(
 		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
 	);
 
+	// Add a config provider to the Loader to enable / disable features.
+	const settings: Record<string, ConfigTypes> = {};
+	const configProvider: IConfigProviderBase = {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+	// Enable GCVersionUpgradeToV3 feature. This is for the snapshot tests which are already using GC version 3
+	// but the default version was changed to 2. Once the default is 3, this will be removed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV3"] = true;
+
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,
@@ -175,6 +180,7 @@ export async function loadContainer(
 			? { ...loaderOptions, summarizeProtocolTree: true }
 			: { summarizeProtocolTree: true },
 		logger,
+		configProvider,
 	});
 
 	return loader.resolve({ url: resolved.url });

@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-	IDisposable,
-	IEvent,
-	IEventProvider,
 	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
-import {
+	IDisposable,
 	IFluidHandleContext,
 	IFluidRouter,
 	IFluidHandle,
@@ -27,6 +24,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
+	IIdCompressor,
 	IInboundSignalMessage,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
@@ -69,6 +67,8 @@ export interface IFluidDataStoreRuntime
 	 * Indicates the attachment state of the data store to a host service.
 	 */
 	readonly attachState: AttachState;
+
+	readonly idCompressor?: IIdCompressor;
 
 	/**
 	 * Returns the channel with the given id

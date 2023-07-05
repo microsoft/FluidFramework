@@ -289,7 +289,7 @@ function convertFullSummaryToWholeSummaryEntries(
 		});
 	});
 
-	// Inspired by `buildHeirarchy` from services-client
+	// Inspired by `buildSummaryTreeHeirarchy` from services-client
 	const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree } } =
 		{};
 	const rootPath = ""; // This would normally be parentHandle, but only important when there are handles
@@ -668,10 +668,48 @@ export class GitWholeSummaryManager {
 			}
 		}
 
-		const inMemorySummaryFullGitTree = await this.writeSummaryTreeCore(
-			wholeSummaryTreeEntries,
-			inMemoryRepoManager,
-		);
+		const writeSummaryIntoMemory = async () =>
+			this.writeSummaryTreeCore(wholeSummaryTreeEntries, inMemoryRepoManager);
+		const inMemorySummaryFullGitTree = await writeSummaryIntoMemory().catch(async (error) => {
+			if (
+				error?.caller === "git.walk" &&
+				error.code === "NotFoundError" &&
+				typeof error.data?.what === "string"
+			) {
+				// This is caused by the previous channel summary tree being missing.
+				// Fetch the missing tree, write it into the in-memory storage, then retry.
+				const missingTreeSha = error.data.what;
+				const missingTree = await this.repoManager.getTree(
+					missingTreeSha,
+					true /* recursive */,
+				);
+				const fullTree = await buildFullGitTreeFromGitTree(
+					missingTree,
+					this.repoManager,
+					{} /* blobCache */,
+					false /* parseInnerFullGitTrees */,
+					true /* retrieveBlobs */,
+				);
+				const writtenTreeHandle = await this.writeFullGitTreeAsSummaryTree(
+					fullTree,
+					inMemoryRepoManager,
+				);
+				if (writtenTreeHandle !== missingTreeSha) {
+					Lumberjack.error(
+						`Attempted to recover from missing git object (${missingTreeSha}), but recovered data sha (${writtenTreeHandle}) did not match.`,
+						this.lumberjackProperties,
+					);
+					throw new NetworkError(
+						500,
+						"Failed to compute new container summary.",
+						false /* canRetry */,
+					);
+				}
+				return writeSummaryIntoMemory();
+			} else {
+				throw error;
+			}
+		});
 		return inMemorySummaryFullGitTree;
 	}
 

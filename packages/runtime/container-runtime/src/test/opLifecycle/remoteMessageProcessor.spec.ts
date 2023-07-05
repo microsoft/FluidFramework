@@ -8,6 +8,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import {
 	IMessageProcessingResult,
 	OpDecompressor,
+	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "../../opLifecycle";
@@ -48,7 +49,11 @@ describe("RemoteMessageProcessor", () => {
 		mockSpliter: Partial<OpSplitter> = getMockSplitter(),
 		mockDecompressor: Partial<OpDecompressor> = getMockDecompressor(),
 	): RemoteMessageProcessor =>
-		new RemoteMessageProcessor(mockSpliter as OpSplitter, mockDecompressor as OpDecompressor);
+		new RemoteMessageProcessor(
+			mockSpliter as OpSplitter,
+			mockDecompressor as OpDecompressor,
+			new OpGroupingManager(false),
+		);
 
 	it("Always processing a shallow copy of the message", () => {
 		const messageProcessor = getMessageProcessor();
@@ -63,7 +68,10 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const result = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage);
+
+		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		const result = processResult[0];
 
 		delete documentMessage.metadata;
 		assert.ok(result.metadata);
@@ -86,7 +94,10 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const result = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage);
+
+		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		const result = processResult[0];
 
 		assert.deepStrictEqual(result.metadata.history, ["decompress", "reconstruct"]);
 		assert.deepStrictEqual(result.contents, message.contents.contents);
@@ -129,7 +140,10 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const result = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage);
+
+		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		const result = processResult[0];
 
 		assert.deepStrictEqual(result.metadata.history, [
 			"decompress",
@@ -152,7 +166,11 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const result = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage);
+
+		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		const result = processResult[0];
+
 		assert.deepStrictEqual(result.contents, contents.contents);
 		assert.deepStrictEqual(result.type, contents.type);
 	});
@@ -166,7 +184,11 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const result = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage);
+
+		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
+		const result = processResult[0];
+
 		assert.deepStrictEqual(result.contents, message.contents);
 		assert.deepStrictEqual(result.type, message.type);
 	});

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import sortPackageJson from "sort-package-json";
-
-import { PackageJson } from "@fluidframework/build-tools";
-import { readJsonSync, writeJsonSync } from "fs-extra";
-import path from "node:path";
+import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 
 import { PackageCommand } from "../BasePackageCommand";
 
@@ -78,7 +74,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		},
 	];
 
-	protected async processPackage(directory: string): Promise<void> {
+	protected async processPackage(pkg: Package): Promise<void> {
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
@@ -86,7 +82,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				: this.flags.previous
 				? VersionOptions.Previous
 				: VersionOptions.ClearIfDisabled);
-		updatePackageJsonFile(directory, (json) => {
+		updatePackageJsonFile(pkg.directory, (json) => {
 			if (this.flags.disable) {
 				json.typeValidation ??= { broken: {} };
 				json.typeValidation.disabled = true;
@@ -182,17 +178,4 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 	if (options.resetBroken === true && pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
-}
-
-/**
- * Update package.json
- */
-function updatePackageJsonFile(
-	packageDir: string,
-	packageTransformer: (json: PackageJson) => void,
-): void {
-	const packagePath = path.join(packageDir, "package.json");
-	const pkgJson: PackageJson = readJsonSync(packagePath);
-	packageTransformer(pkgJson);
-	writeJsonSync(path.join(packagePath), sortPackageJson(pkgJson), { spaces: "\t" });
 }

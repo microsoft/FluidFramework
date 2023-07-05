@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended } from "./bumpTypes";
+import { detectVersionScheme } from "./schemes";
 
 /**
  * The lowest/default public version of valid Fluid internal versions. The public version of Fluid internal versions
@@ -382,4 +383,49 @@ export function changePreReleaseIdentifier(
 	}
 
 	return newVer;
+}
+
+/**
+ * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
+ * versions.
+ *
+ * @param range - The range to check.
+ * @returns The constraint type.
+ *
+ * @throws an Error if `range` is not a parseable semver.Range or if it's not a Fluid internal version scheme.
+ *
+ * @remarks
+ *
+ * This function is only needed for the \>= \< version ranges that Fluid internal versions require. It supports ranges
+ * that start with ~ and ^ for convenience, but standard Fluid internal version ranges always use the \>= \< version
+ * ranges.
+ *
+ * @internal
+ */
+export function detectInternalVersionConstraintType(range: string): "minor" | "patch" {
+	if (semver.validRange(range) === null) {
+		throw new Error(`Invalid range: ${range}`);
+	}
+
+	const minVer = semver.minVersion(range);
+	if (minVer === null) {
+		throw new Error(`Couldn't determine minVersion from ${range}.`);
+	}
+
+	const scheme = detectVersionScheme(minVer);
+	if (scheme !== "internal" && scheme !== "internalPrerelease") {
+		throw new Error(`Range ${range} is not a Fluid internal version range.`);
+	}
+
+	if (range.startsWith("~")) {
+		return "patch";
+	} else if (range.startsWith("^")) {
+		return "minor";
+	}
+
+	const patch = bumpInternalVersion(minVer, "patch");
+	const minor = bumpInternalVersion(minVer, "minor");
+
+	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
+	return maxSatisfying === patch ? "patch" : "minor";
 }

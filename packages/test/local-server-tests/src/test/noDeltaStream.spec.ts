@@ -24,10 +24,10 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Container } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";
@@ -113,9 +113,13 @@ describe("No Delta Stream", () => {
 
 	it("Validate Properties on Loaded Container With No Delta Stream", async () => {
 		// Load the Container that was created by the first client.
-		const container = (await loadContainer(true)) as Container;
+		const container = await loadContainer(true);
 
-		assert.strictEqual(container.connected, true, "container.connected");
+		assert.strictEqual(
+			container.connectionState,
+			ConnectionState.Connected,
+			"container.connected",
+		);
 		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,
@@ -143,9 +147,9 @@ describe("No Delta Stream", () => {
 	});
 
 	it("doesn't affect normal containers", async () => {
-		(await loadContainer(true)) as Container;
-		const normalContainer1 = (await loadContainer(false)) as Container;
-		const normalContainer2 = (await loadContainer(false)) as Container;
+		await loadContainer(true);
+		const normalContainer1 = await loadContainer(false);
+		const normalContainer2 = await loadContainer(false);
 		const normalDataObject1 = await requestFluidObject<ITestFluidObject>(
 			normalContainer1,
 			"default",
@@ -183,11 +187,13 @@ describe("No Delta Stream", () => {
 				return docService;
 			});
 		};
-		const container = (await loadContainerWithDocServiceFactory(
-			documentServiceFactory,
-		)) as Container;
+		const container = await loadContainerWithDocServiceFactory(documentServiceFactory);
 
-		assert.strictEqual(container.connected, true, "container.connected");
+		assert.strictEqual(
+			container.connectionState,
+			ConnectionState.Connected,
+			"container.connected",
+		);
 		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,

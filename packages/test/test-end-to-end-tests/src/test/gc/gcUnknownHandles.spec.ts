@@ -9,15 +9,15 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to

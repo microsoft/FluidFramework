@@ -37,20 +37,39 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * The flags defined on the base class.
 	 */
 	static baseFlags = {
-		root: rootPathFlag(),
+		root: rootPathFlag({
+			helpGroup: "GLOBAL",
+		}),
 		verbose: Flags.boolean({
 			char: "v",
-			description: "Verbose logging.",
+			description: "Enable verbose logging.",
+			helpGroup: "LOGGING",
+			exclusive: ["quiet"],
 			required: false,
+			default: false,
+		}),
+		quiet: Flags.boolean({
+			description: "Disable all logging.",
+			helpGroup: "LOGGING",
+			exclusive: ["verbose"],
+			required: false,
+			default: false,
 		}),
 		timer: Flags.boolean({
 			default: false,
 			hidden: true,
+			helpGroup: "GLOBAL",
 		}),
 	};
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
+
+	/**
+	 * If true, all logs except those sent using the .log function will be suppressed.
+	 */
+	private suppressLogging: boolean = false;
+
 	private _context: Context | undefined;
 	private _logger: CommandLogger | undefined;
 
@@ -65,6 +84,8 @@ export abstract class BaseCommand<T extends typeof Command>
 		});
 		this.flags = flags as Flags<T>;
 		this.args = args as Args<T>;
+
+		this.suppressLogging = this.flags.quiet;
 	}
 
 	protected async catch(err: Error & { exitCode?: number }): Promise<any> {
@@ -106,7 +127,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
-			const resolvedRoot = await getResolvedFluidRoot();
+			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot(this.logger));
 			const gitRepo = new GitRepo(resolvedRoot, this.logger);
 			const branch = await gitRepo.getCurrentBranchName();
 
@@ -123,7 +144,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * Outputs a horizontal rule.
 	 */
 	public logHr() {
-		this.log("=".repeat(72));
+		this.log("=".repeat(Math.max(10, process.stdout.columns)));
 	}
 
 	/**
@@ -138,35 +159,41 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * Logs an informational message.
 	 */
 	public info(message: string | Error | undefined) {
-		this.log(`INFO: ${message}`);
+		if (!this.suppressLogging) {
+			this.log(`INFO: ${message}`);
+		}
 	}
 
 	/**
 	 * Logs an error without exiting.
 	 */
 	public errorLog(message: string | Error | undefined) {
-		this.log(chalk.red(`ERROR: ${message}`));
+		if (!this.suppressLogging) {
+			this.log(chalk.red(`ERROR: ${message}`));
+		}
 	}
 
 	/**
 	 * Logs a warning.
 	 */
 	public warning(message: string | Error | undefined): void {
-		this.log(chalk.yellow(`WARNING: ${message}`));
+		if (!this.suppressLogging) {
+			this.log(chalk.yellow(`WARNING: ${message}`));
+		}
 	}
 
 	/**
 	 * Logs a warning with a stack trace in debug mode.
 	 */
 	public warningWithDebugTrace(message: string | Error): string | Error {
-		return super.warn(message);
+		return this.suppressLogging ? "" : super.warn(message);
 	}
 
 	/**
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
 	public warn(input: string | Error): string | Error {
-		return super.warn(input);
+		return this.suppressLogging ? "" : super.warn(input);
 	}
 
 	/**
@@ -215,11 +242,13 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * This method overrides the oclif Command error method so we can do some formatting on the strings.
 	 */
 	public error(input: unknown, options?: unknown): void {
-		if (typeof input === "string") {
-			return super.error(chalk.red(input), options as any);
-		}
+		if (!this.suppressLogging) {
+			if (typeof input === "string") {
+				super.error(chalk.red(input), options as any);
+			}
 
-		return super.error(input as Error, options as any);
+			return super.error(input as Error, options as any);
+		}
 	}
 
 	/**
@@ -227,11 +256,8 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	public verbose(message: string | Error | undefined): void {
 		if (this.flags.verbose === true) {
-			if (typeof message === "string") {
-				this.log(chalk.grey(`VERBOSE: ${message}`));
-			} else {
-				this.log(chalk.red(`VERBOSE: ${message}`));
-			}
+			const color = typeof message === "string" ? chalk.grey : chalk.red;
+			this.log(color(`VERBOSE: ${message}`));
 		}
 	}
 }

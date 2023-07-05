@@ -14,8 +14,7 @@ One may be added in the future, but for now this library is intended to be consu
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Installation
 
@@ -74,7 +73,7 @@ This package contains 2 primary, programmatic entry-points for generating docume
 #### transformApiModel
 
 The `transformApiModel` function accepts an [ApiModel][] representing the package(s) of a repository, and generates a sequence of "Document" [Abstract Syntax Tree][] objects representing the resulting documentation based on the other provided configuration options.
-These objects include information about the page item, its documentation contents, and the intended output file path the document file should be rendered to, based on provided policy options.
+These objects include information about the page item, its documentation contents, and the intended output file path the document file should be rendered to, based on provided options.
 
 -   These trees are backed by [unist][]'s AST model.
 
@@ -156,7 +155,7 @@ This domain was crafted to support [TSDoc][]'s capabilities, and to represent so
 
 As this domain is implemented as an `AST`, it is highly customizable.
 If you are interested in creating your own intermediate domain concepts, feel free to implement them.
-So long as you provide a corresponding [renderer policy](#markdown-renderer), the system will gladly accept them!
+So long as you provide a corresponding [rendering handler](#markdown-renderer), the system will gladly accept them!
 
 ### Markdown Renderer
 
@@ -169,7 +168,7 @@ The final component of this library's transformation pipeline is its `Markdown` 
 As with the other logic in this library, the renderer is highly configurable.
 It will accept any `Documentation Domain` tree as input, and transform each node according to its configured render policies.
 
-If you would like to add rendering support for a custom `Documentation Domain` node type, simply provide a renderer policy associated with that node's `type` value.
+If you would like to add rendering support for a custom `Documentation Domain` node type, simply provide a rendering handler associated with that node's `type` value.
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
 
@@ -212,8 +211,7 @@ If you would like to change any or all of this library's default rendering polic
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
@@ -240,15 +238,16 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
 Thank you!
 
 <!-- prettier-ignore-end -->
@@ -258,13 +257,15 @@ Thank you!
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->

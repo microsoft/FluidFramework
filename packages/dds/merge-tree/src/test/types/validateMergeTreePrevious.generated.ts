@@ -280,6 +280,30 @@ use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSpec": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAttributionCollectionSpec():
+    TypeOnly<old.IAttributionCollectionSpec<any>>;
+declare function use_current_InterfaceDeclaration_IAttributionCollectionSpec(
+    use: TypeOnly<current.IAttributionCollectionSpec<any>>);
+use_current_InterfaceDeclaration_IAttributionCollectionSpec(
+    get_old_InterfaceDeclaration_IAttributionCollectionSpec());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSpec": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAttributionCollectionSpec():
+    TypeOnly<current.IAttributionCollectionSpec<any>>;
+declare function use_old_InterfaceDeclaration_IAttributionCollectionSpec(
+    use: TypeOnly<old.IAttributionCollectionSpec<any>>);
+use_old_InterfaceDeclaration_IAttributionCollectionSpec(
+    get_current_InterfaceDeclaration_IAttributionCollectionSpec());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICombiningOp():
@@ -1116,6 +1140,30 @@ declare function use_old_InterfaceDeclaration_ISegmentChanges(
     use: TypeOnly<old.ISegmentChanges>);
 use_old_InterfaceDeclaration_ISegmentChanges(
     get_current_InterfaceDeclaration_ISegmentChanges());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITrackingGroup": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITrackingGroup():
+    TypeOnly<old.ITrackingGroup>;
+declare function use_current_InterfaceDeclaration_ITrackingGroup(
+    use: TypeOnly<current.ITrackingGroup>);
+use_current_InterfaceDeclaration_ITrackingGroup(
+    get_old_InterfaceDeclaration_ITrackingGroup());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITrackingGroup": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITrackingGroup():
+    TypeOnly<current.ITrackingGroup>;
+declare function use_old_InterfaceDeclaration_ITrackingGroup(
+    use: TypeOnly<old.ITrackingGroup>);
+use_old_InterfaceDeclaration_ITrackingGroup(
+    get_current_InterfaceDeclaration_ITrackingGroup());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2248,6 +2296,30 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOffsets": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SequenceOffsets():
+    TypeOnly<old.SequenceOffsets>;
+declare function use_current_InterfaceDeclaration_SequenceOffsets(
+    use: TypeOnly<current.SequenceOffsets>);
+use_current_InterfaceDeclaration_SequenceOffsets(
+    get_old_InterfaceDeclaration_SequenceOffsets());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOffsets": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SequenceOffsets():
+    TypeOnly<current.SequenceOffsets>;
+declare function use_old_InterfaceDeclaration_SequenceOffsets(
+    use: TypeOnly<old.SequenceOffsets>);
+use_old_InterfaceDeclaration_SequenceOffsets(
+    get_current_InterfaceDeclaration_SequenceOffsets());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_SerializedAttributionCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SerializedAttributionCollection():
@@ -2268,6 +2340,54 @@ declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
     use: TypeOnly<old.SerializedAttributionCollection>);
 use_old_InterfaceDeclaration_SerializedAttributionCollection(
     get_current_InterfaceDeclaration_SerializedAttributionCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_SlidingPreference": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_SlidingPreference():
+    TypeOnly<typeof old.SlidingPreference>;
+declare function use_current_VariableDeclaration_SlidingPreference(
+    use: TypeOnly<typeof current.SlidingPreference>);
+use_current_VariableDeclaration_SlidingPreference(
+    get_old_VariableDeclaration_SlidingPreference());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_SlidingPreference": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_SlidingPreference():
+    TypeOnly<typeof current.SlidingPreference>;
+declare function use_old_VariableDeclaration_SlidingPreference(
+    use: TypeOnly<typeof old.SlidingPreference>);
+use_old_VariableDeclaration_SlidingPreference(
+    get_current_VariableDeclaration_SlidingPreference());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SlidingPreference": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SlidingPreference():
+    TypeOnly<old.SlidingPreference>;
+declare function use_current_TypeAliasDeclaration_SlidingPreference(
+    use: TypeOnly<current.SlidingPreference>);
+use_current_TypeAliasDeclaration_SlidingPreference(
+    get_old_TypeAliasDeclaration_SlidingPreference());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SlidingPreference": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SlidingPreference():
+    TypeOnly<current.SlidingPreference>;
+declare function use_old_TypeAliasDeclaration_SlidingPreference(
+    use: TypeOnly<old.SlidingPreference>);
+use_old_TypeAliasDeclaration_SlidingPreference(
+    get_current_TypeAliasDeclaration_SlidingPreference());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -3060,6 +3180,30 @@ declare function use_old_FunctionDeclaration_internedSpaces(
     use: TypeOnly<typeof old.internedSpaces>);
 use_old_FunctionDeclaration_internedSpaces(
     get_current_FunctionDeclaration_internedSpaces());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isMergeTreeDeltaRevertible": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isMergeTreeDeltaRevertible():
+    TypeOnly<typeof old.isMergeTreeDeltaRevertible>;
+declare function use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof current.isMergeTreeDeltaRevertible>);
+use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    get_old_FunctionDeclaration_isMergeTreeDeltaRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isMergeTreeDeltaRevertible": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isMergeTreeDeltaRevertible():
+    TypeOnly<typeof current.isMergeTreeDeltaRevertible>;
+declare function use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof old.isMergeTreeDeltaRevertible>);
+use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
+    get_current_FunctionDeclaration_isMergeTreeDeltaRevertible());
 
 /*
 * Validate forward compat by using old type in place of current type

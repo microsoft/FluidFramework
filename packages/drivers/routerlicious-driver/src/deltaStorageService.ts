@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { getW3CData, validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
 	IDocumentDeltaStorageService,
@@ -10,13 +12,21 @@ import {
 	IStream,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { RestWrapper } from "@fluidframework/server-services-client";
+import {
+	readAndParse,
+	requestOps,
+	emptyMessageStream,
+	streamObserver,
+} from "@fluidframework/driver-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
+import { RestWrapper } from "./restWrapperBase";
 
-const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
+const MaxBatchDeltas = 5000; // Maximum number of ops we can fetch at a time
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -27,14 +37,15 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly id: string,
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+	private snapshotOps: ISequencedDocumentMessage[] | undefined;
 
 	fetchMessages(
-		from: number,
-		to: number | undefined,
+		fromTotal: number,
+		toTotal: number | undefined,
 		abortSignal?: AbortSignal,
 		cachedOnly?: boolean,
 		fetchReason?: string,
@@ -42,48 +53,68 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		if (cachedOnly) {
 			return emptyMessageStream;
 		}
-		return requestOps(
-			this.getCore.bind(this),
+
+		let opsFromSnapshot = 0;
+		let opsFromStorage = 0;
+		const requestCallback = async (
+			from: number,
+			to: number,
+			telemetryProps: ITelemetryProperties,
+		) => {
+			this.snapshotOps = this.logtailSha
+				? await readAndParse<ISequencedDocumentMessage[]>(
+						this.documentStorageService,
+						this.logtailSha,
+				  )
+				: [];
+			this.logtailSha = undefined;
+
+			if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
+				const messages = this.snapshotOps.filter(
+					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
+				);
+				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
+				if (messages.length > 0 && messages[0].sequenceNumber === from) {
+					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
+					opsFromSnapshot += messages.length;
+					return { messages, partialResult: true };
+				}
+				this.snapshotOps = undefined;
+			}
+
+			const ops = await this.deltaStorageService.get(this.tenantId, this.id, from, to);
+			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
+			opsFromStorage += ops.messages.length;
+			return ops;
+		};
+
+		const stream = requestOps(
+			async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+				const result = await requestCallback(from, to, telemetryProps);
+				// Catch all case, just in case
+				validateMessages("catch all", result.messages, from, this.logger);
+				return result;
+			},
 			// Staging: starting with no concurrency, listening for feedback first.
 			// In future releases we will switch to actual concurrency
 			1, // concurrency
-			from, // inclusive
-			to, // exclusive
+			fromTotal, // inclusive
+			toTotal, // exclusive
 			MaxBatchDeltas,
 			new TelemetryNullLogger(),
 			abortSignal,
 			fetchReason,
 		);
-	}
 
-	private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
-		const opsFromLogTail = this.logtailSha
-			? await readAndParse<ISequencedDocumentMessage[]>(
-					this.documentStorageService,
-					this.logtailSha,
-			  )
-			: [];
-
-		this.logtailSha = undefined;
-		if (opsFromLogTail.length > 0) {
-			try {
-				const messages = opsFromLogTail.filter((op, i) => {
-					// throw if the sequence numbers in logtail are not contiguous
-					if (i > 0 && op.sequenceNumber !== opsFromLogTail[i - 1].sequenceNumber + 1) {
-						throw new Error("Log tail ops are not contiguous");
-					}
-					return op.sequenceNumber >= from;
+		return streamObserver(stream, (result) => {
+			if (result.done && opsFromSnapshot + opsFromStorage !== 0) {
+				this.logger.sendPerformanceEvent({
+					eventName: "CacheOpsRetrieved",
+					opsFromSnapshot,
+					opsFromStorage,
 				});
-
-				if (messages.length > 0 && messages[0].sequenceNumber === from) {
-					return { messages, partialResult: true };
-				}
-			} catch (error) {
-				this.logger.sendErrorEvent({ eventName: "LogTailReadError" }, error);
 			}
-		}
-
-		return this.deltaStorageService.get(this.tenantId, this.id, from, to);
+		});
 	}
 }
 
@@ -94,7 +125,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 	constructor(
 		private readonly url: string,
 		private readonly restWrapper: RestWrapper,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
 		private readonly getDeltaStorageUrl: () => string = () => this.url,
 	) {}
@@ -120,9 +151,16 @@ export class DeltaStorageService implements IDeltaStorageService {
 					to,
 				});
 				event.end({
-					count: response.length,
+					length: response.content.length,
+					details: JSON.stringify({
+						firstOpSeqNumber: response.content[0]?.sequenceNumber,
+						lastOpSeqNumber:
+							response.content[response.content.length - 1]?.sequenceNumber,
+					}),
+					...response.propsToLog,
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
 				});
-				return response;
+				return response.content;
 			},
 		);
 

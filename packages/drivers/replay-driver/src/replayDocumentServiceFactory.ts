@@ -9,7 +9,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
@@ -27,17 +27,10 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 		);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public readonly protocolName;
-
 	public constructor(
 		private readonly documentServiceFactory: IDocumentServiceFactory,
 		private readonly controller: ReplayController,
-	) {
-		this.protocolName = documentServiceFactory.protocolName;
-	}
+	) {}
 
 	/**
 	 * Creates a replay document service which uses the document service of provided

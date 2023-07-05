@@ -19,7 +19,7 @@ module.exports = function handler(fileData, logger) {
 			benchmarkName: testData.benchmarkName,
 			arithmeticMean: testData.stats.arithmeticMean,
 			marginOfError: testData.stats.marginOfError,
-			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",			
+			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	});
 };

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	DriverErrorType,
@@ -27,12 +27,6 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public get protocolName() {
-		return this.internal.protocolName;
-	}
 	public get documentServices() {
 		return this._documentServices;
 	}
@@ -156,7 +150,6 @@ export class FaultInjectionDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	private _disposed: boolean = false;
 	constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
 		super();
 		this.on("newListener", (event) => this.forwardEvent(event));
@@ -179,7 +172,7 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public get disposed() {
-		return this._disposed;
+		return this.internal.disposed;
 	}
 
 	public get clientId() {
@@ -243,13 +236,15 @@ export class FaultInjectionDocumentDeltaConnection
 	 * Disconnects the given delta connection
 	 */
 	public dispose(): void {
-		this._disposed = true;
 		this.events.forEach((listener, event) => this.internal.off(event, listener));
 		this.internal.dispose();
 	}
 
 	public injectNack(docId: string, canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject nack into closed delta connection");
+		// Cannot inject nack into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		const nack: Partial<INack> = {
 			content: {
 				code: canRetry === true ? 500 : 403,
@@ -261,7 +256,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectError(canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject error into closed delta connection");
+		// Cannot inject error into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		// https://nodejs.org/api/events.html#events_error_events
 		assert(
 			this.listenerCount("error") > 0,
@@ -271,7 +269,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectDisconnect() {
-		assert(!this.disposed, "cannot inject disconnect into closed delta connection");
+		// Cannot inject disconnect into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		this.emit("disconnect", "FaultInjectionDisconnect");
 	}
 

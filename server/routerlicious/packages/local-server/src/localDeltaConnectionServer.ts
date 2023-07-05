@@ -12,11 +12,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
-import { generateToken } from "@fluidframework/server-services-client";
 import {
 	DefaultMetricClient,
-	EmptyTaskMessageSender,
 	IDatabaseManager,
+	IDocumentRepository,
 	IDocumentStorage,
 	ILogger,
 	IServiceConfiguration,
@@ -66,6 +65,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 	public static create(
 		testDbFactory: ITestDbFactory = new TestDbFactory({}),
 		serviceConfiguration?: Partial<IServiceConfiguration>,
+		documentRepository?: IDocumentRepository,
 	): ILocalDeltaConnectionServer {
 		if (!Lumberjack.isSetupCompleted()) {
 			Lumberjack.setup([new TestEngine1()]);
@@ -73,6 +73,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
 		const nodesCollectionName = "nodes";
 		const documentsCollectionName = "documents";
+		const checkpointsCollectionName = "checkpoints";
 		const deltasCollectionName = "deltas";
 		const scribeDeltasCollectionName = "scribeDeltas";
 
@@ -91,6 +92,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			mongoManager,
 			nodesCollectionName,
 			documentsCollectionName,
+			checkpointsCollectionName,
 			deltasCollectionName,
 			scribeDeltasCollectionName,
 		);
@@ -102,14 +104,11 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 		const ordererManager = new LocalOrdererManager(
 			testStorage,
 			databaseManager,
-			testTenantManager,
-			new EmptyTaskMessageSender(),
-			{},
-			generateToken,
 			async () => new TestHistorian(testDbFactory.testDatabase),
 			logger,
 			serviceConfiguration,
 			pubsub,
+			documentRepository,
 		);
 
 		configureWebSocketServices(

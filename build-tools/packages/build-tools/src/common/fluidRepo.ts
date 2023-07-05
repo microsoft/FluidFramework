@@ -4,34 +4,35 @@
  */
 import * as path from "path";
 
-import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+	ReleaseVersion,
+	VersionBumpType,
+} from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
-import { Package, Packages, ScriptDependencies } from "./npmPackage";
+import { MonoRepo } from "./monoRepo";
+import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
+import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 
 /**
  * Fluid build configuration that is expected in the repo-root package.json.
  */
 export interface IFluidBuildConfig {
 	/**
+	 * Build tasks and dependencies definitions
+	 */
+	tasks?: TaskDefinitionsOnDisk;
+
+	/**
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
-	 * configured in the rrepo-wide Fluid build config (the repo-root package.json).
+	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
 	repoPackages: {
 		[name: string]: IFluidRepoPackageEntry;
-	};
-
-	/**
-	 * dependencies defined here will be incorporated into fluid-build's build graph. This can be used to manually
-	 * fluid-build about dependencies it doesn't automatically detect.
-	 */
-	buildDependencies?: {
-		merge?: {
-			[key: string]: ScriptDependencies;
-		};
 	};
 
 	/**
@@ -133,9 +134,28 @@ export type PreviousVersionStyle =
  */
 export interface PolicyConfig {
 	additionalLockfilePaths?: string[];
-	dependencies?: {
-		requireTilde?: string[];
+	pnpmSinglePackageWorkspace?: string[];
+	fluidBuildTasks: {
+		tsc: {
+			ignoreTasks: string[];
+			ignoreDependencies: string[];
+			ignoreDevDependencies: string[];
+		};
 	};
+	dependencies?: {
+		commandPackages: [string, string][];
+	};
+	/**
+	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
+	 * policy-check.
+	 */
+	exclusions?: string[];
+
+	/**
+	 * An object with handler name as keys that maps to an array of strings/regular expressions to
+	 * exclude that rule from being checked.
+	 */
+	handlerExclusions?: { [rule: string]: string[] };
 }
 
 /**
@@ -176,15 +196,19 @@ export interface IFluidRepoPackage {
 	 * An array of paths under `directory` that should be ignored.
 	 */
 	ignoredDirs?: string[];
+
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
+	 * setting controls the default range that will be used when updating the version of a release group. The default can
+	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange: InterdependencyRange;
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	/**
-	 * @deprecated Use .releaseGroups instead.
-	 */
-	public readonly monoRepos = new Map<MonoRepoKind, MonoRepo>();
+	private readonly monoRepos = new Map<string, MonoRepo>();
 
 	public get releaseGroups() {
 		return this.monoRepos;
@@ -192,32 +216,7 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get clientMonoRepo(): MonoRepo {
-		return this.releaseGroups.get(MonoRepoKind.Client)!;
-	}
-
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get serverMonoRepo(): MonoRepo | undefined {
-		return this.releaseGroups.get(MonoRepoKind.Server);
-	}
-
-	/**
-	 * @deprecated Use releaseGroups.get() instead.
-	 */
-	public get azureMonoRepo(): MonoRepo | undefined {
-		return this.releaseGroups.get(MonoRepoKind.Azure);
-	}
-
-	constructor(
-		public readonly resolvedRoot: string,
-		services: boolean,
-		private readonly logger: Logger = defaultLogger,
-	) {
+	constructor(public readonly resolvedRoot: string, log: Logger = defaultLogger) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
 		// Expand to full IFluidRepoPackage and full path
@@ -228,12 +227,20 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				return { directory: path.join(resolvedRoot, item), ignoredDirs: undefined };
+				log?.verbose(
+					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+				);
+				return {
+					directory: path.join(resolvedRoot, item),
+					ignoredDirs: undefined,
+					defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
+				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
 			return {
 				directory,
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+				defaultInterdependencyRange: item.defaultInterdependencyRange,
 			};
 		};
 		const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
@@ -243,24 +250,19 @@ export class FluidRepo {
 		const loadedPackages: Package[] = [];
 		for (const group in packageManifest.repoPackages) {
 			const item = normalizeEntry(packageManifest.repoPackages[group]);
-			if (isMonoRepoKind(group)) {
-				const { directory, ignoredDirs } = item as IFluidRepoPackage;
-				const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
-				this.releaseGroups.set(group, monorepo);
-				loadedPackages.push(...monorepo.packages);
-			} else if (group !== "services" || services) {
-				if (Array.isArray(item)) {
-					for (const i of item) {
-						loadedPackages.push(...loadOneEntry(i, group));
-					}
-				} else {
-					loadedPackages.push(...loadOneEntry(item, group));
+			if (Array.isArray(item)) {
+				for (const i of item) {
+					loadedPackages.push(...loadOneEntry(i, group));
 				}
+				continue;
 			}
-		}
-
-		if (!this.releaseGroups.has(MonoRepoKind.Client)) {
-			throw new Error("client entry does not exist in package.json");
+			const monoRepo = MonoRepo.load(group, item, log);
+			if (monoRepo) {
+				this.releaseGroups.set(group, monoRepo);
+				loadedPackages.push(...monoRepo.packages);
+			} else {
+				loadedPackages.push(...loadOneEntry(item, group));
+			}
 		}
 		this.packages = new Packages(loadedPackages);
 	}
@@ -297,6 +299,16 @@ export class FluidRepo {
 			return this.packages.noHoistInstall(this.resolvedRoot);
 		}
 		return FluidRepo.ensureInstalled(this.packages.packages);
+	}
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	public relativeToRepo(p: string): string {
+		return path.relative(this.resolvedRoot, p);
 	}
 }
 

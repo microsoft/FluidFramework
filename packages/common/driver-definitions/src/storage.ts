@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IEventProvider,
-	IErrorEvent,
-	ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+import { IEventProvider, IErrorEvent } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,
@@ -53,9 +49,9 @@ export interface IDeltaStorageService {
 	 * @param id - document id.
 	 * @param from - first op to retrieve (inclusive)
 	 * @param to - first op not to retrieve (exclusive end)
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	get(
 		tenantId: string,
@@ -85,9 +81,9 @@ export interface IDocumentDeltaStorageService {
 	 * @param to - first op not to retrieve (exclusive end)
 	 * @param abortSignal - signal that aborts operation
 	 * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	fetchMessages(
 		from: number,
@@ -349,13 +345,6 @@ export interface IDocumentService {
 }
 
 export interface IDocumentServiceFactory {
-	/**
-	 * Name of the protocol used by factory
-	 *
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	protocolName: string;
-
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
 	 *

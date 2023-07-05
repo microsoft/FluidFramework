@@ -50,6 +50,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		// Performance tests benefit from having access to GC, and memory tests require it.
+		// Exposing it here avoids all packages which do perf testing from having to expose it.
+		"v8-expose-gc": true,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
@@ -71,6 +74,21 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 				`suiteName=${packageJson.name}`,
 			];
 		}
+	}
+
+	if (process.env.FLUID_TEST_MULTIREPORT === "1") {
+		config["reporter"] = `mocha-multi-reporters`;
+		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+		console.log(
+			`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml and nyc/${outputFilePrefix}junit-report.json`,
+		);
+		config["reporter-options"] = [
+			`configFile=${path.join(
+				__dirname,
+				"test-config.json",
+			)},cmrOutput=xunit+output+${outputFilePrefix}:mocha-json-output-reporter+output+${outputFilePrefix}`,
+		];
 	}
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {

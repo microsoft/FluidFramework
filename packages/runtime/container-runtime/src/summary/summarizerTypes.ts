@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IEvent,
-	IEventProvider,
-	ITelemetryLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
-import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -21,21 +15,6 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 import { SummarizeReason } from "./summaryGenerator";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export interface IProvideSummarizer {
-	/**
-	 * @deprecated This will be removed in a later release.
-	 */
-	readonly ISummarizer: ISummarizer;
-}
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -84,18 +63,24 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
-	/** @deprecated - Moved to `ISummarizerRuntime` as it's no longer needed here */
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	disposeFn?(): void;
+	disposeFn(): void;
 	closeFn(): void;
+	on(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
+	off(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
 }
 
 /** Options affecting summarize behavior. */
@@ -117,12 +102,12 @@ export interface IRefreshSummaryAckOptions {
 	/** Reference sequence number from the ack's summary op */
 	readonly summaryRefSeq: number;
 	/** Telemetry logger to which telemetry events will be forwarded. */
-	readonly summaryLogger: ITelemetryLogger;
+	readonly summaryLogger: ITelemetryLoggerExt;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/** Logger to use for correlated summary events */
-	readonly summaryLogger: ITelemetryLogger;
+	readonly summaryLogger: ITelemetryLoggerExt;
 	/** Tells when summary process should be cancelled */
 	readonly cancellationToken: ISummaryCancellationToken;
 }
@@ -228,6 +213,13 @@ export type SubmitSummaryResult =
 	| IUploadSummaryResult
 	| ISubmitSummaryOpResult;
 
+/** The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage. */
+export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+/** The data in summarizer result when submit summary stage fails. */
+export interface SubmitSummaryFailureData {
+	stage: SummaryStage;
+}
+
 export interface IBroadcastSummaryResult {
 	readonly summarizeOp: ISummaryOpMessage;
 	readonly broadcastDuration: number;
@@ -258,7 +250,9 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
-	readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
+	readonly summarySubmitted: Promise<
+		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
+	>;
 	/** Resolves when we observe our summarize op broadcast. */
 	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
 	/** Resolves when we receive a summaryAck or summaryNack. */
@@ -312,8 +306,13 @@ export type SummarizerStopReason =
 	| "notElectedClient"
 	/** Summarizer client was disconnected */
 	| "summarizerClientDisconnected"
-	/* running summarizer threw an exception */
-	| "summarizerException";
+	/** running summarizer threw an exception */
+	| "summarizerException"
+	/**
+	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+	 */
+	| "latestSummaryStateStale";
 
 export interface ISummarizerEvents extends IEvent {
 	/**
@@ -322,10 +321,12 @@ export interface ISummarizerEvents extends IEvent {
 	(event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer
-	extends IEventProvider<ISummarizerEvents>,
-		IFluidLoadable,
-		Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
+	/**
+	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
+	 */
+	readonly ISummarizer?: ISummarizer;
+
 	/*
 	 * Asks summarizer to move to exit.
 	 * Summarizer will finish current processes, which may take a while.
@@ -414,6 +415,8 @@ export interface ISummarizeHeuristicData {
 
 	/** Mark that the last sent summary attempt has received an ack */
 	markLastAttemptAsSuccessful(): void;
+
+	opsSinceLastSummary: number;
 }
 
 /** Responsible for running heuristics determining when to summarize. */
@@ -490,6 +493,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "opsSizesSinceLastSummary"
 	/** Delta between the number of non-runtime ops since the last summary */
 	| "nonRuntimeOpsSinceLastSummary"
+	/** Delta between the number of runtime ops since the last summary */
+	| "runtimeOpsSinceLastSummary"
 	/** Wether or not this instance contains adjusted metrics due to missing op data */
 	| "hasMissingOpData"
 	/** Time it took to generate the summary tree and stats. */
@@ -507,7 +512,9 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	/** Actual sequence number of the summary op proposal. */
 	| "summarySequenceNumber"
 	/** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-	| "nackRetryAfter";
+	| "nackRetryAfter"
+	/** The stage at which the submit summary method failed at. This can help determine what type of failure we have */
+	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryProperties,

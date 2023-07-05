@@ -1,0 +1,73 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-markdown-magic pipeline
+
+name: $(Build.BuildId)
+
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = skip)
+  type: string
+  default: skip
+  values:
+    - default
+    - skip
+    - force
+
+trigger:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - tools/markdown-magic
+    - tools/pipelines/build-markdown-magic.yml
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+
+pr:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+    - release/*
+  paths:
+    include:
+    - tools/markdown-magic
+    - tools/pipelines/build-markdown-magic.yml
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildDirectory: tools/markdown-magic
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
+    tagName: markdown-magic
+    taskBuild: build
+    taskBuildDocs: false
+    taskLint: false
+    taskTest:
+    - test

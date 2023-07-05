@@ -13,14 +13,14 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
+import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition } from "./localReference";
+import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
 	CollaborationWindow,
 	compareStrings,
@@ -107,7 +107,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
-		public readonly logger: ITelemetryLogger,
+		public readonly logger: ITelemetryLoggerExt,
 		options?: PropertySet,
 	) {
 		super();
@@ -379,12 +379,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
 			offset ?? 0,
 			refType,
 			properties,
+			slidingPreference,
 		);
 	}
 
@@ -596,14 +598,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
 	 */
 	private getClientSequenceArgsForMessage(
-		sequencedMessage: ISequencedDocumentMessage | undefined,
-	): IMergeTreeClientSequenceArgs;
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): Pick<IMergeTreeClientSequenceArgs, "referenceSequenceNumber" | "clientId">;
-	private getClientSequenceArgsForMessage(
 		sequencedMessage:
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
@@ -621,7 +615,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			};
 		} else {
 			return {
-				clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
 				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
@@ -676,6 +670,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return this.getShortClientId(longClientId);
 	}
+
 	getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
@@ -685,6 +680,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
+	}
+	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
+		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
 
 	/**
@@ -710,11 +708,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-		const NACKedSegmentGroup = this._mergeTree.pendingSegments?.shift()?.data;
+		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
-			0x034 /* "Segment group not at head of merge tree pending queue" */,
+			0x034 /* "Segment group not at head of pending rebase queue" */,
 		);
+		if (this.pendingRebase?.empty) {
+			this.pendingRebase = undefined;
+		}
 
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -791,7 +792,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					refSeq: this.getCollabWindow().currentSeq,
 				};
 				segment.segmentGroups.enqueue(newSegmentGroup);
-				this._mergeTree.pendingSegments!.push(newSegmentGroup);
+				this._mergeTree.pendingSegments.push(newSegmentGroup);
 				opList.push(newOp);
 			}
 		}
@@ -802,7 +803,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs) {
 		const op = opArgs.op;
 		const msg = opArgs.sequencedMessage;
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
 				this.applyInsertOp(opArgs);
@@ -857,7 +858,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
 		// Ensure client ID is registered
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		// Apply if an operation message
 		if (msg.type === MessageType.Operation) {
 			const opArgs: IMergeTreeDeltaRemoteOpArgs = {
@@ -908,6 +909,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private lastNormalizationRefSeq = 0;
+
+	private pendingRebase: List<SegmentGroup> | undefined;
 	/**
 	 * Given an pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
@@ -918,6 +921,24 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		resetOp: IMergeTreeOp,
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
+		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
+			let firstGroup: SegmentGroup;
+			if (Array.isArray(segmentGroup)) {
+				if (segmentGroup.length === 0) {
+					// sometimes we rebase to an empty op
+					return createGroupOp();
+				}
+				firstGroup = segmentGroup[0];
+			} else {
+				firstGroup = segmentGroup;
+			}
+			const firstGroupNode = this._mergeTree.pendingSegments.find(
+				(node) => node.data === firstGroup,
+			);
+			assert(firstGroupNode !== undefined, "segment group must exist in pending list");
+			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
+		}
+
 		const rebaseTo = this.getCollabWindow().currentSeq;
 		if (rebaseTo !== this.lastNormalizationRefSeq) {
 			this.emit("normalize", this);

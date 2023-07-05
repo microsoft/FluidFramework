@@ -321,19 +321,3 @@ export async function checkSoftDeleted(
 		throw error;
 	}
 }
-
-export async function executeApiWithMetric<U>(
-	api: () => Promise<U>,
-	apiName: string,
-	telemetryProperties: Record<string, any>,
-): Promise<U> {
-	const metric = Lumberjack.newLumberMetric(apiName, telemetryProperties);
-	try {
-		const result = await api();
-		metric.success(`RepositoryManager: ${apiName} success`);
-		return result;
-	} catch (error: any) {
-		metric.error(`RepositoryManager: ${apiName} error`, error);
-		throw error;
-	}
-}

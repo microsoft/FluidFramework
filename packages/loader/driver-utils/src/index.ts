@@ -3,23 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { BlobAggregationStorage, SnapshotExtractor } from "./blobAggregationStorage";
-export { BlobCacheStorageService } from "./blobCacheStorageService";
 export { buildSnapshotTree } from "./buildSnapshotTree";
+export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-export { EmptyDocumentDeltaStorageService } from "./emptyDocumentDeltaStorageService";
 export { UsageError } from "./error";
-export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
-export { MapWithExpiration } from "./mapWithExpiration";
-export {
-	canBeCoalescedByService,
-	isRuntimeMessage,
-	isUnpackedRuntimeMessage,
-	MessageType2,
-} from "./messageRecognition";
-export { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
-export { configurableUrlResolver, MultiUrlResolver } from "./multiUrlResolver";
+export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {
 	AuthorizationError,
 	canRetryOnError,
@@ -31,7 +20,6 @@ export {
 	GenericNetworkError,
 	getRetryDelayFromError,
 	getRetryDelaySecondsFromError,
-	IAnyDriverError,
 	isOnline,
 	LocationRedirectionError,
 	NetworkErrorBasic,
@@ -40,7 +28,7 @@ export {
 	RetryableError,
 	ThrottlingError,
 } from "./network";
-export { logNetworkFailure, waitForConnectedState } from "./networkUtils";
+export { logNetworkFailure } from "./networkUtils";
 export {
 	emptyMessageStream,
 	ParallelRequests,
@@ -62,7 +50,7 @@ export {
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
 export {
-	convertSnapshotAndBlobsToSummaryTree,
-	ISummaryTreeAssemblerProps,
-	SummaryTreeAssembler,
-} from "./treeUtils";
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	blobHeadersBlobName,
+} from "./adapters";

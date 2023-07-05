@@ -4,6 +4,7 @@
 Release commands are used to manage the Fluid release process.
 
 * [`flub release`](#flub-release)
+* [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
 * [`flub release report`](#flub-release-report)
 
@@ -13,22 +14,26 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-v] [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x |
-    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
+  $ flub release [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-t
+    major|minor|patch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
-                               <options: client|server|azure|build-tools>
-  -p, --package=<value>        Name of package.
+  -g, --releaseGroup=<option>  Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
+                               @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
-  -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]branchCheck           Check that the current branch is correct.
   --[no-]commit                Commit changes to a new branch.
   --[no-]install               Update lockfiles by running 'npm install' automatically.
   --[no-]policyCheck           Check that the local repo complies with all policy.
   --[no-]updateCheck           Check that the local repo is up to date with the remote.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Releases a package or release group.
@@ -47,21 +52,59 @@ DESCRIPTION
 
 _See code: [src/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release.ts)_
 
+## `flub release fromTag TAG`
+
+Determines release information based on a git tag argument.
+
+```
+USAGE
+  $ flub release fromTag TAG [-v | --quiet] [--json]
+
+ARGUMENTS
+  TAG  A git tag that represents a release. May begin with 'refs/tags/'.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Determines release information based on a git tag argument.
+
+  This command is used in CI to determine release information when a new release tag is pushed.
+
+EXAMPLES
+  Get release information based on a git tag.
+
+    $ flub release fromTag build-tools_v0.13.0
+
+  You can include the refs/tags/ part of a tag ref.
+
+    $ flub release fromTag refs/tags/2.0.0-internal.2.0.2
+```
+
 ## `flub release history`
 
 Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
 ```
 USAGE
-  $ flub release history [-v] [-g client|server|azure|build-tools | -p <value>] [-l <value>] [--json]
+  $ flub release history [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l
+    <value>] [--json]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
-                               <options: client|server|azure|build-tools>
+  -g, --releaseGroup=<option>  Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
-  -p, --package=<value>        Name of package.
-  -v, --verbose                Verbose logging.
+  -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
+                               @fluid-tools/markdown-magic and markdown-magic are valid.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -90,7 +133,8 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [-v] [--json] [-i | -r | -s] [-g client|server|azure|build-tools] [-o <value>]
+  $ flub release report [-v | --quiet] [--json] [-i | -r | -s] [-g
+    client|server|azure|build-tools|gitrest|historian] [-o <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -102,7 +146,7 @@ FLAGS
 
       If you want to report on a particular release, check out the git tag for the release version you want to report on
       before running this command.
-      <options: client|server|azure|build-tools>
+      <options: client|server|azure|build-tools|gitrest|historian>
 
   -i, --interactive
       Choose the version of each release group and package to contain in the release report.
@@ -116,8 +160,9 @@ FLAGS
   -s, --highest
       Always pick the greatest semver version as the latest (ignore dates).
 
-  -v, --verbose
-      Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.

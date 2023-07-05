@@ -9,7 +9,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 
 // @public
@@ -36,6 +36,7 @@ export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enableDiscovery?: boolean;
     enableInternalSummaryCaching: boolean;
+    enableLongPollingDowngrade: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
@@ -68,8 +69,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid:";
 }
 
 // @public

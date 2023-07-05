@@ -6,20 +6,26 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
-import { validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
+import {
+	BasicRestWrapper,
+	validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
 	validateTokenClaims,
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
+	getCorrelationId,
+	getBooleanFromConfig,
+	verifyToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
-import requestAPI from "request";
 import winston from "winston";
+import { v4 as uuid } from "uuid";
 import { Constants } from "../../../utils";
 import {
 	craftClientJoinMessage,
@@ -35,7 +41,9 @@ export function create(
 	producer: core.IProducer,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
-	throttler: core.IThrottler,
+	tenantThrottlers: Map<string, core.IThrottler>,
+	jwtTokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -43,6 +51,13 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
 		const tenantId = getParam(request.params, "tenantId");
@@ -55,7 +70,7 @@ export function create(
 
 	router.get(
 		"/ping",
-		throttle(throttler, winston, {
+		throttle(generalTenantThrottler, winston, {
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
@@ -67,7 +82,7 @@ export function create(
 	router.patch(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
-		throttle(throttler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -77,6 +92,9 @@ export function create(
 				storage,
 				maxTokenLifetimeSec,
 				isTokenExpiryEnabled,
+				enableJwtTokenCache,
+				jwtTokenCache,
+				revokedTokenChecker,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -92,7 +110,7 @@ export function create(
 	router.post(
 		"/:tenantId/:id/blobs",
 		validateRequestParams("tenantId", "id"),
-		throttle(throttler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const blobData = request.body as IBlobData;
@@ -193,28 +211,74 @@ const verifyRequest = async (
 	storage: core.IDocumentStorage,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
+	tokenCacheEnabled: boolean,
+	tokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) =>
 	Promise.all([
-		verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled),
+		verifyTokenWrapper(
+			request,
+			tenantManager,
+			maxTokenLifetimeSec,
+			isTokenExpiryEnabled,
+			tokenCacheEnabled,
+			tokenCache,
+			revokedTokenChecker,
+		),
 		checkDocumentExistence(request, storage),
 	]);
 
-async function verifyToken(
+async function verifyTokenWrapper(
 	request: Request,
 	tenantManager: core.ITenantManager,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
+	tokenCacheEnabled: boolean,
+	tokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
-		return Promise.reject(new Error("Missing access token"));
+		return Promise.reject(new Error("Missing access token in request header."));
 	}
 	const tenantId = getParam(request.params, "tenantId");
+	if (!tenantId) {
+		return Promise.reject(new Error("Missing tenantId in request."));
+	}
 	const documentId = getParam(request.params, "id");
+	if (!documentId) {
+		return Promise.reject(new Error("Missing documentId in request."));
+	}
 	const claims = validateTokenClaims(token, documentId, tenantId);
 	if (isTokenExpiryEnabled) {
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
+
+	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
+		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
+			tenantId,
+			documentId,
+			claims.jti,
+		);
+		if (tokenRevoked) {
+			return Promise.reject(new Error("Permission denied. Token is revoked."));
+		}
+	}
+
+	if (tokenCacheEnabled && tokenCache) {
+		const options = {
+			requireDocumentId: true,
+			requireTokenExpiryCheck: isTokenExpiryEnabled,
+			maxTokenLifetimeSec,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: tokenCacheEnabled,
+			tokenCache,
+			revokedTokenChecker,
+		};
+		return verifyToken(tenantId, documentId, token, tenantManager, options);
+	}
+
 	return tenantManager.verifyToken(claims.tenantId, token);
 }
 
@@ -236,24 +300,19 @@ async function checkDocumentExistence(
 const uploadBlob = async (
 	uri: string,
 	blobData: git.ICreateBlobParams,
-): Promise<git.ICreateBlobResponse> =>
-	new Promise<git.ICreateBlobResponse>((resolve, reject) => {
-		requestAPI(
-			{
-				body: blobData,
-				headers: {
-					"Content-Type": "application/json",
-				},
-				json: true,
-				method: "POST",
-				uri,
-			},
-			(err, resp, body) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(body as git.ICreateBlobResponse);
-				}
-			},
-		);
+): Promise<git.ICreateBlobResponse> => {
+	const restWrapper = new BasicRestWrapper(
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		() => getCorrelationId() || uuid(),
+	);
+	return restWrapper.post(uri, blobData, undefined, {
+		"Content-Type": "application/json",
 	});
+};

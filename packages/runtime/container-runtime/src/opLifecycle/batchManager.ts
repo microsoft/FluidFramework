@@ -12,6 +12,11 @@ export interface IBatchManagerOptions {
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
+export interface BatchSequenceNumbers {
+	referenceSequenceNumber?: number;
+	clientSequenceNumber?: number;
+}
+
 /**
  * Estimated size of the stringification overhead for an op accumulated
  * from runtime to loader to the service.
@@ -24,6 +29,7 @@ const opOverhead = 200;
 export class BatchManager {
 	private pendingBatch: BatchMessage[] = [];
 	private batchContentSize = 0;
+	private hasReentrantOps = false;
 
 	public get length() {
 		return this.pendingBatch.length;
@@ -32,17 +38,31 @@ export class BatchManager {
 		return this.batchContentSize;
 	}
 
-	public get referenceSequenceNumber(): number | undefined {
+	public get sequenceNumbers(): BatchSequenceNumbers {
+		return {
+			referenceSequenceNumber: this.referenceSequenceNumber,
+			clientSequenceNumber: this.clientSequenceNumber,
+		};
+	}
+
+	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
 			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
+	private clientSequenceNumber: number | undefined;
+
 	constructor(public readonly options: IBatchManagerOptions) {}
 
-	public push(message: BatchMessage): boolean {
+	public push(
+		message: BatchMessage,
+		reentrant: boolean,
+		currentClientSequenceNumber?: number,
+	): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;
+		this.hasReentrantOps = this.hasReentrantOps || reentrant;
 
 		// Attempt to estimate batch size, aka socket message size.
 		// Each op has pretty large envelope, estimating to be 200 bytes.
@@ -68,6 +88,10 @@ export class BatchManager {
 			return false;
 		}
 
+		if (this.pendingBatch.length === 0) {
+			this.clientSequenceNumber = currentClientSequenceNumber;
+		}
+
 		this.batchContentSize = contentSize;
 		this.pendingBatch.push(message);
 		return true;
@@ -82,10 +106,13 @@ export class BatchManager {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
+			hasReentrantOps: this.hasReentrantOps,
 		};
 
 		this.pendingBatch = [];
 		this.batchContentSize = 0;
+		this.clientSequenceNumber = undefined;
+		this.hasReentrantOps = false;
 
 		return addBatchMetadata(batch);
 	}
@@ -135,4 +162,18 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
  */
 export const estimateSocketSize = (batch: IBatch): number => {
 	return batch.contentSizeInBytes + opOverhead * batch.content.length;
+};
+
+export const sequenceNumbersMatch = (
+	seqNums: BatchSequenceNumbers,
+	otherSeqNums: BatchSequenceNumbers,
+): boolean => {
+	return (
+		(seqNums.referenceSequenceNumber === undefined ||
+			otherSeqNums.referenceSequenceNumber === undefined ||
+			seqNums.referenceSequenceNumber === otherSeqNums.referenceSequenceNumber) &&
+		(seqNums.clientSequenceNumber === undefined ||
+			otherSeqNums.clientSequenceNumber === undefined ||
+			seqNums.clientSequenceNumber === otherSeqNums.clientSequenceNumber)
+	);
 };

@@ -10,8 +10,9 @@ import {
 	ITenantManager,
 	IThrottler,
 	ICache,
-	ICollection,
-	IDocument,
+	IDocumentRepository,
+	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -27,19 +28,23 @@ import {
 import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
+import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
 	deltaService: IDeltaService,
 	producer: IProducer,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
+	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -88,14 +93,17 @@ export function create(
 	const routes = alfredRoutes.create(
 		config,
 		tenantManager,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		deltaService,
 		storage,
 		producer,
 		appTenants,
-		documentsCollection,
+		documentRepository,
+		documentDeleteService,
+		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 
 	app.use(routes.api);

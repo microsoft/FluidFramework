@@ -5,11 +5,6 @@
 
 import assert from "assert";
 
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	DefaultSummaryConfiguration,
@@ -23,19 +18,23 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime() {
+			return this.context.containerRuntime;
+		}
 	}
 
-	public get containerRuntime() {
-		return this.context.containerRuntime;
-	}
-}
-
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 

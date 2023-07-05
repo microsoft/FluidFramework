@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -16,17 +15,21 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
+import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
-import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
+} from "../mockDetachedBlobStorage.js";
+import {
+	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
@@ -692,20 +695,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			return { summarizer, summarizerContainer };
 		}
 
-		const ensureContainerConnectedWriteMode = async (container: IContainer) => {
-			const resolveIfActive = (res: () => void) => {
-				if (container.deltaManager.active) {
-					res();
-				}
-			};
-			if (!container.deltaManager.active) {
-				await new Promise<void>((resolve) =>
-					container.on("connected", () => resolveIfActive(resolve)),
-				);
-				(container as Container).off("connected", resolveIfActive);
-			}
-		};
-
 		beforeEach(async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
@@ -742,7 +731,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// Connect the container after the blob is uploaded. Send an op to transition it to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -819,7 +808,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another blob handle. Both this and
 				// the blob uploaded in disconnected mode should be different.
@@ -921,7 +910,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Add the blob handles to reference them.
 				mainDataStore._root.set("blob1", blobHandle1);

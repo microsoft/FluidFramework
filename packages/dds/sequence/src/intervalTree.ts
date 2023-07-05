@@ -61,7 +61,7 @@ export interface IInterval {
 	): IInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
-	 * Since intervals are inclusive, this includes cases where endpoints are equal.
+	 * Intervals are considered to overlap if their intersection is non-empty.
 	 */
 	overlaps(b: IInterval): boolean;
 	/**
@@ -77,6 +77,13 @@ const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 
+/**
+ * @deprecated - This functionality was useful when adding two intervals at the same start/end positions resulted
+ * in a conflict. This is no longer the case (as of PR#6407), as interval collections support multiple intervals
+ * at the same location and gives each interval a unique id.
+ *
+ * As such, conflict resolvers are never invoked and unnecessary. They will be removed in an upcoming release.
+ */
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 export class IntervalTree<T extends IInterval>

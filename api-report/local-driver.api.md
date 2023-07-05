@@ -18,6 +18,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentServicePolicies } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
+import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -27,7 +28,7 @@ import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -56,8 +57,6 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    // (undocumented)
-    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: any): void;
 }
 
@@ -83,13 +82,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     disconnectClient(clientId: string, disconnectReason: string): void;
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-test:";
 }
 
 // @public (undocumented)
 export class LocalDocumentStorageService implements IDocumentStorageService {
-    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies, localDeltaConnectionServer?: ILocalDeltaConnectionServer | undefined, resolvedUrl?: IResolvedUrl | undefined);
+    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies, localDeltaConnectionServer?: ILocalDeltaConnectionServer | undefined, resolvedUrl?: IFluidResolvedUrl | undefined);
     // (undocumented)
     protected readonly blobsShaCache: Map<string, string>;
     // (undocumented)

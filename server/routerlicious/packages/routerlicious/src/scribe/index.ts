@@ -15,19 +15,25 @@ import * as core from "@fluidframework/server-services-core";
 import {
 	DefaultServiceConfiguration,
 	ICheckpointHeuristicsServerConfiguration,
+	ICheckpoint,
 	IDb,
 	IDocument,
 	IPartitionLambdaFactory,
 	ISequencedOperationMessage,
 	IServiceConfiguration,
+	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
-export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function scribeCreate(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	// Access config values
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 	const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 	const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
 
@@ -45,6 +51,16 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
+	const verifyLastOpPersistence =
+		(config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
+	const transientTenants = config.get("shared:transientTenants") as string[];
+	const disableTransientTenantFiltering =
+		(config.get("scribe:disableTransientTenantFiltering") as boolean) ?? true;
+	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled") as boolean;
+	const restartOnCheckpointFailure =
+		(config.get("scribe:restartOnCheckpointFailure") as boolean) ?? true;
+	const kafkaCheckpointOnReprocessingOp =
+		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -72,10 +88,18 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
 	const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;
 
-	const [collection, scribeDeltas] = await Promise.all([
-		documentsCollectionDb.collection<IDocument>(documentsCollectionName),
-		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName),
-	]);
+	const scribeDeltas =
+		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName);
+	const documentRepository =
+		customizations?.documentRepository ??
+		new MongoDocumentRepository(
+			documentsCollectionDb.collection<IDocument>(documentsCollectionName),
+		);
+
+	const checkpointRepository = new core.MongoCheckpointRepository(
+		operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
+		"scribe",
+	);
 
 	if (createCosmosDBIndexes) {
 		await scribeDeltas.createIndex({ documentId: 1 }, false);
@@ -119,9 +143,15 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 		enforceDiscoveryFlow,
 	};
 
+	const checkpointService = new core.CheckpointService(
+		checkpointRepository,
+		documentRepository,
+		localCheckpointEnabled,
+	);
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
-		collection,
+		documentRepository,
 		scribeDeltas,
 		producer,
 		deltaManager,
@@ -129,11 +159,20 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 		serviceConfiguration,
 		enableWholeSummaryUpload,
 		getDeltasViaAlfred,
+		verifyLastOpPersistence,
+		transientTenants,
+		disableTransientTenantFiltering,
+		checkpointService,
+		restartOnCheckpointFailure,
+		kafkaCheckpointOnReprocessingOp,
 	);
 }
 
-export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	// Nconf has problems with prototype methods which prevents us from storing this as a class
 	config.set("documentLambda", { create: scribeCreate });
-	return createDocumentRouter(config);
+	return createDocumentRouter(config, customizations);
 }

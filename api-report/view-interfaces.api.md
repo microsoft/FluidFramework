@@ -6,23 +6,6 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 
-// @public @deprecated (undocumented)
-export interface IFluidHTMLOptions {
-    // @deprecated (undocumented)
-    display?: "block" | "inline";
-}
-
-// @public @deprecated (undocumented)
-export const IFluidHTMLView: keyof IProvideFluidHTMLView;
-
-// @public @deprecated
-export interface IFluidHTMLView extends IProvideFluidHTMLView {
-    // @deprecated
-    remove?(): void;
-    // @deprecated
-    render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
-}
-
 // @public (undocumented)
 export const IFluidMountableView: keyof IProvideFluidMountableView;
 
@@ -37,12 +20,6 @@ export interface IFluidMountableViewClass {
     // (undocumented)
     new (view: FluidObject): IFluidMountableView;
     canMount(view: FluidObject): boolean;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidHTMLView {
-    // @deprecated (undocumented)
-    readonly IFluidHTMLView: IFluidHTMLView;
 }
 
 // @public (undocumented)

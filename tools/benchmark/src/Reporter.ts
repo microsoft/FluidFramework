@@ -27,21 +27,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// This file is a reporter used with node, so depending on node is fine.
+/* eslint-disable import/no-nodejs-modules */
+
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
-import {
-	bold,
-	geometricMean,
-	italicize,
-	pad,
-	prettyNumber,
-	green,
-	red,
-	yellow,
-	Stats,
-} from "./ReporterUtilities";
+import chalk from "chalk";
+import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
 import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 
@@ -51,7 +45,7 @@ interface BenchmarkResults {
 }
 
 const expectedKeys: ExpectedCell[] = [
-	stringCell("error", "error", (message) => red(message || "Error")),
+	stringCell("error", "error", (message) => chalk.red(message || "Error")),
 	{
 		key: "stats",
 		cell: (table, data) => {
@@ -123,9 +117,7 @@ export class BenchmarkReporter {
 			? path.resolve(outputDirectory)
 			: path.join(__dirname, ".output");
 
-		if (!fs.existsSync(this.outputDirectory)) {
-			fs.mkdirSync(this.outputDirectory, { recursive: true });
-		}
+		fs.mkdirSync(this.outputDirectory, { recursive: true });
 	}
 
 	/**
@@ -143,11 +135,11 @@ export class BenchmarkReporter {
 
 		benchmarksMap.set(testName, result);
 		if (isResultError(result)) {
-			table.cell("status", `${pad(4)}${red("×")}`);
+			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
-			table.cell("status", `${pad(4)}${green("✔")}`);
+			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
-		table.cell("name", italicize(testName));
+		table.cell("name", chalk.italic(testName));
 
 		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
 		// This is useful if this reporter is given unexpected data (such as from a memory test).
@@ -181,7 +173,7 @@ export class BenchmarkReporter {
 		const { benchmarksMap, table } = results;
 
 		// Output results from suite
-		console.log(`\n${bold(suiteName)}`);
+		console.log(`\n${chalk.bold(suiteName)}`);
 		const filenameFull: string = this.writeCompletedBenchmarks(suiteName, benchmarksMap);
 		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
@@ -205,16 +197,16 @@ export class BenchmarkReporter {
 		let statusSymbol: string;
 		switch (benchmarksMap.size) {
 			case countSuccessful:
-				statusSymbol = green("✔");
+				statusSymbol = chalk.green("✔");
 				break;
 			case countFailure:
-				statusSymbol = red("×");
+				statusSymbol = chalk.red("×");
 				break;
 			default:
-				statusSymbol = yellow("!");
+				statusSymbol = chalk.yellow("!");
 		}
 		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
-		this.overallSummaryTable.cell("suite name", italicize(suiteName));
+		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
 		const geometricMeanString: string = prettyNumber(
 			geometricMean(benchmarkPeriodsSeconds) * 1e9,
 			1,
@@ -267,7 +259,7 @@ export class BenchmarkReporter {
 			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
-		console.log(`\n\n${bold("Overall summary")}`);
+		console.log(`\n\n${chalk.bold("Overall summary")}`);
 		console.log(`\n${this.overallSummaryTable.toString()}`);
 		if (countFailure > 0) {
 			console.log(

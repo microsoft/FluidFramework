@@ -64,8 +64,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForReconnection,
+		overrides?: { minimumSequenceNumber?: number },
 	) {
-		super(dataStoreRuntime, factory);
+		super(dataStoreRuntime, factory, overrides);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -109,8 +110,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
 	public createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
+		overrides?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForReconnection {
-		const containerRuntime = new MockContainerRuntimeForReconnection(dataStoreRuntime, this);
+		const containerRuntime = new MockContainerRuntimeForReconnection(
+			dataStoreRuntime,
+			this,
+			overrides,
+		);
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
 	}

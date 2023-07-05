@@ -1,44 +1,46 @@
 {
-  "name": "@fluid-internal/getkeys",
-  "version": "1.0.0",
-  "private": true,
-  "description": "",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "tools/getkeys"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "eslint": "eslint ./index.js",
-    "eslint:fix": "eslint ./index.js --fix",
-    "format": "npm run prettier:fix",
-    "preinstall": "node ../../scripts/only-pnpm.cjs",
-    "lint": "npm run prettier && npm run eslint",
-    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "prettier": "prettier --check . --ignore-path ../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-    "start": "node ./index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@fluidframework/tool-utils": "^0.35.0",
-    "azure-keyvault": "^3.0.4",
-    "ms-rest-azure": "^2.6.0"
-  },
-  "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "eslint": "~8.6.0",
-    "prettier": "~2.6.2",
-    "typescript": "~4.5.5"
-  },
-  "pnpm": {
-    "overrides": {
-      "qs": "^6.11.0"
-    }
-  }
+	"name": "@fluid-internal/getkeys",
+	"version": "1.0.0",
+	"private": true,
+	"description": "",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "tools/getkeys"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"eslint": "eslint ./index.js",
+		"eslint:fix": "eslint ./index.js --fix",
+		"format": "npm run prettier:fix",
+		"preinstall": "node ../../scripts/only-pnpm.cjs",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"start": "node ./index.js",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"tsc": "tsc"
+	},
+	"dependencies": {
+		"@fluidframework/tool-utils": "^0.35.0",
+		"azure-keyvault": "^3.0.4",
+		"ms-rest-azure": "^2.6.0"
+	},
+	"devDependencies": {
+		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"eslint": "~8.6.0",
+		"prettier": "~2.6.2",
+		"typescript": "~4.5.5"
+	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"pnpm": {
+		"overrides": {
+			"qs": "^6.11.0"
+		}
+	}
 }

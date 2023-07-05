@@ -15,8 +15,6 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -33,7 +31,7 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
 		"@oclif/core": "^1.12.0",
-    		"applicationinsights": "^2.4.1"
+		"applicationinsights": "^2.4.1"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",

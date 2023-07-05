@@ -9,7 +9,10 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SnapshotLegacy } from "../snapshotlegacy";
-import { createInsertOnlyAttributionPolicy } from "../attributionCollection";
+import {
+	createInsertOnlyAttributionPolicy,
+	createPropertyTrackingAndInsertionAttributionPolicyFactory,
+} from "../attributionPolicy";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from ".";
@@ -85,13 +88,23 @@ describe("snapshot", () => {
 
 	async function assertAttributionKeysMatch(
 		client: TestClient,
-		expected: number[] | undefined,
+		expected: {
+			root: (number | undefined)[];
+			channels?: { [name: string]: (number | undefined)[] };
+		},
 	): Promise<void> {
 		assert.deepEqual(
 			client.getAllAttributionSeqs(),
-			expected,
+			expected.root,
 			"Keys don't match before round-tripping",
 		);
+		for (const [channel, channelExpectation] of Object.entries(expected.channels ?? {})) {
+			assert.deepEqual(
+				client.getAllAttributionSeqs(channel),
+				channelExpectation,
+				`Keys for channel ${channel} don't match before round-trip.`,
+			);
+		}
 		const serializer = new TestSerializer();
 		// This avoids necessitating handling catchup ops.
 		client.mergeTree.setMinSeq(client.mergeTree.collabWindow.currentSeq);
@@ -113,9 +126,16 @@ describe("snapshot", () => {
 		await roundTripClient.load(runtime as IFluidDataStoreRuntime, services, serializer);
 		assert.deepEqual(
 			roundTripClient.getAllAttributionSeqs(),
-			expected,
+			expected.root,
 			"Keys don't match after round-tripping",
 		);
+		for (const [channel, channelExpectation] of Object.entries(expected.channels ?? {})) {
+			assert.deepEqual(
+				roundTripClient.getAllAttributionSeqs(channel),
+				channelExpectation,
+				`Keys for channel ${channel} don't match after round-trip.`,
+			);
+		}
 	}
 
 	it("preserves attribution information", async () => {
@@ -125,7 +145,8 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory: createInsertOnlyAttributionPolicy,
+						policyFactory:
+							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 					},
 				},
 			},
@@ -149,23 +170,32 @@ describe("snapshot", () => {
 			),
 		);
 
+		ops.push(
+			clients.B.makeOpMessage(
+				clients.B.annotateRangeLocal(0, 14, { foo: "bar" }, undefined),
+				/* seq */ 3,
+				/* refSeq */ 2,
+			),
+		);
+
 		applyAllOps();
 
-		// "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
-		const expectedAttribution = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1];
-		await assertAttributionKeysMatch(clients.A, expectedAttribution);
+		await assertAttributionKeysMatch(clients.A, {
+			// "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
+			root: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1],
+			channels: {
+				foo: Array.from({ length: "hello new world".length }, (_, i) =>
+					i < 14 ? 3 : undefined,
+				),
+			},
+		});
 	});
 
 	it("doesn't include attribution information when attribution tracking is false on doc creation", async () => {
 		const clients = createClientsAtInitialState(
 			{
 				initialState: "",
-				options: {
-					attribution: {
-						track: false,
-						policyFactory: createInsertOnlyAttributionPolicy,
-					},
-				},
+				options: { attribution: { track: false } },
 			},
 			"A",
 		);
@@ -178,6 +208,8 @@ describe("snapshot", () => {
 
 		applyAllOps();
 
-		await assertAttributionKeysMatch(clients.A, undefined);
+		await assertAttributionKeysMatch(clients.A, {
+			root: Array.from({ length: "hello world".length }, () => undefined),
+		});
 	});
 });

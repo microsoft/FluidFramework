@@ -15,14 +15,10 @@ import {
 	RawOperationType,
 } from "@fluidframework/server-services-core";
 
-export const initializeProtocol = (
-	protocolState: IProtocolState,
-	term: number,
-): ProtocolOpHandler =>
+export const initializeProtocol = (protocolState: IProtocolState): ProtocolOpHandler =>
 	new ProtocolOpHandler(
 		protocolState.minimumSequenceNumber,
 		protocolState.sequenceNumber,
-		term,
 		protocolState.members,
 		protocolState.proposals,
 		protocolState.values,

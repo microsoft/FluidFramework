@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -39,6 +40,7 @@ trigger:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -57,6 +59,7 @@ pr:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -73,4 +76,3 @@ extends:
     taskLint: true
     taskTest:
     - test
-    buildNumberInPatch: true

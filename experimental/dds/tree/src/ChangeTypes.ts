@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import { NodeId, TraitLabel, UuidString } from './Identifiers';
-import { assert, assertNotUndefined } from './Common';
+import { assertNotUndefined } from './Common';
 import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types';
 import { TraitLocation } from './TreeView';
 import { getNodeId } from './NodeIdUtilities';
@@ -363,9 +364,14 @@ export const StableRange = {
 	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
 		to: (end: StablePlace): StableRange => {
 			if (start.referenceTrait && end.referenceTrait) {
-				const message = 'StableRange must be constructed with endpoints from the same trait';
-				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
-				assert(start.referenceTrait.label === end.referenceTrait.label, message);
+				assert(
+					start.referenceTrait.parent === end.referenceTrait.parent,
+					0x5fe /* StableRange must be constructed with endpoints from the same trait */
+				);
+				assert(
+					start.referenceTrait.label === end.referenceTrait.label,
+					0x5ff /* StableRange must be constructed with endpoints from the same trait */
+				);
 			}
 			return { start, end };
 		},

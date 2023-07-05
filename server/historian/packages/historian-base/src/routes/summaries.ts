@@ -9,7 +9,11 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { IThrottler } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -19,22 +23,64 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../services";
-import { parseToken } from "../utils";
+import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
+
+	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
+	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
+	};
+	const restTenantCreateSummaryThrottler = restTenantThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
+	const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
+	};
+	const restTenantGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
+	const createSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterCreateSummaryThrottler = restClusterThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
+	const getSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterGetSummaryThrottler = restClusterThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
 	async function getSummary(
 		tenantId: string,
@@ -42,14 +88,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getSummary(sha, useCache);
 	}
 
@@ -58,15 +105,19 @@ export function create(
 		authorization: string,
 		params: IWholeSummaryPayload,
 		initial?: boolean,
+		storageName?: string,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+			initialUpload: initial,
+			storageName,
+		});
 		return service.createSummary(params, initial);
 	}
 
@@ -75,15 +126,16 @@ export function create(
 		authorization: string,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-			true,
-		);
+			allowDisabledTenant: true,
+		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			deletionPs.push(
@@ -95,7 +147,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
+		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -116,7 +170,13 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(
+			restClusterCreateSummaryThrottler,
+			winston,
+			createSummaryPerClusterThrottleOptions,
+		),
+		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -132,6 +192,7 @@ export function create(
 				request.get("Authorization"),
 				request.body,
 				initial,
+				request.get("StorageName"),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);
@@ -140,7 +201,8 @@ export function create(
 
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

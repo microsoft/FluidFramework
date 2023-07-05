@@ -7,9 +7,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
-	ICollection,
 	IDeltaService,
-	IDocument,
 	IDocumentStorage,
 	IOrdererManager,
 	IProducer,
@@ -19,6 +17,10 @@ import {
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
+	IDocumentRepository,
+	ITokenRevocationManager,
+	IWebSocketTracker,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -27,6 +29,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
+import { IDocumentDeleteService } from "./services";
 
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
@@ -38,7 +41,7 @@ export class AlfredRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottler: IThrottler,
+		private readonly restTenantThrottlers: Map<string, IThrottler>,
 		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly socketConnectTenantThrottler: IThrottler,
 		private readonly socketConnectClusterThrottler: IThrottler,
@@ -51,10 +54,14 @@ export class AlfredRunner implements IRunner {
 		private readonly deltaService: IDeltaService,
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
-		private readonly documentsCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
+		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
+		private readonly socketTracker?: IWebSocketTracker,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
+		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -65,14 +72,17 @@ export class AlfredRunner implements IRunner {
 		const alfred = app.create(
 			this.config,
 			this.tenantManager,
-			this.restTenantThrottler,
+			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.singleUseTokenCache,
 			this.storage,
 			this.appTenants,
 			this.deltaService,
 			this.producer,
-			this.documentsCollection,
+			this.documentRepository,
+			this.documentDeleteService,
+			this.tokenRevocationManager,
+			this.revokedTokenChecker,
 		);
 		alfred.set("port", this.port);
 
@@ -113,12 +123,22 @@ export class AlfredRunner implements IRunner {
 			this.socketSubmitSignalThrottler,
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
+			this.socketTracker,
+			this.revokedTokenChecker,
 		);
 
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+
+		// Start token manager
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
+				// Prevent service crash if token revocation manager fails to start
+				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
+			});
+		}
 
 		return this.runningDeferred.promise;
 	}

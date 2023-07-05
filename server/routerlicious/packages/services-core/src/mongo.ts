@@ -70,6 +70,8 @@ export class MongoManager {
 				Lumberjack.error("DB Reconnect failed", undefined, value);
 			});
 
+			debug("Successfully connected");
+			Lumberjack.info("Successfully connected to Db");
 			return db;
 		});
 
@@ -79,8 +81,8 @@ export class MongoManager {
 			this.reconnect(this.reconnectDelayMs);
 		});
 
-		debug("Successfully connected");
-		Lumberjack.info("Successfully connected to Db");
+		debug("Connect requested");
+		Lumberjack.info("Connect requested");
 		return databaseP;
 	}
 

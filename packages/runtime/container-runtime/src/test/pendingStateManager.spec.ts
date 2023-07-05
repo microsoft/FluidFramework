@@ -46,7 +46,7 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should do nothing when rolling back nothing", () => {
-			batchManager.push(getMessage("1"));
+			batchManager.push(getMessage("1"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
 			checkpoint.rollback(rollBackCallback);
 
@@ -56,9 +56,9 @@ describe("Pending State Manager", () => {
 
 		it("should succeed when rolling back entire pending stack", () => {
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -70,10 +70,10 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should succeed when rolling back part of pending stack", () => {
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -86,7 +86,7 @@ describe("Pending State Manager", () => {
 		it("should throw and close when rollback fails", () => {
 			rollbackShouldThrow = true;
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			assert.throws(() => {
 				checkpoint.rollback(rollBackCallback);
 			});
@@ -111,10 +111,7 @@ describe("Pending State Manager", () => {
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
-					orderSequentially: (callback: () => void) => {
-						callback();
-					},
+					reSubmitBatch: () => {},
 				},
 				undefined,
 			);
@@ -123,9 +120,8 @@ describe("Pending State Manager", () => {
 		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
 			messages.forEach((message) => {
 				pendingStateManager.onSubmitMessage(
-					message.type,
+					JSON.stringify({ type: message.type, contents: message.contents }),
 					message.referenceSequenceNumber,
-					message.contents,
 					undefined,
 					message.metadata,
 				);
@@ -280,7 +276,6 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	// TODO: Remove in 2.0.0-internal.4.0.0 once only new format is written in getLocalState()
 	describe("Local state processing", () => {
 		function createPendingStateManager(pendingStates): any {
 			return new PendingStateManager(
@@ -290,151 +285,209 @@ describe("Pending State Manager", () => {
 					close: () => {},
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
-					orderSequentially: () => {},
+					reSubmitBatch: () => {},
 				},
 				{ pendingStates },
 			);
 		}
 
 		describe("Constructor conversion", () => {
-			it("Empty local state", () => {
-				{
-					const pendingStateManager = createPendingStateManager(undefined);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-				}
-				{
-					const pendingStateManager = createPendingStateManager([]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-				}
-			});
+			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor
+			describe("deserialized content", () => {
+				it("Empty local state", () => {
+					{
+						const pendingStateManager = createPendingStateManager(undefined);
+						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+					}
+					{
+						const pendingStateManager = createPendingStateManager([]);
+						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+					}
+				});
 
-			it("Only flush messages", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "flush" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-			});
+				it("Old format", () => {
+					const pendingStateManager = createPendingStateManager([
+						{ type: "message", messageType: "component" },
+						{ type: "message", messageType: "component", content: { prop1: "value" } },
+					]);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+						{
+							type: "message",
+							messageType: "component",
+							content: '{"type":"component"}',
+						},
+						{
+							type: "message",
+							messageType: "component",
+							content: '{"type":"component","contents":{"prop1":"value"}}',
+						},
+					]);
+				});
 
-			it("New format", () => {
-				const messages = [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
-				];
-				const pendingStateManager = createPendingStateManager(messages);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-			});
+				it("New format", () => {
+					const messages = [
+						{ type: "message", content: '{"type":"component"}' },
+						{
+							type: "message",
+							content: '{"type": "component", "contents": {"prop1": "value"}}',
+						},
+					];
+					const pendingStateManager = createPendingStateManager(messages);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+				});
 
-			it("Ends with no flush", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
-			});
-
-			it("Ends with flush", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
-			});
-
-			it("Mix of new and old", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
+				it("Mix of new and old formats", () => {
+					const pendingStateManager = createPendingStateManager([
+						{ type: "message", messageType: "component" },
+						{ type: "message", content: '{"type":"component"}' },
+						{
+							type: "message",
+							content: '{"type": "component", "contents": {"prop1": "value"}}',
+						},
+						{ type: "message", messageType: "component", content: { prop1: "value" } },
+					]);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+						{
+							type: "message",
+							messageType: "component",
+							content: '{"type":"component"}',
+						},
+						{ type: "message", content: '{"type":"component"}' },
+						{
+							type: "message",
+							content: '{"type": "component", "contents": {"prop1": "value"}}',
+						},
+						{
+							type: "message",
+							messageType: "component",
+							content: '{"type":"component","contents":{"prop1":"value"}}',
+						},
+					]);
+				});
 			});
 		});
 
-		it("getLocalState writes old format", async () => {
+		it("getLocalState writes new flush format", async () => {
 			const pendingStateManager = createPendingStateManager([
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ type: "message", referenceSequenceNumber: 0 },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ type: "message", referenceSequenceNumber: 0 },
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					opMetadata: { batch: true },
+					content: '{"type":"component"}',
+				},
+				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					opMetadata: { batch: false },
+					content: '{"type":"component"}',
+				},
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					opMetadata: { batch: true },
+					content: '{"type":"component"}',
+				},
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					opMetadata: { batch: false },
+					content: '{"type":"component"}',
+				},
+				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
 			]);
 
 			await pendingStateManager.applyStashedOpsAt(0);
 
 			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
-				/* eslint-disable max-len */
 				{
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: true },
+					content: undefined,
+					messageType: "component",
 				},
-				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
 				{
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-				},
-				{ type: "flush" },
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
+					content: undefined,
+					messageType: "component",
 				},
 				{
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: false },
+					content: undefined,
+					messageType: "component",
 				},
-				{ type: "flush" },
-				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
-				/* eslint-enable max-len */
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: { batch: true },
+					content: undefined,
+					messageType: "component",
+				},
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: { batch: false },
+					content: undefined,
+					messageType: "component",
+				},
+				{
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					content: undefined,
+					messageType: "component",
+				},
+			]);
+		});
+
+		// TODO: change to new format in "2.0.0-internal.6.0.0" (AB#3826)
+		it("getLocalState writes old message format", async () => {
+			const pendingStateManager = createPendingStateManager([
+				{ type: "message", messageType: "component" },
+				{ type: "message", content: '{"type":"component"}' },
+				{
+					type: "message",
+					content: '{"type": "component", "contents": {"prop1": "value"}}',
+				},
+				{ type: "message", messageType: "component", content: { prop1: "value" } },
+			]);
+
+			await pendingStateManager.applyStashedOpsAt(0);
+
+			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
+				{
+					type: "message",
+					messageType: "component",
+					content: undefined,
+					localOpMetadata: undefined,
+				},
+				{
+					type: "message",
+					messageType: "component",
+					content: undefined,
+					localOpMetadata: undefined,
+				},
+				{
+					type: "message",
+					messageType: "component",
+					content: { prop1: "value" },
+					localOpMetadata: undefined,
+				},
+				{
+					type: "message",
+					messageType: "component",
+					content: { prop1: "value" },
+					localOpMetadata: undefined,
+				},
 			]);
 		});
 	});

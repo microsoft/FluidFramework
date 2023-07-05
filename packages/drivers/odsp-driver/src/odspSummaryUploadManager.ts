@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -39,7 +39,7 @@ export class OdspSummaryUploadManager {
 	constructor(
 		private readonly snapshotUrl: string,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly epochTracker: EpochTracker,
 		private readonly forceAccessTokenViaAuthorizationHeader: boolean,
 		private readonly relayServiceTenantAndSessionId: () => string | undefined,

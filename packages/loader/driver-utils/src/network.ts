@@ -34,22 +34,6 @@ export function isOnline(): OnlineStatus {
 	return OnlineStatus.Unknown;
 }
 
-/**
- * Interface describing errors and warnings raised by any driver code.
- * Not expected to be implemented by a class or an object literal, but rather used in place of
- * any or unknown in various function signatures that pass errors around.
- *
- * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
- * It will be either DriverErrorType or the specific driver's specialized error type enum,
- * but we can't reference a specific driver's error type enum in this code.
- *
- * @deprecated - In favour of {@link @fluidframework/driver-definitions#IAnyDriverError} so that
- * it can used from the base to upper layers.
- */
-export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
-	readonly errorType: string;
-}
-
 /** Telemetry props with driver-specific required properties */
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
 	driverVersion: string | undefined;
@@ -88,9 +72,11 @@ export class DeltaStreamConnectionForbiddenError
 	static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 	readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
 	readonly canRetry = false;
+	readonly storageOnlyReason: string | undefined;
 
-	constructor(message: string, props: DriverErrorTelemetryProps) {
+	constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string) {
 		super(message, { ...props, statusCode: 400 });
+		this.storageOnlyReason = storageOnlyReason;
 	}
 }
 

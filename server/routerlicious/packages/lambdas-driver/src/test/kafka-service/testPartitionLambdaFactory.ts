@@ -9,7 +9,6 @@ import {
 	IContext,
 	IQueuedMessage,
 	IPartitionLambda,
-	IPartitionConfig,
 	IPartitionLambdaFactory,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
@@ -55,7 +54,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
 		super();
 	}
 
-	public async create(config: IPartitionConfig, context: IContext): Promise<IPartitionLambda> {
+	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
 		if (this.failCreate) {
 			return Promise.reject(new Error("Set to fail create"));
 		}

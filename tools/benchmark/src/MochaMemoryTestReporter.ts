@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
+// This file is a reporter used with node, so depending on node is fine.
+/* eslint-disable import/no-nodejs-modules */
+
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
+import chalk from "chalk";
 import { isChildProcess } from "./Configuration";
-import {
-	bold,
-	green,
-	italicize,
-	pad,
-	prettyNumber,
-	red,
-	getName,
-	getSuiteName,
-} from "./ReporterUtilities";
-import { MemoryBenchmarkStats } from "./MemoryTestRunner";
+import { pad, prettyNumber, getName } from "./ReporterUtilities";
+// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
+// Since it's not moved yet, it needs this lint suppression to do this import:
+// eslint-disable-next-line import/no-internal-modules
+import { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
+// eslint-disable-next-line import/no-internal-modules
+import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter for memory tests. It can be used by passing the JavaScript version of this file to
@@ -40,9 +40,8 @@ class MochaMemoryTestReporter {
 		const reportDir = options?.reporterOptions?.reportDir ?? "";
 		this.outputDirectory =
 			reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
-		if (!fs.existsSync(this.outputDirectory)) {
-			fs.mkdirSync(this.outputDirectory, { recursive: true });
-		}
+
+		fs.mkdirSync(this.outputDirectory, { recursive: true });
 
 		const data: Map<Test, MemoryBenchmarkStats> = new Map();
 
@@ -59,7 +58,9 @@ class MochaMemoryTestReporter {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.info(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
+				console.info(
+					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
+				);
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',
@@ -74,7 +75,7 @@ class MochaMemoryTestReporter {
 				if (memoryTestStats === undefined) {
 					// Mocha test complected with out reporting data. This is an error, so report it as such.
 					console.error(
-						red(
+						chalk.red(
 							`Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
 						),
 					);
@@ -84,7 +85,7 @@ class MochaMemoryTestReporter {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					console.info(
-						red(
+						chalk.red(
 							`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
 						),
 					);
@@ -110,18 +111,18 @@ class MochaMemoryTestReporter {
 					if (suiteData === undefined) {
 						return;
 					}
-					console.log(`\n${bold(suiteName)}`);
+					console.log(`\n${chalk.bold(suiteName)}`);
 
 					const table = new Table();
 					const failedTests = new Array<[string, MemoryBenchmarkStats]>();
 					suiteData?.forEach(([testName, testData]) => {
 						if (testData.aborted) {
-							table.cell("status", `${pad(4)}${red("×")}`);
+							table.cell("status", `${pad(4)}${chalk.red("×")}`);
 							failedTests.push([testName, testData]);
 						} else {
-							table.cell("status", `${pad(4)}${green("✔")}`);
+							table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 						}
-						table.cell("name", italicize(testName));
+						table.cell("name", chalk.italic(testName));
 						if (!testData.aborted) {
 							table.cell(
 								"Heap Used Avg",
@@ -162,10 +163,10 @@ class MochaMemoryTestReporter {
 					if (failedTests.length > 0) {
 						console.log(
 							"------------------------------------------------------",
-							`\n${red("ERRORS:")}`,
+							`\n${chalk.red("ERRORS:")}`,
 						);
 						failedTests.forEach(([testName, testData]) => {
-							console.log(`\n${red(testName)}`, "\n", testData.error);
+							console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
 						});
 					}
 					this.writeCompletedBenchmarks(suiteName);

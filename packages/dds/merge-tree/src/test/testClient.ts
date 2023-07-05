@@ -20,7 +20,7 @@ import { Client } from "../client";
 import { List } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeBlock, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
-import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
@@ -29,9 +29,8 @@ import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { LocalReferencePosition } from "../localReference";
-import { InternalRevertDriver } from "../revertibles";
 import { DetachedReferencePosition } from "../referencePositions";
+import { MergeTreeRevertibleDriver } from "../revertibles";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -250,6 +249,24 @@ export class TestClient extends Client {
 		);
 	}
 
+	public annotateRangeRemote(
+		start: number,
+		end: number,
+		props: PropertySet,
+		seq: number,
+		refSeq: number,
+		longClientId: string,
+	) {
+		this.applyMsg(
+			this.makeOpMessage(
+				createAnnotateRangeOp(start, end, props, undefined),
+				seq,
+				refSeq,
+				longClientId,
+			),
+		);
+	}
+
 	public insertMarkerLocal(pos: number, behaviors: ReferenceType, props?: PropertySet) {
 		const segment = new Marker(behaviors);
 		if (props) {
@@ -442,30 +459,23 @@ export class TestClient extends Client {
 	}
 
 	/**
+	 * @param channel - Attribution channel name to request information from.
 	 * @returns an array of all attribution seq#s from the current perspective.
 	 * The `i`th entry of the array is the attribution key for the character at position `i`.
 	 * Validates segments either all have attribution information or none of them.
 	 * If no segment has attribution information, returns undefined.
 	 */
-	public getAllAttributionSeqs(): (number | AttributionKey)[] | undefined {
-		const seqs: (number | AttributionKey)[] | undefined = [];
-		let segmentsWithAttribution = 0;
-		let segmentsWithoutAttribution = 0;
+	public getAllAttributionSeqs(channel?: string): (number | AttributionKey | undefined)[] {
+		const seqs: (number | AttributionKey | undefined)[] = [];
 		this.walkAllSegments((segment) => {
-			if (segment.attribution) {
-				segmentsWithAttribution++;
-				for (let i = 0; i < segment.cachedLength; i++) {
-					const key = segment.attribution.getAtOffset(i);
-					seqs.push(key.type === "op" ? key.seq : key);
-				}
-			} else {
-				segmentsWithoutAttribution++;
+			for (let i = 0; i < segment.cachedLength; i++) {
+				const key = segment.attribution?.getAtOffset(i, channel);
+				seqs.push(key?.type === "op" ? key.seq : key);
 			}
 			return true;
 		});
 
-		assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
-		return segmentsWithAttribution !== 0 ? seqs : undefined;
+		return seqs;
 	}
 
 	/**
@@ -511,19 +521,14 @@ function elapsedMicroseconds(trace: Trace) {
 }
 
 // the client doesn't submit ops, so this adds a callback to capture them
-export type TestClientRevertibleDriver = InternalRevertDriver &
+export type TestClientRevertibleDriver = MergeTreeRevertibleDriver &
 	Partial<{ submitOpCallback?: (op: IMergeTreeOp | undefined) => void }>;
 
 export const createRevertDriver = (client: TestClient): TestClientRevertibleDriver => {
 	return {
-		createLocalReferencePosition: client.createLocalReferencePosition.bind(client),
-
 		removeRange(start: number, end: number) {
 			const op = client.removeRangeLocal(start, end);
 			this.submitOpCallback?.(op);
-		},
-		getPosition(segment: ISegment): number {
-			return client.getPosition(segment);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
 			const op = client.annotateRangeLocal(start, end, props, undefined);
@@ -533,10 +538,6 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			const op = client.insertSegmentLocal(pos, client.specToSegment(spec));
 			this.submitOpCallback?.(op);
 		},
-		localReferencePositionToPosition(lref: LocalReferencePosition): number {
-			return client.localReferencePositionToPosition(lref);
-		},
-		getContainingSegment: client.getContainingSegment.bind(client),
 	};
 };
 

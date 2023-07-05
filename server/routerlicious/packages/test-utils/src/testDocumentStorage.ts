@@ -9,7 +9,13 @@ import {
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
-import { IGitCache, IGitManager, ISession } from "@fluidframework/server-services-client";
+import {
+	IGitCache,
+	IGitManager,
+	ISession,
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+} from "@fluidframework/server-services-client";
 import {
 	IDatabaseManager,
 	IDeliState,
@@ -27,13 +33,7 @@ import {
 	ISnapshotTreeEx,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import {
-	IQuorumSnapshot,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-	getGitMode,
-	getGitType,
-} from "@fluidframework/protocol-base";
+import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
@@ -65,7 +65,6 @@ export class TestDocumentStorage implements IDocumentStorage {
 		documentId: string,
 		summary: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
@@ -85,10 +84,8 @@ export class TestDocumentStorage implements IDocumentStorage {
 			values,
 		};
 		const entries: ITreeEntry[] = getQuorumTreeEntries(
-			documentId,
 			sequenceNumber,
 			sequenceNumber,
-			term,
 			quorumSnapshot,
 		);
 
@@ -122,8 +119,6 @@ export class TestDocumentStorage implements IDocumentStorage {
 			logOffset: -1,
 			sequenceNumber,
 			signalClientConnectionNumber: 0,
-			epoch: undefined,
-			term: 1,
 			lastSentMSN: 0,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],
@@ -143,6 +138,7 @@ export class TestDocumentStorage implements IDocumentStorage {
 			sequenceNumber,
 			lastClientSummaryHead: undefined,
 			lastSummarySequenceNumber: 0,
+			validParentSummaries: undefined,
 		};
 
 		const collection = await this.databaseManager.getDocumentCollection();

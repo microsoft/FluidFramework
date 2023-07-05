@@ -2,17 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import * as semver from "semver";
-
-import {
-	VersionBumpType,
-	VersionChangeType,
-	VersionChangeTypeExtended,
-	VersionScheme,
-	isVersionBumpType,
-} from "@fluid-tools/version-tools";
-
 import { execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
@@ -56,4 +46,42 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 export function prereleaseSatisfies(packageVersion: string, range: string) {
 	// Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
 	return semver.satisfies(`${packageVersion}-zzz`, range);
+}
+
+/**
+ * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
+ * in the fluid-build section of the root package.json.
+ * @deprecated
+ */
+export enum MonoRepoKind {
+	Client = "client",
+	Server = "server",
+	Azure = "azure",
+	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
+}
+
+/**
+ * A type guard used to determine if a string is a MonoRepoKind.
+ * @deprecated
+ */
+export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
+	if (str === undefined) {
+		return false;
+	}
+
+	const list = Object.values<string>(MonoRepoKind);
+	const isMonoRepoValue = list.includes(str);
+	return isMonoRepoValue;
+}
+
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ * @deprecated
+ */
+export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+	for (const [, flag] of Object.entries(MonoRepoKind)) {
+		yield flag;
+	}
 }

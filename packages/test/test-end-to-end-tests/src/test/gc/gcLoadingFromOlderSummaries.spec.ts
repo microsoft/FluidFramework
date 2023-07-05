@@ -24,9 +24,9 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+} from "@fluid-internal/test-version-utils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the latest
@@ -279,7 +279,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	 * summary. But the DDS in the data store containing the references is not changed. This validates that the GC data
 	 * in older summary is correctly propagated to DDS as well.
 	 */
-	it.skip("updates unreferenced nodes correctly when DDS is unchanged after loading from older summary", async () => {
+	it("updates unreferenced nodes correctly when DDS is unchanged after loading from older summary", async () => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a second DDS in dataStoreA. This will be changed after loading from old summary so that the data store

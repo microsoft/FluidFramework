@@ -1,6 +1,6 @@
 ---
 title: "Authentication & authorization"
-menuPosition: 3
+menuPosition: 4
 editor: tylerbutler
 ---
 

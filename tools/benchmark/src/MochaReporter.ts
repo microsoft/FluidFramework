@@ -4,10 +4,15 @@
  */
 
 import { Runner, Suite, Test } from "mocha";
+import chalk from "chalk";
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { red, getName, getSuiteName } from "./ReporterUtilities";
+import { getName } from "./ReporterUtilities";
 import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
+// Since it's not moved yet, it needs this lint suppression to do this import:
+// eslint-disable-next-line import/no-internal-modules
+import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
@@ -38,7 +43,9 @@ module.exports = class {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.error(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
+				console.error(
+					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
+				);
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',
@@ -54,7 +61,7 @@ module.exports = class {
 					// Mocha test complected with out reporting data.
 					// This is an error, so report it as such.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
-					console.error(red(error));
+					console.error(chalk.red(error));
 					benchmarkReporter.recordTestResult(suite, getName(test.title), { error });
 					return;
 				}
@@ -62,7 +69,7 @@ module.exports = class {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
-					console.error(red(error));
+					console.error(chalk.red(error));
 					benchmark = { error };
 				}
 

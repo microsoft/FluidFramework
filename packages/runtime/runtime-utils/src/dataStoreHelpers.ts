@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITaggedTelemetryPropertyType,
+	FluidObject,
+	IFluidRouter,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -102,7 +107,7 @@ export function createResponseError(
 	headers?: { [key: string]: any },
 ): IResponse {
 	assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
-	// Omit query string which could contain personal data (aka "PII")
+	// Omit query string which could contain personal data unfit for logging
 	const urlNoQuery = request.url?.split("?")[0];
 
 	// Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it

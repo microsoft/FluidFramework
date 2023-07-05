@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -12,7 +11,7 @@ import {
 
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
-export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
+export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 export type OdspEndpoint = "odsp" | "odsp-df";
 

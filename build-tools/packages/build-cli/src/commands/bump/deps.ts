@@ -6,9 +6,9 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
 
-import { packageOrReleaseGroupArg } from "../../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
 import {
 	checkFlags,
@@ -61,7 +61,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			exclusive: ["package"],
 		}),
 		package: packageSelectorFlag({
-			description: "Only bump dependencies of this package.",
+			description:
+				"Only bump dependencies of this package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
 			exclusive: ["releaseGroup"],
 		}),
 		commit: checkFlags.commit,
@@ -85,7 +86,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-			command: "<%= config.bin %> <%= command.id %> server -g client -t greatest -p",
+			command:
+				"<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
 		},
 		{
 			description:
@@ -110,8 +112,34 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const shouldInstall = flags.install && !flags.skipChecks;
 		const shouldCommit = flags.commit && !flags.skipChecks;
 
-		if (args.package_or_release_group === undefined) {
-			this.error("ERROR: No dependency provided.");
+		const rgOrPackageName = args.package_or_release_group;
+		if (rgOrPackageName === undefined) {
+			this.error("No dependency provided.");
+		}
+
+		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
+		if (rgOrPackage === undefined) {
+			this.error(`Package not found: ${rgOrPackageName}`);
+		}
+
+		const branchName = await context.gitRepo.getCurrentBranchName();
+
+		// can be removed once server team owns their releases
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
+		}
+
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
+			this.info(
+				`${chalk.red.bold(
+					"Client packages on main branch should NOT be consuming prereleases from server. Server prereleases should be consumed in next branch only",
+				)}`,
+			);
+			if (branchName !== "next") {
+				this.error(
+					`Server prereleases should be consumed in ${chalk.bold("next")} branch only`,
+				);
+			}
 		}
 
 		/**
@@ -119,15 +147,13 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		 */
 		const depsToUpdate: string[] = [];
 
-		if (isReleaseGroup(args.package_or_release_group)) {
-			depsToUpdate.push(
-				...context.packagesInReleaseGroup(args.package_or_release_group).map((p) => p.name),
-			);
+		if (rgOrPackage instanceof MonoRepo) {
+			depsToUpdate.push(...rgOrPackage.packages.map((pkg) => pkg.name));
 		} else {
-			depsToUpdate.push(args.package_or_release_group);
-			const pkg = context.fullPackageMap.get(args.package_or_release_group);
+			depsToUpdate.push(rgOrPackageName);
+			const pkg = context.fullPackageMap.get(rgOrPackageName);
 			if (pkg === undefined) {
-				this.error(`Package not in context: ${args.package_or_release_group}`);
+				this.error(`Package not found: ${rgOrPackageName}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
@@ -143,7 +169,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}
 
 		this.logHr();
-		this.log(`Dependencies: ${chalk.blue(args.package_or_release_group)}`);
+		this.log(`Dependencies: ${chalk.blue(rgOrPackageName)}`);
 		this.log(
 			`Packages: ${chalk.blueBright(flags.releaseGroup ?? flags.package ?? "all packages")}`,
 		);
@@ -160,9 +186,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			context,
 			flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 			depsToUpdate,
-			isReleaseGroup(args.package_or_release_group)
-				? args.package_or_release_group
-				: undefined,
+			isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
 			flags.updateType,
 			/* prerelease */ flags.prerelease,
 			/* writeChanges */ true,
@@ -201,7 +225,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 			changedVersionsString.push(
 				"",
-				`Dependencies on ${chalk.blue(args.package_or_release_group)} updated:`,
+				`Dependencies on ${chalk.blue(rgOrPackageName)} updated:`,
 				"",
 			);
 
@@ -213,14 +237,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			if (shouldCommit) {
 				const commitMessage = stripAnsi(
 					`${generateBumpDepsCommitMessage(
-						args.package_or_release_group,
+						rgOrPackageName,
 						flags.updateType,
 						flags.releaseGroup,
 					)}\n\n${changedVersionMessage}`,
 				);
 
 				const bumpBranch = generateBumpDepsBranchName(
-					args.package_or_release_group,
+					rgOrPackageName,
 					flags.updateType,
 					flags.releaseGroup,
 				);

@@ -11,11 +11,14 @@ Generate a report from input bundle stats collected through the collect bundleSt
 
 ```
 USAGE
-  $ flub run bundleStats [-v] [--dangerfile <value>]
+  $ flub run bundleStats [-v | --quiet] [--dangerfile <value>]
 
 FLAGS
-  -v, --verbose         Verbose logging.
   --dangerfile=<value>  Path to dangerfile
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Generate a report from input bundle stats collected through the collect bundleStats command.

@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/common-utils";
+import { TelemetryDataTag } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -47,7 +49,7 @@ const NullConfigProvider: IConfigProviderBase = {
  */
 export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
-		return new CachedConfigProvider({
+		return new CachedConfigProvider(undefined, {
 			getRawConfig: (name: string) => {
 				try {
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
@@ -142,9 +144,20 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	return defaultReturn;
 }
 
-/** `sessionStorage` is undefined in some environments such as Node */
+/** `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled */
 const safeSessionStorage = (): Storage | undefined => {
-	return globalThis.sessionStorage;
+	// For some configurations accessing "globalThis.sessionStorage" throws
+	// "'sessionStorage' property from 'Window': Access is denied for this document" rather than returning undefined.
+	// Therefor check for it before accessing.
+	try {
+		// Using globalThis and checking for undefined is preferred over just accessing global sessionStorage
+		// since it avoids an exception when running in node.
+		// In some cases this has returned null when disabled in the browser, so ensure its undefined in that case:
+		return globalThis.sessionStorage ?? undefined;
+	} catch {
+		// For browsers which error on the above when session storage is disabled:
+		return undefined;
+	}
 };
 
 /**
@@ -154,7 +167,10 @@ export class CachedConfigProvider implements IConfigProvider {
 	private readonly configCache = new Map<string, StronglyTypedValue>();
 	private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
 
-	constructor(...orderedBaseProviders: (IConfigProviderBase | undefined)[]) {
+	constructor(
+		private readonly logger?: ITelemetryBaseLogger,
+		...orderedBaseProviders: (IConfigProviderBase | undefined)[]
+	) {
 		this.orderedBaseProviders = [];
 		const knownProviders = new Set<IConfigProviderBase>();
 		const candidateProviders = [...orderedBaseProviders];
@@ -203,6 +219,15 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
+					this.logger?.send({
+						category: "generic",
+						eventName: "ConfigRead",
+						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
+						configValue: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: JSON.stringify(parsed),
+						},
+					});
 					return parsed;
 				}
 			}
@@ -216,19 +241,19 @@ export class CachedConfigProvider implements IConfigProvider {
 /**
  * A type containing both a telemetry logger and a configuration provider
  */
-export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger> {
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
 	logger: L;
 }
 
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	obj: L,
 ): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 ): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
@@ -237,7 +262,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
 ) {
@@ -253,7 +278,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 	 * of the MonitoringContext and get the config provider.
 	 */
 	const mc: L & Partial<MonitoringContext<L>> = logger;
-	mc.config = new CachedConfigProvider(...configs);
+	mc.config = new CachedConfigProvider(logger, ...configs);
 	mc.logger = logger;
 	return mc as MonitoringContext<L>;
 }
