@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IDisposable, FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,

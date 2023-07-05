@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import {
+	ITelemetryBaseLogger,
+	ITelemetryGenericEvent,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
