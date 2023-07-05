@@ -8,11 +8,13 @@ import {
 	Button,
 	FluentProvider,
 	makeStyles,
+	shorthands,
 	tokens,
 	Tooltip,
-	Divider,
 } from "@fluentui/react-components";
-import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
+import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
+
+import { ArrowSync24Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -118,6 +120,19 @@ const useDevtoolsStyles = makeStyles({
 			textOverflow: "ellipsis",
 		},
 	},
+	icon: {
+		"& .ms-MessageBar-icon": {
+			marginTop: "10px",
+		},
+	},
+	retryButton: {
+		marginLeft: "5px",
+	},
+	debugNote: {
+		fontWeight: "normal",
+		marginTop: "0px",
+		marginBottom: "0px",
+	},
 });
 
 /**
@@ -138,9 +153,10 @@ export function DevtoolsView(): React.ReactElement {
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
-
+	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
+	const styles = useDevtoolsStyles();
 
 	React.useEffect(() => {
 		/**
@@ -191,6 +207,7 @@ export function DevtoolsView(): React.ReactElement {
 		setQueryTimedOut(false);
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 	}
+	initializeIcons();
 
 	return (
 		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
@@ -198,13 +215,41 @@ export function DevtoolsView(): React.ReactElement {
 				{supportedFeatures === undefined ? (
 					queryTimedOut ? (
 						<>
-							<div>Devtools not found. Timeout exceeded.</div>
-							<Tooltip
-								content="Retry searching for Devtools"
-								relationship="description"
-							>
-								<Button onClick={retryQuery}>Search again</Button>
-							</Tooltip>
+							{!isMessageDismissed && (
+								<MessageBar
+									messageBarType={MessageBarType.error}
+									isMultiline={true}
+									onDismiss={(): void => setIsMessageDismissed(true)}
+									dismissButtonAriaLabel="Close"
+									className={styles.icon}
+								>
+									It seems that Fluid Devtools has not been initialized in the
+									current tab, or it did not respond in a timely manner.
+									<Tooltip
+										content="Retry communicating with Fluid Devtools in the current tab."
+										relationship="description"
+									>
+										<Button
+											className={styles.retryButton}
+											size="small"
+											onClick={retryQuery}
+										>
+											Try again
+										</Button>
+									</Tooltip>
+									<br />
+									<h4 className={styles.debugNote}>
+										Need help? Please refer to our
+										<Link
+											href="https://aka.ms/fluid/devtool/docs"
+											target="_blank"
+										>
+											documentation page
+										</Link>{" "}
+										for guidance on getting the extension working.{" "}
+									</h4>
+								</MessageBar>
+							)}
 						</>
 					) : (
 						<>
@@ -278,7 +323,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<Divider vertical appearance="strong" />
+			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
 		</div>
 	);
@@ -286,10 +331,12 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 const useViewStyles = makeStyles({
 	root: {
+		...shorthands.padding("10px"),
 		alignItems: "center",
 		display: "flex",
 		flexDirection: "column",
 		height: "100%",
+		width: "100%",
 		minWidth: "200px",
 		overflowY: "auto",
 		boxSizing: "border-box",
@@ -354,6 +401,9 @@ function View(props: ViewProps): React.ReactElement {
 
 const useMenuStyles = makeStyles({
 	root: {
+		...shorthands.gap("0px", "10px"),
+		...shorthands.padding("10px"),
+		"boxSizing": "border-box",
 		"display": "flex",
 		"flexDirection": "column",
 		"height": "100%",
@@ -362,6 +412,7 @@ const useMenuStyles = makeStyles({
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
+			marginBottom: "15px",
 		},
 	},
 
@@ -434,6 +485,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
+		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -459,17 +511,16 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 
+	menuSections.push(
+		<MenuSection
+			header="Settings"
+			key="settings-menu-section"
+			onHeaderClick={onSettingsClicked}
+		/>,
+	);
+
 	return (
-		<div className={styles.root}>
-			<div className={styles.button} onClick={onHomeClicked}>
-				<h4 style={{ margin: "0px 3px 0px 0px" }}>Home</h4>
-			</div>
-			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div className={styles.button} onClick={onSettingsClicked}>
-				<h4 style={{ margin: "0px 3px" }}>Settings</h4>
-				<Settings20Regular />
-			</div>
-		</div>
+		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
 	);
 }
 
