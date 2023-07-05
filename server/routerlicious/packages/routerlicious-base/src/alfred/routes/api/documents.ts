@@ -136,7 +136,9 @@ export function create(
 				? uuid()
 				: (request.body.id as string) || uuid();
 
-			Lumberjack.info(`Whole summary length= ${JSON.stringify(request.body.summary).length}.`);
+			Lumberjack.info(
+				`Whole summary length= ${JSON.stringify(request.body.summary).length}.`,
+			);
 			// Summary information
 			const summary = convertWholeSummaryTreeToSummaryTree(request.body.summary);
 
