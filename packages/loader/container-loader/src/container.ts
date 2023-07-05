@@ -1006,6 +1006,11 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
+
+			// There is no user for summarizer, so we need to ensure dispose is called
+			if (this.client.details.type === summarizerClientType) {
+				this.dispose(error);
+			}
 		}
 	}
 
