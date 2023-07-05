@@ -3350,7 +3350,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_gyqcce5u2ijhn2hqkipmk56rmu
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -3399,6 +3399,7 @@ importers:
       concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
+      lodash: ^4.17.21
       prettier: ~2.6.2
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
@@ -3417,6 +3418,7 @@ importers:
       '@fluidframework/matrix': link:../../../packages/dds/matrix
       '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
       '@fluidframework/sequence': link:../../../packages/dds/sequence
+      lodash: 4.17.21
       source-map-loader: 2.0.2_webpack@5.83.0
     devDependencies:
       '@cerner/duplicate-package-checker-webpack-plugin': 2.3.0_webpack@5.83.0
@@ -3715,7 +3717,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_gyqcce5u2ijhn2hqkipmk56rmu
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -3850,7 +3852,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_gyqcce5u2ijhn2hqkipmk56rmu
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -23538,8 +23540,10 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.12.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -28295,34 +28299,6 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_2wwsys6gbnsdc4a7jaa5rcv4nq:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      debug: 3.2.7
-      eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /eslint-module-utils/2.8.0_iwcyz3q5swh44qq6nyzz4rzmcq:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
@@ -28395,36 +28371,6 @@ packages:
       lodash.kebabcase: 4.1.1
       lodash.snakecase: 4.1.1
       lodash.upperfirst: 4.3.1
-    dev: true
-
-  /eslint-plugin-import/2.25.4_eslint@8.6.0:
-    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flat: 1.3.1
-      debug: 2.6.9
-      doctrine: 2.1.0
-      eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-module-utils: 2.8.0_2wwsys6gbnsdc4a7jaa5rcv4nq
-      has: 1.0.3
-      is-core-module: 2.12.1
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      object.values: 1.1.6
-      resolve: 1.22.2
-      tsconfig-paths: 3.14.2
-    transitivePeerDependencies:
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
     dev: true
 
   /eslint-plugin-import/2.25.4_gyqcce5u2ijhn2hqkipmk56rmu:
@@ -39500,7 +39446,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.11
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /scoped-regex/2.1.0:
