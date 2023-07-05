@@ -10,7 +10,7 @@ import {
 	ITelemetryGenericEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/common-definitions";
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 

@@ -7,21 +7,18 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import { IEvent } from "@fluidframework/common-definitions";
+import {
+	IEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+} from "@fluidframework/common-definitions";
 import {
 	TypedEventEmitter,
 	assert,
 	performance,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import {
-	ITelemetryProperties,
-	TelemetryEventCategory,
-	IRequest,
-	IResponse,
-	IFluidRouter,
-	FluidObject,
-} from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetailsInternal,

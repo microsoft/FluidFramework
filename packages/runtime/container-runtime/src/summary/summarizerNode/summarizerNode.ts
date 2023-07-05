@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,

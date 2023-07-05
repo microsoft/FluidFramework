@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth';
 import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree';

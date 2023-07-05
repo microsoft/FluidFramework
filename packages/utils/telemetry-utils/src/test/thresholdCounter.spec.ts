@@ -9,7 +9,7 @@ import {
 	ITelemetryErrorEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryGenericEvent,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/common-definitions";
 import { ThresholdCounter } from "../thresholdCounter";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 

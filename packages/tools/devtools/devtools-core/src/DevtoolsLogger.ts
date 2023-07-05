@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 import {

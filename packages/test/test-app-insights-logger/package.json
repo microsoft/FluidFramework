@@ -52,7 +52,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"applicationinsights": "^2.1.9"
 	},

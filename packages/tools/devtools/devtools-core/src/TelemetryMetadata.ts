@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
 /**
  * Interface for telemetry events with a timestamp. Specific to the Fluid Devtools.

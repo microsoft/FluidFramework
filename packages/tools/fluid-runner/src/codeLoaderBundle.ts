@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * Contract that defines the necessary exports for the bundle provided at runtime

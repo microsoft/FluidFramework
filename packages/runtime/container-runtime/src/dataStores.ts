@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
-import {
-	ITelemetryBaseLogger,
-	IDisposable,
-	IFluidHandle,
-	IRequest,
-} from "@fluidframework/core-interfaces";
+import { IDisposable, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {

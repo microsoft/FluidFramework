@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 import { PromiseCache } from "@fluidframework/common-utils";
-import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,

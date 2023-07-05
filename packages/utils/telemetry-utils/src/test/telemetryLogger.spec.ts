@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerPropertyBags,
 	ITelemetryLoggerPropertyBag,

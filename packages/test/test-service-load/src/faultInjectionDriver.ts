@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	DriverErrorType,
