@@ -96,9 +96,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				pendingMessage !== undefined,
 				"this is impossible due to the above length check",
 			);
-			this.deltaConnections.forEach((dc) => {
-				dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
-			});
 			this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			messageCount--;
 		}
