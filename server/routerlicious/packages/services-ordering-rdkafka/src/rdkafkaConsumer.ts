@@ -28,6 +28,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	 * See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
 	 */
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
+	eventHubConnString?: string;
 }
 
 /**
@@ -94,6 +95,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		const zookeeperEndpoints = this.endpoints.zooKeeper;
 		if (
+			!this.consumerOptions.eventHubConnString &&
 			zookeeperEndpoints &&
 			zookeeperEndpoints.length > 0 &&
 			this.consumerOptions.zooKeeperClientConstructor

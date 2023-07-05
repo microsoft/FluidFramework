@@ -7,18 +7,21 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	IEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
 	TypedEventEmitter,
 	assert,
 	performance,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryProperties,
+	TelemetryEventCategory,
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+} from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetailsInternal,
@@ -118,10 +121,11 @@ import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
-	OnlyValidTermValue,
 	IProtocolHandler,
+	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
+	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
@@ -2230,7 +2234,7 @@ export class Container
 
 	private processSignal(message: ISignalMessage) {
 		// No clientId indicates a system signal message.
-		if (message.clientId === null) {
+		if (protocolHandlerShouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;

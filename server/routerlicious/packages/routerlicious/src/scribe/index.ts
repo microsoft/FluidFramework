@@ -44,6 +44,7 @@ export async function scribeCreate(
 	const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 	const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 	const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+	const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 	const sendTopic = config.get("lambdas:deli:topic");
 	const kafkaClientId = config.get("scribe:kafkaClientId");
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
@@ -133,6 +134,7 @@ export async function scribeCreate(
 		kafkaReplicationFactor,
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
+		eventHubConnString,
 	);
 
 	const externalOrdererUrl = config.get("worker:serverUrl");

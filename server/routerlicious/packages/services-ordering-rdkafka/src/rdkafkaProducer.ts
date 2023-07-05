@@ -44,6 +44,7 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 
 	pollIntervalMs: number;
 	maxMessageSize: number;
+	eventHubConnString?: string;
 }
 
 /**
