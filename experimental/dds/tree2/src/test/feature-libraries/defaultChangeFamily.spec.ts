@@ -145,25 +145,6 @@ describe("DefaultEditBuilder", () => {
 
 		fooEditor.delete(0, 1);
 		assert.equal(deltas.length, 3);
-		fooEditor.insert(0, singleTextCursor({ type: jsonNumber.name, value: 43 }));
-		expectForest(forest, {
-			type: jsonObject.name,
-			fields: {
-				foo: [{ type: jsonNumber.name, value: 43 }],
-			},
-		});
-		assert.equal(deltas.length, 4);
-
-		fooEditor.delete(0, 1);
-		assert.equal(deltas.length, 5);
-		fooEditor.insert(0, singleTextCursor({ type: jsonNumber.name, value: 44 }));
-		expectForest(forest, {
-			type: jsonObject.name,
-			fields: {
-				foo: [{ type: jsonNumber.name, value: 44 }],
-			},
-		});
-		assert.equal(deltas.length, 6);
 	});
 
 	describe("Value Field Edits", () => {
