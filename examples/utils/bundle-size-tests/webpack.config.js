@@ -10,14 +10,17 @@ const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker
 const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
 const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-tools");
 
-// We need to replace the version string in the bundled code; otherwise the bundle we build in CI for PRs will have the
+// We need to replace the version string in the bundled code (in the packageVersion.ts files); otherwise the bundle we build in CI for PRs will have the
 // updated version string, which will not match the one in the main bundle. This will cause the bundle comparison to be
 // incorrect.
 const pkg = require("./package.json");
 
 // Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
-const versionToReplace = process.env.SETVERSION_VERSION ?? pkg.version; // ?? "2.0.0-dev.5.2.0.171706";
-const [publicVer, { major, minor, patch }] = fromInternalScheme(versionToReplace, true, true);
+const verString = process.env.SETVERSION_VERSION ?? pkg.version;
+console.warn(`verString: ${verString}`);
+
+const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
+const versionToReplace = new RegExp(verString, "g");
 const internalVersionNoPrerelease = [major, minor, patch].join(".");
 const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
 
@@ -41,6 +44,17 @@ module.exports = {
 	mode: "production",
 	module: {
 		rules: [
+			{
+				test: /packageVersion\.js$/,
+				loader: "string-replace-loader",
+				options: {
+					search: versionToReplace,
+					replace: newVersion,
+					// If true, webpack will fail if the search string is not found in the file. Since we have some files that
+					// don't have the version numbers, we need to set this to false.
+					strict: false,
+				},
+			},
 			{
 				test: /\.tsx?$/,
 				use: "ts-loader",

@@ -8,9 +8,9 @@ import {
 	Button,
 	FluentProvider,
 	makeStyles,
+	shorthands,
 	tokens,
 	Tooltip,
-	Divider,
 } from "@fluentui/react-components";
 import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 
@@ -323,7 +323,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<Divider vertical appearance="strong" />
+			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
 		</div>
 	);
@@ -331,10 +331,12 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 const useViewStyles = makeStyles({
 	root: {
+		...shorthands.padding("10px"),
 		alignItems: "center",
 		display: "flex",
 		flexDirection: "column",
 		height: "100%",
+		width: "100%",
 		minWidth: "200px",
 		overflowY: "auto",
 		boxSizing: "border-box",
@@ -399,6 +401,9 @@ function View(props: ViewProps): React.ReactElement {
 
 const useMenuStyles = makeStyles({
 	root: {
+		...shorthands.gap("0px", "10px"),
+		...shorthands.padding("10px"),
+		"boxSizing": "border-box",
 		"display": "flex",
 		"flexDirection": "column",
 		"height": "100%",
@@ -407,6 +412,7 @@ const useMenuStyles = makeStyles({
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
+			marginBottom: "15px",
 		},
 	},
 
