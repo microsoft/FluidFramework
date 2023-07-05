@@ -4,8 +4,9 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, IDisposable } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { Lazy } from "@fluidframework/core-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 

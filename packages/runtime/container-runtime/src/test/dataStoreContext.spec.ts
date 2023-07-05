@@ -10,7 +10,6 @@ import { stringToBuffer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import {
-	ITaggedTelemetryPropertyType,
 	FluidObject,
 	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
