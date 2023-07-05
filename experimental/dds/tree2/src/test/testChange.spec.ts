@@ -4,21 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKinds, singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, TreeSchemaIdentifier, Delta, FieldKey } from "../core";
+import { singleTextCursor } from "../feature-libraries";
+import { makeAnonChange, Delta, FieldKey } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
-
-const nodeType: TreeSchemaIdentifier = brand("Node");
-const fieldHandler = FieldKinds.value.changeHandler;
-const tree1 = { type: nodeType, value: "value1" };
-const tree2 = { type: nodeType, value: "value2" };
-
-const change1WithChildChange = { value: tree1, changes: TestChange.mint([0, 1], 2) };
-const childChange = TestChange.mint([0, 1], 2);
-const childChange1 = { changes: TestChange.mint([0, 1], 2) };
-const childChange2 = { changes: TestChange.mint([0, 1], 3) };
-const childChange3 = { changes: TestChange.mint([0, 1], 4) };
 
 describe("TestChange", () => {
 	it("can be composed", () => {

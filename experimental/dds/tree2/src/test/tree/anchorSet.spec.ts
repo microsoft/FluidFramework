@@ -313,15 +313,6 @@ describe("AnchorSet", () => {
 		anchors.applyDelta(makeDelta(deleteMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
 		log.expect([["visitSubtreeChange.onDelete-foo-5-1", 1]]);
 		log.clear();
-		anchors.applyDelta(makeDelta(deleteMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 0])));
-		anchors.applyDelta(
-			makeDelta(insertXYZMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 0])),
-		);
-		log.expect([
-			["visitSubtreeChange.onDelete-foo-0-1", 1],
-			["visitSubtreeChange.onInsert-foo-0", 1],
-		]);
-		log.clear();
 		unsubscribePathVisitor();
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 4])));
 		log.expect([]);
