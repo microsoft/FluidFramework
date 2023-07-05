@@ -311,7 +311,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 				revertible.intervals.push({
 					intervalId: interval.getIntervalId(),
-					label: interval.properties.referenceRangeLabels[0],
+					label: interval.getRangeLabels()[0],
 					startOffset: offset,
 					endOffset,
 				});
@@ -321,7 +321,7 @@ export function appendSharedStringDeltaToRevertibles(
 			endIntervals.forEach(({ interval, offset }) => {
 				revertible.intervals.push({
 					intervalId: interval.getIntervalId(),
-					label: interval.properties.referenceRangeLabels[0],
+					label: interval.getRangeLabels()[0],
 					endOffset: offset,
 				});
 			});
@@ -359,13 +359,12 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-// Uses of referenceRangeLabels will be removed once AB#4081 is completed.
 function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
 ) {
 	const id = getUpdatedIdFromInterval(revertible.interval);
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.getRangeLabels()[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
 
@@ -373,7 +372,7 @@ function revertLocalDelete(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.DELETE>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.getRangeLabels()[0];
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const type = revertible.interval.intervalType;
@@ -396,7 +395,7 @@ function revertLocalChange(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.getRangeLabels()[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
@@ -410,7 +409,7 @@ function revertLocalPropertyChanged(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.getRangeLabels()[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
