@@ -13644,7 +13644,7 @@ packages:
 
   /@fluentui/react-avatar/9.4.10_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-QYDxq2ZzIdau1u7pcDqK8UIyf6xOC+LSoZukdmiqqbOvuuRPb7v1xUqSqfnq3ABMjAyMItdEFFunTrvMevGRug==}
-    peerDependencies:
+    peerDependencies
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0 || 17.0.2'
