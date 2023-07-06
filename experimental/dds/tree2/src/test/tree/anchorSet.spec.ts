@@ -283,10 +283,6 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Delete,
 			count: 1,
 		};
-		const insertXYZMark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [singleTextCursor({ type: jsonString.name, value: "xyz" })],
-		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 3])));
