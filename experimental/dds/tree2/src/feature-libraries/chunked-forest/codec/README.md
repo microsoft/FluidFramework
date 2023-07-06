@@ -19,12 +19,12 @@ A few implementations are included which make different choices here:
 
 -   [uncompressedEncode.ts](uncompressedEncode.ts): the simplest implementation, which captures nothing in the shape and does no Dictionary Coding of identifiers.
     This makes for more human readable data as well as a simple reference implementation which.
--   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must br provided to it via the `EncoderCache`)
+-   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must be provided to it via the `EncoderCache`)
 -   [schemaBasedEncoding.ts](schemaBasedEncoding.ts): a strategy for compressedEncode using schema to infer commonly used shapes.
 
 ### Future Optimizations
 
-One nice thing about this encoding scheme is there is room to improve compression without changeling the format (and thus without changing the decoder).
+One nice thing about this encoding scheme is there is room to improve compression without changing the format (and thus without changing the decoder).
 There are two main kinds of optimizations of this type:
 
 -   Improve selection of shapes to be based on more than just schema.
@@ -51,5 +51,5 @@ The files in this project are layered (ordered such that dependencies are only t
 -   "generic" vs non-generic: "generic" refers to code which does not depend on specific kinds of shapes:
     format changes which add or remove kinds of encoded shapes should not impact these files.
 -   "format" vs other: "format" files define the actual persisted data format.
-    Note that choices like how the "data" array contents are are structured are considered to be defined in the format files as part of the shapes there, despite them not being captured by the schema in those files:
+    Note that choices like how the "data" array contents are structured are considered to be defined in the format files as part of the shapes there, despite them not being captured by the schema in those files:
     these details should be fully defined by documentation in the format files which must not depend on other files.

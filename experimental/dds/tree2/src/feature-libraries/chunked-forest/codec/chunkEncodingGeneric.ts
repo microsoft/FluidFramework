@@ -121,7 +121,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 }
 
 /**
- * A tree shape which can can references to it deduplicated using {@link Counter}.
+ * A tree shape which can have references to it deduplicated using {@link Counter}.
  *
  * @remarks
  * Deduplication of shapes is done after the output is otherwise generated (including identifier dictionary encoding).

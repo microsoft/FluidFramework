@@ -98,7 +98,7 @@ export const EncodedCounter = Type.Object(
  * - `true, value` when there is a value.
  *
  * For a more compact encoding, there are three options for the shape:
- * - `true`: there is a value, and it will simple be encoded by putting it in the output buffer (so `value`).
+ * - `true`: there is a value, and it will simply be encoded by putting it in the output buffer (so `value`).
  * - `false`: there is never a value, and it takes up no space in the output buffer.
  * - `[value]`: there is a value, and its always the same.
  * Takes up no space in the output buffer: the value comes from the shape arrays's content.
@@ -120,7 +120,7 @@ export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 export const EncodedTreeShape = Type.Object(
 	{
 		/**
-		 * If not provided, inline in data.
+		 * If not provided, inlined in data.
 		 */
 		type: Type.Optional(IdentifierOrIndex),
 		value: Type.Optional(EncodedValueShape),
