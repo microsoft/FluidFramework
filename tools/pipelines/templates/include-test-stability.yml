@@ -51,6 +51,9 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+variables:
+  - template: include-vars-node-version.yml
+
 jobs:
   # Job - Build
   - job: build
@@ -88,11 +91,9 @@ jobs:
             TestCoverage=$(testCoverage)
           "
 
-    # Install
-    - task: UseNode@1
-      displayName: Use Node 16.x
-      inputs:
-        version: 16.x
+    - template: include-use-node-version.yml
+      parameters:
+        version: ${{ variables.nodeVersion }}
 
     - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml

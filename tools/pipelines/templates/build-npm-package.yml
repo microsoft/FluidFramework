@@ -130,6 +130,7 @@ variables:
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: ado-feeds
+  - template: include-vars-node-version.yml
 
 stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -241,11 +242,9 @@ stages:
                 fi
               fi
 
-        # Install
-        - task: UseNode@1
-          displayName: Use Node 16.x
-          inputs:
-            version: 16.x
+        - template: include-use-node-version.yml
+          parameters:
+            version: ${{ variables.nodeVersion }}
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml

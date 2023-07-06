@@ -23,12 +23,12 @@ variables:
   value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+- template: include-vars-node-version.yml
 
 steps:
-- task: UseNode@1
-  displayName: Use Node 16.x
-  inputs:
-    version: 16.x
+- template: templates/include-use-node-version.yml
+  parameters:
+    version: ${{ variables.nodeVersion }}
 
 - template: templates/include-install-pnpm.yml
   parameters:

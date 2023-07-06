@@ -66,6 +66,9 @@ parameters:
   type: stepList
   default: []
 
+variables:
+  - template: include-vars-node-version.yml
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -159,11 +162,9 @@ jobs:
               artifactBuildId=${{ parameters.artifactBuildId }}
             "
 
-      # Install
-      - task: UseNode@1
-        displayName: Use Node 16.x
-        inputs:
-          version: 16.x
+      - template: include-use-node-version.yml
+        parameters:
+          version: ${{ variables.nodeVersion }}
 
       # Download artifact
       - task: DownloadPipelineArtifact@2

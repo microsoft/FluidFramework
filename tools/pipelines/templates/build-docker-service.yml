@@ -132,6 +132,7 @@ variables:
 - ${{ if eq(parameters.releaseKind, 'docker') }}:
   - name: tagNameOnReleaseImage
     value: ${{ parameters.tagName }}
+- template: include-vars-node-version.yml
 
 stages:
 - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -227,10 +228,9 @@ stages:
           fi
 
     # for npm ci in component detection and set version
-    - task: UseNode@1
-      displayName: Use Node 16.x
-      inputs:
-        version: 16.x
+    - template: include-use-node-version.yml
+      parameters:
+        version: ${{ variables.nodeVersion }}
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
