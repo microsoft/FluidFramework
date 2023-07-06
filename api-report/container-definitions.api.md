@@ -159,10 +159,6 @@ export interface IContainerContext {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
@@ -170,8 +166,6 @@ export interface IContainerContext {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-    // @deprecated
-    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -181,8 +175,6 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // @deprecated (undocumented)
-    readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
