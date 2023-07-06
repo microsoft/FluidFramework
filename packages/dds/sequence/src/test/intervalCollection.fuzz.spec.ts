@@ -182,7 +182,6 @@ export function makeOperationGenerator(
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[removeRange, usableWeights.removeRange, hasNonzeroLength],
-		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
@@ -209,6 +208,98 @@ describe("IntervalCollection fuzz testing", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
+		},
+		defaultTestCount: 100,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		parseOperations: (serialized: string) => {
+			const operations: Operation[] = JSON.parse(serialized);
+			// Replace this value with some other interval ID and uncomment to filter replay of the test
+			// suite to only include interval operations with this ID.
+			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+			// if (filterIntervalId) {
+			// 	return operations.filter((entry) =>
+			// 		[undefined, filterIntervalId].includes((entry as any).id),
+			// 	);
+			// }
+			return operations;
+		},
+	});
+});
+
+// currently fails
+describe.skip("IntervalCollection offline fuzz testing", () => {
+	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
+		workloadName: "offline interval collection",
+		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+			makeReducer(),
+		validateConsistency: assertEquivalentSharedStrings,
+		factory: new SharedStringFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: 10 },
+		reconnectProbability: 0.0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
+		},
+		defaultTestCount: 100,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		parseOperations: (serialized: string) => {
+			const operations: Operation[] = JSON.parse(serialized);
+			// Replace this value with some other interval ID and uncomment to filter replay of the test
+			// suite to only include interval operations with this ID.
+			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+			// if (filterIntervalId) {
+			// 	return operations.filter((entry) =>
+			// 		[undefined, filterIntervalId].includes((entry as any).id),
+			// 	);
+			// }
+			return operations;
+		},
+	});
+});
+
+describe("IntervalCollection offline fuzz testing no intervals", () => {
+	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
+		workloadName: "offline interval collection no intervals",
+		generatorFactory: () =>
+			take(
+				100,
+				makeOperationGenerator({
+					...defaultOptions,
+					weights: {
+						...defaultOptions.weights,
+						addInterval: 0,
+						deleteInterval: 0,
+						changeInterval: 0,
+						changeProperties: 0,
+					},
+				}),
+			),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+			makeReducer(),
+		validateConsistency: assertEquivalentSharedStrings,
+		factory: new SharedStringFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: 10 },
+		reconnectProbability: 0.0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
 		},
 		defaultTestCount: 100,
 		// Uncomment this line to replay a specific seed from its failure file:
