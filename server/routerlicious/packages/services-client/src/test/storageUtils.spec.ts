@@ -9,7 +9,7 @@ import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	convertWholeSummaryTreeToSummaryTree,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 } from "../storageUtils";
 
 import {
@@ -214,7 +214,7 @@ describe("Storage Utils", () => {
 		});
 	});
 
-	describe("convertWholeSummaryTreeToSummaryTree()", () => {
+	describe("convertFirstSummaryWholeSummaryTreeToSummaryTree()", () => {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: 0,
 			sequenceNumber: 1,
@@ -245,7 +245,7 @@ describe("Storage Utils", () => {
 
 		it("Validate summary tree conversion", () => {
 			const test = convertSummaryTreeToWholeSummaryTree(undefined, summaryTree, "", "");
-			assert.deepStrictEqual(convertWholeSummaryTreeToSummaryTree(test), summaryTree);
+			assert.deepStrictEqual(convertFirstSummaryWholeSummaryTreeToSummaryTree(test), summaryTree);
 		});
 	});
 });

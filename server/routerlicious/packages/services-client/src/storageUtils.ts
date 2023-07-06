@@ -218,11 +218,11 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 }
 
 /**
- * Converts existing IWholeSummaryTree to ISummaryTree
+ * Converts existing IWholeSummaryTree to ISummaryTree for the first summary (without Handle entries)
  * @param wholeSummaryTree - wholeSummaryTree used on the payload for creating and uploading a document.
  * @returns Summary tree to be used when creating a new document.
  */
-export function convertWholeSummaryTreeToSummaryTree(
+export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 	wholeSummaryTree: IWholeSummaryTree,
 ): ISummaryTree {
 	const tree: { [path: string]: SummaryObject } = {};
@@ -234,14 +234,16 @@ export function convertWholeSummaryTreeToSummaryTree(
 						.value as IWholeSummaryBlob;
 					tree[entry.path] = {
 						type: SummaryType.Blob,
-						content: blobPayload.content,
+						content: blobPayload.encoding === "base64"
+						? new Uint8Array(stringToBuffer(blobPayload.content, "base64"))
+						: blobPayload.content,
 					};
 					break;
 				}
 				case "tree": {
 					const treePayload = (entry as IWholeSummaryTreeValueEntry)
 						.value as IWholeSummaryTree;
-					tree[entry.path] = convertWholeSummaryTreeToSummaryTree(treePayload);
+					tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(treePayload);
 					break;
 				}
 				default: {
