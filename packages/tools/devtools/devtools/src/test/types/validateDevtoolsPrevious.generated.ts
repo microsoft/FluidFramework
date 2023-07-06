@@ -40,6 +40,30 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerKey": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<old.ContainerKey>;
+declare function use_current_TypeAliasDeclaration_ContainerKey(
+    use: TypeOnly<current.ContainerKey>);
+use_current_TypeAliasDeclaration_ContainerKey(
+    get_old_TypeAliasDeclaration_ContainerKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerKey": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<current.ContainerKey>;
+declare function use_old_TypeAliasDeclaration_ContainerKey(
+    use: TypeOnly<old.ContainerKey>);
+use_old_TypeAliasDeclaration_ContainerKey(
+    get_current_TypeAliasDeclaration_ContainerKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DevtoolsLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DevtoolsLogger():
@@ -88,6 +112,30 @@ use_old_InterfaceDeclaration_DevtoolsProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_HasContainerKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<old.HasContainerKey>;
+declare function use_current_InterfaceDeclaration_HasContainerKey(
+    use: TypeOnly<current.HasContainerKey>);
+use_current_InterfaceDeclaration_HasContainerKey(
+    get_old_InterfaceDeclaration_HasContainerKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_HasContainerKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<current.HasContainerKey>;
+declare function use_old_InterfaceDeclaration_HasContainerKey(
+    use: TypeOnly<old.HasContainerKey>);
+use_old_InterfaceDeclaration_HasContainerKey(
+    get_current_InterfaceDeclaration_HasContainerKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDevtools": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDevtools():
@@ -108,6 +156,30 @@ declare function use_old_InterfaceDeclaration_IDevtools(
     use: TypeOnly<old.IDevtools>);
 use_old_InterfaceDeclaration_IDevtools(
     get_current_InterfaceDeclaration_IDevtools());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_VisualizeSharedObject": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_VisualizeSharedObject():
+    TypeOnly<old.VisualizeSharedObject>;
+declare function use_current_TypeAliasDeclaration_VisualizeSharedObject(
+    use: TypeOnly<current.VisualizeSharedObject>);
+use_current_TypeAliasDeclaration_VisualizeSharedObject(
+    get_old_TypeAliasDeclaration_VisualizeSharedObject());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_VisualizeSharedObject": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_VisualizeSharedObject():
+    TypeOnly<current.VisualizeSharedObject>;
+declare function use_old_TypeAliasDeclaration_VisualizeSharedObject(
+    use: TypeOnly<old.VisualizeSharedObject>);
+use_old_TypeAliasDeclaration_VisualizeSharedObject(
+    get_current_TypeAliasDeclaration_VisualizeSharedObject());
 
 /*
 * Validate forward compat by using old type in place of current type

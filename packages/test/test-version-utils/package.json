@@ -58,6 +58,7 @@
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-drivers": "workspace:~",
+		"@fluid-tools/version-tools": "^0.20.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",

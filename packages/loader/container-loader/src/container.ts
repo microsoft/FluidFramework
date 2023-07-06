@@ -101,7 +101,6 @@ import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
-import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -112,11 +111,7 @@ import {
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import {
-	initQuorumValuesFromCodeDetails,
-	getCodeDetailsFromQuorumValues,
-	QuorumProxy,
-} from "./quorum";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
@@ -2311,17 +2306,18 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
-		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+		const getSpecifiedCodeDetails = () =>
+			(this.protocolHandler.quorum.get("code") ??
+				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
 			this._loadedFromVersion,
-			deltaManagerProxy,
+			this._deltaManager,
 			this.storageAdapter,
-			quorumProxy,
+			this.protocolHandler.quorum,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2337,9 +2333,10 @@ export class Container
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => deltaManagerProxy.serviceConfiguration,
+			() => this._deltaManager.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
+			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
@@ -2347,8 +2344,6 @@ export class Container
 		);
 		this._lifecycleEvents.once("disposed", () => {
 			context.dispose();
-			quorumProxy.dispose();
-			deltaManagerProxy.dispose();
 		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(

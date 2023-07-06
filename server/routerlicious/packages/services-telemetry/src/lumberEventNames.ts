@@ -17,6 +17,7 @@ export enum LumberEventName {
 	UnitTestEvent = "UnitTestEvent",
 
 	// Lambdas
+	AlfredRunner = "AlfredRunner",
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",

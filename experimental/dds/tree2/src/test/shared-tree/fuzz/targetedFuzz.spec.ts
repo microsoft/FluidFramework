@@ -39,9 +39,7 @@ interface AbortFuzzTestState extends FuzzTestState {
 describe("Fuzz - Targeted", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		setPayload: 1,
-	};
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -100,7 +98,6 @@ describe("Fuzz - Targeted", () => {
 	});
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
-		setPayload: 1,
 		insert: 1,
 		delete: 1,
 		start: 0,
