@@ -41,9 +41,7 @@ export class KafkaRunner implements IRunner {
 			throw new Error("Already started");
 		}
 
-		const deferred = new Deferred<void>();
-
-		this.deferred = deferred;
+		this.deferred = new Deferred<void>();
 
 		process.on("warning", (msg) => {
 			console.trace("Warning", msg);
@@ -51,7 +49,7 @@ export class KafkaRunner implements IRunner {
 
 		this.factory.on("error", (error) => {
 			this.runnerMetric.error("Kafka factory encountered an error", error);
-			deferred.reject(error);
+			this.deferred?.reject(error);
 			this.deferred = undefined;
 		});
 
@@ -93,14 +91,14 @@ export class KafkaRunner implements IRunner {
 				} else {
 					Lumberjack.error(errorMsg, lumberProperties, error);
 				}
-				deferred.reject(error);
+				this.deferred?.reject(error);
 				this.deferred = undefined;
 			}
 		});
 
 		this.stopped = false;
 
-		return deferred.promise;
+		return this.deferred.promise;
 	}
 
 	/**
@@ -141,14 +139,15 @@ export class KafkaRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
-			if (caller === "uncaughtException") {
+			if (caller === "sigterm") {
+				this.deferred?.resolve();
+			} else {
+				// uncaughtException
 				this.deferred?.reject({
 					forceKill: true,
 					uncaughtException: serializeError(uncaughtException),
 					runnerStopException: serializeError(error),
 				});
-			} else {
-				this.deferred?.resolve();
 			}
 			this.deferred = undefined;
 			throw error;

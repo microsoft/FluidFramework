@@ -173,14 +173,15 @@ export class AlfredRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
 			}
-			if (caller === "uncaughtException") {
+			if (caller === "sigterm") {
+				this.runningDeferred?.resolve();
+			} else {
+				// uncaughtException
 				this.runningDeferred?.reject({
 					forceKill: true,
 					uncaughtException: serializeError(uncaughtException),
 					runnerStopException: serializeError(error),
 				});
-			} else {
-				this.runningDeferred?.resolve();
 			}
 			this.runningDeferred = undefined;
 			throw error;
