@@ -240,12 +240,12 @@ export class TenantManager {
 	): Promise<ITenantConfig & { key: string }> {
 		const db = await this.mongoManager.getDatabase();
 		const collection = db.collection<ITenantDocument>(this.collectionName);
-		const incomingKeyVersion = this.secretManager.getIncomingKeyVersion();
+		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
 		const tenantKey1 = this.generateTenantKey();
 		const encryptedTenantKey1 = this.secretManager.encryptSecret(
 			tenantKey1,
-			incomingKeyVersion,
+			latestKeyVersion,
 		);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
@@ -258,7 +258,7 @@ export class TenantManager {
 		const tenantKey2 = this.generateTenantKey();
 		const encryptedTenantKey2 = this.secretManager.encryptSecret(
 			tenantKey2,
-			incomingKeyVersion,
+			latestKeyVersion,
 		);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
@@ -269,8 +269,8 @@ export class TenantManager {
 		}
 
 		// New tenant keys will be encrypted with incoming key version.
-		if (incomingKeyVersion) {
-			customData.encryptionKeyVersion = incomingKeyVersion;
+		if (latestKeyVersion) {
+			customData.encryptionKeyVersion = latestKeyVersion;
 		}
 
 		const id = await collection.insertOne({

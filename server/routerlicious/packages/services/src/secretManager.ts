@@ -10,7 +10,7 @@ import * as core from "@fluidframework/server-services-core";
  * Users requiring encryption of secrets are expected to have their own implementation of ISecretManager.
  */
 export class SecretManager implements core.ISecretManager {
-	public getIncomingKeyVersion(): core.EncryptionKeyVersion {
+	public getLatestKeyVersion(): core.EncryptionKeyVersion {
 		return undefined;
 	}
 

@@ -22,7 +22,7 @@ const rawDeltasCollectionName = "testRawDeltas";
 class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
 
-	public getIncomingKeyVersion(): EncryptionKeyVersion {
+	public getLatestKeyVersion(): EncryptionKeyVersion {
 		return undefined;
 	}
 

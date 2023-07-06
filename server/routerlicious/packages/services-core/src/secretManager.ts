@@ -9,7 +9,7 @@ export interface ISecretManager {
 	/**
 	 * Gets incoming encryption key version.
 	 */
-	getIncomingKeyVersion(): EncryptionKeyVersion;
+	getLatestKeyVersion(): EncryptionKeyVersion;
 
 	/**
 	 * Encrypts secret.
