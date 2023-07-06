@@ -10,7 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Theme } from "@fluentui/react-components";
-import React, { useState } from "react";
+import React from "react";
 import {
 	Area,
 	Bar,
@@ -73,7 +73,10 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 	});
 };
 
-interface Props {
+/**
+ * Props that can be passed to configure the DynamicComposedChart
+ */
+export interface DynamicComposedChartProps {
 	/**
 	 * Renders the data as either an Stacked Area or Stacked Bar chart.
 	 * Note that this overrides individually set graphTypes for each dataset.
@@ -103,7 +106,9 @@ const createGraphColorPalette = (
 	themeMode: string,
 	theme: Theme,
 ): {
-	gray: string;
+	axisTick: string;
+	cartesianGrid: string;
+	toolTipBackround: string;
 	graphColors: string[];
 } => {
 	switch (themeMode) {
@@ -111,7 +116,9 @@ const createGraphColorPalette = (
 		case "dark":
 		default:
 			return {
-				gray: theme.colorNeutralForeground2,
+				axisTick: theme.colorNeutralForeground2,
+				toolTipBackround: theme.colorNeutralBackground1,
+				cartesianGrid: theme.colorNeutralStrokeAccessible,
 				graphColors: [
 					theme.colorPaletteBerryForeground1,
 					theme.colorPaletteMarigoldForeground1,
@@ -121,7 +128,9 @@ const createGraphColorPalette = (
 			};
 		case "highContrast":
 			return {
-				gray: theme.colorNeutralForeground2,
+				axisTick: theme.colorNeutralForeground2,
+				toolTipBackround: theme.colorNeutralBackground1,
+				cartesianGrid: theme.colorNeutralStrokeAccessible,
 				graphColors: [
 					"#3ff23f", // Neon green
 					"#ffff00", // Neon yellow
@@ -136,11 +145,9 @@ const createGraphColorPalette = (
  * This component is a wrapper over Recharts ComposedChart component that provides
  * an easy way to create composed charts from disparate sets of data.
  */
-export function DynamicComposedChart(props: Props): React.ReactElement {
-	const [activeIndex, setActiveIndex] = useState<string | undefined>();
+export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
+	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
 	const { themeInfo } = React.useContext(ThemeContext) ?? {};
-
-	console.log("themeInfo", themeInfo);
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
@@ -150,8 +157,8 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 
 	/**
 	 * Renders a custom component for the graph legend
+	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	// Recharts doesn't have a type for this
 	const renderLegend = (legendProps: any): React.ReactElement => {
 		const { payload } = legendProps;
 
@@ -202,8 +209,8 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 
 	/**
 	 * Renders a custom view for the X Axis displayed on the Rechart chart
+	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	// Recharts doesn't have a type for this
 	const CustomizedXAxisTick = (xAxisProps: any): React.ReactElement => {
 		const { x, y, payload } = xAxisProps;
 		return (
@@ -213,7 +220,7 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					y={0}
 					dy={16}
 					textAnchor="end"
-					fill={graphColorPalette.gray}
+					fill={graphColorPalette.axisTick}
 					transform="rotate(-35)"
 					fontSize={16}
 				>
@@ -225,13 +232,14 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 
 	/**
 	 * Renders a custom view for the Y Axis displayed on the Rechart chart
+	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	// Recharts doesn't have a type for this
 	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
 		const { x, y, payload } = yAxisProps;
 		return (
 			<g>
-				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.gray} fontSize={16}>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
+					{/* eslint-disable-next-line react/prop-types */}
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
@@ -372,13 +380,13 @@ export function DynamicComposedChart(props: Props): React.ReactElement {
 					bottom: 40,
 				}}
 			>
-				<CartesianGrid strokeDasharray="2 2" />
+				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
 				<YAxis tick={<CustomizedYAxisTick />} />
 				<Tooltip
 					contentStyle={{
 						fontSize: "14px",
-						backgroundColor: themeInfo.theme.colorNeutralBackground1,
+						backgroundColor: graphColorPalette.toolTipBackround,
 					}}
 				/>
 				<Legend
