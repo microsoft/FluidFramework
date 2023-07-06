@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Lazy, assert } from "@fluidframework/common-utils";
+import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
 	compatKind,
@@ -153,22 +154,18 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
 	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
 	// This first if statement turns the internal version to x.y.z
-	let semverInternal: string | undefined;
-	if (pkgVersion.startsWith("2.0.0-internal.")) {
-		semverInternal = pkgVersion.split("internal.")[1];
-	} else if (pkgVersion.startsWith("2.0.0-dev.")) {
-		semverInternal = pkgVersion.split("dev.")[1];
-	} else {
-		// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
-		throw new Error(
-			`Unexpected back compat scenario! Expecting package versions to just be 2.0.0-internal.x.y.z, but got ${pkgVersion}.`,
-		);
+	let version: string = pkgVersion;
+	// This grabs the code version to find the backwards compatible options.
+	const codeVersion = process.env.SETVERSION_CODEVERSION;
+	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion, true, true)) {
+		version = codeVersion;
 	}
+
+	const [, semverInternal] = fromInternalScheme(version, true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
-	const major = semverInternal.split(".")[0];
-	const greatestMajor = parseInt(major, 10);
+	const greatestMajor = semverInternal.major;
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
 	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)

@@ -33,7 +33,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^1.0.0",
