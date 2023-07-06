@@ -11,7 +11,6 @@ import {
 	symbolFromKey,
 	FieldKey,
 	GlobalFieldKey,
-	ValueSchema,
 	LocalFieldKey,
 	rootFieldKeySymbol,
 	JsonableTree,
@@ -69,6 +68,7 @@ import {
 	getReadonlyEditableTreeContext,
 	setupForest,
 	personSchemaLibrary,
+	float64Schema,
 } from "./mockData";
 import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
 
@@ -315,8 +315,8 @@ describe("editable-tree: read-only", () => {
 			{
 				[valueSymbol]: 1,
 			},
-			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
-		).unwrappedRoot;
+			SchemaBuilder.field(FieldKinds.value, float64Schema),
+		).root.content;
 		assert(isEditableTree(hasValue));
 		// Value does show up when not empty:
 		assert(valueSymbol in hasValue);
@@ -400,7 +400,6 @@ describe("editable-tree: read-only", () => {
 				),
 			},
 			global: [globalFieldSchema] as const,
-			value: ValueSchema.Serializable,
 		});
 		const rootSchema = SchemaBuilder.field(FieldKinds.optional, childWithGlobalFieldSchema);
 		const schemaData = builder.intoDocumentSchema(rootSchema);

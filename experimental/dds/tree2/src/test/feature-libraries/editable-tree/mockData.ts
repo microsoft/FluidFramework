@@ -31,7 +31,6 @@ import {
 	LocalFieldKey,
 	EmptyKey,
 	JsonableTree,
-	GlobalFieldKeySymbol,
 	IEditableForest,
 	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
@@ -70,30 +69,19 @@ export const phonesSchema = builder.fieldNode(
 	),
 );
 
-export const globalFieldSchemaSequencePhones = builder.globalField(
-	"sequencePhones",
-	SchemaBuilder.fieldSequence(stringSchema),
+export const addressSchema = builder.struct("Test:Address-1.0.0", {
+	zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
+	street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
+	sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
+});
+
+export const mapStringSchema = builder.map(
+	"Map<String>",
+	SchemaBuilder.field(FieldKinds.optional, stringSchema),
 );
-
-export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol =
-	globalFieldSchemaSequencePhones.symbol;
-
-export const addressSchema = builder.object("Test:Address-1.0.0", {
-	local: {
-		zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
-		street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
-		sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
-	},
-	globalFields: [globalFieldSchemaSequencePhones],
-});
-
-export const mapStringSchema = builder.object("Map<String>", {
-	extraLocalFields: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-	value: ValueSchema.Serializable,
-});
 
 export const personSchema = builder.struct("Test:Person-1.0.0", {
 	name: SchemaBuilder.field(FieldKinds.value, stringSchema),
@@ -104,11 +92,8 @@ export const personSchema = builder.struct("Test:Person-1.0.0", {
 	address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
 });
 
-export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
-	local: {
-		child: SchemaBuilder.fieldOptional(Any),
-	},
-	value: ValueSchema.Serializable,
+export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
+	child: SchemaBuilder.fieldOptional(Any),
 });
 
 export const arraySchema = builder.fieldNode(
@@ -199,7 +184,6 @@ export const personData: ContextuallyTypedNodeDataObject = {
 			},
 		],
 		sequencePhones: ["113", "114"],
-		[globalFieldSymbolSequencePhones]: ["115", "116"],
 	},
 };
 
@@ -249,7 +233,6 @@ export function getPerson(): Person {
 				["112", "113"],
 			],
 			sequencePhones: ["113", "114"],
-			[globalFieldSymbolSequencePhones]: ["115", "116"],
 		},
 	} as unknown as Person; // TODO: fix up these strong types to reflect unwrapping
 }
