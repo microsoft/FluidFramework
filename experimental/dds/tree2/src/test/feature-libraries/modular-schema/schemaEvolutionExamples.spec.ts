@@ -112,15 +112,13 @@ describe("Schema Evolution Examples", () => {
 	const codePoint = contentTypesBuilder.primitive("Primitive.CodePoint", ValueSchema.Number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = contentTypesBuilder.object(textIdentifier, {
-		local: { children: SchemaBuilder.field(FieldKinds.sequence, codePoint) },
+	const text = contentTypesBuilder.struct(textIdentifier, {
+		children: SchemaBuilder.field(FieldKinds.sequence, codePoint),
 	});
 
-	const point = contentTypesBuilder.object(pointIdentifier, {
-		local: {
-			x: SchemaBuilder.field(FieldKinds.value, number),
-			y: SchemaBuilder.field(FieldKinds.value, number),
-		},
+	const point = contentTypesBuilder.struct(pointIdentifier, {
+		x: SchemaBuilder.field(FieldKinds.value, number),
+		y: SchemaBuilder.field(FieldKinds.value, number),
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
@@ -131,14 +129,12 @@ describe("Schema Evolution Examples", () => {
 	);
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = containersBuilder.object(positionedCanvasItemIdentifier, {
-		local: {
-			position: SchemaBuilder.field(FieldKinds.value, point),
-			content: SchemaBuilder.field(FieldKinds.value, text),
-		},
+	const positionedCanvasItem = containersBuilder.struct(positionedCanvasItemIdentifier, {
+		position: SchemaBuilder.field(FieldKinds.value, point),
+		content: SchemaBuilder.field(FieldKinds.value, text),
 	});
-	const canvas = containersBuilder.object(canvasIdentifier, {
-		local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem) },
+	const canvas = containersBuilder.struct(canvasIdentifier, {
+		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem),
 	});
 
 	const root: FieldSchema = SchemaBuilder.field(FieldKinds.value, canvas);
@@ -273,24 +269,20 @@ describe("Schema Evolution Examples", () => {
 			const counterIdentifier: TreeSchemaIdentifier = brand(
 				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b",
 			);
-			const counter = builderWithCounter.object(counterIdentifier, {
-				local: {
-					count: SchemaBuilder.field(FieldKinds.value, number),
-				},
+			const counter = builderWithCounter.struct(counterIdentifier, {
+				count: SchemaBuilder.field(FieldKinds.value, number),
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builderWithCounter.object(
+			const positionedCanvasItem2 = builderWithCounter.struct(
 				positionedCanvasItemIdentifier,
 				{
-					local: {
-						position: SchemaBuilder.field(FieldKinds.value, point),
-						content: SchemaBuilder.field(FieldKinds.value, text, counter),
-					},
+					position: SchemaBuilder.field(FieldKinds.value, point),
+					content: SchemaBuilder.field(FieldKinds.value, text, counter),
 				},
 			);
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builderWithCounter.object(canvasIdentifier, {
-				local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2) },
+			const canvas2 = builderWithCounter.struct(canvasIdentifier, {
+				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewCollection3: SchemaCollection = builderWithCounter.intoDocumentSchema(

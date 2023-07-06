@@ -214,7 +214,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		const bool = builder2.primitive("bool", ValueSchema.Boolean);
 		const str = builder2.primitive("str", ValueSchema.String);
 		const parentField = SchemaBuilder.fieldValue(str, bool);
-		const parent = builder2.object("parent", { local: { child: parentField } });
+		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
