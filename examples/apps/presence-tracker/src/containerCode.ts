@@ -8,6 +8,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
+// import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 import { MockAudience } from "./Audience";
@@ -29,7 +30,7 @@ const signalerId = "signaler";
 export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITrackerAppModel> {
 	constructor() {
 		super(
-			new Map([Signaler.factory.registryEntry, Signaler.factory.registryEntry]), // registryEntries
+			new Map([Signaler.factory.registryEntry]), // registryEntries
 		);
 	}
 

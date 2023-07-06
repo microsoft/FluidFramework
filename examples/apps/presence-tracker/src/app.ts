@@ -108,6 +108,4 @@ async function start() {
 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
 }
 
-start().catch((error) => console.error(error));
-
 start().catch(console.error);

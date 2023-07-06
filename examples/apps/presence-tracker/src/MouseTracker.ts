@@ -98,7 +98,6 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 			member.connections.forEach((connection) => {
 				const position = this.getMousePresenceForUser(userId, connection.id);
 				if (position !== undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 					statuses.set((member as any).userName, position);
 				}
 			});
