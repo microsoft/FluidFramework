@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 export interface ISocketStorageDiscovery {
