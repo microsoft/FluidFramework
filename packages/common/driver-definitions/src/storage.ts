@@ -403,10 +403,18 @@ export interface ISocketStorageDiscoveryParts {
 	deltaStreamSocketUrl: string;
 }
 
+/**
+ * An interface that allows a concrete instance of a driver factory to interrogate itself
+ * to find out if it is session aware.
+ */
 export interface IProvideSessionAwareDriverFactory {
 	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
 }
 
+/**
+ * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
+ * function if it session aware.
+ */
 export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts>;
 }

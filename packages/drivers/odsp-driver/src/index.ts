@@ -18,7 +18,11 @@ export {
 // public utils
 export { checkUrl } from "./checkUrl";
 export { createOdspUrl } from "./createOdspUrl";
-export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils";
+export {
+	getHashedDocumentId,
+	getSocketStorageDiscoveryParts,
+	ISnapshotContents,
+} from "./odspPublicUtils";
 export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./odspUrlHelper";
 
 // prefetch latest snapshot before container load

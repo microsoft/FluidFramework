@@ -67,6 +67,9 @@ export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | und
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
 
+// @public
+export function getSocketStorageDiscoveryParts(socketStorageDiscovery: ISocketStorageDiscovery | undefined): ISocketStorageDiscoveryParts | undefined;
+
 // @public (undocumented)
 export interface IClpCompliantAppHeader {
     // (undocumented)
