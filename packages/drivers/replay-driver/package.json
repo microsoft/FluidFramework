@@ -30,7 +30,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
@@ -46,7 +46,7 @@
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-internal.5.0.0",
+		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",

@@ -38,7 +38,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -74,7 +74,6 @@
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
-		"@fluid-experimental/task-manager-previous": "npm:@fluid-experimental/task-manager@2.0.0-internal.2.1.1",
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.20.0",
@@ -82,7 +81,7 @@
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.0.0-internal.5.0.0",
+		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.0.0-internal.5.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
