@@ -243,10 +243,7 @@ export class TenantManager {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
 		const tenantKey1 = this.generateTenantKey();
-		const encryptedTenantKey1 = this.secretManager.encryptSecret(
-			tenantKey1,
-			latestKeyVersion,
-		);
+		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, latestKeyVersion);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
 			Lumberjack.error("Tenant key1 encryption failed.", {
@@ -256,10 +253,7 @@ export class TenantManager {
 		}
 
 		const tenantKey2 = this.generateTenantKey();
-		const encryptedTenantKey2 = this.secretManager.encryptSecret(
-			tenantKey2,
-			latestKeyVersion,
-		);
+		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, latestKeyVersion);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
 			Lumberjack.error("Tenant key2 encryption failed.", {
