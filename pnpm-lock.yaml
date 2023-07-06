@@ -866,12 +866,16 @@ importers:
 
   examples/apps/presence-tracker:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/data-objects': workspace:~
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-client': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -898,9 +902,13 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluid-experimental/data-objects': link:../../../experimental/framework/data-objects
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
+      '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
       fluid-framework: link:../../../packages/framework/fluid-framework
     devDependencies:

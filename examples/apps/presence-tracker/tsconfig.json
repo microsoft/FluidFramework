@@ -7,5 +7,5 @@
 		"jsx": "react",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 	},
-	"include": ["src/**/*", "tests/**/*"],
+	"include": ["src/**/*"],
 }
