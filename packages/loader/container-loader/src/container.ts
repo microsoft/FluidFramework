@@ -2338,9 +2338,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => deltaManagerProxy.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			this._deltaManager.clientDetails,
@@ -2349,7 +2347,6 @@ export class Container
 			pendingLocalState,
 		);
 		this._lifecycleEvents.once("disposed", () => {
-			context.dispose();
 			quorumProxy.dispose();
 			deltaManagerProxy.dispose();
 		});
