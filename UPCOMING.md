@@ -2,34 +2,64 @@
 
 # Upcoming changes in Fluid Framework v2.0.0-internal.5.2.0
 
-## IConnectionDetailsInternal and IDeltaHandlerStrategy deprecated (2023-06-20)
+## TestFluidObject.load removed (2023-06-07)
 
-The IConnectionDetailsInternal and IDeltaHandlerStrategy interfaces from the @fluidframework/container-definitions package have been deprecated and will be removed in a future release. These are internal-only interfaces and should not be used.
+TestFluidObject.load performed unsafe initialization, and has instead been replaced by direct usage of the constructor plus a call to testFluidObject.initialize(). This should have no impact to your scenario, as instantiation of TestFluidObjects should only be done through TestFluidObjectFactory.
 
-## Deprecate unnecessary exports (2023-06-21)
+## FluidDataStoreRuntime.getChannel throws for channels that do not exist (2023-06-07)
 
-This change deprecates a number of interfaces in the merge tree package that are not used in the exported apis surface and therefore should not be used.
+Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
 
-## Deprecate ISegment.parent (2023-06-21)
+## Upgraded typescript transpilation target to ES2020. (2023-06-09)
 
-This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+
+## Removed IContainerContext.existing (2023-06-16)
+
+The recommended means of checking for existing changed to the instantiateRuntime param in 2021, and the IContainerContext.existing member was formally deprecated in 2.0.0-internal.2.0.0. This member is now removed.
+
+## @fluidframework/test-client-utils removed (2023-06-20)
+
+The @fluidframework/test-client-utils package was deprecated in 2.0.0-internal.5.1.0 and has now been removed.
+
+## IChannel.owner removed (2023-06-20)
+
+The owner property on IChannel was deprecated in 2.0.0-internal.5.1.0 and has now been removed.
+
+## `IRootSummaryTreeWithStats` removed (2023-06-20)
+
+`IRootSummaryTreeWithStats` was the return type of `summarize` method on `ContainerRuntime`. It was an internal interface used only in `ContainerRuntime` class to to access `gcStats` from a call site. `gcStats` is not needed in the call site anymore so this interface is removed.
+
+## Calling `ContainerRuntime.closeFn(...)` will no longer call `ContainerContext.disposeFn(...)` as well. This means the `ContainerRuntime` will no longer be disposed by calling this method. (2023-06-21)
+
+To achieve the `ContainerRuntime` being disposed, use the exposed `ContainerRuntime.disposeFn` method.
+
+For more information about close vs. dispose expectations, see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md.
+
+## Remove ISegment.parent (2023-06-23)
+
+This change removed the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
 
 There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
 
 Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
 
-## slide parameter in changeInterval event (2023-06-23)
+## Remove unnecessary exports (2023-06-23)
 
-The changeInterval event listener has a new parameter "slide" that is true if the event was caused by the interval endpoint sliding from a removed range.
+This change removes a number of interfaces in the merge tree package that are not used in the exported apis surface and therefore should not be used.
 
-## IContainerContext members deprecated (2023-06-28)
+## combineAppAndProtocolSummary removed from driver-utils (2023-06-23)
 
-IContainerContext members disposed, dispose(), serviceConfiguration, and id have been deprecated and will be removed in an upcoming release.
+combineAppAndProtocolSummary was deprecated in 2.0.0-internal.3.4.0 and has now been removed.
 
-disposed - The disposed state on the IContainerContext is not meaningful to the runtime.
+## allSentOpsAckd and processTime events removed from IDeltaManagerEvents (2023-06-26)
 
-dispose() - The runtime is not permitted to dispose the IContainerContext, this results in an inconsistent system state.
+The "allSentOpsAckd" and "processTime" events on the IDeltaManagerEvents interface were deprecated in 2.0.0-internal.2.2.0 and have now been removed.
 
-serviceConfiguration - This property is redundant, and is unused by the runtime. The same information can be found via `deltaManager.serviceConfiguration` on this object if it is necessary.
+## IConnectionDetailsInternal and IDeltaHandlerStrategy removed (2023-06-26)
 
-id - The docId is already logged by the IContainerContext.taggedLogger for telemetry purposes, so this is generally unnecessary for telemetry. If the id is needed for other purposes it should be passed to the consumer explicitly.
+IConnectionDetailsInternal and IDeltaHandlerStrategy from the @fluidframework/container-definitions package were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
+
+## IContainerContext members removed (2023-07-06)
+
+IContainerContext members disposed, dispose(), serviceConfiguration, and id were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
