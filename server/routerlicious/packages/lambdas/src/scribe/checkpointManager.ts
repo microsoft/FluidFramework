@@ -31,6 +31,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly verifyLastOpPersistence: boolean,
 		private readonly checkpointService: ICheckpointService,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
@@ -44,9 +45,11 @@ export class CheckpointManager implements ICheckpointManager {
 		protocolHead: number,
 		pending: ISequencedOperationMessage[],
 		noActiveClients: boolean,
+		globalCheckpointOnly: boolean,
 	) {
+		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
 		if (this.getDeltasViaAlfred) {
-			if (pending.length > 0) {
+			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
 				// If it is, we can checkpoint
 				const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
@@ -102,7 +105,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				!noActiveClients,
+				isLocalCheckpoint,
 			);
 		} else {
 			// The order of the three operations below is important.
@@ -138,7 +141,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				!noActiveClients,
+				isLocalCheckpoint,
 			);
 
 			// And then delete messagses that were already summarized.

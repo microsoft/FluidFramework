@@ -1,26 +1,26 @@
 version: "3.4"
 services:
-    alfred:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
-    deli:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
-    scriptorium:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
-    copier:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
-    scribe:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
-    riddler:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
+  alfred:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules
+  deli:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules
+  scriptorium:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules
+  copier:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules
+  scribe:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules
+  riddler:
+    volumes:
+      - .:/usr/src/server
+      - /usr/src/server/node_modules

@@ -11,18 +11,17 @@ import {
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	Value,
-	ITreeCursor,
-	UpPath,
 	SchemaDataAndPolicy,
 	ForestEvents,
-	FieldUpPath,
+	GlobalFieldKey,
+	FieldStoredSchema,
+	FieldKey,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
-import { singleMapTreeCursor } from "../mapTreeCursor";
-import { applyFieldTypesFromContext, ContextuallyTypedFieldData } from "../contextuallyTyped";
-import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
+import { NodeKeyManager } from "../node-key";
+import { FieldGenerator } from "../contextuallyTyped";
+import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 
@@ -63,7 +62,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get root(): EditableField;
 
-	set root(data: ContextuallyTypedFieldData);
+	set root(data: NewFieldContent);
 
 	/**
 	 * Gets or sets the root field of the tree.
@@ -76,7 +75,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get unwrappedRoot(): UnwrappedEditableField;
 
-	set unwrappedRoot(data: ContextuallyTypedFieldData);
+	set unwrappedRoot(data: NewFieldContent);
 
 	/**
 	 * Schema used within this context.
@@ -107,6 +106,11 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * to create new trees starting from the root.
 	 */
 	clear(): void;
+
+	/**
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 */
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -123,10 +127,15 @@ export class ProxyContext implements EditableTreeContext {
 	/**
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
+	 * @param nodeKeys - an object which handles node key generation and conversion
+	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
-		private readonly editor: DefaultEditBuilder,
+		public readonly editor: DefaultEditBuilder,
+		public readonly nodeKeys: NodeKeyManager,
+		public readonly nodeKeyFieldKey?: GlobalFieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -165,9 +174,8 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(true);
 	}
 
-	public set unwrappedRoot(value: ContextuallyTypedFieldData) {
-		// Note that an implementation of `set root` might change in the future,
-		// see a comment in there regarding the `replaceNodes` and `replaceField` semantics.
+	public set unwrappedRoot(value: NewFieldContent) {
+		// Note that an implementation of `set root` might change in the future.
 		// This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
 		// and use `replaceField` only if the root is a sequence field i.e.
 		// it's unwrapped to the field itself.
@@ -179,16 +187,9 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(false);
 	}
 
-	public set root(value: ContextuallyTypedFieldData) {
+	public set root(value: NewFieldContent) {
 		const rootField = this.getRoot(false);
-		const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
-		const cursors = mapTrees.map(singleMapTreeCursor);
-		// `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
-		// `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
-		// We currently use `replaceNodes` here because the low-level editing API
-		// for the desired `replaceField` semantics is not yet avaialble.
-		// TODO: update implementation once the low-level editing API is available.
-		rootField.replaceNodes(0, cursors);
+		rootField.content = value;
 	}
 
 	private getRoot(unwrap: false): EditableField;
@@ -208,62 +209,6 @@ export class ProxyContext implements EditableTreeContext {
 		return this.forest.schema;
 	}
 
-	public setNodeValue(path: UpPath, value: Value): void {
-		this.editor.setValue(path, value);
-	}
-
-	public setValueField(field: FieldUpPath, newContent: ITreeCursor): void {
-		const fieldEditor = this.editor.valueField(field);
-		fieldEditor.set(newContent);
-	}
-
-	public setOptionalField(
-		field: FieldUpPath,
-		newContent: ITreeCursor | undefined,
-		wasEmpty: boolean,
-	): void {
-		const fieldEditor = this.editor.optionalField(field);
-		fieldEditor.set(newContent, wasEmpty);
-	}
-
-	public insertNodes(
-		field: FieldUpPath,
-		index: number,
-		newContent: ITreeCursor | ITreeCursor[],
-	): void {
-		const fieldEditor = this.editor.sequenceField(field);
-		fieldEditor.insert(index, newContent);
-	}
-
-	public moveNodes(
-		sourceField: FieldUpPath,
-		sourceIndex: number,
-		count: number,
-		destinationField: FieldUpPath,
-		destinationIndex: number,
-	): void {
-		this.editor.move(sourceField, sourceIndex, count, destinationField, destinationIndex);
-	}
-
-	public deleteNodes(field: FieldUpPath, index: number, count: number): void {
-		const fieldEditor = this.editor.sequenceField(field);
-		fieldEditor.delete(index, count);
-	}
-
-	public replaceNodes(
-		field: FieldUpPath,
-		index: number,
-		count: number,
-		newContent: ITreeCursor | ITreeCursor[],
-	): void {
-		const fieldEditor = this.editor.sequenceField(field);
-		fieldEditor.delete(index, count);
-
-		if (!Array.isArray(newContent) || newContent.length > 0) {
-			fieldEditor.insert(index, newContent);
-		}
-	}
-
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.forest.on(eventName, listener);
 	}
@@ -274,12 +219,17 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
+ * @param nodeKeyManager - an object which handles node key generation and conversion
+ * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+ * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
+	nodeKeyManager: NodeKeyManager,
+	nodeKeyFieldKey?: GlobalFieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor);
+	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

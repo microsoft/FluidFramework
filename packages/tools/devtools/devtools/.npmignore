@@ -1,5 +1,6 @@
 # Build metadata
-*.tsbuildinfo
+**/*.tsbuildinfo
+*.log
 
 # Test code
 src/test

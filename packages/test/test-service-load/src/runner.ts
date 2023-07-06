@@ -14,9 +14,10 @@ import { Loader, ConnectionState } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils";
+import { assert, delay } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -250,6 +251,9 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
+			// Retain old behavior of runtime being disposed on container close
+			container.once("closed", () => container?.dispose());
+
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -304,6 +308,13 @@ async function runnerProcess(
 				},
 				error,
 			);
+			// Add a little backpressure:
+			// if the runner closed with some sort of throttling error, avoid running into a throttling loop
+			// by respecting that delay before starting the load process for a new container.
+			const delayMs = getRetryDelayFromError(error);
+			if (delayMs !== undefined) {
+				await delay(delayMs);
+			}
 		} finally {
 			if (container?.closed === false) {
 				container?.close();
@@ -356,10 +367,7 @@ function scheduleFaultInjection(
 						case 4:
 						default: {
 							printStatus(runConfig, `nack injected canRetry:${canRetry}`);
-							deltaConn.injectNack(
-								(container.resolvedUrl as IFluidResolvedUrl).id,
-								canRetry,
-							);
+							deltaConn.injectNack(container.resolvedUrl.id, canRetry);
 							break;
 						}
 					}
@@ -505,7 +513,7 @@ async function scheduleOffline(
 
 async function setupOpsMetrics(
 	container: IContainer,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
 ) {

@@ -4,9 +4,12 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { assert, delay, performance } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -74,7 +77,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -434,6 +437,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const result = await this.cache.snapshotPrefetchResultCache
 				?.get(prefetchCacheKey)
 				?.then(async (response) => {
+					// Remove it from cache once used.
+					this.cache.snapshotPrefetchResultCache.remove(prefetchCacheKey);
 					// Validate the epoch from the prefetched snapshot result.
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;

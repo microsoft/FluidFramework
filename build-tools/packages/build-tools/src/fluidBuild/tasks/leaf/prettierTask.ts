@@ -8,7 +8,8 @@ import * as path from "path";
 
 import { existsSync, globFn, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask } from "./leafTask";
+import { getInstalledPackageVersion } from "../../../common/taskUtils";
 
 export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
@@ -49,9 +50,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 
 	protected async getDoneFileContent() {
 		if (!this.parsed) {
-			this.logVerboseTask(
-				`error generating done file content, unable to understand command line`,
-			);
+			this.traceExec(`error generating done file content, unable to understand command line`);
 			return undefined;
 		}
 
@@ -64,15 +63,11 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				ignoreEntries = ignoreFileContent.split(/\r?\n/);
 				ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
 			} else if (this.ignorePath) {
-				this.logVerboseTask(
-					`error generating done file content, unable to find ${ignoreFile}`,
-				);
+				this.traceExec(`error generating done file content, unable to find ${ignoreFile}`);
 				return undefined;
 			}
 		} catch (e) {
-			this.logVerboseTask(
-				`error generating done file content, unable to read ${ignoreFile} file`,
-			);
+			this.traceExec(`error generating done file content, unable to read ${ignoreFile} file`);
 			return undefined;
 		}
 
@@ -110,9 +105,12 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				return { name, hash };
 			});
 			const hashes = await Promise.all(hashesP);
-			return JSON.stringify(hashes);
+			return JSON.stringify({
+				version: await getInstalledPackageVersion("prettier", this.node.pkg.directory),
+				hashes,
+			});
 		} catch (e) {
-			this.logVerboseTask(`error generating done file content. ${e}`);
+			this.traceExec(`error generating done file content. ${e}`);
 			return undefined;
 		}
 	}

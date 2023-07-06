@@ -14,31 +14,6 @@ function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOp
 }
 
 /**
- * Relays the provided message to the window (globalThis).
- *
- * @remarks Thin wrapper to provide some message-wise type-safety, and to inject some automated logging.
- *
- * @internal
- */
-export function relayMessageToWindow<TMessage extends ISourcedDevtoolsMessage>(
-	message: TMessage,
-	messageSource: string,
-	loggingOptions?: MessageLoggingOptions,
-): void {
-	// TODO: remove loggingOptions once things settle.
-	if (loggingOptions !== undefined) {
-		console.debug(
-			formatMessageForLogging(
-				`Relaying message from "${messageSource}" to the window:`,
-				loggingOptions,
-			),
-			message,
-		);
-	}
-	window.postMessage(message, "*"); // TODO: verify target is okay
-}
-
-/**
  * Relays the provided message to the specified target port.
  *
  * @remarks Thin wrapper to provide some message-wise type-safety, and to inject some automated logging.

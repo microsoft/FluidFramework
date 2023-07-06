@@ -9,6 +9,7 @@ import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
 import {
 	ContainerList,
+	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
@@ -19,10 +20,10 @@ import {
 	postMessagesToWindow,
 } from "./messaging";
 import { IFluidDevtools } from "./IFluidDevtools";
-import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { VisualizeSharedObject } from "./data-visualization";
+import { ContainerKey } from "./CommonInterfaces";
 
 /**
  * Message logging options used by the root devtools.
@@ -52,9 +53,9 @@ export const accessBeforeInitializeErrorText = "Devtools have not yet been initi
  *
  * @privateRemarks Exported for test purposes only.
  */
-export function getContainerAlreadyRegisteredErrorText(containerId: string): string {
+export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKey): string {
 	return (
-		`A ContainerDevtools instance has already been registered for container ID "${containerId}".` +
+		`A ContainerDevtools instance has already been registered for specified key: "${containerKey}".` +
 		"Existing instance must be closed before a replacement may be registered."
 	);
 }
@@ -134,9 +135,9 @@ export class FluidDevtools implements IFluidDevtools {
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
-	 * Maps from Container IDs to the corresponding devtools instance.
+	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
-	private readonly containers: Map<string, ContainerDevtools>;
+	private readonly containers: Map<ContainerKey, ContainerDevtools>;
 
 	/**
 	 * Global data visualizers to apply to all {@link IContainerDevtools} instances registered with this object.
@@ -156,11 +157,11 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetDevtoolsFeatures.MessageType]: () => {
+		[GetDevtoolsFeatures.MessageType]: async () => {
 			this.postSupportedFeatures();
 			return true;
 		},
-		[GetContainerList.MessageType]: () => {
+		[GetContainerList.MessageType]: async () => {
 			this.postContainerList();
 			return true;
 		},
@@ -205,11 +206,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
-		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
-			(containerDevtools) => ({
-				id: containerDevtools.containerId,
-				nickname: containerDevtools.containerNickname,
-			}),
+		const containers: ContainerKey[] = this.getAllContainerDevtools().map(
+			(containerDevtools) => containerDevtools.containerKey,
 		);
 
 		postMessagesToWindow(
@@ -233,7 +231,7 @@ export class FluidDevtools implements IFluidDevtools {
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
-					containerConfig.containerId,
+					containerConfig.containerKey,
 					new ContainerDevtools(containerConfig),
 				);
 			}
@@ -247,6 +245,9 @@ export class FluidDevtools implements IFluidDevtools {
 
 		// Register the devtools instance to be disposed on Window unload
 		globalThis.addEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
+
+		// Post message for supported features
+		this.postSupportedFeatures();
 
 		this._disposed = false;
 	}
@@ -263,7 +264,7 @@ export class FluidDevtools implements IFluidDevtools {
 		if (FluidDevtools.I !== undefined) {
 			console.warn(
 				"Devtools have already been initialized. " +
-					"Existing Devtools must be closed (see closeDevtools) before new ones may be initialized. " +
+					"Existing Devtools instance must be disposed before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
 		} else {
@@ -298,10 +299,10 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const { containerId, dataVisualizers: containerVisualizers } = props;
+		const { containerKey, dataVisualizers: containerVisualizers } = props;
 
-		if (this.containers.has(containerId)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));
+		if (this.containers.has(containerKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
 		const dataVisualizers = mergeDataVisualizers(this.dataVisualizers, containerVisualizers);
@@ -310,7 +311,7 @@ export class FluidDevtools implements IFluidDevtools {
 			...props,
 			dataVisualizers,
 		});
-		this.containers.set(containerId, containerDevtools);
+		this.containers.set(containerKey, containerDevtools);
 
 		// Post message for container list change
 		this.postContainerList();
@@ -319,19 +320,17 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
 	 */
-	public closeContainerDevtools(containerId: string): void {
+	public closeContainerDevtools(containerKey: ContainerKey): void {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const containerDevtools = this.containers.get(containerId);
+		const containerDevtools = this.containers.get(containerKey);
 		if (containerDevtools === undefined) {
-			console.warn(
-				`No ContainerDevtools associated with container ID "${containerId}" was found.`,
-			);
+			console.warn(`No ContainerDevtools associated with key "${containerKey}" was found.`);
 		} else {
 			containerDevtools.dispose();
-			this.containers.delete(containerId);
+			this.containers.delete(containerKey);
 
 			// Post message for container list change
 			this.postContainerList();
@@ -339,15 +338,15 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets the registered Container Devtools associated with the provided Container ID, if one exists.
+	 * Gets the registered Container Devtools associated with the provided {@link ContainerKey}, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
-	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
+	public getContainerDevtools(containerKey: ContainerKey): IContainerDevtools | undefined {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return this.containers.get(containerId);
+		return this.containers.get(containerKey);
 	}
 
 	/**
@@ -375,6 +374,9 @@ export class FluidDevtools implements IFluidDevtools {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
+
+		// Send close devtool message
+		postMessagesToWindow(devtoolsMessageLoggingOptions, DevtoolsDisposed.createMessage());
 
 		// Dispose of container-level devtools
 		for (const [, containerDevtools] of this.containers) {

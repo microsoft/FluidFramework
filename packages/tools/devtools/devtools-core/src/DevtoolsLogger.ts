@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 import {
@@ -66,7 +66,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * Handlers for inbound messages related to the logger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetTelemetryHistory.MessageType]: (untypedMessage) => {
+		[GetTelemetryHistory.MessageType]: async (untypedMessage) => {
 			this.postLogHistory();
 			return true;
 		},

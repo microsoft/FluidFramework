@@ -63,7 +63,7 @@ function getFluidPackageMap(root: string) {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = new FluidRepo(rootDir, false);
+		const repo = new FluidRepo(rootDir);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -337,10 +337,12 @@ function getTscCommandDependencies(
 	}
 
 	const deps: string[] = [];
+	// Assume that we are building test ts files either in tsc or build:esnext if build:test
+	// doesn't exist. Make sure the order is encoded
 	if (
 		json.scripts["build:test"] === undefined &&
 		json.scripts["typetests:gen"] !== undefined &&
-		command === "tsc"
+		(script === "tsc" || (json.scripts["tsc"] === undefined && script === "build:esnext"))
 	) {
 		deps.push("typetests:gen");
 	}

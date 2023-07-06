@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -17,7 +17,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 } from "../core";
-import { brand } from "../util";
+import { brand, isReadonlyArray } from "../util";
 import {
 	FieldKind,
 	ModularChangeFamily,
@@ -42,8 +42,8 @@ const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor() {
-		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
+	public constructor(codecOptions: ICodecOptions) {
+		this.modularFamily = new ModularChangeFamily(defaultFieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -65,8 +65,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return new DefaultEditBuilder(this, changeReceiver, anchorSet);
 	}
 }
-
-export const defaultChangeFamily = new DefaultChangeFamily();
 
 /**
  * Default editor for transactions.
@@ -100,13 +98,19 @@ export interface IDefaultEditBuilder {
 	 */
 	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
 
-	// TODO: document
+	/**
+	 * Moves a subsequence from one sequence field to another sequence field.
+	 *
+	 * Note that the `destinationIndex` is the final index the first node moved should end up at.
+	 * Thus if moving nodes from a lower to a higher index within the same field, the `destinationIndex` must be computed as if the subsequence being moved has already been removed.
+	 * See {@link SequenceFieldEditBuilder.move} for details.
+	 */
 	move(
 		sourceField: FieldUpPath,
 		sourceIndex: number,
 		count: number,
 		destinationField: FieldUpPath,
-		destIndex: number,
+		destinationIndex: number,
 	): void;
 
 	// TODO: document
@@ -155,8 +159,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent),
+					valueFieldKind.changeHandler.editor.set(newContent, id),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -166,8 +171,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					optional.changeHandler.editor.set(newContent, wasEmpty),
+					optional.changeHandler.editor.set(newContent, wasEmpty, id),
 				);
 				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
@@ -181,12 +187,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(
-			sourceIndex,
-			count,
-			destIndex,
-			this.modularBuilder.generateId(),
-		);
+		const moveId = this.modularBuilder.generateId(count);
+		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -200,23 +202,29 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					change: brand(changes[1]),
 				},
 			],
-			brand(0),
+			moveId,
 		);
 	}
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
+			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
+				const content = isReadonlyArray(newContent) ? newContent : [newContent];
+				if (content.length === 0) {
+					return;
+				}
+
+				const length = Array.isArray(newContent) ? newContent.length : 1;
+				const firstId = this.modularBuilder.generateId(length);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(
-						index,
-						newContent,
-						this.modularBuilder.generateId(
-							Array.isArray(newContent) ? newContent.length : 1,
-						),
-					),
+					sequence.changeHandler.editor.insert(index, content, firstId),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change);
+				this.modularBuilder.submitChange(
+					field,
+					sequence.identifier,
+					change,
+					brand((firstId as number) + length - 1),
+				);
 			},
 			delete: (index: number, count: number): void => {
 				const change: FieldChangeset = brand(
@@ -225,11 +233,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
+				const moveId = this.modularBuilder.generateId(count);
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
-					this.modularBuilder.generateId(),
+					moveId,
 				);
 
 				this.modularBuilder.submitChanges(
@@ -245,7 +254,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 							change: brand(moves[1]),
 						},
 					],
-					brand(0),
+					moveId,
 				);
 			},
 			revive: (
@@ -304,7 +313,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field
 	 */
-	insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 
 	/**
 	 * Issues a change which deletes `count` elements starting at the given `index`.

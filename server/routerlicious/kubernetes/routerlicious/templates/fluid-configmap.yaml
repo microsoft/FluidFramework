@@ -25,7 +25,7 @@ data:
             "globalDbEnabled": {{ .Values.mongodb.globalDbEnabled }},
             "expireAfterSeconds": {{ .Values.mongodb.expireAfterSeconds }},
             "createCosmosDBIndexes": {{ .Values.mongodb.createCosmosDBIndexes }},
-            "bufferMaxEntries": {{ .Values.mongodb.bufferMaxEntries }},
+            "directConnection": {{ .Values.mongodb.directConnection }},
             "softDeletionRetentionPeriodMs": {{ .Values.mongodb.softDeletionRetentionPeriodMs }},
             "offlineWindowMs": {{ .Values.mongodb.offlineWindowMs }},
             "softDeletionEnabled": {{ .Values.mongodb.softDeletionEnabled }},
@@ -53,7 +53,8 @@ data:
                 "rdkafkaAutomaticConsume": true,
                 "rdkafkaConsumeTimeout": 5,
                 "rdkafkaMaxConsumerCommitRetries": 10
-            }
+            },
+            "customRestartOnKafkaErrorCodes": {{ .Values.kafka.customRestartOnKafkaErrorCodes }}
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -63,7 +64,8 @@ data:
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
         "checkpoints": {
-            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }}
+            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
             },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -140,7 +142,9 @@ data:
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
-            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
+            "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
         },
         "system": {
             "httpServer": {

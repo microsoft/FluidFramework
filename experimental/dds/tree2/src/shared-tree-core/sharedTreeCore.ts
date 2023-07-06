@@ -22,8 +22,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { v4 as uuid } from "uuid";
-import { IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
 	AnchorSet,
@@ -33,11 +32,14 @@ import {
 	IRepairDataStoreProvider,
 	GraphCommit,
 } from "../core";
-import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { SharedTreeBranch, isTransactionCommitChange } from "./branch";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
-import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
+// TODO:AB#4500: The commit import here is used to write `parseCommit`, which should probably share
+// similar validation to decoding a commit as part of the summary.
+import { Commit, SeqNumber } from "./editManagerFormat";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -139,7 +141,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		anchors: AnchorSet,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+		options: ICodecOptions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -154,7 +157,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = uuid();
+		const localSessionId = generateStableId();
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -177,7 +180,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					}
 					break;
 				case "replace":
-					if (isTransactionCommitChange(args)) {
+					if (getChangeReplaceType(args) === "transactionCommit") {
 						if (!this.getLocalBranch().isTransacting()) {
 							this.submitCommit(args.newCommits[0]);
 						}
@@ -193,7 +196,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		this.summarizables = [
-			new EditManagerSummarizer(runtime, this.editManager),
+			new EditManagerSummarizer(runtime, this.editManager, options),
 			...summarizables,
 		];
 		assert(
@@ -238,6 +241,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
+		this.editManager.afterSummaryLoad();
 	}
 
 	/**

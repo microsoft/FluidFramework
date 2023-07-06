@@ -8,7 +8,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKinds,
 	isEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	jsonableTreeFromCursor,
 	SchemaAware,
 	SchemaBuilder,
@@ -18,7 +18,8 @@ import {
 } from "../../feature-libraries";
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
-import { toJsonableTree } from "../utils";
+import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
+import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
@@ -68,7 +69,7 @@ const deepSchema = deepBuilder.intoDocumentSchema(
 	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 /**
  * JS object like a deep tree.
@@ -372,7 +373,9 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedTreeData(
-								tree.storedSchema,
+								{
+									schema: tree.storedSchema,
+								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
@@ -381,6 +384,78 @@ describe("SharedTree benchmarks", () => {
 						assert.deepEqual(actual, [expected]);
 
 						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	describe("acking local commits", () => {
+		const localCommitSize = [1, 25, 100, 500, 1000];
+		for (const size of localCommitSize) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite();
+						const [tree] = provider.trees;
+						for (let i = 0; i < size; i++) {
+							insert(tree, i, "test");
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	// Note that this runs the computation for several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported is
+	// divided by the number of peers.
+	describe("rebasing commits", () => {
+		const commitCounts = [1, 10, 20];
+		const nbPeers = 5;
+		for (const nbCommits of commitCounts) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite(nbPeers);
+						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+								const peer = provider.trees[iPeer];
+								insert(peer, 0, `p${iPeer}c${iCommit}`);
+							}
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						// Divide the duration by the number of peers so we get the average time per peer.
+						duration = state.timer.toSeconds(before, after) / nbPeers;
 					} while (state.recordBatch(duration));
 				},
 				// Force batch size of 1
@@ -489,7 +564,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.root;
-	assert(isUnwrappedNode(root));
+	assert(isEditableTree(root));
 	const field = root.foo as UnwrappedEditableField;
 	assert(isEditableField(field));
 	assert(field.length !== 0);
@@ -503,7 +578,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
-	while (isUnwrappedNode(currentNode)) {
+	while (isEditableTree(currentNode)) {
 		currentNode = currentNode.foo as UnwrappedEditableField;
 		depth++;
 	}

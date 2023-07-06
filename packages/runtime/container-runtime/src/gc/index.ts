@@ -43,6 +43,7 @@ export {
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
+	tagAsCodeArtifact,
 } from "./gcHelpers";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {
@@ -56,10 +57,5 @@ export {
 	GCSummaryStateTracker,
 	IGCSummaryTrackingData,
 } from "./gcSummaryStateTracker";
-export {
-	skipClosureForXDaysKey,
-	closuresMapLocalStorageKey,
-	SweepReadyUsageDetectionHandler,
-} from "./gcSweepReadyUsageDetection";
 export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

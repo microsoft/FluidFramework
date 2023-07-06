@@ -14,9 +14,9 @@ import { addAudienceMember, createMockContainer, removeAudienceMember } from "./
 describe("ContainerDevtools unit tests", () => {
 	it("Audience History", () => {
 		const container = createMockContainer();
-		const containerId = "test-container-id";
+		const containerKey = "test-container-key";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container,
 		};
 		const devtools = new ContainerDevtools(containerProps);
@@ -37,9 +37,9 @@ describe("ContainerDevtools unit tests", () => {
 
 	it("Container State History", async () => {
 		const container = createMockContainer();
-		const containerId = "test-container-id";
+		const containerKey = "test-container-key";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			containerKey,
 			container,
 		};
 		const devtools = new ContainerDevtools(containerProps);

@@ -797,6 +797,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
+						// Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,
@@ -816,6 +818,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
+						// Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,

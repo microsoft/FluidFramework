@@ -11,7 +11,7 @@ import {
 	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoader,
-} from "./DocumentCreator";
+} from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
@@ -25,6 +25,7 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			testName: `Load Document - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();

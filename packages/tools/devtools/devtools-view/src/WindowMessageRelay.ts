@@ -14,17 +14,19 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 /**
- * Message relay used by a debugger view rendered in the same page as the application to communicate with the
+ * Message relay used by a devtools view rendered in the same page as the application to communicate with the
  * {@link @fluid-tools/client-debuger#IFluidDevtools}.
  *
  * @remarks
  *
- * While a debugger view rendered in the same page as the application could technically communicate with the
+ * While a devtools view rendered in the same page as the application could technically communicate with the
  * {@link @fluid-tools/client-debuger#IFluidDevtools} directly, we put this abstraction in the middle to match the
- * way that a debugger view rendered outside the context of the application (e.g. the browser's DevTools panel) has
- * to communicate with the debugger registry.
+ * way that a devtools view rendered outside the context of the application (e.g. the browser's DevTools panel) has
+ * to communicate with the devtools registry.
  * This ensures that we don't "abuse" the power of local interaction to do things that might not be possible (or need
  * to be done differently) with a message passing mechanism that crosses the boundary of the window.
+ *
+ * @internal
  */
 export class WindowMessageRelay
 	extends TypedEventEmitter<IMessageRelayEvents>

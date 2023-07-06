@@ -20,6 +20,7 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { DirectoryFactory } from "../../directory";
 import { IDirectory } from "../../interfaces";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
@@ -64,6 +65,11 @@ interface OperationGenerationConfig {
 	maxSubDirectoryChild?: number;
 	subDirectoryNamePool?: string[];
 	keyNamePool?: string[];
+	setKeyWeight?: number;
+	deleteKeyWeight?: number;
+	clearKeysWeight?: number;
+	createSubDirWeight?: number;
+	deleteSubDirWeight?: number;
 }
 
 const defaultOptions: Required<OperationGenerationConfig> = {
@@ -71,6 +77,11 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	maxSubDirectoryChild: 3,
 	subDirectoryNamePool: ["dir1", "dir2", "dir3"],
 	keyNamePool: ["prop1", "prop2", "prop3"],
+	setKeyWeight: 5,
+	deleteKeyWeight: 2,
+	clearKeysWeight: 1,
+	createSubDirWeight: 2,
+	deleteSubDirWeight: 1,
 };
 
 function makeOperationGenerator(
@@ -208,15 +219,23 @@ function makeOperationGenerator(
 	}
 
 	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
-		[createSubDirectory, 2],
+		[createSubDirectory, options.createSubDirWeight],
 		[
 			deleteSubDirectory,
-			1,
+			options.deleteSubDirWeight,
 			(state: FuzzTestState): boolean => (state.channel.countSubDirectory?.() ?? 0) > 0,
 		],
-		[setKey, 5],
-		[deleteKey, 2, (state: FuzzTestState): boolean => state.channel.size > 0],
-		[clearKeys, 1, (state: FuzzTestState): boolean => state.channel.size > 0],
+		[setKey, options.setKeyWeight],
+		[
+			deleteKey,
+			options.deleteKeyWeight,
+			(state: FuzzTestState): boolean => state.channel.size > 0,
+		],
+		[
+			clearKeys,
+			options.clearKeysWeight,
+			(state: FuzzTestState): boolean => state.channel.size > 0,
+		],
 	]);
 }
 
@@ -294,61 +313,43 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	return withLogging(reducer);
 }
 
-function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
-	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
-}
+describe("SharedDirectory fuzz Create/Delete concenterated", () => {
+	const options: OperationGenerationConfig = {
+		setKeyWeight: 0,
+		clearKeysWeight: 0,
+		deleteKeyWeight: 0,
+		createSubDirWeight: 2,
+		deleteSubDirWeight: 2,
+		maxSubDirectoryChild: 2,
+		subDirectoryNamePool: ["dir1", "dir2"],
+		validateInterval: defaultOptions.validateInterval,
+	};
+	const model: DDSFuzzModel<DirectoryFactory, Operation> = {
+		workloadName: "default directory 1",
+		generatorFactory: () => takeAsync(100, makeOperationGenerator(options)),
+		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
+		validateConsistency: assertEquivalentDirectories,
+		factory: new DirectoryFactory(),
+	};
 
-function assertEventualConsistencyCore(
-	first: IDirectory | undefined,
-	second: IDirectory | undefined,
-) {
-	assert(first !== undefined, "first root dir should be present");
-	assert(second !== undefined, "second root dir should be present");
-
-	// Check number of keys.
-	assert.strictEqual(
-		first.size,
-		second.size,
-		`Number of keys not same: Number of keys ` +
-			`in first at path ${first.absolutePath}: ${first.size} and in second at path ${second.absolutePath}: ${second.size}`,
-	);
-
-	// Check key/value pairs in both directories.
-	for (const key of first.keys()) {
-		assert.strictEqual(
-			first.get(key),
-			second.get(key),
-			`Key not found or value not matching ` +
-				`key: ${key}, value in dir first at path ${first.absolutePath}: ${first.get(
-					key,
-				)} and in second at path ${second.absolutePath}: ${second.get(key)}`,
-		);
-	}
-
-	// Check for number of subdirectores with both directories.
-	assert(first.countSubDirectory !== undefined && second.countSubDirectory !== undefined);
-	assert.strictEqual(
-		first.countSubDirectory(),
-		second.countSubDirectory(),
-		`Number of subDirectories not same: Number of subdirectory in ` +
-			`first at path ${first.absolutePath}: ${first.countSubDirectory()} and in second` +
-			`at path ${second.absolutePath}: ${second.countSubDirectory()}`,
-	);
-
-	// Check for consistency of subdirectores with both directories.
-	for (const [name, subDirectory1] of first.subdirectories()) {
-		const subDirectory2 = second.getSubDirectory(name);
-		assert(
-			subDirectory2 !== undefined,
-			`SubDirectory with name ${name} not present in second directory`,
-		);
-		assertEventualConsistencyCore(subDirectory1, subDirectory2);
-	}
-}
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
+		reconnectProbability: 0.15,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.08,
+		},
+		defaultTestCount: 25,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 21,
+		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1") },
+	});
+});
 
 describe("SharedDirectory fuzz", () => {
 	const model: DDSFuzzModel<DirectoryFactory, Operation> = {
-		workloadName: "default directory",
+		workloadName: "default directory 2",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 		validateConsistency: assertEquivalentDirectories,
@@ -357,12 +358,7 @@ describe("SharedDirectory fuzz", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		/**
-		 * TODO: This test suite currently fails with reconnect enabled.
-		 * AB#4064 tracks fixing any eventual consistency issues and enabling this (or a similar model with
-		 * reconnection enabled).
-		 */
-		reconnectProbability: 0,
+		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
@@ -370,9 +366,9 @@ describe("SharedDirectory fuzz", () => {
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
 		},
-		defaultTestCount: 10,
+		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results") },
+		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },
 	});
 });

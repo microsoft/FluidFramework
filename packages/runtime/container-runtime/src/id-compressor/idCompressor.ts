@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import {
 	IIdCompressor,
@@ -311,7 +311,7 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 	 */
 	public constructor(
 		public readonly localSessionId: SessionId,
-		private readonly logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		this.localSession = this.createSession(localSessionId);
 	}

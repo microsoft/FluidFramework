@@ -5,7 +5,9 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { validateMessages } from "@fluidframework/driver-base";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
@@ -14,10 +16,9 @@ import {
 	IDocumentDeltaStorageService,
 } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
-import { getWithRetryForTokenRefresh, validateMessages } from "./odspUtils";
+import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -27,7 +28,7 @@ export class OdspDeltaStorageService {
 		private readonly deltaFeedUrl: string,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	/**
@@ -127,11 +128,11 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-	private firstCacheMiss = Number.MAX_SAFE_INTEGER;
+	private firstCacheMiss = false;
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly batchSize: number,
 		private readonly concurrency: number,
 		private readonly getFromStorage: (
@@ -177,7 +178,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				validateMessages("cached", messages, from, this.logger);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
-					opsFromSnapshot = messages.length;
+					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };
 				}
 				this.snapshotOps = undefined;
@@ -188,9 +189,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
 			// This saves a bit of processing time
-			if (from < this.firstCacheMiss) {
+			if (!this.firstCacheMiss) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
+				// Set the firstCacheMiss as true in case we didn't get all the ops.
+				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
+				this.firstCacheMiss = from + messagesFromCache.length < to;
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
 					return {
@@ -198,7 +202,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 						partialResult: true,
 					};
 				}
-				this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
 			}
 
 			if (cachedOnly) {
@@ -237,6 +240,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					opsFromSnapshot,
 					opsFromCache,
 					opsFromStorage,
+					reason: fetchReason,
 				});
 			}
 		});

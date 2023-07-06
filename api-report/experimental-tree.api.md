@@ -10,14 +10,14 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import type { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -781,7 +781,7 @@ export class RevisionView extends TreeView {
 // @public
 export interface SequencedEditAppliedEventArguments {
     readonly edit: Edit<ChangeInternal>;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     readonly outcome: EditApplicationOutcome;
     readonly reconciliationPath: ReconciliationPath;
     readonly tree: SharedTree;
@@ -864,7 +864,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     loadSerializedSummary(blobData: string): ITelemetryProperties;
     // @internal
     loadSummary(summary: SharedTreeSummaryBase): void;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)

@@ -22,9 +22,9 @@ import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/common-utils';
@@ -91,6 +91,23 @@ export interface ISnapshotContents {
 }
 
 // @public
+export interface ISocketStorageDiscovery {
+    // (undocumented)
+    deltaStorageUrl: string;
+    deltaStreamSocketUrl: string;
+    // (undocumented)
+    id: string;
+    refreshSessionDurationSeconds?: number;
+    // (undocumented)
+    runtimeTenantId?: string;
+    // (undocumented)
+    snapshotStorageUrl: string;
+    socketToken?: string;
+    // (undocumented)
+    tenantId: string;
+}
+
+// @public
 export function isOdcOrigin(origin: string): boolean;
 
 // @public
@@ -124,6 +141,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
@@ -173,7 +191,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 // Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithProps" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContentsWithProps;
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLoggerExt): ISnapshotContentsWithProps;
 
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //

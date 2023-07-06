@@ -265,6 +265,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private noActiveClients: boolean;
 
+	private globalCheckpointOnly;
+
 	private closed: boolean = false;
 
 	// mapping of enabled nack message types. messages will be nacked based on the provided info
@@ -291,6 +293,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -422,22 +425,39 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	public handler(rawMessage: IQueuedMessage) {
 		// In cases where we are reprocessing messages we have already checkpointed exit early
-		if (rawMessage.offset <= this.logOffset) {
-			Lumberjack.info(
-				`rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
-				getLumberBaseProperties(this.documentId, this.tenantId),
-			);
+		if (this.logOffset !== undefined && rawMessage.offset <= this.logOffset) {
+			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
+			reprocessOpsMetric.setProperties({
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				kafkaMessageOffset: rawMessage.offset,
+				databaseLastOffset: this.logOffset,
+			});
 
 			this.updateCheckpointMessages(rawMessage);
-
-			if (this.checkpointInfo.currentKafkaCheckpointMessage) {
-				this.context.checkpoint(
-					this.checkpointInfo.currentKafkaCheckpointMessage,
-					this.restartOnCheckpointFailure,
+			try {
+				if (
+					this.checkpointInfo.currentKafkaCheckpointMessage &&
+					this.kafkaCheckpointOnReprocessingOp
+				) {
+					this.context.checkpoint(
+						this.checkpointInfo.currentKafkaCheckpointMessage,
+						this.restartOnCheckpointFailure,
+					);
+				}
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
 				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
-
 			return undefined;
+		} else if (this.logOffset === undefined) {
+			Lumberjack.error(
+				`No value for logOffset`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 		}
 
 		this.logOffset = rawMessage.offset;
@@ -619,12 +639,20 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 		this.updateCheckpointMessages(rawMessage);
 
+		if (this.lastMessageType === MessageType.ClientJoin) {
+			this.globalCheckpointOnly = false;
+		}
+
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
+			// Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
+			if (checkpointReason === CheckpointReason.NoClients) {
+				this.globalCheckpointOnly = true;
+			}
 			// checkpoint the current up to date state
-			this.checkpoint(checkpointReason);
+			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
 		} else {
-			this.updateCheckpointIdleTimer();
+			this.updateCheckpointIdleTimer(this.globalCheckpointOnly);
 		}
 
 		// Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -1883,7 +1911,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Checkpoints the current state once the pending kafka messages are produced
 	 */
-	private checkpoint(reason: CheckpointReason) {
+	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean) {
 		this.clearCheckpointIdleTimer();
 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
@@ -1898,6 +1926,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				void this.checkpointContext.checkpoint(
 					checkpointParams,
 					this.restartOnCheckpointFailure,
+					globalCheckpointOnly,
 				);
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
@@ -1938,7 +1967,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Updates the time until the state is checkpointed when idle
 	 * @param rawMessage - The current raw message that is initiating the timer
 	 */
-	private updateCheckpointIdleTimer() {
+	private updateCheckpointIdleTimer(globalCheckpointOnly: boolean = false) {
 		this.clearCheckpointIdleTimer();
 
 		const initialDeliCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
@@ -1950,7 +1979,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// if it matches, that means that delis state is for the raw message
 			// this means our checkpoint will result in the correct state
 			if (initialDeliCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
-				this.checkpoint(CheckpointReason.IdleTime);
+				this.checkpoint(CheckpointReason.IdleTime, globalCheckpointOnly);
 			}
 		}, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
 	}

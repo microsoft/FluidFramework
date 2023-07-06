@@ -9,7 +9,7 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -25,7 +25,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
@@ -322,37 +322,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    usedRoutes?: string[];
-}
-
-// @public @deprecated
-export interface IGarbageCollectionNodeData {
-    outboundRoutes: string[];
-    unreferencedTimestampMs?: number;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionSnapshotData {
-    // (undocumented)
-    deletedNodes: string[] | undefined;
-    // (undocumented)
-    gcState: IGarbageCollectionState;
-    // (undocumented)
-    tombstones: string[] | undefined;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionState {
-    // (undocumented)
-    gcNodes: {
-        [id: string]: IGarbageCollectionNodeData;
-    };
-}
-
-// @public @deprecated (undocumented)
-export interface IGarbageCollectionSummaryDetailsLegacy {
-    gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 

@@ -27,7 +27,7 @@ import {
 	FieldKinds,
 	valueSymbol,
 	isPrimitiveValue,
-	isUnwrappedNode,
+	isEditableTree,
 	isEditableField,
 	UnwrappedEditableTree,
 	getField,
@@ -77,7 +77,7 @@ const emptyNode: JsonableTree = { type: optionalChildSchema.name };
 describe("editable-tree: read-only", () => {
 	it("can use `Object.keys` and `Reflect.ownKeys` with EditableTree", () => {
 		const [, proxy] = buildTestPerson();
-		assert(isUnwrappedNode(proxy));
+		assert(isEditableTree(proxy));
 
 		assert.equal(Object.keys(proxy).length, 6);
 		{
@@ -101,7 +101,7 @@ describe("editable-tree: read-only", () => {
 
 	it("`getOwnPropertyDescriptor` unwraps fields", () => {
 		const [, proxy] = buildTestPerson();
-		assert(isUnwrappedNode(proxy));
+		assert(isEditableTree(proxy));
 
 		// primitive field is unwrapped into value
 		const nameDescriptor = Object.getOwnPropertyDescriptor(proxy, "name");
@@ -122,7 +122,7 @@ describe("editable-tree: read-only", () => {
 		// It reveals the values of non-primitive nodes,
 		// which are otherwise "hidden" behind a proxy.
 		// Usefull for debugging.
-		if (isUnwrappedNode(addressDescriptor.value)) {
+		if (isEditableTree(addressDescriptor.value)) {
 			addressDescriptor.value = clone(addressDescriptor.value);
 			expected = clone(expected);
 		}
@@ -146,7 +146,7 @@ describe("editable-tree: read-only", () => {
 
 	it("can use `getOwnPropertyDescriptor` for symbols of EditableTree", () => {
 		const [, proxy] = buildTestPerson();
-		assert(isUnwrappedNode(proxy));
+		assert(isEditableTree(proxy));
 		const nameField = proxy[getField](brand("name"));
 		const nameNode = nameField.getNode(0);
 
@@ -271,7 +271,7 @@ describe("editable-tree: read-only", () => {
 
 	it('"in" works as expected', () => {
 		const [, personProxy] = buildTestPerson();
-		assert(isUnwrappedNode(personProxy));
+		assert(isEditableTree(personProxy));
 		// Confirm that methods on ProxyTarget are not leaking through.
 		assert.equal("free" in personProxy, false);
 		// Confirm that fields on ProxyTarget are not leaking through.
@@ -297,7 +297,7 @@ describe("editable-tree: read-only", () => {
 			{},
 			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
 		).unwrappedRoot;
-		assert(isUnwrappedNode(emptyOptional));
+		assert(isEditableTree(emptyOptional));
 		// Check empty field does not show up:
 		assert.equal("child" in emptyOptional, false);
 
@@ -307,7 +307,7 @@ describe("editable-tree: read-only", () => {
 			},
 			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
 		).unwrappedRoot;
-		assert(isUnwrappedNode(fullOptional));
+		assert(isEditableTree(fullOptional));
 		// Check full field does show up:
 		assert("child" in fullOptional);
 
@@ -317,7 +317,7 @@ describe("editable-tree: read-only", () => {
 			},
 			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
 		).unwrappedRoot;
-		assert(isUnwrappedNode(hasValue));
+		assert(isEditableTree(hasValue));
 		// Value does show up when not empty:
 		assert(valueSymbol in hasValue);
 	});
@@ -358,7 +358,7 @@ describe("editable-tree: read-only", () => {
 		const schemaData = buildTestSchema(SchemaBuilder.fieldValue(optionalChildSchema));
 		const forest = setupForest(schemaData, {});
 		const context = getReadonlyEditableTreeContext(forest);
-		assert(isUnwrappedNode(context.unwrappedRoot));
+		assert(isEditableTree(context.unwrappedRoot));
 		expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
 		context.free();
 	});
@@ -410,7 +410,7 @@ describe("editable-tree: read-only", () => {
 			[globalFieldSymbol]: "global foo",
 		});
 		const context = getReadonlyEditableTreeContext(forest);
-		assert(isUnwrappedNode(context.unwrappedRoot));
+		assert(isEditableTree(context.unwrappedRoot));
 		assert.deepEqual(
 			context.unwrappedRoot[getField](globalFieldSymbol).getNode(0)[typeSymbol],
 			stringSchema,
@@ -459,7 +459,7 @@ describe("editable-tree: read-only", () => {
 		const schemaData = builder.intoDocumentSchema(rootSchema);
 		const forest = setupForest(schemaData, { child: "x" });
 		const context = getReadonlyEditableTreeContext(forest);
-		assert(isUnwrappedNode(context.unwrappedRoot));
+		assert(isEditableTree(context.unwrappedRoot));
 		assert.equal(context.unwrappedRoot["child" as FieldKey], "x");
 
 		// access without unwrapping
@@ -516,7 +516,7 @@ describe("editable-tree: read-only", () => {
 		it("root node", () => {
 			const context = buildTestTree(personData);
 			const tree = context.unwrappedRoot;
-			assert(isUnwrappedNode(tree));
+			assert(isEditableTree(tree));
 			const { index, parent: rootParent } = tree[parentField];
 			assert.equal(index, 0);
 			expectFieldEquals(context.schema, rootParent, [personJsonableTree()]);
@@ -527,7 +527,7 @@ describe("editable-tree: read-only", () => {
 		it("child field", () => {
 			const context = buildTestTree(personData);
 			const tree = context.unwrappedRoot;
-			assert(isUnwrappedNode(tree));
+			assert(isEditableTree(tree));
 			const childField = tree[getField](brand("name"));
 			const rootNodeAgain = childField.parent;
 			expectTreeEquals(context.schema, rootNodeAgain, personJsonableTree());
@@ -613,6 +613,7 @@ describe("editable-tree: read-only", () => {
 			"primaryType",
 			"parent",
 			"context",
+			"content",
 		]);
 		const act = [...proxy.address.phones].map(
 			(phone: UnwrappedEditableTree): Value | object => {
@@ -638,7 +639,7 @@ describe("editable-tree: read-only", () => {
 		assert.equal(phonesField.length, 1);
 		// get the node with the primary field
 		const phonesNode = phonesField.getNode(0);
-		assert(isUnwrappedNode(phonesNode));
+		assert(isEditableTree(phonesNode));
 		assert.equal([...phonesNode].length, 1);
 		// get the primary key
 		const phonesType = phonesNode[typeSymbol];
@@ -651,7 +652,7 @@ describe("editable-tree: read-only", () => {
 
 		// get the sequence node with the primary field
 		const simplePhonesNode = phonesPrimaryField.getNode(3);
-		assert(isUnwrappedNode(simplePhonesNode));
+		assert(isEditableTree(simplePhonesNode));
 		// assert its schema follows the primary field schema and get the primary key from it
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];

@@ -20,8 +20,6 @@
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -63,13 +61,12 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/gitresources": "workspace:*",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"events": "^3.1.0",
-		"lodash": "^4.17.21"
+		"events": "^3.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.19.0-165129",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.19.0-165129",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/protocol-base-previous": "npm:@fluidframework/protocol-base@0.1040.1000",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -119,6 +116,18 @@
 				"backCompat": false
 			},
 			"RemovedInterfaceDeclaration_ILocalSequencedClient": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_AttachmentTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_BlobTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_TreeTreeEntry": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

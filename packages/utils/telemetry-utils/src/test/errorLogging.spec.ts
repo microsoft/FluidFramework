@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import {
 	LoggingError,
@@ -561,6 +561,39 @@ describe("Error Logging", () => {
 				extractLogSafeErrorProperties(42, false /* sanitizeStack */).stack,
 				undefined,
 			);
+		});
+	});
+	describe("normalizeError", () => {
+		describe("preserves properties", () => {
+			it("missing properties are not set", () => {
+				const unknownError = new Error();
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, undefined, "canRetry not undefined");
+				assert.strictEqual(
+					newError.retryAfterSeconds,
+					undefined,
+					"retryAfterSeconds not undefined",
+				);
+			});
+			it("existing retry properties are present in normalized error", () => {
+				const unknownError: { canRetry?: boolean; retryAfterSeconds?: number } & Error =
+					new Error();
+				unknownError.canRetry = true;
+				unknownError.retryAfterSeconds = 100;
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, true, "canRetry not true");
+				assert.strictEqual(newError.retryAfterSeconds, 100, "retryAfterSeconds not 100");
+			});
 		});
 	});
 });

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
-import { Brand, fail, Invariant } from "../../util";
+import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
-import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
+import { CrossFieldManager } from "./crossFieldQueries";
+import { ChangesetLocalId, NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -18,9 +19,9 @@ export interface FieldChangeHandler<
 	TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
 > {
 	_typeCheck?: Invariant<TChangeset>;
-	rebaser: FieldChangeRebaser<TChangeset>;
-	codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
-	editor: TEditor;
+	readonly rebaser: FieldChangeRebaser<TChangeset>;
+	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
 	/**
@@ -40,7 +41,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * and should be tagged with the revision of its parent change.
 	 * Children which were the result of an earlier call to `composeChild` should be tagged with
 	 * undefined revision if later passed as an argument to `composeChild`.
-	 * See {@link ChangeRebaser} for more details.
+	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
 		changes: TaggedChange<TChangeset>[],
@@ -63,7 +64,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * @returns the inverse of `changes`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	invert(
 		change: TaggedChange<TChangeset>,
@@ -86,7 +87,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * Rebase `change` over `over`.
-	 * See {@link ChangeRebaser} for details.
+	 * See `ChangeRebaser` for details.
 	 */
 	rebase(
 		change: TChangeset,
@@ -135,7 +136,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 		...data,
 		amendCompose: () => fail("Not implemented"),
 		amendInvert: () => fail("Not implemented"),
-		amendRebase: () => fail("Not implemented"),
+		amendRebase: (change) => change,
 	};
 }
 
@@ -176,13 +177,22 @@ export type NodeChangeInverter = (
 /**
  * @alpha
  */
+export enum NodeExistenceState {
+	Alive,
+	Dead,
+}
+
+/**
+ * @alpha
+ */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
 	/**
-	 * True when the baseChange deletes the node. Defaults to false if not specified.
+	 * Whether or not the node is alive or dead in the input context of change.
+	 * Defaults to Alive if undefined.
 	 */
-	deleted?: boolean,
+	state?: NodeExistenceState,
 ) => NodeChangeset | undefined;
 
 /**
@@ -196,73 +206,6 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  * @alpha
  */
 export type IdAllocator = (count?: number) => ChangesetLocalId;
-
-/**
- * Changeset for a subtree rooted at a specific node.
- * @alpha
- */
-export interface NodeChangeset extends HasFieldChanges {
-	valueChange?: ValueChange;
-	valueConstraint?: ValueConstraint;
-	nodeExistsConstraint?: NodeExistsConstraint;
-}
-
-/**
- * @alpha
- */
-export interface NodeExistsConstraint {
-	violated: boolean;
-}
-
-/**
- * @alpha
- */
-export interface ValueConstraint {
-	value: Value;
-	violated: boolean;
-}
-
-/**
- * @alpha
- */
-export interface HasFieldChanges {
-	fieldChanges?: FieldChangeMap;
-}
-
-/**
- * @alpha
- */
-export interface ValueChange {
-	/**
-	 * The revision in which this change occurred.
-	 * Undefined when it can be inferred from context.
-	 */
-	revision?: RevisionTag;
-
-	/**
-	 * Can be left unset to represent the value being cleared.
-	 */
-	value?: Value;
-}
-
-/**
- * @alpha
- */
-export interface ModularChangeset extends HasFieldChanges {
-	/**
-	 * The numerically highest `ChangesetLocalId` used in this changeset.
-	 * If undefined then this changeset contains no IDs.
-	 */
-	maxId?: ChangesetLocalId;
-	/**
-	 * The revisions included in this changeset, ordered temporally (oldest to newest).
-	 * Undefined for anonymous changesets.
-	 * Should never be empty.
-	 */
-	readonly revisions?: readonly RevisionInfo[];
-	fieldChanges: FieldChangeMap;
-	constraintViolationCount?: number;
-}
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
@@ -288,38 +231,9 @@ export interface RevisionMetadataSource {
 /**
  * @alpha
  */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
-	/**
-	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
-	 * The value corresponds to the `revision` of the original changeset being rolled back.
-	 */
-	readonly rollbackOf?: RevisionTag;
+export function getIntention(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
-
-/**
- * @alpha
- */
-export type FieldChangeMap = Map<FieldKey, FieldChange>;
-
-/**
- * @alpha
- */
-export interface FieldChange {
-	fieldKind: FieldKindIdentifier;
-
-	/**
-	 * If defined, `change` is part of the specified revision.
-	 * Undefined in the following cases:
-	 * A) A revision is specified on an ancestor of this `FieldChange`, in which case `change` is part of that revision.
-	 * B) `change` is composed of multiple revisions.
-	 * C) `change` is part of an anonymous revision.
-	 */
-	revision?: RevisionTag;
-	change: FieldChangeset;
-}
-
-/**
- * @alpha
- */
-export type FieldChangeset = Brand<unknown, "FieldChangeset">;

@@ -2,11 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable } from "@fluidframework/common-definitions";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IDisposable } from "@fluidframework/core-interfaces";
 
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
+import { HasContainerKey } from "./CommonInterfaces";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
@@ -20,46 +19,9 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
  *
  * @internal
  */
-export interface IContainerDevtools extends IDisposable {
+export interface IContainerDevtools extends HasContainerKey, IDisposable {
 	/**
-	 * The ID of {@link IContainerDevtools.container}.
-	 */
-	readonly containerId: string;
-
-	/**
-	 * The Container session with which the debugger is associated.
-	 */
-	readonly container: IContainer;
-
-	/**
-	 * The Audience associated with the Container
-	 */
-	readonly audience: IAudience;
-
-	/**
-	 * Data contents of the Container.
-	 *
-	 * @remarks
-	 *
-	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
-	 */
-	readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
-
-	/**
-	 * Optional: Nickname to assign to the debugger instance.
-	 *
-	 * @remarks
-	 *
-	 * Associated tooling may take advantage of this to differentiate between instances using
-	 * semantically meaningful information.
-	 *
-	 * If not provided, the {@link IContainerDevtools.containerId} will be used for the purpose of distinguishing
-	 * instances.
-	 */
-	readonly containerNickname?: string;
-
-	/**
-	 * Gets the history of all ConnectionState changes since the debugger session was initialized.
+	 * Gets the history of all ConnectionState changes since the devtools session was initialized.
 	 *
 	 * @remarks
 	 *
@@ -79,7 +41,7 @@ export interface IContainerDevtools extends IDisposable {
 	getAudienceHistory(): readonly AudienceChangeLogEntry[];
 
 	/**
-	 * Disposes the debugger session.
+	 * Disposes the devtools session.
 	 * All data recording will stop, and no further state change events will be emitted.
 	 */
 	dispose(): void;

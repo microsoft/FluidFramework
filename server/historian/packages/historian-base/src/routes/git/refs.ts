@@ -12,7 +12,7 @@ import {
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -33,7 +33,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -122,7 +122,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/refs",
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
 			utils.handleResponse(refsP, response, false);
@@ -132,7 +132,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = getRef(
 				request.params.tenantId,
@@ -146,7 +146,7 @@ export function create(
 	router.post(
 		"/repos/:ignored?/:tenantId/git/refs",
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = createRef(
 				request.params.tenantId,
@@ -161,7 +161,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		utils.validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = updateRef(
 				request.params.tenantId,
@@ -177,7 +177,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		utils.validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = deleteRef(
 				request.params.tenantId,

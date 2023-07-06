@@ -24,6 +24,7 @@ import {
 	Any,
 	GlobalFieldSchema,
 	TypedSchemaCollection,
+	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -220,7 +221,13 @@ export const personData: ContextuallyTypedNodeDataObject = {
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
-		cursorFromContextualData(fullSchemaData, rootPersonSchema.types, personData),
+		cursorFromContextualData(
+			{
+				schema: fullSchemaData,
+			},
+			rootPersonSchema.types,
+			personData,
+		),
 	);
 }
 
@@ -273,7 +280,7 @@ export function buildTestSchema<T extends FieldSchema>(rootField: T) {
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor);
+	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
 }
 
 export function setupForest<T extends GlobalFieldSchema>(
@@ -282,7 +289,13 @@ export function setupForest<T extends GlobalFieldSchema>(
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
-	const root = cursorsFromContextualData(schemaRepo, schema.root.schema, data);
+	const root = cursorsFromContextualData(
+		{
+			schema: schemaRepo,
+		},
+		schema.root.schema,
+		data,
+	);
 	initializeForest(forest, root);
 	return forest;
 }

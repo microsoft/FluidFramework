@@ -18,11 +18,14 @@ import {
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
+import { noopValidator } from "../../codec";
+
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -90,6 +93,23 @@ describe("Branches", () => {
 		assertBased(parent, child);
 		// Ensure that the changes are now present on the parent
 		assertHistory(parent, tag1, tag2);
+	});
+
+	it("rebase changes up to a certain commit", () => {
+		// Create a parent branch and a child fork
+		const parent = create();
+		const child = parent.fork();
+		// Apply a couple of changes to the parent
+		const tag1 = change(parent);
+		change(parent);
+		// Rebase the child onto the parent up to the first new commit
+		const parentCommit1 =
+			findAncestor(parent.getHead(), (c) => c.revision === tag1) ??
+			fail("Expected to find commit");
+
+		child.rebaseOnto(parent, parentCommit1);
+		// Ensure that the changes are now present on the child
+		assertHistory(child, tag1);
 	});
 
 	it("merge changes from a child into a parent", () => {
@@ -495,7 +515,11 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			new MockRepairDataStoreProvider(),
+		);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -507,7 +531,8 @@ describe("Branches", () => {
 		return new SharedTreeBranch(
 			from.getHead(),
 			defaultChangeFamily,
-			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			new MockRepairDataStoreProvider(),
+			UndoRedoManager.create(defaultChangeFamily),
 		);
 	}
 

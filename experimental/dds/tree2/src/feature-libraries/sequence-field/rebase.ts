@@ -10,6 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
+	NodeExistenceState,
 	RevisionMetadataSource,
 } from "../modular-schema";
 import {
@@ -50,7 +51,7 @@ import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
 	getMoveEffect,
-	getOrAddEffect,
+	setMoveEffect,
 	isMoveMark,
 	MoveEffect,
 	MoveEffectTable,
@@ -99,6 +100,7 @@ export function rebase<TNodeChange>(
 export type NodeChangeRebaser<TNodeChange> = (
 	change: TNodeChange | undefined,
 	baseChange: TNodeChange | undefined,
+	stateChange?: NodeExistenceState,
 ) => TNodeChange | undefined;
 
 function rebaseMarkList<TNodeChange>(
@@ -110,7 +112,7 @@ function rebaseMarkList<TNodeChange>(
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 ): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
+	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new RebaseQueue(
 		baseRevision,
 		baseIntention,
@@ -166,15 +168,14 @@ function rebaseMarkList<TNodeChange>(
 				baseInputIndex += detachLength;
 			} else if (isAttach(baseMark)) {
 				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
-					const effect = getMoveEffect(
+					const movedMark = getMovedMark(
 						moveEffects,
-						CrossFieldTarget.Destination,
 						baseMark.revision ?? baseRevision,
 						baseMark.id,
+						baseMark.count,
 					);
-					if (effect.movedMark !== undefined) {
-						factory.push(effect.movedMark);
-						delete effect.movedMark;
+					if (movedMark !== undefined) {
+						factory.push(movedMark);
 					} else {
 						factory.pushOffset(getOutputLength(baseMark));
 					}
@@ -344,8 +345,9 @@ function rebaseMark<TNodeChange>(
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
+			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
 			if (markFollowsMoves(rebasedMark)) {
-				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId);
+				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId, baseMark.count);
 				return { count: 0 };
 			}
 
@@ -353,7 +355,7 @@ function rebaseMark<TNodeChange>(
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
 				const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
-				sendMarkToDest(modify, moveEffects, baseRevision, moveId);
+				sendMarkToDest(modify, moveEffects, baseRevision, moveId, baseMark.count);
 			}
 		}
 
@@ -364,19 +366,23 @@ function rebaseMark<TNodeChange>(
 
 		if (isMoveMark(rebasedMark)) {
 			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
-				getOrAddEffect(
+				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
 					rebasedMark.revision,
 					rebasedMark.id,
-				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+					rebasedMark.count,
+					PairedMarkUpdate.Deactivated,
+				);
 			} else if (rebasedMark.type === "ReturnTo") {
-				getOrAddEffect(
+				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
 					rebasedMark.revision,
 					rebasedMark.id,
-				).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+					rebasedMark.count,
+					PairedMarkUpdate.Reactivated,
+				);
 			}
 		}
 		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseInputOffset);
@@ -387,19 +393,23 @@ function rebaseMark<TNodeChange>(
 		);
 		if (isMoveMark(rebasedMark)) {
 			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
-				getOrAddEffect(
+				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
 					rebasedMark.revision,
 					rebasedMark.id,
-				).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+					rebasedMark.count,
+					PairedMarkUpdate.Reactivated,
+				);
 			} else if (rebasedMark.type === "ReturnTo") {
-				getOrAddEffect(
+				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
 					rebasedMark.revision,
 					rebasedMark.id,
-				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+					rebasedMark.count,
+					PairedMarkUpdate.Deactivated,
+				);
 			}
 		}
 		rebasedMark = withoutDetachEvent(rebasedMark);
@@ -420,19 +430,69 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "Insert":
 		case "MoveIn":
 		case "ReturnTo":
+		case "Placeholder":
 			return false;
 		default:
 			unreachableCase(type);
 	}
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendMarkToDest<T>(
 	mark: Mark<T>,
 	moveEffects: MoveEffectTable<T>,
 	revision: RevisionTag,
-	moveId: MoveId,
+	id: MoveId,
+	count: number,
 ) {
-	getOrAddEffect(moveEffects, CrossFieldTarget.Destination, revision, moveId).movedMark = mark;
+	const effect = getMoveEffect(
+		moveEffects,
+		CrossFieldTarget.Destination,
+		revision,
+		id,
+		count,
+		false,
+	);
+	let newEffect: MoveEffect<T>;
+	if (effect !== undefined) {
+		assert(
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
+			0x6f1 /* Expected effect to cover entire mark */,
+		);
+		newEffect = { ...effect.value, movedMark: mark };
+	} else {
+		newEffect = { movedMark: mark };
+	}
+	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
+}
+
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
+function setPairedMarkStatus(
+	moveEffects: MoveEffectTable<unknown>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+	status: PairedMarkUpdate,
+) {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
+	let newEffect: MoveEffect<unknown>;
+	if (effect !== undefined) {
+		assert(
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
+			0x6f2 /* Expected effect to cover entire mark */,
+		);
+		newEffect = { ...effect.value, pairedMarkStatus: status };
+	} else {
+		newEffect = { pairedMarkStatus: status };
+	}
+	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
 function getMarkIntention(mark: Mark<unknown>, intention: RevisionTag): RevisionTag {
@@ -448,6 +508,18 @@ function rebaseNodeChange<TNodeChange>(
 ): Mark<TNodeChange> {
 	const baseChange = getNodeChange(baseMark);
 	const currChange = getNodeChange<TNodeChange>(currMark);
+
+	if (markEmptiesCells(baseMark) && !isMoveMark(baseMark)) {
+		return withNodeChange(
+			currMark,
+			nodeRebaser(currChange, baseChange, NodeExistenceState.Dead),
+		);
+	} else if (markFillsCells(baseMark) && !isMoveMark(baseMark)) {
+		return withNodeChange(
+			currMark,
+			nodeRebaser(currChange, baseChange, NodeExistenceState.Alive),
+		);
+	}
 
 	return withNodeChange(currMark, nodeRebaser(currChange, baseChange));
 }
@@ -509,7 +581,7 @@ function amendRebaseI<TNodeChange>(
 		moveEffects,
 		revisionMetadata,
 	);
-	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
+	const factory = new MarkListFactory<TNodeChange>();
 
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
@@ -517,16 +589,15 @@ function amendRebaseI<TNodeChange>(
 			baseMark !== undefined &&
 			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
 		) {
-			const effect = getMoveEffect(
+			const movedMark = getMovedMark(
 				moveEffects,
-				CrossFieldTarget.Destination,
 				baseMark.revision ?? baseRevision,
 				baseMark.id,
+				baseMark.count,
 			);
-			if (effect.movedMark !== undefined) {
-				factory.push(effect.movedMark);
-				factory.pushOffset(-getInputLength(effect.movedMark));
-				delete effect.movedMark;
+			if (movedMark !== undefined) {
+				factory.push(movedMark);
+				factory.pushOffset(-getInputLength(movedMark));
 			}
 		}
 
@@ -562,11 +633,45 @@ function amendRebaseI<TNodeChange>(
 
 	// We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
 	// A second pass through MarkListFactory will handle any remaining merges.
-	const factory2 = new MarkListFactory<TNodeChange>(undefined, moveEffects);
+	const factory2 = new MarkListFactory<TNodeChange>();
 	for (const mark of factory.list) {
 		factory2.push(mark);
 	}
 	return factory2.list;
+}
+
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
+function getMovedMark<T>(
+	moveEffects: MoveEffectTable<T>,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+): Mark<T> | undefined {
+	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
+
+	if (effect?.value.movedMark !== undefined) {
+		assert(
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
+			0x6f3 /* Expected effect to cover entire mark */,
+		);
+		const newEffect = { ...effect.value };
+		delete newEffect.movedMark;
+		setMoveEffect(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			revision,
+			id,
+			count,
+			newEffect,
+			false,
+		);
+		return effect.value.movedMark;
+	}
+
+	return undefined;
 }
 
 function handleCurrAttach<T>(

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
@@ -50,7 +50,7 @@ export class ParallelRequests<T> {
 		from: number,
 		private to: number | undefined,
 		private readonly payloadSize: number,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly requestCallback: (
 			request: number,
 			from: number,
@@ -309,9 +309,10 @@ export class ParallelRequests<T> {
 				if (to === this.latestRequested) {
 					// we can go after full chunk at the end if we received partial chunk, or more than asked
 					// Also if we got more than we asked to, we can actually use those ops!
-					if (payload.length !== 0) {
-						this.results.set(from, payload);
-						from += payload.length;
+					while (payload.length !== 0) {
+						const data = payload.splice(0, requestedLength);
+						this.results.set(from, data);
+						from += data.length;
 					}
 
 					this.latestRequested = from;
@@ -409,7 +410,7 @@ async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
 	props: ITelemetryProperties,
 	strongTo: boolean,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
@@ -540,7 +541,7 @@ export function requestOps(
 	fromTotal: number,
 	toTotal: number | undefined,
 	payloadSize: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {

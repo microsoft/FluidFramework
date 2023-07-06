@@ -9,7 +9,7 @@ import {
 	RootDataVisualizations,
 	GetRootDataVisualizations,
 	handleIncomingMessage,
-	HasContainerId,
+	HasContainerKey,
 	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	RootHandleNode,
@@ -24,7 +24,7 @@ const loggingContext = "INLINE(VIEW)";
 /**
  * {@link DataObjectsView} input props.
  */
-export type DataObjectsViewProps = HasContainerId;
+export type DataObjectsViewProps = HasContainerKey;
 
 /**
  * Displays the data inside a container.
@@ -34,7 +34,7 @@ export type DataObjectsViewProps = HasContainerId;
  * Dispatches data object rendering based on those provided view {@link TreeDataView}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerKey } = props;
 
 	const messageRelay = useMessageRelay();
 
@@ -44,10 +44,10 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 	React.useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
-			[RootDataVisualizations.MessageType]: (untypedMessage) => {
+			[RootDataVisualizations.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as RootDataVisualizations.Message;
 
-				if (message.data.containerId === containerId) {
+				if (message.data.containerKey === containerKey) {
 					setRootDataHandles(message.data.visualizations);
 
 					return true;
@@ -68,14 +68,14 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		// POST Request for DDS data in container.
 		messageRelay.postMessage(
 			GetRootDataVisualizations.createMessage({
-				containerId,
+				containerKey,
 			}),
 		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setRootDataHandles, messageRelay]);
+	}, [containerKey, setRootDataHandles, messageRelay]);
 
 	if (rootDataHandles === undefined) {
 		return <Waiting />;
@@ -87,7 +87,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 				return (
 					<TreeDataView
 						key={key}
-						containerId={containerId}
+						containerKey={containerKey}
 						label={key}
 						node={fluidObject}
 					/>

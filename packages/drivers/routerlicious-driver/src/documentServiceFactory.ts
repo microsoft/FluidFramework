@@ -10,14 +10,12 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageServicePolicies,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -28,7 +26,12 @@ import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+	toInstrumentedR11sStorageTokenFetcher,
+} from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
@@ -47,6 +50,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
+	enableLongPollingDowngrade: true,
 };
 
 /**
@@ -96,7 +100,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
 		if (createNewSummary === undefined) {
 			throw new Error("Empty file summary creation isn't supported in this driver.");
 		}
@@ -117,11 +120,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
 		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
+			tenantId,
+			undefined /* documentId */,
+			this.tokenProvider,
+			logger2,
+		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-			tenantId,
-			undefined,
-			this.tokenProvider,
+			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
@@ -233,7 +240,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		clientIsSummarizer?: boolean,
 		session?: ISession,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
 		const parsedUrl = parseFluidUrl(resolvedUrl.url);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		if (!documentId || !tenantId) {
@@ -245,17 +251,32 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			all: { driverVersion },
 		});
 
-		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			documentId,
 			this.tokenProvider,
 			logger2,
+		);
+		const storageTokenFetcher = toInstrumentedR11sStorageTokenFetcher(
+			tenantId,
+			documentId,
+			this.tokenProvider,
+			logger2,
+		);
+		const ordererTokenP = ordererTokenFetcher();
+		const storageTokenP = storageTokenFetcher();
+
+		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+			ordererTokenFetcher,
+			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
+			undefined /* baseUrl */,
+			ordererTokenP,
 		);
 
-		const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
+		const discoverFluidResolvedUrl = async (): Promise<IResolvedUrl> => {
 			if (!this.driverPolicies.enableDiscovery) {
 				return resolvedUrl;
 			}
@@ -280,7 +301,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
 		};
-		const fluidResolvedUrl: IFluidResolvedUrl =
+		const fluidResolvedUrl: IResolvedUrl =
 			session !== undefined
 				? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
 				: await discoverFluidResolvedUrl();
@@ -294,6 +315,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`,
 			);
 		}
+
+		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+			tenantId,
+			storageTokenFetcher,
+			logger2,
+			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
+			this.driverPolicies.enableRestLess,
+			storageUrl,
+			storageTokenP,
+		);
 
 		const documentStorageServicePolicies: IDocumentStorageServicePolicies = {
 			caching: this.driverPolicies.enablePrefetch
@@ -320,6 +351,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
+			storageRestWrapper,
+			storageTokenFetcher,
+			ordererTokenFetcher,
 		);
 	}
 }

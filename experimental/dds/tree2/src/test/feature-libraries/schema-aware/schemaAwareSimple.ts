@@ -20,7 +20,7 @@ import { ValueSchema } from "../../../core";
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
 // eslint-disable-next-line import/no-internal-modules
 import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
-import { Assume } from "../../../util";
+import { Assume, _InlineTrick } from "../../../util";
 
 /**
  * @alpha
@@ -54,7 +54,7 @@ export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema
 				[key in keyof TFields]: TypedField<TFields[key]>;
 		  }
 		: Record<string, never>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
@@ -65,7 +65,7 @@ export type TypedField<TField extends FieldSchema> = [
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<TField["allowedTypes"]>
 	>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -102,7 +102,7 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 				>
 		  >
 		: unknown,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -115,7 +115,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Generate a schema aware API for a list of types.
