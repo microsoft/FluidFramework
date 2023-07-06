@@ -101,28 +101,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryErrorEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryGenericEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryPerformanceEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryPropertiesExt": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
