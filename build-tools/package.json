@@ -70,6 +70,7 @@
 		"@commitlint/config-conventional": "^17.6.5",
 		"@commitlint/cz-commitlint": "^17.5.0",
 		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.22.18",
 		"@microsoft/api-extractor": "^7.35.3",
@@ -102,7 +103,8 @@
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
-			"qs": "^6.11.0"
+			"qs": "^6.11.0",
+			"@oclif/core": "~2.4.0"
 		}
 	}
 }
