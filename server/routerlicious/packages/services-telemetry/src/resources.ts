@@ -90,7 +90,7 @@ export enum CommonProperties {
 	serviceName = "serviceName",
 	telemetryGroupName = "telemetryGroupName",
 	totalBatchSize = "totalBatchSize",
-	isUncaughtException = "isUncaughtException",
+	restartReason = "restartReason",
 }
 
 export enum ThrottlingTelemetryProperties {

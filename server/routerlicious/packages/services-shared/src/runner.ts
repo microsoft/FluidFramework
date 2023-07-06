@@ -115,7 +115,7 @@ export function runService<T extends IResources>(
 		},
 		async (error) => {
 			if (error.uncaughtException) {
-				runnerMetric.setProperty(CommonProperties.isUncaughtException, true);
+				runnerMetric.setProperty(CommonProperties.restartReason, "uncaughtException");
 			}
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
