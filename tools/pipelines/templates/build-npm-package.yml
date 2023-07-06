@@ -241,7 +241,7 @@ stages:
                 fi
               fi
 
-        - template: templates/include-use-node-version.yml
+        - template: include-use-node-version.yml
           parameters:
             version: '16.16.0'
 

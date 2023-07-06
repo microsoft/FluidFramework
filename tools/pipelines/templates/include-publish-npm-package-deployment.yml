@@ -55,7 +55,7 @@ jobs:
           steps:
           - download: current
             artifact: pack
-          - template: templates/include-use-node-version.yml
+          - template: include-use-node-version.yml
             parameters:
               version: '16.16.0'
           - template: include-publish-npm-package-steps.yml
