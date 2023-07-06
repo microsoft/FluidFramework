@@ -34,12 +34,14 @@ export interface ISnapshotContents {
  * Returns ISocketStorageDiscoveryParts.
  * @param socketStorageDiscovery - The (raw) ISocketStorageDiscovery to parse
  */
-export function getSocketStorageDiscoveryParts(socketStorageDiscovery: ISocketStorageDiscovery | undefined): ISocketStorageDiscoveryParts | undefined {
-	if(socketStorageDiscovery !== undefined) {
+export function getSocketStorageDiscoveryParts(
+	socketStorageDiscovery: ISocketStorageDiscovery | undefined,
+): ISocketStorageDiscoveryParts | undefined {
+	if (socketStorageDiscovery !== undefined) {
 		return {
 			runtimeTenantId: socketStorageDiscovery?.runtimeTenantId,
 			tenantId: socketStorageDiscovery.tenantId,
-			deltaStreamSocketUrl: socketStorageDiscovery.deltaStreamSocketUrl
+			deltaStreamSocketUrl: socketStorageDiscovery.deltaStreamSocketUrl,
 		};
 	}
 	return undefined;

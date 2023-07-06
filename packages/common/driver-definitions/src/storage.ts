@@ -403,11 +403,11 @@ export interface ISocketStorageDiscoveryParts {
 	deltaStreamSocketUrl: string;
 }
 
-export interface IProvideSessionAwareServiceFactory {
+export interface IProvideSessionAwareDriverFactory {
 	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
 }
 
-export interface ISessionAwareDriverFactory extends IProvideSessionAwareServiceFactory {
+export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts>;
 }
 

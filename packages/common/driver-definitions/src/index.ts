@@ -27,6 +27,8 @@ export {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IProvideSessionAwareDriverFactory,
+	ISessionAwareDriverFactory,
 	ISocketStorageDiscoveryParts,
 	IStream,
 	IStreamResult,

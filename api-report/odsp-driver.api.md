@@ -21,6 +21,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISocketStorageDiscoveryParts } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
@@ -141,7 +142,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts | undefined>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
