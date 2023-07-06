@@ -4,7 +4,9 @@
  */
 
 import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { ISocketStorageDiscoveryParts } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISocketStorageDiscovery } from "./contractsPublic";
 
 export async function getHashedDocumentId(driveId: string, itemId: string): Promise<string> {
 	const buffer = IsoBuffer.from(`${driveId}_${itemId}`);
@@ -25,4 +27,20 @@ export interface ISnapshotContents {
 	 * Sequence number for the latest op/snapshot for the file in ODSP
 	 */
 	latestSequenceNumber: number | undefined;
+}
+
+/**
+ * Picks out the pieces necessary for sending a request to the broadcast-signal endpoint on PUSH.
+ * Returns ISocketStorageDiscoveryParts.
+ * @param socketStorageDiscovery - The (raw) ISocketStorageDiscovery to parse
+ */
+export function getSocketStorageDiscoveryParts(socketStorageDiscovery: ISocketStorageDiscovery | undefined): ISocketStorageDiscoveryParts | undefined {
+	if(socketStorageDiscovery !== undefined) {
+		return {
+			runtimeTenantId: socketStorageDiscovery?.runtimeTenantId,
+			tenantId: socketStorageDiscovery.tenantId,
+			deltaStreamSocketUrl: socketStorageDiscovery.deltaStreamSocketUrl
+		};
+	}
+	return undefined;
 }

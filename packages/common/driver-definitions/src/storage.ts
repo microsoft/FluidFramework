@@ -25,7 +25,6 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver";
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
@@ -386,12 +385,30 @@ export interface IDocumentServiceFactory {
 	): Promise<IDocumentService>;
 }
 
+export interface ISocketStorageDiscoveryParts {
+	/**
+	 * Niche interface to allow odsp-driver to expose specific pieces necessary for /broadcast-signal
+	 * endpoint. Please do not use this for anything else. We will phase this out once we know how
+	 * the interface for a more uniform interface across multiple drivers looks.
+	 */
+
+	// SPO gives us runtimeTenantId, we remap it to tenantId
+	// See getSocketStorageDiscovery
+	runtimeTenantId?: string;
+	tenantId: string;
+
+	/**
+	 * PUSH URL
+	 */
+	deltaStreamSocketUrl: string;
+}
+
 export interface IProvideSessionAwareServiceFactory {
 	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
 }
 
 export interface ISessionAwareDriverFactory extends IProvideSessionAwareServiceFactory {
-	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery>;
+	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts>;
 }
 
 /**

@@ -8,6 +8,7 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
+	ISocketStorageDiscoveryParts,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -41,7 +42,7 @@ import {
 	isNewFileInfo,
 	getJoinSessionCacheKey,
 } from "./odspUtils";
-import { ISocketStorageDiscovery } from "./contractsPublic";
+import { getSocketStorageDiscoveryParts } from "./odspPublicUtils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -66,12 +67,13 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	 */
 	public async getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
-	): Promise<ISocketStorageDiscovery | undefined> {
+	): Promise<ISocketStorageDiscoveryParts | undefined> {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
 			getJoinSessionCacheKey(odspResolvedUrl),
 		);
-		return joinSessionResponse?.joinSessionResponse;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return getSocketStorageDiscoveryParts(joinSessionResponse?.joinSessionResponse);
 	}
 
 	public async createContainer(

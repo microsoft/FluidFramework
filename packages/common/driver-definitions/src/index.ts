@@ -27,6 +27,7 @@ export {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISocketStorageDiscoveryParts,
 	IStream,
 	IStreamResult,
 	ISummaryContext,
