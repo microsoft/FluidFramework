@@ -37,7 +37,6 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "row",
 		fontWeight: "bold",
-		paddingLeft: "5px",
 		cursor: "pointer",
 	},
 });
@@ -76,7 +75,7 @@ const useMenuItemStyles = makeStyles({
 		"cursor": "pointer",
 		"display": "flex",
 		"flexDirection": "row",
-		"paddingLeft": "20px",
+		"paddingLeft": "15px",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,

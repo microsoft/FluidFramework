@@ -47,6 +47,7 @@ const DEFAULT_PAGE_SIZE = 100;
 const useTelemetryViewStyles = makeStyles({
 	root: {
 		...shorthands.gap("10px"),
+		boxSizing: "border-box",
 		alignItems: "start",
 		display: "flex",
 		flexDirection: "column",
@@ -174,18 +175,16 @@ export function TelemetryView(): React.ReactElement {
 			/>
 			<div className={styles.menu}>
 				<div>
-					<div style={{ marginLeft: "6px" }}>
-						{bufferedEvents.length > 0 ? (
-							<>
-								<CounterBadge size="large" color="brand">
-									{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
-								</CounterBadge>
-								<> {` Newer telemetry events received.`}</>
-							</>
-						) : (
-							<> {`You're up to date!`} </>
-						)}
-					</div>
+					{bufferedEvents.length > 0 ? (
+						<>
+							<CounterBadge size="large" color="brand">
+								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
+							</CounterBadge>
+							<> {` Newer telemetry events received.`}</>
+						</>
+					) : (
+						<> {`You're up to date!`} </>
+					)}
 				</div>
 				<div>
 					<Button onClick={handleLoadMore} size="small">
@@ -241,25 +240,23 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	return (
 		<div>
-			<div style={{ marginLeft: "6px" }}>
-				Show &nbsp;
-				<Dropdown
-					placeholder="Select an option"
-					size="small"
-					style={{ minWidth: "30px", zIndex: "1" }}
-					defaultValue={currentLimit.toString()}
-					// change the number of logs displayed on the page
-					onOptionSelect={handleMaxEventChange}
-				>
-					{dropdownOptions.map((option) => {
-						return (
-							<Option style={{ minWidth: "30px" }} key={option.key}>
-								{option.text}
-							</Option>
-						);
-					})}
-				</Dropdown>
-			</div>
+			Show &nbsp;
+			<Dropdown
+				placeholder="Select an option"
+				size="small"
+				style={{ minWidth: "30px", zIndex: "1" }}
+				defaultValue={currentLimit.toString()}
+				// change the number of logs displayed on the page
+				onOptionSelect={handleMaxEventChange}
+			>
+				{dropdownOptions.map((option) => {
+					return (
+						<Option style={{ minWidth: "30px" }} key={option.key}>
+							{option.text}
+						</Option>
+					);
+				})}
+			</Dropdown>
 		</div>
 	);
 }
@@ -538,6 +535,9 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			style={{
 				position: "relative",
 				borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
+				paddingTop: "10px",
+				width: "100%",
+				overflowX: "scroll",
 			}}
 			pane1Style={{ overflowY: "auto" }}
 			pane2Style={{ margin: "10px" }}
@@ -595,12 +595,11 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				style={{
 					position: "relative",
 					height: "100%",
-					fontSize: "10px",
 				}}
 			>
 				<h4 style={{ margin: 0, fontSize: 14 }}>Event Information</h4>
 				{selectedEvent === undefined ? (
-					<h5>Select an event from the table to get started</h5>
+					"Select an event from the table to get started"
 				) : (
 					<pre> {selectedEvent?.information} </pre>
 				)}

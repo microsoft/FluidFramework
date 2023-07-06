@@ -5,6 +5,7 @@
 import React from "react";
 import { tokens } from "@fluentui/react-components";
 import { ThemeContext } from "../../ThemeHelper";
+import { ThemeOption } from "../SettingsView";
 import { HasLabel } from "./CommonInterfaces";
 
 /**
@@ -39,7 +40,9 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			<span
 				style={{
 					color:
-						themeInfo.name === "highContrast" ? "" : tokens.colorPaletteRedBorderActive,
+						themeInfo.name === ThemeOption.HighContrast
+							? ""
+							: tokens.colorPaletteRedBorderActive,
 					fontSize: "10px",
 				}}
 			>
@@ -48,7 +51,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			<span
 				style={{
 					color:
-						themeInfo.name === "highContrast"
+						themeInfo.name === ThemeOption.HighContrast
 							? ""
 							: tokens.colorPalettePlatinumBorderActive,
 					fontStyle: "oblique",

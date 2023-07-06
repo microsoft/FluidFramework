@@ -37,7 +37,7 @@
 		"scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
