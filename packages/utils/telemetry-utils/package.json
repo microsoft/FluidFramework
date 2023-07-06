@@ -43,7 +43,7 @@
 		"test:report": "npm test -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -79,7 +79,7 @@
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.5.0.0",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/debug": "^4.1.5",
 		"@types/events": "^3.0.0",
@@ -101,28 +101,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryErrorEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryGenericEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryPerformanceEventExt": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITelemetryPropertiesExt": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

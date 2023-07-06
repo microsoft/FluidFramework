@@ -36,21 +36,26 @@ export async function run<T extends IResources>(
 			logger?.error(`Could not stop runner due to error: ${innerError}`);
 			Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
 			error.forceKill = true;
+			error.runnerStopException = innerError;
 		});
 		return Promise.reject(error);
 	});
 
 	process.on("SIGTERM", () => {
 		Lumberjack.info(`Received SIGTERM request to stop the service.`);
-		runner.stop().catch((error) => {
+		runner.stop("sigterm").catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
 		});
 	});
 
-	process.on("uncaughtException", (error, origin) => {
-		Lumberjack.error(`Encountered uncaughtException while running service`, { origin }, error);
-		runner.stop().catch((innerError) => {
+	process.on("uncaughtException", (uncaughtException, origin) => {
+		Lumberjack.error(
+			`Encountered uncaughtException while running service`,
+			{ origin },
+			uncaughtException,
+		);
+		runner.stop("uncaughtException", uncaughtException).catch((innerError) => {
 			logger?.error(
 				`Could not stop runner after uncaughtException event due to error: ${innerError}`,
 			);
