@@ -1,9 +1,10 @@
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
-/**
- * Socket storage discovery api response
- */
 export interface ISocketStorageDiscovery {
+	/**
+	 * Socket storage discovery api response
+	 */
+
 	// The id of the web socket
 	id: string;
 
@@ -34,19 +35,19 @@ export interface ISocketStorageDiscovery {
 	refreshSessionDurationSeconds?: number;
 }
 
-/**
- * An interface that allows a concrete instance of a driver factory to interrogate itself
- * to find out if it is session aware.
- */
 export interface IProvideSessionAwareDriverFactory {
+	/**
+	 * An interface that allows a concrete instance of a driver factory to interrogate itself
+	 * to find out if it is session aware.
+	 */
 	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
 }
 
-/**
- * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
- * function if it session aware.
- */
 export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+	/**
+	 * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
+	 * function if it session aware.
+	 */
 	getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
 	): Promise<ISocketStorageDiscovery | undefined>;

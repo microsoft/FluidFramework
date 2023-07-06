@@ -141,15 +141,13 @@ export interface IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @public
+// @public (undocumented)
 export interface IProvideSessionAwareDriverFactory {
-    // (undocumented)
     readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
 }
 
-// @public
+// @public (undocumented)
 export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
-    // (undocumented)
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 }
 
@@ -181,12 +179,11 @@ export interface ISnapshotOptions {
     timeout?: number;
 }
 
-// @public
+// @public (undocumented)
 export interface ISocketStorageDiscovery {
     // (undocumented)
     deltaStorageUrl: string;
     deltaStreamSocketUrl: string;
-    // (undocumented)
     id: string;
     refreshSessionDurationSeconds?: number;
     // (undocumented)
