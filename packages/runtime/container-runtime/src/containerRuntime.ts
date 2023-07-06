@@ -216,6 +216,8 @@ export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 }
 
+export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
+
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -2007,7 +2009,7 @@ export class ContainerRuntime
 	private _processedClientSequenceNumber: number | undefined;
 
 	private processCore(
-		message: ISequencedDocumentMessage,
+		message: SequencedContainerRuntimeMessage,
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
@@ -2030,8 +2032,7 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			const type = message.type as ContainerMessageType;
-			switch (type) {
+			switch (message.type) {
 				case ContainerMessageType.Attach:
 					this.dataStores.processAttachMessage(message, local);
 					break;
@@ -2055,23 +2056,10 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					if (runtimeMessage) {
-						const error = DataProcessingError.create(
-							// Former assert 0x3ce
-							"Runtime message of unknown type",
-							"OpProcessing",
-							message,
-							{
-								local,
-								type: message.type,
-								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
-								compression: message.compression,
-							},
-						);
-						this.closeFn(error);
-						throw error;
-					}
+					assert(
+						!runtimeMessage,
+						`ContainerRuntimeMessage type should have been validated already [type: ${message.type}]`,
+					);
 			}
 
 			if (runtimeMessage || this.groupedBatchingEnabled) {
