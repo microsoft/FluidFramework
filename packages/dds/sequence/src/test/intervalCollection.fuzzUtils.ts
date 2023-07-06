@@ -188,9 +188,9 @@ export function makeReducer(
 		removeRange: async ({ channel }, { start, end }) => {
 			channel.removeRange(start, end);
 		},
-		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
+		addInterval: async ({ channel }, { start, end, collectionName, id, stickiness }) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
+			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id }, stickiness);
 		},
 		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
