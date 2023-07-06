@@ -26,11 +26,7 @@ import {
 	FieldEditTypes,
 	FuzzDelete,
 	FuzzInsert,
-	FuzzNodeEditChange,
-	FuzzSetPayload,
 	FuzzTransactionType,
-	NodeEdit,
-	NodeRangePath,
 	Operation,
 	OptionalFieldEdit,
 	SequenceFieldEdit,
@@ -47,7 +43,6 @@ export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
 export interface EditGeneratorOpWeights {
 	insert: number;
 	delete: number;
-	setPayload: number;
 	start: number;
 	commit: number;
 	abort: number;
@@ -55,46 +50,9 @@ export interface EditGeneratorOpWeights {
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
 	delete: 0,
-	setPayload: 0,
 	start: 0,
 	commit: 0,
 	abort: 0,
-};
-
-export const makeNodeEditGenerator = (): Generator<NodeEdit, FuzzTestState> => {
-	function setPayloadGenerator(state: FuzzTestState): FuzzNodeEditChange {
-		const tree = state.channel;
-		// generate edit for that specific tree
-		const path = getExistingRandomNodePosition(tree, state.random);
-		const setPayload: FuzzSetPayload = {
-			nodeEditType: "setPayload",
-			path,
-			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-		};
-		switch (path.parentField) {
-			case sequenceFieldKey:
-			default:
-				return {
-					type: "sequence",
-					edit: setPayload,
-				};
-			case valueFieldKey:
-				return {
-					type: "value",
-					edit: setPayload,
-				};
-			case optionalFieldKey:
-				return {
-					type: "optional",
-					edit: setPayload,
-				};
-		}
-	}
-
-	return (state) => ({
-		type: "nodeEdit",
-		edit: setPayloadGenerator(state),
-	});
 };
 
 export const makeFieldEditGenerator = (
@@ -233,7 +191,7 @@ export const makeEditGenerator = (
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const fieldOrNodeEdit = createWeightedGenerator<FieldEdit | NodeEdit, FuzzTestState>([
+	const fieldEdit = createWeightedGenerator<FieldEdit, FuzzTestState>([
 		[
 			makeFieldEditGenerator({
 				insert: passedOpWeights.insert,
@@ -242,15 +200,10 @@ export const makeEditGenerator = (
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
 			({ channel }) => containsAtLeastOneNode(channel),
 		],
-		[
-			makeNodeEditGenerator(),
-			passedOpWeights.setPayload,
-			({ channel }) => containsAtLeastOneNode(channel),
-		],
 	]);
 
 	return (state) => {
-		const contents = fieldOrNodeEdit(state);
+		const contents = fieldEdit(state);
 		return contents === done
 			? done
 			: {
@@ -299,11 +252,7 @@ export function makeOpGenerator(
 	const generatorWeights: Weights<Operation, FuzzTestState> = [
 		[
 			makeEditGenerator(passedOpWeights),
-			sumWeights([
-				passedOpWeights.delete,
-				passedOpWeights.insert,
-				passedOpWeights.setPayload,
-			]),
+			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
 		],
 		[
 			makeTransactionEditGenerator(passedOpWeights),
@@ -433,72 +382,6 @@ function getExistingFieldPath(tree: ISharedTree, random: IRandom): FieldPathWith
 		fieldKey: currentField,
 		count: fieldNodes,
 	};
-}
-
-function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
-	const { firstNode: firstNodePath } = getExistingRandomNodeRangePath(tree, random);
-	return firstNodePath;
-}
-
-function getExistingRandomNodeRangePath(tree: ISharedTree, random: IRandom): NodeRangePath {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	const firstNode = cursor.firstNode();
-	assert(firstNode, "tree must contain at least one node");
-	const firstPath = cursor.getPath();
-	assert(firstPath !== undefined, "firstPath must be defined");
-	let path: UpPath = firstPath;
-	const firstField = cursor.firstField();
-	if (!firstField) {
-		// no fields, return the rootnode
-		cursor.free();
-		return { firstNode: path, count: 1 };
-	}
-	let fieldNodes: number = cursor.getFieldLength();
-	let nodeIndex: number = 0;
-	let rangeSize: number = 1;
-
-	let currentMove = random.pick(moves.field);
-	assert(cursor.mode === CursorLocationType.Fields);
-
-	while (currentMove !== "stop") {
-		switch (currentMove) {
-			case "enterNode":
-				if (fieldNodes > 0) {
-					nodeIndex = random.integer(0, fieldNodes - 1);
-					rangeSize = random.integer(1, fieldNodes - nodeIndex);
-					cursor.enterNode(nodeIndex);
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					path = cursor.getPath()!;
-					currentMove = random.pick(moves.nodes);
-				} else {
-					// if the node does not exist, return the most recently entered node
-					cursor.free();
-					return { firstNode: path, count: rangeSize };
-				}
-				break;
-			case "firstField":
-				if (cursor.firstField()) {
-					currentMove = random.pick(moves.field);
-					fieldNodes = cursor.getFieldLength();
-				} else {
-					currentMove = "stop";
-				}
-				break;
-			case "nextField":
-				if (cursor.nextField()) {
-					currentMove = random.pick(moves.field);
-					fieldNodes = cursor.getFieldLength();
-				} else {
-					currentMove = "stop";
-				}
-				break;
-			default:
-				fail(`Unexpected move ${currentMove}`);
-		}
-	}
-	cursor.free();
-	return { firstNode: path, count: rangeSize };
 }
 
 function containsAtLeastOneNode(tree: ISharedTree): boolean {
