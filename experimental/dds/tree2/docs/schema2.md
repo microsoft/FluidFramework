@@ -77,7 +77,7 @@ This an be addressed by supporting either one or both of the following:
 Additionally an API could be added to struct nodes to enumerate all unexpected fields.
 API wise this looks similar to the existing extra fields support, but it is distinct in its use-case and performance characteristics.
 Extra local fields were designed to allow allow arbitrary fields, without bloating the stored schema:
-in the previous system adding and removing N extra local fields with different keys currently makes no schema changes where as adding a bunch of fields to the stored scheme as unrecognized fields in the proposed schema system would bloat the document schema proportionally.
+in the previous system adding and removing N extra local fields with different keys currently makes no schema changes whereas adding a bunch of fields to the stored schema as unrecognized fields in the proposed schema system would bloat the document schema proportionally.
 Instead this feature is only intended for when an application has a view schema for a field that other applications using the document might not have.
 Thus any actual schema editing done as part of supporting these fields can be done implicitly as part of schematize based on the comparison of the view and stored schema,
 and does not involve exposing any stored schema editing to users.
