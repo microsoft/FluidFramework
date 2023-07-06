@@ -158,7 +158,7 @@ export class CheckpointService implements ICheckpointService {
 					const globalCheckpoint: IDeliState | IScribe = JSON.parse(document[service]);
 
 					// Compare local and global checkpoints to use latest version
-					if (localCheckpoint.logOffset < globalCheckpoint.logOffset) {
+					if (localCheckpoint.sequenceNumber < globalCheckpoint.sequenceNumber) {
 						// if local checkpoint is behind global, use global
 						lastCheckpoint = globalCheckpoint;
 						checkpointSource = "latestFoundInGlobalCollection";
