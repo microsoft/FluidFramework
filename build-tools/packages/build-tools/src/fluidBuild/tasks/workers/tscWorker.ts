@@ -11,7 +11,6 @@ import type { WorkerExecResult, WorkerMessage } from "./worker";
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 	const { command, cwd } = msg;
 	// Load the typescript version that is in the cwd scope
-	// Load the eslint version that is in the cwd scope
 	const tsPath = require.resolve("typescript", { paths: [cwd] });
 	const ts: typeof tsLib = require(tsPath);
 

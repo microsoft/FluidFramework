@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -39,7 +39,9 @@ import {
 	toInstrumentedOdspTokenFetcher,
 	IExistingFileInfo,
 	isNewFileInfo,
+	getJoinSessionCacheKey,
 } from "./odspUtils";
+import { ISocketStorageDiscovery } from "./contractsPublic";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -54,6 +56,22 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
 	public get snapshotPrefetchResultCache() {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
+
+	/**
+	 * This function would return info about relay service session only if this factory established (or attempted to
+	 * establish) connection very recently. Otherwise, it will return undefined.
+	 * @param resolvedUrl - resolved url for container
+	 * @returns - Current join session response stored in cache. Undefined if not present.
+	 */
+	public async getRelayServiceSessionInfo(
+		resolvedUrl: IResolvedUrl,
+	): Promise<ISocketStorageDiscovery | undefined> {
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
+			getJoinSessionCacheKey(odspResolvedUrl),
+		);
+		return joinSessionResponse?.joinSessionResponse;
 	}
 
 	public async createContainer(

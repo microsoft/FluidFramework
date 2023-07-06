@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/debugger",
-	"version": "2.0.0-internal.5.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "Fluid Debugger - a tool to play through history of a file",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -41,9 +41,9 @@
 		"jsonschema": "^1.2.6"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.20.0-169245",
+		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0-169245",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.5.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -56,6 +56,14 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"broken": {}
