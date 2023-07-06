@@ -52,7 +52,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		private readonly signaler: Signaler,
 	) {
 		super();
-		
+
 		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
 			const focusClientIdMap = this.focusMap.get(member.userId);
 			if (focusClientIdMap !== undefined) {

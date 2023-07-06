@@ -10,6 +10,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
+import { MockAudience } from "./Audience";
 
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;
@@ -28,7 +29,7 @@ const signalerId = "signaler";
 export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITrackerAppModel> {
 	constructor() {
 		super(
-			new Map([Signaler.factory.registryEntry]), // registryEntries
+			new Map([Signaler.factory.registryEntry, Signaler.factory.registryEntry]), // registryEntries
 		);
 	}
 
@@ -46,9 +47,11 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 			"",
 		);
 
-		const focusTracker = new FocusTracker(container, container.audience, signaler);
+		const audience = new MockAudience(container);
 
-		const mouseTracker = new MouseTracker(container.audience, signaler);
+		const focusTracker = new FocusTracker(container, audience, signaler);
+
+		const mouseTracker = new MouseTracker(audience, signaler);
 
 		return new TrackerAppModel(focusTracker, mouseTracker);
 	}
