@@ -23,9 +23,11 @@ Instead of one kind of node in view schema, have 4, each with a subset of our cu
 1. Terminal Node: holds a value, but no children.
    Don't support `undefined` as a value: an empty Struct can be used for that case if needed.
 2. Struct Node: finite list of fields (key+field type).
-3. Map Node: node with a single single field type which must permit empty.
-   Allows any field of that type under any string field key.
-   Provides the functionality currently done by making a node schema with extra local fields.
+3. Map Node: A node which maps all strings (as field keys) fto fields.
+   All possible fields get a single field schema (just like existing extraLocalFields).
+   This field schema allow the filed to be empty (for example an optional or sequence filed, but not a value field):
+   otherwise the tree would be required to have a non-empty field for all possible string keys (which would be an infinite sized tree) to be in schema.
+   This is the same functionality currently done by making a node schema with extra local fields.
 4. Field Node: Has a single unnamed filed (using the empty field key).
    When reading in the editable tree API implicitly, unwraps to the field.
    This provides the functionality currently done by making a node schema with a primary field (empty field key), which used for "array nodes".
@@ -39,7 +41,7 @@ Struct Nodes will also get an additional feature: custom field names.
 Custom field names allow the view schema to declare the string to be used for the name of the field in schema-aware APIs instead of just using the field key.
 This can default to the field key, but can optionally be a distinct string.
 
-Customizable field names are great for app maintainability: a field in coded can be renamed as used in code without breaking existing data.
+Customizable field names are great for app maintainability: a field can be renamed as used in code without breaking existing data.
 There are also some further benefits:
 it makes it practical to ban specific field names for use in APIs if they collide with our framework APIs.
 Since an app can rename the field without changing how data is persisted, requiring them to do this remaining if a framework update causes a name collision will be ok.
