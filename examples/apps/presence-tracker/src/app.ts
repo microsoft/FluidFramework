@@ -7,7 +7,7 @@ import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode";
 
-function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "70px";
@@ -48,7 +48,7 @@ function getFocusPresencesString(
 	return focusString.join(newLineSeparator);
 }
 
-function renderMousePresence(
+export function renderMousePresence(
 	mouseTracker: MouseTracker,
 	focusTracker: FocusTracker,
 	div: HTMLDivElement,

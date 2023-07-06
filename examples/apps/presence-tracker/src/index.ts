@@ -4,3 +4,5 @@
  */
 
 export { FocusTracker, IFocusSignalPayload, IFocusTrackerEvents } from "./FocusTracker";
+export { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode";
+export { renderFocusPresence, renderMousePresence } from "./app";
