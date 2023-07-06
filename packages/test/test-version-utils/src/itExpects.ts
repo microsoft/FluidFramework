@@ -4,7 +4,7 @@
  */
 
 import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
