@@ -421,15 +421,13 @@ describe("Schema Evolution Examples", () => {
 			"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 		);
 		const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
-		const formattedText = builder.objectRecursive(formattedTextIdentifier, {
-			local: {
-				content: SchemaBuilder.fieldRecursive(
-					FieldKinds.sequence,
-					() => formattedText,
-					codePoint,
-				),
-				size: SchemaBuilder.field(FieldKinds.value, number),
-			},
+		const formattedText = builder.structRecursive(formattedTextIdentifier, {
+			content: SchemaBuilder.fieldRecursive(
+				FieldKinds.sequence,
+				() => formattedText,
+				codePoint,
+			),
+			size: SchemaBuilder.field(FieldKinds.value, number),
 		});
 
 		// We are also updating positionedCanvasItem to accept the new type.
@@ -439,16 +437,14 @@ describe("Schema Evolution Examples", () => {
 		// Were we not batching all these examples in one scope, this would reuse the `positionedCanvasItem` name
 		// as no version of the app need both view schema at the same time
 		// (except for some approaches for staging roll-outs which are not covered here).
-		const positionedCanvasItemNew = builder.object(positionedCanvasItemIdentifier, {
-			local: {
-				position: SchemaBuilder.field(FieldKinds.value, point),
-				// Note that we are specifically excluding the old text here
-				content: SchemaBuilder.field(FieldKinds.value, formattedText),
-			},
+		const positionedCanvasItemNew = builder.struct(positionedCanvasItemIdentifier, {
+			position: SchemaBuilder.field(FieldKinds.value, point),
+			// Note that we are specifically excluding the old text here
+			content: SchemaBuilder.field(FieldKinds.value, formattedText),
 		});
 		// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-		const canvas2 = builder.object(canvasIdentifier, {
-			local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew) },
+		const canvas2 = builder.struct(canvasIdentifier, {
+			items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew),
 		});
 
 		const viewCollection: SchemaCollection = builder.intoDocumentSchema(

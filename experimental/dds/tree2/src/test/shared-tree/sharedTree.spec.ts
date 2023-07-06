@@ -2150,7 +2150,7 @@ function initializeTestTree(
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
-	const treeSchema = builder.object("root", { value: ValueSchema.Number });
+	const treeSchema = builder.terminal("root", ValueSchema.Number);
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 	return tree.schematize({

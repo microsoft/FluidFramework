@@ -11,9 +11,10 @@ import {
 	rootFieldKey,
 	TreeAdapter,
 	TreeSchemaIdentifier,
+	ValueSchema,
 } from "../../../core";
 import { Sourced, SchemaCollection } from "../view";
-import { brand, requireAssignableTo } from "../../../util";
+import { brand, requireAssignableTo, RestrictiveReadonlyRecord } from "../../../util";
 import { optional, sequence, value, FieldKindTypes } from "../../defaultFieldKinds";
 import type { FieldKinds } from "../..";
 import { InternalTypes } from "../../schema-aware";
@@ -95,6 +96,11 @@ export class SchemaBuilder {
 		}
 	}
 
+	private addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
+		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
+		this.treeSchema.set(schema.name, schema as TreeSchema);
+	}
+
 	/**
 	 * Define (and add to this library) a schema for an object.
 	 *
@@ -105,8 +111,7 @@ export class SchemaBuilder {
 		t: T,
 	): TreeSchema<Name, T> {
 		const schema = new TreeSchema(this, name, t);
-		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
-		this.treeSchema.set(schema.name, schema as TreeSchema);
+		this.addNodeSchema(schema);
 		return schema;
 	}
 
@@ -124,6 +129,96 @@ export class SchemaBuilder {
 	}
 
 	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a struct node.
+	 *
+	 * The name must be unique among all node schema in the the document schema.
+	 */
+	public struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: T }> {
+		const schema = new TreeSchema(this, name, { local: t });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `struct` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public structRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: T }> {
+		return this.struct(
+			name,
+			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
+		) as unknown as TreeSchema<Name, { local: T }>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a map node.
+	 *
+	 * The name must be unique among all node schema in the the document schema.
+	 */
+	public map<Name extends string, T extends FieldSchema>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { extraLocalFields: T }> {
+		const schema = new TreeSchema(this, name, { extraLocalFields: t });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `map` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public mapRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { extraLocalFields: T }> {
+		return this.map(name, t as unknown as FieldSchema) as unknown as TreeSchema<
+			Name,
+			{ extraLocalFields: T }
+		>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a field node.
+	 *
+	 * The name must be unique among all node schema in the the document schema.
+	 */
+	public fieldNode<Name extends string, T extends FieldSchema>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: { [""]: T } }> {
+		const schema = new TreeSchema(this, name, { local: { [""]: t } });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `fieldNode` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public fieldNodeRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: { [""]: T } }> {
+		return this.fieldNode(name, t as unknown as FieldSchema) as unknown as TreeSchema<
+			Name,
+			{ local: { [""]: T } }
+		>;
+	}
+
+	/**
 	 * Define (and add to this library) a schema for an object that just wraps a primitive value.
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
 	 *
@@ -135,6 +230,24 @@ export class SchemaBuilder {
 	): TreeSchema<Name, { value: T }> {
 		// TODO: add "primitive" metadata to schema, and set it here.
 		return this.object(name, { value: t });
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
+	 * Such objects will be implicitly unwrapped to the value in some APIs.
+	 *
+	 * The name must be unique among all node schema in the the document schema.
+	 *
+	 * TODO: Maybe ban undefined from allowed values here.
+	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
+	 */
+	public terminal<Name extends string, T extends ValueSchema>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { value: T }> {
+		const schema = new TreeSchema(this, name, { value: t });
+		this.addNodeSchema(schema);
+		return schema;
 	}
 
 	/**

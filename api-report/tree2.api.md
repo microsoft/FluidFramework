@@ -1200,11 +1200,13 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 local: {
-[x: string]: FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 };
@@ -1229,7 +1231,9 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 };
 
 // @alpha (undocumented)
-export const jsonNull: TreeSchema<"Json.Null", {}>;
+export const jsonNull: TreeSchema<"Json.Null", {
+local: {};
+}>;
 
 // @alpha (undocumented)
 export const jsonNumber: TreeSchema<"Json.Number", {
@@ -1240,11 +1244,13 @@ value: ValueSchema.Number;
 export const jsonObject: TreeSchema<"Json.Object", {
 extraLocalFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
 local: {
-[x: string]: FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 };
@@ -1252,7 +1258,9 @@ value: ValueSchema.Boolean;
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 }>;
@@ -1680,6 +1688,16 @@ export class SchemaBuilder {
     constructor(name: string, ...libraries: SchemaLibrary[]);
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
+        local: {
+            [""]: T;
+        };
+    }>;
+    fieldNodeRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        local: {
+            [""]: T;
+        };
+    }>;
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
@@ -1687,11 +1705,26 @@ export class SchemaBuilder {
     globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
+    map<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
+        extraLocalFields: T;
+    }>;
+    mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        extraLocalFields: T;
+    }>;
     // (undocumented)
     readonly name: string;
     object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     primitive<Name extends string, T extends InternalTypes_2.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
+        value: T;
+    }>;
+    struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
+        local: T;
+    }>;
+    structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        local: T;
+    }>;
+    terminal<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
     }>;
 }

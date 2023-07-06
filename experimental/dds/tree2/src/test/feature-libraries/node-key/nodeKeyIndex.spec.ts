@@ -166,10 +166,8 @@ describe("Node Key Index", () => {
 	it("errors on nodes which have keys, but are not in schema", () => {
 		// This is missing the global field on the node
 		const builder2 = new SchemaBuilder("node key index test", nodeKeyLibrary);
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
@@ -305,10 +303,8 @@ describe("Node Key Index", () => {
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
 		const builder2 = new SchemaBuilder("node key index test", nodeKeyLibrary);
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),

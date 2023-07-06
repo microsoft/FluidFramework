@@ -74,27 +74,21 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Simple object
 	{
-		const simpleObject = builder.object("simple", {
-			local: {
-				x: SchemaBuilder.fieldValue(numberSchema),
-			},
+		const simpleObject = builder.struct("simple", {
+			x: SchemaBuilder.fieldValue(numberSchema),
 		});
 	}
 
-	const ballSchema = builder.object("ball", {
-		local: {
-			// Test schema objects in as well as lazy functions
-			x: SchemaBuilder.fieldValue(numberSchema),
-			y: SchemaBuilder.fieldValue(() => numberSchema),
-			size: SchemaBuilder.fieldOptional(numberSchema),
-		},
+	const ballSchema = builder.struct("ball", {
+		// Test schema objects in as well as lazy functions
+		x: SchemaBuilder.fieldValue(numberSchema),
+		y: SchemaBuilder.fieldValue(() => numberSchema),
+		size: SchemaBuilder.fieldOptional(numberSchema),
 	});
 
 	// Recursive case:
-	const boxSchema = builder.objectRecursive("box", {
-		local: {
-			children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
-		},
+	const boxSchema = builder.structRecursive("box", {
+		children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
 	});
 
 	{
@@ -461,10 +455,8 @@ describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
 		const builder = new SchemaBuilder("SchemaAware");
 		const stringSchema = builder.primitive("string", ValueSchema.String);
-		const rootNodeSchema = builder.object("Test", {
-			local: {
-				children: SchemaBuilder.fieldSequence(stringSchema),
-			},
+		const rootNodeSchema = builder.struct("Test", {
+			children: SchemaBuilder.fieldSequence(stringSchema),
 		});
 		const schema = builder.intoDocumentSchema(
 			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),

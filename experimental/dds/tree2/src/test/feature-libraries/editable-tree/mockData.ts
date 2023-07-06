@@ -41,47 +41,34 @@ import { brand, Brand } from "../../../util";
 
 const builder = new SchemaBuilder("mock data");
 
-export const stringSchema = builder.object("String", {
-	value: ValueSchema.String,
+export const stringSchema = builder.terminal("String", ValueSchema.String);
+
+export const int32Schema = builder.terminal("Int32", ValueSchema.Number);
+
+export const float64Schema = builder.terminal("Float64", ValueSchema.Number);
+
+export const boolSchema = builder.terminal("Bool", ValueSchema.Boolean);
+
+export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
+	[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
 });
 
-export const int32Schema = builder.object("Int32", {
-	value: ValueSchema.Number,
+export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
+	number: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
 });
 
-export const float64Schema = builder.object("Float64", {
-	value: ValueSchema.Number,
-});
-
-export const boolSchema = builder.object("Bool", {
-	value: ValueSchema.Boolean,
-});
-
-export const simplePhonesSchema = builder.object("Test:SimplePhones-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
-	},
-});
-
-export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
-	local: {
-		number: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
-	},
-});
-
-export const phonesSchema = builder.object("Test:Phones-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.fieldSequence(
-			stringSchema,
-			int32Schema,
-			complexPhoneSchema,
-			// array of arrays
-			simplePhonesSchema,
-		),
-	},
-});
+export const phonesSchema = builder.fieldNode(
+	"Test:Phones-1.0.0",
+	SchemaBuilder.fieldSequence(
+		stringSchema,
+		int32Schema,
+		complexPhoneSchema,
+		// array of arrays
+		simplePhonesSchema,
+	),
+);
 
 export const globalFieldSchemaSequencePhones = builder.globalField(
 	"sequencePhones",
@@ -108,15 +95,13 @@ export const mapStringSchema = builder.object("Map<String>", {
 	value: ValueSchema.Serializable,
 });
 
-export const personSchema = builder.object("Test:Person-1.0.0", {
-	local: {
-		name: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
-		adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
-		salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
-		friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
-		address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
-	},
+export const personSchema = builder.struct("Test:Person-1.0.0", {
+	name: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
+	adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
+	salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
+	friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
+	address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
 });
 
 export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
@@ -126,11 +111,10 @@ export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 	value: ValueSchema.Serializable,
 });
 
-export const arraySchema = builder.object("Test:Array-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
-	},
-});
+export const arraySchema = builder.fieldNode(
+	"Test:Array-1.0.0",
+	SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
+);
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 

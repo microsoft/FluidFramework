@@ -11,22 +11,18 @@ const builder = new SchemaBuilder("bubble-bench");
 export const stringSchema = builder.primitive("string", ValueSchema.String);
 export const numberSchema = builder.primitive("number", ValueSchema.Number);
 
-export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
-	local: {
-		x: SchemaBuilder.fieldValue(numberSchema),
-		y: SchemaBuilder.fieldValue(numberSchema),
-		r: SchemaBuilder.fieldValue(numberSchema),
-		vx: SchemaBuilder.fieldValue(numberSchema),
-		vy: SchemaBuilder.fieldValue(numberSchema),
-	},
+export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
+	x: SchemaBuilder.fieldValue(numberSchema),
+	y: SchemaBuilder.fieldValue(numberSchema),
+	r: SchemaBuilder.fieldValue(numberSchema),
+	vx: SchemaBuilder.fieldValue(numberSchema),
+	vy: SchemaBuilder.fieldValue(numberSchema),
 });
 
-export const clientSchema = builder.object("BubbleBenchAppStateClient-1.0.0", {
-	local: {
-		clientId: SchemaBuilder.fieldValue(stringSchema),
-		color: SchemaBuilder.fieldValue(stringSchema),
-		bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
-	},
+export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
+	clientId: SchemaBuilder.fieldValue(stringSchema),
+	color: SchemaBuilder.fieldValue(stringSchema),
+	bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
 });
 
 export const rootAppStateSchema = SchemaBuilder.fieldSequence(clientSchema);
