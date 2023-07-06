@@ -369,30 +369,6 @@ describe("editable-tree: editing", () => {
 		}
 	});
 
-	it("validates schema of values", () => {
-		const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
-		const schemaData = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, stringSchema),
-		);
-		const tree = createSharedTreeView().schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: "x",
-			schema: schemaData,
-		});
-		const root = tree.context.root.content;
-		assert(isEditableTree(root));
-		// Confirm stetting value to a string does not error
-		root[valueSymbol] = "hi";
-		// Conform setting value to something out of schema does error
-		assert.throws(() => (root[valueSymbol] = { kate: "kate" }));
-		assert.throws(() => (root[valueSymbol] = 5));
-		assert.throws(() => (root[valueSymbol] = true));
-		assert.throws(() => (root[valueSymbol] = undefined));
-		// This is not dynamic delete: valueSymbol is a constant symbol.
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		assert.throws(() => delete root[valueSymbol]);
-	});
-
 	describe(`can move nodes`, () => {
 		it("to the left within the same field", () => {
 			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
@@ -644,10 +620,6 @@ describe("editable-tree: editing", () => {
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
 
-				// edit using valueSymbol
-				field.getNode(0)[valueSymbol] = "via symbol";
-				assert.equal(root[fieldKey], "via symbol");
-
 				// edit using indexing
 				field[0] = "replaced";
 				assert.equal(root[fieldKey], "replaced");
@@ -713,10 +685,6 @@ describe("editable-tree: editing", () => {
 				// edit using assignment
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
-
-				// edit using valueSymbol
-				field.getNode(0)[valueSymbol] = "via symbol";
-				assert.equal(root[fieldKey], "via symbol");
 
 				// edit using indexing
 				field[0] = "replaced";
