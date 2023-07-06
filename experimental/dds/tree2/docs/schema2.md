@@ -90,8 +90,8 @@ and does not involve exposing any stored schema editing to users.
 
 Workstream 1
 
-1. Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive)
-2. Update all schema to use new API.
+1. (Done) Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive).
+2. (In progress) Update all schema to use new API.
 3. Remove old schema builder API.
 4. Capture which kind of node schema the view schema are in the data and type produced by the schema builder.
 
