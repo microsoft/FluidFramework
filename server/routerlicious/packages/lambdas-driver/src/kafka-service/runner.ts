@@ -128,7 +128,7 @@ export class KafkaRunner implements IRunner {
 				this.deferred?.reject({
 					uncaughtException: serializeError(uncaughtException),
 				}); // reject the promise so that the runService exits the process with exit(1)
-			} else {
+			} else if (caller === "sigterm") {
 				this.deferred?.resolve();
 			}
 			this.deferred = undefined;
@@ -139,15 +139,14 @@ export class KafkaRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
 			}
-			if (caller === "sigterm") {
-				this.deferred?.resolve();
-			} else {
-				// uncaughtException
+			if (caller === "uncaughtException") {
 				this.deferred?.reject({
 					forceKill: true,
 					uncaughtException: serializeError(uncaughtException),
 					runnerStopException: serializeError(error),
 				});
+			} else if (caller === "sigterm") {
+				this.deferred?.resolve();
 			}
 			this.deferred = undefined;
 			throw error;
