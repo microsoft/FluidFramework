@@ -416,18 +416,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x384 /* requesting handle for unknown blob */,
 		);
 		const pending = this.pendingBlobs.get(id);
-		const callback = () => {
-			// in detached container case, there is no pending entry
-			if (pending) {
-				pending.attached = true;
-				this.deletePendingBlobMaybe(id);
-			}
-		};
+		const callback = pending
+			? () => {
+					pending.attached = true;
+					this.deletePendingBlobMaybe(id);
+			  }
+			: undefined;
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
 			this.routeContext,
 			async () => this.getBlob(id),
-			pending ? callback : () => {},
+			pending ? callback : undefined,
 		);
 	}
 
