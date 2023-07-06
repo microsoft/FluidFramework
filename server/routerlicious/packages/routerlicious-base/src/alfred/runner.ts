@@ -162,7 +162,7 @@ export class AlfredRunner implements IRunner {
 				this.runningDeferred?.reject({
 					uncaughtException: serializeError(uncaughtException),
 				}); // reject the promise so that the runService exits the process with exit(1)
-			} else if (caller === "sigterm") {
+			} else {
 				this.runningDeferred?.resolve();
 			}
 			this.runningDeferred = undefined;
@@ -173,14 +173,15 @@ export class AlfredRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
 			}
-			if (caller === "uncaughtException") {
+			if (caller === "sigterm") {
+				this.runningDeferred?.resolve();
+			} else {
+				// uncaughtException
 				this.runningDeferred?.reject({
 					forceKill: true,
 					uncaughtException: serializeError(uncaughtException),
 					runnerStopException: serializeError(error),
 				});
-			} else if (caller === "sigterm") {
-				this.runningDeferred?.resolve();
 			}
 			this.runningDeferred = undefined;
 			throw error;
