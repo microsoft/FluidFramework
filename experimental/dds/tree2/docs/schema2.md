@@ -54,7 +54,7 @@ This avoids the need to use a Proxy for any of the node implementations, as well
 
 ### Annotation Pattern
 
-ExtraGlobalFields in the previous design existed to support an "annotations pattern" where a an app could opt some or all of their schema into allowing annotation subtrees to be placed on nodes.
+ExtraGlobalFields in the previous design existed to support an "annotations pattern" where an app could opt some or all of their schema into allowing annotation subtrees to be placed on nodes.
 This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views withing the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
 
 ExtraGlobalFields isn't really a full solution to this.
@@ -75,7 +75,7 @@ This an be addressed by supporting either one or both of the following:
     This would generate an API that could enumerate unexpected fields in the schema-aware API.
 
 Additionally an API could be added to struct nodes to enumerate all unexpected fields.
-API wise this looks similar to the existing extra fields support, but its distinct in its use-case and performance characteristics.
+API wise this looks similar to the existing extra fields support, but it is distinct in its use-case and performance characteristics.
 Extra local fields were designed to allow allow arbitrary fields, without bloating the stored schema:
 in the previous system adding and removing N extra local fields with different keys currently makes no schema changes where as adding a bunch of fields to the stored scheme as unrecognized fields in the proposed schema system would bloat the document schema proportionally.
 Instead this feature is only intended for when an application has a view schema for a field that other applications using the document might not have.
