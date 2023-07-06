@@ -159,11 +159,9 @@ jobs:
               artifactBuildId=${{ parameters.artifactBuildId }}
             "
 
-      # Install
-      - task: UseNode@1
-        displayName: Use Node 16.x
-        inputs:
-          version: 16.x
+      - template: templates/include-use-node-version.yml
+        parameters:
+          version: '16.16.0'
 
       # Download artifact
       - task: DownloadPipelineArtifact@2

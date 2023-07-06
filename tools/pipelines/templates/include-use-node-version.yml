@@ -1,0 +1,25 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-use-node-version template to use a specific node version
+
+parameters:
+- name: version
+  type: string
+
+steps:
+- task: Bash@3
+  name: SetNodeVersion
+  displayName: Set node version
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # Output installed node versions
+      n ls
+      # Output diagnostics
+      n doctor
+      # Use the specified node version
+      n ${{ parameters.version }}
+      # Output the node version
+      node --version
