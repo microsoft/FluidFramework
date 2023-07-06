@@ -2608,6 +2608,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					newStart,
 					interval.start.refType,
 					op,
+					undefined,
+					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {
@@ -2626,6 +2628,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					newEnd,
 					interval.end.refType,
 					op,
+					undefined,
+					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {

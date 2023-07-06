@@ -9,7 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "../intervalCollection";
+import { IntervalStickiness, IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { assertConsistent, Client } from "./intervalUtils";
@@ -157,6 +157,78 @@ describe("interval rebasing", () => {
 			intervalId: "2",
 		});
 
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("is consistent for full stickiness", () => {
+		clients[0].sharedString.insertText(0, "A");
+		clients[0].sharedString.insertText(0, "BC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_1.add(
+			0,
+			2,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "2",
+			},
+			IntervalStickiness.FULL,
+		);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[1].sharedString.removeRange(0, 3);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("slides two refs on same segment to different segments", () => {
+		clients[0].sharedString.insertText(0, "AB");
+		clients[0].sharedString.insertText(0, "C");
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_1.add(
+			1,
+			2,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+			IntervalStickiness.FULL,
+		);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.removeRange(1, 2);
+		const collection_2 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_2.add(
+			0,
+			1,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "2",
+			},
+			IntervalStickiness.FULL,
+		);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("maintains sliding preference on references after ack", () => {
+		clients[1].sharedString.insertText(0, "ABC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].sharedString.insertText(0, "D");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_1.add(
+			0,
+			1,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+			IntervalStickiness.START,
+		);
+		clients[2].sharedString.removeRange(1, 2);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
