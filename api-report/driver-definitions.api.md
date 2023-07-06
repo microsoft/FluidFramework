@@ -247,27 +247,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export interface IProvideSessionAwareDriverFactory {
-    // (undocumented)
-    readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
-}
-
-// @public (undocumented)
 export type IResolvedUrl = IFluidResolvedUrl;
-
-// @public (undocumented)
-export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
-    // (undocumented)
-    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts>;
-}
-
-// @public (undocumented)
-export interface ISocketStorageDiscoveryParts {
-    deltaStreamSocketUrl: string;
-    runtimeTenantId?: string;
-    // (undocumented)
-    tenantId: string;
-}
 
 // @public
 export interface IStream<T> {

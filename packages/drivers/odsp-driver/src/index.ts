@@ -10,7 +10,6 @@ export {
 	ClpCompliantAppHeader,
 	IClpCompliantAppHeader,
 	ISharingLinkHeader,
-	ISocketStorageDiscovery,
 	OdspFluidDataStoreLocator,
 	SharingLinkHeader,
 } from "./contractsPublic";
@@ -18,11 +17,7 @@ export {
 // public utils
 export { checkUrl } from "./checkUrl";
 export { createOdspUrl } from "./createOdspUrl";
-export {
-	getHashedDocumentId,
-	getSocketStorageDiscoveryParts,
-	ISnapshotContents,
-} from "./odspPublicUtils";
+export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils";
 export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./odspUrlHelper";
 
 // prefetch latest snapshot before container load
@@ -55,3 +50,13 @@ export {
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
+
+// Provider for
+
+import {
+	IProvideSessionAwareDriverFactory,
+	ISessionAwareDriverFactory,
+	ISocketStorageDiscovery,
+} from "@fluidframework/odsp-driver-definitions";
+
+export { IProvideSessionAwareDriverFactory, ISessionAwareDriverFactory, ISocketStorageDiscovery };

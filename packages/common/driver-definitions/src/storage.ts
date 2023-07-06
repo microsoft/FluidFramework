@@ -385,40 +385,6 @@ export interface IDocumentServiceFactory {
 	): Promise<IDocumentService>;
 }
 
-export interface ISocketStorageDiscoveryParts {
-	/**
-	 * Niche interface to allow odsp-driver to expose specific pieces necessary for /broadcast-signal
-	 * endpoint. Please do not use this for anything else. We will phase this out once we know how
-	 * the interface for a more uniform interface across multiple drivers looks.
-	 */
-
-	// SPO gives us runtimeTenantId, we remap it to tenantId
-	// See getSocketStorageDiscovery
-	runtimeTenantId?: string;
-	tenantId: string;
-
-	/**
-	 * PUSH URL
-	 */
-	deltaStreamSocketUrl: string;
-}
-
-/**
- * An interface that allows a concrete instance of a driver factory to interrogate itself
- * to find out if it is session aware.
- */
-export interface IProvideSessionAwareDriverFactory {
-	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
-}
-
-/**
- * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
- * function if it session aware.
- */
-export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
-	getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts>;
-}
-
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.

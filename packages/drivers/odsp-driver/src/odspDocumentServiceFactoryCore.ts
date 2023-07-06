@@ -8,7 +8,6 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-	ISocketStorageDiscoveryParts,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -28,6 +27,8 @@ import {
 	SharingLinkRole,
 	ShareLinkTypes,
 	ISharingLinkKind,
+	ISocketStorageDiscovery,
+	ISessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
@@ -42,7 +43,6 @@ import {
 	isNewFileInfo,
 	getJoinSessionCacheKey,
 } from "./odspUtils";
-import { getSocketStorageDiscoveryParts } from "./odspPublicUtils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -51,12 +51,18 @@ import { getSocketStorageDiscoveryParts } from "./odspPublicUtils";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore
+	implements IDocumentServiceFactory, ISessionAwareDriverFactory
+{
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
 	public get snapshotPrefetchResultCache() {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
+
+	public get ISessionAwareDriverFactory() {
+		return this;
 	}
 
 	/**
@@ -67,13 +73,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	 */
 	public async getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
-	): Promise<ISocketStorageDiscoveryParts | undefined> {
+	): Promise<ISocketStorageDiscovery | undefined> {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
 			getJoinSessionCacheKey(odspResolvedUrl),
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return getSocketStorageDiscoveryParts(joinSessionResponse?.joinSessionResponse);
+		return joinSessionResponse?.joinSessionResponse;
 	}
 
 	public async createContainer(

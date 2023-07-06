@@ -15,13 +15,15 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
+import { IProvideSessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISocketStorageDiscoveryParts } from '@fluidframework/driver-definitions';
+import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
@@ -67,14 +69,15 @@ export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | und
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
 
-// @public
-export function getSocketStorageDiscoveryParts(socketStorageDiscovery: ISocketStorageDiscovery | undefined): ISocketStorageDiscoveryParts | undefined;
-
 // @public (undocumented)
 export interface IClpCompliantAppHeader {
     // (undocumented)
     [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
+
+export { IProvideSessionAwareDriverFactory }
+
+export { ISessionAwareDriverFactory }
 
 // @public (undocumented)
 export interface ISharingLinkHeader {
@@ -94,22 +97,7 @@ export interface ISnapshotContents {
     snapshotTree: ISnapshotTree;
 }
 
-// @public
-export interface ISocketStorageDiscovery {
-    // (undocumented)
-    deltaStorageUrl: string;
-    deltaStreamSocketUrl: string;
-    // (undocumented)
-    id: string;
-    refreshSessionDurationSeconds?: number;
-    // (undocumented)
-    runtimeTenantId?: string;
-    // (undocumented)
-    snapshotStorageUrl: string;
-    socketToken?: string;
-    // (undocumented)
-    tenantId: string;
-}
+export { ISocketStorageDiscovery }
 
 // @public
 export function isOdcOrigin(origin: string): boolean;
@@ -135,7 +123,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 // @public
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, ISessionAwareDriverFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
@@ -145,7 +133,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscoveryParts | undefined>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+    // (undocumented)
+    get ISessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
