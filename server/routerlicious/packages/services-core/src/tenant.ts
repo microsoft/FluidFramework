@@ -72,6 +72,8 @@ export enum KeyName {
 export enum EncryptionKeyVersion {
 	key2022 = "2022",
 	key2023 = "2023",
+	key2024 = "2024",
+	key2025 = "2025",
 }
 
 export interface IEncryptedTenantKeys extends ITenantKeys {
