@@ -23,27 +23,26 @@ import {
 	FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-	IAudience,
-	IConnectionDetailsInternal,
-	IContainer,
-	IContainerEvents,
-	IDeltaManager,
-	ICriticalContainerError,
-	ContainerWarning,
 	AttachState,
-	IThrottlingWarning,
-	ReadOnlyInfo,
-	IContainerLoadMode,
-	IFluidCodeDetails,
-	isFluidCodeDetails,
+	ContainerWarning,
+	IAudience,
 	IBatchMessage,
 	ICodeDetailsLoader,
+	IContainer,
+	IContainerEvents,
+	IContainerLoadMode,
+	ICriticalContainerError,
+	IDeltaManager,
+	IFluidCodeDetails,
 	IHostLoader,
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
 	IRuntime,
+	isFluidCodeDetails,
+	IThrottlingWarning,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -58,7 +57,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
@@ -99,7 +97,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
+import {
+	ReconnectMode,
+	IConnectionManagerFactoryArgs,
+	getPackageName,
+	IConnectionDetailsInternal,
+} from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
@@ -110,7 +113,11 @@ import {
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
-import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import {
+	combineAppAndProtocolSummary,
+	getProtocolSnapshotTree,
+	getSnapshotTreeFromSerializedContainer,
+} from "./utils";
 import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
@@ -2331,9 +2338,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this._deltaManager.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			getSpecifiedCodeDetails,
@@ -2342,9 +2347,6 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => {
-			context.dispose();
-		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,

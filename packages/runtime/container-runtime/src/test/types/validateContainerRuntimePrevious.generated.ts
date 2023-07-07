@@ -107,6 +107,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -664,26 +665,14 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummaryTreeWithStats": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IRootSummaryTreeWithStats():
-    TypeOnly<old.IRootSummaryTreeWithStats>;
-declare function use_current_InterfaceDeclaration_IRootSummaryTreeWithStats(
-    use: TypeOnly<current.IRootSummaryTreeWithStats>);
-use_current_InterfaceDeclaration_IRootSummaryTreeWithStats(
-    get_old_InterfaceDeclaration_IRootSummaryTreeWithStats());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummaryTreeWithStats": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IRootSummaryTreeWithStats():
-    TypeOnly<current.IRootSummaryTreeWithStats>;
-declare function use_old_InterfaceDeclaration_IRootSummaryTreeWithStats(
-    use: TypeOnly<old.IRootSummaryTreeWithStats>);
-use_old_InterfaceDeclaration_IRootSummaryTreeWithStats(
-    get_current_InterfaceDeclaration_IRootSummaryTreeWithStats());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -875,6 +864,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
