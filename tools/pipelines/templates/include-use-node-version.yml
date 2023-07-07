@@ -17,8 +17,6 @@ steps:
     script: |
       # Output installed node versions
       n ls
-      # Output diagnostics
-      n doctor
       # Use the specified node version
       n ${{ parameters.version }}
       # Output the node version
