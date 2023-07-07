@@ -7,6 +7,8 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate packageJson`](#flub-generate-packagejson)
+* [`flub generate readme`](#flub-generate-readme)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate buildVersion`
@@ -140,6 +142,54 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
+```
+
+## `flub generate packageJson`
+
+Generate mono repo package json
+
+```
+USAGE
+  $ flub generate packageJson -g client|server|azure|build-tools|gitrest|historian [-v | --quiet]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  Generate mono repo package json
+```
+
+## `flub generate readme`
+
+Adds commands to README.md in current directory.
+
+```
+USAGE
+  $ flub generate readme --dir <value> [--multi] [--aliases]
+
+FLAGS
+  --[no-]aliases  include aliases in the command list
+  --dir=<value>   (required) [default: docs] output directory for multi docs
+  --multi         create a different markdown page for each topic
+
+DESCRIPTION
+  Adds commands to README.md in current directory.
+
+  The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
+
+  # Usage
+  <!-- usage -->
+  # Commands
+  <!-- commands -->
+  # Table of contents
+  <!-- toc -->
+
+  Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
 ```
 
 ## `flub generate upcoming`
