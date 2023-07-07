@@ -12,7 +12,11 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel } from "@fluid-internal/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+} from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -29,7 +33,7 @@ import {
 	FuzzTestState,
 	makeReducer,
 	OperationGenerationConfig,
-	defaultOptions,
+	defaultOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
@@ -37,7 +41,7 @@ type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, ClientOpState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
 		for (const _ of collection) {
@@ -178,7 +182,7 @@ export function makeOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-	const usableWeights = optionsParam?.weights ?? defaultOptions.weights;
+	const usableWeights = optionsParam?.weights ?? defaultOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[removeRange, usableWeights.removeRange, hasNonzeroLength],
@@ -189,95 +193,72 @@ export function makeOperationGenerator(
 	]);
 }
 
+const baseModel: Omit<
+	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
+	"workloadName"
+> = {
+	generatorFactory: () => take(100, makeOperationGenerator(defaultOperationGenerationConfig)),
+	reducer:
+		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+		makeReducer(),
+	validateConsistency: assertEquivalentSharedStrings,
+	factory: new SharedStringFactory(),
+};
+
+const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+	validationStrategy: { type: "fixedInterval", interval: 10 },
+	reconnectProbability: 0.1,
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	defaultTestCount: 100,
+	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+	parseOperations: (serialized: string) => {
+		const operations: Operation[] = JSON.parse(serialized);
+		// Replace this value with some other interval ID and uncomment to filter replay of the test
+		// suite to only include interval operations with this ID.
+		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+		// if (filterIntervalId) {
+		// 	return operations.filter((entry) =>
+		// 		[undefined, filterIntervalId].includes((entry as any).id),
+		// 	);
+		// }
+		return operations;
+	},
+};
+
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
+	const model = {
+		...baseModel,
 		workloadName: "default interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFactory(),
 	};
 
 	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: 10 },
-		reconnectProbability: 0.1,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
-		},
-		defaultTestCount: 100,
+		...defaultFuzzOptions,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		parseOperations: (serialized: string) => {
-			const operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID and uncomment to filter replay of the test
-			// suite to only include interval operations with this ID.
-			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			// if (filterIntervalId) {
-			// 	return operations.filter((entry) =>
-			// 		[undefined, filterIntervalId].includes((entry as any).id),
-			// 	);
-			// }
-			return operations;
-		},
 	});
 });
 
-// currently fails
-describe.skip("IntervalCollection offline fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
-		workloadName: "offline interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator(defaultOptions)),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFactory(),
+describe("IntervalCollection no reconnect fuzz testing", () => {
+	const noReconnectModel = {
+		...baseModel,
+		workloadName: "interval collection without reconnects",
 	};
 
-	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: 10 },
-		reconnectProbability: 0.0,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 3,
-			clientAddProbability: 0.0,
-		},
-		defaultTestCount: 100,
-		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		parseOperations: (serialized: string) => {
-			const operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID and uncomment to filter replay of the test
-			// suite to only include interval operations with this ID.
-			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			// if (filterIntervalId) {
-			// 	return operations.filter((entry) =>
-			// 		[undefined, filterIntervalId].includes((entry as any).id),
-			// 	);
-			// }
-			return operations;
-		},
-	});
-});
-
-describe("IntervalCollection offline fuzz testing no intervals", () => {
-	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
-		workloadName: "offline interval collection no intervals",
+	const noReconnectNoIntervalsModel = {
+		...baseModel,
+		workloadName: "interval collection without reconnects or intervals",
 		generatorFactory: () =>
 			take(
 				100,
 				makeOperationGenerator({
-					...defaultOptions,
+					...defaultOperationGenerationConfig,
 					weights: {
-						...defaultOptions.weights,
+						...defaultOperationGenerationConfig.weights,
 						addInterval: 0,
 						deleteInterval: 0,
 						changeInterval: 0,
@@ -285,38 +266,29 @@ describe("IntervalCollection offline fuzz testing no intervals", () => {
 					},
 				}),
 			),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFactory(),
 	};
 
-	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: 10 },
+	const options = {
+		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
 		},
-		defaultTestCount: 100,
+	};
+
+	createDDSFuzzSuite(noReconnectModel, {
+		...options,
+		skip: [80],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		parseOperations: (serialized: string) => {
-			const operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID and uncomment to filter replay of the test
-			// suite to only include interval operations with this ID.
-			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			// if (filterIntervalId) {
-			// 	return operations.filter((entry) =>
-			// 		[undefined, filterIntervalId].includes((entry as any).id),
-			// 	);
-			// }
-			return operations;
-		},
+	});
+
+	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
+		...options,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
 	});
 });
 
