@@ -20,7 +20,6 @@ import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -46,9 +45,9 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		const forceWriteMode = async (map, dataStore1): Promise<void> => {
 			map.set("forceWrite", true);
-			const runtime = dataStore1.context.containerRuntime as IContainerRuntime;
+			const runtime = runtimeOf(dataStore1);
 			while (runtime.isDirty) {
-				await timeoutPromise((resolve) => runtime.once("batchEnd", resolve));
+				await timeoutPromise((resolve) => runtime.once("saved", resolve));
 			}
 			await provider.ensureSynchronized();
 		};
@@ -93,7 +92,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode to avoid reconnection while uploading the blob
+			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
+			// goes into online flow
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -123,6 +123,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
+			// goes into online flow
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -135,6 +137,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("removes multiple pending blobs after attached and acked", async function () {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
+			// goes into online flow
 			await forceWriteMode(map, dataStore1);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {

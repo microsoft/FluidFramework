@@ -426,7 +426,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			`${BlobManager.basePath}/${id}`,
 			this.routeContext,
 			async () => this.getBlob(id),
-			pending ? callback : undefined,
+			callback,
 		);
 	}
 
@@ -949,8 +949,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				blob: bufferToString(entry.blob, "base64"),
 				attached: entry.attached,
 				acked: entry.acked,
-				...(entry.minTTLInSeconds && { minTTLInSeconds: entry.minTTLInSeconds }),
-				...(entry.uploadTime && { uploadTime: entry.uploadTime }),
+				minTTLInSeconds: entry.minTTLInSeconds,
+				uploadTime: entry.uploadTime,
 			};
 		}
 		return blobs;
