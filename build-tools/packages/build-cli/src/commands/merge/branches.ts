@@ -118,6 +118,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			`refs/remotes/${this.remote}/${flags.source}`,
 		);
 
+		this.log(`Unmerged commit list: ${unmergedCommitList}`);
+
 		if (unmergedCommitList.length === 0) {
 			this.log(
 				chalk.green(

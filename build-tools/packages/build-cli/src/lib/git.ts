@@ -194,17 +194,9 @@ export class Repository {
 	}
 
 	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
-		console.log(`canMergeWithoutConflicts: ${commit}`);
 		const mergeResult = await this.git.merge([commit, "--no-commit", "--no-ff"]);
-		console.log(`mergeResult: ${mergeResult}`);
-
-		const hasConflicts = mergeResult.conflicts.length > 0;
-		console.log(`hasConflicts: ${hasConflicts}`);
-
-		if (hasConflicts) {
-			await this.git.merge(["--abort"]);
-		}
-
-		return hasConflicts;
+		await this.git.merge(["--abort"]);
+		const canMerge = mergeResult.result === "success";
+		return canMerge;
 	}
 }
