@@ -5155,6 +5155,45 @@ importers:
       prettier: 2.6.2
       sinon: 7.5.0
 
+  experimental/PropertyDDS/packages/property-shared-tree-interop:
+    specifiers:
+      '@fluid-experimental/property-changeset': workspace:~
+      '@fluid-experimental/property-properties': workspace:~
+      '@fluid-experimental/tree2': workspace:~
+      '@fluidframework/build-common': ^1.2.0
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@types/jest': 22.2.3
+      '@types/node': ^14.18.38
+      concurrently: ^7.6.0
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      ts-jest: ^26.4.4
+      typescript: ~4.5.5
+    dependencies:
+      '@fluid-experimental/property-changeset': link:../property-changeset
+      '@fluid-experimental/property-properties': link:../property-properties
+      '@fluid-experimental/tree2': link:../../../dds/tree2
+      '@fluidframework/common-utils': 1.1.1
+    devDependencies:
+      '@fluidframework/build-common': 1.2.0
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
+      '@types/jest': 22.2.3
+      '@types/node': 14.18.47
+      concurrently: 7.6.0
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      prettier: 2.6.2
+      rimraf: 4.4.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      typescript: 4.5.5
+
   experimental/PropertyDDS/services/property-query-service:
     specifiers:
       '@fluid-experimental/property-changeset': workspace:~
