@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/readme-command",
-	"version": "0.20.0",
+	"version": "0.21.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -45,7 +45,7 @@
 		"@oclif/plugin-plugins": "^3.1.2",
 		"@oclif/test": "^2.3.22",
 		"oclif": "^3.9.1",
-		"semver": "^7.5.1"
+		"semver": "^7.5.3"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",

@@ -49,7 +49,7 @@ export function generateRandomUpPath(
 }
 
 enum Operation {
-	SetValue = 0,
+	Modify = 0,
 	Delete = 1,
 	Insert = 2,
 }
@@ -66,13 +66,13 @@ export function generateRandomChange(
 	const random = makeRandom(seed);
 	const [changeReceiver, getChanges] = testChangeReceiver<T.LocalChangeset>();
 	const builder = new SequenceEditBuilder(changeReceiver, new AnchorSet());
-	const operation = random.integer(Operation.SetValue, Operation.Insert) as Operation;
+	const operation = random.integer(Operation.Modify, Operation.Insert) as Operation;
 	switch (operation) {
-		case Operation.SetValue:
-			builder.setValue(
-				pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
-				random.integer(0, Number.MAX_SAFE_INTEGER),
-			);
+		case Operation.Modify:
+			// builder.setValue(
+			// 	pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
+			// 	random.integer(0, Number.MAX_SAFE_INTEGER),
+			// );
 			break;
 		case Operation.Insert:
 			builder.insert(

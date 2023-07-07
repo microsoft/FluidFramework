@@ -7,12 +7,13 @@ import { strict as assert } from "assert";
 import { jsonString } from "../../../domains";
 import {
 	ChangesetLocalId,
-	NodeChangeset,
 	SequenceField as SF,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
+import { TestChange } from "../../testChange";
+import { TestChangeset } from "./testEdits";
 
 const id: ChangesetLocalId = brand(0);
 const nodeX = { type: jsonString.name, value: "X" };
@@ -22,10 +23,10 @@ deepFreeze(content);
 
 describe("SequenceField - Editor", () => {
 	it("child change", () => {
-		const childChange: NodeChangeset = { valueChange: { value: 1 } };
+		const childChange = TestChange.mint([0], 1);
 		deepFreeze(childChange);
 		const actual = SF.sequenceFieldEditor.buildChildChange(42, childChange);
-		const expected: SF.Changeset = [{ count: 42 }, { type: "Modify", changes: childChange }];
+		const expected: TestChangeset = [{ count: 42 }, { type: "Modify", changes: childChange }];
 		assert.deepEqual(actual, expected);
 	});
 

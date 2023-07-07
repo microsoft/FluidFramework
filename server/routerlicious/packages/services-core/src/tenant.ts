@@ -67,6 +67,19 @@ export enum KeyName {
 	key2 = "key2",
 }
 
+// This is tenantEncryptionKey version by year, it's append only.
+// We will add a new version each year.
+export enum EncryptionKeyVersion {
+	key2022 = "2022",
+	key2023 = "2023",
+	key2024 = "2024",
+	key2025 = "2025",
+}
+
+export interface IEncryptedTenantKeys extends ITenantKeys {
+	encryptionKeyVersion?: EncryptionKeyVersion;
+}
+
 export interface ITenant {
 	gitManager: IGitManager;
 

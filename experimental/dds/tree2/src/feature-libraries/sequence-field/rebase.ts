@@ -325,7 +325,7 @@ function rebaseMark<TNodeChange>(
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
-			assert(isMoveMark(baseMark), "Only move marks have move IDs");
+			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
 			if (markFollowsMoves(rebasedMark)) {
 				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId, baseMark.count);
 				return { count: 0 };
@@ -441,7 +441,7 @@ function sendMarkToDest<T>(
 	if (effect !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6f1 /* Expected effect to cover entire mark */,
 		);
 		newEffect = { ...effect.value, movedMark: mark };
 	} else {
@@ -467,7 +467,7 @@ function setPairedMarkStatus(
 	if (effect !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6f2 /* Expected effect to cover entire mark */,
 		);
 		newEffect = { ...effect.value, pairedMarkStatus: status };
 	} else {
@@ -636,7 +636,7 @@ function getMovedMark<T>(
 	if (effect?.value.movedMark !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6f3 /* Expected effect to cover entire mark */,
 		);
 		const newEffect = { ...effect.value };
 		delete newEffect.movedMark;

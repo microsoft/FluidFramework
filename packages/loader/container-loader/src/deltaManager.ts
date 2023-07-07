@@ -5,11 +5,8 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import {
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	IDeltaHandlerStrategy,
 	IDeltaManager,

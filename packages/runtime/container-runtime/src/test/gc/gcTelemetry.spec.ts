@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,

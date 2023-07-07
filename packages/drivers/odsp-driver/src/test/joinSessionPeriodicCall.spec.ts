@@ -10,11 +10,10 @@ import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
 import * as joinSession from "../vroom";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { LocalPersistentCache } from "../odspCache";
-import { OdspFluidDataStoreLocator } from "../contractsPublic";
+import { ISocketStorageDiscovery, OdspFluidDataStoreLocator } from "../contractsPublic";
 import { createOdspUrl } from "../createOdspUrl";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentService } from "../odspDocumentService";
-import { ISocketStorageDiscovery } from "../contracts";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
 
 describe("joinSessions Tests", () => {

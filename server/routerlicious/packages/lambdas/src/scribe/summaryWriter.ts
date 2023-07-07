@@ -130,7 +130,7 @@ export class SummaryWriter implements ISummaryWriter {
 									existingRef ? existingRef.object.sha : "n/a"
 								}" nor other valid parent summaries "[${
 									checkpoint.validParentSummaries?.join(",") ?? ""
-								}]".`,
+								}] nor the last known client summary "${lastSummaryHead}".`,
 								summaryProposal: {
 									summarySequenceNumber: op.sequenceNumber,
 								},

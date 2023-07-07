@@ -128,12 +128,13 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ modify", () => {
 		const deletion = Change.delete(0, 3);
-		const modify = Change.modify(0, { valueChange: { value: 2 } });
-		const expected: SF.Changeset = [
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
+		const expected: TestChangeset = [
 			{ type: "Delete", id: brand(0), count: 3 },
 			{
 				type: "Modify",
-				changes: { valueChange: { value: 2 } },
+				changes: childChange,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(modify)]);
@@ -142,14 +143,15 @@ describe("SequenceField - Compose", () => {
 
 	it("revive ○ modify", () => {
 		const revive = Change.revive(0, 3, tag1, brand(0));
-		const modify = Change.modify(0, { valueChange: { value: 2 } });
-		const expected: SF.Changeset = [
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
+		const expected: TestChangeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag1, id: brand(0) },
-				changes: { valueChange: { value: 2 } },
+				changes: childChange,
 				inverseOf: tag1,
 			},
 			{
@@ -382,12 +384,12 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("modify ○ delete", () => {
-		const nodeChange = { valueChange: { value: 1 } };
-		const modify = Change.modify(0, nodeChange);
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
 		const deletion = Change.delete(0, 1);
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(deletion)]);
-		const expected: SF.Changeset = [
-			{ type: "Delete", id: brand(0), count: 1, changes: nodeChange },
+		const expected: TestChangeset = [
+			{ type: "Delete", id: brand(0), count: 1, changes: childChange },
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -449,31 +451,35 @@ describe("SequenceField - Compose", () => {
 
 	// TODO: update this test to expect the node change to be represented for the transient node
 	it("revive and modify ○ delete", () => {
-		const nodeChange = { valueChange: { value: 1 } };
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
 		const detachEvent: SF.DetachEvent = { revision: tag1, id: brand(0) };
-		const revive: SF.Changeset = [
+		const revive: TestChangeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				detachEvent,
-				changes: nodeChange,
+				changes: childChange,
 			},
 		];
-		const deletion: SF.Changeset = [{ type: "Delete", id: brand(0), count: 2 }];
+		const deletion: TestChangeset = [{ type: "Delete", id: brand(0), count: 2 }];
 		const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
-		const expected: SF.Changeset = [{ type: "Delete", revision: tag3, id: brand(1), count: 1 }];
+		const expected: TestChangeset = [
+			{ type: "Delete", revision: tag3, id: brand(1), count: 1 },
+		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("modify ○ insert", () => {
-		const modify = Change.modify(0, { valueChange: { value: 1 } });
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
 		const insert = Change.insert(0, 1, 2);
-		const expected: SF.Changeset = [
+		const expected: TestChangeset = [
 			{ type: "Insert", content: [{ type, value: 2 }], id: brand(2) },
 			{
 				type: "Modify",
-				changes: { valueChange: { value: 1 } },
+				changes: childChange,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(insert)]);
@@ -543,9 +549,10 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("modify ○ revive", () => {
-		const modify = Change.modify(0, { valueChange: { value: 1 } });
+		const childChange = TestChange.mint([0, 1], 2);
+		const modify = Change.modify(0, childChange);
 		const revive = Change.revive(0, 2, tag1, brand(0));
-		const expected: SF.Changeset = [
+		const expected: TestChangeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
@@ -555,7 +562,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Modify",
-				changes: { valueChange: { value: 1 } },
+				changes: childChange,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(revive)]);
