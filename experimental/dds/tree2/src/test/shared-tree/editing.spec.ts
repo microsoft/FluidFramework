@@ -61,7 +61,7 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 			tree3.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2, tree3], [["a"], "B", "C"]);
+			expectJsonTree([tree1, tree2, tree3], [{ foo: "a" }, "B", "C"]);
 		});
 
 		it("can handle competing deletes", () => {
