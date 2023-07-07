@@ -212,7 +212,7 @@ export enum ContainerMessageType {
 }
 
 export interface ContainerRuntimeMessage {
-	contents?: any;
+	contents: any;
 	type: ContainerMessageType;
 }
 
@@ -878,12 +878,7 @@ export class ContainerRuntime
 	}
 
 	//* Deprecate?
-	public get reSubmitFn(): (
-		type: ContainerMessageType,
-		contents: any,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void {
+	public get reSubmitFn() {
 		return (
 			type: ContainerMessageType,
 			contents: any,
@@ -1344,10 +1339,14 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit({ type: ContainerMessageType.BlobAttach }, undefined, {
-						localId,
-						blobId,
-					});
+					this.submit(
+						{ type: ContainerMessageType.BlobAttach, contents: undefined },
+						undefined,
+						{
+							localId,
+							blobId,
+						},
+					);
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
@@ -1900,10 +1899,9 @@ export class ContainerRuntime
 	 */
 	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const parsed = JSON.parse(serializedContent);
-		//* Maybe this is overkill...
-		requireContainerRuntimeMessage(parsed);
-		return { type: parsed.type, contents: parsed.contents };
+		const { type, contents } = JSON.parse(serializedContent);
+		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
+		return { type, contents };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
@@ -2339,7 +2337,7 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+	private isContainerMessageDirtyable({ type, contents }: ContainerRuntimeMessage) {
 		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
 		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
 		if (type === ContainerMessageType.Attach) {
@@ -3091,7 +3089,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		{ type, contents }: ContainerRuntimeMessage, //* Or just message
+		containerRuntimeMessage: ContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
 	): void {
@@ -3104,7 +3102,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const serializedContent = JSON.stringify({ type, contents });
+		const serializedContent = JSON.stringify(containerRuntimeMessage);
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
@@ -3115,6 +3113,7 @@ export class ContainerRuntime
 			});
 		}
 
+		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
 			type,
@@ -3170,7 +3169,7 @@ export class ContainerRuntime
 			throw error;
 		}
 
-		if (this.isContainerMessageDirtyable(type, contents)) {
+		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
 			this.updateDocumentDirtyState(true);
 		}
 	}

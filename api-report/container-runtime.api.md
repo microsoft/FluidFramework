@@ -191,7 +191,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
+    get reSubmitFn(): (type: ContainerMessageType, contents: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
@@ -760,7 +760,7 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): asserts message is SequencedContainerRuntimeMessage;
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): message is SequencedContainerRuntimeMessage;
 
 // (No @packageDocumentation comment for this package)
 
