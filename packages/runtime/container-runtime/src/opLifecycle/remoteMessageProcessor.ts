@@ -99,6 +99,7 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 
 /**
  * For a given message, it moves the nested contents and type on level up.
+ * @returns void - If it doesn't throw, the provided message is now known to be a SequencedContainerRuntimeMessage
  */
 function unpack(
 	message: ISequencedDocumentMessage,
@@ -141,7 +142,13 @@ export function unpackRuntimeMessage(
 	return true;
 }
 
-//* TODO: Comment
+/**
+ * Unpacks runtime messages, throwing if the unpacked message doesn't adhere to expectations for a ContainerRuntimeMessage
+ *
+ * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
+ * @param message - message (as it observed in storage / service)
+ * @returns void - If it doesn't throw, the provided message is now known to be a SequencedContainerRuntimeMessage
+ */
 function unpackAndValidateRuntimeMessage(
 	message: ISequencedDocumentMessage,
 ): asserts message is SequencedContainerRuntimeMessage {

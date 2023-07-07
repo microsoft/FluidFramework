@@ -43,6 +43,7 @@ import {
 	loggerToMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	isFluidError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -218,6 +219,7 @@ export interface ContainerRuntimeMessage {
 
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
+/** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
 export function requireContainerRuntimeMessage(
 	message: any,
 ): asserts message is ContainerRuntimeMessage {
@@ -241,7 +243,6 @@ export function requireContainerRuntimeMessage(
 				"OpProcessing",
 				message,
 				{
-					//* local, // TODO: Do we need this info?  It can be plumbed through
 					type: message.type,
 					contentType: typeof message.contents,
 					batch: message.metadata?.batch,
@@ -877,7 +878,7 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	//* Deprecate?
+	/** @deprecated - The functionality is no longer exposed publicly */
 	public get reSubmitFn() {
 		return (
 			type: ContainerMessageType,
@@ -2037,8 +2038,15 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local, runtimeMessage);
+		try {
+			for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+				this.processCore(message, local, runtimeMessage);
+			}
+		} catch (e: unknown) {
+			if (isFluidError(e)) {
+				e.addTelemetryProperties({ local });
+			}
+			throw e;
 		}
 	}
 
