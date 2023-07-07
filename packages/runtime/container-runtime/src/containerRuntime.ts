@@ -217,6 +217,10 @@ export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 }
 
+/**
+ * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
+ * promoted up to the outer object
+ */
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
 /** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
@@ -2102,7 +2106,7 @@ export class ContainerRuntime
 				default:
 					assert(
 						!runtimeMessage,
-						"ContainerRuntimeMessage type should have been validated already",
+						"ContainerRuntimeMessage type should have been validated already for a runtimeMessage",
 					);
 			}
 
