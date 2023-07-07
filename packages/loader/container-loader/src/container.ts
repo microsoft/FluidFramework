@@ -2338,9 +2338,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this._deltaManager.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			getSpecifiedCodeDetails,
@@ -2349,9 +2347,6 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => {
-			context.dispose();
-		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
