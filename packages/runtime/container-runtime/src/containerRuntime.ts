@@ -2913,6 +2913,7 @@ export class ContainerRuntime
 					summarizeResult.summary,
 					summaryContext,
 				);
+				this.emit("experimentalSummary", summarizeResult);
 			} catch (error) {
 				return { stage: "generate", ...generateSummaryData, error };
 			}
