@@ -7,13 +7,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import {
-	Repository,
-	createPullRequest,
-	getUserAccess,
-	pullRequestExists,
-	pullRequestInfo,
-} from "../../lib";
+import { Repository, createPullRequest, pullRequestExists, pullRequestInfo } from "../../lib";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -79,9 +73,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		// const [owner, repo] = context.originRemotePartialUrl.split("/");
-		const owner = "sonalideshpandemsft";
-		const repo = "FluidFramework";
+		const [owner, repo] = context.originRemotePartialUrl.split("/");
 
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
@@ -195,7 +187,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			.branch(["--set-upstream-to", `${this.remote}/${branchName}`]);
 
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
-		await this.gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
+		await this.gitRepo.gitClient
+			.branch(["--delete", tempBranchToCheckConflicts, "--force"])
+			.push(this.remote, `:${tempBranchToCheckConflicts}`);
 
 		/**
 		 * The below description is intended for PRs which has merge conflicts with next.
@@ -220,7 +214,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		git push`;
 
 		if (prWillConflict === false) {
-			await this.gitRepo.gitClient.merge([flags.target, "-m", prTitle]);
+			await this.gitRepo.gitClient
+				.merge([flags.target, "-m", prTitle])
+				.push(this.remote, branchName);
 
 			/**
 			 * The below description is intended for PRs which may have CI failures with next.
@@ -245,13 +241,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		 * fetch name of owner associated to the pull request
 		 */
 		const pr = await pullRequestInfo(flags.auth, owner, repo, prHeadCommit, this.logger);
-		console.debug(pr);
-		const author = pr.data?.[0]?.assignee?.login;
+		const username = pr.data.author.login;
 		this.info(
-			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${author}`,
+			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${username}`,
 		);
-		const user = await getUserAccess(flags.auth, owner, repo, this.logger);
-		this.verbose(`List users with push access to main branch: ${JSON.stringify(user.data)}`);
 
 		const prObject = {
 			token: flags.auth,
@@ -259,15 +252,15 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			repo,
 			source: branchName,
 			target: flags.target,
-			assignee: author,
+			assignee: username,
 			title: prTitle,
 			description,
 		};
 
+		this.log(`Initiate PR creation: ${prObject}}`);
+
 		const prNumber = await createPullRequest(prObject, this.logger);
-		this.log(
-			`Opened pull request ${prNumber} for commit id ${prHeadCommit}. Please resolve the merge conflicts.`,
-		);
+		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
 	}
 
 	/**
@@ -330,7 +323,6 @@ async function hasConflicts(
 	for (const [i, commit] of commitIds.entries()) {
 		// eslint-disable-next-line no-await-in-loop
 		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
-		log?.log(`hasConflicts mergesClean-----------------------${mergesClean}`);
 		log?.verbose(`Can merge without conflicts ${commit}: ${mergesClean}`);
 		if (mergesClean === false) {
 			return [true, i];
