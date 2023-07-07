@@ -258,6 +258,17 @@ export function requireContainerRuntimeMessage(
 	}
 }
 
+//* Reconcile with existing isRuntimeMessage
+function confirmIsRuntimeMessage(
+	message: ISequencedDocumentMessage,
+	appearsToBeRuntimeMessage: boolean,
+): message is SequencedContainerRuntimeMessage {
+	if (appearsToBeRuntimeMessage) {
+		requireContainerRuntimeMessage(message);
+	}
+	return appearsToBeRuntimeMessage;
+}
+
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -2044,7 +2055,11 @@ export class ContainerRuntime
 		const messageCopy = { ...messageArg };
 		try {
 			for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-				this.processCore(message, local, runtimeMessage);
+				if (confirmIsRuntimeMessage(message, runtimeMessage)) {
+					this.processRuntimeMessage(message, local);
+				} else {
+					this.processCore(message, local);
+				}
 			}
 		} catch (e: unknown) {
 			if (isFluidError(e)) {
@@ -2056,11 +2071,80 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
-	private processCore(
-		message: SequencedContainerRuntimeMessage,
-		local: boolean,
-		runtimeMessage: boolean,
-	) {
+	//* This is a copy of `processCore` with refined type for message param
+	private processRuntimeMessage(message: SequencedContainerRuntimeMessage, local: boolean) {
+		const runtimeMessage = true as const;
+
+		// Surround the actual processing of the operation with messages to the schedule manager indicating
+		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
+		// messages once a batch has been fully processed.
+		this.scheduleManager.beforeOpProcessing(message);
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
+
+		try {
+			let localOpMetadata: unknown;
+			if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
+				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
+			}
+
+			// If there are no more pending messages after processing a local message,
+			// the document is no longer dirty.
+			if (!this.hasPendingMessages()) {
+				this.updateDocumentDirtyState(false);
+			}
+
+			switch (message.type) {
+				case ContainerMessageType.Attach:
+					this.dataStores.processAttachMessage(message, local);
+					break;
+				case ContainerMessageType.Alias:
+					this.processAliasMessage(message, localOpMetadata, local);
+					break;
+				case ContainerMessageType.FluidDataStoreOp:
+					this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
+					break;
+				case ContainerMessageType.BlobAttach:
+					this.blobManager.processBlobAttachOp(message, local);
+					break;
+				case ContainerMessageType.IdAllocation:
+					assert(
+						this.idCompressor !== undefined,
+						0x67c /* IdCompressor should be defined if enabled */,
+					);
+					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
+					break;
+				case ContainerMessageType.ChunkedOp:
+				case ContainerMessageType.Rejoin:
+					break;
+				default:
+					assert(
+						!runtimeMessage,
+						"ContainerRuntimeMessage type should have been validated already for a runtimeMessage",
+					);
+			}
+
+			if (runtimeMessage || this.groupedBatchingEnabled) {
+				this.emit("op", message, runtimeMessage);
+			}
+
+			this.scheduleManager.afterOpProcessing(undefined, message);
+
+			if (local) {
+				// If we have processed a local op, this means that the container is
+				// making progress and we can reset the counter for how many times
+				// we have consecutively replayed the pending states
+				this.resetReconnectCount(message);
+			}
+		} catch (e) {
+			this.scheduleManager.afterOpProcessing(e, message);
+			throw e;
+		}
+	}
+
+	private processCore(message: ISequencedDocumentMessage, local: boolean) {
+		const runtimeMessage = false as const;
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.

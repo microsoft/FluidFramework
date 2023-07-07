@@ -28,14 +28,15 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
+	//* Update comments given we're not validating in here anymore
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
 	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
 	 * @throws DataProcessingError if any inner message doesn't adhere to expectations for a ContainerRuntimeMessage
 	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
 	 */
-	public process(remoteMessage: ISequencedDocumentMessage): SequencedContainerRuntimeMessage[] {
-		const result: SequencedContainerRuntimeMessage[] = [];
+	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+		const result: ISequencedDocumentMessage[] = [];
 
 		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
 		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
@@ -51,7 +52,7 @@ export class RemoteMessageProcessor {
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					requireContainerRuntimeMessage(ungroupedMessage2);
+					//* requireContainerRuntimeMessage(ungroupedMessage2);
 					result.push(ungroupedMessage2);
 					continue;
 				}
@@ -70,7 +71,7 @@ export class RemoteMessageProcessor {
 						if (decompressionAfterChunking.state === "Skipped") {
 							// After chunking, if the original message was not compressed,
 							// there is no need to continue processing
-							requireContainerRuntimeMessage(ungroupedMessageAfterChunking2);
+							//* requireContainerRuntimeMessage(ungroupedMessageAfterChunking2);
 							result.push(ungroupedMessageAfterChunking2);
 							continue;
 						}
