@@ -33,7 +33,7 @@
 		"test:webpack": "webpack --config webpack.config.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -91,7 +91,8 @@
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~4.5.5",
+		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
 		"broken": {

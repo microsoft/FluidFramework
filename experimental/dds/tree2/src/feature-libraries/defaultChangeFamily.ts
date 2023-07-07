@@ -11,7 +11,6 @@ import {
 	AnchorSet,
 	Delta,
 	UpPath,
-	Value,
 	ITreeCursor,
 	RevisionTag,
 	ChangeFamilyEditor,
@@ -71,9 +70,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  * @alpha
  */
 export interface IDefaultEditBuilder {
-	// TODO: document
-	setValue(path: UpPath, value: Value): void;
-
 	/**
 	 * @param field - the value field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
@@ -114,7 +110,6 @@ export interface IDefaultEditBuilder {
 	): void;
 
 	// TODO: document
-	addValueConstraint(path: UpPath, value: Value): void;
 	addNodeExistsConstraint(path: UpPath): void;
 }
 
@@ -144,14 +139,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.apply(change);
 	}
 
-	public setValue(path: UpPath, value: Value): void {
-		this.modularBuilder.setValue(path, value);
-	}
-
-	public addValueConstraint(path: UpPath, value: Value): void {
-		this.modularBuilder.addValueConstraint(path, value);
-	}
-
 	public addNodeExistsConstraint(path: UpPath): void {
 		this.modularBuilder.addNodeExistsConstraint(path);
 	}
@@ -159,8 +146,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const id = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent),
+					valueFieldKind.changeHandler.editor.set(newContent, id),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -186,7 +174,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId();
+		const moveId = this.modularBuilder.generateId(count);
 		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
@@ -232,7 +220,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId();
+				const moveId = this.modularBuilder.generateId(count);
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,

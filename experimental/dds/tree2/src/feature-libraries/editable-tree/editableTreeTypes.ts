@@ -13,7 +13,9 @@ import {
 	PathVisitor,
 	NamedTreeSchema,
 	isCursor,
+	GlobalFieldKeySymbol,
 } from "../../core";
+import { brand } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
@@ -59,6 +61,12 @@ export const parentField: unique symbol = Symbol("editable-tree:parentField()");
 export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 
 /**
+ * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
+ * @alpha
+ */
+export const localNodeKeySymbol: GlobalFieldKeySymbol = brand(Symbol("editable-tree:localNodeKey"));
+
+/**
  * A symbol for subscribing to events.
  * @alpha
  */
@@ -80,11 +88,11 @@ export const on: unique symbol = Symbol("editable-tree:on");
 export interface EditableTreeEvents {
 	/**
 	 * Raised when a specific EditableTree node is changing.
-	 * This includes its values and fields.
+	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
 	 * @param value - the new value stored in the node.
 	 */
-	changing(upPath: UpPath, value: Value): void;
+	changing(upPath: UpPath): void;
 
 	/**
 	 * Raised when something in the tree is changing, including this node and its descendants.
@@ -140,7 +148,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * Set the value using the simple assignment operator (`=`).
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
-	[valueSymbol]: Value;
+	readonly [valueSymbol]: Value;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this node.

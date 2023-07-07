@@ -106,6 +106,7 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
+	RangeEntry,
 } from "./util";
 
 export {
@@ -128,8 +129,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeIdentifierKey,
-	nodeIdentifierSchema,
+	nodeKeyFieldKey,
+	nodeKeySchema,
 } from "./domains";
 
 export {
@@ -144,7 +145,6 @@ export {
 	FieldEditor,
 	FieldChangeRebaser,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChangeset,
 	FieldChange,
@@ -186,7 +186,10 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	NodeIdentifier,
+	StableNodeKey,
+	LocalNodeKey,
+	compareLocalNodeKeys,
+	localNodeKeySymbol,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -202,7 +205,6 @@ export {
 	HasFieldChanges,
 	EditableTreeEvents,
 	on,
-	ValueConstraint,
 	InternalTypedSchemaTypes,
 	SchemaAware,
 	ArrayLikeMut,
@@ -227,7 +229,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,

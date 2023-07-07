@@ -139,6 +139,8 @@ export class CheckpointService implements ICheckpointService {
 			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
 				// If we cannot checkpoint locally, use document
 				lastCheckpoint = JSON.parse(document[service]);
+				globalLogOffset = lastCheckpoint.logOffset;
+				globalSequenceNumber = lastCheckpoint.sequenceNumber;
 			} else {
 				// Search checkpoints collection for checkpoint
 				checkpoint = await this.checkpointRepository
@@ -156,7 +158,7 @@ export class CheckpointService implements ICheckpointService {
 					const globalCheckpoint: IDeliState | IScribe = JSON.parse(document[service]);
 
 					// Compare local and global checkpoints to use latest version
-					if (localCheckpoint.logOffset < globalCheckpoint.logOffset) {
+					if (localCheckpoint.sequenceNumber < globalCheckpoint.sequenceNumber) {
 						// if local checkpoint is behind global, use global
 						lastCheckpoint = globalCheckpoint;
 						checkpointSource = "latestFoundInGlobalCollection";

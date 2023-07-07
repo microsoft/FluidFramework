@@ -13,8 +13,8 @@ import {
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+} from "@fluidframework/core-interfaces";
+import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,
@@ -31,6 +31,13 @@ import {
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
+export interface Memory {
+	usedJSHeapSize: number;
+}
+
+export interface PerformanceWithMemory extends IsomorphicPerformance {
+	readonly memory: Memory;
+}
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
@@ -415,8 +422,9 @@ export class PerformanceEvent {
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
+		recordHeapSize: boolean = false,
 	) {
-		return new PerformanceEvent(logger, event, markers);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize);
 	}
 
 	public static timedExec<T>(
@@ -441,8 +449,9 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
+		recordHeapSize?: boolean,
 	) {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -460,11 +469,13 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEvent;
 	private readonly startTime = performance.now();
 	private startMark?: string;
+	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
+		private readonly recordHeapSize: boolean = false,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -527,6 +538,20 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
+			if (this.startMemoryCollection) {
+				const currentMemory = (performance as PerformanceWithMemory)?.memory
+					?.usedJSHeapSize;
+				const differenceInKBytes = Math.floor(
+					(currentMemory - this.startMemoryCollection) / 1024,
+				);
+				if (differenceInKBytes > 0) {
+					event.usedJSHeapSize = differenceInKBytes;
+				}
+			}
+		} else if (this.recordHeapSize) {
+			this.startMemoryCollection = (
+				performance as PerformanceWithMemory
+			)?.memory?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);

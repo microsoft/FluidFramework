@@ -111,7 +111,8 @@ export class AlfredResources implements core.IResources {
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
 		public socketTracker?: core.IWebSocketTracker,
-		public tokenManager?: core.ITokenRevocationManager,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
+		public revokedTokenChecker?: core.IRevokedTokenChecker,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -127,8 +128,10 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
+		const tokenRevocationManagerP = this.tokenRevocationManager
+			? this.tokenRevocationManager.close()
+			: Promise.resolve();
+		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
 	}
 }
 
@@ -148,6 +151,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -160,6 +164,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaReplicationFactor,
 			kafkaMaxBatchSize,
 			kafkaSslCACertFilePath,
+			eventHubConnString,
 		);
 
 		const redisConfig = config.get("redis");
@@ -535,13 +540,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
-		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		/**
+		 * Always have a revoked token checker,
+		 * just make sure it rejects existing revoked tokens even with the feature flag disabled
+		 */
+		const revokedTokenChecker: core.IRevokedTokenChecker =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
+		const tokenRevocationEnabled: boolean = utils.getBooleanFromConfig(
+			"tokenRevocation:enable",
+			config,
+		);
 		let socketTracker: core.IWebSocketTracker | undefined;
-		let tokenManager: core.ITokenRevocationManager | undefined;
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new utils.WebSocketTracker();
-			tokenManager = new utils.DummyTokenRevocationManager();
-			await tokenManager.initialize();
+			tokenRevocationManager =
+				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
+			await tokenRevocationManager.initialize().catch((error) => {
+				// Do NOT crash the service if token revocation feature cannot be initialized properly.
+				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
+			});
 		}
 
 		return new AlfredResources(
@@ -572,7 +590,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			verifyMaxMessageSize,
 			redisCache,
 			socketTracker,
-			tokenManager,
+			tokenRevocationManager,
+			revokedTokenChecker,
 		);
 	}
 }
@@ -604,7 +623,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
 			resources.socketTracker,
-			resources.tokenManager,
+			resources.tokenRevocationManager,
+			resources.revokedTokenChecker,
 		);
 	}
 }

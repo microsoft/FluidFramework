@@ -27,7 +27,7 @@
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -76,6 +76,7 @@
 		"jsonwebtoken": "^9.0.0",
 		"lodash": "^4.17.21",
 		"nconf": "^0.12.0",
+		"serialize-error": "^8.1.0",
 		"sillyname": "^0.1.0",
 		"uuid": "^8.3.1",
 		"winston": "^3.6.0",
@@ -116,6 +117,14 @@
 		"sinon": "^9.2.3",
 		"supertest": "^3.1.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"broken": {
