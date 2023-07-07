@@ -52,7 +52,7 @@ export const canWrite: (scopes: string[]) => boolean;
 export const choose: () => string;
 
 // @public
-export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree): ISummaryTree;
+export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
 
 // @public
 export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][];

@@ -224,6 +224,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
  */
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 	wholeSummaryTree: IWholeSummaryTree,
+	unreferenced?: true | undefined,
 ): ISummaryTree {
 	const tree: { [path: string]: SummaryObject } = {};
 	for (const entry of wholeSummaryTree.entries) {
@@ -243,7 +244,14 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 			case "tree": {
 				const treePayload = (entry as IWholeSummaryTreeValueEntry)
 					.value as IWholeSummaryTree;
-				tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(treePayload);
+				const nodeReferenced = (entry as IWholeSummaryTreeValueEntry).unreferenced;
+				if (nodeReferenced) {
+					console.log("this is it");
+				}
+				tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(
+					treePayload,
+					nodeReferenced,
+				);
 				break;
 			}
 			default: {
@@ -251,8 +259,14 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 			}
 		}
 	}
-	return {
-		type: SummaryType.Tree,
-		tree,
-	};
+	return unreferenced
+		? {
+				type: SummaryType.Tree,
+				tree,
+				unreferenced,
+		  }
+		: {
+				type: SummaryType.Tree,
+				tree,
+		  };
 }

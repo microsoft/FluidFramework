@@ -243,6 +243,35 @@ describe("Storage Utils", () => {
 			type: SummaryType.Tree,
 		};
 
+		const appSummary: ISummaryTree = {
+			type: SummaryType.Tree,
+			tree: {
+				default: {
+					type: SummaryType.Tree,
+					tree: {
+						".component": {
+							type: SummaryType.Blob,
+							content: JSON.stringify("defaultDataStore"),
+						},
+						"root": {
+							type: SummaryType.Tree,
+							tree: {
+								attributes: {
+									type: SummaryType.Blob,
+									content: JSON.stringify("rootattributes"),
+								},
+							},
+						},
+						"unref": {
+							type: SummaryType.Tree,
+							tree: {},
+							unreferenced: true,
+						},
+					},
+				},
+			},
+		};
+
 		it("Validate summary tree conversion", () => {
 			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
 				undefined,
@@ -253,6 +282,31 @@ describe("Storage Utils", () => {
 			const newSummaryTree =
 				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
 			assert.deepStrictEqual(newSummaryTree, summaryTree);
+		});
+
+		it("Validate app summary tree conversion", () => {
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				appSummary,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, appSummary);
+		});
+
+		it("Validate empty summary tree conversion", () => {
+			const emptySummaryTree: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				emptySummaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, emptySummaryTree);
 		});
 	});
 });
