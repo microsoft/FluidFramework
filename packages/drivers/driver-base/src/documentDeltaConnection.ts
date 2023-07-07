@@ -163,7 +163,7 @@ export class DocumentDeltaConnection
 			);
 			if (!this.trackedListeners.has(event)) {
 				if (event === "pong") {
-					// Garbage so we don't subscribe to any event coming from socket
+					// Empty callback for tracking purposes in this class
 					this.trackedListeners.set("pong", () => {});
 
 					const sendPingLoop = () => {
