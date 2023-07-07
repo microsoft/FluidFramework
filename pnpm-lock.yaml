@@ -7257,7 +7257,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-base-previous': npm:@fluidframework/driver-base@2.0.0-internal.5.2.0
@@ -7284,7 +7283,6 @@ importers:
       socket.io-client: ^4.6.1
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
