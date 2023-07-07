@@ -36,16 +36,16 @@ export class RemoteMessageProcessor {
 		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
 			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
-			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
-				unpackRuntimeMessage(ungroupedMessage2);
+			for (const ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
+				unpackAndValidateRuntimeMessage(ungroupedMessage2);
 
 				const chunkProcessingResult =
 					this.opSplitter.processRemoteMessage(ungroupedMessage2);
-				ungroupedMessage2 = chunkProcessingResult.message;
+				const innerUngroupedMessage = chunkProcessingResult.message;
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					requireContainerRuntimeMessage(ungroupedMessage2);
+					requireContainerRuntimeMessage(innerUngroupedMessage);
 					result.push(ungroupedMessage2);
 					continue;
 				}
@@ -149,27 +149,37 @@ function unpack(
  *
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
+ * @returns whether the given message was unpacked and is now a SequencedContainerRuntimeMessage
  *
  * @internal
  */
 export function unpackRuntimeMessage(
 	message: ISequencedDocumentMessage,
-): asserts message is SequencedContainerRuntimeMessage {
+): message is SequencedContainerRuntimeMessage {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.
 		// Or it's non-runtime message.
 		// Nothing to do in such case.
-
-		requireContainerRuntimeMessage(message);
-		return;
+		return false;
 	}
 
 	// legacy op format?
 	if (message.contents.address !== undefined && message.contents.type === undefined) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
-		return;
+	} else {
+		// new format
+		unpack(message);
 	}
 
-	unpack(message);
+	return true;
+}
+
+//* TODO: Comment
+function unpackAndValidateRuntimeMessage(
+	message: ISequencedDocumentMessage,
+): asserts message is SequencedContainerRuntimeMessage {
+	if (!unpackRuntimeMessage(message)) {
+		requireContainerRuntimeMessage(message);
+	}
 }
