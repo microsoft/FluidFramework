@@ -144,11 +144,11 @@ export interface IPersistedCache {
 // @public
 export interface IProvideSessionAwareDriverFactory {
     // (undocumented)
-    readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
+    readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
 }
 
 // @public
-export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
     // (undocumented)
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 }

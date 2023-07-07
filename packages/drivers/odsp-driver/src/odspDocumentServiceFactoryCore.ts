@@ -28,7 +28,7 @@ import {
 	ShareLinkTypes,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
-	ISessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
@@ -52,7 +52,7 @@ import {
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryCore
-	implements IDocumentServiceFactory, ISessionAwareDriverFactory
+	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
 {
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
@@ -61,7 +61,7 @@ export class OdspDocumentServiceFactoryCore
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
-	public get ISessionAwareDriverFactory() {
+	public get IRelaySessionAwareDriverFactory() {
 		return this;
 	}
 

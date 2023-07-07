@@ -55,6 +55,6 @@ export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
 
 export {
 	IProvideSessionAwareDriverFactory,
-	ISessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions";

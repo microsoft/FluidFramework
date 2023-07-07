@@ -44,14 +44,14 @@ export interface ISocketStorageDiscovery {
  * to find out if it is session aware.
  */
 export interface IProvideSessionAwareDriverFactory {
-	readonly ISessionAwareDriverFactory: ISessionAwareDriverFactory;
+	readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
 }
 
 /**
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
  */
-export interface ISessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
 	): Promise<ISocketStorageDiscovery | undefined>;

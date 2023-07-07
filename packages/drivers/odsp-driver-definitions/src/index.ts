@@ -41,6 +41,6 @@ export {
 } from "./tokenFetch";
 export {
 	IProvideSessionAwareDriverFactory,
-	ISessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
 	ISocketStorageDiscovery,
 } from "./sessionProvider";
