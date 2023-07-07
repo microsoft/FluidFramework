@@ -127,10 +127,15 @@ function toLowerCase(x: string) {
 }
 // eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
-export const getCanonicalFileName = ts.sys.useCaseSensitiveFileNames
-	? (x: string) => x
-	: (x: string) =>
-			fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
+function createGetCanonicalFileName(tsLib: typeof ts) {
+	return tsLib.sys.useCaseSensitiveFileNames
+		? (x: string) => x
+		: (x: string) =>
+				fileNameLowerCaseRegExp.test(x)
+					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
+					: x;
+}
+export const getCanonicalFileName = createGetCanonicalFileName(ts);
 
 export function getTscUtil(tsLib: typeof ts) {
 	return {
@@ -173,5 +178,6 @@ export function getTscUtil(tsLib: typeof ts) {
 			return configFile.config;
 		},
 		convertToOptionsWithAbsolutePath,
+		getCanonicalFileName: createGetCanonicalFileName(tsLib),
 	};
 }
