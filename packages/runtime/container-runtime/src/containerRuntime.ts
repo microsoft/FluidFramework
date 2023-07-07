@@ -212,7 +212,7 @@ export enum ContainerMessageType {
 }
 
 export interface ContainerRuntimeMessage {
-	contents: any;
+	contents?: any;
 	type: ContainerMessageType;
 }
 
@@ -842,14 +842,19 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
+	//* Deprecate?
 	public get reSubmitFn(): (
 		type: ContainerMessageType,
-		content: any,
+		contents: any,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) => void {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		return this.reSubmitCore;
+		return (
+			type: ContainerMessageType,
+			contents: any,
+			localOpMetadata: unknown,
+			opMetadata: Record<string, unknown> | undefined,
+		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
 	}
 
 	public get disposeFn(): (error?: ICriticalContainerError) => void {
@@ -1277,7 +1282,7 @@ export class ContainerRuntime
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(context.baseSnapshot, metadata),
 			this,
-			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
+			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
 				(
 					summarizeInternal: SummarizeInternalFn,
@@ -1304,7 +1309,7 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
+					this.submit({ type: ContainerMessageType.BlobAttach }, undefined, {
 						localId,
 						blobId,
 					});
@@ -1854,6 +1859,7 @@ export class ContainerRuntime
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
+	//* Revisit type safety here
 	/**
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
@@ -2998,7 +3004,10 @@ export class ContainerRuntime
 			address: id,
 			contents,
 		};
-		this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+		this.submit(
+			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
+			localOpMetadata,
+		);
 	}
 
 	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
@@ -3007,7 +3016,7 @@ export class ContainerRuntime
 			throw new UsageError("malformedDataStoreAliasMessage");
 		}
 
-		this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
+		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
 	}
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -3050,8 +3059,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		type: ContainerMessageType,
-		contents: any,
+		{ type, contents }: ContainerRuntimeMessage, //* Or just message
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
 	): void {
@@ -3254,27 +3262,27 @@ export class ContainerRuntime
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmitCore(
-		type: ContainerMessageType,
-		content: any,
+		message: ContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		switch (type) {
+		const contents = message.contents;
+		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
+				this.dataStores.resubmitDataStoreOp(contents, localOpMetadata);
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Remove the stashedState from the op if it's a stashed op
-				if (content.stashedState !== undefined) {
-					delete content.stashedState;
+				if (contents.stashedState !== undefined) {
+					delete contents.stashedState;
 				}
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				throw new Error(`chunkedOp not expected here`);
@@ -3282,10 +3290,13 @@ export class ContainerRuntime
 				this.blobManager.reSubmit(opMetadata);
 				break;
 			case ContainerMessageType.Rejoin:
-				this.submit(type, content);
+				this.submit(message);
 				break;
 			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+				unreachableCase(
+					message.type,
+					`Unknown ContainerMessageType [type: ${message.type}]`,
+				);
 		}
 	}
 
