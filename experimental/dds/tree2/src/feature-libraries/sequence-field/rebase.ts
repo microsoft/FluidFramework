@@ -169,6 +169,8 @@ function rebaseMarkList<TNodeChange>(
 				} else {
 					factory.pushOffset(getOutputLength(baseMark));
 				}
+				lineageRecipients.length = 0;
+				lineageEntries.length = 0;
 			}
 		} else {
 			assert(
@@ -664,7 +666,7 @@ function handleLineage<T>(
 	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
 	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
 	// e.g., if the inverse of the lineage event is muted after rebasing.
-	tryRemoveLineageEvent(rebasedMark, baseIntention);
+	tryRemoveLineageEvents(rebasedMark, baseIntention);
 
 	for (const entry of lineageEntries) {
 		addLineageEntry(rebasedMark, baseIntention, entry.id, entry.count, entry.count);
@@ -697,33 +699,35 @@ function addLineageEntry(
 
 	if (mark.lineage.length > 0) {
 		const lastEntry = mark.lineage[mark.lineage.length - 1];
-		if (
-			lastEntry.revision === revision &&
-			(lastEntry.id as number) + lastEntry.count === id &&
-			lastEntry.offset === lastEntry.count
-		) {
-			mark.lineage[mark.lineage.length - 1] = {
-				...lastEntry,
-				count: lastEntry.count + count,
-				offset: lastEntry.offset + offset,
-			};
-			return;
+		if (lastEntry.revision === revision && (lastEntry.id as number) + lastEntry.count === id) {
+			if (lastEntry.offset === lastEntry.count) {
+				mark.lineage[mark.lineage.length - 1] = {
+					...lastEntry,
+					count: lastEntry.count + count,
+					offset: lastEntry.offset + offset,
+				};
+				return;
+			} else if (lastEntry.offset === 0 && offset === 0) {
+				// Both entries are entirely after the mark
+				mark.lineage[mark.lineage.length - 1] = {
+					...lastEntry,
+					count: lastEntry.count + count,
+				};
+			}
 		}
 	}
 
 	mark.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvent<T>(mark: Mark<T>, revisionToRemove: RevisionTag) {
+function tryRemoveLineageEvents<T>(mark: Mark<T>, revisionToRemove: RevisionTag) {
 	if (mark.lineage === undefined) {
 		return;
 	}
-	const index = mark.lineage.findIndex((event) => event.revision === revisionToRemove);
-	if (index >= 0) {
-		mark.lineage.splice(index, 1);
-		if (mark.lineage.length === 0) {
-			delete mark.lineage;
-		}
+
+	mark.lineage = mark.lineage.filter((event) => event.revision !== revisionToRemove);
+	if (mark.lineage.length === 0) {
+		delete mark.lineage;
 	}
 }
 
