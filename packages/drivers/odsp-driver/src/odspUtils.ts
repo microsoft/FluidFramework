@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	isOnline,

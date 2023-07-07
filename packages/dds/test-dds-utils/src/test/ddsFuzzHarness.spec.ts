@@ -625,6 +625,52 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 
+		describe("supports modified .skip syntax", () => {
+			let runResults: MochaReport;
+			before(async function () {
+				// 2s timeout is a bit aggressive to run mocha, even though the suite of tests is very fast.
+				this.timeout(5000);
+				runResults = await runTestFile("dotSkip");
+			});
+
+			it("via .skip(2, 3)", () => {
+				const tests = runResults.passes
+					.filter((p) => p.fullTitle.includes("1: .skip via function"))
+					.sort();
+				assert.deepEqual(
+					tests.map((t) => t.title),
+					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `seed ${i}`),
+				);
+			});
+
+			it("via `skip: [4, 7]`", () => {
+				const tests = runResults.passes
+					.filter((p) => p.fullTitle.includes("2: .skip via options"))
+					.sort();
+				assert.deepEqual(
+					tests.map((t) => t.title),
+					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+				);
+			});
+
+			it("via a combination of .skip() and `skip: []`", () => {
+				const tests = runResults.passes
+					.filter((p) => p.fullTitle.includes("3: .skip via function and options"))
+					.sort();
+				assert.deepEqual(
+					tests.map((t) => t.title),
+					[0, 1, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+				);
+			});
+
+			it("runs multiple suites with .skip simultaneously set", () => {
+				assert.equal(runResults.stats.tests, 30);
+				assert.equal(runResults.stats.pending, 7);
+				assert.equal(runResults.stats.passes, 23);
+				assert.equal(runResults.stats.failures, 0);
+			});
+		});
+
 		describe("failure", () => {
 			let runResults: MochaReport;
 			const jsonDir = path.join(__dirname, "./ddsSuiteCases/failing-configuration");

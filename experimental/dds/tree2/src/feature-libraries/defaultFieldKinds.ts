@@ -39,11 +39,7 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
-import {
-	counterCodecFamily,
-	makeOptionalFieldCodecFamily,
-	noChangeCodecFamily,
-} from "./defaultFieldChangeCodecs";
+import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
 /**
@@ -75,17 +71,6 @@ function brandedFieldKind<
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
 	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}
-
-/**
- * @returns a ChangeRebaser that assumes all the changes commute, meaning that order does not matter.
- */
-function commutativeRebaser<TChange>(data: {
-	compose: (changes: TChange[]) => TChange;
-	invert: (changes: TChange) => TChange;
-}): FieldChangeRebaser<TChange> {
-	const rebase = (change: TChange, _over: TChange) => change;
-	return referenceFreeFieldChangeRebaser({ ...data, rebase });
 }
 
 /**
@@ -157,61 +142,6 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 	isEmpty: (change: 0) => true,
 };
-
-/**
- * ChangeHandler that does not support any changes.
- *
- * TODO: Due to floating point precision compose is not quite associative.
- * This may violate our requirements.
- * This could be fixed by making this integer only
- * and handling values past Number.MAX_SAFE_INTEGER (ex: via an arbitrarily large integer library)
- * or via modular arithmetic.
- */
-export const counterHandle: FieldChangeHandler<number> = {
-	rebaser: commutativeRebaser({
-		compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-		invert: (change: number) => -change,
-	}),
-	codecsFactory: () => counterCodecFamily,
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			setValue: change,
-		},
-	],
-	isEmpty: (change: number) => change === 0,
-};
-
-/**
- * Field kind for counters.
- * Stores a single value which corresponds to number which can be added to.
- *
- * This is an example of a few interesting things:
- *
- * - A field kind with some constraints on what can be under it type wise.
- * Other possible examples which would do this include sets, maps (for their keys),
- * or any domain specific specialized kinds.
- *
- * - A field kind with commutative edits.
- *
- * TODO:
- * What should the subtrees under this look like?
- * How does it prevent / interact with direct edits to the subtree (ex: set value)?
- * How should it use its type set?
- * How should it handle lack of associative addition due to precision and overflow?
- */
-export const counter: BrandedFieldKind<
-	"Counter",
-	Multiplicity.Value,
-	FieldEditor<number>
-> = brandedFieldKind(
-	"Counter",
-	Multiplicity.Value,
-	counterHandle,
-	(types, other) => other.kind.identifier === counter.identifier,
-	new Set(),
-);
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
@@ -522,7 +452,6 @@ function deltaForDelete(
 	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange);
-		deleteDelta.setValue = modify.setValue;
 		deleteDelta.fields = modify.fields;
 	}
 	return [deleteDelta];
@@ -685,7 +614,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, nodeKey, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.

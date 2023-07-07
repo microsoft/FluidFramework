@@ -492,7 +492,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     readonly [proxyTargetSymbol]: object;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: NamedTreeSchema;
-    [valueSymbol]: Value;
+    readonly [valueSymbol]: Value;
     [key: FieldKey]: UnwrappedEditableField;
 }
 
@@ -511,7 +511,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 
 // @alpha
 export interface EditableTreeEvents {
-    changing(upPath: UpPath, value: Value): void;
+    changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
@@ -842,7 +842,6 @@ export interface HasListeners<E extends Events<E>> {
 interface HasModifications<TTree = ProtoNode> {
     // (undocumented)
     readonly fields?: FieldMarks<TTree>;
-    readonly setValue?: Value;
 }
 
 // @alpha (undocumented)
@@ -874,15 +873,11 @@ export interface IDecoder<TDecoded, TEncoded> {
 export interface IDefaultEditBuilder {
     // (undocumented)
     addNodeExistsConstraint(path: UpPath): void;
-    // (undocumented)
-    addValueConstraint(path: UpPath, value: Value): void;
     move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destinationIndex: number): void;
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
-    // (undocumented)
-    setValue(path: UpPath, value: Value): void;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
@@ -1426,10 +1421,6 @@ state?: NodeExistenceState) => NodeChangeset | undefined;
 export interface NodeChangeset extends HasFieldChanges {
     // (undocumented)
     nodeExistsConstraint?: NodeExistsConstraint;
-    // (undocumented)
-    valueChange?: ValueChange;
-    // (undocumented)
-    valueConstraint?: ValueConstraint;
 }
 
 // @alpha
@@ -1559,7 +1550,6 @@ export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-    onSetValue(path: UpPath, value: Value): void;
 }
 
 // @alpha
@@ -2189,20 +2179,6 @@ export type UpPathDefault = UpPath;
 
 // @alpha
 export type Value = undefined | TreeValue;
-
-// @alpha (undocumented)
-export interface ValueChange {
-    revision?: RevisionTag;
-    value?: Value;
-}
-
-// @alpha (undocumented)
-export interface ValueConstraint {
-    // (undocumented)
-    value: Value;
-    // (undocumented)
-    violated: boolean;
-}
 
 // @alpha (undocumented)
 export interface ValueFieldEditBuilder {
