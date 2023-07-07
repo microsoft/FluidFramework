@@ -28,7 +28,7 @@ import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions';

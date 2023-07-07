@@ -20,7 +20,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
-	IQuorum,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -54,10 +53,6 @@ export class ContainerContext implements IContainerContext {
 		return this._getConnected();
 	}
 
-	public get quorum(): IQuorumClients {
-		return this._quorum;
-	}
-
 	constructor(
 		public readonly options: ILoaderOptions,
 		public readonly scope: FluidObject,
@@ -65,7 +60,7 @@ export class ContainerContext implements IContainerContext {
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		public readonly storage: IDocumentStorageService,
-		private readonly _quorum: IQuorum,
+		public readonly quorum: IQuorumClients,
 		public readonly audience: IAudience,
 		public readonly loader: ILoader,
 		public readonly submitFn: (
@@ -91,23 +86,12 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
+		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {}
-
-	/**
-	 * @deprecated Temporary migratory API, to be removed when customers no longer need it.
-	 * When removed, `ContainerContext` should only take an {@link @fluidframework/container-definitions#IQuorumClients}
-	 * rather than an {@link @fluidframework/protocol-definitions#IQuorum}.
-	 * See {@link @fluidframework/container-definitions#IContainerContext} for more details.
-	 */
-	public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
-		return (this._quorum.get("code") ?? this._quorum.get("code2")) as
-			| IFluidCodeDetails
-			| undefined;
-	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
 		return this._version;

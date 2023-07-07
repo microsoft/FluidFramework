@@ -12,7 +12,7 @@ import {
 	setInRangeMap,
 } from "../../util";
 import * as Delta from "./delta";
-import { FieldKey, Value } from "./types";
+import { FieldKey } from "./types";
 
 /**
  * Implementation notes:
@@ -102,7 +102,6 @@ export interface DeltaVisitor {
 	onInsert(index: number, content: Delta.ProtoNodes): void;
 	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
 	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-	onSetValue(value: Value): void;
 	// TODO: better align this with ITreeCursor:
 	// maybe rename its up and down to enter / exit? Maybe Also)?
 	// Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
@@ -145,17 +144,9 @@ function visitModify(
 	config: PassConfig,
 ): boolean {
 	let containsMovesOrDeletes = false;
-	// Note that `hasOwnProperty` returns true for properties that are present on the object even if they
-	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-	// `undefined` as opposed to leaving the value untouched.
-	const hasValueChange =
-		config.applyValueChanges && Object.prototype.hasOwnProperty.call(modify, "setValue");
 
-	if (hasValueChange || modify.fields !== undefined) {
+	if (modify.fields !== undefined) {
 		visitor.enterNode(index);
-		if (hasValueChange) {
-			visitor.onSetValue(modify.setValue);
-		}
 		if (modify.fields !== undefined) {
 			const result = visitFieldMarks(modify.fields, visitor, config);
 			containsMovesOrDeletes ||= result;
@@ -253,7 +244,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						extractFromOpaque(mark.moveId),
 						mark.count,
 					);
-					assert(entry !== undefined, "Expected a move out for this move in");
+					assert(entry !== undefined, 0x6d7 /* Expected a move out for this move in */);
 					visitor.onMoveIn(index, entry.length, entry.value);
 					let endIndex = index + entry.length;
 
@@ -278,7 +269,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 
 						assert(
 							entry !== undefined && entry.start === nextId,
-							"Expected a move out for the remaining portion of this move in",
+							0x6d8 /* Expected a move out for the remaining portion of this move in */,
 						);
 
 						lastEntryId = entry.start + entry.length - 1;

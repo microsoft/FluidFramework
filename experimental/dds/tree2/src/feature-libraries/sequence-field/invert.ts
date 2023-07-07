@@ -178,7 +178,10 @@ function invertMark<TNodeChange>(
 				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 			}
 			if (mark.changes !== undefined) {
-				assert(mark.count === 1, "Mark with changes can only target a single cell");
+				assert(
+					mark.count === 1,
+					0x6ed /* Mark with changes can only target a single cell */,
+				);
 				crossFieldManager.set(
 					CrossFieldTarget.Destination,
 					mark.revision ?? revision,

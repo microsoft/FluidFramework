@@ -8,9 +8,9 @@ import {
 	Button,
 	FluentProvider,
 	makeStyles,
+	shorthands,
 	tokens,
 	Tooltip,
-	Divider,
 } from "@fluentui/react-components";
 import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 
@@ -213,50 +213,42 @@ export function DevtoolsView(): React.ReactElement {
 		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
 			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
 				{supportedFeatures === undefined ? (
-					queryTimedOut ? (
-						<>
-							{!isMessageDismissed && (
-								<MessageBar
-									messageBarType={MessageBarType.error}
-									isMultiline={true}
-									onDismiss={(): void => setIsMessageDismissed(true)}
-									dismissButtonAriaLabel="Close"
-									className={styles.icon}
+					<>
+						{!queryTimedOut && <Waiting />}
+						{queryTimedOut && !isMessageDismissed && (
+							<MessageBar
+								messageBarType={MessageBarType.error}
+								isMultiline={true}
+								onDismiss={(): void => setIsMessageDismissed(true)}
+								dismissButtonAriaLabel="Close"
+								className={styles.icon}
+							>
+								It seems that Fluid Devtools has not been initialized in the current
+								tab, or it did not respond in a timely manner.
+								<Tooltip
+									content="Retry communicating with Fluid Devtools in the current tab."
+									relationship="description"
 								>
-									It seems that Fluid Devtools has not been initialized in the
-									current tab, or it did not respond in a timely manner.
-									<Tooltip
-										content="Retry communicating with Fluid Devtools in the current tab."
-										relationship="description"
+									<Button
+										className={styles.retryButton}
+										size="small"
+										onClick={retryQuery}
 									>
-										<Button
-											className={styles.retryButton}
-											size="small"
-											onClick={retryQuery}
-										>
-											Try again
-										</Button>
-									</Tooltip>
-									<br />
-									<h4 className={styles.debugNote}>
-										Need help? Please refer to our
-										<Link
-											href="https://aka.ms/fluid/devtool/docs"
-											target="_blank"
-										>
-											documentation page
-										</Link>{" "}
-										for guidance on getting the extension working.{" "}
-									</h4>
-								</MessageBar>
-							)}
-						</>
-					) : (
-						<>
-							<Waiting />
-							<_DevtoolsView supportedFeatures={{}} />
-						</>
-					)
+										Try again
+									</Button>
+								</Tooltip>
+								<br />
+								<h4 className={styles.debugNote}>
+									Need help? Please refer to our
+									<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
+										documentation page
+									</Link>{" "}
+									for guidance on getting the extension working.{" "}
+								</h4>
+							</MessageBar>
+						)}
+						<_DevtoolsView supportedFeatures={{}} />
+					</>
 				) : (
 					<_DevtoolsView supportedFeatures={supportedFeatures} />
 				)}
@@ -323,7 +315,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<Divider vertical appearance="strong" />
+			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
 		</div>
 	);
@@ -331,10 +323,12 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 const useViewStyles = makeStyles({
 	root: {
+		...shorthands.padding("10px"),
 		alignItems: "center",
 		display: "flex",
 		flexDirection: "column",
 		height: "100%",
+		width: "100%",
 		minWidth: "200px",
 		overflowY: "auto",
 		boxSizing: "border-box",
@@ -399,6 +393,9 @@ function View(props: ViewProps): React.ReactElement {
 
 const useMenuStyles = makeStyles({
 	root: {
+		...shorthands.gap("0px", "10px"),
+		...shorthands.padding("10px"),
+		"boxSizing": "border-box",
 		"display": "flex",
 		"flexDirection": "column",
 		"height": "100%",
@@ -407,6 +404,7 @@ const useMenuStyles = makeStyles({
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
+			marginBottom: "15px",
 		},
 	},
 

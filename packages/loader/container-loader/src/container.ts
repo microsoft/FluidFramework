@@ -7,18 +7,21 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	IEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
 	TypedEventEmitter,
 	assert,
 	performance,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryProperties,
+	TelemetryEventCategory,
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+} from "@fluidframework/core-interfaces";
 import {
 	AttachState,
 	ContainerWarning,
@@ -101,7 +104,6 @@ import {
 	IConnectionDetailsInternal,
 } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
-import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -116,19 +118,16 @@ import {
 	getProtocolSnapshotTree,
 	getSnapshotTreeFromSerializedContainer,
 } from "./utils";
-import {
-	initQuorumValuesFromCodeDetails,
-	getCodeDetailsFromQuorumValues,
-	QuorumProxy,
-} from "./quorum";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
-	OnlyValidTermValue,
 	IProtocolHandler,
+	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
+	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
@@ -2237,7 +2236,7 @@ export class Container
 
 	private processSignal(message: ISignalMessage) {
 		// No clientId indicates a system signal message.
-		if (message.clientId === null) {
+		if (protocolHandlerShouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
@@ -2314,17 +2313,18 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
-		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+		const getSpecifiedCodeDetails = () =>
+			(this.protocolHandler.quorum.get("code") ??
+				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
 			this._loadedFromVersion,
-			deltaManagerProxy,
+			this._deltaManager,
 			this.storageAdapter,
-			quorumProxy,
+			this.protocolHandler.quorum,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2341,15 +2341,12 @@ export class Container
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
+			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => {
-			quorumProxy.dispose();
-			deltaManagerProxy.dispose();
-		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,

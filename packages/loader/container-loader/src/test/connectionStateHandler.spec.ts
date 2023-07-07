@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { Audience } from "../audience";
 import { ConnectionState } from "../connectionState";
 import {

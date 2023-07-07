@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IErrorEvent,
-	IEventProvider,
-	IEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -125,10 +121,7 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  */
-export interface IDeltaManager<T, U>
-	extends IEventProvider<IDeltaManagerEvents>,
-		IDeltaSender,
-		IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/** The queue of inbound delta messages */
 	readonly inbound: IDeltaQueue<T>;
 
@@ -178,6 +171,18 @@ export interface IDeltaManager<T, U>
 
 	/** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
 	submitSignal(content: any): void;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.3.0 - The IDeltaManager's dispose state is not recommended for observation
+	 * and will be removed in an upcoming release.
+	 */
+	readonly disposed: boolean;
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.3.0 - Disposing the IDeltaManager results in inconsistent system state.
+	 * This member will be removed in an upcoming release.
+	 */
+	dispose(error?: Error): void;
 }
 
 /**

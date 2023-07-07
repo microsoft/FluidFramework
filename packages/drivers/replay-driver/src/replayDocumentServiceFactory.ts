@@ -9,7 +9,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";

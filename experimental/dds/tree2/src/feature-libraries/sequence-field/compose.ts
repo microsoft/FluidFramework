@@ -669,13 +669,13 @@ function getReplacementMark<T>(
 	const lastEffectId = effect.start + effect.length - 1;
 	assert(
 		effect.start <= id && lastEffectId >= lastTargetId,
-		"Expected effect to cover entire mark",
+		0x6e9 /* Expected effect to cover entire mark */,
 	);
 
 	let mark = effect.value.mark;
 	assert(
 		getMarkLength(mark) === effect.length,
-		"Expected replacement mark to be same length as number of cells replaced",
+		0x6ea /* Expected replacement mark to be same length as number of cells replaced */,
 	);
 
 	// The existing effect may cover more cells than the area we are querying.
@@ -737,7 +737,7 @@ function setReplacementMark<T>(
 	if (effect !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6eb /* Expected effect to cover entire mark */,
 		);
 		newEffect = { ...effect.value, mark };
 	} else {
@@ -891,7 +891,7 @@ function setModifyAfter<T>(
 	if (effect !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6ec /* Expected effect to cover entire mark */,
 		);
 		const nodeChange =
 			effect.value.modifyAfter !== undefined

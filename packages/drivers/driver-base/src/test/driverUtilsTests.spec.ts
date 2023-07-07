@@ -107,5 +107,12 @@ describe("driver utils tests", () => {
 				"Ops fetch violation event not correctly recorded",
 			);
 		});
+
+		it("only 1 op: strict = false", () => {
+			const ops = generateOps(1, 1);
+			validateMessages("test", ops, 1, mockLogger, false);
+			assert(ops.length === 1, "some should be returned as strict == false");
+			assert(mockLogger.events.length === 0, "no events should be there");
+		});
 	});
 });

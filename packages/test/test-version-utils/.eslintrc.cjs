@@ -13,7 +13,7 @@ module.exports = {
 		// should exist there)
 		// AB#4614 tracks moving to eslint-import-resolver-typescript (which handles such imports
 		// out of the box) and removing this exception.
-		"import/no-unresolved": ["error", { ignore: ["^\\.(.*)\\.js$"] }],
+		"import/no-unresolved": ["error", { ignore: ["^\\.(.*)\\.(m|c)?js$"] }],
 	},
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],

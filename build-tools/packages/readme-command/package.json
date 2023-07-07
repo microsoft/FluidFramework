@@ -45,7 +45,7 @@
 		"@oclif/plugin-plugins": "^3.1.2",
 		"@oclif/test": "^2.3.22",
 		"oclif": "^3.9.1",
-		"semver": "^7.5.1"
+		"semver": "^7.5.3"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
