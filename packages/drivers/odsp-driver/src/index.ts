@@ -51,12 +51,10 @@ export {
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
 
-// Provider for
+// Re-exports so consumers of odsp-driver don't need to also have a direct dependency on odsp-driver-definitions
 
-import {
+export {
 	IProvideSessionAwareDriverFactory,
 	ISessionAwareDriverFactory,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions";
-
-export { IProvideSessionAwareDriverFactory, ISessionAwareDriverFactory, ISocketStorageDiscovery };
