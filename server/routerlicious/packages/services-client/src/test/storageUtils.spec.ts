@@ -243,7 +243,7 @@ describe("Storage Utils", () => {
 			type: SummaryType.Tree,
 		};
 
-		const appSummary: ISummaryTree = {
+		const summaryWithUnreferencedNode: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: {
 				default: {
@@ -284,16 +284,16 @@ describe("Storage Utils", () => {
 			assert.deepStrictEqual(newSummaryTree, summaryTree);
 		});
 
-		it("Validate app summary tree conversion", () => {
+		it("Validate summary with unreferenced node tree conversion", () => {
 			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
 				undefined,
-				appSummary,
+				summaryWithUnreferencedNode,
 				"",
 				"",
 			);
 			const newSummaryTree =
 				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
-			assert.deepStrictEqual(newSummaryTree, appSummary);
+			assert.deepStrictEqual(newSummaryTree, summaryWithUnreferencedNode);
 		});
 
 		it("Validate empty summary tree conversion", () => {
