@@ -213,8 +213,35 @@ export class SchemaBuilder {
 
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a field node.
+	 * Such nodes will be implicitly unwrapped to the field in some APIs.
 	 *
 	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * A field is a node with a single field which captures all its meaning.
+	 *
+	 * @remarks
+	 * Field nodes are mainly a shorthand for a struct with a single field.
+	 *
+	 * There are several use-cases where it makes sense to use a field node.
+	 * Here are a few:
+	 * - When its necessary to differentiate between an empty sequence, and no sequence.
+	 * One case where this is needed is encoding Json.
+	 * - When polymorphism over file kinds is required.
+	 * For example when encoding a schema for a type like
+	 * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is our Optional field kind, not TypeScript's `Optional`).
+	 * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+	 * these aggregate types are most simple expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
+	 * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed a single fields without extra nodes.
+	 * - When a distinct merge identity is desired for a field.
+	 * For example, if the application wants to be able to have a optional node or a sequence which is can pass around, edit and observe changes to,
+	 * in some cases (like when the content is moved to a different parent) this can be more flexible if a field node is introduced
+	 * to this create a separate logical entity (node) which wraps the field.
+	 * This can even be useful with value fields to wrap terminal nodes if a stable merge identity is needed that survives editing the value (which is done by replacing the leaf node).
+	 *
+	 * Field nodes store their field under the {@link FieldKey} {@link EmptyKey}.
+	 *
+	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
+	 * TODO: Maybe find a better name for this.
 	 */
 	public fieldNode<Name extends string, T extends FieldSchema>(
 		name: Name,
@@ -257,7 +284,7 @@ export class SchemaBuilder {
 
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
-	 * Such objects will be implicitly unwrapped to the value in some APIs.
+	 * Such nodes will be implicitly unwrapped to the value in some APIs.
 	 *
 	 * The name must be unique among all TreeSchema in the the document schema.
 	 *
