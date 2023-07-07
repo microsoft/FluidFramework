@@ -355,10 +355,9 @@ export class TenantManager {
 				if (cachedKey) {
 					retrievedFromCache = true;
 					const tenantKeys = this.decryptCachedKeys(cachedKey);
-					// This is an edge case where we already re-encrypt tenant keys from
-					// old encryption key to new encryption key, and we disable old encryption
-					// key in the AKV. If both decrypted tenant keys are null, it means it hits
-					// this case, then we should read from database and set new values in cache.
+					// This is an edge case where the used encryption key is not valid.
+					// If both decrypted tenant keys are null, it means it hits this case,
+					// then we should read from database and set new values in cache.
 					if (tenantKeys.key1 || tenantKeys.key2) {
 						return tenantKeys;
 					}
