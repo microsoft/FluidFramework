@@ -1936,7 +1936,7 @@ function initializeTestTree(
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
-	const numberSchema = builder.terminal("number", ValueSchema.Number);
+	const numberSchema = builder.leaf("number", ValueSchema.Number);
 	const treeSchema = builder.struct("root", {
 		x: SchemaBuilder.fieldValue(numberSchema),
 	});

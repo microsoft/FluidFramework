@@ -131,7 +131,20 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a struct node.
 	 *
-	 * The name must be unique among all node schema in the the document schema.
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link FieldSchema}.
+	 *
+	 * @remarks
+	 * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
+	 * (Including Algol 68, C, Go, Rust, C# etc.).
+	 * Struct nodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
+	 * which is why "Struct" nodes are named after "Structs" instead.
+	 *
+	 * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
+	 * The name "Record" is avoided (in favor of Struct) here because it has less precise connotations for most TypeScript developers.
+	 * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
+	 * putting its semantics half way between this library's "struct" schema and "map" schema.
 	 */
 	public struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
 		name: Name,
@@ -161,13 +174,23 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a map node.
 	 *
-	 * The name must be unique among all node schema in the the document schema.
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * Map nodes consist of a collection fields, each with a unique key, but with the content of each following the same schema.
+	 * The schema permits any string to be used as a key.
+	 *
+	 * @remarks
+	 * These node resemble the TypeScript Map type, parameterized as `Map<string, fieldSchema>` with one important difference:
+	 * Unlike TypeScript Map type, Map nodes can always provide a reference to any field looked up, even if its never been set.
+	 * This means that, for example, a Map node of sequenceFields will return an empty sequence when a previously unused key is looked up, and that sequence can be used to insert new items into the field.
+	 * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
+	 * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
 	 */
 	public map<Name extends string, T extends FieldSchema>(
 		name: Name,
-		t: T,
+		fieldSchema: T,
 	): TreeSchema<Name, { extraLocalFields: T }> {
-		const schema = new TreeSchema(this, name, { extraLocalFields: t });
+		const schema = new TreeSchema(this, name, { extraLocalFields: fieldSchema });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -191,7 +214,7 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a field node.
 	 *
-	 * The name must be unique among all node schema in the the document schema.
+	 * The name must be unique among all TreeSchema in the the document schema.
 	 */
 	public fieldNode<Name extends string, T extends FieldSchema>(
 		name: Name,
@@ -236,12 +259,16 @@ export class SchemaBuilder {
 	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
 	 *
-	 * The name must be unique among all node schema in the the document schema.
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * In addition to the normal properties of all nodes (having a schema for example),
+	 * Leaf nodes only contain a value.
+	 * Leaf nodes cannot have fields.
 	 *
 	 * TODO: Maybe ban undefined from allowed values here.
 	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
 	 */
-	public terminal<Name extends string, T extends ValueSchema>(
+	public leaf<Name extends string, T extends ValueSchema>(
 		name: Name,
 		t: T,
 	): TreeSchema<Name, { value: T }> {

@@ -40,13 +40,13 @@ import { brand, Brand } from "../../../util";
 
 const builder = new SchemaBuilder("mock data");
 
-export const stringSchema = builder.terminal("String", ValueSchema.String);
+export const stringSchema = builder.leaf("String", ValueSchema.String);
 
-export const int32Schema = builder.terminal("Int32", ValueSchema.Number);
+export const int32Schema = builder.leaf("Int32", ValueSchema.Number);
 
-export const float64Schema = builder.terminal("Float64", ValueSchema.Number);
+export const float64Schema = builder.leaf("Float64", ValueSchema.Number);
 
-export const boolSchema = builder.terminal("Bool", ValueSchema.Boolean);
+export const boolSchema = builder.leaf("Bool", ValueSchema.Boolean);
 
 export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
 	[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),

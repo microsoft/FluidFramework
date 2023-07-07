@@ -1695,7 +1695,10 @@ export class SchemaBuilder {
     globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
-    map<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
+    leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
+        value: T;
+    }>;
+    map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
         extraLocalFields: T;
     }>;
     mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
@@ -1713,9 +1716,6 @@ export class SchemaBuilder {
     }>;
     structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
         local: T;
-    }>;
-    terminal<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
-        value: T;
     }>;
 }
 
