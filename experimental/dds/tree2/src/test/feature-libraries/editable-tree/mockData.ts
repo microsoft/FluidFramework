@@ -24,13 +24,13 @@ import {
 	Any,
 	GlobalFieldSchema,
 	TypedSchemaCollection,
+	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
 	LocalFieldKey,
 	EmptyKey,
 	JsonableTree,
-	GlobalFieldKeySymbol,
 	IEditableForest,
 	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
@@ -40,96 +40,66 @@ import { brand, Brand } from "../../../util";
 
 const builder = new SchemaBuilder("mock data");
 
-export const stringSchema = builder.object("String", {
-	value: ValueSchema.String,
+export const stringSchema = builder.leaf("String", ValueSchema.String);
+
+export const int32Schema = builder.leaf("Int32", ValueSchema.Number);
+
+export const float64Schema = builder.leaf("Float64", ValueSchema.Number);
+
+export const boolSchema = builder.leaf("Bool", ValueSchema.Boolean);
+
+export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
+	[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
 });
 
-export const int32Schema = builder.object("Int32", {
-	value: ValueSchema.Number,
+export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
+	number: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
 });
 
-export const float64Schema = builder.object("Float64", {
-	value: ValueSchema.Number,
-});
-
-export const boolSchema = builder.object("Bool", {
-	value: ValueSchema.Boolean,
-});
-
-export const simplePhonesSchema = builder.object("Test:SimplePhones-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
-	},
-});
-
-export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
-	local: {
-		number: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
-	},
-});
-
-export const phonesSchema = builder.object("Test:Phones-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.fieldSequence(
-			stringSchema,
-			int32Schema,
-			complexPhoneSchema,
-			// array of arrays
-			simplePhonesSchema,
-		),
-	},
-});
-
-export const globalFieldSchemaSequencePhones = builder.globalField(
-	"sequencePhones",
-	SchemaBuilder.fieldSequence(stringSchema),
+export const phonesSchema = builder.fieldNode(
+	"Test:Phones-1.0.0",
+	SchemaBuilder.fieldSequence(
+		stringSchema,
+		int32Schema,
+		complexPhoneSchema,
+		// array of arrays
+		simplePhonesSchema,
+	),
 );
 
-export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol =
-	globalFieldSchemaSequencePhones.symbol;
-
-export const addressSchema = builder.object("Test:Address-1.0.0", {
-	local: {
-		zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
-		street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-		phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
-		sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
-	},
-	globalFields: [globalFieldSchemaSequencePhones],
+export const addressSchema = builder.struct("Test:Address-1.0.0", {
+	zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
+	street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
+	sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
 });
 
-export const mapStringSchema = builder.object("Map<String>", {
-	extraLocalFields: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-	value: ValueSchema.Serializable,
+export const mapStringSchema = builder.map(
+	"Map<String>",
+	SchemaBuilder.field(FieldKinds.optional, stringSchema),
+);
+
+export const personSchema = builder.struct("Test:Person-1.0.0", {
+	name: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
+	adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
+	salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
+	friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
+	address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
 });
 
-export const personSchema = builder.object("Test:Person-1.0.0", {
-	local: {
-		name: SchemaBuilder.field(FieldKinds.value, stringSchema),
-		age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
-		adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
-		salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
-		friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
-		address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
-	},
+export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
+	child: SchemaBuilder.fieldOptional(Any),
 });
 
-export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
-	local: {
-		child: SchemaBuilder.fieldOptional(Any),
-	},
-	value: ValueSchema.Serializable,
-});
-
-export const arraySchema = builder.object("Test:Array-1.0.0", {
-	local: {
-		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
-	},
-});
+export const arraySchema = builder.fieldNode(
+	"Test:Array-1.0.0",
+	SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
+);
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
@@ -214,7 +184,6 @@ export const personData: ContextuallyTypedNodeDataObject = {
 			},
 		],
 		sequencePhones: ["113", "114"],
-		[globalFieldSymbolSequencePhones]: ["115", "116"],
 	},
 };
 
@@ -264,7 +233,6 @@ export function getPerson(): Person {
 				["112", "113"],
 			],
 			sequencePhones: ["113", "114"],
-			[globalFieldSymbolSequencePhones]: ["115", "116"],
 		},
 	} as unknown as Person; // TODO: fix up these strong types to reflect unwrapping
 }
@@ -279,7 +247,7 @@ export function buildTestSchema<T extends FieldSchema>(rootField: T) {
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor);
+	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
 }
 
 export function setupForest<T extends GlobalFieldSchema>(

@@ -25,13 +25,12 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger, IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
 	DetachedSequenceId,
