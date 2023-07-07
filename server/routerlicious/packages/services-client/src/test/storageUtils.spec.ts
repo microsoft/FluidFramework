@@ -4,7 +4,12 @@
  */
 
 import assert from "assert";
-import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
+import {
+	Uint8ArrayToString,
+	fromBase64ToUtf8,
+	fromUtf8ToBase64,
+	stringToBuffer,
+} from "@fluidframework/common-utils";
 import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
@@ -232,7 +237,7 @@ describe("Storage Utils", () => {
 					type: SummaryType.Blob,
 				},
 				quorumProposals: {
-					content: JSON.stringify([]),
+					content: fromUtf8ToBase64("This is a test"),
 					type: SummaryType.Blob,
 				},
 				quorumValues: {
@@ -244,8 +249,15 @@ describe("Storage Utils", () => {
 		};
 
 		it("Validate summary tree conversion", () => {
-			const test = convertSummaryTreeToWholeSummaryTree(undefined, summaryTree, "", "");
-			assert.deepStrictEqual(convertFirstSummaryWholeSummaryTreeToSummaryTree(test), summaryTree);
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				summaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, summaryTree);
 		});
 	});
 });

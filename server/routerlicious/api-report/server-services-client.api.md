@@ -52,6 +52,9 @@ export const canWrite: (scopes: string[]) => boolean;
 export const choose: () => string;
 
 // @public
+export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree): ISummaryTree;
+
+// @public
 export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][];
 
 // @public
@@ -59,9 +62,6 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 
 // @public
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
-
-// @public
-export function convertWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree): ISummaryTree;
 
 // @public (undocumented)
 export const CorrelationIdHeaderName = "x-correlation-id";

@@ -234,16 +234,18 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 						.value as IWholeSummaryBlob;
 					tree[entry.path] = {
 						type: SummaryType.Blob,
-						content: blobPayload.encoding === "base64"
-						? new Uint8Array(stringToBuffer(blobPayload.content, "base64"))
-						: blobPayload.content,
+						content:
+							blobPayload.encoding === "base64"
+								? new Uint8Array(stringToBuffer(blobPayload.content, "base64"))
+								: blobPayload.content,
 					};
 					break;
 				}
 				case "tree": {
 					const treePayload = (entry as IWholeSummaryTreeValueEntry)
 						.value as IWholeSummaryTree;
-					tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(treePayload);
+					tree[entry.path] =
+						convertFirstSummaryWholeSummaryTreeToSummaryTree(treePayload);
 					break;
 				}
 				default: {
