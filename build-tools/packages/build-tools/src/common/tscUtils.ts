@@ -125,6 +125,7 @@ export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cw
 function toLowerCase(x: string) {
 	return x.toLowerCase();
 }
+// eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
 export const getCanonicalFileName = ts.sys.useCaseSensitiveFileNames
 	? (x: string) => x
