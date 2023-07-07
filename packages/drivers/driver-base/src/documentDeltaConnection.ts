@@ -169,24 +169,14 @@ export class DocumentDeltaConnection
 					const sendPingLoop = () => {
 						const start = Date.now();
 
-						// Log if latency is longer than 1 min
 						this.socket.volatile?.emit("ping", () => {
-							const latency = Date.now() - start;
-							if (latency > 1000 * 60) {
-								this.mc.logger.sendErrorEvent({
-									eventName: "LatencyTooLong",
-									driverVersion,
-									duration: latency,
-								});
-							}
+							this.emit("pong", Date.now() - start);
 
-							this.emit("pong", latency);
+							// Schedule another ping event in 1 minute
+							this.trackLatencyTimeout = setTimeout(() => {
+								sendPingLoop();
+							}, 1000 * 60);
 						});
-
-						// Schedule another ping event in 1 minute
-						this.trackLatencyTimeout = setTimeout(() => {
-							sendPingLoop();
-						}, 1000 * 60);
 					};
 
 					sendPingLoop();
