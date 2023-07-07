@@ -147,7 +147,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): unknown;
+    getPendingLocalState(): PendingLocalState;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
