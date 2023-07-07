@@ -2057,10 +2057,14 @@ export class ContainerRuntime
 	private _processedClientSequenceNumber: number | undefined;
 
 	private processCore(
-		message: SequencedContainerRuntimeMessage,
+		message: ISequencedDocumentMessage,
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
+		if (runtimeMessage) {
+			requireContainerRuntimeMessage(message);
+		}
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
