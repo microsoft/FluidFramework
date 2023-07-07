@@ -10,7 +10,6 @@ import {
 	TinyliciousMember,
 	TinyliciousUser,
 } from "@fluidframework/tinylicious-client";
-import { assert } from "@fluidframework/common-utils";
 
 export class MockAudience
 	extends ServiceAudience<TinyliciousMember>
@@ -18,10 +17,10 @@ export class MockAudience
 {
 	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
 		const tinyliciousUser = audienceMember.user as TinyliciousUser;
-		assert(
-			tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
-			0x313 /* Specified user was not of type "TinyliciousUser". */,
-		);
+
+		if (tinyliciousUser === undefined) {
+			throw new Error("Specified user was not of type TinyliciousUser");
+		}
 
 		return {
 			userId: tinyliciousUser.id,

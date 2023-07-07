@@ -8,7 +8,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
-// import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 import { MockAudience } from "./Audience";
