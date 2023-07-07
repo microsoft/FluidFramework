@@ -279,7 +279,6 @@ export interface Delete<TNodeChange = NodeChangeType>
 	id: ChangesetLocalId;
 }
 
-// XXX: Update
 // Note: inconsistent naming here is to avoid shadowing Effects.Delete
 export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([

@@ -235,7 +235,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const inv = tagRollbackInverse(invert(taggedChange), tag2, taggedChange.revision);
 				tracker.apply(taggedChange);
 				tracker.apply(inv);
-				// XXX: Shouldn't need this
+				// TODO: Use the original change instead once composes handles this correctly.
 				const updatedChange = tracker.update(taggedChange);
 				const changes = [inv, updatedChange];
 				const actual = compose(changes);
