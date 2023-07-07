@@ -653,7 +653,7 @@ export enum RuntimeMessage {
     Rejoin = "rejoin"
 }
 
-// @public (undocumented)
+// @public
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
 // @public
