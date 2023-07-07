@@ -218,6 +218,41 @@ export interface ContainerRuntimeMessage {
 
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
+export function requireContainerRuntimeMessage(
+	message: any,
+): asserts message is ContainerRuntimeMessage {
+	const maybeContainerRuntimeMessage = message as ContainerRuntimeMessage;
+	switch (maybeContainerRuntimeMessage.type) {
+		case ContainerMessageType.Attach:
+		case ContainerMessageType.Alias:
+		case ContainerMessageType.FluidDataStoreOp:
+		case ContainerMessageType.BlobAttach:
+		case ContainerMessageType.IdAllocation:
+		case ContainerMessageType.ChunkedOp:
+		case ContainerMessageType.Rejoin:
+			return;
+		default: {
+			// Type safety on missing known cases
+			((_: never) => {})(maybeContainerRuntimeMessage.type);
+
+			const error = DataProcessingError.create(
+				// Former assert 0x3ce
+				"Runtime message of unknown type",
+				"OpProcessing",
+				message,
+				{
+					//* local, // TODO: Do we need this info?  It can be plumbed through
+					type: message.type,
+					contentType: typeof message.contents,
+					batch: message.metadata?.batch,
+					compression: message.compression,
+				},
+			);
+			throw error;
+		}
+	}
+}
+
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -1859,19 +1894,16 @@ export class ContainerRuntime
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
-	//* Revisit type safety here
 	/**
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	private parseOpContent(serializedContent?: string): {
-		type: ContainerMessageType;
-		contents: unknown;
-	} {
+	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
 		const parsed = JSON.parse(serializedContent);
-		assert(parsed.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
+		//* Maybe this is overkill...
+		requireContainerRuntimeMessage(parsed);
+		return { type: parsed.type, contents: parsed.contents };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
@@ -3251,8 +3283,8 @@ export class ContainerRuntime
 
 	private reSubmit(message: IPendingBatchMessage) {
 		// Need to parse from string for back-compat
-		const { contents, type } = this.parseOpContent(message.content);
-		this.reSubmitCore(type, contents, message.localOpMetadata, message.opMetadata);
+		const containerRuntimeMessage = this.parseOpContent(message.content);
+		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**

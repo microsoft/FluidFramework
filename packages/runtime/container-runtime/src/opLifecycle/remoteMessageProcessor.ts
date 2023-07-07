@@ -4,11 +4,10 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	SequencedContainerRuntimeMessage,
+	requireContainerRuntimeMessage,
 } from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
@@ -97,39 +96,6 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 
 	return message;
 };
-
-function requireContainerRuntimeMessage(message: any): asserts message is ContainerRuntimeMessage {
-	const maybeContainerRuntimeMessage = message as ContainerRuntimeMessage;
-	switch (maybeContainerRuntimeMessage.type) {
-		case ContainerMessageType.Attach:
-		case ContainerMessageType.Alias:
-		case ContainerMessageType.FluidDataStoreOp:
-		case ContainerMessageType.BlobAttach:
-		case ContainerMessageType.IdAllocation:
-		case ContainerMessageType.ChunkedOp:
-		case ContainerMessageType.Rejoin:
-			return;
-		default: {
-			// Type safety on missing known cases
-			((_: never) => {})(maybeContainerRuntimeMessage.type);
-
-			const error = DataProcessingError.create(
-				// Former assert 0x3ce
-				"Runtime message of unknown type",
-				"OpProcessing",
-				message,
-				{
-					//* local, // TODO: Do we need this info?  It can be plumbed through
-					type: message.type,
-					contentType: typeof message.contents,
-					batch: message.metadata?.batch,
-					compression: message.compression,
-				},
-			);
-			throw error;
-		}
-	}
-}
 
 /**
  * For a given message, it moves the nested contents and type on level up.
