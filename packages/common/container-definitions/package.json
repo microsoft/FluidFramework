@@ -72,6 +72,12 @@
 			"RemovedInterfaceDeclaration_IDeltaHandlerStrategy": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDeltaManager": {
+				"backCompat": false
 			}
 		}
 	}

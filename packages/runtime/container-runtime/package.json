@@ -116,6 +116,12 @@
 			"RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"backCompat": false
 			}
 		}
 	}
