@@ -15,7 +15,6 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { IProvideSessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -75,10 +74,6 @@ export interface IClpCompliantAppHeader {
     [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
 
-export { IProvideSessionAwareDriverFactory }
-
-export { IRelaySessionAwareDriverFactory }
-
 // @public (undocumented)
 export interface ISharingLinkHeader {
     // (undocumented)
@@ -96,8 +91,6 @@ export interface ISnapshotContents {
     // (undocumented)
     snapshotTree: ISnapshotTree;
 }
-
-export { ISocketStorageDiscovery }
 
 // @public
 export function isOdcOrigin(origin: string): boolean;

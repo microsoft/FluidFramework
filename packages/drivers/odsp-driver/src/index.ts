@@ -50,11 +50,3 @@ export {
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
-
-// Re-exports so consumers of odsp-driver don't need to also have a direct dependency on odsp-driver-definitions
-
-export {
-	IProvideSessionAwareDriverFactory,
-	IRelaySessionAwareDriverFactory,
-	ISocketStorageDiscovery,
-} from "@fluidframework/odsp-driver-definitions";
