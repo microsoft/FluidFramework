@@ -99,6 +99,15 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_RootDataObject": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_RootDataObjectProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
