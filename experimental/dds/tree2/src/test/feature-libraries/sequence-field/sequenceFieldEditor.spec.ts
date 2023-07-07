@@ -45,8 +45,8 @@ describe("SequenceField - Editor", () => {
 	});
 
 	it("delete", () => {
-		const actual = SF.sequenceFieldEditor.delete(42, 3);
-		const expected: SF.Changeset = [{ count: 42 }, { type: "Delete", count: 3 }];
+		const actual = SF.sequenceFieldEditor.delete(42, 3, id);
+		const expected: SF.Changeset = [{ count: 42 }, { type: "Delete", id, count: 3 }];
 		assert.deepEqual(actual, expected);
 	});
 });

@@ -15,6 +15,8 @@ import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../fe
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachEvent, LineageEvent } from "../../../feature-libraries/sequence-field/format";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
@@ -133,7 +135,7 @@ describe("SequenceField - Compose", () => {
 		const deletion = Change.delete(0, 3);
 		const modify = Change.modify(0, { valueChange: { value: 2 } });
 		const expected: SF.Changeset = [
-			{ type: "Delete", count: 3 },
+			{ type: "Delete", id: brand(0), count: 3 },
 			{
 				type: "Modify",
 				changes: { valueChange: { value: 2 } },
@@ -144,14 +146,14 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ modify", () => {
-		const revive = Change.revive(0, 3, tag1, 0);
+		const revive = Change.revive(0, 3, tag1, brand(0));
 		const modify = Change.modify(0, { valueChange: { value: 2 } });
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				changes: { valueChange: { value: 2 } },
 				inverseOf: tag1,
 			},
@@ -159,7 +161,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
-				detachEvent: { revision: tag1, index: 1 },
+				detachEvent: { revision: tag1, id: brand(1) },
 				inverseOf: tag1,
 			},
 		];
@@ -179,7 +181,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				changes: childChangeA,
 			},
 		];
@@ -194,7 +196,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				changes: childChangeAB,
 			},
 		];
@@ -389,43 +391,45 @@ describe("SequenceField - Compose", () => {
 		const modify = Change.modify(0, nodeChange);
 		const deletion = Change.delete(0, 1);
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(deletion)]);
-		const expected: SF.Changeset = [{ type: "Delete", count: 1, changes: nodeChange }];
+		const expected: SF.Changeset = [
+			{ type: "Delete", id: brand(0), count: 1, changes: nodeChange },
+		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("delete ○ delete", () => {
 		// Deletes ABC-----IJKLM
 		const deleteA: SF.Changeset = [
-			{ type: "Delete", count: 3 },
+			{ type: "Delete", id: brand(0), count: 3 },
 			{ count: 5 },
-			{ type: "Delete", count: 5 },
+			{ type: "Delete", id: brand(3), count: 5 },
 		];
 		// Deletes DEFG--OP
 		const deleteB: SF.Changeset = [
-			{ type: "Delete", count: 4 },
+			{ type: "Delete", id: brand(0), count: 4 },
 			{ count: 2 },
-			{ type: "Delete", count: 2 },
+			{ type: "Delete", id: brand(4), count: 2 },
 		];
 		const actual = shallowCompose([tagChange(deleteA, tag1), tagChange(deleteB, tag2)]);
 		// Deletes ABCDEFG-IJKLMNOP
 		const expected: SF.Changeset = [
-			{ type: "Delete", revision: tag1, count: 3 },
-			{ type: "Delete", revision: tag2, count: 4 },
+			{ type: "Delete", revision: tag1, id: brand(0), count: 3 },
+			{ type: "Delete", revision: tag2, id: brand(0), count: 4 },
 			{ count: 1 },
-			{ type: "Delete", revision: tag1, count: 5 },
+			{ type: "Delete", revision: tag1, id: brand(3), count: 5 },
 			{ count: 1 },
-			{ type: "Delete", revision: tag2, count: 2 },
+			{ type: "Delete", revision: tag2, id: brand(4), count: 2 },
 		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("revive ○ delete", () => {
-		const revive = Change.revive(0, 5, tag1, 0);
+		const revive = Change.revive(0, 5, tag1, brand(0));
 		const deletion: SF.Changeset = [
 			{ count: 1 },
-			{ type: "Delete", count: 1 },
+			{ type: "Delete", id: brand(0), count: 1 },
 			{ count: 1 },
-			{ type: "Delete", count: 3 },
+			{ type: "Delete", id: brand(1), count: 3 },
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
 		const expected: SF.Changeset = [
@@ -433,17 +437,17 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 2 },
+				detachEvent: { revision: tag1, id: brand(2) },
 				inverseOf: tag1,
 			},
-			{ type: "Delete", count: 1 },
+			{ type: "Delete", id: brand(3), count: 1 },
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -451,7 +455,7 @@ describe("SequenceField - Compose", () => {
 	// TODO: update this test to expect the node change to be represented for the transient node
 	it("revive and modify ○ delete", () => {
 		const nodeChange = { valueChange: { value: 1 } };
-		const detachEvent = { revision: tag1, index: 0 };
+		const detachEvent: DetachEvent = { revision: tag1, id: brand(0) };
 		const revive: SF.Changeset = [
 			{
 				type: "Revive",
@@ -461,9 +465,9 @@ describe("SequenceField - Compose", () => {
 				changes: nodeChange,
 			},
 		];
-		const deletion: SF.Changeset = [{ type: "Delete", count: 2 }];
+		const deletion: SF.Changeset = [{ type: "Delete", id: brand(0), count: 2 }];
 		const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
-		const expected: SF.Changeset = [{ type: "Delete", revision: tag3, count: 1 }];
+		const expected: SF.Changeset = [{ type: "Delete", revision: tag3, id: brand(1), count: 1 }];
 		assert.deepEqual(actual, expected);
 	});
 
@@ -487,14 +491,14 @@ describe("SequenceField - Compose", () => {
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
 			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
-			{ type: "Delete", revision: tag1, count: 3 },
+			{ type: "Delete", id: brand(0), revision: tag1, count: 3 },
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("revive ○ insert", () => {
-		const revive = Change.revive(0, 5, tag1, 0);
+		const revive = Change.revive(0, 5, tag1, brand(0));
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
@@ -503,7 +507,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 5),
 				count: 5,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				inverseOf: tag1,
 			},
 		];
@@ -545,13 +549,13 @@ describe("SequenceField - Compose", () => {
 
 	it("modify ○ revive", () => {
 		const modify = Change.modify(0, { valueChange: { value: 1 } });
-		const revive = Change.revive(0, 2, tag1, 0);
+		const revive = Change.revive(0, 2, tag1, brand(0));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				inverseOf: tag1,
 			},
 			{
@@ -565,19 +569,18 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different earlier nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 0 }]),
-		);
+		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 0 }];
+		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
-				lineage: [{ revision: tag1, offset: 0 }],
+				lineage,
 			},
-			{ type: "Delete", count: 2, revision: tag1 },
+			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
 		];
 		const actual = shallowCompose([deletion, revive]);
 		assert.deepEqual(actual, expected);
@@ -585,20 +588,19 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different in-between nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 1 }]),
-		);
+		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 1 }];
+		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
-			{ type: "Delete", count: 1, revision: tag1 },
+			{ type: "Delete", id: brand(0), count: 1, revision: tag1 },
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
-				lineage: [{ revision: tag1, offset: 1 }],
+				lineage,
 			},
-			{ type: "Delete", count: 1, revision: tag1 },
+			{ type: "Delete", id: brand(1), count: 1, revision: tag1 },
 		];
 		const actual = shallowCompose([deletion, revive]);
 		assert.deepEqual(actual, expected);
@@ -606,18 +608,17 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different later nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 2 }]),
-		);
+		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 2 }];
+		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
-			{ type: "Delete", count: 2, revision: tag1 },
+			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
-				lineage: [{ revision: tag1, offset: 2 }],
+				lineage,
 			},
 		];
 		const actual = shallowCompose([deletion, revive]);
@@ -629,13 +630,15 @@ describe("SequenceField - Compose", () => {
 		const delete2 = Change.delete(0, 2);
 		// The revive needs lineage to describe the precise gap in which it is reviving the nodes.
 		// Such lineage would normally be acquired by rebasing the revive over the second delete.
-		const revive = Change.revive(0, 1, tag1, 2, undefined, [{ revision: tag2, offset: 1 }]);
+		const revive = Change.revive(0, 1, tag1, brand(1), undefined, [
+			{ revision: tag2, id: brand(0), count: 2, offset: 1 },
+		]);
 		const expected: SF.Changeset = [
-			{ type: "Delete", count: 1, revision: tag2 },
-			{ type: "Delete", count: 1, revision: tag1 },
+			{ type: "Delete", id: brand(0), count: 1, revision: tag2 },
+			{ type: "Delete", id: brand(0), count: 1, revision: tag1 },
 			{ count: 1 },
-			{ type: "Delete", count: 1, revision: tag1 },
-			{ type: "Delete", count: 1, revision: tag2 },
+			{ type: "Delete", id: brand(2), count: 1, revision: tag1 },
+			{ type: "Delete", id: brand(1), count: 1, revision: tag2 },
 		];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
@@ -648,8 +651,11 @@ describe("SequenceField - Compose", () => {
 	it("delete1 ○ delete2 ○ revive (delete2)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
-		const revive = Change.revive(0, 2, tag2, 0);
-		const expected: SF.Changeset = [{ count: 1 }, { type: "Delete", count: 3, revision: tag1 }];
+		const revive = Change.revive(0, 2, tag2, brand(0));
+		const expected: SF.Changeset = [
+			{ count: 1 },
+			{ type: "Delete", id: brand(0), count: 3, revision: tag1 },
+		];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
 			tagChange(delete2, tag2),
@@ -659,23 +665,24 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => BAA", () => {
-		const reviveAA = Change.revive(0, 2, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
-		const reviveB = Change.revive(0, 1, tag2, 0);
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const reviveAA = Change.revive(0, 2, tag1, brand(1), undefined, lineage);
+		const reviveB = Change.revive(0, 1, tag2, brand(0));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
-				detachEvent: { revision: tag1, index: 1 },
+				detachEvent: { revision: tag1, id: brand(1) },
 				inverseOf: tag1,
-				lineage: [{ revision: tag2, offset: 1 }],
+				lineage,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(reviveAA), makeAnonChange(reviveB)]);
@@ -683,30 +690,31 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveA ○ reviveBB => BAB", () => {
-		const reviveA = Change.revive(0, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
-		const reviveB1 = Change.revive(0, 1, tag2, 0);
-		const reviveB2 = Change.revive(2, 1, tag2, 1);
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 2, offset: 1 }];
+		const reviveA = Change.revive(0, 1, tag1, brand(1), undefined, lineage);
+		const reviveB1 = Change.revive(0, 1, tag2, brand(0));
+		const reviveB2 = Change.revive(2, 1, tag2, brand(1));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 1 },
+				detachEvent: { revision: tag1, id: brand(1) },
 				inverseOf: tag1,
-				lineage: [{ revision: tag2, offset: 1 }],
+				lineage,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 1, 1),
 				count: 1,
-				detachEvent: { revision: tag2, index: 1 },
+				detachEvent: { revision: tag2, id: brand(1) },
 				inverseOf: tag2,
 			},
 		];
@@ -719,22 +727,23 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => AAB", () => {
-		const reviveA = Change.revive(0, 2, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
-		const reviveB = Change.revive(2, 1, tag2, 0);
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
+		const reviveA = Change.revive(0, 2, tag1, brand(0), undefined, lineage);
+		const reviveB = Change.revive(2, 1, tag2, brand(0));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				inverseOf: tag1,
-				lineage: [{ revision: tag2, offset: 0 }],
+				lineage,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag2,
 			},
 		];
@@ -743,14 +752,14 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ redundant revive", () => {
-		const reviveA = Change.revive(0, 2, tag1, 0);
-		const reviveB = Change.redundantRevive(0, 2, tag1, 0);
+		const reviveA = Change.revive(0, 2, tag1, brand(0));
+		const reviveB = Change.redundantRevive(0, 2, tag1, brand(0));
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 				inverseOf: tag1,
 				revision: tag2,
 			},
@@ -779,7 +788,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag3,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 			},
 			{ count: 4 },
 			{
@@ -787,7 +796,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag4,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
@@ -797,7 +806,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag3,
 				count: 1,
 				content: fakeRepair(tag1, 0, 1),
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 			},
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			{ count: 2 },
@@ -807,7 +816,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag4,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, index: 0 },
+				detachEvent: { revision: tag1, id: brand(0) },
 			},
 			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
 		];
@@ -836,8 +845,8 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("return ○ return", () => {
-		const return1 = tagChange(Change.return(0, 1, 3, tag2), tag3);
-		const return2 = tagChange(Change.return(3, 1, 0, tag3), tag4);
+		const return1 = tagChange(Change.return(0, 1, 3, tag2, brand(0)), tag3);
+		const return2 = tagChange(Change.return(3, 1, 0, tag3, brand(0)), tag4);
 		const actual = shallowCompose([return1, return2]);
 		assert.deepEqual(actual, []);
 	});
@@ -888,10 +897,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies B
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1 = { revision: tag1, index: 0 };
-		const detach2 = { revision: tag2, index: 0 };
+		const detach1: DetachEvent = { revision: tag1, id: brand(0) };
+		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage = [{ revision: tag2, offset: 0 }];
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -912,10 +921,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies A
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1 = { revision: tag1, index: 1 };
-		const detach2 = { revision: tag2, index: 0 };
+		const detach1: DetachEvent = { revision: tag1, id: brand(1) };
+		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage = [{ revision: tag2, offset: 1 }];
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -936,10 +945,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies A
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1 = { revision: tag1, index: 0 };
-		const detach2 = { revision: tag2, index: 0 };
+		const detach1: DetachEvent = { revision: tag1, id: brand(0) };
+		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage = [{ revision: tag2, offset: 0 }];
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -960,10 +969,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies B
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1 = { revision: tag1, index: 1 };
-		const detach2 = { revision: tag2, index: 0 };
+		const detach1: DetachEvent = { revision: tag1, id: brand(1) };
+		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage = [{ revision: tag2, offset: 1 }];
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -977,9 +986,9 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("adjacent blocked revives", () => {
-		const lineage = [{ revision: tag2, offset: 1 }];
-		const revive1 = Change.blockedRevive(0, 5, tag1, tag2);
-		const revive2 = Change.blockedRevive(0, 4, tag3, tag4, undefined, undefined, lineage);
+		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const revive1 = Change.blockedRevive(0, 5, tag1, tag2, brand(0));
+		const revive2 = Change.blockedRevive(0, 4, tag3, tag4, brand(0), undefined, lineage);
 		const actual = shallowCompose([tagChange(revive1, tag5), tagChange(revive2, tag6)]);
 
 		const expected: SF.Changeset<never> = [
@@ -988,7 +997,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag5,
 				count: 5,
 				content: fakeRepair(tag1, 0, 5),
-				detachEvent: { revision: tag2, index: 0 },
+				detachEvent: { revision: tag2, id: brand(0) },
 				inverseOf: tag1,
 			},
 			{
@@ -996,7 +1005,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag6,
 				count: 4,
 				content: fakeRepair(tag3, 0, 4),
-				detachEvent: { revision: tag4, index: 0 },
+				detachEvent: { revision: tag4, id: brand(0) },
 				inverseOf: tag3,
 				lineage,
 			},

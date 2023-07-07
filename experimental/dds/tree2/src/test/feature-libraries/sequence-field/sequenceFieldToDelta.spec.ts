@@ -93,7 +93,7 @@ describe("SequenceField - toDelta", () => {
 			assert.equal(count, 1);
 			return contentCursor;
 		}
-		const changeset = Change.revive(0, 1, tag, 0, reviver);
+		const changeset = Change.revive(0, 1, tag, brand(0), reviver);
 		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
@@ -117,7 +117,7 @@ describe("SequenceField - toDelta", () => {
 				type: "Revive",
 				content: contentCursor,
 				count: 1,
-				detachEvent: { revision: tag, index: 0 },
+				detachEvent: { revision: tag, id: brand(0) },
 				changes: nodeChange,
 			},
 		];
@@ -220,7 +220,9 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("modify and delete => delete", () => {
-		const changeset: TestChangeset = [{ type: "Delete", count: 1, changes: childChange1 }];
+		const changeset: TestChangeset = [
+			{ type: "Delete", id: brand(0), count: 1, changes: childChange1 },
+		];
 		const mark: Delta.Delete = {
 			type: Delta.MarkType.Delete,
 			count: 1,
@@ -284,11 +286,16 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	describe("Muted changes", () => {
-		const detachEvent = { revision: tag1, index: 0 };
+		const detachEvent = { revision: tag1, id: brand<ChangesetLocalId>(0) };
 
 		it("delete", () => {
 			const deletion: TestChangeset = [
-				{ type: "Delete", count: 2, detachEvent: { revision: tag1, index: 0 } },
+				{
+					type: "Delete",
+					id: brand(0),
+					count: 2,
+					detachEvent: { revision: tag1, id: brand(0) },
+				},
 			];
 
 			const actual = toDelta(deletion);
@@ -338,7 +345,7 @@ describe("SequenceField - toDelta", () => {
 					count: 1,
 					content: fakeRepairData(tag, 0, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, index: 0 },
+					detachEvent: { revision: tag2, id: brand(0) },
 				},
 				{
 					type: "Revive",
@@ -346,7 +353,7 @@ describe("SequenceField - toDelta", () => {
 					changes: childChange1,
 					content: fakeRepairData(tag, 1, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, index: 1 },
+					detachEvent: { revision: tag2, id: brand(1) },
 				},
 			];
 			const actual = toDelta(changeset);

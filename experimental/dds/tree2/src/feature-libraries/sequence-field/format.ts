@@ -69,6 +69,8 @@ export enum Effects {
  */
 export interface LineageEvent {
 	readonly revision: RevisionTag;
+	readonly id: ChangesetLocalId;
+	readonly count: number;
 
 	/**
 	 * The position of this mark within a range of nodes which were detached in this revision.
@@ -139,15 +141,11 @@ export interface DetachEvent {
 	 * The intention of edit which last emptied the cell.
 	 */
 	revision: RevisionTag;
-
-	/**
-	 * The absolute position of the node in this cell in the input context of the revision which emptied it.
-	 */
-	index: number;
+	id: ChangesetLocalId;
 }
 export const DetachEvent = Type.Object({
 	revision: RevisionTagSchema,
-	index: Type.Number(),
+	id: ChangesetLocalIdSchema,
 });
 
 /**
@@ -278,7 +276,10 @@ export interface Delete<TNodeChange = NodeChangeType>
 		CellTargetingMark {
 	type: "Delete";
 	count: NodeCount;
+	id: ChangesetLocalId;
 }
+
+// XXX: Update
 // Note: inconsistent naming here is to avoid shadowing Effects.Delete
 export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
@@ -287,6 +288,7 @@ export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("Delete"),
+			id: ChangesetLocalIdSchema,
 			count: NodeCount,
 		}),
 	]);

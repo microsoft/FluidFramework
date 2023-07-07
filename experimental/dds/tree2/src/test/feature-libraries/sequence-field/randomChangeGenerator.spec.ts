@@ -26,7 +26,7 @@ describe("SequenceField - generateRandomChange", () => {
 
 	it("Generates a change", () => {
 		const change = generateRandomChange(testSeed, maxIndex, childGen);
-		const expected = [{ count: 2 }, { type: "Delete", count: 5 }];
+		const expected = [{ count: 2 }, { type: "Delete", id: 0, count: 5 }];
 		assert.deepStrictEqual(change, expected);
 	});
 });

@@ -17,13 +17,11 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ExistingCellMark,
 	EmptyInputCellMark,
 	DetachEvent,
 	Modify,
 	MoveId,
 } from "./format";
-import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -39,7 +37,7 @@ import {
 	getInputLength,
 	getOutputLength,
 	isNoopMark,
-	getOffsetAtRevision,
+	getOffsetInCellRange,
 	cloneMark,
 	isDeleteMark,
 	areOutputCellsEmpty,
@@ -57,6 +55,7 @@ import {
 	withRevision,
 	markEmptiesCells,
 	splitMark,
+	areOverlappingIdRanges,
 } from "./utils";
 
 /**
@@ -434,8 +433,6 @@ function amendComposeI<TNodeChange>(
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
-	private readonly baseIndex: IndexTracker;
-	private readonly baseGap: GapTracker;
 	private readonly cancelledInserts: Set<RevisionTag> = new Set();
 
 	public constructor(
@@ -448,8 +445,6 @@ export class ComposeQueue<T> {
 		private readonly revisionMetadata: RevisionMetadataSource,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker(revisionMetadata.getIndex);
-		this.baseGap = new GapTracker(revisionMetadata.getIndex);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,
@@ -494,15 +489,6 @@ export class ComposeQueue<T> {
 	}
 
 	public pop(): ComposeMarks<T> {
-		const output = this.popImpl();
-		if (output.baseMark !== undefined) {
-			this.baseIndex.advance(output.baseMark);
-			this.baseGap.advance(output.baseMark);
-		}
-		return output;
-	}
-
-	private popImpl(): ComposeMarks<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		if (baseMark === undefined && newMark === undefined) {
@@ -515,12 +501,6 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
-			// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
-			assert(
-				isExistingCellMark(baseMark),
-				0x693 /* Only existing cell mark can have empty output */,
-			);
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
@@ -540,11 +520,16 @@ export class ComposeQueue<T> {
 				}
 				baseCellId = {
 					revision: baseIntention,
-					index: this.baseIndex.getIndex(baseRevision),
+					id: baseMark.id,
 				};
+			} else if (baseMark.type === "MoveIn") {
+				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
+				assert(baseIntention !== undefined, "Base mark must have an intention");
+				baseCellId = { revision: baseIntention, id: baseMark.id };
 			} else {
 				assert(
-					areInputCellsEmpty(baseMark),
+					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
 					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
 				baseCellId = baseMark.detachEvent;
@@ -555,7 +540,6 @@ export class ComposeQueue<T> {
 				newMark,
 				this.newRevision,
 				this.cancelledInserts,
-				this.baseGap,
 			);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
@@ -790,11 +774,10 @@ function areInverseMovesAtIntermediateLocation(
  */
 function compareCellPositions(
 	baseCellId: DetachEvent,
-	baseMark: ExistingCellMark<unknown>,
+	baseMark: Mark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
-	gapTracker: GapTracker,
 ): number {
 	const newCellId = getCellId(newMark, newIntention);
 	if (baseCellId.revision === newCellId?.revision) {
@@ -810,30 +793,40 @@ function compareCellPositions(
 			// cell. This means we can safely treat them as inverses of one another.
 			return 0;
 		}
-		return baseCellId.index - newCellId.index;
+
+		if (
+			areOverlappingIdRanges(
+				baseCellId.id,
+				getMarkLength(baseMark),
+				newCellId.id,
+				getMarkLength(newMark),
+			)
+		) {
+			return baseCellId.id - newCellId.id;
+		}
 	}
 
 	if (newCellId !== undefined) {
-		const baseOffset = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
-		if (baseOffset !== undefined) {
-			// BUG: `newCellId.revision` may not be the revision of a change in the composition.
-			const newOffset = gapTracker.getOffset(newCellId.revision);
-
-			// `newOffset` refers to the index of `newMark`'s first cell within the adjacent cells detached in `newCellId.revision`.
-			// `offsetInBase` refers to the index of the position between those detached cells where `baseMark`'s cells would be.
-			// Note that `baseMark`'s cells were not detached in `newCellId.revision`, as that case is handled above.
-			// Therefore, when `offsetInBase === newOffset` `baseMark`'s cells come before `newMark`'s cells,
-			// as the nth position between detached cells is before the nth detached cell.
-			return baseOffset <= newOffset ? -Infinity : baseOffset - newOffset;
+		const offset = getOffsetInCellRange(
+			baseMark.lineage,
+			newCellId.revision,
+			newCellId.id,
+			getMarkLength(newMark),
+		);
+		if (offset !== undefined) {
+			return offset > 0 ? offset : -Infinity;
 		}
 	}
 
 	{
-		const newOffset = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
-		if (newOffset !== undefined) {
-			// BUG: `baseCellId.revision` may not be the revision of a change in the composition.
-			const baseOffset = gapTracker.getOffset(baseCellId.revision);
-			return newOffset <= baseOffset ? Infinity : baseOffset - newOffset;
+		const offset = getOffsetInCellRange(
+			newMark.lineage,
+			baseCellId.revision,
+			baseCellId.id,
+			getMarkLength(baseMark),
+		);
+		if (offset !== undefined) {
+			return offset > 0 ? -offset : Infinity;
 		}
 	}
 

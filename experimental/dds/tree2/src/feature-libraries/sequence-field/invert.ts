@@ -110,7 +110,7 @@ function invertMark<TNodeChange>(
 		}
 		case "Insert": {
 			const inverse = withNodeChange(
-				{ type: "Delete", count: mark.content.length },
+				{ type: "Delete", count: mark.content.length, id: mark.id },
 				invertNodeChange(mark.changes, inputIndex, invertChild),
 			);
 			return [inverse];
@@ -121,7 +121,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
-						detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
+						detachEvent: { revision: mark.revision ?? revision, id: mark.id },
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: mark.revision ?? revision,
@@ -136,10 +136,15 @@ function invertMark<TNodeChange>(
 		}
 		case "Revive": {
 			if (!isReattachConflicted(mark)) {
+				assert(
+					mark.detachEvent !== undefined,
+					"Active reattach should have a detach event",
+				);
 				const inverse = withNodeChange(
 					{
 						type: "Delete",
 						count: mark.count,
+						id: mark.detachEvent.id,
 					},
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
@@ -195,7 +200,7 @@ function invertMark<TNodeChange>(
 					count: mark.count,
 					detachEvent: {
 						revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-						index: inputIndex,
+						id: mark.id,
 					},
 				},
 			];
