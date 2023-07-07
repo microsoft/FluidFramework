@@ -10,7 +10,7 @@ import {
 	unreachableCase,
 } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryTree,
 	IWholeSummaryTree,
@@ -21,6 +21,8 @@ import {
 	IWholeFlatSummaryTree,
 	IWholeFlatSummary,
 	INormalizedWholeSummary,
+	IWholeSummaryTreeValueEntry,
+	IWholeSummaryBlob,
 } from "./storageContracts";
 
 /**
@@ -212,5 +214,48 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 		blobs,
 		snapshotTree,
 		sequenceNumber,
+	};
+}
+
+/**
+ * Converts existing IWholeSummaryTree to ISummaryTree for the first summary (without Handle entries)
+ * @param wholeSummaryTree - wholeSummaryTree used on the payload for creating and uploading a document.
+ * @returns Summary tree to be used when creating a new document.
+ */
+export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
+	wholeSummaryTree: IWholeSummaryTree,
+): ISummaryTree {
+	const tree: { [path: string]: SummaryObject } = {};
+	if (wholeSummaryTree.entries) {
+		for (const entry of wholeSummaryTree.entries) {
+			switch (entry.type) {
+				case "blob": {
+					const blobPayload = (entry as IWholeSummaryTreeValueEntry)
+						.value as IWholeSummaryBlob;
+					tree[entry.path] = {
+						type: SummaryType.Blob,
+						content:
+							blobPayload.encoding === "base64"
+								? new Uint8Array(stringToBuffer(blobPayload.content, "base64"))
+								: blobPayload.content,
+					};
+					break;
+				}
+				case "tree": {
+					const treePayload = (entry as IWholeSummaryTreeValueEntry)
+						.value as IWholeSummaryTree;
+					tree[entry.path] =
+						convertFirstSummaryWholeSummaryTreeToSummaryTree(treePayload);
+					break;
+				}
+				default: {
+					throw new Error(`Unsupported tree type for first summary`);
+				}
+			}
+		}
+	}
+	return {
+		type: SummaryType.Tree,
+		tree,
 	};
 }

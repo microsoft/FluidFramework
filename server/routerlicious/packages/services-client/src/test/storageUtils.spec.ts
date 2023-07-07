@@ -4,8 +4,13 @@
  */
 
 import assert from "assert";
-import { stringToBuffer } from "@fluidframework/common-utils";
-import { buildTreePath, convertWholeFlatSummaryToSnapshotTreeAndBlobs } from "../storageUtils";
+import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
+import {
+	buildTreePath,
+	convertSummaryTreeToWholeSummaryTree,
+	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
+} from "../storageUtils";
 
 import {
 	IWholeFlatSummaryBlob,
@@ -13,6 +18,11 @@ import {
 	IWholeFlatSummaryTree,
 	IWholeFlatSummaryTreeEntry,
 } from "../storageContracts";
+import {
+	IDocumentAttributes,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 
 const summaryBlobs: IWholeFlatSummaryBlob[] = [
 	{
@@ -201,6 +211,48 @@ describe("Storage Utils", () => {
 				snapshotTree: snapshotTreeWithoutPrefixStrip,
 				sequenceNumber,
 			});
+		});
+	});
+
+	describe("convertFirstSummaryWholeSummaryTreeToSummaryTree()", () => {
+		const documentAttributes: IDocumentAttributes = {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 1,
+			term: 1,
+		};
+
+		const summaryTree: ISummaryTree = {
+			tree: {
+				attributes: {
+					content: JSON.stringify(documentAttributes),
+					type: SummaryType.Blob,
+				},
+				quorumMembers: {
+					content: fromUtf8ToBase64(JSON.stringify([])),
+					type: SummaryType.Blob,
+				},
+				quorumProposals: {
+					content: fromUtf8ToBase64("This is a test"),
+					type: SummaryType.Blob,
+				},
+				quorumValues: {
+					content: JSON.stringify([]),
+					type: SummaryType.Blob,
+				},
+			},
+			type: SummaryType.Tree,
+		};
+
+		it("Validate summary tree conversion", () => {
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				summaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, summaryTree);
 		});
 	});
 });
