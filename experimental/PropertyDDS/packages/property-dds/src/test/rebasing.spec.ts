@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { expect } from "chai";
 import {
@@ -35,8 +34,11 @@ import {
 	ArrayProperty,
 	NamedProperty,
 	Int32Property,
+	StringProperty,
+	Float64Property,
 } from "@fluid-experimental/property-properties";
 import { SharedPropertyTree } from "../propertyTree";
+import { createDerivedGuid } from "./createDerivedGuid";
 
 function createLocalLoader(
 	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
@@ -49,17 +51,6 @@ function createLocalLoader(
 	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
 }
 
-function createDerivedGuid(referenceGuid: string, identifier: string) {
-	const hash = crypto.createHash("sha1");
-	hash.write(`${referenceGuid}:${identifier}`);
-	hash.end();
-
-	const hexHash = hash.digest("hex");
-	return (
-		`${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
-		`${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
-	);
-}
 console.assert = (condition: boolean, ...data: any[]) => {
 	assert(!!condition, "Console Assert");
 };
@@ -363,6 +354,79 @@ describe("PropertyDDS", () => {
 				insertInArray(sharedPropertyTree1, "A");
 				insertInArray(sharedPropertyTree2, "C");
 				await opProcessingController.ensureSynchronized();
+			});
+
+			it("Should work when intermediate changes cancel", async () => {
+				sharedPropertyTree1.root.insert(
+					"test",
+					PropertyFactory.create("Float64", undefined, 0),
+				);
+				sharedPropertyTree1.commit();
+				await opProcessingController.ensureSynchronized();
+
+				// Remove the entry in tree 1
+				sharedPropertyTree1.root.remove("test");
+				sharedPropertyTree1.commit();
+
+				// Remove and reinsert in two operations that cancel out in tree2
+				sharedPropertyTree2.root.remove("test");
+				sharedPropertyTree2.commit();
+				await opProcessingController.processOutgoing(container2);
+				await opProcessingController.processIncoming(container1);
+				sharedPropertyTree2.root.insert(
+					"test",
+					PropertyFactory.create("Float64", undefined, 0),
+				);
+				sharedPropertyTree2.commit();
+				await opProcessingController.processOutgoing(container2);
+				await opProcessingController.processIncoming(container1);
+
+				// Now make sure the trees are synchronized
+				await opProcessingController.ensureSynchronized();
+
+				expect(sharedPropertyTree1.root.serialize()).to.deep.equal(
+					sharedPropertyTree2.root.serialize(),
+				);
+			});
+
+			it("Should work when the type of a primitive variable changes", async () => {
+				// First we insert a float
+				sharedPropertyTree1.root.insert(
+					"test",
+					PropertyFactory.create("Float64", undefined, 0),
+				);
+				sharedPropertyTree1.commit();
+				await opProcessingController.ensureSynchronized();
+
+				// Modify the entry in tree 1
+				sharedPropertyTree1.root.get<Float64Property>("test")?.setValue(10);
+				sharedPropertyTree1.commit();
+
+				// Remove and reinsert in two operations changing the type in tree2
+				sharedPropertyTree2.root.remove("test");
+				sharedPropertyTree2.commit();
+				await opProcessingController.processOutgoing(container2);
+				await opProcessingController.processIncoming(container1);
+				sharedPropertyTree2.root.insert(
+					"test",
+					PropertyFactory.create("String", undefined, "Test"),
+				);
+				sharedPropertyTree2.commit();
+				await opProcessingController.processOutgoing(container2);
+				await opProcessingController.processIncoming(container1);
+
+				// Now make sure the trees are synchronized
+				await opProcessingController.ensureSynchronized();
+
+				expect(sharedPropertyTree1.root.serialize()).to.deep.equal(
+					sharedPropertyTree2.root.serialize(),
+				);
+				expect(sharedPropertyTree1.root.get<StringProperty>("test")).to.be.instanceof(
+					StringProperty,
+				);
+				expect(sharedPropertyTree1.root.get<StringProperty>("test")?.getValue()).to.equal(
+					"Test",
+				);
 			});
 
 			it("works with overlapping sequences", async () => {

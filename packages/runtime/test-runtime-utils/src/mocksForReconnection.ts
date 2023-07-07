@@ -122,6 +122,21 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		return containerRuntime;
 	}
 
+	public getMinSeq(): number {
+		// We overwrite the min sequence number function, to simulate that
+		// the minimum sequence number will be incremented by the server while the
+		// client is not connected. By checking, whether a client is currently
+		// within the quorum we ignore it during the min sequence number computation
+		// it it is currently not connected.
+		let minSeq: number | undefined;
+		for (const [client, clientSeq] of this.minSeq) {
+			if (this.quorum.getMember(client) !== undefined) {
+				minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+			}
+		}
+		return minSeq ?? 0;
+	}
+
 	public clearOutstandingClientMessages(clientId: string) {
 		// Delete all the messages for client with the given clientId.
 		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
