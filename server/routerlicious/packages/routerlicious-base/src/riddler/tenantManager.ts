@@ -354,7 +354,18 @@ export class TenantManager {
 
 				if (cachedKey) {
 					retrievedFromCache = true;
-					return this.decryptCachedKeys(cachedKey);
+					const tenantKeys = this.decryptCachedKeys(cachedKey);
+					// This is an edge case where we already re-encrypt tenant keys from
+					// old encryption key to new encryption key, and we disable old encryption
+					// key in the AKV. If both decrypted tenant keys are null, it means it hits
+					// this case, then we should read from tenant db and set new values in cache.
+					if (tenantKeys.key1 || tenantKeys.key2) {
+						return tenantKeys;
+					}
+					Lumberjack.info(
+						"Retrieved from cache but both decrypted tenant keys are null.",
+						lumberProperties,
+					);
 				}
 			}
 
