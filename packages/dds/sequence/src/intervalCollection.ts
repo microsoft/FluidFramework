@@ -1375,7 +1375,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 					props[reservedRangeLabelsKey][0] !== this.label
 				) {
 					throw new LoggingError(
-						"The collection is unable to add an interval which does not belong to it",
+						"Adding an interval that belongs to another interval collection is not permitted",
 					);
 				}
 				interval.addProperties(props);
