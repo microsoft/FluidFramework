@@ -207,11 +207,6 @@ export interface ISerializableInterval extends IInterval {
 	 * of Fluid didn't always write interval ids.
 	 */
 	getIntervalId(): string | undefined;
-
-	/**
-	 * Gets the labels associated with this interval
-	 */
-	getRangeLabels(): string[];
 }
 
 /**
@@ -314,15 +309,6 @@ export class Interval implements ISerializableInterval {
 		const id = this.properties?.[reservedIntervalIdKey];
 		assert(id !== undefined, 0x5e1 /* interval ID should not be undefined */);
 		return `${id}`;
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.getRangeLabels}
-	 */
-	public getRangeLabels(): string[] {
-		const labels: string[] = this.properties?.[reservedRangeLabelsKey];
-		assert(labels !== undefined, "labels should not be undefiend");
-		return labels;
 	}
 
 	/**
@@ -674,15 +660,6 @@ export class SequenceInterval implements ISerializableInterval {
 		const id = this.properties?.[reservedIntervalIdKey];
 		assert(id !== undefined, 0x5e2 /* interval ID should not be undefined */);
 		return `${id}`;
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.getRangeLabels}
-	 */
-	public getRangeLabels(): string[] {
-		const labels: string[] = this.properties?.[reservedRangeLabelsKey];
-		assert(labels !== undefined, "labels should not be undefiend");
-		return labels;
 	}
 
 	/**

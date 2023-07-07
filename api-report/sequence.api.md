@@ -193,7 +193,6 @@ export class Interval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
-    getRangeLabels(): string[];
     // @deprecated
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval | undefined;
     // (undocumented)
@@ -312,7 +311,6 @@ export interface ISerializableInterval extends IInterval {
     // @internal (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
-    getRangeLabels(): string[];
     properties: PropertySet;
     // @internal (undocumented)
     propertyManager: PropertiesManager;
@@ -405,7 +403,6 @@ export class SequenceInterval implements ISerializableInterval {
     compareStart(b: SequenceInterval): number;
     end: LocalReferencePosition;
     getIntervalId(): string;
-    getRangeLabels(): string[];
     // (undocumented)
     intervalType: IntervalType;
     // @deprecated
