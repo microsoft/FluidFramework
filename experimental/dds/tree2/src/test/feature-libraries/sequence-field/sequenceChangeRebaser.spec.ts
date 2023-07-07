@@ -14,7 +14,6 @@ import {
 	compose,
 	composeAnonChanges,
 	invert,
-	normalizeMoveIds,
 	rebaseTagged,
 	toDelta,
 } from "./utils";
@@ -107,8 +106,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r2 = rebaseTagged(r1, inv);
 							tracker.apply(inv);
 							const change1Updated = tracker.update(change1);
-							normalizeMoveIds(r2.change);
-							normalizeMoveIds(change1Updated.change);
 							checkDeltaEquality(r2.change, change1Updated.change);
 						}
 					}
@@ -144,8 +141,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r2 = rebaseTagged(r1, inv);
 							tracker.apply(inv);
 							const change1Updated = tracker.update(change1);
-							normalizeMoveIds(r2.change);
-							normalizeMoveIds(change1Updated.change);
 							checkDeltaEquality(r2.change, change1Updated.change);
 						}
 					}
@@ -193,20 +188,17 @@ describe("SequenceField - Rebaser Axioms", () => {
 								);
 								const r1 = rebaseTagged(change1, change2);
 								tracker.apply(change2);
-								normalizeMoveIds(r1.change);
 								const r2 = rebaseTagged(r1, inverse2);
 								tracker.apply(inverse2);
 								// We need to update change2 to ensure it refers to detached nodes by the detach
 								// that last affected them.
-								// XXX: Should be able to remove this
+								// TODO: This should not be necessary, as in a real sandwich rebase, this step would not happen.
 								const change2Updated = tracker.update(change2);
 								const r3 = rebaseTagged(r2, change2Updated);
 								tracker.apply(change2Updated);
-								normalizeMoveIds(r3.change);
 								// We need to update r1 to ensure it refers to detached nodes by the detach
 								// that last affected them. This is for comparison only.
 								const r1Updated = tracker.update(r1);
-								normalizeMoveIds(r1Updated.change);
 								assert.deepEqual(r3, r1Updated);
 								// assert.deepEqual(r3, r1);
 							}

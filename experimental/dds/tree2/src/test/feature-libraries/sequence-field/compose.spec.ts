@@ -15,10 +15,8 @@ import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../fe
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachEvent, LineageEvent } from "../../../feature-libraries/sequence-field/format";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
+import { compose, composeNoVerify, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -62,9 +60,6 @@ describe("SequenceField - Compose", () => {
 							const left = composeNoVerify([makeAnonChange(ab), taggedC], revInfos);
 							const bc = composeNoVerify([taggedB, taggedC]);
 							const right = composeNoVerify([taggedA, makeAnonChange(bc)], revInfos);
-
-							normalizeMoveIds(left);
-							normalizeMoveIds(right);
 							assert.deepEqual(left, right);
 						});
 					}
@@ -455,7 +450,7 @@ describe("SequenceField - Compose", () => {
 	// TODO: update this test to expect the node change to be represented for the transient node
 	it("revive and modify ○ delete", () => {
 		const nodeChange = { valueChange: { value: 1 } };
-		const detachEvent: DetachEvent = { revision: tag1, id: brand(0) };
+		const detachEvent: SF.DetachEvent = { revision: tag1, id: brand(0) };
 		const revive: SF.Changeset = [
 			{
 				type: "Revive",
@@ -569,7 +564,7 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different earlier nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 0 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 0 }];
 		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
 			{
@@ -588,7 +583,7 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different in-between nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 1 }];
 		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
 			{ type: "Delete", id: brand(0), count: 1, revision: tag1 },
@@ -608,7 +603,7 @@ describe("SequenceField - Compose", () => {
 
 	it("delete ○ revive (different later nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
-		const lineage: LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 2 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag1, id: brand(0), count: 2, offset: 2 }];
 		const revive = makeAnonChange(Change.revive(0, 2, tag2, brand(0), undefined, lineage));
 		const expected: SF.Changeset = [
 			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
@@ -665,7 +660,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => BAA", () => {
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const reviveAA = Change.revive(0, 2, tag1, brand(1), undefined, lineage);
 		const reviveB = Change.revive(0, 1, tag2, brand(0));
 		const expected: SF.Changeset = [
@@ -690,7 +685,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveA ○ reviveBB => BAB", () => {
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 2, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 2, offset: 1 }];
 		const reviveA = Change.revive(0, 1, tag1, brand(1), undefined, lineage);
 		const reviveB1 = Change.revive(0, 1, tag2, brand(0));
 		const reviveB2 = Change.revive(2, 1, tag2, brand(1));
@@ -727,7 +722,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => AAB", () => {
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const reviveA = Change.revive(0, 2, tag1, brand(0), undefined, lineage);
 		const reviveB = Change.revive(2, 1, tag2, brand(0));
 		const expected: SF.Changeset = [
@@ -897,10 +892,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies B
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1: DetachEvent = { revision: tag1, id: brand(0) };
-		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
+		const detach1: SF.DetachEvent = { revision: tag1, id: brand(0) };
+		const detach2: SF.DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -921,10 +916,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies A
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1: DetachEvent = { revision: tag1, id: brand(1) };
-		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
+		const detach1: SF.DetachEvent = { revision: tag1, id: brand(1) };
+		const detach2: SF.DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -945,10 +940,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies A
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1: DetachEvent = { revision: tag1, id: brand(0) };
-		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
+		const detach1: SF.DetachEvent = { revision: tag1, id: brand(0) };
+		const detach2: SF.DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -969,10 +964,10 @@ describe("SequenceField - Compose", () => {
 		// Revision 4 modifies B
 		const nodeChange1 = "Change1";
 		const nodeChange2 = "Change2";
-		const detach1: DetachEvent = { revision: tag1, id: brand(1) };
-		const detach2: DetachEvent = { revision: tag2, id: brand(0) };
+		const detach1: SF.DetachEvent = { revision: tag1, id: brand(1) };
+		const detach2: SF.DetachEvent = { revision: tag2, id: brand(0) };
 
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
@@ -986,7 +981,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("adjacent blocked revives", () => {
-		const lineage: LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
+		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const revive1 = Change.blockedRevive(0, 5, tag1, tag2, brand(0));
 		const revive2 = Change.blockedRevive(0, 4, tag3, tag4, brand(0), undefined, lineage);
 		const actual = shallowCompose([tagChange(revive1, tag5), tagChange(revive2, tag6)]);

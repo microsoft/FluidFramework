@@ -9,13 +9,7 @@ import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { createFakeRepair, fakeRepair } from "../../utils";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
-import {
-	checkDeltaEquality,
-	composeAnonChanges,
-	normalizeMoveIds,
-	rebaseTagged,
-	rebase as rebaseI,
-} from "./utils";
+import { checkDeltaEquality, composeAnonChanges, rebaseTagged, rebase as rebaseI } from "./utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -43,7 +37,6 @@ describe("SequenceField - Rebase", () => {
 		for (const [name, testCase] of Object.entries(cases)) {
 			it(`${name} ↷ no changes`, () => {
 				const actual = rebase(testCase, cases.no_change);
-				normalizeMoveIds(actual);
 				assert.deepEqual(actual, testCase);
 			});
 		}
@@ -317,7 +310,6 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(4, 2, brand(3)),
 		]);
 		const actual = rebase(move, deletion, tag1);
-		normalizeMoveIds(actual);
 
 		// Moves --E-G
 		const expected: SF.Changeset<never> = [
@@ -350,7 +342,6 @@ describe("SequenceField - Rebase", () => {
 				lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],
 			},
 		];
-		normalizeMoveIds(expected);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -598,7 +589,6 @@ describe("SequenceField - Rebase", () => {
 		const insertB2 = rebaseTagged(insertB, delA);
 		const moveC2 = rebaseTagged(moveC, delA, insertB2);
 		const expected = Change.move(2, 1, 1);
-		normalizeMoveIds(moveC2.change);
 		checkDeltaEquality(moveC2.change, expected);
 	});
 
@@ -624,7 +614,6 @@ describe("SequenceField - Rebase", () => {
 		const moveB = Change.move(2, 2, 3);
 		const expected = Change.move(0, 2, 3);
 		const rebased = rebase(moveB, moveA);
-		normalizeMoveIds(rebased);
 		assert.deepEqual(rebased, expected);
 	});
 });

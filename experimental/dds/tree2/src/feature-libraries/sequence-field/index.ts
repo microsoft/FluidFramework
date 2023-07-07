@@ -35,6 +35,7 @@ export {
 	LineageEvent,
 	HasReattachFields,
 	CellSpanningMark,
+	DetachEvent,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
