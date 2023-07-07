@@ -121,6 +121,17 @@ export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cw
 	return result;
 }
 
+// This is a duplicate of how tsc deal with case insenitive file system as keys (in tsBuildInfo)
+function toLowerCase(x: string) {
+	return x.toLowerCase();
+}
+// eslint-disable-next-line no-useless-escape
+const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
+export const getCanonicalFileName = ts.sys.useCaseSensitiveFileNames
+	? (x: string) => x
+	: (x: string) =>
+			fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
+
 export function getTscUtil(tsLib: typeof ts) {
 	return {
 		parseCommandLine: (command: string) => {
