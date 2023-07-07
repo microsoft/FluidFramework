@@ -2,13 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { expect, test } from "@oclif/test";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import * as semver from "semver";
 
-import { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "@fluidframework/build-tools";
-
-import { getVersionRange } from "@fluid-tools/version-tools";
+import { getIsLatest, getSimpleVersion } from "../versions";
+import { getVersionRange } from "../internalVersionScheme";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [
@@ -69,6 +67,7 @@ describe("getSimpleVersion", () => {
 			expect(result).to.equal(expected);
 
 			const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			expect(semver.satisfies(result, range)).to.be.false;
 		});
 
@@ -79,6 +78,7 @@ describe("getSimpleVersion", () => {
 			expect(result).to.equal(expected);
 
 			const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			expect(semver.satisfies(result, range)).to.be.true;
 		});
 
@@ -91,14 +91,6 @@ describe("getSimpleVersion", () => {
 			const input = "2.0.0-internal.1.3.0";
 			expect(() => getSimpleVersion(input, "93923", true, true)).to.throw();
 		});
-	});
-});
-
-describe("getVersionsFromStrings", () => {
-	const versions = getVersionsFromStrings("client", test_tags);
-
-	it("highest version should be 0.59.3000", () => {
-		assert.equal(versions.slice(-1)[0], "0.59.3000");
 	});
 });
 
