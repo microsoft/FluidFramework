@@ -24,13 +24,7 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import {
-	getFieldKind,
-	getFieldSchema,
-	typeNameSymbol,
-	valueSymbol,
-	allowsValue,
-} from "../contextuallyTyped";
+import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
@@ -138,14 +132,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return this.cursor.value;
 	}
 
-	public set value(value: Value) {
-		assert(
-			allowsValue(this.type.value, value),
-			0x5b2 /* Out of schema value can not be set on tree */,
-		);
-		this.context.editor.setValue(this.anchorNode, value);
-	}
-
 	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
@@ -221,20 +207,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
-				return () => {
-					unsubscribeFromValueChange();
-					unsubscribeFromChildrenChange();
-				};
+				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
@@ -286,11 +268,15 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		value: NewFieldContent,
 		receiver: NodeProxyTarget,
 	): boolean => {
+		assert(
+			key !== valueSymbol,
+			"The value of a node can only be changed by replacing the node",
+		);
 		if (typeof key === "string" || symbolIsFieldKey(key)) {
 			const fieldKey: FieldKey = brand(key);
 			if (fieldKey === localNodeKeySymbol) {
 				// TODO: this is not very type safe. Can we do better?
-				assert(typeof key === "number", "Invalid local node key");
+				assert(typeof key === "number", 0x6d9 /* Invalid local node key */);
 				const localNodeKey = key as unknown as LocalNodeKey;
 				const stableNodeKey = target.context.nodeKeys.stabilizeNodeKey(localNodeKey);
 				target.getField(fieldKey).content = stableNodeKey;
@@ -298,9 +284,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				target.getField(fieldKey).content = value;
 			}
 
-			return true;
-		} else if (key === valueSymbol) {
-			target.value = value;
 			return true;
 		}
 		return false;

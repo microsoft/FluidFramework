@@ -30,7 +30,7 @@ export function applyStorageCompression(
 			documentServiceFactory,
 		);
 	} else {
-		assert(isCompressionConfig(config), "Invalid compression config");
+		assert(isCompressionConfig(config), 0x6f4 /* Invalid compression config */);
 		return applyStorageCompressionInternal(
 			DocumentServiceFactoryCompressionAdapter,
 			documentServiceFactory,

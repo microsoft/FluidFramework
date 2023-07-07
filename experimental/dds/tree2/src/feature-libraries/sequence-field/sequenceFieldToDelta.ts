@@ -139,5 +139,5 @@ function deltaFromNodeChange<TNodeChange>(
 }
 
 function isEmptyModify(modify: Delta.Modify): boolean {
-	return modify.fields === undefined && modify.setValue === undefined;
+	return modify.fields === undefined;
 }

@@ -27,7 +27,6 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 	"onInsert",
 	"onMoveOut",
 	"onMoveIn",
-	"onSetValue",
 	"enterNode",
 	"exitNode",
 	"enterField",
@@ -70,42 +69,6 @@ const content = [singleTextCursor(nodeX)];
 describe("visit", () => {
 	it("empty delta", () => {
 		testTreeVisit([], []);
-	});
-
-	it("set root value", () => {
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const expected: VisitScript = [
-			["enterNode", 0],
-			["onSetValue", 1],
-			["exitNode", 0],
-		];
-		testTreeVisit([mark], expected);
-	});
-
-	it("set child value", () => {
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const delta: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
-		const expected: VisitScript = [
-			["enterNode", 0],
-			["enterField", fooKey],
-			["enterNode", 42],
-			["onSetValue", 1],
-			["exitNode", 42],
-			["exitField", fooKey],
-			["exitNode", 0],
-		];
-		testTreeVisit(delta, expected);
 	});
 
 	it("insert root", () => {
@@ -217,23 +180,16 @@ describe("visit", () => {
 			type: Delta.MarkType.Insert,
 			content,
 		};
-		const set: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
 		const delta: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
+				fields: new Map([[fooKey, [del, 3, ins]]]),
 			},
 		];
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", fooKey],
 			["onInsert", 13, content],
-			["enterNode", 15],
-			["onSetValue", 1],
-			["exitNode", 15],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -377,7 +333,6 @@ describe("visit", () => {
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
-			setValue: 42,
 			moveId,
 		};
 
@@ -403,9 +358,6 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["enterNode", 6],
-			["onSetValue", 42],
-			["exitNode", 6],
 			["onMoveOut", 6, 1, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],

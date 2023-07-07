@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.0.0-internal.5.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,7 +38,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -79,12 +79,13 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.20.0-169245",
+		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0-169245",
+		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.5.0.0",
+		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
@@ -106,16 +107,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_OdspDocumentServiceFactory": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_OdspDocumentServiceFactoryCore": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
