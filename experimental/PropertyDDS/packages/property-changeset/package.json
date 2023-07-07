@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.0.0-internal.5.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,7 +67,7 @@
 		"async": "^3.2.2",
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
-		"semver": "^7.3.4",
+		"semver": "^7.5.3",
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {

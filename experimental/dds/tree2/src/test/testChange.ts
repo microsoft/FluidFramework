@@ -17,6 +17,7 @@ import {
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
+import { singleTextCursor } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -185,7 +186,23 @@ function toDelta(change: TestChange): Delta.Modify {
 	if (change.intentions.length > 0) {
 		return {
 			type: Delta.MarkType.Modify,
-			setValue: change.intentions.map(String).join("|"),
+			fields: new Map([
+				[
+					brand("foo"),
+					[
+						{ type: Delta.MarkType.Delete, count: 1 },
+						{
+							type: Delta.MarkType.Insert,
+							content: [
+								singleTextCursor({
+									type: brand("test"),
+									value: change.intentions.map(String).join("|"),
+								}),
+							],
+						},
+					],
+				],
+			]),
 		};
 	}
 	return { type: Delta.MarkType.Modify };

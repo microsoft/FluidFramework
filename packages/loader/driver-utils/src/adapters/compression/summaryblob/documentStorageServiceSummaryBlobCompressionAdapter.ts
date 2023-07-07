@@ -82,7 +82,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 				return blob;
 			}
 		}
-		assert(algorithm < 0x10, "Algorithm should be less than 0x10");
+		assert(algorithm < 0x10, 0x6f5 /* Algorithm should be less than 0x10 */);
 		const blobView = new Uint8Array(blob);
 		const blobLength = blobView.length;
 		const newBlob = new Uint8Array(blobLength + 1);
@@ -241,7 +241,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		config: ICompressionStorageConfig,
 		context?: ISummaryContext,
 	): SummaryObject {
-		assert(typeof input === "object", "input must be a non-null object");
+		assert(typeof input === "object", 0x6f6 /* input must be a non-null object */);
 		const maybeReplaced = isEncode ? encoder(input, config) : decoder(input);
 
 		if (maybeReplaced !== input) {
@@ -277,7 +277,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns - The summary tree containing the metadata blob.
 	 */
 	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
-		assert(typeof summary === "object", "summary must be a non-null object");
+		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
 		for (const key of Object.keys(summary.tree)) {
 			const value = summary.tree[key];
 
@@ -302,7 +302,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static getMetadataHolderTree(summary: ISummaryTree) {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
-		assert(metadataHolder !== undefined, "metadataHolder must be a non-null object");
+		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
 		const metadataHolderTree = metadataHolder.tree;
 		return metadataHolderTree;
 	}
@@ -328,7 +328,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns - True if the compression markup blob is found, otherwise false.
 	 */
 	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
-		assert(typeof snapshot === "object", "snapshot must be a non-null object");
+		assert(typeof snapshot === "object", 0x6f9 /* snapshot must be a non-null object */);
 		for (const key of Object.keys(snapshot.blobs)) {
 			if (key === metadataBlobName) {
 				const value = snapshot.blobs[blobHeadersBlobName];

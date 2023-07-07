@@ -325,7 +325,7 @@ export function getModifyAfter<T>(
 	if (effect?.value.modifyAfter !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6ee /* Expected effect to cover entire mark */,
 		);
 		if (consumeEffect) {
 			const newEffect = { ...effect.value };
@@ -355,7 +355,7 @@ function getPairedMarkStatus<T>(
 	if (effect?.value.pairedMarkStatus !== undefined) {
 		assert(
 			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			"Expected effect to cover entire mark",
+			0x6ef /* Expected effect to cover entire mark */,
 		);
 		if (consumeEffect) {
 			const newEffect = { ...effect.value };
