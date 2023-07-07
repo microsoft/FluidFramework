@@ -20,10 +20,10 @@ The current schema system has several issues:
 
 Instead of one kind of node in view schema, have 4, each with a subset of our current functionality:
 
-1. Terminal Node: holds a value, but no children.
+1. Leaf Node: holds a value, but no children.
    Don't support `undefined` as a value: an empty Struct can be used for that case if needed.
 2. Struct Node: finite list of fields (key+field type).
-3. Map Node: A node which maps all strings (as field keys) fto fields.
+3. Map Node: A node which maps all strings (as field keys) to fields.
    All possible fields get a single field schema (just like existing extraLocalFields).
    This field schema allow the filed to be empty (for example an optional or sequence filed, but not a value field):
    otherwise the tree would be required to have a non-empty field for all possible string keys (which would be an infinite sized tree) to be in schema.
@@ -90,8 +90,8 @@ and does not involve exposing any stored schema editing to users.
 
 Workstream 1
 
-1. Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive)
-2. Update all schema to use new API.
+1. (Done) Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive).
+2. (In progress) Update all schema to use new API.
 3. Remove old schema builder API.
 4. Capture which kind of node schema the view schema are in the data and type produced by the schema builder.
 
@@ -114,7 +114,7 @@ Workstream 3
 -   Extend base for each kind.
 -   Remove use of symbols on editable tree APIs
 -   Remove use of proxies for nodes: dynamically generate custom struct node subclasses from schema.
--   Remove support for "undefined" values from terminal nodes.
+-   Remove support for "undefined" values from Leaf nodes.
 
 ### Longer term
 
