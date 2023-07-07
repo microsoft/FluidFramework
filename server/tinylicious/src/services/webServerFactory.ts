@@ -57,13 +57,6 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
 			this.emit("connection", webSocket);
-
-			// server side listening for ping events
-			socket.on("ping", (cb) => {
-				if (typeof cb === "function") {
-					cb();
-				}
-			});
 		});
 	}
 
