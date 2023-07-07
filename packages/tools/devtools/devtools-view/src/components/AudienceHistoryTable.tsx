@@ -12,6 +12,7 @@ import {
 	Table,
 	TableHeader,
 	TableHeaderCell,
+	makeStyles,
 } from "@fluentui/react-components";
 import {
 	DoorArrowLeftRegular,
@@ -20,10 +21,29 @@ import {
 	ArrowJoinRegular,
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
-
+import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
+
+const audienceStyles = makeStyles({
+	joined: {
+		backgroundColor: tokens.colorPaletteRoyalBlueBackground2,
+	},
+	left: {
+		backgroundColor: tokens.colorPaletteRedBackground2,
+	},
+	highContrast: {
+		"color": "#FFF",
+		"&:hover": {
+			"color": "#000",
+			"& *": {
+				color: "#000",
+			},
+		},
+	},
+});
 
 /**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
@@ -41,6 +61,9 @@ export interface AudienceHistoryTableProps {
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
+
+	const style = audienceStyles();
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
@@ -84,12 +107,13 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 						// The list of items here is never reordered, and is strictly appended to,
 						// so using the index as the key here is safe.
 						key={itemIndex}
-						style={{
-							backgroundColor:
-								item.changeKind === "joined"
-									? tokens.colorPaletteRoyalBlueBackground2
-									: tokens.colorPaletteRedBackground2,
-						}}
+						className={
+							themeInfo.name === ThemeOption.HighContrast
+								? style.highContrast
+								: item.changeKind === "joined"
+								? style.joined
+								: style.left
+						}
 					>
 						<TableCell>
 							<LabelCellLayout

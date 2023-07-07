@@ -18,7 +18,8 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
+
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "@fluidframework/driver-utils";
 

@@ -23,6 +23,7 @@ import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../
 import { brand, fail } from "../../../util";
 import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../../../codec";
+import { singleJsonCursor } from "../../../domains";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -44,6 +45,7 @@ const valueField = new FieldKind(
 	() => false,
 	new Set(),
 );
+const valueFieldKey: FieldKey = brand("Value");
 
 const fieldA: FieldKey = brand("a");
 
@@ -143,14 +145,22 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 	assert(typeof valueChange !== "number");
 	const nodeDelta: Delta.Modify = {
 		type: Delta.MarkType.Modify,
-		setValue: valueChange.new,
+		fields: new Map([
+			[
+				valueFieldKey,
+				[
+					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
+				],
+			],
+		]),
 	};
 	return nodeDelta;
 };
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
-	getOrCreate: unexpectedDelegate,
+	set: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {
@@ -388,12 +398,28 @@ describe("Generic FieldKind", () => {
 
 		const valueDelta1: Delta.Mark = {
 			type: Delta.MarkType.Modify,
-			setValue: 1,
+			fields: new Map([
+				[
+					valueFieldKey,
+					[
+						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
+					],
+				],
+			]),
 		};
 
 		const valueDelta2: Delta.Mark = {
 			type: Delta.MarkType.Modify,
-			setValue: 2,
+			fields: new Map([
+				[
+					valueFieldKey,
+					[
+						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
+					],
+				],
+			]),
 		};
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];

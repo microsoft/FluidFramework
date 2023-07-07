@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import {
+	ITelemetryBaseLogger,
+	ITelemetryGenericEvent,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
@@ -179,6 +180,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 	OpGroupingManager,
+	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
@@ -435,9 +437,24 @@ export interface IContainerRuntimeOptions {
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
 	 *
+	 * For safety, {@link IContainerRuntimeOptions#enableBatchRebasing} needs to also be enabled to ensure
+	 * consistency across clients.
+	 *
 	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
+	/**
+	 * Configures if the runtime should rebase a batch of ops when it detects op reentrancy,
+	 * when an op is created as the result of processing another op. Usually this is the case
+	 * when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the
+	 * reentrant op will have a different reference sequence number  than the rest of the ops in
+	 * the batch, resulting in  a different view of the state of the data model. Therefore all ops
+	 * must be resubmitted and rebased to the current reference sequence number to be in agreement
+	 * about the state of the data model.
+	 *
+	 * @experimental Not ready for use.
+	 */
+	readonly enableBatchRebasing?: boolean;
 }
 
 /**
@@ -685,6 +702,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
+			enableBatchRebasing = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -783,6 +801,7 @@ export class ContainerRuntime
 				enableRuntimeIdCompressor,
 				enableOpReentryCheck,
 				enableGroupedBatching,
+				enableBatchRebasing,
 			},
 			containerScope,
 			logger,
@@ -1218,7 +1237,6 @@ export class ContainerRuntime
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
-			getContainerDiagnosticId: () => this.context.id,
 			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
 			// delta manager would always return false for summarizer client.
 			activeConnection: () => this.innerDeltaManager.active,
@@ -1331,6 +1349,9 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
+		const enableBatchRebasing =
+			runtimeOptions.enableBatchRebasing &&
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchRebasing") !== true;
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1341,6 +1362,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
+				enableBatchRebasing,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1348,6 +1370,9 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
+			reSubmit: this.reSubmit.bind(this),
+			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
+			closeContainer: this.closeFn,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1355,7 +1380,7 @@ export class ContainerRuntime
 		});
 
 		this.summaryStateUpdateMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod",
+			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
 		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -1508,6 +1533,7 @@ export class ContainerRuntime
 				idCompressorEnabled: this.idCompressorEnabled,
 				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
+				enableBatchRebasing,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -3196,7 +3222,7 @@ export class ContainerRuntime
 				this.mc.logger.sendTelemetryEvent(
 					{ eventName: "OpReentry" },
 					// We need to capture the call stack in order to inspect the source of this usage pattern
-					new UsageError(errorMessage),
+					getLongStack(() => new UsageError(errorMessage)),
 				);
 				this.opReentryCallsToReport--;
 			}

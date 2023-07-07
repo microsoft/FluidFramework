@@ -56,51 +56,6 @@ describe("toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("set root value", () => {
-		const changeset: T.MarkList = [
-			{
-				type: "Modify",
-				value: { id: 0, value: 1 },
-			},
-		];
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const expected: Delta.MarkList = [mark];
-		const actual = toTreeDelta(changeset);
-		assert.deepStrictEqual(actual, expected);
-	});
-
-	it("set child value", () => {
-		const changeset: T.MarkList = [
-			{
-				type: "Modify",
-				fields: {
-					foo: [
-						42,
-						{
-							type: "Modify",
-							value: { id: 0, value: 1 },
-						},
-					],
-				},
-			},
-		];
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
-		const actual = toTreeDelta(changeset);
-		assert.deepStrictEqual(actual, expected);
-	});
-
 	it("insert root", () => {
 		const changeset: T.MarkList = [{ type: "Insert", id: opId, content }];
 		const mark: Delta.Insert = {
@@ -342,11 +297,6 @@ describe("toDelta", () => {
 							id: opId,
 							content,
 						},
-						1,
-						{
-							type: "Modify",
-							value: { id: opId, value: 1 },
-						},
 					],
 				},
 			},
@@ -359,14 +309,10 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Insert,
 			content: contentCursor,
 		};
-		const set: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
+				fields: new Map([[fooKey, [del, 3, ins]]]),
 			},
 		];
 		const actual = toTreeDelta(changeset);
@@ -391,15 +337,15 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.Insert = {
-				type: Delta.MarkType.Insert,
-				content: contentCursor,
-				setValue: 4242,
-				fields: new Map([[fooKey, [{ type: Delta.MarkType.Modify, setValue: 4343 }]]]),
-			};
-			const expected: Delta.MarkList = [mark];
-			const actual = toTreeDelta(changeset);
-			assert.deepStrictEqual(actual, expected);
+			// const mark: Delta.Insert = {
+			// 	type: Delta.MarkType.Insert,
+			// 	content: contentCursor,
+			// 	setValue: 4242,
+			// 	fields: new Map([[fooKey, [{ type: Delta.MarkType.Modify, setValue: 4343 }]]]),
+			// };
+			// const expected: Delta.MarkList = [mark];
+			// const actual = toTreeDelta(changeset);
+			// assert.deepStrictEqual(actual, expected);
 		});
 
 		it("inserts", () => {

@@ -122,7 +122,6 @@ export {
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -145,7 +144,6 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	ValueConstraint,
 	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
@@ -163,6 +161,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	LazyTreeSchema,
 	NodeExistenceState,
 } from "./modular-schema";
 

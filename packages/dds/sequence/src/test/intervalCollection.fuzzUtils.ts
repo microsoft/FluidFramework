@@ -114,7 +114,7 @@ export interface OperationGenerationConfig {
 	weights?: RevertibleWeights;
 }
 
-export const defaultOptions: Required<OperationGenerationConfig> = {
+export const defaultOperationGenerationConfig: Required<OperationGenerationConfig> = {
 	maxStringLength: 1000,
 	maxIntervals: 100,
 	maxInsertLength: 10,
