@@ -2102,7 +2102,7 @@ export class ContainerRuntime
 				default:
 					assert(
 						!runtimeMessage,
-						`ContainerRuntimeMessage type should have been validated already [type: ${message.type}]`,
+						"ContainerRuntimeMessage type should have been validated already",
 					);
 			}
 
