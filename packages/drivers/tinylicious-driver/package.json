@@ -55,7 +55,7 @@
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.5.2.0",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",

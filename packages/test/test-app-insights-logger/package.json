@@ -62,7 +62,7 @@
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/random-js": "^1.0.31",
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
