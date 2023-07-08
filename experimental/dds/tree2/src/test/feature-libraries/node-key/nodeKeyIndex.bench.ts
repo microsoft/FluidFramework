@@ -16,6 +16,7 @@ import {
 	localNodeKeySymbol,
 	SchemaBuilder,
 	FieldKinds,
+	nodeKeyFieldKey,
 } from "../../../feature-libraries";
 import {
 	rootFieldKeySymbol,
@@ -23,13 +24,11 @@ import {
 	moveToDetachedField,
 	JsonableTree,
 	AllowedUpdateType,
-	symbolFromKey,
 } from "../../../core";
-import { nodeKeySchema } from "../../../domains";
+import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
+import { brand } from "../../../util";
 
-const { schema: nodeKeyLibrary, field: nodeKeyField, type: nodeKeyType } = nodeKeySchema();
-
-const builder = new SchemaBuilder("node key index benchmarks", nodeKeyLibrary);
+const builder = new SchemaBuilder("node key index benchmarks", nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	child: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,
@@ -37,15 +36,13 @@ const nodeSchema = builder.structRecursive("node", {
 		() => nodeWithKeySchema,
 	),
 });
-const nodeWithKeySchema = builder.objectRecursive("nodeWithKey", {
-	local: {
-		child: SchemaBuilder.fieldRecursive(
-			FieldKinds.optional,
-			() => nodeWithKeySchema,
-			() => nodeSchema,
-		),
-	},
-	global: [nodeKeyField],
+const nodeWithKeySchema = builder.structRecursive("nodeWithKey", {
+	...nodeKeyField,
+	child: SchemaBuilder.fieldRecursive(
+		FieldKinds.optional,
+		() => nodeWithKeySchema,
+		() => nodeSchema,
+	),
 });
 const schemaData = builder.intoDocumentSchema(
 	SchemaBuilder.fieldOptional(nodeSchema, nodeWithKeySchema),
@@ -78,10 +75,10 @@ describe("Node Key Index Benchmarks", () => {
 					nodeKey !== undefined
 						? {
 								type: nodeWithKeySchema.name,
-								globalFields: {
-									[nodeKeyField.key]: [
+								fields: {
+									[nodeKeyFieldKey]: [
 										{
-											type: nodeKeyType,
+											type: nodeKeyTreeSchema.name,
 											value: view.nodeKey.stabilize(nodeKey),
 										},
 									],
@@ -126,7 +123,7 @@ describe("Node Key Index Benchmarks", () => {
 							cursor.firstNode();
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									cursor.enterField(symbolFromKey(nodeKeyField.key));
+									cursor.enterField(brand(nodeKeyFieldKey));
 									cursor.enterNode(0);
 									const id = ids[i];
 									const stableId =
