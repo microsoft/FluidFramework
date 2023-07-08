@@ -162,7 +162,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-						enableWholeSummaryTreeOnFirstSummary: true,
+						enableAnyBinaryBlobOnFirstSummary : true,
 					})
 				).content;
 

@@ -40,11 +40,11 @@ export function create(storage: IDocumentStorage): Router {
 		const id = request.body.id || uuid();
 
 		const summary =
-			request.body.enableWholeSummaryTreeOnFirstSummary === true
+			request.body.enableAnyBinaryBlobOnFirstSummary 
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
 				: request.body.summary;
 		winston.info(
-			`SummaryTree converted = ${request.body.enableWholeSummaryTreeOnFirstSummary}.`,
+			`SummaryTree converted = ${request.body.enableAnyBinaryBlobOnFirstSummary }.`,
 		);
 
 		// Protocol state

@@ -4,12 +4,7 @@
  */
 
 import assert from "assert";
-import {
-	Uint8ArrayToString,
-	fromBase64ToUtf8,
-	fromUtf8ToBase64,
-	stringToBuffer,
-} from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
 import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
@@ -248,6 +243,35 @@ describe("Storage Utils", () => {
 			type: SummaryType.Tree,
 		};
 
+		const summaryWithUnreferencedNode: ISummaryTree = {
+			type: SummaryType.Tree,
+			tree: {
+				default: {
+					type: SummaryType.Tree,
+					tree: {
+						".component": {
+							type: SummaryType.Blob,
+							content: JSON.stringify("defaultDataStore"),
+						},
+						"root": {
+							type: SummaryType.Tree,
+							tree: {
+								attributes: {
+									type: SummaryType.Blob,
+									content: JSON.stringify("rootattributes"),
+								},
+							},
+						},
+						"unref": {
+							type: SummaryType.Tree,
+							tree: {},
+							unreferenced: true,
+						},
+					},
+				},
+			},
+		};
+
 		it("Validate summary tree conversion", () => {
 			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
 				undefined,
@@ -258,6 +282,31 @@ describe("Storage Utils", () => {
 			const newSummaryTree =
 				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
 			assert.deepStrictEqual(newSummaryTree, summaryTree);
+		});
+
+		it("Validate summary with unreferenced node tree conversion", () => {
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				summaryWithUnreferencedNode,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, summaryWithUnreferencedNode);
+		});
+
+		it("Validate empty summary tree conversion", () => {
+			const emptySummaryTree: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				emptySummaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, emptySummaryTree);
 		});
 	});
 });
