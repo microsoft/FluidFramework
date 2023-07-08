@@ -245,7 +245,6 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 				const treePayload = (entry as IWholeSummaryTreeValueEntry)
 					.value as IWholeSummaryTree;
 				const nodeReferenced = (entry as IWholeSummaryTreeValueEntry).unreferenced;
-				
 				tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(
 					treePayload,
 					nodeReferenced,
