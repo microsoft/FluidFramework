@@ -215,7 +215,7 @@ export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 }
 
-interface PendingLocalState {
+export interface PendingLocalState {
 	pending: IPendingLocalState | undefined;
 	pendingAttachmentBlobs: IPendingBlobs;
 }

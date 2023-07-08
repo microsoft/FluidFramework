@@ -629,6 +629,18 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
 
+// @public (undocumented)
+export interface PendingLocalState {
+    // Warning: (ae-forgotten-export) The symbol "IPendingLocalState" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    pending: IPendingLocalState | undefined;
+    // Warning: (ae-forgotten-export) The symbol "IPendingBlobs" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    pendingAttachmentBlobs: IPendingBlobs;
+}
+
 // @public
 export enum RuntimeHeaders {
     viaHandle = "viaHandle",

@@ -24,6 +24,7 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	PendingLocalState,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";
