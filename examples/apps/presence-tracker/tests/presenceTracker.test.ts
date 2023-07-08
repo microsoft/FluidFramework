@@ -34,9 +34,21 @@ describe("presence-tracker", () => {
 	});
 
 	it("Current User is displayed", async () => {
-		await page.waitForFunction(
-			() => document.getElementById("focus-div")?.innerHTML.startsWith("Current user"),
-			{ timeout: 10000 },
+		const elementHandle = await page.waitForFunction(() =>
+			document.getElementById("focus-div"),
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		const innerHTML = await page.evaluate((element) => element.innerHTML.trim(), elementHandle);
+		console.log(innerHTML.startsWith("Current user"));
+		expect(innerHTML).toMatch(/^Current user:/);
+	});
+
+	it("Current User is missing focus", async () => {
+		const elementHandle = await page.waitForFunction(() =>
+			document.getElementById("focus-div"),
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		const innerHTML = await page.evaluate((element) => element.innerHTML.trim(), elementHandle);
+		expect(innerHTML.endsWith("has focus")).toBe(true);
 	});
 });
