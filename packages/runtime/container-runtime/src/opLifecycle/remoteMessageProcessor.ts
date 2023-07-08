@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, SequencedContainerRuntimeMessage } from "../containerRuntime";
+import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -24,11 +24,9 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
-	//* Update comments given we're not validating in here anymore
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
 	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
-	 * @throws DataProcessingError if any inner message doesn't adhere to expectations for a ContainerRuntimeMessage
 	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
 	 */
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
@@ -48,7 +46,6 @@ export class RemoteMessageProcessor {
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					//* requireContainerRuntimeMessage(ungroupedMessage2);
 					result.push(ungroupedMessage2);
 					continue;
 				}
@@ -67,7 +64,6 @@ export class RemoteMessageProcessor {
 						if (decompressionAfterChunking.state === "Skipped") {
 							// After chunking, if the original message was not compressed,
 							// there is no need to continue processing
-							//* requireContainerRuntimeMessage(ungroupedMessageAfterChunking2);
 							result.push(ungroupedMessageAfterChunking2);
 							continue;
 						}
@@ -103,33 +99,24 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 
 /**
  * For a given message, it moves the nested contents and type on level up.
- * @throws DataProcessingError if the inner message doesn't adhere to expectations for a ContainerRuntimeMessage
- * @returns void - If it doesn't throw, the provided message is now known to be a SequencedContainerRuntimeMessage
+ *
  */
-function unpack(
-	message: ISequencedDocumentMessage,
-): asserts message is SequencedContainerRuntimeMessage {
-	//*	requireContainerRuntimeMessage(message.contents);
-	const innerContainerRuntimeMessage = message.contents;
-
-	message.type = innerContainerRuntimeMessage.type;
-	message.contents = innerContainerRuntimeMessage.contents;
-}
+const unpack = (message: ISequencedDocumentMessage) => {
+	const innerContents = message.contents as ContainerRuntimeMessage;
+	message.type = innerContents.type;
+	message.contents = innerContents.contents;
+};
 
 /**
  * Unpacks runtime messages.
  *
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
- * @throws DataProcessingError in some cases if the unpacked message doesn't adhere to
- * expectations for a ContainerRuntimeMessage
- * @returns whether the given message was unpacked and is now a SequencedContainerRuntimeMessage
+ * @returns whether the given message was unpacked
  *
  * @internal
  */
-export function unpackRuntimeMessage(
-	message: ISequencedDocumentMessage,
-): message is SequencedContainerRuntimeMessage {
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.

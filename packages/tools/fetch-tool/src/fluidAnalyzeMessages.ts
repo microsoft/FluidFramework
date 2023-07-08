@@ -537,7 +537,7 @@ function processOp(
 	let totalMsgSize = msgSize;
 	let opCount = 1;
 	if (unpackRuntimeMessage(runtimeMessage)) {
-		const messageType = runtimeMessage.type;
+		const messageType = runtimeMessage.type as ContainerMessageType;
 		switch (messageType) {
 			case ContainerMessageType.Attach: {
 				const attachMessage = runtimeMessage.contents as IAttachMessage;

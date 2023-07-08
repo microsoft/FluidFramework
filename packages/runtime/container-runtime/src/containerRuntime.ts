@@ -43,7 +43,6 @@ import {
 	loggerToMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
-	isFluidError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -215,47 +214,6 @@ export enum ContainerMessageType {
 export interface ContainerRuntimeMessage {
 	contents: any;
 	type: ContainerMessageType;
-}
-
-/**
- * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
- * promoted up to the outer object
- */
-export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
-
-/** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
-export function requireContainerRuntimeMessage(
-	message: any,
-): asserts message is ContainerRuntimeMessage {
-	const maybeContainerRuntimeMessage = message as ContainerRuntimeMessage;
-	switch (maybeContainerRuntimeMessage.type) {
-		case ContainerMessageType.Attach:
-		case ContainerMessageType.Alias:
-		case ContainerMessageType.FluidDataStoreOp:
-		case ContainerMessageType.BlobAttach:
-		case ContainerMessageType.IdAllocation:
-		case ContainerMessageType.ChunkedOp:
-		case ContainerMessageType.Rejoin:
-			return;
-		default: {
-			// Type safety on missing known cases
-			((_: never) => {})(maybeContainerRuntimeMessage.type);
-
-			const error = DataProcessingError.create(
-				// Former assert 0x3ce
-				"Runtime message of unknown type",
-				"OpProcessing",
-				message,
-				{
-					type: message.type,
-					contentType: typeof message.contents,
-					batch: message.metadata?.batch,
-					compression: message.compression,
-				},
-			);
-			throw error;
-		}
-	}
 }
 
 export interface ISummaryBaseConfiguration {
@@ -2042,15 +2000,8 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		try {
-			for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-				this.processCore(message, local, runtimeMessage);
-			}
-		} catch (e: unknown) {
-			if (isFluidError(e)) {
-				e.addTelemetryProperties({ local });
-			}
-			throw e;
+		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+			this.processCore(message, local, runtimeMessage);
 		}
 	}
 
@@ -2061,10 +2012,6 @@ export class ContainerRuntime
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
-		if (runtimeMessage) {
-			requireContainerRuntimeMessage(message);
-		}
-
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -2084,7 +2031,8 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			switch (message.type) {
+			const type = message.type as ContainerMessageType;
+			switch (type) {
 				case ContainerMessageType.Attach:
 					this.dataStores.processAttachMessage(message, local);
 					break;
@@ -2108,10 +2056,23 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					assert(
-						!runtimeMessage,
-						"ContainerRuntimeMessage type should have been validated already for a runtimeMessage",
-					);
+					if (runtimeMessage) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								type: message.type,
+								contentType: typeof message.contents,
+								batch: message.metadata?.batch,
+								compression: message.compression,
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
 			}
 
 			if (runtimeMessage || this.groupedBatchingEnabled) {
@@ -3305,7 +3266,7 @@ export class ContainerRuntime
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
-	 * @param content - The content of the original message.
+	 * @param message - The original ContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmitCore(
