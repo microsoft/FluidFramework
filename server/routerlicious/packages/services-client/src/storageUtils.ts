@@ -218,6 +218,33 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 }
 
 /**
+ * Validates whether the entry is an IWholeSummaryTreeEntry with a value field
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryTreeEntry type
+ */
+function isWholeSummaryTreeValueEntry(obj: any): obj is IWholeSummaryTreeValueEntry {
+	return obj && typeof obj === "object" && "value" in obj;
+}
+
+/**
+ * Validates whether a specific value is of IWholeSummaryBlob type.
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryBlob type
+ */
+function isWholeSummaryBlob(obj: unknown): obj is IWholeSummaryBlob {
+	return obj && typeof obj === "object" && "content" in obj;
+}
+
+/**
+ * Validates whether a specific value is of IWholeSummaryBlob type.
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryBlob type
+ */
+function isWholeSummaryTree(obj: any): obj is IWholeSummaryTree {
+	return obj && typeof obj === "object" && "type" in obj;
+}
+
+/**
  * Converts existing IWholeSummaryTree to ISummaryTree for the first summary (without Handle entries)
  * @param wholeSummaryTree - wholeSummaryTree used on the payload for creating and uploading a document.
  * @returns Summary tree to be used when creating a new document.
@@ -230,8 +257,9 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 	for (const entry of wholeSummaryTree.entries) {
 		switch (entry.type) {
 			case "blob": {
-				const blobPayload = (entry as IWholeSummaryTreeValueEntry)
-					.value as IWholeSummaryBlob;
+				assert(isWholeSummaryTreeValueEntry(entry), "Invalid entry type");
+				assert(isWholeSummaryBlob(entry.value), "entry value is not an IWholeSummaryBlob");
+				const blobPayload = entry.value;
 				tree[entry.path] = {
 					type: SummaryType.Blob,
 					content:
@@ -242,9 +270,10 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 				break;
 			}
 			case "tree": {
-				const treePayload = (entry as IWholeSummaryTreeValueEntry)
-					.value as IWholeSummaryTree;
-				const nodeReferenced = (entry as IWholeSummaryTreeValueEntry).unreferenced;
+				assert(isWholeSummaryTreeValueEntry(entry), "Invalid entry type");
+				assert(isWholeSummaryTree(entry.value), "entry value is not an IWholeSummaryTree");
+				const treePayload = entry.value;
+				const nodeReferenced = entry.unreferenced;
 				tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(
 					treePayload,
 					nodeReferenced,
