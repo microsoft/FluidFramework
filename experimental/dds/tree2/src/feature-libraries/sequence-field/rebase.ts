@@ -707,8 +707,7 @@ function addLineageEntry(
 					offset: lastEntry.offset + offset,
 				};
 				return;
-			} else if (lastEntry.offset === 0 && offset === 0) {
-				// Both entries are entirely after the mark
+			} else if (offset === 0) {
 				mark.lineage[mark.lineage.length - 1] = {
 					...lastEntry,
 					count: lastEntry.count + count,
