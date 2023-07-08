@@ -654,9 +654,6 @@ export enum RuntimeMessage {
 }
 
 // @public
-export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
-
-// @public
 export interface SubmitSummaryFailureData {
     // (undocumented)
     stage: SummaryStage;
@@ -760,7 +757,7 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): message is SequencedContainerRuntimeMessage;
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)
 
