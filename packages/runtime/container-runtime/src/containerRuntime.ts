@@ -2007,6 +2007,12 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
+	/**
+	 * Direct the message to the correct subsystem for processing, and implement other side effects
+	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
+	 * @param local - Did this client send the op?
+	 * @param runtimeMessage - Does this appear like a current ContainerRuntimeMessage?  If true, certain validation will occur.
+	 */
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
