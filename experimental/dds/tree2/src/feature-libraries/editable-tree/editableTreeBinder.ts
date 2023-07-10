@@ -334,7 +334,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					listeners: new Set(),
 					children: new Map(),
 				};
-				assert(contextRoots !== undefined, "expected contextRoots to be defined");
+				assert(contextRoots !== undefined, 0x6da /* expected contextRoots to be defined */);
 				contextRoots.set(tree.field, newRoot);
 				this.bindTree(contextType, tree, listener, newRoot);
 			} else {
@@ -387,7 +387,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				foundTree.listeners.delete(listener);
 			} else {
 				tree.children.forEach((childTree, fieldKey) => {
-					assert(foundTree !== undefined, "expected foundTree to be defined");
+					assert(foundTree !== undefined, 0x6db /* expected foundTree to be defined */);
 					const childCallTree = foundTree.children.get(fieldKey);
 					if (childCallTree !== undefined) {
 						this.unregisterListener(contextType, childTree, listener, childCallTree);
@@ -666,7 +666,7 @@ class AbstractDataBinder<
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
 				anchor[on]("subtreeChanging", (upPath: UpPath) => {
-					assert(newVisitor !== undefined, "visitor expected to be defined");
+					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
 					}
@@ -728,8 +728,8 @@ class BufferingDataBinder<E extends Events<E>>
 		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
-			assert(pathA !== undefined, "pathA expected to be defined");
-			assert(pathB !== undefined, "pathB expected to be defined");
+			assert(pathA !== undefined, 0x6dd /* pathA expected to be defined */);
+			assert(pathB !== undefined, 0x6de /* pathB expected to be defined */);
 			return sortFn(pathA, pathB);
 		};
 		const sortedVisitors: BufferingPathVisitor[] = nativeSort(unsortedVisitors, compareFn);

@@ -131,6 +131,7 @@ describe("Runtime", () => {
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
+							clientId: "fakeClientId",
 						};
 					};
 
@@ -261,6 +262,66 @@ describe("Runtime", () => {
 							"third message should be the batch end",
 						);
 					});
+
+					it("Resubmitting batch preserves original batches", async () => {
+						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+						(containerRuntime as any).dataStores = {
+							setConnectionState: (_connected: boolean, _clientId?: string) => {},
+							// Pass data store op right back to ContainerRuntime
+							resubmitDataStoreOp: (envelope, localOpMetadata) => {
+								containerRuntime.submitDataStoreOp(
+									envelope.address,
+									envelope.contents,
+									localOpMetadata,
+								);
+							},
+						} as DataStores;
+
+						containerRuntime.setConnectionState(false);
+
+						containerRuntime.orderSequentially(() => {
+							containerRuntime.submitDataStoreOp("1", "test");
+							containerRuntime.submitDataStoreOp("2", "test");
+							containerRuntime.submitDataStoreOp("3", "test");
+						});
+						(containerRuntime as any).flush();
+
+						containerRuntime.orderSequentially(() => {
+							containerRuntime.submitDataStoreOp("4", "test");
+							containerRuntime.submitDataStoreOp("5", "test");
+							containerRuntime.submitDataStoreOp("6", "test");
+						});
+						(containerRuntime as any).flush();
+
+						assert.strictEqual(
+							submittedOpsMetdata.length,
+							0,
+							"no messages should be sent",
+						);
+
+						containerRuntime.setConnectionState(true);
+
+						assert.strictEqual(
+							submittedOpsMetdata.length,
+							6,
+							"6 messages should be sent",
+						);
+
+						const expectedBatchMetadata = [
+							{ batch: true },
+							undefined,
+							{ batch: false },
+							{ batch: true },
+							undefined,
+							{ batch: false },
+						];
+
+						assert.deepStrictEqual(
+							submittedOpsMetdata,
+							expectedBatchMetadata,
+							"batch metadata does not match",
+						);
+					});
 				});
 			}));
 
@@ -369,6 +430,40 @@ describe("Runtime", () => {
 						error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
 					})),
 				);
+			});
+
+			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{
+						flushMode: FlushMode.Immediate,
+					}, // runtimeOptions
+				);
+
+				assert.throws(() =>
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.orderSequentially(() => {});
+					}),
+				);
+			});
+
+			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				const callback = () => {
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.submitDataStoreOp("id", "test");
+						callback();
+					});
+				};
+				assert.throws(() => callback());
 			});
 		});
 
@@ -1087,6 +1182,7 @@ describe("Runtime", () => {
 					gcAllowed: true,
 				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+				enableGroupedBatching: true,
 			};
 
 			const defaultRuntimeOptions = {
@@ -1119,7 +1215,9 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({ idCompressorEnabled: false }),
+						featureGates: JSON.stringify({
+							idCompressorEnabled: false,
+						}),
 					},
 				]);
 			});
@@ -1130,6 +1228,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
+					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1149,6 +1248,7 @@ describe("Runtime", () => {
 							disableChunking: true,
 							idCompressorEnabled: true,
 						}),
+						groupedBatchingEnabled: false,
 					},
 				]);
 			});

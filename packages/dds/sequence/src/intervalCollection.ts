@@ -1367,6 +1367,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			}
 
 			if (props) {
+				// This check is intended to prevent scenarios where a random interval is created and then
+				// inserted into a collection. The aim is to ensure that the collection is created first
+				// then the user can create/add intervals based on the collection
+				if (
+					props[reservedRangeLabelsKey] !== undefined &&
+					props[reservedRangeLabelsKey][0] !== this.label
+				) {
+					throw new LoggingError(
+						"Adding an interval that belongs to another interval collection is not permitted",
+					);
+				}
 				interval.addProperties(props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
@@ -1713,6 +1724,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * endpoints. These references should be used for position information only.
 	 * `local` reflects whether the change originated locally.
 	 * `op` is defined if and only if the server has acked this change.
+	 * `slide` is true if the change is due to sliding on removal of position
 	 */
 	(
 		event: "changeInterval",
@@ -1721,6 +1733,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			previousInterval: TInterval,
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
+			slide: boolean,
 		) => void,
 	);
 	/**
@@ -2050,7 +2063,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			client,
 			label,
 			this.helpers,
-			(interval, previousInterval) => this.emitChange(interval, previousInterval, true),
+			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
@@ -2090,6 +2103,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		interval: TInterval,
 		previousInterval: TInterval,
 		local: boolean,
+		slide: boolean,
 		op?: ISequencedDocumentMessage,
 	): void {
 		// Temporarily make references transient so that positional queries work (non-transient refs
@@ -2102,11 +2116,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			endRefType = previousInterval.end.refType;
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
-			this.emit("changeInterval", interval, previousInterval, local, op);
+			this.emit("changeInterval", interval, previousInterval, local, op, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
-			this.emit("changeInterval", interval, previousInterval, local, op);
+			this.emit("changeInterval", interval, previousInterval, local, op, slide);
 		}
 	}
 
@@ -2225,6 +2239,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (!props) {
 			throw new LoggingError("changeProperties should be called with a property set");
 		}
+		// prevent the overwriting of an interval label, it should remain unchanged
+		// once it has been inserted into the collection.
+		if (props[reservedRangeLabelsKey] !== undefined) {
+			throw new LoggingError(
+				"The label property should not be modified once inserted to the collection",
+			);
+		}
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
@@ -2276,7 +2297,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			this.addPendingChange(id, serializedInterval);
-			this.emitChange(newInterval, interval, true);
+			this.emitChange(newInterval, interval, true, false);
 			return newInterval;
 		}
 		// No interval to change
@@ -2412,7 +2433,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 
 			if (newInterval !== interval) {
-				this.emitChange(newInterval, interval, local, op);
+				this.emitChange(newInterval, interval, local, false, op);
 			}
 
 			const changedProperties = Object.keys(newProps).length > 0;
@@ -2635,7 +2656,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
 			this.localCollection.add(interval);
-			this.emitChange(interval, oldInterval as TInterval, true, op);
+			this.emitChange(interval, oldInterval as TInterval, true, true, op);
 		}
 	}
 

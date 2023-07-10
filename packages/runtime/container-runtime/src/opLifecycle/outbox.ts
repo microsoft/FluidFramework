@@ -10,11 +10,11 @@ import {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { PendingStateManager } from "../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -31,6 +31,7 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
+	readonly enableGroupedBatching: boolean;
 }
 
 export interface IOutboxParameters {
@@ -43,18 +44,40 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryLoggerExt;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
+	readonly reSubmit: (message: IPendingBatchMessage) => void;
+	readonly opReentrancy: () => boolean;
+	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
-function getLongStack(action: () => Error): Error {
-	// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-	try {
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		(Error as any).stackTraceLimit = 50;
-		const result = action();
-		(Error as any).stackTraceLimit = originalStackTraceLimit;
-		return result;
-	} catch (error) {
+/**
+ * Temporarily increase the stack limit while executing the provided action.
+ * If a negative value is provided for `length`, no stack frames will be collected.
+ * If Infinity is provided, all frames will be collected.
+ *
+ * ADO:4663 - add this to the common packages.
+ *
+ * @param action - action which returns an error
+ * @param length - number of stack frames to collect, 50 if unspecified.
+ * @returns the result of the action provided
+ */
+export function getLongStack<T>(action: () => T, length: number = 50): T {
+	const errorObj = Error as any;
+	if (
+		(
+			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit") ||
+			{}
+		).writable !== true
+	) {
 		return action();
+	}
+
+	const originalStackTraceLimit = errorObj.stackTraceLimit;
+	try {
+		errorObj.stackTraceLimit = length;
+		return action();
+	} finally {
+		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
 
@@ -63,6 +86,8 @@ export class Outbox {
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
+	private batchRebasesToReport = 5;
+	private rebasing = false;
 
 	/**
 	 * Track the number of ops which were detected to have a mismatched
@@ -132,7 +157,7 @@ export class Outbox {
 		}
 
 		if (!this.params.config.disablePartialFlush) {
-			this.flush();
+			this.flushAll();
 		}
 	}
 
@@ -142,6 +167,7 @@ export class Outbox {
 		if (
 			!this.mainBatch.push(
 				message,
+				this.isContextReentrant(),
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 			)
 		) {
@@ -160,16 +186,18 @@ export class Outbox {
 		if (
 			!this.attachFlowBatch.push(
 				message,
+				this.isContextReentrant(),
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 			)
 		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.attachFlowBatch.popBatch());
+			this.flushInternal(this.attachFlowBatch);
 			if (
 				!this.attachFlowBatch.push(
 					message,
+					this.isContextReentrant(),
 					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
 				)
 			) {
@@ -191,20 +219,83 @@ export class Outbox {
 			this.attachFlowBatch.contentSizeInBytes >=
 			this.params.config.compressionOptions.minimumBatchSizeInBytes
 		) {
-			this.flushInternal(this.attachFlowBatch.popBatch());
+			this.flushInternal(this.attachFlowBatch);
 		}
 	}
 
 	public flush() {
-		this.flushInternal(this.attachFlowBatch.popBatch());
-		this.flushInternal(this.mainBatch.popBatch());
+		if (this.isContextReentrant()) {
+			const error = new UsageError("Flushing is not supported inside DDS event handlers");
+			this.params.closeContainer(error);
+			throw error;
+		}
+
+		this.flushAll();
 	}
 
-	private flushInternal(rawBatch: IBatch) {
+	private flushAll() {
+		this.flushInternal(this.attachFlowBatch);
+		this.flushInternal(this.mainBatch);
+	}
+
+	private flushInternal(batchManager: BatchManager) {
+		if (batchManager.empty) {
+			return;
+		}
+
+		const rawBatch = batchManager.popBatch();
+		if (rawBatch.hasReentrantOps === true && this.params.config.enableGroupedBatching) {
+			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
+			// If a batch contains reentrant ops (ops created as a result from processing another op)
+			// it needs to be rebased so that we can ensure consistent reference sequence numbers
+			// and eventual consistency at the DDS level.
+			this.rebase(rawBatch, batchManager);
+			return;
+		}
+
 		const processedBatch = this.compressBatch(rawBatch);
 		this.sendBatch(processedBatch);
 
 		this.persistBatch(rawBatch.content);
+	}
+
+	/**
+	 * Rebases a batch. All the ops in the batch are resubmitted to the runtime and
+	 * they will end up back in the same batch manager they were flushed from and subsequently flushed.
+	 *
+	 * @param rawBatch - the batch to be rebased
+	 */
+	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
+		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+
+		this.rebasing = true;
+		for (const message of rawBatch.content) {
+			this.params.reSubmit({
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				content: message.contents!,
+				localOpMetadata: message.localOpMetadata,
+				opMetadata: message.metadata,
+			});
+		}
+
+		if (this.batchRebasesToReport > 0) {
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "BatchRebase",
+					length: rawBatch.content.length,
+					referenceSequenceNumber: rawBatch.referenceSequenceNumber,
+				},
+				new UsageError("BatchRebase"),
+			);
+			this.batchRebasesToReport--;
+		}
+
+		this.flushInternal(batchManager);
+		this.rebasing = false;
+	}
+
+	private isContextReentrant(): boolean {
+		return this.params.opReentrancy() && !this.rebasing;
 	}
 
 	private compressBatch(batch: IBatch): IBatch {
