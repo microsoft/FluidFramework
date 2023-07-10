@@ -68,7 +68,10 @@ export interface ViewEvents {
 	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
 	 * stack which cannot be modified and no additional information about the change is provided.
 	 *
-	 * Merging and rebasing branches can cause the order of revertibles in the undo/redo stack to change.
+	 * This event should only be subscribed to when coming from the local branch. The order of revertible events coming
+	 * from any other branch is not guaranteed to be correct.
+	 * 
+	 * This is because merging and rebasing branches can cause the order of revertibles in the undo/redo stack to change.
 	 * Therefore, the order of revertible events are not guaranteed to be reflective of the order of the undo/redo
 	 * stack in these cases. The only exception is merging a branch into the local branch because the order of commits is
 	 * not changed in this case.
