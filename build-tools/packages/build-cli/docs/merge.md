@@ -12,7 +12,7 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-v | --quiet] [-r <value>]
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> --reviewers <value> [-v | --quiet] [-r <value>]
 
 FLAGS
   -a, --auth=<value>       (required) GitHub authentication token. For security reasons, this value should be passed
@@ -21,6 +21,7 @@ FLAGS
   -r, --remote=<value>     [default: origin]
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name
+  --reviewers=<value>...   (required) Add reviewers to PR
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

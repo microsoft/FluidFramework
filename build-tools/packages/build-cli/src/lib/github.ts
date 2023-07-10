@@ -10,6 +10,7 @@ const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
+const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 
 /**
  *
@@ -72,6 +73,7 @@ export async function createPullRequest(
 		assignee: string;
 		title: string;
 		description: string;
+		reviewers: string[];
 	},
 	log: CommandLogger,
 ): Promise<any> {
@@ -95,13 +97,13 @@ export async function createPullRequest(
 	});
 
 	log.log(`Adding reviewer to pull request ${newPr.data.number}`);
-	// await octokit.request(REVIEWER, {
-	// 	owner: pr.owner,
-	// 	repo: pr.repo,
-	// 	pull_number: newPr.data.number,
-	// 	reviewers: [""],
-	// 	team_reviewers: [""],
-	// });
+	await octokit.request(REVIEWER, {
+		owner: pr.owner,
+		repo: pr.repo,
+		pull_number: newPr.data.number,
+		reviewers: pr.reviewers,
+		team_reviewers: [""],
+	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);
 	await octokit.request(LABEL, {

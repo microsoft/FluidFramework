@@ -45,6 +45,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "r",
 			default: "origin",
 		}),
+		reviewers: Flags.string({
+			description: "Add reviewers to PR",
+			required: true,
+			multiple: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -255,6 +260,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			assignee: username,
 			title: prTitle,
 			description,
+			reviewers: flags.reviewers,
 		};
 
 		this.log(`Initiate PR creation: ${prObject}}`);
