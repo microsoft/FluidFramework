@@ -2,17 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode";
-import { renderFocusPresence, renderMousePresence } from "./view";
+
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "../src/containerCode";
+import { renderFocusPresence, renderMousePresence } from "../src/view";
 
 /**
- * Start the app and render.
- *
- * @remarks We wrap this in an async function so we can await Fluid's async calls.
+ * This is a helper function for loading the page. It's required because getting the Fluid Container
+ * requires making async calls.
  */
-async function start() {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<ITrackerAppModel>(
+async function setup() {
+	const sessionStorageModelLoader = new SessionStorageModelLoader<ITrackerAppModel>(
 		new StaticCodeLoader(new TrackerContainerRuntimeFactory()),
 	);
 
@@ -23,23 +23,34 @@ async function start() {
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.substring(1);
-		model = await tinyliciousModelLoader.loadExisting(id);
+		model = await sessionStorageModelLoader.loadExisting(id);
 	}
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
 	document.title = id;
 
+	// Render page focus information for audience members
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
 	renderFocusPresence(model.focusTracker, contentDiv);
 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
-start().catch(console.error);
+setup().catch((e) => {
+	console.error(e);
+	console.log(
+		"%cThere were issues setting up and starting the in memory FLuid Server",
+		"font-size:30px",
+	);
+});

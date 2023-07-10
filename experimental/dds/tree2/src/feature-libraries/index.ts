@@ -175,7 +175,6 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 export {
-	buildNodeKeySchema,
 	compareLocalNodeKeys,
 	LocalNodeKey,
 	createNodeKeyManager,
@@ -183,6 +182,8 @@ export {
 	StableNodeKey,
 	NodeKeyIndex,
 	NodeKeyManager,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
 } from "./node-key";
 
 export {

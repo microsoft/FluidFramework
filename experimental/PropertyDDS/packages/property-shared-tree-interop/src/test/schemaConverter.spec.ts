@@ -353,6 +353,18 @@ describe("schema converter", () => {
 			);
 		});
 
+		it(`can use independent and 'Any' types as allowed root types`, () => {
+			// note: "Test:IndependentType-1.0.0" does not belong to any inheritance chain i.e.
+			// it is not included into the full schema automatically
+			const extraTypeName: TreeSchemaIdentifier = brand("Test:IndependentType-1.0.0");
+			const fullSchemaData = convertSchema(
+				FieldKinds.optional,
+				new Set([extraTypeName, Any]),
+			);
+			assert(fullSchemaData.treeSchema.get(extraTypeName) !== undefined);
+			assert(fullSchemaData.root.types === undefined);
+		});
+
 		it(`can use extra schemas`, () => {
 			// note: "Test:IndependentType-1.0.0" does not belong to any inheritance chain i.e.
 			// it is not included into the full schema automatically
