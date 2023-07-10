@@ -68,7 +68,7 @@ export interface ViewEvents {
 	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
 	 * stack which cannot be modified and no additional information about the change is provided.
 	 * 
-	 * Revertible events are emitted when merging a view into another view but not when rebasing onto another view. This is because
+	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
 	 * rebasing onto another view can cause the relative ordering of revertible commits to change so there is no guarantee they
 	 * are accurate.
 	 * 
