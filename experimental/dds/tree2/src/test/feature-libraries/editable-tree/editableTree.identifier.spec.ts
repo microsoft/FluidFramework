@@ -19,7 +19,7 @@ import { AllowedUpdateType, ValueSchema } from "../../../core";
 import { brand } from "../../../util";
 
 const builder = new SchemaBuilder("EditableTree Node Keys", nodeKeySchema);
-const stringSchema = builder.primitive("string", ValueSchema.String);
+const stringSchema = builder.leaf("string", ValueSchema.String);
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
 	name: SchemaBuilder.fieldValue(stringSchema),

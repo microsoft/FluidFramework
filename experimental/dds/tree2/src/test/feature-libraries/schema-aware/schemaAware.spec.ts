@@ -54,7 +54,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const builder = new SchemaBuilder("Schema Aware tests");
 
 	// Declare a simple type which just holds a number.
-	const numberSchema = builder.primitive("number", ValueSchema.Number);
+	const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 	// Check the various ways to refer to child types produce the same results
 	{
@@ -211,8 +211,8 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test polymorphic cases:
 	{
 		const builder2 = new SchemaBuilder("Schema Aware polymorphic");
-		const bool = builder2.primitive("bool", ValueSchema.Boolean);
-		const str = builder2.primitive("str", ValueSchema.String);
+		const bool = builder2.leaf("bool", ValueSchema.Boolean);
+		const str = builder2.leaf("str", ValueSchema.String);
 		const parentField = SchemaBuilder.fieldValue(str, bool);
 		const parent = builder2.struct("parent", { child: parentField });
 
@@ -454,7 +454,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
 		const builder = new SchemaBuilder("SchemaAware");
-		const stringSchema = builder.primitive("string", ValueSchema.String);
+		const stringSchema = builder.leaf("string", ValueSchema.String);
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.fieldSequence(stringSchema),
 		});
