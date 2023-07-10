@@ -10652,6 +10652,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.22.0
+      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
@@ -10663,6 +10664,8 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
+      '@microsoft/oteljs': ^4.13.14
+      '@microsoft/oteljs-1ds': ^4.13.14
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
@@ -10715,7 +10718,10 @@ importers:
       '@fluentui/react': 8.109.4_74b3ggvk3akyhuq4eydyx3fqim
       '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluid-experimental/devtools-view': link:../devtools-view
+      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@microsoft/oteljs': 4.14.0
+      '@microsoft/oteljs-1ds': 4.14.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -19109,6 +19115,26 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
+  /@microsoft/1ds-core-js/3.2.12_tslib@1.14.1:
+    resolution: {integrity: sha1-gJ0hoS1IXwuzYdQGZUGxv2S8HXA=}
+    dependencies:
+      '@microsoft/applicationinsights-core-js': 2.8.14_tslib@1.14.1
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    transitivePeerDependencies:
+      - tslib
+    dev: false
+
+  /@microsoft/1ds-post-js/3.2.12_tslib@1.14.1:
+    resolution: {integrity: sha1-t1SJfh+82+m13OxU1v9qdho5DoM=}
+    dependencies:
+      '@microsoft/1ds-core-js': 3.2.12_tslib@1.14.1
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    transitivePeerDependencies:
+      - tslib
+    dev: false
+
   /@microsoft/api-documenter/7.22.5:
     resolution: {integrity: sha512-umZ2Xn/q8CXi31pQ3+6aQdjmNULej41VSuKm5AFf8QT/75bqJmjstiwb4t1M9I4ZBIrfnGcn217h9XKp0Xkf9w==}
     hasBin: true
@@ -19259,6 +19285,16 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@microsoft/applicationinsights-core-js/2.8.14_tslib@1.14.1:
+    resolution: {integrity: sha1-gOPZ1CEC50FJRybXiskjCYutcTI=}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+      tslib: 1.14.1
+    dev: false
+
   /@microsoft/applicationinsights-dependencies-js/2.8.13_tslib@1.14.1:
     resolution: {integrity: sha512-Ix4ej+Brohj0iUlWRMuFr7uK902C7R20zAvvzEwDiKFp4DTxue3kLr+ClxxLedMmMoI2M+N4UoA0081jJqUfmg==}
     peerDependencies:
@@ -19284,7 +19320,7 @@ packages:
     dev: false
 
   /@microsoft/applicationinsights-shims/2.0.2:
-    resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
+    resolution: {integrity: sha1-krNqCTdeLZyytCAzg7BXcr6DcIU=}
     dev: false
 
   /@microsoft/applicationinsights-web-snippet/1.0.1:
@@ -19308,11 +19344,26 @@ packages:
     dev: false
 
   /@microsoft/dynamicproto-js/1.1.9:
-    resolution: {integrity: sha512-n1VPsljTSkthsAFYdiWfC+DKzK2WwcRp83Y1YAqdX552BstvsDjft9YXppjUzp11BPsapDoO1LDgrDB0XVsfNQ==}
+    resolution: {integrity: sha1-dDfbeqBhFi7pTkExtppiuNrV3qY=}
     dev: false
 
   /@microsoft/load-themed-styles/1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
+    dev: false
+
+  /@microsoft/oteljs-1ds/4.14.0:
+    resolution: {integrity: sha1-y75Tex1hxxEyDJ61v5HhFSo7cVk=}
+    dependencies:
+      '@microsoft/1ds-core-js': 3.2.12_tslib@1.14.1
+      '@microsoft/1ds-post-js': 3.2.12_tslib@1.14.1
+      '@microsoft/oteljs': 4.14.0
+      tslib: 1.14.1
+    dev: false
+
+  /@microsoft/oteljs/4.14.0:
+    resolution: {integrity: sha1-NCNgxtfIUpBc0U4xRmc2kw1kuJk=}
+    dependencies:
+      tslib: 1.14.1
     dev: false
 
   /@microsoft/tsdoc-config/0.16.2:
