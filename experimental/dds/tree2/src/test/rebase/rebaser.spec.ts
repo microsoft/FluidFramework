@@ -12,6 +12,7 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
+import { MockRepairDataStoreProvider } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -68,7 +69,6 @@ describe("rebaser", () => {
 				for (const revision of main) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
@@ -80,7 +80,6 @@ describe("rebaser", () => {
 				for (const revision of branch.slice(1)) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
@@ -134,6 +133,7 @@ describe("rebaser", () => {
 
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
+					new MockRepairDataStoreProvider(),
 					tester.branch,
 					base,
 					tester.main,

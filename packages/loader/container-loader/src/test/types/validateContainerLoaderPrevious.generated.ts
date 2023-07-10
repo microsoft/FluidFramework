@@ -64,50 +64,26 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IContainerConfig": {"forwardCompat": false}
+* "InterfaceDeclaration_IContainerExperimental": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IContainerConfig():
-    TypeOnly<old.IContainerConfig>;
-declare function use_current_InterfaceDeclaration_IContainerConfig(
-    use: TypeOnly<current.IContainerConfig>);
-use_current_InterfaceDeclaration_IContainerConfig(
-    get_old_InterfaceDeclaration_IContainerConfig());
+declare function get_old_InterfaceDeclaration_IContainerExperimental():
+    TypeOnly<old.IContainerExperimental>;
+declare function use_current_InterfaceDeclaration_IContainerExperimental(
+    use: TypeOnly<current.IContainerExperimental>);
+use_current_InterfaceDeclaration_IContainerExperimental(
+    get_old_InterfaceDeclaration_IContainerExperimental());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IContainerConfig": {"backCompat": false}
+* "InterfaceDeclaration_IContainerExperimental": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IContainerConfig():
-    TypeOnly<current.IContainerConfig>;
-declare function use_old_InterfaceDeclaration_IContainerConfig(
-    use: TypeOnly<old.IContainerConfig>);
-use_old_InterfaceDeclaration_IContainerConfig(
-    get_current_InterfaceDeclaration_IContainerConfig());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IContainerLoadOptions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IContainerLoadOptions():
-    TypeOnly<old.IContainerLoadOptions>;
-declare function use_current_InterfaceDeclaration_IContainerLoadOptions(
-    use: TypeOnly<current.IContainerLoadOptions>);
-use_current_InterfaceDeclaration_IContainerLoadOptions(
-    get_old_InterfaceDeclaration_IContainerLoadOptions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IContainerLoadOptions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IContainerLoadOptions():
-    TypeOnly<current.IContainerLoadOptions>;
-declare function use_old_InterfaceDeclaration_IContainerLoadOptions(
-    use: TypeOnly<old.IContainerLoadOptions>);
-use_old_InterfaceDeclaration_IContainerLoadOptions(
-    get_current_InterfaceDeclaration_IContainerLoadOptions());
+declare function get_current_InterfaceDeclaration_IContainerExperimental():
+    TypeOnly<current.IContainerExperimental>;
+declare function use_old_InterfaceDeclaration_IContainerExperimental(
+    use: TypeOnly<old.IContainerExperimental>);
+use_old_InterfaceDeclaration_IContainerExperimental(
+    get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -232,30 +208,6 @@ use_old_InterfaceDeclaration_ILoaderServices(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IPendingContainerState():
-    TypeOnly<old.IPendingContainerState>;
-declare function use_current_InterfaceDeclaration_IPendingContainerState(
-    use: TypeOnly<current.IPendingContainerState>);
-use_current_InterfaceDeclaration_IPendingContainerState(
-    get_old_InterfaceDeclaration_IPendingContainerState());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingContainerState": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IPendingContainerState():
-    TypeOnly<current.IPendingContainerState>;
-declare function use_old_InterfaceDeclaration_IPendingContainerState(
-    use: TypeOnly<old.IPendingContainerState>);
-use_old_InterfaceDeclaration_IPendingContainerState(
-    get_current_InterfaceDeclaration_IPendingContainerState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
@@ -276,30 +228,6 @@ declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
     get_current_InterfaceDeclaration_IProtocolHandler());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableBlobContents": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ISerializableBlobContents():
-    TypeOnly<old.ISerializableBlobContents>;
-declare function use_current_InterfaceDeclaration_ISerializableBlobContents(
-    use: TypeOnly<current.ISerializableBlobContents>);
-use_current_InterfaceDeclaration_ISerializableBlobContents(
-    get_old_InterfaceDeclaration_ISerializableBlobContents());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableBlobContents": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ISerializableBlobContents():
-    TypeOnly<current.ISerializableBlobContents>;
-declare function use_old_InterfaceDeclaration_ISerializableBlobContents(
-    use: TypeOnly<old.ISerializableBlobContents>);
-use_old_InterfaceDeclaration_ISerializableBlobContents(
-    get_current_InterfaceDeclaration_ISerializableBlobContents());
 
 /*
 * Validate forward compat by using old type in place of current type

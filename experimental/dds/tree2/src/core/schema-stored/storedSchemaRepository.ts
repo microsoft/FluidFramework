@@ -7,9 +7,9 @@ import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
 	GlobalFieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
+	TreeStoredSchema,
 	SchemaData,
 	SchemaPolicy,
 } from "./schema";
@@ -99,11 +99,11 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 		return new InMemoryStoredSchemaRepository(this.policy, this.data);
 	}
 
-	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldStoredSchema> {
 		return this.data.globalFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
 		return this.data.treeSchema;
 	}
 
@@ -121,21 +121,31 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 }
 
 interface MutableSchemaData extends SchemaData {
-	globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
-	treeSchema: Map<TreeSchemaIdentifier, TreeSchema>;
+	globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema>;
+	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
+/**
+ * Helper for getting a global {@link FieldSchema} from a stored schema.
+ * Defaults to the FieldSchema defined with a stored schema policy.
+ * @alpha
+ */
 export function lookupGlobalFieldSchema(
 	data: SchemaDataAndPolicy,
 	identifier: GlobalFieldKey,
-): FieldSchema {
+): FieldStoredSchema {
 	return data.globalFieldSchema.get(identifier) ?? data.policy.defaultGlobalFieldSchema;
 }
 
+/**
+ * Helper for getting a {@link TreeSchema} from a stored schema.
+ * Defaults to the TreeSchema defined with a stored schema policy.
+ * @alpha
+ */
 export function lookupTreeSchema(
 	data: SchemaDataAndPolicy,
 	identifier: TreeSchemaIdentifier,
-): TreeSchema {
+): TreeStoredSchema {
 	return data.treeSchema.get(identifier) ?? data.policy.defaultTreeSchema;
 }
 

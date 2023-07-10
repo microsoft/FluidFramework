@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 
 /**
  * Property types that can be logged.
@@ -14,7 +14,11 @@ export type TelemetryEventPropertyTypeExt =
 	| number
 	| boolean
 	| undefined
-	| (string | number | boolean)[];
+	| (string | number | boolean)[]
+	| {
+			[key: string]: // Flat objects can have the same properties as the event itself
+			string | number | boolean | undefined | (string | number | boolean)[];
+	  };
 
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used

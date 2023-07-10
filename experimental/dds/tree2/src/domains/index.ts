@@ -11,7 +11,9 @@ export {
 	jsonNumber,
 	jsonObject,
 	jsonRoot,
-	jsonSchemaData,
+	jsonSchema,
 	jsonString,
 	singleJsonCursor,
 } from "./json";
+
+export { nodeKeyFieldKey, nodeKeySchema } from "./nodeKey";

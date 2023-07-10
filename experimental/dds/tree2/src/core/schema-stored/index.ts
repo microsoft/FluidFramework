@@ -4,17 +4,21 @@
  */
 
 export {
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
 	GlobalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
+	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	NamedTreeSchema,
 	Named,
 	TreeTypeSet,
 	SchemaPolicy,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	SchemaData,
 	NamedFieldSchema,

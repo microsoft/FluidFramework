@@ -6,10 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
-	settings: {
-		"import/resolver": "node",
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		"@typescript-eslint/ban-ts-comment": "off",

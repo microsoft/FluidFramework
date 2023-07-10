@@ -3,35 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ProgressiveEditBuilderBase,
-	ITreeCursor,
-	AnchorSet,
-	UpPath,
-	Value,
-	getDepth,
-} from "../../core";
+import { EditBuilder, ITreeCursor, AnchorSet, UpPath, getDepth } from "../../core";
 import { fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Transposed as T } from "./changeset";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
+export class SequenceEditBuilder extends EditBuilder<SequenceChangeset> {
 	private opId: number = 0;
 
 	public constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
 		super(sequenceChangeFamily, changeReceiver, anchorSet);
-	}
-
-	public setValue(node: NodePath, value: Value) {
-		const modify: T.Modify & { value: T.SetValue } = { type: "Modify", value: { id: 0 } };
-		// Only set the `SetValue.value` field if the given `value` is defined.
-		// This ensures the object properly round-trips through JSON.
-		if (value !== undefined) {
-			modify.value.value = value;
-		}
-		this.applyMarkAtPath(modify, node);
 	}
 
 	public insert(place: PlacePath, cursor: ITreeCursor) {

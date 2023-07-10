@@ -23,6 +23,7 @@ export {
 	IServiceConfiguration,
 } from "./configuration";
 export {
+	ICheckpointRepository,
 	ICollection,
 	IDatabaseManager,
 	IDb,
@@ -37,6 +38,7 @@ export {
 	IClientSequenceNumber,
 	IDeliState,
 	IDocument,
+	ICheckpoint,
 	IDocumentDetails,
 	IDocumentStorage,
 	IScribe,
@@ -96,6 +98,8 @@ export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
 export { MongoDocumentRepository } from "./mongoDocumentRepository";
+export { MongoCheckpointRepository } from "./mongoCheckpointRepository";
+export { CheckpointService, ICheckpointService } from "./checkpointService";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";
@@ -125,6 +129,8 @@ export {
 	ITaskMessageSender,
 } from "./taskMessages";
 export {
+	EncryptionKeyVersion,
+	IEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -149,7 +155,10 @@ export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
 export {
 	IWebSocketTracker,
 	ITokenRevocationManager,
+	IRevokedTokenChecker,
 	ITokenRevocationResponse,
+	IRevokeTokenOptions,
 	TokenRevocationError,
+	TokenRevokedError,
 	createCompositeTokenId,
 } from "./tokenRevocationManager";

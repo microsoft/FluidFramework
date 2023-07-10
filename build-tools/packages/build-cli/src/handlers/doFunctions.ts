@@ -10,7 +10,13 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
+import {
+	bumpReleaseGroup,
+	difference,
+	getPreReleaseDependencies,
+	npmCheckUpdates,
+	setVersion,
+} from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
@@ -113,6 +119,14 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 	}
 
 	if (updatedPackages.length > 0) {
+		log?.verbose(`Running install if needed.`);
+		await FluidRepo.ensureInstalled(
+			isReleaseGroup(releaseGroup)
+				? context.packagesInReleaseGroup(releaseGroup)
+				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  [context.fullPackageMap.get(releaseGroup)!],
+			false,
+		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
 		context.repo.reload();
@@ -160,7 +174,13 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		)} bump)!`,
 	);
 
-	await bumpReleaseGroup(context, bumpType, rgRepo, scheme, undefined, log);
+	await setVersion(
+		context,
+		rgRepo,
+		newVersion,
+		rgRepo instanceof MonoRepo ? rgRepo.interdependencyRange : undefined,
+		log,
+	);
 
 	if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages, false))) {
 		log.errorLog("Install failed.");

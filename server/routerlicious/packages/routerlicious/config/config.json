@@ -13,7 +13,7 @@
 		"globalDbEnabled": false,
 		"expireAfterSeconds": -1,
 		"createCosmosDBIndexes": false,
-		"bufferMaxEntries": 50,
+		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
 		"offlineWindowMs": 86400000,
 		"softDeletionEnabled": false,
@@ -23,6 +23,7 @@
 			"deltas": "deltas",
 			"rawdeltas": "rawdeltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",
@@ -41,7 +42,8 @@
 			"rdkafkaAutomaticConsume": true,
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
-		}
+		},
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -49,6 +51,11 @@
 	"storage": {
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
+	},
+	"checkpoints": {
+		"localCheckpointEnabled": true,
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -100,6 +107,9 @@
 		"enforceServerGeneratedDocumentId": false,
 		"socketIo": {
 			"perMessageDeflate": true
+		},
+		"jwtTokenCache": {
+			"enable": true
 		}
 	},
 	"client": {
@@ -120,7 +130,8 @@
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
-		}
+		},
+		"restartOnCheckpointFailure": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -130,7 +141,10 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true
+		"getDeltasViaAlfred": true,
+		"verifyLastOpPersistence": false,
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true
 	},
 	"system": {
 		"httpServer": {
@@ -185,7 +199,8 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
-		"maxDbBatchSize": 1000
+		"maxDbBatchSize": 1000,
+		"restartOnCheckpointFailure": true
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -218,22 +233,38 @@
 	"redis": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -301,6 +332,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }

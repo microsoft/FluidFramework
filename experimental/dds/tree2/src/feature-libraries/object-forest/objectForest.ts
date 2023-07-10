@@ -17,7 +17,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Value,
 	Delta,
 	UpPath,
 	Anchor,
@@ -33,7 +32,7 @@ import {
 	ForestEvents,
 	PathRootPrefix,
 } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
@@ -161,14 +160,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				const countMoved = moveIn(index, toAttach);
 				assert(countMoved === count, 0x369 /* counts must match */);
 			},
-			onSetValue: (value: Value): void => {
-				const node = cursor.getNode();
-				if (value !== undefined) {
-					node.value = value;
-				} else {
-					delete node.value;
-				}
-			},
 			enterNode: (index: number): void => cursor.enterNode(index),
 			exitNode: (index: number): void => cursor.exitNode(),
 			enterField: (key: FieldKey): void => cursor.enterField(key),
@@ -274,16 +265,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		}
 
 		return;
-	}
-}
-
-function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
-	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
-	assert(index >= 0, 0x377 /* index must be non-negative */);
-	if (allowOnePastEnd) {
-		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
-	} else {
-		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
 }
 

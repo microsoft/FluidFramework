@@ -3,40 +3,28 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncReducer } from "@fluid-internal/stochastic-test-utils";
+import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
+import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { toJsonableTree } from "../../utils";
-import { ISharedTree } from "../../../shared-tree";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
-import { FuzzTestState } from "./fuzzEditGenerators";
 import {
 	FieldEdit,
 	FuzzDelete,
 	FuzzFieldChange,
-	FuzzNodeEditChange,
 	FuzzTransactionType,
-	NodeEdit,
 	Operation,
 } from "./operationTypes";
 
-export const fuzzReducer: {
-	[K in Operation["type"]]: AsyncReducer<Extract<Operation, { type: K }>, FuzzTestState>;
-} = {
+export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
 		const { contents } = operation;
-		switch (contents.editType) {
+		switch (contents.type) {
 			case "fieldEdit": {
-				const index = operation.index;
-				const tree = state.trees[index];
+				const tree = state.channel;
 				applyFieldEdit(tree, contents);
-				break;
-			}
-			case "nodeEdit": {
-				const change = operation.contents as NodeEdit;
-				const index = operation.index;
-				const tree = state.trees[index];
-				applyNodeEdit(tree, change.edit);
 				break;
 			}
 			default:
@@ -44,20 +32,13 @@ export const fuzzReducer: {
 		}
 		return state;
 	},
-	synchronize: async (state) => {
-		const { testTreeProvider } = state;
-		assert(testTreeProvider !== undefined);
-		await testTreeProvider.ensureSynchronized();
-		checkTreesAreSynchronized(state.trees);
-		return state;
-	},
 	transaction: async (state, operation) => {
-		const { contents, treeIndex } = operation;
-		const tree = state.trees[treeIndex];
+		const { contents } = operation;
+		const tree = state.channel;
 		applyTransactionEdit(tree, contents);
 		return state;
 	},
-};
+});
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	const lastTree = toJsonableTree(trees[trees.length - 1]);
@@ -142,18 +123,6 @@ function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
-	switch (change.type) {
-		case "sequence":
-		case "value":
-		case "optional": {
-			tree.editor.setValue(change.edit.path, change.edit.value);
-			break;
-		}
-		default:
-			fail("Invalid edit.");
-	}
-}
 function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {

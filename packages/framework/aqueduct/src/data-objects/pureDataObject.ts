@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
+import type { EventEmitter } from "events";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
 	IFluidHandle,
@@ -14,7 +15,6 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
@@ -56,6 +56,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not provide a functioning built-in disposed flow.
+	 * This member will be removed in an upcoming release.
+	 */
 	public get disposed() {
 		return this._disposed;
 	}
@@ -165,29 +169,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * Retrieve Fluid object using the handle get
-	 *
-	 * @param key - key that object (handle/id) is stored with in the directory
-	 * @param directory - directory containing the object
-	 * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
-	 * define custom types/getters for object retrieval
-	 */
-	public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
-		key: string,
-		directory: IDirectory,
-		getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined,
-	): Promise<T | undefined> {
-		const handleMaybe = getObjectFromDirectory
-			? getObjectFromDirectory(key, directory)
-			: directory.get(key);
-		const handle = handleMaybe?.IFluidHandle;
-		if (handle) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return handle.get();
-		}
-	}
-
-	/**
 	 * Called every time the data store is initialized, before initializingFirstTime or
 	 * initializingFromExisting is called.
 	 */
@@ -214,8 +195,39 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	/**
 	 * Called when the host container closes and disposes itself
+	 * @deprecated - 2.0.0-internal.5.2.0 - Dispose does nothing and will be removed in an upcoming release.
 	 */
 	public dispose(): void {
 		super.dispose();
+	}
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * in a future release.
+	 */
+	protected static isEmitterEvent(event: string): boolean {
+		return super.isEmitterEvent(event);
+	}
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * in a future release.
+	 */
+	protected forwardEvent(
+		source: EventEmitter | IEventProvider<I["Events"] & IEvent>,
+		...events: string[]
+	): void {
+		super.forwardEvent(source, ...events);
+	}
+
+	/**
+	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * in a future release.
+	 */
+	protected unforwardEvent(
+		source: EventEmitter | IEventProvider<I["Events"] & IEvent>,
+		...events: string[]
+	): void {
+		super.unforwardEvent(source, ...events);
 	}
 }

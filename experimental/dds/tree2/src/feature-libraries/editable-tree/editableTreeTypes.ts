@@ -6,19 +6,23 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ITreeCursor,
 	UpPath,
 	PathVisitor,
+	NamedTreeSchema,
+	isCursor,
+	GlobalFieldKeySymbol,
 } from "../../core";
+import { brand } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
 	ContextuallyTypedNodeDataObject,
 	typeNameSymbol,
 	valueSymbol,
+	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
 import { EditableTreeContext } from "./editableTreeContext";
 
@@ -43,20 +47,6 @@ export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
- * A symbol to get the function, which creates a new field of {@link EditableTree},
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const createField: unique symbol = Symbol("editable-tree:createField()");
-
-/**
- * A symbol to get the function, which replaces a field of {@link EditableTree},
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
-
-/**
  * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
  * in contexts where string keys are already in use for fields.
  * @alpha
@@ -69,6 +59,12 @@ export const parentField: unique symbol = Symbol("editable-tree:parentField()");
  * @alpha
  */
 export const contextSymbol: unique symbol = Symbol("editable-tree:context");
+
+/**
+ * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
+ * @alpha
+ */
+export const localNodeKeySymbol: GlobalFieldKeySymbol = brand(Symbol("editable-tree:localNodeKey"));
 
 /**
  * A symbol for subscribing to events.
@@ -92,11 +88,11 @@ export const on: unique symbol = Symbol("editable-tree:on");
 export interface EditableTreeEvents {
 	/**
 	 * Raised when a specific EditableTree node is changing.
-	 * This includes its values and fields.
+	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
 	 * @param value - the new value stored in the node.
 	 */
-	changing(upPath: UpPath, value: Value): void;
+	changing(upPath: UpPath): void;
 
 	/**
 	 * Raised when something in the tree is changing, including this node and its descendants.
@@ -124,8 +120,9 @@ export interface EditableTreeEvents {
  * ```
  * where `context` is a common `EditableTreeContext`.
  *
- * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link createField})
- * or using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details).
+ * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link valueSymbol}),
+ * using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details)
+ * or by getting a field (via {@link getField} or optionally property access for sequence fields) and modifying that.
  *
  * When iterating, reads all fields at once before the iteration starts to get a "snapshot" of this node.
  * It might be inefficient regarding resources, but avoids situations
@@ -142,7 +139,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * Value stored on this node.
@@ -150,7 +148,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * Set the value using the simple assignment operator (`=`).
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
-	[valueSymbol]: Value;
+	readonly [valueSymbol]: Value;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this node.
@@ -190,40 +188,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	[key: FieldKey]: UnwrappedEditableField;
 
 	/**
-	 * Creates a new field at this node.
-	 *
-	 * The content of the new field must follow the {@link Multiplicity} of the {@link FieldKind}:
-	 * - use a single cursor when creating an `optional` field;
-	 * - use array of cursors when creating a `sequence` field;
-	 * - use {@link EditableField.insertNodes} instead to create fields of kind `value` as currently
-	 * it is not possible to have trees with already populated fields of this kind.
-	 *
-	 * When creating a field in a concurrent environment,
-	 * `optional` fields will be created following the "last-write-wins" semantics,
-	 * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
-	 */
-	[createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
-
-	/**
-	 * Replaces the field of this node.
-	 *
-	 * The content of the field must follow the {@link Multiplicity} of the {@link FieldKind}:
-	 * - use a single cursor when replacing an `optional` or a `value` field;
-	 * - use array of cursors when replacing a `sequence` field.
-	 *
-	 * Use `delete` operator to delete `optional` or `sequence` fields of this node, if any.
-	 *
-	 * When replacing a field in a concurrent environment,
-	 * the following merge semantics will be applied depending on the field multiplicity:
-	 * - optional and value fields will be overwritten in a "last-write-wins" fashion,
-	 * - for sequence fields, the nodes present in the field on the issuing client will be
-	 * deleted and the newContent will be inserted. This means concurrent inserts (including
-	 * calls to `replaceField`) can all contribute content. In the future this will likely be
-	 * replaced with merge semantics that is more consistent with that of optional and value fields.
-	 */
-	[replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
-
-	/**
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
@@ -237,6 +201,37 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	): () => void;
 }
 
+/**
+ * Content to use for a field.
+ *
+ * When used, this content will be deeply copied into the tree, and must comply with the schema.
+ *
+ * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
+ * - use a single cursor for an `optional` or `value` field;
+ * - use array of cursors for a `sequence` field;
+ *
+ * TODO: this should allow a field cursor instead of an array of cursors.
+ * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
+ * @alpha
+ */
+export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
+
+/**
+ * Check if NewFieldContent is made of {@link ITreeCursor}s.
+ *
+ * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ */
+export function areCursors(data: NewFieldContent): data is ITreeCursor | readonly ITreeCursor[] {
+	if (isCursor(data)) {
+		return true;
+	}
+
+	if (Array.isArray(data) && data.length >= 0 && isCursor(data[0])) {
+		return true;
+	}
+
+	return false;
+}
 /**
  * EditableTree,
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
@@ -275,6 +270,8 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * children of the tree starting from its root.
  *
  * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+ *
+ * TODO: split this interface by field kind.
  * @alpha
  */
 export interface EditableField
@@ -290,9 +287,9 @@ export interface EditableField
 	// TODO: replace the numeric indexed access with getters and setters if possible.
 	extends MarkedArrayLike<UnwrappedEditableTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -325,11 +322,24 @@ export interface EditableField
 
 	/**
 	 * Inserts new nodes into this field.
+	 * Sequence fields only.
 	 */
-	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insertNodes(index: number, newContent: NewFieldContent): void;
+
+	/**
+	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
+	 * If the destinationField is not provided, the current field is used as the destination.
+	 */
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		destinationField?: EditableField,
+	): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.
+	 * Sequence fields only.
 	 *
 	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
 	 * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
@@ -339,6 +349,7 @@ export interface EditableField
 
 	/**
 	 * Sequentially replaces the nodes of this field.
+	 * Sequence fields only.
 	 *
 	 * @param index - the index of the first node to be replaced. It must be in a range of existing node indices.
 	 * @param count - the number of nodes to be replaced. If not provided, replaces all nodes
@@ -347,5 +358,32 @@ export interface EditableField
 	 * Note that, if multiple clients concurrently call replace on a sequence field,
 	 * all the insertions will be preserved.
 	 */
-	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+
+	/**
+	 * Delete the content of this field.
+	 * Only supports field kinds which can be empty.
+	 */
+	delete(): void;
+
+	/**
+	 * The content of this field.
+	 *
+	 * @remarks
+	 * For optional and value field multiplicities, the single child, or undefined of none.
+	 * For sequence fields, the field itself (and thus not very useful to read, but can be assigned to).
+	 * Does not unwrap the content.
+	 */
+	get content(): EditableTree | undefined | EditableField;
+	set content(newContent: NewFieldContent);
+
+	/**
+	 * Sets the content of this field.
+	 *
+	 * @remarks
+	 * Same as assigning to `content`.
+	 * This exists in addition to the setter for `content` since in many contexts limitations in TypeScripts typing
+	 * prevent providing strongly typed getters and setters with the types required.
+	 */
+	setContent(newContent: NewFieldContent): void;
 }

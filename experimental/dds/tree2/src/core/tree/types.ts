@@ -36,9 +36,9 @@ export type TreeType = TreeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a LocalFieldKey since different nodes will have different FieldSchema for it.
+ * This has to be a LocalFieldKey since different nodes will have different FieldStoredSchema for it.
  * This makes it prone to collisions and suggests
- * that this intention may be better conveyed by metadata on the TreeViewSchema.
+ * that this intention may be better conveyed by metadata on the ITreeSchema.
  * @alpha
  */
 export const EmptyKey: LocalFieldKey = brand("");
@@ -172,6 +172,9 @@ export type Value = undefined | TreeValue;
 /**
  * The fields required by a node in a tree.
  * @alpha
+ * @privateRemarks - A forked version of this type is used in `persistedTreeTextFormat.ts`.
+ * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
+ * See persistedTreeTextFormat's module documentation for more details.
  */
 export interface NodeData {
 	/**
@@ -186,7 +189,7 @@ export interface NodeData {
 	/**
 	 * The meaning of this node.
 	 * Provides contexts/semantics for this node and its content.
-	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
 	readonly type: TreeSchemaIdentifier;
 }

@@ -11,4 +11,9 @@ export {
 	AlfredRunnerFactory,
 	OrdererManager,
 } from "./runnerFactory";
-export { DeltaService, StorageNameAllocator } from "./services";
+export {
+	DeltaService,
+	DocumentDeleteService,
+	IDocumentDeleteService,
+	StorageNameAllocator,
+} from "./services";

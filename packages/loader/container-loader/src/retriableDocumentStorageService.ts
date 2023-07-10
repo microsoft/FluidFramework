@@ -18,14 +18,16 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
+
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {

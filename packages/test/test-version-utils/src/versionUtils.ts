@@ -5,17 +5,18 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { exec, execSync } from "child_process";
+import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
-import { pkgVersion } from "./packageVersion";
-import { InstalledPackage } from "./testApi";
+import { pkgVersion } from "./packageVersion.js";
+import { InstalledPackage } from "./testApi.js";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
-const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
+const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
 
@@ -33,7 +34,7 @@ async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
-	const release = await lock(__dirname, { retries: { forever: true } });
+	const release = await lock(fileURLToPath(import.meta.url), { retries: { forever: true } });
 	try {
 		// Check it again under the lock
 		if (existsSync(installedJsonPath)) {
@@ -190,7 +191,7 @@ export async function ensureInstalled(
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
 
-	// Release the __dirname but lock the modulePath so we can do parallel installs
+	// Release the base path but lock the modulePath so we can do parallel installs
 	const release = await lock(modulePath, { retries: { forever: true } });
 	try {
 		if (force) {
@@ -200,9 +201,18 @@ export async function ensureInstalled(
 
 		// Check installed status again under lock the modulePath lock
 		if (force || !(await isInstalled(version))) {
+			const options: ExecOptions = {
+				cwd: modulePath,
+				env: {
+					...process.env,
+					// Reset any parent process node options: path-specific options (ex: --require, --experimental-loader)
+					// will otherwise propagate to these commands but fail to resolve.
+					NODE_OPTIONS: "",
+				},
+			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				exec(`npm init --yes`, { cwd: modulePath }, (error, stdout, stderr) => {
+				exec(`npm init --yes`, options, (error, stdout, stderr) => {
 					if (error) {
 						reject(new Error(`Failed to initialize install directory ${modulePath}`));
 					}
@@ -214,7 +224,7 @@ export async function ensureInstalled(
 					`npm i --no-package-lock ${adjustedPackageList
 						.map((pkg) => `${pkg}@${version}`)
 						.join(" ")}`,
-					{ cwd: modulePath },
+					options,
 					(error, stdout, stderr) => {
 						if (error) {
 							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
@@ -252,10 +262,8 @@ export function checkInstalled(requested: string) {
 	);
 }
 
-export const loadPackage = (modulePath: string, pkg: string) =>
-	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
-	require(path.join(modulePath, "node_modules", pkg));
-
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
+	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
 /**
  * Used to get the major version number above or below the baseVersion.
  * @param baseVersion - The base version to move from (eg. "0.60.0")

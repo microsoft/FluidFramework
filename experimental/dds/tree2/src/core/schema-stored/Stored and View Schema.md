@@ -11,10 +11,10 @@ graph LR;
         stored[Stored Schema]
         stored-->fieldMap["Field Schema Map"]
         fieldMap--Keys-->GlobalFieldKeys
-        fieldMap--Values-->FieldSchema["Global FieldSchema"]
+        fieldMap--Values-->FieldStoredSchema["Global FieldStoredSchema"]
         stored-->treeMap["Tree Schema Map"]
         treeMap--Keys-->TreeSchemaIdentifiers
-        treeMap--Values-->TreeSchema
+        treeMap--Values-->TreeStoredSchema
         tree[Tree]
         tree-.->TreeSchemaIdentifiers
         tree-.->GlobalFieldKeys
@@ -31,10 +31,10 @@ graph LR;
         view["View Schema"]
         view-->vfieldMap["Field Schema Map"]
         vfieldMap--Keys-->vGlobalFieldKeys["GlobalFieldKeys"]
-        vfieldMap--Values-->vFieldSchema["Global FieldSchema"]
+        vfieldMap--Values-->vFieldSchema["Global FieldStoredSchema"]
         view-->vtreeMap["Tree Schema Map"]
         vtreeMap--Keys-->vTreeSchemaIdentifiers["TreeSchemaIdentifiers"]
-        vtreeMap--Values-->vTreeSchema["TreeSchema"]
+        vtreeMap--Values-->vTreeSchema["TreeStoredSchema"]
     end
 ```
 
@@ -173,9 +173,9 @@ Use edit primitives that avoid this?
 
 ex: swap instead of delete and insert. Maybe a version of detach that inserts a placeholder which has to be replaced with valid data before the transaction ends? That seems like it could make the tree reading API for the middle of transactions messy.
 
-### What to do with TreeSchema.extraGlobalFields?
+### What to do with TreeStoredSchema.extraGlobalFields?
 
-Should TreeSchema.extraGlobalFields exist, and if not, should be be unconditionally on or off? (See its doc comment).
+Should TreeStoredSchema.extraGlobalFields exist, and if not, should be be unconditionally on or off? (See its doc comment).
 
 ### Do we need bounded open polymorphism?
 
@@ -186,7 +186,7 @@ Definitions for adjectives used with polymorphism:
 -   open: does not require modifying the declaration of the field to create a new type which can be used in it.
 -   closed: requires modifying the declaration of the field to create a new type which can be used in it.
 
-The example schema system includes bounded closed polymorphism (via unions in fields), and unbounded open polymorphism (via fields with unconstrained types). However, it does not support bounded open polymorphism. If support for bounded open polymorphism was added, it would be done by modifying FieldSchema.type. See its doc comment for details.
+The example schema system includes bounded closed polymorphism (via unions in fields), and unbounded open polymorphism (via fields with unconstrained types). However, it does not support bounded open polymorphism. If support for bounded open polymorphism was added, it would be done by modifying FieldStoredSchema.type. See its doc comment for details.
 
 There are a few reasons to leave bounded open polymorphism out of initial versions:
 

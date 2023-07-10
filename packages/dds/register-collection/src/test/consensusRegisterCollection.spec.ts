@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { BlobTreeEntry } from "@fluidframework/driver-utils";
 import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,

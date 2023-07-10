@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Lazy } from "@fluidframework/common-utils";
-import { ensurePackageInstalled } from "./testApi";
-import { pkgVersion } from "./packageVersion";
+import { Lazy, assert } from "@fluidframework/common-utils";
+import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
 	compatKind,
@@ -12,9 +11,11 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	baseVersion,
 	reinstall,
-} from "./compatOptions";
+} from "../compatOptions.cjs";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
+import { baseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -32,7 +33,7 @@ interface CompatConfig {
 
 // N and N - 1
 const defaultVersions = [0, -1];
-// we are currently supporting 0.45 long-term
+// we are currently supporting 1.3.4 long-term
 const LTSVersions = ["^1.3.4"];
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
@@ -130,6 +131,51 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 	];
 };
 
+const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+	return [
+		{
+			name: `compat back N${compatVersion} - older loader`,
+			kind: CompatKind.Loader,
+			compatVersion,
+			loader: compatVersion,
+		},
+		{
+			name: `compat back N${compatVersion} - older loader + older driver`,
+			kind: CompatKind.LoaderDriver,
+			compatVersion,
+			driver: compatVersion,
+			loader: compatVersion,
+		},
+	];
+};
+
+const genFullBackCompatConfig = (): CompatConfig[] => {
+	const _configList: CompatConfig[] = [];
+	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
+	// This first if statement turns the internal version to x.y.z
+	let version: string = pkgVersion;
+	// This grabs the code version to find the backwards compatible options.
+	const codeVersion = process.env.SETVERSION_CODEVERSION;
+	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion, true, true)) {
+		version = codeVersion;
+	}
+
+	const [, semverInternal] = fromInternalScheme(version, true, true);
+
+	assert(semverInternal !== undefined, "Unexpected pkg version");
+	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
+	const greatestMajor = semverInternal.major;
+	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
+	// This loop goes as far back as 2.0.0.internal.1.y.z.
+	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
+	// This means as the number of majors increase the number of versions we support - this may be updated in the future.
+	for (let i = 2; i < greatestMajor; i++) {
+		_configList.push(...genBackCompatConfig(-i));
+	}
+	return _configList;
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -148,6 +194,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultVersions.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
+		if (process.env.fluid__test__backCompat === "FULL") {
+			_configList.push(...genFullBackCompatConfig());
+		}
 		LTSVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
@@ -157,6 +206,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 				LTSVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
+			} else if (value === "FULL") {
+				_configList.push(...genFullBackCompatConfig());
 			} else {
 				const num = parseInt(value, 10);
 				if (num.toString() === value) {
@@ -175,8 +226,40 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	return _configList;
 });
 
-/*
+/**
  * Mocha start up to ensure legacy versions are installed
+ * @privateRemarks
+ * This isn't currently used in a global setup hook due to https://github.com/mochajs/mocha/issues/4508.
+ * Instead, we ensure that all requested compatibility versions are loaded at `describeCompat` module import time by
+ * leveraging top-level await.
+ *
+ * This makes compatibility layer APIs (e.g. DDSes, data object, etc.) available at mocha suite creation time rather than
+ * hook/test execution time, which is convenient for test authors: this sort of code can be used
+ * ```ts
+ * describeCompat("my suite", (getTestObjectProvider, apis) => {
+ *     class MyDataObject extends apis.dataRuntime.DataObject {
+ *         // ...
+ *     }
+ * });
+ * ```
+ *
+ * instead of code like this:
+ *
+ * ```ts
+ * describeCompat("my suite", (getTestObjectProvider, getApis) => {
+ *
+ *     const makeDataObjectClass = (apis: CompatApis) => class MyDataObject extends apis.dataRuntime.DataObject {
+ *         // ...
+ *     }
+ *
+ *     before(() => {
+ *         // `getApis` can only be invoked from inside a hook or test
+ *         const MyDataObject = makeDataObjectClass(getApis())
+ *     });
+ * });
+ * ```
+ *
+ * If the linked github issue is ever fixed, this can be once again used as a global setup fixture.
  */
 export async function mochaGlobalSetup() {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));

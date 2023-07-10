@@ -9,7 +9,11 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -25,11 +29,12 @@ import * as utils from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -73,7 +78,7 @@ export function create(
 		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
-	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+	const restClusterGetSummaryThrottler = restClusterThrottlers.get(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 
@@ -88,6 +93,7 @@ export function create(
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
 		});
@@ -106,6 +112,7 @@ export function create(
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
 			initialUpload: initial,
@@ -124,6 +131,7 @@ export function create(
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
 			allowDisabledTenant: true,
@@ -141,7 +149,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -168,7 +176,7 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -194,7 +202,7 @@ export function create(
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

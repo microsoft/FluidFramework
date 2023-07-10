@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,12 +15,9 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -38,7 +35,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -63,28 +60,29 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^0.26.0",
 		"events": "^3.1.0",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.15.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.15.0",
+		"@fluid-tools/build-cli": "^0.20.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.4.1.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",
@@ -104,10 +102,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_MockFluidDataStoreContext": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

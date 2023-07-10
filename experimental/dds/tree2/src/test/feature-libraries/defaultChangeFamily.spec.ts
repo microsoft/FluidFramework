@@ -16,26 +16,28 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
-	ReadonlyRepairDataStore,
-	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
 } from "../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
-	defaultChangeFamily,
-	defaultChangeFamily as family,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	ForestRepairDataStore,
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
+	ModularChangeset,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
+import { noopValidator } from "../../codec";
+
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
+const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");
@@ -74,7 +76,6 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 function initializeEditableForest(data?: JsonableTree): {
 	forest: IForestSubscription;
 	builder: DefaultEditBuilder;
-	repairStore: ReadonlyRepairDataStore;
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
@@ -84,13 +85,6 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
-		assert(
-			revision === currentRevision,
-			"The repair data store should only ask for the current forest state",
-		);
-		return forest;
-	});
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(
@@ -98,7 +92,6 @@ function initializeEditableForest(data?: JsonableTree): {
 		(change) => {
 			changes.push({ revision: currentRevision, change });
 			const delta = defaultChangeFamily.intoDelta(change);
-			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();
@@ -108,7 +101,6 @@ function initializeEditableForest(data?: JsonableTree): {
 	return {
 		forest,
 		builder,
-		repairStore,
 		changes,
 		deltas,
 	};
@@ -131,97 +123,28 @@ describe("DefaultEditBuilder", () => {
 
 	it("Produces one delta for each editing call made to it", () => {
 		const { builder, deltas, forest } = initializeEditableForest({
-			type: jsonNumber.name,
-			value: 41,
+			type: jsonObject.name,
+			fields: {
+				foo: [{ type: jsonNumber.name, value: 0 }],
+			},
 		});
 		assert.equal(deltas.length, 0);
 
-		builder.setValue(root, 42);
-		expectForest(forest, { type: jsonNumber.name, value: 42 });
+		const fooPath = { parent: root, field: fooKey };
+		const fooEditor = builder.sequenceField(fooPath);
+		fooEditor.delete(0, 1);
 		assert.equal(deltas.length, 1);
-
-		builder.setValue(root, 43);
-		expectForest(forest, { type: jsonNumber.name, value: 43 });
+		fooEditor.insert(0, singleTextCursor({ type: jsonNumber.name, value: 42 }));
+		expectForest(forest, {
+			type: jsonObject.name,
+			fields: {
+				foo: [{ type: jsonNumber.name, value: 42 }],
+			},
+		});
 		assert.equal(deltas.length, 2);
 
-		builder.setValue(root, 44);
-		expectForest(forest, { type: jsonNumber.name, value: 44 });
+		fooEditor.delete(0, 1);
 		assert.equal(deltas.length, 3);
-	});
-
-	it("Allows repair data to flow in and out of the repair store", () => {
-		const { builder, repairStore, changes, forest } = initializeEditableForest({
-			type: jsonNumber.name,
-			value: 41,
-		});
-
-		builder.setValue(root, 42);
-		expectForest(forest, { type: jsonNumber.name, value: 42 });
-
-		const change = changes[0];
-		const inverse = family.rebaser.invert(change, false, repairStore);
-		builder.apply(inverse);
-		expectForest(forest, { type: jsonNumber.name, value: 41 });
-	});
-
-	describe("Node Edits", () => {
-		it("Can set the root node value", () => {
-			const { builder, forest } = initializeEditableForest({
-				type: jsonNumber.name,
-				value: 41,
-			});
-			builder.setValue(root, 42);
-			expectForest(forest, { type: jsonNumber.name, value: 42 });
-		});
-
-		it("Can set a child node value", () => {
-			const { builder, forest } = initializeEditableForest({
-				type: jsonObject.name,
-				fields: {
-					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{
-							type: jsonObject.name,
-							fields: {
-								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
-									{ type: jsonNumber.name, value: 5 },
-								],
-							},
-						},
-					],
-				},
-			});
-			builder.setValue(root_foo2_foo5, 42);
-			const expected = {
-				type: jsonObject.name,
-				fields: {
-					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{
-							type: jsonObject.name,
-							fields: {
-								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
-									{ type: jsonNumber.name, value: 42 },
-								],
-							},
-						},
-					],
-				},
-			};
-			expectForest(forest, expected);
-		});
 	});
 
 	describe("Value Field Edits", () => {

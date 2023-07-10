@@ -12,7 +12,9 @@ import {
 	getOutputLength,
 	isAttach,
 	isDetachMark,
-	isNetZeroNodeCountChange,
+	isModify,
+	isNoopMark,
+	markHasCellEffect,
 } from "./utils";
 
 export class IndexTracker {
@@ -25,9 +27,12 @@ export class IndexTracker {
 		const inLength = getInputLength(mark);
 		const outLength = getOutputLength(mark);
 		this.inputIndex += inLength;
-		if (isNetZeroNodeCountChange(mark)) {
+		if (!markHasCellEffect(mark)) {
 			return;
 		}
+
+		assert(!isNoopMark(mark) && !isModify(mark), 0x6a4 /* These marks have no cell effects */);
+
 		const netLength = outLength - inLength;
 		// If you hit this assert, then you probably need to add a check for it in `isNetZeroNodeCountChange`.
 		assert(netLength !== 0, 0x501 /* Unknown mark type with net-zero node count change */);
@@ -79,9 +84,13 @@ export class GapTracker {
 	public constructor(private readonly revisionIndexer: RevisionIndexer) {}
 
 	public advance(mark: Mark<unknown>): void {
-		if (isNetZeroNodeCountChange(mark)) {
+		if (!markHasCellEffect(mark)) {
 			this.map.clear();
 		} else {
+			assert(
+				!isNoopMark(mark) && !isModify(mark) && mark.type !== "Placeholder",
+				0x6a5 /* These marks have no cell effects */,
+			);
 			const revision = mark.revision;
 			// TODO: Remove this early return. It is only needed because some tests use anonymous changes.
 			// These tests will fail (i.e., produce the wrong result) if they rely the index tracking performed here.

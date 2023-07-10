@@ -6,6 +6,7 @@ import { assert } from "chai";
 import * as semver from "semver";
 
 import {
+	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionRange,
@@ -137,6 +138,11 @@ describe("internalScheme", () => {
 
 		it("^2.0.0-internal.2.2.1 is not internal", () => {
 			const input = `^2.0.0-internal.2.2.1`;
+			assert.isFalse(isInternalVersionRange(input));
+		});
+
+		it("~2.0.0-internal.2.2.1 is not internal", () => {
+			const input = `~2.0.0-internal.2.2.1`;
 			assert.isFalse(isInternalVersionRange(input));
 		});
 	});
@@ -294,6 +300,57 @@ describe("internalScheme", () => {
 			);
 			assert.isFalse(
 				semver.satisfies(`2.0.0-dev.1.5.0`, `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`),
+			);
+		});
+	});
+
+	describe("detect constraint types", () => {
+		it("patch constraint", () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.1.0`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("minor constraint", () => {
+			const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("minor constraint with higher majors", () => {
+			const input = `>=2.0.0-internal.2.21.34 <2.0.0-internal.3.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("~ constraint", () => {
+			const input = `~2.0.0-internal.1.0.23`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("^ constraint", () => {
+			const input = `^2.0.0-internal.1.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("invalid and unsupported ranges throw", () => {
+			assert.throws(() => detectInternalVersionConstraintType("~"));
+			assert.throws(() => detectInternalVersionConstraintType("*"));
+			assert.throws(() => detectInternalVersionConstraintType("1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("1.2.3-0"));
+			assert.throws(() => detectInternalVersionConstraintType("^1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("^1.2.3-0"));
+			assert.throws(() => detectInternalVersionConstraintType("~1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("~1.2.3-0"));
+			assert.throws(() =>
+				detectInternalVersionConstraintType("workspace:~2.0.0-internal.1.0.23"),
 			);
 		});
 	});

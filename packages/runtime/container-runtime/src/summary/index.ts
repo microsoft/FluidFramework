@@ -62,6 +62,8 @@ export {
 	ISummarizingWarning,
 	IUploadSummaryResult,
 	SummarizeResultPart,
+	SubmitSummaryFailureData,
+	SummaryStage,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,
@@ -96,7 +98,7 @@ export {
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
 } from "./summaryFormat";
-export { getFailMessage, SummarizeReason } from "./summaryGenerator";
+export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator";
 export {
 	IConnectedEvents,
 	IConnectedState,

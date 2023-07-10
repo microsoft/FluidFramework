@@ -11,7 +11,7 @@ import {
 	jsonableTreeFromCursor,
 	EmptyKey,
 	cursorToJsonObject,
-	jsonSchemaData,
+	jsonSchema,
 	JsonCompatible,
 } from "../../..";
 import {
@@ -21,6 +21,7 @@ import {
 	singleMapTreeCursor,
 	singleTextCursor,
 	buildChunkedForest,
+	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	initializeForest,
@@ -33,6 +34,7 @@ import {
 	defaultChunkPolicy,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
+import { jsonRoot } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
@@ -49,7 +51,11 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
 	}[],
 ) {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
+	const schemaCollection = new SchemaBuilder(
+		"JsonCursor benchmark",
+		jsonSchema,
+	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;

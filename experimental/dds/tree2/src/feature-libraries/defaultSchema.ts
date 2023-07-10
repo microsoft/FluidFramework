@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema } from "../core";
+import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeStoredSchema } from "../core";
 import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 import { FullSchemaPolicy } from "./modular-schema";
 
 /**
- * FieldSchema which is impossible for any data to be in schema with.
+ * FieldStoredSchema which is impossible for any data to be in schema with.
  */
 export const neverField = fieldSchema(value, []);
 
 /**
- * FieldSchema which is impossible to put anything in.
+ * FieldStoredSchema which is impossible to put anything in.
  * @alpha
  */
 
 export const emptyField = fieldSchema(forbidden, []);
 
 /**
- * TreeSchema which is impossible for any data to be in schema with.
+ * TreeStoredSchema which is impossible for any data to be in schema with.
  * @alpha
  */
-export const neverTree: TreeSchema = {
+export const neverTree: TreeStoredSchema = {
 	localFields: emptyMap,
 	globalFields: emptySet,
 	extraLocalFields: neverField,

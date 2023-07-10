@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	lookupTreeSchema,
 	lookupGlobalFieldSchema,
@@ -219,7 +219,7 @@ function tryShapeForSchema(
  */
 function tryShapeForFieldSchema(
 	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
-	type: FieldSchema,
+	type: FieldStoredSchema,
 	key: FieldKey,
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {

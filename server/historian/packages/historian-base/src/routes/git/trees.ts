@@ -5,7 +5,11 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -21,10 +25,11 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -46,6 +51,7 @@ export function create(
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
 		});
@@ -64,6 +70,7 @@ export function create(
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
 		});
@@ -74,7 +81,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees",
 		utils.validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const treeP = createTree(
 				request.params.tenantId,
@@ -89,7 +96,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const treeP = getTree(

@@ -11,7 +11,7 @@ import {
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -90,6 +89,7 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
+	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -102,7 +102,7 @@ export async function createSummarizerFromFactory(
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-		configProvider: mockConfigProvider(),
+		configProvider,
 		logger,
 	});
 	return createSummarizerCore(container, loader, summaryVersion);
@@ -168,7 +168,10 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 	const result = summarizer.summarizeOnDemand({ reason });
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
-	assert(submitResult.success, "on-demand summary should submit");
+	if (!submitResult.success) {
+		submitResult.error.data = submitResult.data;
+		throw submitResult.error;
+	}
 	assert(
 		submitResult.data.stage === "submit",
 		"on-demand summary submitted data stage should be submit",
@@ -176,10 +179,14 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
-	assert(broadcastResult.success, "summary op should be broadcast");
+	if (!broadcastResult.success) {
+		throw broadcastResult.error;
+	}
 
 	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
-	assert(ackNackResult.success, "summary op should be acked");
+	if (!ackNackResult.success) {
+		throw ackNackResult.error;
+	}
 
 	await new Promise((resolve) => process.nextTick(resolve));
 

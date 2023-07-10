@@ -27,7 +27,7 @@ import {
 	isEditableField,
 	isPrimitive,
 	getField,
-	isUnwrappedNode,
+	isEditableTree,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
@@ -66,7 +66,7 @@ export function expectTreeEquals(
 		return;
 	}
 	// Confirm we have an EditableTree object.
-	assert(isUnwrappedNode(node));
+	assert(isEditableTree(node));
 	assert.equal(node[valueSymbol], expected.value);
 	const type = node[typeSymbol];
 	assert.deepEqual(type, expectedType);

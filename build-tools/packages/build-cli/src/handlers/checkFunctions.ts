@@ -314,9 +314,16 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 
 	const { context, releaseGroup, releaseVersion, shouldCheckBranch } = data;
 	assert(context !== undefined, "Context is undefined.");
-	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	if (!isReleaseGroup(releaseGroup)) {
+		// must be a package
+		assert(
+			context.fullPackageMap.has(releaseGroup),
+			`Package ${releaseGroup} not found in context.`,
+		);
+	}
+
 	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
 	if (shouldCheckBranch) {
@@ -396,7 +403,7 @@ export const checkPolicy: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execa(`npm run policy-check`, {
+		const result = await execa.command(`npm run policy-check`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -454,7 +461,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execa(`npm run policy-check:asserts`, {
+		const result = await execa.command(`npm run policy-check:asserts`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);

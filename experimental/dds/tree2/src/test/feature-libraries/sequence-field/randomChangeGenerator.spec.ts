@@ -5,11 +5,24 @@
 
 import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
+import { FieldKey } from "../../../core";
+import { brand } from "../../../util";
 import { generateRandomChange } from "./randomChangeGenerator";
 
 const testSeed = 432167897;
 const maxIndex = 3;
-const childGen = (seed: number): NodeChangeset => ({ valueChange: { value: seed } });
+const fooField: FieldKey = brand("foo");
+const childGen = (seed: number): NodeChangeset => ({
+	fieldChanges: new Map([
+		[
+			fooField,
+			{
+				fieldKind: brand("field"),
+				change: brand({ type: "Insert", content: seed }),
+			},
+		],
+	]),
+});
 
 describe("SequenceField - generateRandomChange", () => {
 	it("generates the same change given the same seed", () => {
@@ -26,7 +39,7 @@ describe("SequenceField - generateRandomChange", () => {
 
 	it("Generates a change", () => {
 		const change = generateRandomChange(testSeed, maxIndex, childGen);
-		const expected = [2, { type: "Delete", count: 5 }];
+		const expected = [{ count: 2 }, { type: "Delete", count: 5 }];
 		assert.deepStrictEqual(change, expected);
 	});
 });

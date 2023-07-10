@@ -3,29 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FieldKinds,
-	rootFieldKey,
-	SchemaAware,
-	TypedSchema,
-	ValueSchema,
-} from "@fluid-experimental/tree2";
+import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
 
-export const float64 = TypedSchema.tree("number", { value: ValueSchema.Number });
+const builder = new SchemaBuilder("tree-react-api");
+export const float64 = builder.primitive("number", ValueSchema.Number);
 
-export const inventory = TypedSchema.tree("Contoso:Inventory-1.0.0", {
-	local: {
-		nuts: TypedSchema.field(FieldKinds.value, float64),
-		bolts: TypedSchema.field(FieldKinds.value, float64),
-	},
+export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
+	nuts: SchemaBuilder.field(FieldKinds.value, float64),
+	bolts: SchemaBuilder.field(FieldKinds.value, float64),
 });
 
-export const rootField = TypedSchema.field(FieldKinds.value, inventory);
+export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
 
-export const schema = SchemaAware.typedSchemaData([[rootFieldKey, rootField]], float64, inventory);
+export const schema = builder.intoDocumentSchema(rootField);
 
-export type Inventory = SchemaAware.NodeDataFor<
-	typeof schema,
-	SchemaAware.ApiMode.Editable,
-	typeof inventory
->;
+export type Inventory = SchemaAware.TypedNode<typeof inventory>;

@@ -23,6 +23,7 @@ declare function get_old_ClassDeclaration_AlfredResources():
 declare function use_current_ClassDeclaration_AlfredResources(
     use: TypeOnly<current.AlfredResources>);
 use_current_ClassDeclaration_AlfredResources(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AlfredResources());
 
 /*
@@ -263,6 +264,7 @@ declare function get_old_ClassDeclaration_RiddlerResources():
 declare function use_current_ClassDeclaration_RiddlerResources(
     use: TypeOnly<current.RiddlerResources>);
 use_current_ClassDeclaration_RiddlerResources(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_RiddlerResources());
 
 /*

@@ -3,77 +3,62 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, TypedSchema, SchemaAware } from "../../feature-libraries";
-import { ValueSchema, FieldSchema, SchemaData, EmptyKey } from "../../core";
+import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
+import { ValueSchema } from "../../core";
+import { requireAssignableTo } from "../../util";
+
+const builder = new SchemaBuilder("Json Domain");
+
+/**
+ * @alpha
+ */
+export const jsonNumber = builder.primitive("Json.Number", ValueSchema.Number);
+
+/**
+ * @alpha
+ */
+export const jsonString = builder.primitive("Json.String", ValueSchema.String);
+
+/**
+ * @alpha
+ */
+export const jsonNull = builder.struct("Json.Null", {});
+
+/**
+ * @alpha
+ */
+export const jsonBoolean = builder.primitive("Json.Boolean", ValueSchema.Boolean);
+
+const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
 
 /**
  * Types allowed as roots of Json content.
- * Since the Json domain is recursive, this set is declared,
- * then used in the schema, then populated below.
+ * @alpha
  */
-const jsonTypes = [
+export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
+
+{
+	// Recursive objects don't get this type checking automatically, so confirm it
+	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
+}
+
+/**
+ * @alpha
+ */
+export const jsonObject = builder.mapRecursive(
 	"Json.Object",
-	"Json.Array",
-	"Json.Number",
-	"Json.String",
-	"Json.Null",
-	"Json.Boolean",
-] as const;
-
-/**
- * @alpha
- */
-export const jsonObject = TypedSchema.tree("Json.Object", {
-	extraLocalFields: TypedSchema.field(FieldKinds.optional, ...jsonTypes),
-});
-
-/**
- * @alpha
- */
-export const jsonArray = TypedSchema.tree("Json.Array", {
-	local: { [EmptyKey]: TypedSchema.field(FieldKinds.sequence, ...jsonTypes) },
-});
-
-/**
- * @alpha
- */
-export const jsonNumber = TypedSchema.tree("Json.Number", {
-	value: ValueSchema.Number,
-});
-
-/**
- * @alpha
- */
-export const jsonString = TypedSchema.tree("Json.String", {
-	value: ValueSchema.String,
-});
-
-/**
- * @alpha
- */
-export const jsonNull = TypedSchema.tree("Json.Null", {});
-
-/**
- * @alpha
- */
-export const jsonBoolean = TypedSchema.tree("Json.Boolean", {
-	value: ValueSchema.Boolean,
-});
-
-/**
- * @alpha
- */
-export const jsonSchemaData: SchemaData = SchemaAware.typedSchemaData(
-	[],
-	jsonObject,
-	jsonArray,
-	jsonNumber,
-	jsonString,
-	jsonNull,
-	jsonBoolean,
+	SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
 );
 
 /**
  * @alpha
  */
-export const jsonRoot: FieldSchema = TypedSchema.field(FieldKinds.value, ...jsonTypes);
+export const jsonArray = builder.fieldNodeRecursive(
+	"Json.Array",
+	SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
+);
+
+/**
+ * @alpha
+ */
+export const jsonSchema = builder.intoLibrary();

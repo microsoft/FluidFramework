@@ -14,13 +14,8 @@ export {
 	generateReleaseBranchName,
 } from "./branches";
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
-export {
-	bumpPackageDependencies,
-	bumpReleaseGroup,
-	DependencyUpdateType,
-	isDependencyUpdateType,
-	PackageWithRangeSpec,
-} from "./bump";
+export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
+export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
@@ -31,6 +26,7 @@ export {
 	npmCheckUpdates,
 	PackageVersionMap,
 	PreReleaseDependencies,
+	setVersion,
 	sortVersions,
 } from "./package";
 export { difference } from "./sets";

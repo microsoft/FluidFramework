@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -27,7 +27,7 @@ describe("SharedString interval collection event spec", () => {
 
 	let sharedString2: SharedString;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
-	let collection: IntervalCollection<SequenceInterval>;
+	let collection: IIntervalCollection<SequenceInterval>;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
@@ -165,10 +165,11 @@ describe("SharedString interval collection event spec", () => {
 		const eventLog: (IntervalEventInfo & {
 			previousEndpoints: { start: number; end: number };
 			previousInterval: SequenceInterval;
+			slide: boolean;
 		})[] = [];
 		let intervalId: string;
 		beforeEach(() => {
-			collection.on("changeInterval", ({ start, end }, previousInterval, local, op) =>
+			collection.on("changeInterval", ({ start, end }, previousInterval, local, op, slide) =>
 				eventLog.push({
 					interval: {
 						start: sharedString.localReferencePositionToPosition(start),
@@ -183,6 +184,7 @@ describe("SharedString interval collection event spec", () => {
 					previousInterval,
 					local,
 					op,
+					slide,
 				}),
 			);
 			const _intervalId = collection.add(0, 1, IntervalType.SlideOnRemove).getIntervalId();
@@ -196,11 +198,12 @@ describe("SharedString interval collection event spec", () => {
 			collection.change(intervalId, 2, 3);
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ interval, previousEndpoints, local, op }] = eventLog;
+				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
 				assert.deepEqual(interval, { start: 2, end: 3 });
 				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 				assert.equal(local, true);
 				assert.equal(op, undefined);
+				assert.equal(slide, false);
 			}
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
@@ -213,11 +216,12 @@ describe("SharedString interval collection event spec", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ interval, previousEndpoints, local, op }] = eventLog;
+				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
 				assert.deepEqual(interval, { start: 2, end: 3 });
 				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 				assert.equal(local, false);
 				assert.equal(op?.contents.type, "act");
+				assert.equal(slide, false);
 			}
 		});
 
@@ -235,12 +239,14 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op }] = eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
+						eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
 					assert.equal(op, undefined);
+					assert.equal(slide, true);
 				}
 			});
 
@@ -251,13 +257,15 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, op }] = eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
+						eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
 					assert.equal(op?.contents.type, "act");
+					assert.equal(slide, true);
 				}
 			});
 
@@ -268,7 +276,7 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 2);
 				{
-					const { interval, previousInterval, previousEndpoints, local, op } =
+					const { interval, previousInterval, previousEndpoints, local, op, slide } =
 						eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
@@ -276,6 +284,7 @@ describe("SharedString interval collection event spec", () => {
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
 					assert.equal(op?.contents.type, "act");
+					assert.equal(slide, true);
 				}
 			});
 		});

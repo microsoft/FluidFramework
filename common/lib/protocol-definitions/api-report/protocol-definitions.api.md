@@ -4,7 +4,6 @@
 
 ```ts
 
-import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
@@ -166,14 +165,6 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
     data: string;
 }
 
-// @public
-export interface IHelpMessage {
-    // (undocumented)
-    tasks: string[];
-    // (undocumented)
-    version?: string;
-}
-
 // @public (undocumented)
 export interface INack {
     content: INackContent;
@@ -216,23 +207,11 @@ export interface IProtocolState {
 }
 
 // @public
-export interface IQueueMessage {
-    // (undocumented)
-    documentId: string;
-    // (undocumented)
-    message: IHelpMessage;
-    // (undocumented)
-    tenantId: string;
-    // (undocumented)
-    token: string;
-}
-
-// @public
 export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
 }
 
 // @public
-export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
@@ -251,7 +230,7 @@ export interface IQuorumClientsEvents extends IErrorEvent {
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 // @public
-export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
     // (undocumented)
     get(key: string): unknown;
     // (undocumented)
@@ -522,8 +501,6 @@ export enum MessageType {
     Operation = "op",
     Propose = "propose",
     Reject = "reject",
-    // @deprecated
-    RemoteHelp = "remoteHelp",
     RoundTrip = "tripComplete",
     Summarize = "summarize",
     SummaryAck = "summaryAck",

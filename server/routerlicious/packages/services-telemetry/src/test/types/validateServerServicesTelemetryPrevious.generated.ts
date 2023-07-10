@@ -107,6 +107,7 @@ declare function get_current_EnumDeclaration_CommonProperties():
 declare function use_old_EnumDeclaration_CommonProperties(
     use: TypeOnly<old.CommonProperties>);
 use_old_EnumDeclaration_CommonProperties(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_CommonProperties());
 
 /*
@@ -275,6 +276,7 @@ declare function get_current_ClassDeclaration_Lumber():
 declare function use_old_ClassDeclaration_Lumber(
     use: TypeOnly<old.Lumber>);
 use_old_ClassDeclaration_Lumber(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Lumber());
 
 /*
@@ -299,6 +301,7 @@ declare function get_current_EnumDeclaration_LumberEventName():
 declare function use_old_EnumDeclaration_LumberEventName(
     use: TypeOnly<old.LumberEventName>);
 use_old_EnumDeclaration_LumberEventName(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_LumberEventName());
 
 /*

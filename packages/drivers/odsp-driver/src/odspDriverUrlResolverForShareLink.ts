@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { PromiseCache } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	IdentityType,
@@ -48,7 +48,7 @@ export interface ShareLinkFetcherProps {
  * This resolver also handles share links and try to generate one for the use by the app.
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly sharingLinkCache = new PromiseCache<string, string>();
 	private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
 

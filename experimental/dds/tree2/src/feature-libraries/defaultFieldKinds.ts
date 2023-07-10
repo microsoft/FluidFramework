@@ -4,20 +4,17 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
 import {
 	FieldKindIdentifier,
 	Delta,
-	JsonableTree,
 	ITreeCursor,
 	TaggedChange,
 	ITreeCursorSynchronous,
 	tagChange,
-	FieldSchema,
-	RevisionTag,
+	FieldStoredSchema,
 	TreeTypeSet,
 } from "../core";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../util";
+import { brand, fail, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -33,12 +30,22 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
-	isolatedFieldChangeRebaser,
+	IdAllocator,
+	CrossFieldManager,
+	RevisionMetadataSource,
+	getIntention,
+	NodeExistenceState,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
+import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
+import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
-type BrandedFieldKind<
+/**
+ * @alpha
+ */
+export type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
@@ -54,7 +61,7 @@ function brandedFieldKind<
 	identifier: TName,
 	multiplicity: TMultiplicity,
 	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
 	return new FieldKind<TEditor, TMultiplicity>(
@@ -64,17 +71,6 @@ function brandedFieldKind<
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
 	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}
-
-/**
- * @returns a ChangeRebaser that assumes all the changes commute, meaning that order does not matter.
- */
-function commutativeRebaser<TChange>(data: {
-	compose: (changes: TChange[]) => TChange;
-	invert: (changes: TChange) => TChange;
-}): FieldChangeRebaser<TChange> {
-	const rebase = (change: TChange, _over: TChange) => change;
-	return referenceFreeFieldChangeRebaser({ ...data, rebase });
 }
 
 /**
@@ -141,330 +137,25 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
 	}),
-	codecsFactory: () => makeCodecFamily([[0, unitCodec]]),
+	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 	isEmpty: (change: 0) => true,
 };
 
-/**
- * ChangeHandler that does not support any changes.
- *
- * TODO: Due to floating point precision compose is not quite associative.
- * This may violate our requirements.
- * This could be fixed by making this integer only
- * and handling values past Number.MAX_SAFE_INTEGER (ex: via an arbitrarily large integer library)
- * or via modular arithmetic.
- */
-export const counterHandle: FieldChangeHandler<number> = {
-	rebaser: commutativeRebaser({
-		compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-		invert: (change: number) => -change,
-	}),
-	codecsFactory: () => makeCodecFamily([[0, makeValueCodec<number>()]]),
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			setValue: change,
-		},
-	],
-	isEmpty: (change: number) => change === 0,
-};
-
-/**
- * Field kind for counters.
- * Stores a single value which corresponds to number which can be added to.
- *
- * This is an example of a few interesting things:
- *
- * - A field kind with some constraints on what can be under it type wise.
- * Other possible examples which would do this include sets, maps (for their keys),
- * or any domain specific specialized kinds.
- *
- * - A field kind with commutative edits.
- *
- * TODO:
- * What should the subtrees under this look like?
- * How does it prevent / interact with direct edits to the subtree (ex: set value)?
- * How should it use its type set?
- * How should it handle lack of associative addition due to precision and overflow?
- */
-export const counter: BrandedFieldKind<
-	"Counter",
-	Multiplicity.Value,
-	FieldEditor<number>
-> = brandedFieldKind(
-	"Counter",
-	Multiplicity.Value,
-	counterHandle,
-	(types, other) => other.kind.identifier === counter.identifier,
-	new Set(),
-);
-
-export type NodeUpdate =
-	| {
-			set: JsonableTree;
-			changes?: NodeChangeset;
-	  }
-	| {
-			/**
-			 * The node being restored.
-			 */
-			revert: ITreeCursorSynchronous;
-			revision: RevisionTag | undefined;
-			changes?: NodeChangeset;
-	  };
-
-type EncodedNodeUpdate =
-	| {
-			set: JsonableTree;
-			changes?: JsonCompatibleReadOnly;
-	  }
-	| {
-			/**
-			 * The node being restored.
-			 */
-			revert: JsonableTree;
-			revision: RevisionTag | undefined;
-			changes?: JsonCompatibleReadOnly;
-	  };
-
-export interface ValueChangeset {
-	value?: NodeUpdate;
-	changes?: NodeChangeset;
-}
-
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeRebaser({
-	compose: (
-		changes: TaggedChange<ValueChangeset>[],
-		composeChildren: NodeChangeComposer,
-	): ValueChangeset => {
-		if (changes.length === 0) {
-			return {};
-		}
-		let newValue: NodeUpdate | undefined;
-		const childChanges: TaggedChange<NodeChangeset>[] = [];
-		for (const { change, revision } of changes) {
-			if (change.value !== undefined) {
-				newValue = change.value;
-
-				// The previous changes applied to a different value, so we discard them.
-				// TODO: Consider if we should represent muted changes
-				childChanges.length = 0;
-			}
-
-			if (change.changes !== undefined) {
-				childChanges.push(tagChange(change.changes, revision));
-			}
-		}
-
-		const composed: ValueChangeset = {};
-		if (newValue !== undefined) {
-			composed.value = newValue;
-		}
-
-		if (childChanges.length > 0) {
-			composed.changes = composeChildren(childChanges);
-		}
-
-		return composed;
-	},
-
-	invert: (
-		{ revision, change }: TaggedChange<ValueChangeset>,
-		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
-	): ValueChangeset => {
-		const inverse: ValueChangeset = {};
-		if (change.changes !== undefined) {
-			inverse.changes = invertChild(change.changes, 0);
-		}
-		if (change.value !== undefined) {
-			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
-			inverse.value = { revert: reviver(revision, 0, 1)[0], revision };
-		}
-		return inverse;
-	},
-
-	rebase: (
-		change: ValueChangeset,
-		over: TaggedChange<ValueChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	): ValueChangeset => {
-		if (change.changes === undefined || over.change.changes === undefined) {
-			return change;
-		}
-		return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
-	},
-});
-
-interface EncodedValueChangeset {
-	value?: EncodedNodeUpdate;
-	changes?: JsonCompatibleReadOnly;
-}
-
-function makeValueFieldCodec(childCodec: IJsonCodec<NodeChangeset>): IJsonCodec<ValueChangeset> {
-	return {
-		encode: (change: ValueChangeset) => {
-			const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
-			if (change.value !== undefined) {
-				encoded.value = encodeNodeUpdate(change.value, childCodec);
-			}
-
-			if (change.changes !== undefined) {
-				encoded.changes = childCodec.encode(change.changes);
-			}
-
-			return encoded;
-		},
-
-		decode: (change: JsonCompatibleReadOnly) => {
-			const encoded = change as EncodedValueChangeset;
-			const decoded: ValueChangeset = {};
-			if (encoded.value !== undefined) {
-				decoded.value = decodeNodeUpdate(encoded.value, childCodec);
-			}
-
-			if (encoded.changes !== undefined) {
-				decoded.changes = childCodec.decode(encoded.changes);
-			}
-
-			return decoded;
-		},
-	};
-}
-
-function encodeNodeUpdate(
-	update: NodeUpdate,
-	childCodec: IJsonCodec<NodeChangeset>,
-): EncodedNodeUpdate {
-	const encoded: EncodedNodeUpdate =
-		"revert" in update
-			? {
-					revert: jsonableTreeFromCursor(update.revert),
-					revision: update.revision,
-			  }
-			: {
-					set: update.set,
-			  };
-
-	if (update.changes !== undefined) {
-		encoded.changes = childCodec.encode(update.changes);
-	}
-
-	return encoded;
-}
-
-function decodeNodeUpdate(
-	encoded: EncodedNodeUpdate,
-	childCodec: IJsonCodec<NodeChangeset>,
-): NodeUpdate {
-	const decoded: NodeUpdate =
-		"revert" in encoded
-			? {
-					revert: singleTextCursor(encoded.revert),
-					revision: encoded.revision,
-			  }
-			: { set: encoded.set };
-
-	if (encoded.changes !== undefined) {
-		decoded.changes = childCodec.decode(encoded.changes);
-	}
-
-	return decoded;
-}
-
-export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 */
-	set(newValue: ITreeCursor): ValueChangeset;
+	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
 }
 
-const valueFieldEditor: ValueFieldEditor = {
-	buildChildChange: (index, change) => {
-		assert(index === 0, 0x3b6 /* Value fields only support a single child node */);
-		return { changes: change };
-	},
-
-	set: (newValue: ITreeCursor) => ({ value: { set: jsonableTreeFromCursor(newValue) } }),
-};
-
-const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
-	rebaser: valueRebaser,
-	codecsFactory: (childCodec) => makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]),
-	editor: valueFieldEditor,
-
-	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
-		if (change.value !== undefined) {
-			const newValue: ITreeCursorSynchronous =
-				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
-			const insertDelta = deltaFromInsertAndChange(newValue, change.changes, deltaFromChild);
-			return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
-		}
-
-		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
-	},
-
-	isEmpty: (change: ValueChangeset) => change.changes === undefined && change.value === undefined,
-};
-
-/**
- * Exactly one item.
- */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
-	brandedFieldKind(
-		"Value",
-		Multiplicity.Value,
-		valueChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set(),
-	);
-
-export interface OptionalFieldChange {
-	/**
-	 * The new content for the trait. If undefined, the trait will be cleared.
-	 */
-	newContent?: NodeUpdate;
-
-	/**
-	 * Whether the field was empty in the state this change is based on.
-	 */
-	wasEmpty: boolean;
-}
-
-export interface OptionalChangeset {
-	/**
-	 * If defined, specifies the new content for the field.
-	 */
-	fieldChange?: OptionalFieldChange;
-
-	/**
-	 * Changes to the node which were in the field before this changeset is applied, or the node deleted in this field in the given revision
-	 */
-	childChange?: NodeChangeset;
-
-	/**
-	 * The revision the node `childChange` is referring to was deleted in.
-	 * If undefined, `childChange` refers to the node currently in this field.
-	 *
-	 * This representation is sufficient for representing changes to the node present before this changeset and
-	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
-	 */
-	deletedBy?: RevisionTag;
-}
-
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFieldChangeRebaser({
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
-		let fieldChange: OptionalFieldChange | undefined;
+		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
 		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
@@ -479,7 +170,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 			if (change.fieldChange !== undefined) {
 				if (fieldChange === undefined) {
-					fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+					fieldChange = {
+						id: change.fieldChange.id,
+						revision: change.fieldChange.revision ?? revision,
+						wasEmpty: change.fieldChange.wasEmpty,
+					};
+				} else {
+					fieldChange.id = change.fieldChange.id;
+					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
@@ -517,6 +215,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		return composed;
 	},
 
+	amendCompose: () => fail("Not implemented"),
+
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
@@ -526,7 +226,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 		const fieldChange = change.fieldChange;
 		if (fieldChange !== undefined) {
-			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+			inverse.fieldChange = {
+				id: fieldChange.id,
+				wasEmpty: fieldChange.newContent === undefined,
+			};
 			if (fieldChange.newContent?.changes !== undefined) {
 				// The node inserted by change will be the node deleted by inverse
 				// Move the inverted changes to the child change field
@@ -535,7 +238,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
-				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0], revision };
+				inverse.fieldChange.newContent = {
+					revert: reviver(revision, 0, 1)[0],
+					changeId: { revision, localId: fieldChange.id },
+				};
 				if (change.childChange !== undefined) {
 					if (change.deletedBy === undefined) {
 						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
@@ -558,10 +264,15 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		return inverse;
 	},
 
+	amendInvert: () => fail("Not implemented"),
+
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
@@ -590,29 +301,44 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
+				const overIntention = getIntention(
+					over.fieldChange.revision ?? overTagged.revision,
+					revisionMetadata,
+				);
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
+							NodeExistenceState.Dead,
 						),
-						deletedBy: overTagged.revision,
+						deletedBy: {
+							revision: overIntention,
+							localId: over.fieldChange.id,
+						},
 					};
-				} else if (
-					over.fieldChange.newContent !== undefined &&
-					"revert" in over.fieldChange.newContent &&
-					over.fieldChange.newContent.revision === change.deletedBy
-				) {
-					// Over is reviving the node that change.childChange is referring to.
-					// Rebase change.childChange and remove deletedBy
-					// because we revived the node that childChange refers to
-					return {
-						childChange: rebaseChild(
-							change.childChange,
-							over.fieldChange.newContent.changes,
-						),
-					};
+				} else if (over.fieldChange.newContent !== undefined) {
+					const overContent = over.fieldChange.newContent;
+					const rebasingOverRollback =
+						overIntention === change.deletedBy.revision &&
+						over.fieldChange.id === change.deletedBy.localId;
+					const rebasingOverUndo =
+						"revert" in overContent &&
+						overContent.changeId.revision === change.deletedBy.revision &&
+						overContent.changeId.localId === change.deletedBy.localId;
+					if (rebasingOverRollback || rebasingOverUndo) {
+						// Over is reviving the node that change.childChange is referring to.
+						// Rebase change.childChange and remove deletedBy
+						// because we revived the node that childChange refers to
+						return {
+							childChange: rebaseChild(
+								change.childChange,
+								overContent.changes,
+								NodeExistenceState.Alive,
+							),
+						};
+					}
 				}
 			}
 		}
@@ -635,20 +361,45 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			return rebasedChange;
 		}
 	},
-});
+
+	amendRebase: (
+		change: OptionalChangeset,
+		overTagged: TaggedChange<OptionalChangeset>,
+		rebaseChild: NodeChangeRebaser,
+	) => {
+		const amendedChildChange = rebaseChild(change.childChange, overTagged.change.childChange);
+		const amended = { ...change };
+		if (amendedChildChange !== undefined) {
+			amended.childChange = amendedChildChange;
+		} else {
+			delete amended.childChange;
+		}
+		return amended;
+	},
+};
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param id - the ID associated with the change.
 	 */
-	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+	set(
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalFieldEditor: OptionalFieldEditor = {
-	set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
+	set: (
+		newContent: ITreeCursor | undefined,
+		wasEmpty: boolean,
+		id: ChangesetLocalId,
+	): OptionalChangeset => ({
 		fieldChange: {
+			id,
 			newContent:
 				newContent === undefined
 					? undefined
@@ -664,75 +415,6 @@ const optionalFieldEditor: OptionalFieldEditor = {
 		return { childChange };
 	},
 };
-
-interface EncodedOptionalFieldChange {
-	/**
-	 * The new content for the trait. If undefined, the trait will be cleared.
-	 */
-	newContent?: EncodedNodeUpdate;
-
-	/**
-	 * Whether the field was empty in the state this change is based on.
-	 */
-	wasEmpty: boolean;
-}
-
-interface EncodedOptionalChangeset {
-	fieldChange?: EncodedOptionalFieldChange;
-	childChange?: JsonCompatibleReadOnly;
-}
-
-const optionalFieldCodecFamilyFactory: FieldChangeHandler<OptionalChangeset>["codecsFactory"] = (
-	childCodec,
-) =>
-	makeCodecFamily([
-		[
-			0,
-			{
-				encode: (change: OptionalChangeset) => {
-					const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
-					if (change.fieldChange !== undefined) {
-						encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
-						if (change.fieldChange.newContent !== undefined) {
-							encoded.fieldChange.newContent = encodeNodeUpdate(
-								change.fieldChange.newContent,
-								childCodec,
-							);
-						}
-					}
-
-					if (change.childChange !== undefined) {
-						encoded.childChange = childCodec.encode(change.childChange);
-					}
-
-					return encoded;
-				},
-
-				decode: (change: JsonCompatibleReadOnly) => {
-					const encoded = change as EncodedOptionalChangeset;
-					const decoded: OptionalChangeset = {};
-					if (encoded.fieldChange !== undefined) {
-						decoded.fieldChange = {
-							wasEmpty: encoded.fieldChange.wasEmpty,
-						};
-
-						if (encoded.fieldChange.newContent !== undefined) {
-							decoded.fieldChange.newContent = decodeNodeUpdate(
-								encoded.fieldChange.newContent,
-								childCodec,
-							);
-						}
-					}
-
-					if (encoded.childChange !== undefined) {
-						decoded.childChange = childCodec.decode(encoded.childChange);
-					}
-
-					return decoded;
-				},
-			},
-		],
-	]);
 
 function deltaFromInsertAndChange(
 	insertedContent: ITreeCursorSynchronous | undefined,
@@ -770,74 +452,125 @@ function deltaForDelete(
 	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange);
-		deleteDelta.setValue = modify.setValue;
 		deleteDelta.fields = modify.fields;
 	}
 	return [deleteDelta];
 }
 
+function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
+	if (change.fieldChange === undefined) {
+		if (change.deletedBy === undefined && change.childChange !== undefined) {
+			return [deltaFromChild(change.childChange)];
+		}
+		return [];
+	}
+
+	const deleteDelta = deltaForDelete(
+		!change.fieldChange.wasEmpty,
+		change.deletedBy === undefined ? change.childChange : undefined,
+		deltaFromChild,
+	);
+
+	const update = change.fieldChange?.newContent;
+	let content: ITreeCursorSynchronous | undefined;
+	if (update === undefined) {
+		content = undefined;
+	} else if ("set" in update) {
+		content = singleTextCursor(update.set);
+	} else {
+		content = update.revert;
+	}
+
+	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
+
+	return [...deleteDelta, ...insertDelta];
+}
+
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
-	brand("Optional"),
-	Multiplicity.Optional,
-	{
-		rebaser: optionalChangeRebaser,
-		codecsFactory: optionalFieldCodecFamilyFactory,
-		editor: optionalFieldEditor,
+export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, OptionalFieldEditor> =
+	brandedFieldKind(
+		"Optional",
+		Multiplicity.Optional,
+		{
+			rebaser: optionalChangeRebaser,
+			codecsFactory: makeOptionalFieldCodecFamily,
+			editor: optionalFieldEditor,
 
-		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
-			if (change.fieldChange === undefined) {
-				if (change.deletedBy === undefined && change.childChange !== undefined) {
-					return [deltaFromChild(change.childChange)];
-				}
-				return [];
-			}
-
-			const deleteDelta = deltaForDelete(
-				!change.fieldChange.wasEmpty,
-				change.deletedBy === undefined ? change.childChange : undefined,
-				deltaFromChild,
-			);
-
-			const update = change.fieldChange?.newContent;
-			let content: ITreeCursorSynchronous | undefined;
-			if (update === undefined) {
-				content = undefined;
-			} else if ("set" in update) {
-				content = singleTextCursor(update.set);
-			} else {
-				content = update.revert;
-			}
-
-			const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
-
-			return [...deleteDelta, ...insertDelta];
+			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
+				optionalFieldIntoDelta(change, deltaFromChild),
+			isEmpty: (change: OptionalChangeset) =>
+				change.childChange === undefined && change.fieldChange === undefined,
 		},
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === optional.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set([]),
+	);
 
-		isEmpty: (change: OptionalChangeset) =>
-			change.childChange === undefined && change.fieldChange === undefined,
-	},
-	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optional.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set([value.identifier]),
-);
+const valueFieldEditor: ValueFieldEditor = {
+	...optionalFieldEditor,
+	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
+		optionalFieldEditor.set(newContent, false, id),
+};
+
+const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
+	...optional.changeHandler,
+	editor: valueFieldEditor,
+};
+
+/**
+ * Exactly one item.
+ */
+export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
+	brandedFieldKind(
+		"Value",
+		Multiplicity.Value,
+		valueChangeHandler,
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier ||
+				other.kind.identifier === nodeKey.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set(),
+	);
 
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
-	brand("Sequence"),
-	Multiplicity.Sequence,
-	sequenceFieldChangeHandler,
+export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, SequenceFieldEditor> =
+	brandedFieldKind(
+		"Sequence",
+		Multiplicity.Sequence,
+		sequenceFieldChangeHandler,
+		(types, other) =>
+			other.kind.identifier === sequence.identifier &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		// TODO: add normalizer/importers for handling ops from other kinds.
+		new Set([]),
+	);
+
+/**
+ * Exactly one identifier.
+ */
+export const nodeKey: BrandedFieldKind<
+	"NodeKey",
+	Multiplicity.Value,
+	FieldEditor<0>
+> = brandedFieldKind(
+	"NodeKey",
+	Multiplicity.Value,
+	noChangeHandler,
 	(types, other) =>
-		other.kind.identifier === sequence.identifier &&
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === value.identifier ||
+			other.kind.identifier === optional.identifier ||
+			other.kind.identifier === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	// TODO: add normalizer/importers for handling ops from other kinds.
-	new Set([]),
+	new Set(),
 );
 
 /**
@@ -881,5 +614,54 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
 );
+
+// Create named Aliases for nicer intellisense.
+
+// TODO: Find a way to make docs like {@inheritDoc value} work in vscode.
+// TODO: ensure thy work in generated docs.
+// TODO: add these comments to the rest of the cases below.
+/**
+ * @alpha
+ */
+export interface ValueFieldKind
+	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Optional
+	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Sequence
+	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface NodeKeyFieldKind
+	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Forbidden
+	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
+
+/**
+ * Default FieldKinds with their editor types erased.
+ * @alpha
+ */
+export const FieldKinds: {
+	// TODO: inheritDoc for these somehow
+	readonly value: ValueFieldKind;
+	readonly optional: Optional;
+	readonly sequence: Sequence;
+	readonly nodeKey: NodeKeyFieldKind;
+	readonly forbidden: Forbidden;
+} = { value, optional, sequence, nodeKey, forbidden };
+
+/**
+ * @alpha
+ */
+export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];

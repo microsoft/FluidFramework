@@ -13,7 +13,11 @@ import {
 } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import {
+	DeltaStreamConnectionForbiddenError,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -144,4 +148,14 @@ export const getSnapshotTreeFromSerializedContainer = (
 
 export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
 	return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+}
+
+export function isDeltaStreamConnectionForbiddenError(
+	error: any,
+): error is DeltaStreamConnectionForbiddenError {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		error?.errorType === DriverErrorType.deltaStreamConnectionForbidden
+	);
 }

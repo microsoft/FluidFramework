@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import { assert } from '@fluidframework/common-utils';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import BTree from 'sorted-btree';
 import {
 	hasLength,
@@ -397,7 +397,7 @@ export class IdCompressor {
 		public readonly localSessionId: SessionId,
 		public readonly reservedIdCount: number,
 		attributionId?: AttributionId,
-		private readonly logger?: ITelemetryLogger
+		private readonly logger?: ITelemetryLoggerExt
 	) {
 		assert(reservedIdCount >= 0, 0x642 /* reservedIdCount must be non-negative */);
 		if (attributionId !== undefined) {
