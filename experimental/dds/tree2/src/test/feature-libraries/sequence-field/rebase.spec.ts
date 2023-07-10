@@ -248,9 +248,9 @@ describe("SequenceField - Rebase", () => {
 		const deleteA = Change.delete(3, 5);
 		// Deletes --CD-F-HI
 		const deleteB = composeAnonChanges([
-			Change.delete(2, 2),
-			Change.delete(3, 1),
-			Change.delete(4, 2),
+			Change.delete(2, 2, brand(0)),
+			Change.delete(3, 1, brand(2)),
+			Change.delete(4, 2, brand(3)),
 		]);
 		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --E-G
