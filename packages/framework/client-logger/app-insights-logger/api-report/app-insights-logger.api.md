@@ -5,8 +5,8 @@
 ```ts
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @public @sealed
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {

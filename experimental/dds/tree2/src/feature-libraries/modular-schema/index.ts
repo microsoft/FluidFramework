@@ -12,10 +12,13 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
+	addCrossFieldQuery,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
+	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
@@ -44,8 +47,6 @@ export {
 	ModularChangeset,
 	NodeChangeset,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
@@ -70,4 +71,5 @@ export {
 	TypedSchemaCollection,
 	SchemaLibrary,
 	SchemaLibraryData,
+	LazyTreeSchema,
 } from "./typedSchema";

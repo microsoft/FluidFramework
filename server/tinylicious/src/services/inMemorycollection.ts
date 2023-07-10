@@ -83,12 +83,26 @@ export class Collection<T> implements ICollection<T> {
 		});
 	}
 
+	private removeOneInternal(value: any): void {
+		const index = this.collection.indexOf(value);
+		if (index >= 0) {
+			this.collection.splice(index, 1);
+		}
+	}
+
 	public async deleteOne(filter: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const value = this.findOneInternal(filter);
+		this.removeOneInternal(value);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return value;
 	}
 
 	public async deleteMany(filter: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const values = this.findInternal(filter);
+		values.forEach((value) => {
+			this.removeOneInternal(value);
+		});
+		return values;
 	}
 
 	public async createIndex(index: any, unique: boolean): Promise<void> {

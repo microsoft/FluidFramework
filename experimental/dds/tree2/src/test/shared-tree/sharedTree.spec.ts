@@ -16,7 +16,6 @@ import {
 	jsonableTreeFromCursor,
 	namedTreeSchema,
 	on,
-	valueSymbol,
 	SchemaBuilder,
 	Any,
 } from "../../feature-libraries";
@@ -493,36 +492,17 @@ describe("SharedTree", () => {
 				};
 				const foo0 = branch.editor.sequenceField({ parent: root0Path, field: fooKey });
 				const foo1 = branch.editor.sequenceField({ parent: root1Path, field: fooKey });
-				branch.editor.setValue(
-					{
-						parent: root0Path,
-						parentField: fooKey,
-						parentIndex: 1,
-					},
-					41,
-				);
-				branch.editor.setValue(
-					{
-						parent: root0Path,
-						parentField: fooKey,
-						parentIndex: 2,
-					},
-					42,
-				);
-				branch.editor.setValue(root0Path, "RootValue1");
+				foo0.delete(1, 1);
+				foo0.insert(1, singleTextCursor({ type: brand("Number"), value: 41 }));
+				foo0.delete(2, 1);
+				foo0.insert(2, singleTextCursor({ type: brand("Number"), value: 42 }));
 				foo0.delete(0, 1);
 				rootField.insert(0, singleTextCursor({ type: brand("Test") }));
 				foo1.delete(0, 1);
-				branch.editor.setValue(root1Path, "RootValue2");
+				foo1.insert(0, singleTextCursor({ type: brand("Number"), value: "RootValue2" }));
 				foo1.insert(0, singleTextCursor({ type: brand("Test") }));
-				branch.editor.setValue(
-					{
-						parent: root1Path,
-						parentField: fooKey,
-						parentIndex: 1,
-					},
-					82,
-				);
+				foo1.delete(1, 1);
+				foo1.insert(1, singleTextCursor({ type: brand("Number"), value: 82 }));
 				// Aborting the transaction should restore the forest
 				return TransactionResult.Abort;
 			});
@@ -990,30 +970,35 @@ describe("SharedTree", () => {
 	describe("Events", () => {
 		it("triggers events for local and subtree changes", () => {
 			const view = testTreeView();
-			const root = view.context.root.getNode(0);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
 			const log: string[] = [];
-			const unsubscribe = root[on]("changing", () => log.push("change"));
-			const unsubscribeSubtree = root[on]("subtreeChanging", () => {
+			const unsubscribe = rootNode[on]("changing", () => log.push("change"));
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
-			root[valueSymbol] = 5;
+			root.x = 5;
 			log.push("editStart");
-			root[valueSymbol] = 6;
+			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
 			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
-			root[valueSymbol] = 7;
+			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
 				"change",
+				"subtree",
+				"change",
 				"after",
 				"editStart",
+				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -1022,36 +1007,41 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		it("propagates path and value args for local and subtree changes", () => {
+		it("propagates path args for local and subtree changes", () => {
 			const view = testTreeView();
-			const root = view.context.root.getNode(0);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
 			const log: string[] = [];
-			const unsubscribe = root[on]("changing", (upPath, val) =>
-				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${val}`),
+			const unsubscribe = rootNode[on]("changing", (upPath) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
-			root[valueSymbol] = 5;
+			root.x = 5;
 			log.push("editStart");
-			root[valueSymbol] = 6;
+			root.x = 6;
 			log.push("unsubscribe");
 			unsubscribe();
 			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
-			root[valueSymbol] = 7;
+			root.x = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-Symbol(rootFieldKey)-0",
-				"change-Symbol(rootFieldKey)-0-5",
+				"change-Symbol(rootFieldKey)-0",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0",
 				"after",
 				"editStart",
 				"subtree-Symbol(rootFieldKey)-0",
-				"change-Symbol(rootFieldKey)-0-6",
+				"change-Symbol(rootFieldKey)-0",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1794,210 +1784,6 @@ describe("SharedTree", () => {
 	});
 
 	describe.skip("Fuzz Test fail cases", () => {
-		it("Invalid operation", async () => {
-			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-			const initialTreeState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-					foo2: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-			await provider.ensureSynchronized();
-
-			const tree0 = provider.trees[0];
-			const tree1 = provider.trees[1];
-			const tree2 = provider.trees[2];
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			let path: UpPath;
-			// edit 1
-			let readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			path = {
-				parent: rootPath,
-				parentField: brand("foo2"),
-				parentIndex: 1,
-			};
-			runSynchronous(tree1, () => {
-				tree1.editor.setValue(path, 7419365656138425);
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 2
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				const field = tree2.editor.sequenceField({
-					parent: rootPath,
-					field: brand("Test"),
-				});
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// edit 3
-			await provider.ensureSynchronized();
-
-			// edit 4
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree1, () => {
-				const field = tree1.editor.sequenceField({
-					parent: rootPath,
-					field: brand("Test"),
-				});
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 5
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				const field = tree2.editor.sequenceField({
-					parent: rootPath,
-					field: brand("foo"),
-				});
-				field.delete(1, 1);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 6
-			await provider.ensureSynchronized();
-
-			// edit 7
-			await provider.ensureSynchronized();
-
-			// edit 8
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree1, () => {
-				const field = tree1.editor.sequenceField({
-					parent: undefined,
-					field: rootFieldKeySymbol,
-				});
-				field.insert(
-					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			path = {
-				parent: rootPath,
-				parentField: brand("foo"),
-				parentIndex: 0,
-			};
-			// edit 9
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				tree2.editor.setValue(path, -3697253287396999);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField({
-					parent: rootPath,
-					field: brand("foo"),
-				});
-				field.delete(1, 1);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 11
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree1, () => {
-				const field = tree1.editor.sequenceField({
-					parent: rootPath,
-					field: brand("Test"),
-				});
-				field.delete(0, 1);
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// edit 12
-			await provider.ensureSynchronized();
-
-			// edit 13
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField({
-					parent: rootPath,
-					field: brand("Test"),
-				});
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-		});
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 			const initialTreeState: JsonableTree = {
@@ -2150,12 +1936,17 @@ function initializeTestTree(
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
-	const treeSchema = builder.object("root", { value: ValueSchema.Number });
+	const numberSchema = builder.leaf("number", ValueSchema.Number);
+	const treeSchema = builder.struct("root", {
+		x: SchemaBuilder.fieldValue(numberSchema),
+	});
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: 24,
+		initialTree: {
+			x: 24,
+		},
 		schema,
 	});
 }
