@@ -31,7 +31,7 @@ const tag8: RevisionTag = mintRevisionTag();
 const id0: ChangesetLocalId = brand(0);
 
 /**
- * @returns Lineage for a block of cells of `length` starting which were detached `revision`.
+ * @returns Lineage for a mark of `length` targeting cells emptied in `revision`.
  * Assumes `revision` detaches a contiguous block of cells of length `max + 1` which start with ID 0 and have contiguous IDs.
  * `id` is the ID of the first cell in the block of the mark with this lineage.
  */
@@ -46,9 +46,9 @@ function generateLineage(
 		result.push({ revision, id: brand(0), count: id, offset: id });
 	}
 
-	if (id < max) {
-		const nextId = brand<ChangesetLocalId>((id as number) + 1);
-		result.push({ revision, id: nextId, count: max - id, offset: 0 });
+	const nextId = brand<ChangesetLocalId>((id as number) + length);
+	if (nextId <= max) {
+		result.push({ revision, id: nextId, count: max - nextId, offset: 0 });
 	}
 
 	return result;
