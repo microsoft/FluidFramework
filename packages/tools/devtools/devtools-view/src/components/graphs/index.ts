@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { DynamicComposedChart, GraphDataSet } from "./DynamicComposedChart";
+export { DynamicComposedChart, DynamicComposedChartProps, GraphDataSet } from "./DynamicComposedChart";
