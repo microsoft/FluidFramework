@@ -24,9 +24,9 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-} from "./containerRuntime";
-export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCRuntimeOptions, IGCStats } from "./gc";
+} from "../containerRuntime";
+export { FluidDataStoreRegistry } from "../dataStoreRegistry";
+export { IGCRuntimeOptions, IGCStats } from "../gc";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -69,6 +69,7 @@ export {
 	ICancellableSummarizerController,
 	SubmitSummaryFailureData,
 	SummaryStage,
-} from "./summary";
-export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
-export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";
+} from "../summary";
+export { IChunkedOp, unpackRuntimeMessage } from "../opLifecycle";
+export { generateStableId, isStableId, assertIsStableId } from "../id-compressor";
+export { PendingLocalState } from "./testInterfaces";

@@ -20,6 +20,8 @@ import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { PendingLocalState } from "@fluidframework/container-runtime/dist/test";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -97,8 +99,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			await forceWriteMode(map, dataStore1);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
-			const pendingBlobs =
-				runtimeOf(dataStore1).getPendingLocalState().pendingAttachmentBlobs;
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
 			const acked = Object.values<any>(pendingBlobs)[0].acked;
 			assert.strictEqual(blob.isAttached, false);
 			assert.strictEqual(acked, true);
@@ -110,8 +112,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			// by not calling forceWriteMode we are actually checking offline flow
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			await provider.ensureSynchronized();
-			const pendingBlobs =
-				runtimeOf(dataStore1).getPendingLocalState().pendingAttachmentBlobs;
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
 			const acked = Object.values<any>(pendingBlobs)[0].acked;
 			assert.strictEqual(blob.isAttached, false);
 			assert.strictEqual(acked, true);
@@ -129,8 +131,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
-			const pendingBlobs =
-				runtimeOf(dataStore1).getPendingLocalState().pendingAttachmentBlobs;
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 
@@ -145,8 +147,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
 				map.set(`${i}`, blob);
 			}
-			const pendingBlobs =
-				runtimeOf(dataStore1).getPendingLocalState().pendingAttachmentBlobs;
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 	});

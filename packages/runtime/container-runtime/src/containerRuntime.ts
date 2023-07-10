@@ -215,11 +215,6 @@ export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 }
 
-export interface PendingLocalState {
-	pending: IPendingLocalState | undefined;
-	pendingAttachmentBlobs: IPendingBlobs;
-}
-
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -3557,7 +3552,7 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public getPendingLocalState(): PendingLocalState {
+	public getPendingLocalState(): unknown {
 		if (this._orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");
 		}

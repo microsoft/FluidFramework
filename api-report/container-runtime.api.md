@@ -147,7 +147,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): PendingLocalState;
+    getPendingLocalState(): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -628,18 +628,6 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
-
-// @public (undocumented)
-export interface PendingLocalState {
-    // Warning: (ae-forgotten-export) The symbol "IPendingLocalState" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    pending: IPendingLocalState | undefined;
-    // Warning: (ae-forgotten-export) The symbol "IPendingBlobs" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    pendingAttachmentBlobs: IPendingBlobs;
-}
 
 // @public
 export enum RuntimeHeaders {
