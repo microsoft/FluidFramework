@@ -6,6 +6,7 @@
 import React from "react";
 import {
 	Dropdown,
+	Link,
 	Option,
 	Switch,
 	makeStyles,
@@ -124,6 +125,14 @@ export function SettingsView(): React.ReactElement {
 			</div>
 			<div className={styles.section}>
 				<h4 className={styles.sectionHeader}>Usage telemetry</h4>
+				<Link
+					href="https://go.microsoft.com/fwlink/?LinkId=521839"
+					target="_blank"
+					rel="noreferrer"
+					inline
+				>
+					Microsoft Privacy Statement
+				</Link>
 				<Switch
 					label="Send usage telemetry to Microsoft"
 					checked={optedIn}
