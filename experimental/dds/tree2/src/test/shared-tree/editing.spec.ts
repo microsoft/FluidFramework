@@ -689,7 +689,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		it.skip("delete source ancestor of return mark", () => {
+		it("delete source ancestor of return mark", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,

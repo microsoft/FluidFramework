@@ -18,7 +18,6 @@ import {
 	getOutputLength,
 	isAttach,
 	isDetachMark,
-	isModify,
 	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
@@ -618,6 +617,12 @@ function amendRebaseI<TNodeChange>(
 
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
+
+		if (baseMark === undefined) {
+			assert(newMark !== undefined, "Both marks shouldn't be undefined at the same time");
+			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
+		}
+
 		if (
 			baseMark !== undefined &&
 			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
@@ -634,32 +639,8 @@ function amendRebaseI<TNodeChange>(
 			}
 		}
 
-		if (newMark !== undefined) {
-			let rebasedMark = newMark;
-
-			// TODO: Handle all pairings of base and new mark types.
-			if (baseMark !== undefined && isModify(baseMark)) {
-				switch (newMark.type) {
-					case NoopMarkType: {
-						const childChange = rebaseChild(undefined, baseMark.changes);
-						if (childChange !== undefined) {
-							rebasedMark = { type: "Modify", changes: childChange };
-						}
-						break;
-					}
-					case "Modify": {
-						const childChange = rebaseChild(newMark.changes, baseMark.changes);
-						if (childChange === undefined) {
-							rebasedMark = { count: 1 };
-						} else {
-							newMark.changes = childChange;
-						}
-						break;
-					}
-					default:
-						break;
-				}
-			}
+		if (newMark !== undefined && baseMark !== undefined) {
+			const rebasedMark = rebaseNodeChange(cloneMark(newMark), baseMark, rebaseChild);
 			factory.push(rebasedMark);
 		}
 	}
