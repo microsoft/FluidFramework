@@ -713,6 +713,7 @@ function addLineageEntry(
 					...lastEntry,
 					count: lastEntry.count + count,
 				};
+				return;
 			}
 		}
 	}

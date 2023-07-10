@@ -100,7 +100,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;
 							}
-							const inv = tagChange(invert(change2), tag6);
+							const inv = tagRollbackInverse(invert(change2), tag6, tag5);
 							const r1 = rebaseTagged(change1, change2);
 							tracker.apply(change2);
 							const r2 = rebaseTagged(r1, inv);
