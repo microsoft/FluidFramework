@@ -18,11 +18,7 @@ import {
 	emptyMessageStream,
 	streamObserver,
 } from "@fluidframework/driver-utils";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	TelemetryNullLogger,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 
@@ -101,7 +97,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 			fromTotal, // inclusive
 			toTotal, // exclusive
 			MaxBatchDeltas,
-			new TelemetryNullLogger(),
+			this.logger,
 			abortSignal,
 			fetchReason,
 		);
@@ -139,7 +135,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 		const ops = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
-				eventName: "getDeltas",
+				eventName: "OpsFetch",
 				from,
 				to,
 			},

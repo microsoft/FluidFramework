@@ -1936,11 +1936,9 @@ function initializeTestTree(
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	const builder = new SchemaBuilder("testTreeView");
-	const numberSchema = builder.primitive("number", ValueSchema.Number);
-	const treeSchema = builder.object("root", {
-		local: {
-			x: SchemaBuilder.fieldValue(numberSchema),
-		},
+	const numberSchema = builder.leaf("number", ValueSchema.Number);
+	const treeSchema = builder.struct("root", {
+		x: SchemaBuilder.fieldValue(numberSchema),
 	});
 	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
