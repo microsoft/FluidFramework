@@ -76,6 +76,7 @@ importers:
       '@fluidframework/azure-local-service': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
+      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
@@ -111,6 +112,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
+      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
@@ -41041,7 +41043,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.87.0
+      webpack: 5.87.0_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:
