@@ -46,6 +46,9 @@ This `zip` file is what we will upload to each of the stores.
 
 Our published extension for the `Edge` browser can be found [here](https://aka.ms/fluid/devtool/edge).
 
+The portal used for managing the extension in the `Edge` store can be found [here](https://partner.microsoft.com/en-us/dashboard/microsoftedge/b21bb070-408b-4b8f-b943-3e3f1a4d3c76/packages/dashboard).
+In order to access it, join the `TODO` alias via the [identity portal](TODO).
+
 To publish an update, you will need to do the following:
 
 TODO
@@ -54,6 +57,11 @@ TODO
 
 Our published extension for the `Chrome` browser can be found [here](https://aka.ms/fluid/devtool/chrome).
 
+The portal used for managing the extension in the `Chrome` store can be found [here](TODO).
+In order to gain access, you will need to do the following:
+
+1. Join the `TODO` alias via the [identity portal]().
+
 To publish an update, you will need to do the following:
 
 TODO
@@ -61,6 +69,11 @@ TODO
 ### Copy-pastable information for the publishing portals
 
 The following blurbs can be copy-pasted into the publishing portals to update details about the extension / add context for the browser teams to do their review.
+
+Note: this document should be considered the "source of truth" for what we use in the browser store portals for the browser stores.
+This way, we can be sure that our content is consistent between the stores.
+If you wish to update any of the details in the portal, please update the contents here first, and make a PR with the changes.
+_Then_ make the corresponding updates in the browser store portals.
 
 #### Extension Description
 
