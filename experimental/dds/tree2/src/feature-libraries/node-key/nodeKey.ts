@@ -38,7 +38,7 @@ export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 |
 }
 
 /**
- * The key for the special field for node keys,
+ * The key for the special field for {@link LocalNodeKey}s,
  * which allows nodes to be given keys that can be used to find the nodes via the node key index.
  * @alpha
  * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for fields defined by the system.

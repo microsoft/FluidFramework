@@ -22,7 +22,7 @@ export const nodeKeyTreeSchema = builder.leaf(nodeKeyTreeIdentifier, ValueSchema
 /**
  * Key and Field schema for working with {@link LocalNodeKey}s in a shared tree.
  * Node keys are added to struct nodes via a field.
- * This object can be expanded into the a schema to add the field.
+ * This object can be expanded into a schema to add the field.
  *
  * Requires including {@link nodeKeySchema}.
  * @alpha
@@ -32,7 +32,7 @@ export const nodeKeyField = {
 };
 
 /**
- * Create a schema library for working with {@link StableNodeKey}s in a tree.
+ * The schema library for working with {@link StableNodeKey}s in a tree.
  * Required to use {@link nodeKeyField}.
  * @alpha
  */
