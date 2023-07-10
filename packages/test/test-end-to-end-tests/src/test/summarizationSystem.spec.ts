@@ -42,7 +42,7 @@ describeNoCompat("Do not need summarize on demand", (getTestObjectProvider) => {
 		});
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		const containerRuntime = dataObject._context.containerRuntime;
-		const waitForSummary = new Deferred();
+		const waitForSummary = new Deferred<any>();
 		(containerRuntime as any).summarizerClientElection.on("electedSummarizerChanged", () => {
 			const runtime = (containerRuntime as any).summaryManager.summarizer
 				?.runtime as ContainerRuntime;
@@ -65,5 +65,7 @@ describeNoCompat("Do not need summarize on demand", (getTestObjectProvider) => {
 		dataObject._root.set("an", "op Or 10");
 		const result = await waitForSummary.promise;
 		assert(result !== undefined, "Should be able to get a summary!");
+		assert(result.stats !== undefined, "Should be able to get a summary!");
+		assert(result.summary !== undefined, "Should be able to get a summary!");
 	});
 });
