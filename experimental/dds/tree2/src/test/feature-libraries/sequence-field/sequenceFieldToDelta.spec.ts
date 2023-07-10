@@ -357,7 +357,7 @@ describe("SequenceField - toDelta", () => {
 					type: "Delete",
 					id: brand(0),
 					count: 2,
-					detachEvent: { revision: tag1, localId: brand(0) },
+					detachEvent,
 				},
 			];
 
