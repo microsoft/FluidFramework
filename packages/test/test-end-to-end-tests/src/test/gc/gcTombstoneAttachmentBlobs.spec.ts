@@ -852,7 +852,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
-				await provider.ensureSynchronized();
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
@@ -946,7 +945,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
-				await provider.ensureSynchronized();
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
