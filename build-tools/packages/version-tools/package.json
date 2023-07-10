@@ -71,10 +71,10 @@
 		"@oclif/plugin-autocomplete": "^2.3.1",
 		"@oclif/plugin-commands": "^2.2.17",
 		"@oclif/plugin-help": "^5.2.11",
-		"@oclif/plugin-not-found": "^2.3.26",
+		"@oclif/plugin-not-found": "^2.3.27",
 		"@oclif/plugin-plugins": "^3.1.6",
 		"chalk": "^2.4.2",
-		"semver": "^7.5.3",
+		"semver": "^7.5.4",
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
@@ -82,7 +82,7 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.36.1",
-		"@oclif/test": "^2.3.26",
+		"@oclif/test": "^2.3.27",
 		"@types/chai": "^4.3.5",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.53",
