@@ -72,6 +72,7 @@ export interface ViewEvents {
 	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
 	 * are accurate.
 	 * 
+	 * @privateRemarks
 	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the 
 	 * local branch which cannot be rebased onto another branch.
 	 */
