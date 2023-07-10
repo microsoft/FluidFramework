@@ -37,26 +37,22 @@ describe("DeltaUtils", () => {
 					[
 						{
 							type: Delta.MarkType.Modify,
-							setValue: 1,
 							fields: nestedCursorInsert,
 						},
 						{
 							type: Delta.MarkType.MoveOut,
 							count: 1,
 							moveId,
-							setValue: 1,
 							fields: nestedCursorInsert,
 						},
 						{
 							type: Delta.MarkType.Delete,
 							count: 1,
-							setValue: 1,
 							fields: nestedCursorInsert,
 						},
 						{
 							type: Delta.MarkType.Insert,
 							content: [nodeXCursor],
-							setValue: 1,
 							fields: nestedCursorInsert,
 						},
 					],
@@ -82,26 +78,22 @@ describe("DeltaUtils", () => {
 					[
 						{
 							type: Delta.MarkType.Modify,
-							setValue: 1,
 							fields: nestedMapTreeInsert,
 						},
 						{
 							type: Delta.MarkType.MoveOut,
 							count: 1,
 							moveId,
-							setValue: 1,
 							fields: nestedMapTreeInsert,
 						},
 						{
 							type: Delta.MarkType.Delete,
 							count: 1,
-							setValue: 1,
 							fields: nestedMapTreeInsert,
 						},
 						{
 							type: Delta.MarkType.Insert,
 							content: [nodeX],
-							setValue: 1,
 							fields: nestedMapTreeInsert,
 						},
 					],

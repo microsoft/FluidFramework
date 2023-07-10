@@ -30,14 +30,12 @@ import { nodeKeySchema } from "../../../domains";
 const { schema: nodeKeyLibrary, field: nodeKeyField, type: nodeKeyType } = nodeKeySchema();
 
 const builder = new SchemaBuilder("node key index benchmarks", nodeKeyLibrary);
-const nodeSchema = builder.objectRecursive("node", {
-	local: {
-		child: SchemaBuilder.fieldRecursive(
-			FieldKinds.optional,
-			() => nodeSchema,
-			() => nodeWithKeySchema,
-		),
-	},
+const nodeSchema = builder.structRecursive("node", {
+	child: SchemaBuilder.fieldRecursive(
+		FieldKinds.optional,
+		() => nodeSchema,
+		() => nodeWithKeySchema,
+	),
 });
 const nodeWithKeySchema = builder.objectRecursive("nodeWithKey", {
 	local: {

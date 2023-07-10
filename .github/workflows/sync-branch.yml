@@ -1,0 +1,38 @@
+name: Sync branches
+
+on:
+  schedule:
+    - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
+
+env:
+  TARGET_BRANCH: test-next
+  SOURCE_BRANCH: main
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'microsoft'
+    steps: 
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # add the bin dir of build-cli to the path
+          cd packages/build-cli/bin
+          echo "$(pwd)" >> $GITHUB_PATH
+      
+      - name: Run merge command
+        run: flub merge branches -a ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 10
