@@ -11,7 +11,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
-	createSummarizerCore,
+	createSummarizerWithTestConfig,
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
@@ -217,11 +217,12 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				registry: [], // omit the sharedCounter factory from the registry to cause a summarization error
 			};
 
-			const loader = provider.makeTestLoader(configWithMissingChannelFactory);
-			const { container: summarizingContainer, summarizer } = await createSummarizerCore(
-				container,
-				loader,
-			);
+			const { container: summarizingContainer, summarizer } =
+				await createSummarizerWithTestConfig(
+					provider,
+					container,
+					configWithMissingChannelFactory,
+				);
 
 			await provider.ensureSynchronized();
 

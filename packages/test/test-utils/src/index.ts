@@ -31,10 +31,9 @@ export {
 } from "./testObjectProvider";
 export {
 	createSummarizer,
-	createSummarizerCore,
 	createSummarizerFromFactory,
-	createSummarizerWithTestConfig,
 	summarizeNow,
+	createSummarizerWithTestConfig,
 } from "./TestSummaryUtils";
 export {
 	defaultTimeoutDurationMs,

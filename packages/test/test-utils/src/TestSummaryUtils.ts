@@ -27,7 +27,7 @@ import { timeoutAwait } from "./timeoutUtils";
 
 const summarizerClientType = "summarizer";
 
-export async function createSummarizerCore(
+async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
@@ -148,7 +148,7 @@ export async function createSummarizerWithTestConfig(
 		...config,
 		runtimeOptions: {
 			...config.runtimeOptions,
-			summaryOptions: defaultSummaryOptions,
+			summaryOptions: config.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
 			...config.loaderProps,
