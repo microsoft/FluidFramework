@@ -291,7 +291,7 @@ export function areOverlappingIdRanges(
 ): boolean {
 	const lastId1 = (id1 as number) + count1 - 1;
 	const lastId2 = (id2 as number) + count2 - 1;
-	return (id1 >= id2 && id1 <= lastId2) || (id2 >= id1 && id2 <= lastId1);
+	return (id2 <= id1 && id1 <= lastId2) || (id1 <= id2 && id2 <= lastId1);
 }
 
 export function isDetachMark<TNodeChange>(
