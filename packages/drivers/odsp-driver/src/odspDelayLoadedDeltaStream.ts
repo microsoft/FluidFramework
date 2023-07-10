@@ -25,10 +25,10 @@ import {
 	TokenFetchOptions,
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import { ISocketStorageDiscovery } from "./contractsPublic";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import {

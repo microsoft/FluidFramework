@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { FocusTracker, IFocusSignalPayload, IFocusTrackerEvents } from "./FocusTracker";
+export {
+	DynamicComposedChart,
+	DynamicComposedChartProps,
+	GraphDataSet,
+} from "./DynamicComposedChart";

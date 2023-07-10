@@ -40,7 +40,6 @@ import {
 	stringSchema,
 	Int32,
 	getPerson,
-	globalFieldSymbolSequencePhones,
 	SimplePhones,
 	complexPhoneSchema,
 	ComplexPhone,
@@ -206,19 +205,6 @@ describe("editable-tree: editing", () => {
 			}
 		}
 
-		const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;
-		maybePerson.address[globalPhonesKey] = ["111"];
-		// TODO: fix typing of property access in EditableTree (broken by assignment support) and remove this "as"
-		const globalPhones = maybePerson.address[globalPhonesKey] as UnwrappedEditableField;
-		assert(isEditableField(globalPhones));
-		globalPhones[0] = "222";
-		globalPhones[1] = "333";
-		// explicitly check and delete the global field as `clone` (used below)
-		// does not support symbols as property keys
-		assert.deepEqual([...globalPhones], ["222", "333"]);
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete maybePerson.address[globalPhonesKey];
-
 		const clonedPerson = clone(maybePerson);
 		assert.deepEqual(clonedPerson, {
 			name: "Peter",
@@ -252,12 +238,6 @@ describe("editable-tree: editing", () => {
 
 		// check initial data
 		{
-			// explicitly check the global field as `clone` does not support symbols as field keys
-			assert.deepEqual(clone(person.address?.[globalFieldSymbolSequencePhones]), {
-				"0": "115",
-				"1": "116",
-			});
-			delete person.address?.[globalFieldSymbolSequencePhones];
 			const clonedPerson = clone(person);
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",

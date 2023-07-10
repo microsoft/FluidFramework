@@ -11,9 +11,10 @@ import {
 	rootFieldKey,
 	TreeAdapter,
 	TreeSchemaIdentifier,
+	ValueSchema,
 } from "../../../core";
 import { Sourced, SchemaCollection } from "../view";
-import { brand, requireAssignableTo } from "../../../util";
+import { brand, requireAssignableTo, RestrictiveReadonlyRecord } from "../../../util";
 import { optional, sequence, value, FieldKindTypes } from "../../defaultFieldKinds";
 import type { FieldKinds } from "../..";
 import { InternalTypes } from "../../schema-aware";
@@ -95,6 +96,11 @@ export class SchemaBuilder {
 		}
 	}
 
+	private addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
+		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
+		this.treeSchema.set(schema.name, schema as TreeSchema);
+	}
+
 	/**
 	 * Define (and add to this library) a schema for an object.
 	 *
@@ -105,8 +111,7 @@ export class SchemaBuilder {
 		t: T,
 	): TreeSchema<Name, T> {
 		const schema = new TreeSchema(this, name, t);
-		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
-		this.treeSchema.set(schema.name, schema as TreeSchema);
+		this.addNodeSchema(schema);
 		return schema;
 	}
 
@@ -124,6 +129,146 @@ export class SchemaBuilder {
 	}
 
 	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a struct node.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link FieldSchema}.
+	 *
+	 * @remarks
+	 * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
+	 * (Including Algol 68, C, Go, Rust, C# etc.).
+	 * Struct nodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
+	 * which is why "Struct" nodes are named after "Structs" instead.
+	 *
+	 * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
+	 * The name "Record" is avoided (in favor of Struct) here because it has less precise connotations for most TypeScript developers.
+	 * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
+	 * putting its semantics half way between this library's "struct" schema and "map" schema.
+	 */
+	public struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: T }> {
+		const schema = new TreeSchema(this, name, { local: t });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `struct` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public structRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: T }> {
+		return this.struct(
+			name,
+			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
+		) as unknown as TreeSchema<Name, { local: T }>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a map node.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * Map nodes consist of a collection of fields, each with a unique key, but with the content of each following the same schema.
+	 * The schema permits any string to be used as a key.
+	 *
+	 * @remarks
+	 * These node resemble the TypeScript Map type, parameterized as `Map<string, fieldSchema>` with one important difference:
+	 * Unlike TypeScript Map type, Map nodes can always provide a reference to any field looked up, even if its never been set.
+	 * This means that, for example, a Map node of sequenceFields will return an empty sequence when a previously unused key is looked up, and that sequence can be used to insert new items into the field.
+	 * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
+	 * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
+	 */
+	public map<Name extends string, T extends FieldSchema>(
+		name: Name,
+		fieldSchema: T,
+	): TreeSchema<Name, { extraLocalFields: T }> {
+		const schema = new TreeSchema(this, name, { extraLocalFields: fieldSchema });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `map` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public mapRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { extraLocalFields: T }> {
+		return this.map(name, t as unknown as FieldSchema) as unknown as TreeSchema<
+			Name,
+			{ extraLocalFields: T }
+		>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a field node.
+	 * Such nodes will be implicitly unwrapped to the field in some APIs.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * A field is a node with a single field which captures all its meaning.
+	 *
+	 * @remarks
+	 * Field nodes are mainly a shorthand for a struct with a single field.
+	 *
+	 * There are several use-cases where it makes sense to use a field node.
+	 * Here are a few:
+	 * - When it's necessary to differentiate between an empty sequence, and no sequence.
+	 * One case where this is needed is encoding Json.
+	 * - When polymorphism over file kinds is required.
+	 * For example when encoding a schema for a type like
+	 * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is our Optional field kind, not TypeScript's `Optional`).
+	 * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+	 * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
+	 * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
+	 * - When a distinct merge identity is desired for a field.
+	 * For example, if the application wants to be able to have an optional node or a sequence which it can pass around, edit and observe changes to,
+	 * in some cases (like when the content is moved to a different parent) this can be more flexible if a field node is introduced
+	 * to create a separate logical entity (node) which wraps the field.
+	 * This can even be useful with value fields to wrap terminal nodes if a stable merge identity is needed that survives editing the value (which is done by replacing the leaf node).
+	 *
+	 * Field nodes store their field under the {@link FieldKey} {@link EmptyKey}.
+	 *
+	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
+	 * TODO: Maybe find a better name for this.
+	 */
+	public fieldNode<Name extends string, T extends FieldSchema>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: { [""]: T } }> {
+		const schema = new TreeSchema(this, name, { local: { [""]: t } });
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `fieldNode` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on RecursiveTreeSchema for details.
+	 */
+	public fieldNodeRecursive<Name extends string, T>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { local: { [""]: T } }> {
+		return this.fieldNode(name, t as unknown as FieldSchema) as unknown as TreeSchema<
+			Name,
+			{ local: { [""]: T } }
+		>;
+	}
+
+	/**
 	 * Define (and add to this library) a schema for an object that just wraps a primitive value.
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
 	 *
@@ -135,6 +280,28 @@ export class SchemaBuilder {
 	): TreeSchema<Name, { value: T }> {
 		// TODO: add "primitive" metadata to schema, and set it here.
 		return this.object(name, { value: t });
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
+	 * Such nodes will be implicitly unwrapped to the value in some APIs.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * In addition to the normal properties of all nodes (having a schema for example),
+	 * Leaf nodes only contain a value.
+	 * Leaf nodes cannot have fields.
+	 *
+	 * TODO: Maybe ban undefined from allowed values here.
+	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
+	 */
+	public leaf<Name extends string, T extends ValueSchema>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, { value: T }> {
+		const schema = new TreeSchema(this, name, { value: t });
+		this.addNodeSchema(schema);
+		return schema;
 	}
 
 	/**

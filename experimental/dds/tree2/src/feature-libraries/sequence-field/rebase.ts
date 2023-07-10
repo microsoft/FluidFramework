@@ -19,7 +19,6 @@ import {
 	getOutputLength,
 	isAttach,
 	isDetachMark,
-	isModify,
 	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
@@ -81,6 +80,7 @@ export function rebase<TNodeChange>(
 	genId: IdAllocator,
 	manager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
+	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset<TNodeChange> {
 	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
 	const baseInfo =
@@ -94,6 +94,7 @@ export function rebase<TNodeChange>(
 		rebaseChild,
 		genId,
 		manager as MoveEffectTable<TNodeChange>,
+		nodeExistenceState,
 	);
 }
 
@@ -111,6 +112,7 @@ function rebaseMarkList<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
+	nodeExistenceState: NodeExistenceState,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new RebaseQueue(
@@ -186,6 +188,7 @@ function rebaseMarkList<TNodeChange>(
 				baseIntention,
 				rebaseChild,
 				moveEffects,
+				nodeExistenceState,
 			);
 
 			// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
@@ -320,6 +323,7 @@ function rebaseMark<TNodeChange>(
 	baseIntention: RevisionTag,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
 	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
@@ -374,7 +378,10 @@ function rebaseMark<TNodeChange>(
 			0x69e /* Only an ExistingCellMark can target an empty cell */,
 		);
 		if (isMoveMark(rebasedMark)) {
-			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
+			if (
+				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+				nodeExistenceState === NodeExistenceState.Alive
+			) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
@@ -395,6 +402,31 @@ function rebaseMark<TNodeChange>(
 			}
 		}
 		rebasedMark = withoutDetachEvent(rebasedMark);
+	} else if (
+		nodeExistenceState === NodeExistenceState.Alive &&
+		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+		rebasedMark.detachEvent === undefined
+	) {
+		setPairedMarkStatus(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			rebasedMark.revision,
+			rebasedMark.id,
+			rebasedMark.count,
+			PairedMarkUpdate.Reactivated,
+		);
+	} else if (
+		nodeExistenceState === NodeExistenceState.Dead &&
+		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom")
+	) {
+		setPairedMarkStatus(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			rebasedMark.revision,
+			rebasedMark.id,
+			rebasedMark.count,
+			PairedMarkUpdate.Deactivated,
+		);
 	}
 	return rebasedMark;
 }
@@ -567,6 +599,15 @@ function amendRebaseI<TNodeChange>(
 
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
+
+		if (baseMark === undefined) {
+			assert(
+				newMark !== undefined,
+				"Non-empty RebaseQueue should not provide two empty marks",
+			);
+			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
+		}
+
 		if (
 			baseMark !== undefined &&
 			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
@@ -583,32 +624,8 @@ function amendRebaseI<TNodeChange>(
 			}
 		}
 
-		if (newMark !== undefined) {
-			let rebasedMark = newMark;
-
-			// TODO: Handle all pairings of base and new mark types.
-			if (baseMark !== undefined && isModify(baseMark)) {
-				switch (newMark.type) {
-					case NoopMarkType: {
-						const childChange = rebaseChild(undefined, baseMark.changes);
-						if (childChange !== undefined) {
-							rebasedMark = { type: "Modify", changes: childChange };
-						}
-						break;
-					}
-					case "Modify": {
-						const childChange = rebaseChild(newMark.changes, baseMark.changes);
-						if (childChange === undefined) {
-							rebasedMark = { count: 1 };
-						} else {
-							newMark.changes = childChange;
-						}
-						break;
-					}
-					default:
-						break;
-				}
-			}
+		if (newMark !== undefined && baseMark !== undefined) {
+			const rebasedMark = rebaseNodeChange(cloneMark(newMark), baseMark, rebaseChild);
 			factory.push(rebasedMark);
 		}
 	}
