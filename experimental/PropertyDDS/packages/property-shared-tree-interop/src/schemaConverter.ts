@@ -43,13 +43,13 @@ const numberTypes = new Set<string>([
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
 
-type PropertyContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
+type PropertyDDSContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
 
-const singleContext: PropertyContext = brand("single");
-const arrayContext: PropertyContext = brand("array");
-const mapContext: PropertyContext = brand("map");
+const singleContext: PropertyDDSContext = brand("single");
+const arrayContext: PropertyDDSContext = brand("array");
+const mapContext: PropertyDDSContext = brand("map");
 
-function isPropertyContext(context: string): context is PropertyContext {
+function isPropertyContext(context: string): context is PropertyDDSContext {
 	return context in { single: true, array: true, map: true, set: true };
 }
 
