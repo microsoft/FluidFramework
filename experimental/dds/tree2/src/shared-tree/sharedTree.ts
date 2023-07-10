@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ICodecOptions, noopValidator } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
@@ -27,24 +28,23 @@ import {
 	EditableTreeContext,
 	ForestSummarizer,
 	SchemaSummarizer as SchemaSummarizer,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	DefaultEditBuilder,
 	UnwrappedEditableField,
 	DefaultChangeset,
 	buildForest,
-	ContextuallyTypedNodeData,
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
-	EditableTree,
 	SchemaEditor,
-	NodeIdentifierIndex,
-	NodeIdentifier,
-	defaultIntoDelta,
+	NodeKeyIndex,
+	createNodeKeyManager,
+	NewFieldContent,
+	ModularChangeset,
+	nodeKeyFieldKey,
 } from "../feature-libraries";
-import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
-import { nodeIdentifierKey } from "../domains";
-import { SchematizeConfiguration } from "./schematizedTree";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
+import { JsonCompatibleReadOnly, brand } from "../util";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
@@ -63,7 +63,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
- * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
@@ -71,43 +70,58 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
+	private readonly _events: ISubscribable<ViewEvents> &
+		IEmitter<ViewEvents> &
+		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
+		const options = { jsonValidator: noopValidator, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(runtime, forest);
-		const repairProvider = new ForestRepairDataStoreProvider(forest, schema, defaultIntoDelta);
+		const changeFamily = new DefaultChangeFamily(options);
+		const repairProvider = new ForestRepairDataStoreProvider(
+			forest,
+			schema,
+			(change: ModularChangeset) => changeFamily.intoDelta(change),
+		);
 		super(
 			[schemaSummarizer, forestSummarizer],
-			defaultChangeFamily,
+			changeFamily,
 			forest.anchors,
 			repairProvider,
+			options,
 			id,
 			runtime,
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-		this.identifierIndex = new NodeIdentifierIndex(nodeIdentifierKey);
+		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
+		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
+		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
 			schema,
 			forest,
 			repairProvider,
-			identifierIndex: this.identifierIndex,
+			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyIndex: this.nodeKeyIndex,
+			events: this._events,
 		});
-		this.events = createEmitter<ViewEvents>();
-		this.getLocalBranch().on("change", () => this.finishBatch());
+	}
+
+	public get events(): ISubscribable<ViewEvents> {
+		return this._events;
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -122,15 +136,11 @@ export class SharedTree
 		return this.view.forest;
 	}
 
-	public get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree> {
-		return this.view.identifiedNodes;
-	}
-
 	public get root(): UnwrappedEditableField {
 		return this.view.root;
 	}
 
-	public set root(data: ContextuallyTypedNodeData | undefined) {
+	public set root(data: NewFieldContent) {
 		this.view.root = data;
 	}
 
@@ -142,18 +152,18 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public generateNodeIdentifier(): NodeIdentifier {
-		return this.view.generateNodeIdentifier();
-	}
-
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return this.view.schematize(config);
+		return schematizeView(this, config);
 	}
 
 	public get transaction(): SharedTreeView["transaction"] {
 		return this.view.transaction;
+	}
+
+	public get nodeKey(): SharedTreeView["nodeKey"] {
+		return this.view.nodeKey;
 	}
 
 	public fork(): SharedTreeView {
@@ -202,15 +212,17 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.finishBatch();
-	}
-
-	/** Finish a batch (see {@link ViewEvents}) */
-	private finishBatch(): void {
-		this.identifierIndex.scanIdentifiers(this.context);
-		this.events.emit("afterBatch");
+		// The identifier index must be populated after both the schema and forest have loaded.
+		// TODO: Create an ISummarizer for the identifier index and ensure it loads after the other indexes.
+		this.nodeKeyIndex.scanKeys(this.context);
+		this._events.emit("afterBatch");
 	}
 }
+
+/**
+ * @alpha
+ */
+export interface SharedTreeOptions extends Partial<ICodecOptions> {}
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
@@ -225,19 +237,21 @@ export class SharedTreeFactory implements IChannelFactory {
 		packageVersion: "0.0.0",
 	};
 
+	public constructor(private readonly options: SharedTreeOptions = {}) {}
+
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
+		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
 		return tree;
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
+		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
 	}

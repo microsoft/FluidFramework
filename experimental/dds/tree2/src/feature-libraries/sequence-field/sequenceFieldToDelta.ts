@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
+import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
@@ -88,6 +88,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 					out.pushContent(insertMark);
 					break;
 				}
+				case "Placeholder":
+					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
 					unreachableCase(type);
 			}
@@ -121,5 +123,5 @@ function deltaFromNodeChange<TNodeChange>(
 }
 
 function isEmptyModify(modify: Delta.Modify): boolean {
-	return modify.fields === undefined && modify.setValue === undefined;
+	return modify.fields === undefined;
 }

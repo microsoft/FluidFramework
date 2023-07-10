@@ -47,8 +47,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 	}
 
 	private readonly invalidVersions: Package[] = [];
-	protected async processPackage(directory: string): Promise<void> {
-		const pkg = new Package(path.join(directory, "package.json"), "none");
+	protected async processPackage(pkg: Package): Promise<void> {
 		if (pkg.version !== this.versionToCheck) {
 			this.invalidVersions.push(pkg);
 		}

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	IBatchMessage,
 	IContainerContext,
+	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
@@ -15,7 +16,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { PendingStateManager } from "../../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager";
 import {
 	BatchMessage,
 	IBatch,
@@ -124,15 +125,13 @@ describe("Outbox", () => {
 		},
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
-		return {
-			contents: JSON.stringify({ type, contents }),
-			type,
-			metadata: { test: true },
-			localOpMetadata: {},
-			referenceSequenceNumber: Number.POSITIVE_INFINITY,
-		};
-	};
+	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
+		contents: JSON.stringify({ type, contents }),
+		type,
+		metadata: { test: true },
+		localOpMetadata: {},
+		referenceSequenceNumber: Number.POSITIVE_INFINITY,
+	});
 
 	const batchedMessage = (
 		message: BatchMessage,
@@ -168,6 +167,7 @@ describe("Outbox", () => {
 			.reduce((a, b) => a + b, 0),
 		referenceSequenceNumber:
 			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+		hasReentrantOps: false,
 	});
 
 	const DefaultCompressionOptions = {
@@ -184,6 +184,7 @@ describe("Outbox", () => {
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
+		enableGroupedBatching?: boolean;
 	}) =>
 		new Outbox({
 			shouldSend: () => state.canSendOps,
@@ -198,10 +199,14 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
+				enableGroupedBatching: params.enableGroupedBatching ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
+			reSubmit: (message: IPendingBatchMessage) => {},
+			opReentrancy: () => false,
+			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 
 	beforeEach(() => {

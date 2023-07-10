@@ -5,8 +5,6 @@
 export {
 	DefaultChangeset,
 	DefaultChangeFamily,
-	defaultChangeFamily,
-	defaultIntoDelta,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
@@ -32,6 +30,42 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	localNodeKeySymbol,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	SetValueBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
@@ -53,6 +87,8 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
+	FieldGenerator,
+	TreeDataContext,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -60,7 +96,7 @@ export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
-export { getSchemaString } from "./schemaIndexFormat";
+export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,
@@ -80,14 +116,12 @@ export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -110,7 +144,6 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	ValueConstraint,
 	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
@@ -128,7 +161,8 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
-	NodeExistenceStateChange,
+	LazyTreeSchema,
+	NodeExistenceState,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -140,9 +174,17 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
-
-export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export {
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	StableNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
+} from "./node-key";
 
 export {
 	FieldKinds,
@@ -150,7 +192,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

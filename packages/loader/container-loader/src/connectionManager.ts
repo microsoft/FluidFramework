@@ -4,7 +4,8 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
@@ -14,7 +15,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-	DriverErrorType,
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
@@ -52,6 +52,7 @@ import {
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
+import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -106,6 +107,9 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
+	constructor(public readonly storageOnlyReason?: string) {
+		super();
+	}
 	submit(messages: IDocumentMessage[]): void {
 		this.emit(
 			"nack",
@@ -132,6 +136,10 @@ class NoDeltaStream
 	public dispose() {
 		this._disposed = true;
 	}
+}
+
+function isNoDeltaStreamConnection(connection: any): connection is NoDeltaStream {
+	return connection instanceof NoDeltaStream;
 }
 
 const waitForOnline = async (): Promise<void> => {
@@ -309,14 +317,19 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
-		const storageOnly =
-			this.connection !== undefined && this.connection instanceof NoDeltaStream;
+		let storageOnly: boolean = false;
+		let storageOnlyReason: string | undefined;
+		if (isNoDeltaStreamConnection(this.connection)) {
+			storageOnly = true;
+			storageOnlyReason = this.connection.storageOnlyReason;
+		}
 		if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
 			return {
 				readonly: true,
 				forced: this._forceReadonly,
 				permissions: this._readonlyPermissions,
 				storageOnly,
+				storageOnlyReason,
 			};
 		}
 
@@ -372,8 +385,6 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 		this._disposed = true;
-
-		this.pendingConnection = undefined;
 
 		// Ensure that things like triggerConnect() will short circuit
 		this._reconnectMode = ReconnectMode.Never;
@@ -489,7 +500,7 @@ export class ConnectionManager implements IConnectionManager {
 		let pendingConnectionMode;
 		if (this.pendingConnection !== undefined) {
 			pendingConnectionMode = this.pendingConnection.connectionMode;
-			this.cancelConnection(); // Throw out in-progress connection attempt in favor of new attempt
+			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
 			assert(
 				this.pendingConnection === undefined,
 				0x344 /* this.pendingConnection should be undefined */,
@@ -533,6 +544,7 @@ export class ConnectionManager implements IConnectionManager {
 			connectionMode: requestedMode,
 		};
 
+		this.props.establishConnectionHandler(reason);
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -562,12 +574,8 @@ export class ConnectionManager implements IConnectionManager {
 					connection = undefined;
 				}
 			} catch (origError: any) {
-				if (
-					typeof origError === "object" &&
-					origError !== null &&
-					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
-				) {
-					connection = new NoDeltaStream();
+				if (isDeltaStreamConnectionForbiddenError(origError)) {
+					connection = new NoDeltaStream(origError.storageOnlyReason);
 					requestedMode = "read";
 					break;
 				}
@@ -593,6 +601,7 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				if (retryDelayFromError !== undefined) {
 					// If the error told us to wait, then we wait.
@@ -613,6 +622,14 @@ export class ConnectionManager implements IConnectionManager {
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
 				await waitForOnline();
+				this.logger.sendPerformanceEvent({
+					eventName: "WaitBetweenConnectionAttempts",
+					duration: performance.now() - waitStartTime,
+					details: JSON.stringify({
+						retryDelayFromError,
+						delayMs,
+					}),
+				});
 			}
 		}
 
@@ -674,7 +691,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (this.connection === undefined) {
 			if (this.pendingConnection !== undefined) {
-				this.cancelConnection();
+				this.cancelConnection(reason);
 				return true;
 			}
 			return false;
@@ -712,7 +729,7 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Cancel in-progress connection attempt.
 	 */
-	private cancelConnection() {
+	private cancelConnection(reason: string) {
 		assert(
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
@@ -720,6 +737,7 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
+		this.props.cancelConnectionHandler(`Cancel Pending Connection due to ${reason}`);
 	}
 
 	/**
@@ -941,7 +959,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.triggerConnect(
 			error !== undefined
-				? "Reconnect on Error"
+				? "Reconnecting due to Error"
 				: `Reconnecting due to: ${disconnectMessage}`,
 			requestedMode,
 		);
@@ -960,6 +978,7 @@ export class ConnectionManager implements IConnectionManager {
 				forcedReadonly: this.readOnlyInfo.forced,
 				readonlyPermissions: this.readOnlyInfo.permissions,
 				storageOnly: this.readOnlyInfo.storageOnly,
+				storageOnlyReason: this.readOnlyInfo.storageOnlyReason,
 			});
 			this.props.closeHandler(error);
 			return undefined;

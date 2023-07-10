@@ -7,11 +7,7 @@ export {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	AnchorEvents,
@@ -42,6 +38,7 @@ export {
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
+	topDownPath,
 	getDepth,
 	UpPath,
 	FieldUpPath,

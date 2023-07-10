@@ -8,9 +8,9 @@ import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
 import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";

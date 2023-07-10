@@ -5,7 +5,6 @@
 
 import React from "react";
 
-import { Stack } from "@fluentui/react";
 import { Spinner } from "@fluentui/react-components";
 
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -34,19 +33,13 @@ export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 		for (let col = 0; col < colCount; col++) {
 			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<SharedCell<boolean>>;
 			renderedCells.push(
-				<Stack.Item key={`emoji-grid-cell-${row}-${col}`}>
-					<CellView cellHandle={cellHandle} />
-				</Stack.Item>,
+				<CellView key={`emoji-grid-cell-${row}-${col}`} cellHandle={cellHandle} />,
 			);
 		}
-		renderedRows.push(
-			<Stack.Item key={`emoji-grid-row${row}`}>
-				<Stack horizontal>{renderedCells}</Stack>
-			</Stack.Item>,
-		);
+		renderedRows.push(<div key={`emoji-grid-row${row}`}>{renderedCells}</div>);
 	}
 
-	return <Stack>{renderedRows}</Stack>;
+	return <div>{renderedRows}</div>;
 }
 
 interface CellViewProps {

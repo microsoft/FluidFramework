@@ -5,11 +5,8 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import {
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	IDeltaHandlerStrategy,
 	IDeltaManager,
@@ -24,6 +21,7 @@ import {
 	normalizeError,
 	logIfFalse,
 	safeRaiseEvent,
+	isFluidError,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -45,6 +43,7 @@ import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 	DataProcessingError,
+	UsageError,
 } from "@fluidframework/container-utils";
 import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
@@ -64,6 +63,8 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
+	(event: "establishingConnection", listener: (reason: string) => void);
+	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
 }
 
 /**
@@ -369,6 +370,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
+			establishConnectionHandler: (reason: string) => this.establishingConnection(reason),
+			cancelConnectionHandler: (reason: string) => this.cancelEstablishingConnection(reason),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -406,6 +409,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Initially, all queues are created paused.
 		// - outbound is flipped back and forth in setupNewSuccessfulConnection / disconnectFromDeltaStream
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
+	}
+
+	private cancelEstablishingConnection(reason: string) {
+		this.emit("cancelEstablishingConnection", reason);
+	}
+
+	private establishingConnection(reason: string) {
+		this.emit("establishingConnection", reason);
 	}
 
 	private connectHandler(connection: IConnectionDetailsInternal) {
@@ -455,10 +466,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		} else if (connection.mode === "read") {
 			this.fetchMissingDeltas("AfterReadConnection");
 		}
-	}
-
-	public dispose() {
-		throw new Error("Not implemented.");
 	}
 
 	/**
@@ -648,23 +655,51 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	/**
 	 * Closes the connection and clears inbound & outbound queues.
 	 *
-	 * @param doDispose - should the DeltaManager treat this close call as a dispose?
-	 * Differences between close and dispose:
-	 * - dispose will emit "disposed" event while close emits "closed"
-	 * - dispose will remove all listeners
-	 * - dispose can be called after closure, but not vis versa
+	 * Differences from dispose:
+	 * - close will trigger readonly notification
+	 * - close emits "closed"
+	 * - close cannot be called after dispose
 	 */
-	public close(error?: ICriticalContainerError, doDispose?: boolean): void {
+	public close(error?: ICriticalContainerError): void {
 		if (this._closed) {
-			if (doDispose === true) {
-				this.disposeInternal(error);
-			}
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(error, doDispose !== true);
+		this.connectionManager.dispose(error, true /* switchToReadonly */);
+		this.clearQueues();
+		this.emit("closed", error);
+	}
 
+	/**
+	 * Disposes the connection and clears the inbound & outbound queues.
+	 *
+	 * Differences from close:
+	 * - dispose will emit "disposed"
+	 * - dispose will remove all listeners
+	 * - dispose can be called after closure
+	 */
+	public dispose(error?: Error | ICriticalContainerError): void {
+		if (this._disposed) {
+			return;
+		}
+		if (error !== undefined && !isFluidError(error)) {
+			throw new UsageError("Error must be a Fluid error");
+		}
+
+		this._disposed = true;
+		this._closed = true; // We consider "disposed" as a further state than "closed"
+
+		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.clearQueues();
+
+		// This needs to be the last thing we do (before removing listeners), as it causes
+		// Container to dispose context and break ability of data stores / runtime to "hear" from delta manager.
+		this.emit("disposed", error);
+		this.removeAllListeners();
+	}
+
+	private clearQueues() {
 		this.closeAbortController.abort();
 
 		this._inbound.clear();
@@ -677,25 +712,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Drop pending messages - this will ensure catchUp() does not go into infinite loop
 		this.pending = [];
-
-		if (doDispose === true) {
-			this.disposeInternal(error);
-		} else {
-			this.emit("closed", error);
-		}
-	}
-
-	private disposeInternal(error?: ICriticalContainerError): void {
-		if (this._disposed) {
-			return;
-		}
-		this._disposed = true;
-
-		// This needs to be the last thing we do (before removing listeners), as it causes
-		// Container to dispose context and break ability of data stores / runtime to "hear"
-		// from delta manager, including notification (above) about readonly state.
-		this.emit("disposed", error);
-		this.removeAllListeners();
 	}
 
 	public refreshDelayInfo(id: string) {

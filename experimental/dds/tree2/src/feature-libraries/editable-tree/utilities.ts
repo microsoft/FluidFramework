@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchema, ValueSchema } from "../../core";
-import { forbidden } from "../defaultFieldKinds";
+import { assert } from "@fluidframework/common-utils";
+import { isStableId } from "@fluidframework/container-runtime";
+import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
+import { brand } from "../../util";
+import { valueSymbol } from "../contextuallyTyped";
+import { FieldKinds, forbidden } from "../defaultFieldKinds";
+import { StableNodeKey } from "../node-key";
+import { EditableTree, getField } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -65,4 +71,32 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
 	const index = Number(key);
 	if (typeof key === "string" && String(index) !== key) return false;
 	return Number.isInteger(index) && 0 <= index && index < length;
+}
+
+/**
+ * Retrieve a {@link StableNodeKey} on the given {@link EditableTree} node.
+ * @param nodeKeyFieldKey - the key of the field under which the node key resides
+ * @param node - the {@link EditableTree} node from which to retrieve the node key
+ * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
+ */
+export function getStableNodeKey(
+	nodeKeyFieldKey: LocalFieldKey,
+	node: EditableTree,
+): StableNodeKey | undefined {
+	if (nodeKeyFieldKey in node) {
+		// Get the ID via a wrapped node rather than an unwrapped node (`node[nodeKeyFieldKeySymbol]`)
+		// so that the field kind can be checked
+		const field = node[getField](nodeKeyFieldKey);
+		assert(
+			field.fieldSchema.kind.identifier === FieldKinds.nodeKey.identifier,
+			0x6df /* Invalid node key field kind */,
+		);
+		const nodeKeyNode = field.getNode(0);
+		const id = nodeKeyNode[valueSymbol];
+		assert(
+			typeof id === "string" && isStableId(id),
+			0x6e0 /* Malformed value encountered in node key field */,
+		);
+		return brand(id);
+	}
 }

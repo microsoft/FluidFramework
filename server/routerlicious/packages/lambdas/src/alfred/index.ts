@@ -230,6 +230,7 @@ export function configureWebSocketServices(
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -243,6 +244,9 @@ export function configureWebSocketServices(
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
+		const clientIdConnectionsDisconnected = new Set<string>();
+		const clientIdClientsDisconnected = new Set<string>();
+		let disconnectDocumentP: Promise<void> | undefined;
 
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
@@ -289,6 +293,7 @@ export function configureWebSocketServices(
 			if (throttleErrorPerTenant) {
 				return Promise.reject(throttleErrorPerTenant);
 			}
+
 			if (!message.token) {
 				throw new NetworkError(403, "Must provide an authorization token");
 			}
@@ -296,8 +301,65 @@ export function configureWebSocketServices(
 			// Validate token signature and claims
 			const token = message.token;
 			const claims = validateTokenClaims(token, message.id, message.tenantId);
+			const clientId = generateClientId();
+
+			const lumberjackProperties = {
+				...getLumberBaseProperties(claims.documentId, claims.tenantId),
+				[CommonProperties.clientId]: clientId,
+			};
+
+			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ConnectDocumentGetClients,
+				lumberjackProperties,
+			);
+			const clients = await clientManager
+				.getClients(claims.tenantId, claims.documentId)
+				.then((response) => {
+					connectDocumentGetClientsMetric.success(
+						"Successfully got clients from client manager",
+					);
+					return response;
+				})
+				.catch(async (err) => {
+					const errMsg = `Failed to get clients. Error: ${safeStringify(
+						err,
+						undefined,
+						2,
+					)}`;
+					connectDocumentGetClientsMetric.error(
+						"Failed to get clients during connectDocument",
+						err,
+					);
+					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+				});
+
+			if (clients.length > maxNumberOfClientsPerDocument) {
+				throw new NetworkError(
+					429,
+					"Too Many Clients Connected to Document",
+					true /* canRetry */,
+					false /* isFatal */,
+					5 * 60 * 1000 /* retryAfterMs (5 min) */,
+				);
+			}
 
 			try {
+				// Check if token is revoked
+				if (revokedTokenChecker && claims.jti) {
+					const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
+						claims.tenantId,
+						claims.documentId,
+						claims.jti,
+					);
+					if (isTokenRevoked) {
+						throw new core.TokenRevokedError(
+							403,
+							"Permission denied. Token has been revoked",
+							false /* canRetry */,
+							true /* isFatal */,
+						);
+					}
+				}
 				await tenantManager.verifyToken(claims.tenantId, token);
 			} catch (error) {
 				if (isNetworkError(error)) {
@@ -312,7 +374,6 @@ export function configureWebSocketServices(
 				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
 			}
 
-			const clientId = generateClientId();
 			const room: IRoom = {
 				tenantId: claims.tenantId,
 				documentId: claims.documentId,
@@ -377,46 +438,6 @@ export function configureWebSocketServices(
 					`Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(
 						connectVersions,
 					)}`,
-				);
-			}
-
-			const lumberjackProperties = {
-				...getLumberBaseProperties(claims.documentId, claims.tenantId),
-				[CommonProperties.clientId]: clientId,
-			};
-
-			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
-				LumberEventName.ConnectDocumentGetClients,
-				lumberjackProperties,
-			);
-			const clients = await clientManager
-				.getClients(claims.tenantId, claims.documentId)
-				.then((response) => {
-					connectDocumentGetClientsMetric.success(
-						"Successfully got clients from client manager",
-					);
-					return response;
-				})
-				.catch(async (err) => {
-					const errMsg = `Failed to get clients. Error: ${safeStringify(
-						err,
-						undefined,
-						2,
-					)}`;
-					connectDocumentGetClientsMetric.error(
-						"Failed to get clients during connectDocument",
-						err,
-					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-				});
-
-			if (clients.length > maxNumberOfClientsPerDocument) {
-				throw new NetworkError(
-					429,
-					"Too Many Clients Connected to Document",
-					true /* canRetry */,
-					false /* isFatal */,
-					5 * 60 * 1000 /* retryAfterMs (5 min) */,
 				);
 			}
 
@@ -603,6 +624,101 @@ export function configureWebSocketServices(
 			};
 		}
 
+		async function disconnectDocument() {
+			// Clear token expiration timer on disconnection
+			clearExpirationTimer();
+			const removeAndStoreP: Promise<void>[] = [];
+			// Send notification messages for all client IDs in the connection map
+			for (const [clientId, connection] of connectionsMap) {
+				if (clientIdConnectionsDisconnected.has(clientId)) {
+					// We already removed this clientId once. Skip it.
+					continue;
+				}
+				const messageMetaData = getMessageMetadata(
+					connection.documentId,
+					connection.tenantId,
+				);
+				logger.info(`Disconnect of ${clientId}`, { messageMetaData });
+				Lumberjack.info(
+					`Disconnect of ${clientId}`,
+					getLumberBaseProperties(connection.documentId, connection.tenantId),
+				);
+
+				connection
+					.disconnect()
+					.then(() => {
+						// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
+						// for the same clientId if retrying when connectDocument completes after disconnectDocument.
+						clientIdConnectionsDisconnected.add(clientId);
+					})
+					.catch((error) => {
+						const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(connection.documentId, connection.tenantId),
+							error,
+						);
+					});
+				if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
+					const connectionTimestamp = connectionTimeMap.get(clientId);
+					if (connectionTimestamp) {
+						removeAndStoreP.push(
+							storeClientConnectivityTime(
+								clientId,
+								connection.documentId,
+								connection.tenantId,
+								connectionTimestamp,
+								throttleAndUsageStorageManager,
+							),
+						);
+					}
+				}
+			}
+			// Send notification messages for all client IDs in the room map
+			for (const [clientId, room] of roomMap) {
+				if (clientIdClientsDisconnected.has(clientId)) {
+					// We already removed this clientId once. Skip it.
+					continue;
+				}
+				const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+				// excluding summarizer for total client count.
+				if (connectionTimeMap.has(clientId)) {
+					connectionCountLogger.decrementConnectionCount();
+				}
+				logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
+				Lumberjack.info(
+					`Disconnect of ${clientId} from room`,
+					getLumberBaseProperties(room.documentId, room.tenantId),
+				);
+				removeAndStoreP.push(
+					clientManager
+						.removeClient(room.tenantId, room.documentId, clientId)
+						.then(() => {
+							// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
+							// for the same clientId if retrying when connectDocument completes after disconnectDocument.
+							clientIdClientsDisconnected.add(clientId);
+						}),
+				);
+				socket
+					.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))
+					.catch((error) => {
+						const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(
+							room,
+						)}.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(room.documentId, room.tenantId),
+							error,
+						);
+					});
+			}
+			// Clear socket tracker upon disconnection
+			if (socketTracker) {
+				socketTracker.removeSocket(socket.id);
+			}
+			await Promise.all(removeAndStoreP);
+		}
+
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("connect_document", async (connectionMessage: IConnect) => {
@@ -641,6 +757,7 @@ export function configureWebSocketServices(
 				})
 				.catch((error) => {
 					socket.emit("connect_document_error", error);
+					clearExpirationTimer();
 					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
@@ -648,6 +765,62 @@ export function configureWebSocketServices(
 				})
 				.finally(() => {
 					connectDocumentComplete = true;
+					if (disconnectDocumentP) {
+						Lumberjack.warning(
+							`ConnectDocument completed after disconnect was handled.`,
+						);
+						// We have already received disconnect for this connection.
+						disconnectDocumentP.finally(() => {
+							// We might need to re-run disconnect handler after previous disconnect handler completes.
+							// DisconnectDocument internally handles the cases where we have already run disconnect for
+							// roomsMap and connectionsMap so that we don't duplicate disconnect efforts.
+							// The primary need for this retry is when we receive "disconnect" in the narrow window after
+							// "connect_document" but before "connectDocumentP" is defined.
+							const alreadyDisconnectedAllConnections: boolean =
+								connectionsMap.size === clientIdConnectionsDisconnected.size;
+							const alreadyDisconnectedAllClients: boolean =
+								roomMap.size === clientIdClientsDisconnected.size;
+							if (
+								alreadyDisconnectedAllConnections &&
+								alreadyDisconnectedAllClients
+							) {
+								// Don't retry disconnect if all connections and clients are already handled.
+								return;
+							}
+
+							const disconnectRetryMetric = Lumberjack.newLumberMetric(
+								LumberEventName.DisconnectDocumentRetry,
+							);
+							disconnectRetryMetric.setProperties({
+								[CommonProperties.connectionCount]: connectionsMap.size,
+								[CommonProperties.connectionClients]: JSON.stringify(
+									Array.from(connectionsMap.keys()),
+								),
+								[CommonProperties.roomClients]: JSON.stringify(
+									Array.from(roomMap.keys()),
+								),
+							});
+
+							if (roomMap.size >= 1) {
+								const rooms = Array.from(roomMap.values());
+								const documentId = rooms[0].documentId;
+								const tenantId = rooms[0].tenantId;
+								disconnectRetryMetric.setProperties({
+									...getLumberBaseProperties(documentId, tenantId),
+								});
+							}
+
+							disconnectDocument()
+								.then(() => {
+									disconnectRetryMetric.success(
+										`Successfully retried disconnect.`,
+									);
+								})
+								.catch((error) => {
+									disconnectRetryMetric.error(`Disconnect retry failed.`, error);
+								});
+						});
+					}
 				});
 		});
 
@@ -867,87 +1040,18 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
-			try {
-				clearExpirationTimer();
-				const removeAndStoreP: Promise<void>[] = [];
-				// Send notification messages for all client IDs in the connection map
-				for (const [clientId, connection] of connectionsMap) {
-					const messageMetaData = getMessageMetadata(
-						connection.documentId,
-						connection.tenantId,
-					);
-					logger.info(`Disconnect of ${clientId}`, { messageMetaData });
-					Lumberjack.info(
-						`Disconnect of ${clientId}`,
-						getLumberBaseProperties(connection.documentId, connection.tenantId),
-					);
+			if (roomMap.size >= 1) {
+				const rooms = Array.from(roomMap.values());
+				const documentId = rooms[0].documentId;
+				const tenantId = rooms[0].tenantId;
+				disconnectMetric.setProperties({
+					...getLumberBaseProperties(documentId, tenantId),
+				});
+			}
 
-					connection.disconnect().catch((error) => {
-						const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
-						Lumberjack.error(
-							errorMsg,
-							getLumberBaseProperties(connection.documentId, connection.tenantId),
-							error,
-						);
-					});
-					if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
-						const connectionTimestamp = connectionTimeMap.get(clientId);
-						if (connectionTimestamp) {
-							removeAndStoreP.push(
-								storeClientConnectivityTime(
-									clientId,
-									connection.documentId,
-									connection.tenantId,
-									connectionTimestamp,
-									throttleAndUsageStorageManager,
-								),
-							);
-						}
-					}
-				}
-				// Send notification messages for all client IDs in the room map
-				for (const [clientId, room] of roomMap) {
-					const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
-					// excluding summarizer for total client count.
-					if (connectionTimeMap.has(clientId)) {
-						connectionCountLogger.decrementConnectionCount();
-					}
-					logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
-					Lumberjack.info(
-						`Disconnect of ${clientId} from room`,
-						getLumberBaseProperties(room.documentId, room.tenantId),
-					);
-					removeAndStoreP.push(
-						clientManager.removeClient(room.tenantId, room.documentId, clientId),
-					);
-					socket
-						.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))
-						.catch((error) => {
-							const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(
-								room,
-							)}.`;
-							Lumberjack.error(
-								errorMsg,
-								getLumberBaseProperties(room.documentId, room.tenantId),
-								error,
-							);
-						});
-				}
-				// Clear socket tracker upon disconnection
-				if (socketTracker) {
-					socketTracker.removeSocket(socket.id);
-				}
-				await Promise.all(removeAndStoreP);
-				if (roomMap.size >= 1) {
-					const rooms = Array.from(roomMap.values());
-					const documentId = rooms[0].documentId;
-					const tenantId = rooms[0].tenantId;
-					const clients = await clientManager.getClients(tenantId, documentId);
-					disconnectMetric.setProperties({
-						...getLumberBaseProperties(documentId, tenantId),
-						[CommonProperties.clientCount]: clients.length,
-					});
-				}
+			try {
+				disconnectDocumentP = disconnectDocument();
+				await disconnectDocumentP;
 				disconnectMetric.success(`Successfully disconnected.`);
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
