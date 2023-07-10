@@ -138,7 +138,10 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
-	 * Undoes the last completed transaction made by the client. Calling this does nothing if there are no transactions in the
+	 * Undoes the last completed transaction made by the client. 
+	 * 
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
 	 * undo stack.
 	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
@@ -146,7 +149,10 @@ export interface ISharedTreeView extends AnchorLocator {
 	undo(): void;
 
 	/**
-	 * Redoes the last completed undo made by the client. Calling this does nothing if there are no transactions in the
+	 * Redoes the last completed undo made by the client. 
+	 * 
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
 	 * redo stack. New local transactions will not clear the redo stack.
 	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
