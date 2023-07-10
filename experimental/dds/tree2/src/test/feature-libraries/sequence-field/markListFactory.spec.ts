@@ -119,13 +119,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, id: brand(0) },
+			detachEvent: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, id: brand(1) },
+			detachEvent: { revision: detachedBy, localId: brand(1) },
 			content: fakeRepair(detachedBy, 1, 1),
 			count: 1,
 		};
@@ -133,7 +133,7 @@ describe("SequenceField - MarkListFactory", () => {
 		factory.pushContent(revive2);
 		const expected: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, id: brand(0) },
+			detachEvent: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 2),
 			count: 2,
 		};
@@ -144,13 +144,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, id: brand(0) },
+			detachEvent: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, id: brand(2) },
+			detachEvent: { revision: detachedBy, localId: brand(2) },
 			content: fakeRepair(detachedBy, 2, 1),
 			count: 1,
 		};

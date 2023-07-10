@@ -146,7 +146,7 @@ describe("SequenceField - Rebase", () => {
 			// Overlapping revive is no longer redundant
 			Change.revive(1, 1, tag1, brand(1), rebaseRepair, undefined, {
 				revision: tag2,
-				id: brand(0),
+				localId: brand(0),
 			}),
 			// Later revive is unaffected
 			Change.redundantRevive(1, 1, tag1, brand(3), rebaseRepair),
@@ -170,7 +170,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag3, id: brand(0) },
+				detachEvent: { revision: tag3, localId: brand(0) },
 			},
 			{
 				type: "Revive",
@@ -192,7 +192,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 1, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag2, id: brand(1) },
+				detachEvent: { revision: tag2, localId: brand(1) },
 			},
 			{
 				type: "Revive",
@@ -205,7 +205,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 3, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag2, id: brand(3) },
+				detachEvent: { revision: tag2, localId: brand(3) },
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -260,21 +260,21 @@ describe("SequenceField - Rebase", () => {
 				type: "Delete",
 				id: brand(0),
 				count: 1,
-				detachEvent: { revision: tag1, id: brand(1) },
+				detachEvent: { revision: tag1, localId: brand(1) },
 			},
 			{ type: "Delete", id: brand(1), count: 1 },
 			{
 				type: "Delete",
 				id: brand(2),
 				count: 1,
-				detachEvent: { revision: tag1, id: brand(2) },
+				detachEvent: { revision: tag1, localId: brand(2) },
 			},
 			{ type: "Delete", id: brand(3), count: 1 },
 			{
 				type: "Delete",
 				id: brand(4),
 				count: 1,
-				detachEvent: { revision: tag1, id: brand(3) },
+				detachEvent: { revision: tag1, localId: brand(3) },
 			},
 		];
 		checkDeltaEquality(actual, expected);
@@ -323,7 +323,7 @@ describe("SequenceField - Rebase", () => {
 				type: "MoveOut",
 				count: 1,
 				id: brand(0),
-				detachEvent: { revision: tag1, id: brand(1) },
+				detachEvent: { revision: tag1, localId: brand(1) },
 				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
 			},
 			{ type: "MoveOut", count: 1, id: brand(1) },
@@ -331,14 +331,14 @@ describe("SequenceField - Rebase", () => {
 				type: "MoveOut",
 				count: 1,
 				id: brand(2),
-				detachEvent: { revision: tag1, id: brand(2) },
+				detachEvent: { revision: tag1, localId: brand(2) },
 			},
 			{ type: "MoveOut", count: 1, id: brand(3) },
 			{
 				type: "MoveOut",
 				count: 1,
 				id: brand(4),
-				detachEvent: { revision: tag1, id: brand(3) },
+				detachEvent: { revision: tag1, localId: brand(3) },
 				lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],
 			},
 		];

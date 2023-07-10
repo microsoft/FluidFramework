@@ -7,21 +7,14 @@ import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { brand, fail } from "../../util";
 import {
+	ChangeAtomId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	EmptyInputCellMark,
-	DetachEvent,
-	Modify,
-	MoveId,
-} from "./format";
+import { Changeset, Mark, MarkList, EmptyInputCellMark, Modify, MoveId } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -303,7 +296,7 @@ function composeMarks<TNodeChange>(
 function createModifyMark<TNodeChange>(
 	length: number,
 	nodeChange: TNodeChange | undefined,
-	cellId?: DetachEvent,
+	cellId?: ChangeAtomId,
 ): Mark<TNodeChange> {
 	if (nodeChange === undefined) {
 		return { count: cellId === undefined ? length : 0 };
@@ -501,7 +494,7 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			let baseCellId: DetachEvent;
+			let baseCellId: ChangeAtomId;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
@@ -520,13 +513,13 @@ export class ComposeQueue<T> {
 				}
 				baseCellId = {
 					revision: baseIntention,
-					id: baseMark.id,
+					localId: baseMark.id,
 				};
 			} else if (baseMark.type === "MoveIn") {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				assert(baseIntention !== undefined, "Base mark must have an intention");
-				baseCellId = { revision: baseIntention, id: baseMark.id };
+				baseCellId = { revision: baseIntention, localId: baseMark.id };
 			} else {
 				assert(
 					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
@@ -773,14 +766,14 @@ function areInverseMovesAtIntermediateLocation(
  * are before the first cell of `newMark`.
  */
 function compareCellPositions(
-	baseCellId: DetachEvent,
+	baseCellId: ChangeAtomId,
 	baseMark: Mark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
 ): number {
 	const newCellId = getCellId(newMark, newIntention);
-	if (baseCellId.revision === newCellId?.revision) {
+	if (newCellId !== undefined && baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {
 			// There is some change foo that is being cancelled out as part of a rebase sandwich.
 			// The marks that make up this change (and its inverse) may be broken up differently between the base
@@ -796,13 +789,13 @@ function compareCellPositions(
 
 		if (
 			areOverlappingIdRanges(
-				baseCellId.id,
+				baseCellId.localId,
 				getMarkLength(baseMark),
-				newCellId.id,
+				newCellId.localId,
 				getMarkLength(newMark),
 			)
 		) {
-			return baseCellId.id - newCellId.id;
+			return baseCellId.localId - newCellId.localId;
 		}
 	}
 
@@ -810,7 +803,7 @@ function compareCellPositions(
 		const offset = getOffsetInCellRange(
 			baseMark.lineage,
 			newCellId.revision,
-			newCellId.id,
+			newCellId.localId,
 			getMarkLength(newMark),
 		);
 		if (offset !== undefined) {
@@ -822,7 +815,7 @@ function compareCellPositions(
 		const offset = getOffsetInCellRange(
 			newMark.lineage,
 			baseCellId.revision,
-			baseCellId.id,
+			baseCellId.localId,
 			getMarkLength(baseMark),
 		);
 		if (offset !== undefined) {

@@ -13,7 +13,7 @@ import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachEvent } from "../../../feature-libraries/sequence-field/format";
+import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -72,7 +72,7 @@ function createDeleteChangeset(
 function createRedundantRemoveChangeset(
 	index: number,
 	size: number,
-	detachEvent: DetachEvent,
+	detachEvent: ChangeAtomId,
 ): SF.Changeset<never> {
 	const changeset = createDeleteChangeset(index, size);
 	(changeset[changeset.length - 1] as SF.Delete).detachEvent = detachEvent;
@@ -86,7 +86,7 @@ function createReviveChangeset(
 	detachId: ChangesetLocalId,
 	reviver = fakeRepair,
 	lineage?: SF.LineageEvent[],
-	lastDetach?: DetachEvent,
+	lastDetach?: ChangeAtomId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -143,7 +143,7 @@ function createBlockedReviveChangeset(
 		reviver,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	mark.detachEvent = { revision: lastDetachedBy, id: lastDetachId };
+	mark.detachEvent = { revision: lastDetachedBy, localId: lastDetachId };
 	if (lineage !== undefined) {
 		mark.lineage = lineage;
 	}
@@ -157,7 +157,7 @@ function createIntentionalReviveChangeset(
 	detachId: ChangesetLocalId,
 	reviver = fakeRepair,
 	lineage?: SF.LineageEvent[],
-	lastDetach?: DetachEvent,
+	lastDetach?: ChangeAtomId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -218,7 +218,7 @@ function createModifyChangeset<TNodeChange>(
 function createModifyDetachedChangeset<TNodeChange>(
 	index: number,
 	change: TNodeChange,
-	detachEvent: DetachEvent,
+	detachEvent: ChangeAtomId,
 	lineage?: SF.LineageEvent[],
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);

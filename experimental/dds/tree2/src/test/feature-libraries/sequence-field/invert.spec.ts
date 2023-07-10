@@ -44,7 +44,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("child changes of removed content", () => {
-		const detachEvent = { revision: tag1, id: brand<ChangesetLocalId>(0) };
+		const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 		const input = Change.modifyDetached(0, childChange1, detachEvent);
 		// TODO: use the line below once we apply modifications to removed content
 		// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
@@ -134,7 +134,7 @@ describe("SequenceField - Invert", () => {
 
 	describe("Redundant changes", () => {
 		it("delete", () => {
-			const detachEvent = { revision: tag1, id: brand<ChangesetLocalId>(0) };
+			const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 			const input: TestChangeset = [
 				{
 					type: "Delete",
@@ -152,7 +152,7 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("move out", () => {
-			const detachEvent = { revision: tag1, id: brand<ChangesetLocalId>(0) };
+			const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 			const input: TestChangeset = [
 				{
 					type: "MoveOut",
@@ -243,7 +243,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnTo",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, id: brand(0) },
+					detachEvent: { revision: tag2, localId: brand(0) },
 					inverseOf: tag1,
 				},
 				{
@@ -265,7 +265,7 @@ describe("SequenceField - Invert", () => {
 					type: "MoveOut",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, id: brand(0) },
+					detachEvent: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Modify",
@@ -296,7 +296,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnFrom",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, id: brand(0) },
+					detachEvent: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Modify",
@@ -306,7 +306,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnTo",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag1, id: brand(0) },
+					detachEvent: { revision: tag1, localId: brand(0) },
 					isSrcConflicted: true,
 				},
 				{
@@ -328,7 +328,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnFrom",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, id: brand(0) },
+					detachEvent: { revision: tag2, localId: brand(0) },
 					isDstConflicted: true,
 				},
 				{

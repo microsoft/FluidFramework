@@ -117,7 +117,7 @@ describe("SequenceField - toDelta", () => {
 				type: "Revive",
 				content: contentCursor,
 				count: 1,
-				detachEvent: { revision: tag, id: brand(0) },
+				detachEvent: { revision: tag, localId: brand(0) },
 				changes: nodeChange,
 			},
 		];
@@ -349,7 +349,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	describe("Muted changes", () => {
-		const detachEvent = { revision: tag1, id: brand<ChangesetLocalId>(0) };
+		const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 
 		it("delete", () => {
 			const deletion: TestChangeset = [
@@ -357,7 +357,7 @@ describe("SequenceField - toDelta", () => {
 					type: "Delete",
 					id: brand(0),
 					count: 2,
-					detachEvent: { revision: tag1, id: brand(0) },
+					detachEvent: { revision: tag1, localId: brand(0) },
 				},
 			];
 
@@ -408,7 +408,7 @@ describe("SequenceField - toDelta", () => {
 					count: 1,
 					content: fakeRepairData(tag, 0, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, id: brand(0) },
+					detachEvent: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Revive",
@@ -416,7 +416,7 @@ describe("SequenceField - toDelta", () => {
 					changes: childChange1,
 					content: fakeRepairData(tag, 1, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, id: brand(1) },
+					detachEvent: { revision: tag2, localId: brand(1) },
 				},
 			];
 			const actual = toDelta(changeset);

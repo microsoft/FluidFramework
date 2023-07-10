@@ -80,7 +80,7 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		// Revives are typically created to undo a delete from the prior revision.
 		// When that's the case, we know the content used to be at the index at which it is being revived.
-		const detachEvent = { revision: detachedBy, id: detachId };
+		const detachEvent = { revision: detachedBy, localId: detachId };
 		const mark: Reattach<never> = {
 			type: "Revive",
 			content: reviver(detachedBy, detachId, count),
@@ -126,7 +126,7 @@ export const sequenceFieldEditor = {
 			return [];
 		}
 
-		const detachEvent = { revision: detachedBy, id: detachId };
+		const detachEvent = { revision: detachedBy, localId: detachId };
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFrom<never> = {
 			type: "ReturnFrom",

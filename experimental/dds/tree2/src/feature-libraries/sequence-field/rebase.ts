@@ -515,7 +515,7 @@ function makeDetachedMark<T>(
 	}
 
 	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
-	return { ...mark, detachEvent: { revision: detachIntention, id: detachId } };
+	return { ...mark, detachEvent: { revision: detachIntention, localId: detachId } };
 }
 
 function withoutDetachEvent<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
@@ -746,26 +746,36 @@ function compareCellPositions(
 	const baseId = getCellId(baseMark, baseIntention);
 	const baseLength = getMarkLength(baseMark);
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
-	const baseIdLast = (baseId.id as number) + baseLength - 1;
+	const baseIdLast = (baseId.localId as number) + baseLength - 1;
 	const newId = getCellId(newMark, undefined);
 	const newLength = getMarkLength(newMark);
-	if (baseId.revision === newId?.revision) {
-		const newIdLast = (newId.id as number) + newLength - 1;
-		if (baseId.id >= newId.id && baseId.id <= newIdLast) {
-			return baseId.id - newId.id;
-		} else if (newId.id >= baseId.id && newId.id <= baseIdLast) {
-			return baseId.id - newId.id;
+	if (newId !== undefined && baseId.revision === newId.revision) {
+		const newIdLast = (newId.localId as number) + newLength - 1;
+		if (baseId.localId >= newId.localId && baseId.localId <= newIdLast) {
+			return baseId.localId - newId.localId;
+		} else if (newId.localId >= baseId.localId && newId.localId <= baseIdLast) {
+			return baseId.localId - newId.localId;
 		}
 	}
 
 	if (newId !== undefined) {
-		const offset = getOffsetInCellRange(baseMark.lineage, newId.revision, newId.id, newLength);
+		const offset = getOffsetInCellRange(
+			baseMark.lineage,
+			newId.revision,
+			newId.localId,
+			newLength,
+		);
 		if (offset !== undefined) {
 			return offset > 0 ? offset : -Infinity;
 		}
 	}
 
-	const newOffset = getOffsetInCellRange(newMark.lineage, baseId.revision, baseId.id, baseLength);
+	const newOffset = getOffsetInCellRange(
+		newMark.lineage,
+		baseId.revision,
+		baseId.localId,
+		baseLength,
+	);
 	if (newOffset !== undefined) {
 		return newOffset > 0 ? -newOffset : Infinity;
 	}
