@@ -87,16 +87,12 @@ describe("ContextuallyTyped", () => {
 		assert.deepEqual(mapTree, expected);
 	});
 
-	describe("cursorFromContextualData adds globalFieldKey", () => {
+	describe("cursorFromContextualData adds field", () => {
 		it("for empty contextual data.", () => {
-			const builder = new SchemaBuilder("Identifier Domain");
-			const identifierSchema = builder.primitive("identifier", ValueSchema.String);
-			const identifierFieldSchema = builder.globalField(
-				"identifier",
-				SchemaBuilder.fieldValue(identifierSchema),
-			);
-			const nodeSchema = builder.object("node", {
-				global: [identifierFieldSchema] as const,
+			const builder = new SchemaBuilder("cursorFromContextualData");
+			const generatedSchema = builder.primitive("generated", ValueSchema.String);
+			const nodeSchema = builder.struct("node", {
+				foo: SchemaBuilder.fieldValue(generatedSchema),
 			});
 
 			const nodeSchemaData = builder.intoDocumentSchema(
@@ -104,10 +100,10 @@ describe("ContextuallyTyped", () => {
 			);
 			const contextualData: ContextuallyTypedNodeDataObject = {};
 
-			const identifierField = [
+			const generatedField = [
 				{
 					value: "x",
-					type: identifierSchema.name,
+					type: generatedSchema.name,
 					fields: new Map(),
 				},
 			];
@@ -115,28 +111,23 @@ describe("ContextuallyTyped", () => {
 				cursorFromContextualData(
 					{
 						schema: nodeSchemaData,
-						fieldSource: () => (): MapTree[] => identifierField,
+						fieldSource: () => (): MapTree[] => generatedField,
 					},
 					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);
 
-			assert.equal(treeFromContextualData.globalFields?.identifier[0].value, "x");
+			assert.equal(treeFromContextualData.fields?.foo[0].value, "x");
 		});
 
 		it("for nested contextual data.", () => {
 			const builder = new SchemaBuilder("Identifier Domain");
-			const identifierSchema = builder.primitive("identifier", ValueSchema.String);
-			const identifierFieldSchema = builder.globalField(
-				"identifier",
-				SchemaBuilder.fieldValue(identifierSchema),
-			);
-			const nodeSchema = builder.objectRecursive("node", {
-				local: {
-					child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
-				},
-				global: [identifierFieldSchema] as const,
+			const generatedSchema = builder.primitive("generated", ValueSchema.String);
+
+			const nodeSchema = builder.structRecursive("node", {
+				foo: SchemaBuilder.fieldValue(generatedSchema),
+				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
 			});
 
 			const nodeSchemaData = builder.intoDocumentSchema(
@@ -144,10 +135,10 @@ describe("ContextuallyTyped", () => {
 			);
 			const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
 
-			const identifierField = [
+			const generatedField = [
 				{
 					value: "x",
-					type: identifierSchema.name,
+					type: generatedSchema.name,
 					fields: new Map(),
 				},
 			];
@@ -156,18 +147,15 @@ describe("ContextuallyTyped", () => {
 				cursorFromContextualData(
 					{
 						schema: nodeSchemaData,
-						fieldSource: () => (): MapTree[] => identifierField,
+						fieldSource: () => (): MapTree[] => generatedField,
 					},
 					new Set([nodeSchema.name]),
 					contextualData,
 				),
 			);
 
-			assert.equal(treeFromContextualData.globalFields?.identifier[0].value, "x");
-			assert.equal(
-				treeFromContextualData.fields?.child[0].globalFields?.identifier[0].value,
-				"x",
-			);
+			assert.equal(treeFromContextualData.fields?.foo[0].value, "x");
+			assert.equal(treeFromContextualData.fields?.child[0].fields?.foo[0].value, "x");
 		});
 	});
 
