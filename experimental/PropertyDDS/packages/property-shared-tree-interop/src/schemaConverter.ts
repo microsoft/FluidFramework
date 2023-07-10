@@ -9,7 +9,6 @@ import {
 	FieldKinds,
 	FieldSchema,
 	ValueSchema,
-	EmptyKey,
 	SchemaBuilder,
 	FieldKindTypes,
 	Any,
@@ -74,25 +73,6 @@ function getAllInheritingChildrenTypes(): InheritingChildrenByType {
 	return inheritingChildrenByType;
 }
 
-function mapTypesAndChildren<T>(
-	allChildrenByType: InheritingChildrenByType,
-	f: (t: string) => T | undefined,
-	...types: readonly string[]
-): Set<T> {
-	const output = new Set<T>();
-	let result: T | undefined;
-	for (const typeid of types) {
-		result = f(typeid);
-		if (result) output.add(result);
-		const inheritingTypes = allChildrenByType.get(typeid) ?? new Set();
-		for (const inheritingType of inheritingTypes) {
-			result = f(inheritingType);
-			if (result) output.add(result);
-		}
-	}
-	return output;
-}
-
 function buildTreeSchema(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
@@ -133,13 +113,12 @@ function buildTreeSchema(
 			for (const inheritanceType of inheritanceChain) {
 				buildLocalFields(builder, treeSchemaMap, allChildrenByType, inheritanceType, local);
 			}
-			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
-				? SchemaBuilder.fieldOptional(Any)
-				: undefined;
-			cache.treeSchema = builder.object(typeid, {
-				local,
-				extraLocalFields,
-			});
+			cache.treeSchema = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
+				? builder.object(typeid, {
+						local,
+						extraLocalFields: SchemaBuilder.fieldOptional(Any),
+				  })
+				: builder.struct(typeid, local);
 			return cache.treeSchema;
 		}
 	} else {
@@ -162,7 +141,7 @@ function buildTreeSchema(
 		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: TreeSchema } = {};
 		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
-		const fieldType = buildFieldSchema(
+		const fieldSchema = buildFieldSchema(
 			builder,
 			treeSchemaMap,
 			allChildrenByType,
@@ -171,15 +150,11 @@ function buildTreeSchema(
 		);
 		switch (context) {
 			case mapContext: {
-				cache.treeSchema = builder.object(currentTypeid, { extraLocalFields: fieldType });
+				cache.treeSchema = builder.map(currentTypeid, fieldSchema);
 				return cache.treeSchema;
 			}
 			case arrayContext: {
-				cache.treeSchema = builder.object(currentTypeid, {
-					local: {
-						[EmptyKey]: fieldType,
-					},
-				});
+				cache.treeSchema = builder.fieldNode(currentTypeid, fieldSchema);
 				return cache.treeSchema;
 			}
 			default:
@@ -270,15 +245,24 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
 ): FieldSchema {
-	if (fieldTypes.length === 0 || fieldTypes.find((t) => t === Any)) {
-		return SchemaBuilder.field(fieldKind, Any);
+	const allowedTypes: Set<LazyTreeSchema> = new Set();
+	let isAny = false;
+	for (const typeid of fieldTypes) {
+		if (typeid === Any) {
+			isAny = true;
+			continue;
+		}
+		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeid));
+		const inheritingTypes = allChildrenByType.get(typeid) ?? new Set();
+		for (const inheritingType of inheritingTypes) {
+			allowedTypes.add(
+				buildTreeSchema(builder, treeSchemaMap, allChildrenByType, inheritingType),
+			);
+		}
 	}
-	const allowedTypes = mapTypesAndChildren(
-		allChildrenByType,
-		(child) => buildTreeSchema(builder, treeSchemaMap, allChildrenByType, child),
-		...fieldTypes,
-	);
-	return SchemaBuilder.field(fieldKind, ...allowedTypes);
+	return isAny
+		? SchemaBuilder.field(fieldKind, Any)
+		: SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
 /**
@@ -299,23 +283,15 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
-	const referencedTypeIDs =
-		allowedRootTypes === Any || allowedRootTypes.has(Any)
-			? new Set<string>()
-			: mapTypesAndChildren(allChildrenByType, (t) => t, ...allowedRootTypes);
-
-	primitiveTypes.forEach((primitiveType) => referencedTypeIDs.add(primitiveType));
-	// That's enough to add just "NodeProperty" type, as all other
-	// related built-in types will be added through inheritances.
-	referencedTypeIDs.add(nodePropertyType);
-
-	if (extraTypes) {
-		extraTypes.forEach((typeid) => referencedTypeIDs.add(typeid));
-	}
-
-	for (const referencedTypeId of referencedTypeIDs) {
-		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, referencedTypeId);
-	}
+	primitiveTypes.forEach((primitiveType) =>
+		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, primitiveType),
+	);
+	// That's enough to just add "NodeProperty" type as all other
+	// dependent built-in types will be added through inheritances.
+	buildTreeSchema(builder, treeSchemaMap, allChildrenByType, nodePropertyType);
+	extraTypes?.forEach((extraType) =>
+		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, extraType),
+	);
 
 	const allowedTypes = allowedRootTypes === Any ? [Any] : [...allowedRootTypes];
 	const rootSchema = buildFieldSchema(
