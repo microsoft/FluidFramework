@@ -18,6 +18,7 @@ export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 // @public
 export interface DevtoolsPanelProps {
     messageRelay: IMessageRelay;
+    unloadCallback?: () => void;
     usageTelemetryLogger?: ITelemetryBaseLogger;
 }
 
