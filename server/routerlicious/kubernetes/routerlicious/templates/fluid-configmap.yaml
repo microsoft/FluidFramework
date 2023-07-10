@@ -70,6 +70,7 @@ data:
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+            "checkpointsTTLInSeconds": 864000,
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
         "alfred": {
