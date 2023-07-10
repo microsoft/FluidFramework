@@ -75,7 +75,7 @@ export interface ViewEvents {
 	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the 
 	 * local branch which cannot be rebased onto another branch.
 	 */
-	revertible(source: LocalCommitSource, target: ISharedTreeView): void;
+	revertible(source: LocalCommitSource): void;
 }
 
 /**
