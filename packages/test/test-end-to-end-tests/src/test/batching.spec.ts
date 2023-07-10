@@ -24,8 +24,8 @@ import {
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -109,7 +109,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container1: IContainer;
+	let container1: IContainerExperimental;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: SharedMap;

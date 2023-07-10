@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { IContainerExperimental, Loader } from "@fluidframework/container-loader";
 import {
 	IChannelAttributes,
 	IChannelServices,
@@ -172,14 +172,14 @@ export class TestTreeProvider {
 
 	private readonly provider: ITestObjectProvider;
 	private readonly _trees: ISharedTree[] = [];
-	private readonly _containers: IContainer[] = [];
+	private readonly _containers: IContainerExperimental[] = [];
 	private readonly summarizer?: ISummarizer;
 
 	public get trees(): readonly ISharedTree[] {
 		return this._trees;
 	}
 
-	public get containers(): readonly IContainer[] {
+	public get containers(): readonly IContainerExperimental[] {
 		return this._containers;
 	}
 
