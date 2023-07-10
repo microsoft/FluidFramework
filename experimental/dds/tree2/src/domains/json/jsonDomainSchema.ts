@@ -4,7 +4,7 @@
  */
 
 import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
-import { ValueSchema, EmptyKey } from "../../core";
+import { ValueSchema } from "../../core";
 import { requireAssignableTo } from "../../util";
 
 const builder = new SchemaBuilder("Json Domain");
@@ -22,7 +22,7 @@ export const jsonString = builder.primitive("Json.String", ValueSchema.String);
 /**
  * @alpha
  */
-export const jsonNull = builder.object("Json.Null", {});
+export const jsonNull = builder.struct("Json.Null", {});
 
 /**
  * @alpha
@@ -45,18 +45,18 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 /**
  * @alpha
  */
-export const jsonObject = builder.objectRecursive("Json.Object", {
-	extraLocalFields: SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
-});
+export const jsonObject = builder.mapRecursive(
+	"Json.Object",
+	SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
+);
 
 /**
  * @alpha
  */
-export const jsonArray = builder.objectRecursive("Json.Array", {
-	local: {
-		[EmptyKey]: SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
-	},
-});
+export const jsonArray = builder.fieldNodeRecursive(
+	"Json.Array",
+	SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
+);
 
 /**
  * @alpha
