@@ -1341,8 +1341,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				// If grouped batching is enabled, we need to enable batch rebasing
-				enableBatchRebasing: this.groupedBatchingEnabled,
+				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
