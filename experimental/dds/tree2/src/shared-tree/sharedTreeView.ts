@@ -70,7 +70,6 @@ export interface ViewEvents {
 	 * 
 	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
 	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
-	 * are accurate.
 	 * 
 	 * @privateRemarks
 	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the 
