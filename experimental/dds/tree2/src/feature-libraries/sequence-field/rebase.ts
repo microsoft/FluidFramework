@@ -112,7 +112,7 @@ function rebaseMarkList<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
-	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
+	nodeExistenceState: NodeExistenceState,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new RebaseQueue(
@@ -342,7 +342,7 @@ function rebaseMark<TNodeChange>(
 	baseInputOffset: number,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
-	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
+	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
 	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
@@ -619,7 +619,10 @@ function amendRebaseI<TNodeChange>(
 		const { baseMark, newMark } = queue.pop();
 
 		if (baseMark === undefined) {
-			assert(newMark !== undefined, "Both marks shouldn't be undefined at the same time");
+			assert(
+				newMark !== undefined,
+				"Non-empty RebaseQueue should not provide two empty marks",
+			);
 			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
 		}
 

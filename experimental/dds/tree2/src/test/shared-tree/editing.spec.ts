@@ -489,7 +489,8 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
 		});
 
-		it("destination of move's ancestor deleted", () => {
+		// Moving a node into a concurrently deleted subtree should result in the moved node being deleted
+		it("ancestor of move destination deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 
@@ -527,7 +528,8 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		it("source of move's ancestor deleted", () => {
+		// Tests that a move is aborted if the moved node has been concurrently deleted
+		it("ancestor of move source deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 
@@ -565,7 +567,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		it("source of move's ancestor deleted then revived", () => {
+		it("ancestor of move source deleted then revived", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 
@@ -689,7 +691,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		it("delete source ancestor of return mark", () => {
+		it("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
@@ -730,7 +732,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		it("delete destination ancestor of return mark", () => {
+		it("delete ancestor of return destination", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
