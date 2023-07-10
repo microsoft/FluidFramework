@@ -787,15 +787,6 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree2), value);
 		});
 
-		function stringToJsonableTree(values: string[]): JsonableTree[] {
-			return values.map((value) => {
-				return {
-					type: brand("TestValue"),
-					value,
-				};
-			});
-		}
-
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -1119,6 +1110,47 @@ describe("SharedTree", () => {
 
 			tree1.merge(branch);
 			assert.deepEqual(revertibles1, [LocalCommitSource.Default]);
+			assert.deepEqual(revertibles2, [LocalCommitSource.Default]);
+		});
+
+		it("doesn't trigger a revertible event for rebases", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Initialize the tree
+			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
+			initializeTestTree(tree1, expectedState);
+			provider.processMessages();
+
+			// Validate initialization
+			validateTree(tree2, expectedState);
+
+			const revertibles1: LocalCommitSource[] = [];
+			tree1.events.on("revertible", (commitSource) => {
+				revertibles1.push(commitSource);
+			});
+
+			const revertibles2: LocalCommitSource[] = [];
+			tree2.events.on("revertible", (commitSource) => {
+				revertibles2.push(commitSource);
+			});
+
+			// Insert a node on tree 2
+			insert(tree2, 4, "z");
+			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "D", "z"]));
+
+			// Insert nodes on both trees
+			insert(tree1, 1, "x");
+			validateTree(tree1, stringToJsonableTree(["A", "x", "B", "C", "D"]));
+
+			insert(tree2, 3, "y");
+			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D", "z"]));
+
+			// Syncing will cause both trees to rebase their local changes
+			provider.processMessages();
+
+			assert.deepEqual(revertibles1, [LocalCommitSource.Default, LocalCommitSource.Default]);
 			assert.deepEqual(revertibles2, [LocalCommitSource.Default]);
 		});
 	});
@@ -1976,6 +2008,15 @@ const testSchema: SchemaData = {
 		[globalFieldKey, globalFieldSchema],
 	]),
 };
+
+function stringToJsonableTree(values: string[]): JsonableTree[] {
+	return values.map((value) => {
+		return {
+			type: brand("TestValue"),
+			value,
+		};
+	});
+}
 
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.

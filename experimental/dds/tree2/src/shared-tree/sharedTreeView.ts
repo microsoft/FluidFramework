@@ -67,14 +67,13 @@ export interface ViewEvents {
 	 * The event along with the {@link LocalCommitSource} communicates a change has been made that can be undone or redone on
 	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
 	 * stack which cannot be modified and no additional information about the change is provided.
-	 *
-	 * This event should only be subscribed to when coming from the local branch. The order of revertible events coming
-	 * from any other branch is not guaranteed to be correct.
 	 * 
-	 * This is because merging and rebasing branches can cause the order of revertibles in the undo/redo stack to change.
-	 * Therefore, the order of revertible events are not guaranteed to be reflective of the order of the undo/redo
-	 * stack in these cases. The only exception is merging a branch into the local branch because the order of commits is
-	 * not changed in this case.
+	 * Revertible events are emitted when merging a view into another view but not when rebasing onto another view. This is because
+	 * rebasing onto another view can cause the relative ordering of revertible commits to change so there is no guarantee they
+	 * are accurate.
+	 * 
+	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the 
+	 * local branch which cannot be rebased onto another branch.
 	 */
 	revertible(source: LocalCommitSource, target: ISharedTreeView): void;
 }
@@ -141,8 +140,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
-	 * Undoes the last completed transaction made by the client. 
-	 * 
+	 * Undoes the last completed transaction made by the client.
+	 *
 	 * @remarks
 	 * Calling this does nothing if there are no transactions in the
 	 * undo stack.
@@ -152,8 +151,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	undo(): void;
 
 	/**
-	 * Redoes the last completed undo made by the client. 
-	 * 
+	 * Redoes the last completed undo made by the client.
+	 *
 	 * @remarks
 	 * Calling this does nothing if there are no transactions in the
 	 * redo stack. New local transactions will not clear the redo stack.

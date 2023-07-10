@@ -408,6 +408,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Rebase the changes that have been applied to this branch over divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
+	 *
+	 * @remarks
+	 * This operation can change the relative ordering between revertible commits therefore, the revertible event
+	 * is not emitted during this operation.
+	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
 	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
@@ -455,6 +460,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
+	 *
+	 * @remarks
+	 * Revertible events are emitted for new local commits merged into this branch.
+	 *
 	 * @param branch - the branch to merge into this branch
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
 	 * or undefined if nothing changed
@@ -485,9 +494,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			);
 			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
 
-			// KLUDGE: Merging does not cause commits to change their ordering. This allows the
-			// revertible events to be accurate for the local branch but it's not guaranteed to be
-			// accurate for any other branch.
 			for (const commit of sourceCommits) {
 				const type = this.undoRedoManager.getCommitType(commit.revision);
 				if (type !== undefined) {
