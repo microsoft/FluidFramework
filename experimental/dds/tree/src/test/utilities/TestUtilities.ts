@@ -9,7 +9,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
-import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -677,7 +677,7 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
  */
 export async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
-	container: IContainer,
+	container: IContainerExperimental,
 	action: () => TReturn
 ): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
 	await provider.ensureSynchronized();

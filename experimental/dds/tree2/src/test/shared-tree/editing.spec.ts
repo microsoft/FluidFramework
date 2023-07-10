@@ -41,7 +41,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
 		});
 
-		it.skip("can rebase a change under a node whose insertion is also rebased", () => {
+		it("can rebase a change under a node whose insertion is also rebased", () => {
 			const tree1 = makeTreeFromJson(["B"]);
 			const tree2 = tree1.fork();
 			const tree3 = tree1.fork();
@@ -61,7 +61,7 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 			tree3.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2, tree3], [["a"], "B", "C"]);
+			expectJsonTree([tree1, tree2, tree3], [{ foo: "a" }, "B", "C"]);
 		});
 
 		it("can handle competing deletes", () => {
@@ -258,7 +258,7 @@ describe("Editing", () => {
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
 		});
 
 		it("intra-field move", () => {
@@ -274,7 +274,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		it.skip("can rebase intra-field move over insert", () => {
+		it("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();
 

@@ -1808,7 +1808,7 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
-    revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
+    revive(index: number, count: number, detachedBy: RevisionTag, detachId: ChangesetLocalId, reviver: NodeReviver, isIntention?: true): void;
 }
 
 // @alpha
