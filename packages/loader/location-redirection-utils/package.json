@@ -38,7 +38,7 @@
 		"test:report": "npm test -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -70,8 +70,9 @@
 		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/location-redirection-utils-previous": "npm:@fluidframework/location-redirection-utils@2.0.0-internal.5.0.0",
+		"@fluidframework/location-redirection-utils-previous": "npm:@fluidframework/location-redirection-utils@2.0.0-internal.5.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
