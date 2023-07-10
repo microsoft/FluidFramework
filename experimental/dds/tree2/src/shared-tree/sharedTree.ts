@@ -40,10 +40,10 @@ import {
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
+	nodeKeyFieldKey,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
-import { nodeKeyFieldKey } from "../domains";
+import { JsonCompatibleReadOnly, brand } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -75,7 +75,7 @@ export class SharedTree
 		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -107,7 +107,7 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.nodeKeyIndex = new NodeKeyIndex(nodeKeyFieldKey);
+		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
