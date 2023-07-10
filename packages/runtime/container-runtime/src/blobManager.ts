@@ -660,7 +660,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					if (entry.status === PendingBlobStatus.OnlinePendingOp) {
 						this.setRedirection(pendingLocalId, blobId);
 						entry.acked = true;
-						entry.handleP.resolve(this.getBlobHandle(localId));
+						entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
 						this.deletePendingBlobMaybe(pendingLocalId);
 					}
 				});
