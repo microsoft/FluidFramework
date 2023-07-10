@@ -34,6 +34,7 @@ import {
 	withNodeChange,
 	getMarkMoveId,
 	isNoopMark,
+	areOverlappingIdRanges,
 } from "./utils";
 import {
 	Changeset,
@@ -746,14 +747,10 @@ function compareCellPositions(
 	const baseId = getCellId(baseMark, baseIntention);
 	const baseLength = getMarkLength(baseMark);
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
-	const baseIdLast = (baseId.localId as number) + baseLength - 1;
 	const newId = getCellId(newMark, undefined);
 	const newLength = getMarkLength(newMark);
 	if (newId !== undefined && baseId.revision === newId.revision) {
-		const newIdLast = (newId.localId as number) + newLength - 1;
-		if (baseId.localId >= newId.localId && baseId.localId <= newIdLast) {
-			return baseId.localId - newId.localId;
-		} else if (newId.localId >= baseId.localId && newId.localId <= baseIdLast) {
+		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
 			return baseId.localId - newId.localId;
 		}
 	}
