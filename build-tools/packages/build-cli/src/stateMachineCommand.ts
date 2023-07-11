@@ -2,18 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Command, Flags, Interfaces } from "@oclif/core";
+import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { BaseCommand } from "./base";
 import { StateHandler } from "./handlers";
 import { testModeFlag } from "./flags";
-
-// type Flags<T extends typeof Command> = Interfaces.InferredFlags<
-// 	typeof StateMachineCommand["baseFlags"] & T["flags"]
-// >;
-// type Args<T extends typeof BaseCommand> = Interfaces.InferredArgs<T["args"]>;
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state
