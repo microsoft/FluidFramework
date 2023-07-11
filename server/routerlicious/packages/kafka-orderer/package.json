@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-core": "workspace:*"
+		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.19.0-165129",
