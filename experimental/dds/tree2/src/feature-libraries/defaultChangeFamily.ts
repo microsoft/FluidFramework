@@ -11,7 +11,6 @@ import {
 	AnchorSet,
 	Delta,
 	UpPath,
-	Value,
 	ITreeCursor,
 	RevisionTag,
 	ChangeFamilyEditor,
@@ -25,6 +24,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeReviver,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
@@ -71,9 +71,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  * @alpha
  */
 export interface IDefaultEditBuilder {
-	// TODO: document
-	setValue(path: UpPath, value: Value): void;
-
 	/**
 	 * @param field - the value field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
@@ -114,7 +111,6 @@ export interface IDefaultEditBuilder {
 	): void;
 
 	// TODO: document
-	addValueConstraint(path: UpPath, value: Value): void;
 	addNodeExistsConstraint(path: UpPath): void;
 }
 
@@ -142,14 +138,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public apply(change: DefaultChangeset): void {
 		this.modularBuilder.apply(change);
-	}
-
-	public setValue(path: UpPath, value: Value): void {
-		this.modularBuilder.setValue(path, value);
-	}
-
-	public addValueConstraint(path: UpPath, value: Value): void {
-		this.modularBuilder.addValueConstraint(path, value);
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {
@@ -227,8 +215,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				);
 			},
 			delete: (index: number, count: number): void => {
+				if (count === 0) {
+					return;
+				}
+				const id = this.modularBuilder.generateId(count);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.delete(index, count),
+					sequence.changeHandler.editor.delete(index, count, id),
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
@@ -261,8 +253,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				index: number,
 				count: number,
 				detachedBy: RevisionTag,
+				detachId: ChangesetLocalId,
 				reviver: NodeReviver,
-				detachIndex: number,
 				isIntention?: true,
 			): void => {
 				const change: FieldChangeset = brand(
@@ -270,8 +262,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						index,
 						count,
 						detachedBy,
+						detachId,
 						reviver,
-						detachIndex,
 						isIntention,
 					),
 				);
@@ -344,8 +336,8 @@ export interface SequenceFieldEditBuilder {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		detachId: ChangesetLocalId,
 		reviver: NodeReviver,
-		detachIndex: number,
 		isIntention?: true,
 	): void;
 }

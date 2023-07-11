@@ -1182,7 +1182,7 @@ describe("Runtime", () => {
 					gcAllowed: true,
 				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-				enableBatchRebasing: true,
+				enableGroupedBatching: true,
 			};
 
 			const defaultRuntimeOptions = {
@@ -1199,7 +1199,6 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
-				enableBatchRebasing: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -1218,7 +1217,6 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
 							idCompressorEnabled: false,
-							enableBatchRebasing: true,
 						}),
 					},
 				]);
@@ -1230,7 +1228,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
-					"Fluid.ContainerRuntime.DisableBatchRebasing": true,
+					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1249,8 +1247,8 @@ describe("Runtime", () => {
 							disableOpReentryCheck: false,
 							disableChunking: true,
 							idCompressorEnabled: true,
-							enableBatchRebasing: false,
 						}),
+						groupedBatchingEnabled: false,
 					},
 				]);
 			});

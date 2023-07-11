@@ -166,6 +166,9 @@ export class Partition extends EventEmitter {
 				"Error during checkpointManager.flush call",
 				{
 					partition: this.id,
+					ignoreCheckpointFlushExceptionFlag: this.config?.get(
+						"checkpoints:ignoreCheckpointFlushException",
+					),
 				},
 				err,
 			);

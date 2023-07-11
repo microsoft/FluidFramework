@@ -20,7 +20,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 

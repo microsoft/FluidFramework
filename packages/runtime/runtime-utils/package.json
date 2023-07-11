@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-utils",
-	"version": "2.0.0-internal.5.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "Collection of utility functions for Fluid Runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -60,7 +60,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -77,7 +76,7 @@
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.5.0.0",
+		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",

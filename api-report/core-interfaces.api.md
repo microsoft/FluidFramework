@@ -118,6 +118,11 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
+// @public
+export interface ILoggingError extends Error {
+    getTelemetryProperties(): ITelemetryProperties;
+}
+
 // @public @deprecated (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
@@ -189,6 +194,68 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ITaggedTelemetryPropertyType {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryEventPropertyType;
+}
+
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryGenericEvent extends ITelemetryProperties {
+    // (undocumented)
+    category?: TelemetryEventCategory;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryLogger extends ITelemetryBaseLogger {
+    send(event: ITelemetryBaseEvent): void;
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+}
+
+// @public
+export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
+    // (undocumented)
+    duration?: number;
+}
+
+// @public
+export interface ITelemetryProperties {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+// @public
+export type TelemetryEventCategory = "generic" | "error" | "performance";
+
+// @public
+export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // (No @packageDocumentation comment for this package)
 

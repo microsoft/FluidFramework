@@ -41,3 +41,16 @@ export {
 
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
 export type { IDisposable } from "./disposable";
+export type {
+	ILoggingError,
+	ITaggedTelemetryPropertyType,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITelemetryErrorEvent,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
+	ITelemetryPerformanceEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+	TelemetryEventPropertyType,
+} from "./logger";

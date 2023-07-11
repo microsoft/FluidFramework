@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
 	IDisposable,
 	FluidObject,
 	IRequest,
 	IResponse,
 	IFluidHandle,
+	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
