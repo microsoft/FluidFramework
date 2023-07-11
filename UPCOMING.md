@@ -6,6 +6,6 @@
 
 Directly calling dispose() on the IDeltaManager puts the system in an inconsistent state, and inspecting the disposed state of the IDeltaManager is not recommended (instead, prefer to inspect either the IContainer.disposed, IContainerRuntime.disposed, or IFluidDataStoreRuntime.disposed depending on your scenario). These members have been deprecated from the interface and will be removed in an upcoming release.
 
-## A new API getRelaySessionInfo to surface relay session info from cache, and providers to allow access to the new API
+## New API getRelaySessionInfo in odsp-driver to surface relay session info from cache, and new providers IProvideSessionAwareDriverFactory and IRelaySessionAwareDriverFactory in odsp-driver-definitions to allow access to the new API
 
-A new API getRelaySessionInfo to surface relay session info from cache, and providers to allow access to the new API
+`OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` acquired a new API `getRelaySessionInfo` to surface relay session info from cache, and implement new interfaces `IRelaySessionAwareDriverFactory` and `IProvideSessionAwareDriverFactory` that enable using the provider pattern to discover the new API.
