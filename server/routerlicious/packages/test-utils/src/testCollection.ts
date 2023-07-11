@@ -36,16 +36,12 @@ export class TestCollection implements ICollection<any> {
 
 	public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
 		const values = this.findInternal(filter);
-		try {
-			values.forEach((value) => {
-				if (!value) {
-					throw new Error("Not found");
-				}
-				_.extend(value, set);
-			});
-		} catch (e) {
-			throw e;
-		}
+		values.forEach((value) => {
+			if (!value) {
+				throw new Error("Not found");
+			}
+			_.extend(value, set);
+		});
 	}
 
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
