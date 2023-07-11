@@ -41,9 +41,10 @@ import {
 } from "@fluid-experimental/devtools-core";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
+import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
 import { Waiting } from "./Waiting";
 import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
 
@@ -371,6 +372,16 @@ const useActionBarStyles = makeStyles({
 		display: "flex",
 		flexDirection: "row",
 	},
+	actionBarHighContrast: {
+		...shorthands.borderColor("#D3D3D3"),
+		"color": "#000",
+		"backgroundColor": "#D3D3D3",
+		"&:hover": {
+			...shorthands.borderColor("#D3D3D3"),
+			color: "#000",
+			backgroundColor: "#D3D3D3",
+		},
+	},
 });
 
 interface ActionsBarProps extends IContainerActions {
@@ -382,6 +393,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, containerState, tryConnect, forceDisconnect, closeContainer } =
 		props;
 
+	const { themeInfo } = React.useContext(ThemeContext);
+
 	const styles = useActionBarStyles();
 
 	const changeConnectionStateButton = isContainerConnected ? (
@@ -390,6 +403,12 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			icon={<PlugDisconnected20Regular />}
 			onClick={forceDisconnect}
 			disabled={forceDisconnect === undefined || containerState.closed}
+			className={
+				themeInfo.name === ThemeOption.HighContrast &&
+				(forceDisconnect === undefined || containerState.closed)
+					? styles.actionBarHighContrast
+					: ""
+			}
 		>
 			Disconnect Container
 		</Button>
@@ -402,6 +421,14 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 				tryConnect === undefined ||
 				containerState.closed ||
 				containerState.attachState === AttachState.Detached
+			}
+			className={
+				themeInfo.name === ThemeOption.HighContrast &&
+				(tryConnect === undefined ||
+					containerState.closed ||
+					containerState.attachState === AttachState.Detached)
+					? styles.actionBarHighContrast
+					: ""
 			}
 		>
 			Connect Container
@@ -417,6 +444,14 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 				closeContainer === undefined ||
 				containerState.closed ||
 				containerState.attachState === AttachState.Detached
+			}
+			className={
+				themeInfo.name === ThemeOption.HighContrast &&
+				(closeContainer === undefined ||
+					containerState.closed ||
+					containerState.attachState === AttachState.Detached)
+					? styles.actionBarHighContrast
+					: ""
 			}
 		>
 			Close Container
