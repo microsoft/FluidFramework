@@ -1150,8 +1150,8 @@ describe("SharedTree", () => {
 			// Syncing will cause both trees to rebase their local changes
 			provider.processMessages();
 
-			assert.deepEqual(revertibles1, [LocalCommitSource.Default, LocalCommitSource.Default]);
-			assert.deepEqual(revertibles2, [LocalCommitSource.Default]);
+			assert.deepEqual(revertibles1, [LocalCommitSource.Default]);
+			assert.deepEqual(revertibles2, [LocalCommitSource.Default, LocalCommitSource.Default]);
 		});
 	});
 
