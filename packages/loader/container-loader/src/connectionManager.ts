@@ -4,8 +4,7 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,

@@ -122,7 +122,6 @@ export {
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -145,7 +144,6 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	ValueConstraint,
 	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
@@ -163,6 +161,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	LazyTreeSchema,
 	NodeExistenceState,
 } from "./modular-schema";
 
@@ -176,7 +175,6 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 export {
-	buildNodeKeySchema,
 	compareLocalNodeKeys,
 	LocalNodeKey,
 	createNodeKeyManager,
@@ -184,6 +182,8 @@ export {
 	StableNodeKey,
 	NodeKeyIndex,
 	NodeKeyManager,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
 } from "./node-key";
 
 export {

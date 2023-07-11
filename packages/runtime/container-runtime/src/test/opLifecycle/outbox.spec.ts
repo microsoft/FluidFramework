@@ -184,7 +184,7 @@ describe("Outbox", () => {
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
-		enableBatchRebasing?: boolean;
+		enableGroupedBatching?: boolean;
 	}) =>
 		new Outbox({
 			shouldSend: () => state.canSendOps,
@@ -199,7 +199,7 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
-				enableBatchRebasing: params.enableBatchRebasing ?? false,
+				enableGroupedBatching: params.enableGroupedBatching ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),

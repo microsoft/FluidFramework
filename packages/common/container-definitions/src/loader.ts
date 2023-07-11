@@ -366,6 +366,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	close(error?: ICriticalContainerError): void;
 
 	/**
+	 * @deprecated - This is moved to the IContainerExperimental interface. To access you should cast IContainerExperimental before attempting to use
+	 *
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
 	 * @experimental

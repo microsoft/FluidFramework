@@ -152,7 +152,6 @@ const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
  * Modifications to a subtree as described by a Changeset.
  */
 interface ChangesetMods {
-	value?: T.SetValue;
 	fields?: T.FieldMarks;
 }
 
@@ -161,9 +160,6 @@ interface ChangesetMods {
  */
 function convertModify(modify: ChangesetMods): Delta.HasModifications {
 	const out: Mutable<Delta.HasModifications> = {};
-	if (modify.value !== undefined) {
-		out.setValue = modify.value.value;
-	}
 	const fields = modify.fields;
 	if (fields !== undefined) {
 		out.fields = convertFieldMarks(fields);

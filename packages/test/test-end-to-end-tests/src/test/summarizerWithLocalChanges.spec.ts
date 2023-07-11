@@ -27,10 +27,13 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryLogger,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 
 export const rootDataObjectType = "@fluid-example/rootDataObject";
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";

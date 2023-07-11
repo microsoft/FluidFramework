@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { GlobalFieldKey, TreeStoredSchema, ValueSchema, symbolFromKey } from "../../core";
+import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds, forbidden } from "../defaultFieldKinds";
@@ -80,14 +80,13 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
  * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
  */
 export function getStableNodeKey(
-	nodeKeyFieldKey: GlobalFieldKey,
+	nodeKeyFieldKey: LocalFieldKey,
 	node: EditableTree,
 ): StableNodeKey | undefined {
-	const nodeKeyFieldKeySymbol = symbolFromKey(nodeKeyFieldKey);
-	if (nodeKeyFieldKeySymbol in node) {
+	if (nodeKeyFieldKey in node) {
 		// Get the ID via a wrapped node rather than an unwrapped node (`node[nodeKeyFieldKeySymbol]`)
 		// so that the field kind can be checked
-		const field = node[getField](nodeKeyFieldKeySymbol);
+		const field = node[getField](nodeKeyFieldKey);
 		assert(
 			field.fieldSchema.kind.identifier === FieldKinds.nodeKey.identifier,
 			0x6df /* Invalid node key field kind */,

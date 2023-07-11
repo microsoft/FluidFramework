@@ -108,19 +108,17 @@ describe("Schema Evolution Examples", () => {
 	const pointIdentifier: TreeSchemaIdentifier = brand("a68c1750-9fba-4b6e-8643-9d830e271c05");
 	const numberIdentifier: TreeSchemaIdentifier = brand("08b4087a-da53-45d1-86cd-15a2948077bf");
 
-	const number = contentTypesBuilder.primitive(numberIdentifier, ValueSchema.Number);
-	const codePoint = contentTypesBuilder.primitive("Primitive.CodePoint", ValueSchema.Number);
+	const number = contentTypesBuilder.leaf(numberIdentifier, ValueSchema.Number);
+	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = contentTypesBuilder.object(textIdentifier, {
-		local: { children: SchemaBuilder.field(FieldKinds.sequence, codePoint) },
+	const text = contentTypesBuilder.struct(textIdentifier, {
+		children: SchemaBuilder.field(FieldKinds.sequence, codePoint),
 	});
 
-	const point = contentTypesBuilder.object(pointIdentifier, {
-		local: {
-			x: SchemaBuilder.field(FieldKinds.value, number),
-			y: SchemaBuilder.field(FieldKinds.value, number),
-		},
+	const point = contentTypesBuilder.struct(pointIdentifier, {
+		x: SchemaBuilder.field(FieldKinds.value, number),
+		y: SchemaBuilder.field(FieldKinds.value, number),
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
@@ -131,14 +129,12 @@ describe("Schema Evolution Examples", () => {
 	);
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = containersBuilder.object(positionedCanvasItemIdentifier, {
-		local: {
-			position: SchemaBuilder.field(FieldKinds.value, point),
-			content: SchemaBuilder.field(FieldKinds.value, text),
-		},
+	const positionedCanvasItem = containersBuilder.struct(positionedCanvasItemIdentifier, {
+		position: SchemaBuilder.field(FieldKinds.value, point),
+		content: SchemaBuilder.field(FieldKinds.value, text),
 	});
-	const canvas = containersBuilder.object(canvasIdentifier, {
-		local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem) },
+	const canvas = containersBuilder.struct(canvasIdentifier, {
+		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem),
 	});
 
 	const root: FieldSchema = SchemaBuilder.field(FieldKinds.value, canvas);
@@ -273,24 +269,20 @@ describe("Schema Evolution Examples", () => {
 			const counterIdentifier: TreeSchemaIdentifier = brand(
 				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b",
 			);
-			const counter = builderWithCounter.object(counterIdentifier, {
-				local: {
-					count: SchemaBuilder.field(FieldKinds.value, number),
-				},
+			const counter = builderWithCounter.struct(counterIdentifier, {
+				count: SchemaBuilder.field(FieldKinds.value, number),
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builderWithCounter.object(
+			const positionedCanvasItem2 = builderWithCounter.struct(
 				positionedCanvasItemIdentifier,
 				{
-					local: {
-						position: SchemaBuilder.field(FieldKinds.value, point),
-						content: SchemaBuilder.field(FieldKinds.value, text, counter),
-					},
+					position: SchemaBuilder.field(FieldKinds.value, point),
+					content: SchemaBuilder.field(FieldKinds.value, text, counter),
 				},
 			);
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builderWithCounter.object(canvasIdentifier, {
-				local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2) },
+			const canvas2 = builderWithCounter.struct(canvasIdentifier, {
+				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewCollection3: SchemaCollection = builderWithCounter.intoDocumentSchema(
@@ -421,15 +413,13 @@ describe("Schema Evolution Examples", () => {
 			"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 		);
 		const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
-		const formattedText = builder.objectRecursive(formattedTextIdentifier, {
-			local: {
-				content: SchemaBuilder.fieldRecursive(
-					FieldKinds.sequence,
-					() => formattedText,
-					codePoint,
-				),
-				size: SchemaBuilder.field(FieldKinds.value, number),
-			},
+		const formattedText = builder.structRecursive(formattedTextIdentifier, {
+			content: SchemaBuilder.fieldRecursive(
+				FieldKinds.sequence,
+				() => formattedText,
+				codePoint,
+			),
+			size: SchemaBuilder.field(FieldKinds.value, number),
 		});
 
 		// We are also updating positionedCanvasItem to accept the new type.
@@ -439,16 +429,14 @@ describe("Schema Evolution Examples", () => {
 		// Were we not batching all these examples in one scope, this would reuse the `positionedCanvasItem` name
 		// as no version of the app need both view schema at the same time
 		// (except for some approaches for staging roll-outs which are not covered here).
-		const positionedCanvasItemNew = builder.object(positionedCanvasItemIdentifier, {
-			local: {
-				position: SchemaBuilder.field(FieldKinds.value, point),
-				// Note that we are specifically excluding the old text here
-				content: SchemaBuilder.field(FieldKinds.value, formattedText),
-			},
+		const positionedCanvasItemNew = builder.struct(positionedCanvasItemIdentifier, {
+			position: SchemaBuilder.field(FieldKinds.value, point),
+			// Note that we are specifically excluding the old text here
+			content: SchemaBuilder.field(FieldKinds.value, formattedText),
 		});
 		// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-		const canvas2 = builder.object(canvasIdentifier, {
-			local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew) },
+		const canvas2 = builder.struct(canvasIdentifier, {
+			items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew),
 		});
 
 		const viewCollection: SchemaCollection = builder.intoDocumentSchema(
