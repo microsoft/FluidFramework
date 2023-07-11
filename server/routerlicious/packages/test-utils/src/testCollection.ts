@@ -29,7 +29,7 @@ export class TestCollection implements ICollection<any> {
 	public async update(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = this.findOneInternal(filter);
 		if (!value) {
-			return Promise.reject(new Error("Not found"));
+			throw new Error("Not found");
 		}
 		_.extend(value, set);
 	}
@@ -44,7 +44,7 @@ export class TestCollection implements ICollection<any> {
 				_.extend(value, set);
 			});
 		} catch (e) {
-			return Promise.reject(e);
+			throw e;
 		}
 	}
 

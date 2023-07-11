@@ -68,7 +68,7 @@ export class OrdererManager implements core.IOrdererManager {
 
 		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
 			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			return Promise.reject(new Error("Invalid ordering service endpoint"));
+			throw new Error("Invalid ordering service endpoint");
 		}
 
 		switch (tenant.orderer.type) {

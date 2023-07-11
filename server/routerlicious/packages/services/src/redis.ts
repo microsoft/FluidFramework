@@ -51,7 +51,7 @@ export class RedisCache implements ICache {
 			expireAfterSeconds ?? this.expireAfterSeconds,
 		);
 		if (result !== "OK") {
-			return Promise.reject(result);
+			throw result;
 		}
 	}
 
@@ -64,7 +64,7 @@ export class RedisCache implements ICache {
 				undefined,
 				error,
 			);
-			return Promise.reject(error);
+			throw error;
 		}
 	}
 
@@ -77,7 +77,7 @@ export class RedisCache implements ICache {
 				undefined,
 				error,
 			);
-			return Promise.reject(error);
+			throw error;
 		}
 	}
 

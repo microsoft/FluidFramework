@@ -41,7 +41,7 @@ export class RedisTenantCache {
 	): Promise<void> {
 		const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
 		if (result !== "OK") {
-			return Promise.reject(result);
+			throw result;
 		}
 	}
 

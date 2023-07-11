@@ -282,7 +282,7 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerCluster) {
-				return Promise.reject(throttleErrorPerCluster);
+				throw throttleErrorPerCluster;
 			}
 			const throttleErrorPerTenant = checkThrottleAndUsage(
 				connectThrottlerPerTenant,
@@ -291,7 +291,7 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerTenant) {
-				return Promise.reject(throttleErrorPerTenant);
+				throw throttleErrorPerTenant;
 			}
 
 			if (!message.token) {
