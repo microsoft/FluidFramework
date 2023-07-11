@@ -58,8 +58,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    readonly isEndpoint = false;
-    // (undocumented)
     isLeaf(): boolean;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
@@ -109,7 +107,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, canSlideToEndpoint: boolean, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -592,8 +590,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    // (undocumented)
-    readonly isEndpoint: boolean;
+    readonly isEndpoint?: boolean;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -669,7 +666,7 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     clear(): void;
     // @internal (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, canSlideToEndpoint: boolean, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
@@ -690,6 +687,8 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
+    // (undocumented)
+    readonly canSlideToEndpoint: boolean;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -752,7 +751,7 @@ export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     index: number;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     ordinal: string;
 }
