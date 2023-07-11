@@ -801,7 +801,7 @@ export class SharedPropertyTree extends SharedObject {
 	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
 		if (startIndex === -1 && startGuid !== "") {
-			throw new Error("Unknown start GUID specified.");
+			console.error("Unknown start GUID specified.");
 		}
 		if (endGuid !== undefined) {
 			const endIndex = findIndex(this.remoteChanges, (c) => c.guid === endGuid);
