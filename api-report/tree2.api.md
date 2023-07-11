@@ -1284,6 +1284,13 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
 // @alpha
+export enum LocalCommitSource {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha (undocumented)
@@ -2258,6 +2265,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+    revertible(source: LocalCommitSource): void;
 }
 
 // @alpha

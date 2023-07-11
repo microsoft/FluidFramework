@@ -67,7 +67,7 @@ export class ReplayControllerStatic extends ReplayController {
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async getStartingOpSequence(): Promise<number> {
