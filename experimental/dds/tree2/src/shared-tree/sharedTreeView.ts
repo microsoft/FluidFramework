@@ -365,7 +365,7 @@ export class SharedTreeView implements ISharedTreeView {
 			}
 		});
 		branch.on("revertible", (type) => {
-			this._events.emit("revertible", type, this);
+			this._events.emit("revertible", type);
 		});
 	}
 

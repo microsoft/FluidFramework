@@ -2228,7 +2228,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    revertible(source: LocalCommitSource, target: ISharedTreeView): void;
+    revertible(source: LocalCommitSource): void;
 }
 
 // @alpha
