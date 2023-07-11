@@ -152,6 +152,7 @@ export type Any = typeof Any;
 /**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
+ * @alpha
  */
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 

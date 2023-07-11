@@ -27,6 +27,8 @@ import {
 	SharingLinkRole,
 	ShareLinkTypes,
 	ISharingLinkKind,
+	ISocketStorageDiscovery,
+	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
@@ -41,7 +43,6 @@ import {
 	isNewFileInfo,
 	getJoinSessionCacheKey,
 } from "./odspUtils";
-import { ISocketStorageDiscovery } from "./contractsPublic";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -50,12 +51,18 @@ import { ISocketStorageDiscovery } from "./contractsPublic";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore
+	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
+{
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
 	public get snapshotPrefetchResultCache() {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
+
+	public get IRelaySessionAwareDriverFactory() {
+		return this;
 	}
 
 	/**

@@ -165,10 +165,7 @@
 				"deps": ["Server-Tools"]
 			},
 			"Azure-Examples": {
-				"packages": [
-					"@fluid-example/presence-tracker",
-					"@fluid-example/app-integration-external-controller"
-				],
+				"packages": ["@fluid-example/app-integration-external-controller"],
 				"deps": ["UberPackage", "AzureClient", "ServiceClients"]
 			}
 		}

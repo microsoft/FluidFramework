@@ -9,16 +9,12 @@ import { FieldKinds, SchemaBuilder } from "../../../../feature-libraries";
 const builder = new SchemaBuilder("example");
 
 // Declare a simple type which just holds a number.
-const numberSchema = builder.object("number", {
-	value: ValueSchema.Number,
-});
+const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 // Declare an aggregate type with local fields
-const ballSchema = builder.object("Ball", {
-	local: {
-		x: SchemaBuilder.fieldValue(numberSchema),
-		y: SchemaBuilder.fieldValue(numberSchema),
-	},
+const ballSchema = builder.struct("Ball", {
+	x: SchemaBuilder.fieldValue(numberSchema),
+	y: SchemaBuilder.fieldValue(numberSchema),
 });
 
 // We can inspect the schema.
