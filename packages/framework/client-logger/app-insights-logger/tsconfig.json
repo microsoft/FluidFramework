@@ -5,6 +5,7 @@
 		"outDir": "dist",
 		"composite": true,
 		"types": ["mocha"],
+		"target": "ES2020",
 	},
 	"include": ["src/**/*"],
 }
