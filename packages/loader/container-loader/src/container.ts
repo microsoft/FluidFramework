@@ -560,7 +560,6 @@ export class Container
 	private messageCountAfterDisconnection: number = 0;
 	private _loadedFromVersion: IVersion | undefined;
 	private attachStarted = false;
-	private _snapshotSeqNumber: number | undefined;
 	private _dirtyContainer = false;
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
@@ -1958,7 +1957,6 @@ export class Container
 		attributes: IDocumentAttributes,
 		prefetchType?: "cached" | "all" | "none",
 	) {
-		this._snapshotSeqNumber = attributes.sequenceNumber;
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
@@ -1995,18 +1993,13 @@ export class Container
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-				// On first connection, also note how much gap was there between last processed seq number which would
-				// mostly be JoinOp and the snapshot seq number.
-				if (this._snapshotSeqNumber !== undefined && this.firstConnection) {
-					opsBehind = this.deltaManager.lastSequenceNumber - this._snapshotSeqNumber;
-				}
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
-				// Need to check that we have already fetched the snapshot.
+				// Need to check that we have already loaded and fetched the snapshot.
 				if (
 					this.deltaManager.hasCheckpointSequenceNumber &&
-					this._snapshotSeqNumber !== undefined
+					this._lifecycleState === "loaded"
 				) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
