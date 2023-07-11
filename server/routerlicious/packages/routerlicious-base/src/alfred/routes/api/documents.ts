@@ -28,6 +28,7 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
@@ -163,7 +164,9 @@ export function create(
 				: (request.body.id as string) || uuid();
 
 			// Summary information
-			const summary = request.body.summary;
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
 
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
