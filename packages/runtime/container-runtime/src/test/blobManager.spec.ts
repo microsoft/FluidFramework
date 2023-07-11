@@ -675,7 +675,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob1Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob1Handle),
-				(error) => {
+				(error: any) => {
 					const blob1Id = blob1Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
@@ -688,7 +688,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob2Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob2Handle),
-				(error) => {
+				(error: any) => {
 					const blob2Id = blob2Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;

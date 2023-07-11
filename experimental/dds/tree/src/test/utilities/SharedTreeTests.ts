@@ -925,7 +925,7 @@ export function runSharedTreeOperationsTests(
 				};
 				assert.throws(
 					() => sharedTree2.loadSummary(corruptedSummary),
-					(e) => validateAssertionError(e, /Duplicate/)
+					(e: Error) => validateAssertionError(e, /Duplicate/)
 				);
 			});
 

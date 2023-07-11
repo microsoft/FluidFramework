@@ -361,7 +361,7 @@ describe("Branches", () => {
 		branch.dispose();
 
 		function assertDisposed(fn: () => void): void {
-			assert.throws(fn, (e) => validateAssertionError(e, "Branch is disposed"));
+			assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
 		}
 
 		// These methods are not valid to call after disposal
@@ -442,7 +442,7 @@ describe("Branches", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.undo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to undo.",
@@ -454,7 +454,7 @@ describe("Branches", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.redo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to redo.",
@@ -476,7 +476,7 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.rebaseOnto(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot rebase a revertible branch onto a non-revertible branch",
@@ -498,7 +498,7 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.merge(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot merge a non-revertible branch into a revertible branch",

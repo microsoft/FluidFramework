@@ -419,7 +419,7 @@ describe("editable-tree: read-only", () => {
 			expectFieldEquals(forest.schema, context.unwrappedRoot, []);
 			assert.throws(
 				() => (context.unwrappedRoot as EditableField).getNode(0),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"A child node must exist at index to get it without unwrapping.",

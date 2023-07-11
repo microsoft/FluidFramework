@@ -293,7 +293,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === "";
 							return correctErrorMessage && correctErrorId;
@@ -330,7 +330,7 @@ describe("Runtime", () => {
 
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === midNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -368,7 +368,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === leafNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -531,7 +531,7 @@ describe("Runtime", () => {
 								readAndParseBlob,
 								logger,
 							),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage =
 								error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =

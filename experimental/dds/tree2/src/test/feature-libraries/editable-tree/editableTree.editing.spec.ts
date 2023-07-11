@@ -119,7 +119,7 @@ describe("editable-tree: editing", () => {
 		// ambiguous type since there are multiple options which are numbers:
 		assert.throws(
 			() => (maybePerson.salary = 99.99),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"data compatible with more than one type allowed by the schema",
@@ -428,7 +428,8 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field], ["first", "second", "third"]);
 			assert.throws(
 				() => field.insertNodes(5, ["x"]),
-				(e) => validateAssertionError(e, "Index must be less than or equal to length."),
+				(e: Error) =>
+					validateAssertionError(e, "Index must be less than or equal to length."),
 				"Expected exception was not thrown",
 			);
 		});
@@ -446,7 +447,7 @@ describe("editable-tree: editing", () => {
 
 			assert.throws(
 				() => field.replaceNodes(1, ["x"]),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"Index must be less than length or, if the field is empty, be 0.",
@@ -566,7 +567,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content
@@ -637,7 +638,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content

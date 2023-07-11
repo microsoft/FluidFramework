@@ -1603,7 +1603,7 @@ describe("SharedTree", () => {
 			fork.transaction.start();
 			assert.throws(
 				() => view.merge(fork),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"Branch may not be merged while transaction is in progress",
@@ -1616,7 +1616,7 @@ describe("SharedTree", () => {
 			const fork = view.fork();
 			assert.throws(
 				() => fork.transaction.commit(),
-				(e) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
 			);
 		});
 

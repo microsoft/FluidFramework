@@ -138,7 +138,7 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Encountered duplicate node key"),
+			(e: Error) => validateAssertionError(e, "Encountered duplicate node key"),
 		);
 	});
 
@@ -175,7 +175,8 @@ describe("Node Key Index", () => {
 					},
 					nodeSchemaData,
 				),
-			(e) => validateAssertionError(e, "Malformed value encountered in node key field"),
+			(e: Error) =>
+				validateAssertionError(e, "Malformed value encountered in node key field"),
 		);
 	});
 
@@ -191,7 +192,7 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Node key absent but required by schema"),
+			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
 
