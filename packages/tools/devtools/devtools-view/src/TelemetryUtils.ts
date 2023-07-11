@@ -67,6 +67,19 @@ export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateActi
 		localStorage.setItem(telemetryOptInKey, value.toString());
 	}, [value]);
 
+	const localStorageChangeHandler = (event: StorageEvent): void => {
+		if (event.storageArea === localStorage) {
+			setValue(event.newValue === "true");
+		}
+	}
+	React.useEffect(() => {
+		localStorage.setItem(telemetryOptInKey, value.toString());
+		window.addEventListener('storage', localStorageChangeHandler);
+		return (): void => {
+			window.removeEventListener('storage', localStorageChangeHandler);
+		};
+	});
+
 	return [value, setValue];
 };
 
