@@ -14,8 +14,8 @@ import {
 	normalizeFlexListEager,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema/flexList";
-import { requireAssignableTo, requireFalse, requireTrue } from "../../../../util";
+} from "../../../feature-libraries/typed-schema/flexList";
+import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 
 // Test ArrayHasFixedLength
 {

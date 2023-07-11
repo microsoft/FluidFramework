@@ -19,8 +19,8 @@ import {
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
-} from "../../core";
-import { jsonNumber, jsonObject, jsonString } from "../../domains";
+} from "../../../core";
+import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
@@ -30,10 +30,10 @@ import {
 	singleTextCursor,
 	jsonableTreeFromCursor,
 	ModularChangeset,
-} from "../../feature-libraries";
-import { brand } from "../../util";
-import { assertDeltaEqual } from "../utils";
-import { noopValidator } from "../../codec";
+} from "../../../feature-libraries";
+import { brand } from "../../../util";
+import { assertDeltaEqual } from "../../utils";
+import { noopValidator } from "../../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);

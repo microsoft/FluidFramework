@@ -1,5 +1,5 @@
 {
 	"tags": ["schema-aware"],
 	"exports": ["index"],
-	"imports": ["util", "events", "core", "feature-libraries", "modular-schema"]
+	"imports": ["util", "events", "core", "feature-libraries", "modular-schema", "type-schema"]
 }
