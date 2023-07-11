@@ -67,12 +67,12 @@ export interface ViewEvents {
 	 * The event along with the {@link LocalCommitSource} communicates a change has been made that can be undone or redone on
 	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
 	 * stack which cannot be modified and no additional information about the change is provided.
-	 * 
+	 *
 	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
 	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
-	 * 
+	 *
 	 * @privateRemarks
-	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the 
+	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the
 	 * local branch which cannot be rebased onto another branch.
 	 */
 	revertible(source: LocalCommitSource): void;
