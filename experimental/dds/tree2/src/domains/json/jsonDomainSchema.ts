@@ -12,12 +12,12 @@ const builder = new SchemaBuilder("Json Domain");
 /**
  * @alpha
  */
-export const jsonNumber = builder.primitive("Json.Number", ValueSchema.Number);
+export const jsonNumber = builder.leaf("Json.Number", ValueSchema.Number);
 
 /**
  * @alpha
  */
-export const jsonString = builder.primitive("Json.String", ValueSchema.String);
+export const jsonString = builder.leaf("Json.String", ValueSchema.String);
 
 /**
  * @alpha
@@ -27,7 +27,7 @@ export const jsonNull = builder.struct("Json.Null", {});
 /**
  * @alpha
  */
-export const jsonBoolean = builder.primitive("Json.Boolean", ValueSchema.Boolean);
+export const jsonBoolean = builder.leaf("Json.Boolean", ValueSchema.Boolean);
 
 const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
 
