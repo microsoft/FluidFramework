@@ -25,6 +25,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 			env: "GITHUB_TOKEN",
 		}),
+		pat: Flags.string({
+			description: "GitHub Personal Access Token",
+			char: "p",
+			required: true,
+		}),
 		source: Flags.string({
 			description: "Source branch name",
 			char: "s",
@@ -239,7 +244,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		/**
 		 * fetch name of owner associated to the pull request
 		 */
-		const pr = await pullRequestInfo(flags.auth, owner, repo, prHeadCommit, this.logger);
+		const pr = await pullRequestInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
 		if (pr === undefined) {
 			this.warning(`Unable to add assignee`);
 		}
@@ -249,7 +254,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 
 		const prObject = {
-			token: flags.auth,
+			token: flags.pat,
 			owner,
 			repo,
 			source: branchName,
