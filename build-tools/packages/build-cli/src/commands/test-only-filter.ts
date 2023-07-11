@@ -4,8 +4,6 @@
  */
 import { Package } from "@fluidframework/build-tools";
 import { strict as assert } from "node:assert";
-// import path from "node:path";
-
 import { PackageCommand } from "../BasePackageCommand";
 import { PackageWithKind } from "../filter";
 
