@@ -8,8 +8,6 @@
  * - indefinite: entries don't expire and must be explicitly removed
  * - absolute: entries expire after the given duration in MS, even if accessed multiple times in the mean time
  * - sliding: entries expire after the given duration in MS of inactivity (i.e. get resets the clock)
- *
- * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export type PromiseCacheExpiry =
 	| {
@@ -22,8 +20,6 @@ export type PromiseCacheExpiry =
 
 /**
  * Options for configuring the {@link PromiseCache}
- *
- * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export interface PromiseCacheOptions {
 	/** Common expiration policy for all items added to this cache */
@@ -35,8 +31,6 @@ export interface PromiseCacheOptions {
 /**
  * Handles garbage collection of expiring cache entries.
  * Not exported.
- *
- * @deprecated Only used internally by the {@link PromiseCache} class.
  */
 class GarbageCollector<TKey> {
 	private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
@@ -87,8 +81,6 @@ class GarbageCollector<TKey> {
 /**
  * A specialized cache for async work, allowing you to safely cache the promised result of some async work
  * without fear of running it multiple times or losing track of errors.
- *
- * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export class PromiseCache<TKey, TResult> {
 	private readonly cache = new Map<TKey, Promise<TResult>>();

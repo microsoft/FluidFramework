@@ -17,7 +17,8 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";

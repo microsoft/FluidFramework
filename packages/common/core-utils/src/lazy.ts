@@ -4,58 +4,34 @@
  */
 
 /**
- * A deferred creates a promise and the ability to resolve or reject it
+ * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable.
  */
-export class Deferred<T> {
-	private readonly p: Promise<T>;
-	private res: ((value: T | PromiseLike<T>) => void) | undefined;
-	private rej: ((reason?: any) => void) | undefined;
-	private completed: boolean = false;
-
-	constructor() {
-		this.p = new Promise<T>((resolve, reject) => {
-			this.res = resolve;
-			this.rej = reject;
-		});
-	}
+export class Lazy<T> {
+	private _value: T | undefined;
+	private _evaluated: boolean = false;
 	/**
-	 * Returns whether the underlying promise has been completed
+	 * Instantiates an instance of Lazy<T>.
+	 * @param valueGenerator - The function that will generate the value when value is accessed the first time.
 	 */
-	public get isCompleted(): boolean {
-		return this.completed;
+	constructor(private readonly valueGenerator: () => T) {}
+
+	/**
+	 * Return true if the value as been generated, otherwise false.
+	 */
+	public get evaluated(): boolean {
+		return this._evaluated;
 	}
 
 	/**
-	 * Retrieves the underlying promise for the deferred
-	 *
-	 * @returns the underlying promise
+	 * Get the value. If this is the first call the value will be generated.
 	 */
-	public get promise(): Promise<T> {
-		return this.p;
-	}
-
-	/**
-	 * Resolves the promise
-	 *
-	 * @param value - the value to resolve the promise with
-	 */
-	public resolve(value: T | PromiseLike<T>): void {
-		if (this.res !== undefined) {
-			this.completed = true;
-			this.res(value);
+	public get value(): T {
+		if (!this._evaluated) {
+			this._evaluated = true;
+			this._value = this.valueGenerator();
 		}
-	}
-
-	/**
-	 * Rejects the promise
-	 *
-	 * @param value - the value to reject the promise with
-	 */
-	public reject(error: any): void {
-		if (this.rej !== undefined) {
-			this.completed = true;
-			this.rej(error);
-		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._value!;
 	}
 }
 
@@ -64,8 +40,6 @@ export class Deferred<T> {
  * the promise is used, e.g. await, then, catch ...
  * The execute function is only called once.
  * All calls are then proxied to the promise returned by the execute method.
- *
- * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export class LazyPromise<T> implements Promise<T> {
 	public get [Symbol.toStringTag](): string {
