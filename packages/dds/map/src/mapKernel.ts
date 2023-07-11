@@ -342,6 +342,9 @@ export class MapKernel {
 		// Clear the data locally first.
 		this.clearCore(true);
 
+		// Clear the pendingKeys immediately, the local unack'd operations are aborted
+		this.pendingKeys.clear();
+
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
 			return;

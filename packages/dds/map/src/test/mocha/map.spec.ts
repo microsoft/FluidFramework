@@ -557,7 +557,7 @@ describe("Map", () => {
 					/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 				});
 
-				it("Shouldn't clear value if there is pending set", () => {
+				it("Shouldn't clear value remotely if there is pending set", () => {
 					const valuesChanged: IValueChanged[] = [];
 					let clearCount = 0;
 
@@ -593,16 +593,21 @@ describe("Map", () => {
 					assert.equal(map1.size, 0);
 				});
 
-				// TODO:AB#4609: Enable this test.
-				it.skip("Shouldn't clear value set before and after a clear", () => {
-					map1.set("1", "first result");
+				it("Shouldn't keep the old pending set after a local clear", () => {
+					map1.set("1", 1);
+					map1.set("2", 2);
+					map1.set("3", 3);
 					map1.clear();
-					map1.set("1", "second result");
+					map1.set("1", 2);
 
 					containerRuntimeFactory.processAllMessages();
 
-					assert.equal(map1.get("1"), "second result");
-					assert.equal(map2.get("1"), "second result");
+					assert.equal(map1.get("1"), 2);
+					assert.equal(map1.get("2"), undefined);
+					assert.equal(map1.get("3"), undefined);
+					assert.equal(map2.get("1"), 2);
+					assert.equal(map2.get("2"), undefined);
+					assert.equal(map2.get("3"), undefined);
 				});
 
 				it("Shouldn't overwrite value if there is pending set", () => {
