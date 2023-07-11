@@ -54,7 +54,7 @@ import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const MaxReconnectDelayInMs = 8000;
+const MaxReconnectDelayInMs = 30000;
 const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
