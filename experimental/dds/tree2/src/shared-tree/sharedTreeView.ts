@@ -14,6 +14,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
+	LocalCommitSource,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -57,6 +58,24 @@ export interface ViewEvents {
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
 	 */
 	afterBatch(): void;
+
+	/**
+	 * A revertible change has been made to this view.
+	 *
+	 * @remarks
+	 * This event is made available to allow consumers to manage reverting changes to different DDSes.
+	 * The event along with the {@link LocalCommitSource} communicates a change has been made that can be undone or redone on
+	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
+	 * stack which cannot be modified and no additional information about the change is provided.
+	 *
+	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
+	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
+	 *
+	 * @privateRemarks
+	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the
+	 * local branch which cannot be rebased onto another branch.
+	 */
+	revertible(source: LocalCommitSource): void;
 }
 
 /**
@@ -122,12 +141,22 @@ export interface ISharedTreeView extends AnchorLocator {
 
 	/**
 	 * Undoes the last completed transaction made by the client.
+	 *
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
+	 * undo stack.
+	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	undo(): void;
 
 	/**
 	 * Redoes the last completed undo made by the client.
+	 *
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
+	 * redo stack. New local transactions will not clear the redo stack.
+	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	redo(): void;
@@ -339,6 +368,9 @@ export class SharedTreeView implements ISharedTreeView {
 				this._nodeKeyIndex.scanKeys(this.context);
 				this._events.emit("afterBatch");
 			}
+		});
+		branch.on("revertible", (type) => {
+			this._events.emit("revertible", type);
 		});
 	}
 
