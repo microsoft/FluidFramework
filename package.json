@@ -184,7 +184,7 @@
 				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
-        "@types/node",
+				"@types/node",
 				"fluid-framework"
 			]
 		}
