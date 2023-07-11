@@ -22,12 +22,10 @@ import {
 	RevisionTag,
 	SparseNode,
 	UpPath,
-	Value,
 } from "../core";
 import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
-	value?: Map<RevisionTag, Value>;
 	node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
@@ -184,13 +182,6 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 			cursor.firstNode();
 			return cursor;
 		});
-	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		const data = getDescendant(this.root, path).data;
-		const valueMap = data?.value;
-		assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
-		return valueMap.get(revision);
 	}
 }
 

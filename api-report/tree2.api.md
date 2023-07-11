@@ -1603,8 +1603,6 @@ export interface RangeEntry<T> {
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
     getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-    // (undocumented)
-    getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 // @alpha
