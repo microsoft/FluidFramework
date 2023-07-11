@@ -10845,22 +10845,25 @@ importers:
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.109.4
+      '@fluid-example/example-utils': workspace~
       '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
+      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.21.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
-      '@fluidframework/tinylicious-client': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
@@ -10906,7 +10909,6 @@ importers:
       sinon: ^7.4.2
       sinon-chrome: ^3.0.1
       start-server-and-test: ^1.11.7
-      tinylicious: 0.7.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -10922,20 +10924,23 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
-      '@fluidframework/map': link:../../../dds/map
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
-      '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
       '@types/chai': 4.3.5
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
@@ -10978,7 +10983,6 @@ importers:
       sinon: 7.5.0
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
-      tinylicious: 0.7.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
