@@ -11,7 +11,7 @@ import {
 	ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHeirarchy } from "@fluidframework/protocol-base";
 import { v4 as uuid } from "uuid";
 
 function flattenCore(
@@ -91,5 +91,5 @@ export function buildSnapshotTree(
 	blobMap: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
 	const flattened = flatten(entries, blobMap);
-	return buildHierarchy(flattened);
+	return buildGitTreeHeirarchy(flattened);
 }
