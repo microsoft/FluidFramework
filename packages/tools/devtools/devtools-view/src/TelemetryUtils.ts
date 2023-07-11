@@ -71,11 +71,11 @@ export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateActi
 		if (event.storageArea === localStorage && event.key === telemetryOptInKey) {
 			setValue(event.newValue === "true");
 		}
-	}
+	};
 	React.useEffect(() => {
-		window.addEventListener('storage', localStorageChangeHandler);
+		window.addEventListener("storage", localStorageChangeHandler);
 		return (): void => {
-			window.removeEventListener('storage', localStorageChangeHandler);
+			window.removeEventListener("storage", localStorageChangeHandler);
 		};
 	});
 
