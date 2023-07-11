@@ -85,10 +85,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
-		this.log(`initial branch: ${this.initialBranch}`);
-
 		this.remote = flags.remote;
-		this.log(`remote: ${this.remote}`);
+
 		const prExists: boolean = await pullRequestExists(
 			flags.auth,
 			prTitle,
@@ -97,7 +95,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.logger,
 		);
 
-		this.log(`prExists: ${prExists}`);
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
 			this.exit(-1);
@@ -137,7 +134,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		await this.gitRepo.gitClient
 			.checkoutBranch(tempBranchToCheckConflicts, flags.target)
-			.push(this.remote, tempBranchToCheckConflicts)
 			.branch(["--set-upstream-to", `${this.remote}/${tempBranchToCheckConflicts}`]);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
@@ -192,9 +188,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			.branch(["--set-upstream-to", `${this.remote}/${branchName}`]);
 
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
-		await this.gitRepo.gitClient
-			.branch(["--delete", tempBranchToCheckConflicts, "--force"])
-			.push(this.remote, `:${tempBranchToCheckConflicts}`);
+		await this.gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
 
 		/**
 		 * The below description is intended for PRs which has merge conflicts with next.
@@ -246,6 +240,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		 * fetch name of owner associated to the pull request
 		 */
 		const pr = await pullRequestInfo(flags.auth, owner, repo, prHeadCommit, this.logger);
+		if (pr === undefined) {
+			this.warning(`Unable to add assignee`);
+		}
 		const username = pr.data.author.login;
 		this.info(
 			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${username}`,
@@ -325,7 +322,6 @@ async function hasConflicts(
 	gitRepo: Repository,
 	log?: Logger,
 ): Promise<[boolean, number]> {
-	log?.log(`hasConflicts`);
 	for (const [i, commit] of commitIds.entries()) {
 		// eslint-disable-next-line no-await-in-loop
 		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
