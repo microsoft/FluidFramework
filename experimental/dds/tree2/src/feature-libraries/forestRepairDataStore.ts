@@ -119,19 +119,6 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 		 * Restores the `cursor` to that same position before exiting.
 		 */
 		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
-			// Note that the check below returns true for properties that are present on the object even if they
-			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
-			// `undefined` as opposed to leaving the value unchanged.
-			if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-				if (node.data === undefined) {
-					node.data = repairDataFactory();
-				}
-				const value = cursor.value;
-				if (node.data.value === undefined) {
-					node.data.value = new Map();
-				}
-				node.data.value.set(revision, value);
-			}
 			if (modify.fields !== undefined) {
 				visitFieldMarks(modify.fields, node);
 			}
