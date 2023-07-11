@@ -29,11 +29,11 @@ import {
 import {
 	assert,
 	delay,
-	LazyPromise,
 	Trace,
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
