@@ -40,6 +40,11 @@ export abstract class PackageCommand<
 
 	/**
 	 * An array of packages selected based on the selection criteria.
+	 *
+	 * @remarks
+	 *
+	 * Note that these packages are not necessarily the ones that are acted on. Packages are selected, then that list is
+	 * further narrowed by filtering criteria, so this array may contain packages that are not acted on.
 	 */
 	protected selectedPackages: PackageWithKind[] | undefined;
 
