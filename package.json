@@ -165,11 +165,9 @@
 	},
 	"pnpm": {
 		"comments": [
+			"@types/node is pinned so that all packages use the same version of node types.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
-			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
-			"npm-package-json-lint overrides is here because 6.4 updates type-fest such that it requires typescript 4.7",
-			"Fixing the react related type version here avoids a compile error in office-ui-fabric-react@7.199.6_@types+react-dom@17.0.18_@types+react@17.0.59_react-dom@17.0.2_react@17.0.2/node_modules/office-ui-fabric-react/lib/components/Tooltip/Tooltip.types.d.ts",
-			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
+			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work."
 		],
 		"overrides": {
 			"@types/node": "^14.18.38",
@@ -177,11 +175,7 @@
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
-			"simplemde>marked": "^4.3.0",
-			"@fluidframework/build-tools>npm-package-json-lint@^6.0.0": "~6.3.0",
-			"@types/react": "17.0.52",
-			"@types/react-dom": "17.0.18",
-			"@oclif/core": "~2.4.0"
+			"simplemde>marked": "^4.3.0"
 		},
 		"peerDependencyRules": {
 			"allowedVersions": {
