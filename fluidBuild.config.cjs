@@ -19,7 +19,13 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs"],
+			dependsOn: ["compile", "lint", "build:docs", "build:readme"],
+			script: false,
+		},
+		// Runs checks and build tasks together. This is the legacy behavior of the "build" script. Right now the npm build
+		// script calls this fluid-build task, but eventually, the npm build script wlll _only_ call the build task.
+		"build:all": {
+			dependsOn: ["checks", "build"],
 			script: false,
 		},
 		"compile": {
@@ -31,7 +37,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences"],
+			dependsOn: ["eslint"],
+			script: false,
+		},
+		"checks": {
+			// TODO: This should also include syncpack, layer-check, and policy-check, but that requires fluid-build to
+			// support running top-level scripts, which it can't do right now. Once that feature is added we can add those
+			// tasks here.
+			dependsOn: ["prettier", "good-fences"],
 			script: false,
 		},
 		"build:copy": [],
@@ -42,6 +55,7 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"build:readme": [...tscDependsOn, "tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],

@@ -15,11 +15,15 @@
 		"build:ci": "lerna run build:compile --stream",
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
+		"build:eslint": "pnpm run -r --no-sort --stream eslint",
 		"build:fast": "fluid-build --root .. -g build-tools",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
+		"check:versions": "flub check buildVersion -g build-tools --path .",
+		"check:versions:fix": "pnpm run check:versions --fix",
+		"checks": "concurrently npm:policy-check npm:syncpack:deps npm:syncpack:versions && npm run check:versions && npm run prettier",
+		"checks:fix": "npm run policy-check:fix && npm run syncpack:deps:fix && npm run syncpack:versions:fix && npm run check:versions:fix && npm run prettier:fix",
 		"ci:build": "lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
-		"ci:eslint": "lerna run eslint --no-sort --stream",
 		"ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
@@ -29,8 +33,8 @@
 		"format": "npm run prettier:fix",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
-		"lint": "npm run prettier && npm run ci:eslint",
-		"lint:fix": "lerna run lint:fix --no-sort --stream",
+		"lint": "npm run build:eslint",
+		"lint:fix": "pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "node packages/build-cli/bin/dev check policy",
 		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --handler assert-short-codes --fix",
 		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
@@ -69,6 +73,7 @@
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
+		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/test-tools": "^0.2.158186",
@@ -100,7 +105,7 @@
 				"eslint": "8.6.0"
 			},
 			"ignoreMissing": [
-				"fluid-framework"
+				"@types/node"
 			]
 		},
 		"overrides": {

@@ -86,7 +86,6 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskLintName: ci:eslint
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: false
@@ -94,3 +93,4 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - prettier
+    - check:versions
