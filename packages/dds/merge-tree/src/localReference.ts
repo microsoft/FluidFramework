@@ -66,6 +66,8 @@ export interface LocalReferencePosition extends ReferencePosition {
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
 	readonly trackingCollection: TrackingGroupCollection;
+	// todo: optional
+	readonly canSlideToEndpoint: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	constructor(
+		public readonly canSlideToEndpoint: boolean,
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
 		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
@@ -148,7 +151,7 @@ class LocalReference implements LocalReferencePosition {
 export function createDetachedLocalReferencePosition(
 	refType?: ReferenceType,
 ): LocalReferencePosition {
-	return new LocalReference(refType, undefined);
+	return new LocalReference(false, refType, undefined);
 }
 
 interface IRefsAtOffset {
@@ -316,10 +319,11 @@ export class LocalReferenceCollection {
 	public createLocalRef(
 		offset: number,
 		refType: ReferenceType,
+		canSlideToEndpoint: boolean,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties, slidingPreference);
+		const ref = new LocalReference(canSlideToEndpoint, refType, properties, slidingPreference);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);

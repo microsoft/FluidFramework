@@ -135,6 +135,7 @@ export function appendDeleteIntervalToRevertibles(
 		startSeg,
 		interval.start.getOffset(),
 		startType,
+		false,
 		undefined,
 		interval.start.slidingPreference,
 	);
@@ -142,6 +143,7 @@ export function appendDeleteIntervalToRevertibles(
 		endSeg,
 		interval.end.getOffset(),
 		endType,
+		false,
 		undefined,
 		interval.end.slidingPreference,
 	);
@@ -185,6 +187,7 @@ export function appendChangeIntervalToRevertibles(
 		startSeg,
 		previousInterval.start.getOffset(),
 		startType,
+		false,
 		undefined,
 		previousInterval.start.slidingPreference,
 	);
@@ -192,6 +195,7 @@ export function appendChangeIntervalToRevertibles(
 		endSeg,
 		previousInterval.end.getOffset(),
 		endType,
+		false,
 		undefined,
 		previousInterval.end.slidingPreference,
 	);
@@ -566,6 +570,7 @@ function revertLocalSequenceRemove(
 					pos.segment as SharedStringSegment,
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					false,
 					{ revertible: revertibleRef.revertible },
 				);
 				revertibleRef.revertible.start = newRef;
@@ -575,6 +580,7 @@ function revertLocalSequenceRemove(
 					pos.segment as SharedStringSegment,
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					false,
 					{ revertible: revertibleRef.revertible },
 				);
 				revertibleRef.revertible.end = newRef;

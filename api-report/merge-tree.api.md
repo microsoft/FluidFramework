@@ -58,6 +58,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
+    readonly isEndpoint = false;
+    // (undocumented)
     isLeaf(): boolean;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
@@ -590,6 +592,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
+    // (undocumented)
+    readonly isEndpoint: boolean;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;

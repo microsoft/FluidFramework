@@ -249,6 +249,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.START,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
@@ -274,6 +275,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.START,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				const intervalId = interval1.getIntervalId();
@@ -289,9 +291,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("has start stickiness during delete of start of interval", () => {
-				// abc(Xdef]
-				// abc(Xghidef]
-				// (aghidef]
+				// -abc(Xdef]-
+				// -abc(Xghidef]-
+				// -(aghidef]-
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abcXdef");
 				containerRuntimeFactory.processAllMessages();
@@ -301,6 +303,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.START,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				const intervalId = interval1.getIntervalId();
@@ -314,12 +317,17 @@ describe("SharedString interval collections", () => {
 				sharedString.removeRange(1, 4);
 				containerRuntimeFactory.processAllMessages();
 
+				assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+				assert.strictEqual(interval1.start.getSegment()?.isLeaf(), true);
+				assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
+
 				assert.strictEqual(sharedString.getText(), "aghidef", "different text");
 				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
 			});
 
-			// skipped: endpoint behavior of sticky intervals is not currently implemented
-			it.skip("has start stickiness when spanning whole string and insertion at index 0", () => {
+			it("has start stickiness when spanning whole string and insertion at index 0", () => {
+				// (-abc]-
+				// (-Xabc]-
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
@@ -329,15 +337,256 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.START,
+					true,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
 				sharedString.insertText(0, "X");
 				containerRuntimeFactory.processAllMessages();
+				assert.strictEqual(
+					interval1.start.getSegment()?.constructor.name,
+					"StartOfTreeSegment",
+				);
+				assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
 
-				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+			});
+
+			it("has full stickiness when spanning whole string and insertion at index 0", () => {
+				// (-abc)-
+				// (-Xabc)-
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.FULL,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(0, "X");
+				containerRuntimeFactory.processAllMessages();
+				assert.strictEqual(
+					interval1.start.getSegment()?.constructor.name,
+					"StartOfTreeSegment",
+				);
+				assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
+
+				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+			});
+
+			it("has end stickiness when spanning whole string and insertion at index 0", () => {
+				// -[abc-)
+				// -X[abc-)
+				// -X[abcX-)
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					3,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.END,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(0, "X");
+				containerRuntimeFactory.processAllMessages();
+				assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+				assert.strictEqual(
+					interval1.end.getSegment()?.constructor.name,
+					"EndOfTreeSegment",
+				);
+
+				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 1, end: 4 }], false);
+
+				sharedString.insertText(4, "X");
+				containerRuntimeFactory.processAllMessages();
+				assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+				assert.strictEqual(
+					interval1.end.getSegment()?.constructor.name,
+					"EndOfTreeSegment",
+				);
+
+				assert.strictEqual(sharedString.getText(), "XabcX", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 1, end: 5 }], false);
+			});
+
+			it("full stickiness doesn't slide off string when entire string is deleted", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abcdef");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					1,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.FULL,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.removeRange(0, 6);
+				containerRuntimeFactory.processAllMessages();
+				sharedString.insertText(0, "XXX");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+			});
+
+			it("none stickiness slides off string when entire string is deleted", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					1,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.NONE,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.removeRange(0, 3);
+				containerRuntimeFactory.processAllMessages();
+				sharedString.insertText(0, "XXX");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+			});
+
+			it("none stickiness slides off string when entire string is deleted incrementally", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					1,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.NONE,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.removeRange(0, 1);
+				sharedString.removeRange(0, 1);
+				sharedString.removeRange(0, 1);
+				containerRuntimeFactory.processAllMessages();
+				sharedString.insertText(0, "XXX");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+			});
+
+			it("full stickiness doesn't slide off string when entire string is deleted incrementally", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					1,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.FULL,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.removeRange(0, 1);
+				sharedString.removeRange(0, 1);
+				sharedString.removeRange(0, 1);
+				containerRuntimeFactory.processAllMessages();
+				sharedString.insertText(0, "XXX");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+				assert.strictEqual(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
+				assert.strictEqual(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+				assert.strictEqual(
+					interval1.start.getSegment()?.constructor.name,
+					"StartOfTreeSegment",
+				);
+				assert.strictEqual(
+					interval1.end.getSegment()?.constructor.name,
+					"EndOfTreeSegment",
+				);
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+			});
+
+			it("doesn't have left stickiness when spanning whole string and insertion at index 0", () => {
+				// (abc]
+				// X(abc]
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.END,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(0, "X");
+				containerRuntimeFactory.processAllMessages();
+				assert.notStrictEqual(
+					interval1.start.getSegment()?.constructor.name,
+					"StartOfTreeSegment",
+				);
+
+				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 1, end: 3 }], false);
+			});
+
+			it("slides to endpoint after deleting all text to left of start-sticky+exclusive reference", () => {
+				// -a(bcde]f-
+				// (-Xde]f
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abcdef");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					2,
+					5,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.START,
+					true,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.removeRange(0, 3);
+				sharedString.insertText(0, "X");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "Xdef", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
 			});
 
 			it("has end stickiness", () => {
@@ -351,6 +600,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.END,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.END);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
@@ -378,6 +628,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.END,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.END);
 				const intervalId = interval1.getIntervalId();
@@ -398,7 +649,14 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abcXdef");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(0, 3, IntervalType.SlideOnRemove, undefined);
+				const interval1 = collection.add(
+					0,
+					3,
+					IntervalType.SlideOnRemove,
+					undefined,
+					undefined,
+					true,
+				);
 				assert.equal(interval1.stickiness, IntervalStickiness.END);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
 				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
@@ -426,6 +684,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.NONE,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.NONE);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
@@ -450,6 +709,7 @@ describe("SharedString interval collections", () => {
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.FULL,
+					true,
 				);
 				assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);

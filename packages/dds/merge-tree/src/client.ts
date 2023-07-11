@@ -380,6 +380,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segment: ISegment,
 		offset: number | undefined,
 		refType: ReferenceType,
+		// todo: make optional everywhere and move to last argument
+		canSlideToEndpoint: boolean,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
@@ -387,6 +389,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			segment,
 			offset ?? 0,
 			refType,
+			canSlideToEndpoint,
 			properties,
 			slidingPreference,
 		);
@@ -1107,7 +1110,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @deprecated Use getSlideToSegoff function instead.
 	 */
 	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		return getSlideToSegoff(segoff);
+		return getSlideToSegoff(segoff, this._mergeTree);
 	}
 
 	getPropertiesAtPosition(pos: number) {

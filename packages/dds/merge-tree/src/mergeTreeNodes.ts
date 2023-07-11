@@ -132,6 +132,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
+	// todo: make optional
+	readonly isEndpoint: boolean;
 
 	/**
 	 * The length of the contents of the node.
@@ -342,7 +344,7 @@ export class MergeNode implements IMergeNodeCommon {
 	ordinal: string = "";
 	cachedLength: number = 0;
 
-	isLeaf() {
+	isLeaf(): this is ISegment {
 		return false;
 	}
 }
@@ -403,6 +405,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
 	public removedClientIds?: number[];
+	readonly isEndpoint = false;
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/**

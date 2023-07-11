@@ -309,6 +309,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T,
 		offset: number,
 		refType: ReferenceType,
+		canSlideToEndpoint: boolean,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
@@ -316,6 +317,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			segment,
 			offset,
 			refType,
+			canSlideToEndpoint,
 			properties,
 			slidingPreference,
 		);
