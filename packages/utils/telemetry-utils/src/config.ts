@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/common-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { TelemetryDataTag } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
