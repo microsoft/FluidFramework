@@ -90,10 +90,12 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext"
+				"@fluid-example/multiview-coordinate-interface#build:esnext",
+				"^tsc"
 			],
 			"build:esnext": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext"
+				"@fluid-example/multiview-coordinate-interface#build:esnext",
+				"^tsc"
 			]
 		}
 	},
