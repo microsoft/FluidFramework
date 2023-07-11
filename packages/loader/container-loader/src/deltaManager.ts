@@ -70,7 +70,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 /**
  * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
  */
-interface IMaybeBatchMetadata {
+interface IBatchMetadata {
 	batch?: boolean;
 }
 
@@ -297,13 +297,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				(batch[0].metadata as IMaybeBatchMetadata)?.batch === undefined,
+				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
-			assert((batch[0].metadata as IMaybeBatchMetadata)?.batch === true, 0x3ca /* no start batch markup */);
+			assert((batch[0].metadata as IBatchMetadata)?.batch === true, 0x3ca /* no start batch markup */);
 			assert(
-				(batch[batch.length - 1].metadata as IMaybeBatchMetadata)?.batch === false,
+				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
