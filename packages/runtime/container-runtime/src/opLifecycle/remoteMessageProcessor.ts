@@ -16,7 +16,7 @@ export class RemoteMessageProcessor {
 		private readonly opGroupingManager: OpGroupingManager,
 	) {}
 
-	public get partialMessages(): ReadonlyMap<string, string[]> {
+	public get partialMessages(): ReadonlyMap<string | null, string[]> {
 		return this.opSplitter.chunks;
 	}
 
@@ -120,7 +120,8 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 	}
 
 	// legacy op format?
-	if (message.contents.address !== undefined && message.contents.type === undefined) {
+	// TODO: Unsure if this is a real format we should be concerned with. There doesn't appear to be anything prepared to handle the address member.
+	if ((message.contents as { address?: unknown }).address !== undefined && (message.contents as { type?: unknown }).type === undefined) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
 	} else {
 		// new format

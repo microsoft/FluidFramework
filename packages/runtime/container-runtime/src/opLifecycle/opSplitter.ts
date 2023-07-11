@@ -20,7 +20,7 @@ import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./de
  */
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
-	private readonly chunkMap: Map<string, string[]>;
+	private readonly chunkMap: Map<string | null, string[]>;
 	private readonly logger;
 
 	constructor(
@@ -40,7 +40,7 @@ export class OpSplitter {
 		return this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined;
 	}
 
-	public get chunks(): ReadonlyMap<string, string[]> {
+	public get chunks(): ReadonlyMap<string | null, string[]> {
 		return this.chunkMap;
 	}
 
@@ -80,14 +80,14 @@ export class OpSplitter {
 		};
 	}
 
-	public clearPartialChunks(clientId: string) {
+	public clearPartialChunks(clientId: string | null) {
 		if (this.chunkMap.has(clientId)) {
 			this.chunkMap.delete(clientId);
 		}
 	}
 
 	private addChunk(
-		clientId: string,
+		clientId: string | null,
 		chunkedContent: IChunkedOp,
 		originalMessage: ISequencedDocumentMessage,
 	) {

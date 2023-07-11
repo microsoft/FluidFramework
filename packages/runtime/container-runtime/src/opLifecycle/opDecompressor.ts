@@ -12,6 +12,13 @@ import { IMessageProcessingResult } from "./definitions";
 import { IBatchMetadata } from "../metadata";
 
 /**
+ * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
+ */
+interface IPackedContentsContents {
+	packedContents: string;
+}
+
+/**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
  * This class relies on some implicit contracts defined below:
  * 1. A compressed batch will have its first message with batch metadata set to true and compressed set to true
@@ -48,7 +55,7 @@ export class OpDecompressor {
 
 			this.activeBatch = true;
 
-			const contents = IsoBuffer.from(message.contents.packedContents, "base64");
+			const contents = IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64");
 			const decompressedMessage = decompress(contents);
 			const intoString = Uint8ArrayToString(decompressedMessage);
 			const asObj = JSON.parse(intoString);
@@ -98,7 +105,7 @@ export class OpDecompressor {
 				0x4ba /* shouldn't receive compressed message in middle of a batch */,
 			);
 
-			const contents = IsoBuffer.from(message.contents.packedContents, "base64");
+			const contents = IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64");
 			const decompressedMessage = decompress(contents);
 			const intoString = new TextDecoder().decode(decompressedMessage);
 			const asObj = JSON.parse(intoString);
@@ -136,11 +143,10 @@ export class OpDecompressor {
 				message.contents !== null &&
 				typeof message.contents === "object" &&
 				Object.keys(message.contents).length === 1 &&
-				message.contents?.packedContents !== undefined &&
-				typeof message.contents?.packedContents === "string" &&
-				message.contents.packedContents.length > 0 &&
-				IsoBuffer.from(message.contents.packedContents, "base64").toString("base64") ===
-					message.contents.packedContents
+				typeof (message.contents as { packedContents?: unknown }).packedContents === "string" &&
+				(message.contents as IPackedContentsContents).packedContents.length > 0 &&
+				IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64").toString("base64") ===
+					(message.contents as IPackedContentsContents).packedContents
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",

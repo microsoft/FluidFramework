@@ -34,7 +34,7 @@ type IRuntimeMessageMetadata =
  */
 export class ScheduleManager {
 	private readonly deltaScheduler: DeltaScheduler;
-	private batchClientId: string | undefined;
+	private batchClientId: string | null | undefined;
 	private hitError = false;
 
 	constructor(
@@ -98,7 +98,7 @@ export class ScheduleManager {
  */
 class ScheduleManagerCore {
 	private pauseSequenceNumber: number | undefined;
-	private currentBatchClientId: string | undefined;
+	private currentBatchClientId: string | null | undefined;
 	private localPaused = false;
 	private timePaused = 0;
 	private batchCount = 0;
@@ -265,7 +265,7 @@ class ScheduleManagerCore {
 					message,
 					{
 						runtimeVersion: pkgVersion,
-						batchClientId: this.currentBatchClientId,
+						batchClientId: this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
 						messageType: message.type,
@@ -299,7 +299,7 @@ class ScheduleManagerCore {
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
-				batchClientId: this.currentBatchClientId,
+				batchClientId: this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),
 				localMessage: message.clientId === this.getClientId(),

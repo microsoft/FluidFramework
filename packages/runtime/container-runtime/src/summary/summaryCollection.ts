@@ -46,7 +46,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
  * The life cycle is: Local to Broadcast to Acked/Nacked.
  */
 export interface ISummary {
-	readonly clientId: string;
+	readonly clientId: string | null;
 	readonly clientSequenceNumber: number;
 	waitBroadcast(): Promise<ISummaryOpMessage>;
 	waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage>;
@@ -93,7 +93,7 @@ class Summary implements ISummary {
 	}
 
 	private constructor(
-		public readonly clientId: string,
+		public readonly clientId: string | null,
 		public readonly clientSequenceNumber: number,
 	) {}
 
@@ -223,7 +223,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId
-	private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
+	private readonly summaryWatchers = new Map<string | null, ClientSummaryWatcher>();
 	// key: summarySeqNum
 	private readonly pendingSummaries = new Map<number, Summary>();
 	private refreshWaitNextAck = new Deferred<void>();
