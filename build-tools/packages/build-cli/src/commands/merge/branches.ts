@@ -18,13 +18,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	static description = "Sync branches depending on the batch size passed";
 
 	static flags = {
-		auth: Flags.string({
-			description:
-				"GitHub authentication token. For security reasons, this value should be passed using the GITHUB_TOKEN environment variable.",
-			char: "a",
-			required: true,
-			env: "GITHUB_TOKEN",
-		}),
 		pat: Flags.string({
 			description: "GitHub Personal Access Token",
 			char: "p",
@@ -55,6 +48,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 			multiple: true,
 		}),
+		creds: Flags.string({
+			description: "Username and email id for GitHub auth",
+			required: true,
+			multiple: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -74,26 +72,32 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
+		this.verbose(flags.source);
+		this.verbose(flags.target);
+
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
 
 		if (this.gitRepo === undefined) {
-			this.log(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
+			this.verbose(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
-
-		this.log(`owner: ${owner} and repo: ${repo}`);
+		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
+		this.verbose(`initial branch: ${this.initialBranch}`);
+
 		this.remote = flags.remote;
 
+		this.verbose(`remote branch: ${this.remote}`);
+
 		const prExists: boolean = await pullRequestExists(
-			flags.auth,
+			flags.pat,
 			prTitle,
 			owner,
 			repo,
@@ -102,25 +106,30 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
-			this.exit(-1);
+			this.exit();
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
 
-		const lastMergedCommit = await this.gitRepo.getMergeBase(flags.source, flags.target);
-		this.log(
+		this.verbose(`pr exists: ${prExists}`);
+
+		const lastMergedCommit = await this.gitRepo.getMergeBase(
+			`${flags.source}`,
+			`refs/remotes/${this.remote}/${flags.target}`,
+		);
+		this.verbose(
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
 
 		const unmergedCommitList: string[] = await this.gitRepo.revList(
 			lastMergedCommit,
-			`refs/remotes/${this.remote}/${flags.source}`,
+			`${flags.source}`,
 		);
 
-		this.log(`Unmerged commit list: ${unmergedCommitList}`);
+		this.verbose(`Unmerged commit list: ${unmergedCommitList}`);
 
 		if (unmergedCommitList.length === 0) {
-			this.log(
+			this.verbose(
 				chalk.green(
 					`${flags.source} and ${flags.target} branches are in sync. No commits to merge`,
 				),
@@ -128,7 +137,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.exit(0);
 		}
 
-		this.log(
+		this.verbose(
 			`There are ${unmergedCommitList.length} unmerged commits between the ${flags.source} and ${flags.target} branches`,
 		);
 
@@ -138,11 +147,15 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.branchesToCleanup.push(tempBranchToCheckConflicts);
 
 		await this.gitRepo.gitClient
-			.checkoutBranch(tempBranchToCheckConflicts, flags.target)
-			.branch(["--set-upstream-to", `${this.remote}/${tempBranchToCheckConflicts}`]);
+			.checkoutBranch(
+				tempBranchToCheckConflicts,
+				`refs/remotes/${this.remote}/${flags.target}`,
+			)
+			.branch(["--set-upstream-to", `${tempBranchToCheckConflicts}`]);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
 			unmergedCommitList.slice(0, commitSize),
+			flags.creds,
 			this.gitRepo,
 			this.logger,
 		);
@@ -187,6 +200,14 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				prHeadCommit,
 			)}`,
 		);
+
+		await this.gitRepo.gitClient.raw([
+			"config",
+			"--global",
+			`url.https://${flags.pat}@github.com/.insteadOf`,
+			"https://github.com/",
+		]);
+
 		await this.gitRepo.gitClient
 			.checkoutBranch(branchName, prHeadCommit)
 			.push(this.remote, branchName)
@@ -219,7 +240,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
-				.merge([flags.target, "-m", prTitle])
+				.merge([`${this.remote}/${flags.target}`, "-m", prTitle])
 				.push(this.remote, branchName);
 
 			/**
@@ -265,10 +286,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			reviewers: flags.reviewers,
 		};
 
-		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
+		this.verbose(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
 
 		const prNumber = await createPullRequest(prObject, this.logger);
-		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
+		this.verbose(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
 	}
 
 	/**
@@ -324,12 +345,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
  */
 async function hasConflicts(
 	commitIds: string[],
+	creds: string[],
 	gitRepo: Repository,
 	log?: Logger,
 ): Promise<[boolean, number]> {
 	for (const [i, commit] of commitIds.entries()) {
 		// eslint-disable-next-line no-await-in-loop
-		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
+		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit, creds);
 		log?.verbose(`Can merge without conflicts ${commit}: ${mergesClean}`);
 		if (mergesClean === false) {
 			return [true, i];

@@ -193,14 +193,17 @@ export class Repository {
 			.filter((value) => value !== null && value !== undefined && value !== "");
 	}
 
-	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
+	public async canMergeWithoutConflicts(commit: string, creds: string[]): Promise<boolean> {
 		let mergeResult;
+		await this.git.addConfig("user.email", creds[0]);
+		await this.git.addConfig("user.name", creds[1]);
 		try {
 			console.log(`Checking merge conflicts for: ${commit}`);
 			mergeResult = await this.git.merge([commit, "--no-commit", "--no-ff"]);
 			console.log(`Git merge result: ${mergeResult}`);
 			await this.git.merge(["--abort"]);
-		} catch {
+		} catch (error: any) {
+			console.log(`in catch: ${error}`);
 			await this.git.merge(["--abort"]);
 			return false;
 		}

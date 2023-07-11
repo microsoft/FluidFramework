@@ -5,8 +5,11 @@ on:
     - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
 
 env:
-  TARGET_BRANCH: test-next
+  TARGET_BRANCH: next
   SOURCE_BRANCH: main
+  USERNAME: msfluid-bot
+  EMAIL: banana-bot@outlook.com
+  BATCH: 10
 
 jobs:
   sync-branches:
@@ -35,4 +38,4 @@ jobs:
           echo "$(pwd)" >> $GITHUB_PATH
       
       - name: Run merge command
-        run: flub merge branches -a ${{ secrets.GITHUB_TOKEN }} -p ${{ secrets.TEST_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 10 --reviewers sonalideshpandemsft -v
+        run: flub merge branches -p ${{ secrets.TEST_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --creds $EMAIL --creds $USERNAME --reviewers sonalideshpandemsft -v
