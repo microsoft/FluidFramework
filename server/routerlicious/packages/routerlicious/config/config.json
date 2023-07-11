@@ -54,7 +54,7 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"checkpointsTTLInSeconds": 86400,
+		"checkpointsTTLInSeconds": 864000,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
