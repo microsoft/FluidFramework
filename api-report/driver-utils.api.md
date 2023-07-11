@@ -14,6 +14,7 @@ import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
@@ -28,7 +29,7 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
@@ -38,6 +39,9 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+
+// @public
+export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;
 
 // @public
 export class AttachmentTreeEntry {
@@ -66,6 +70,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     // (undocumented)
     readonly tenantId: string | undefined;
 }
+
+// @public (undocumented)
+export const blobHeadersBlobName = ".metadata.blobHeaders";
 
 // @public
 export class BlobTreeEntry {
@@ -187,6 +194,16 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public (undocumented)
+export interface ICompressionStorageConfig {
+    // Warning: (ae-forgotten-export) The symbol "SummaryCompressionAlgorithm" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    algorithm: SummaryCompressionAlgorithm;
+    // (undocumented)
+    minSizeToCompress: number;
+}
 
 // @public
 export class InsecureUrlResolver implements IUrlResolver {

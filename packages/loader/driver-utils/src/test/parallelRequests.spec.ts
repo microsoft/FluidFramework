@@ -47,7 +47,7 @@ describe("Parallel Requests", () => {
 						length = Math.min(length, payloadSize / 2 + 1);
 						break;
 					case HowMany.TooMany:
-						length += 2;
+						length = 2 * length + 2;
 						break;
 					case HowMany.Exact:
 						break;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
-import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
+import { IProtocolHandler } from "./protocol";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -45,6 +45,8 @@ export interface IConnectionStateHandlerInputs {
 		category: TelemetryEventCategory,
 		details?: ITelemetryProperties,
 	) => void;
+	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
+	clientShouldHaveLeft: (clientId: string) => void;
 }
 
 /**
@@ -190,6 +192,9 @@ class ConnectionStateHandlerPassThrough
 		details?: ITelemetryProperties,
 	) {
 		return this.inputs.logConnectionIssue(eventName, category, details);
+	}
+	public clientShouldHaveLeft(clientId: string) {
+		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 }
 
@@ -598,18 +603,18 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// This is the only place in code that deals with quorum. The rest works with audience
 		// The code below ensures that we do not send ops until we know that old "write" client's disconnect
 		// produced (and sequenced) leave op
-		let client: ILocalSequencedClient | undefined;
-		if (this._clientId !== undefined) {
-			client = this.protocol?.quorum?.getMember(this._clientId);
-		}
+		const currentClientInQuorum =
+			this._clientId !== undefined &&
+			this.protocol?.quorum?.getMember(this._clientId) !== undefined;
 		if (value === ConnectionState.Connected) {
 			assert(
 				oldState === ConnectionState.CatchingUp,
 				0x1d8 /* "Should only transition from Connecting state" */,
 			);
 			// Mark our old client should have left in the quorum if it's still there
-			if (client !== undefined) {
-				client.shouldHaveLeft = true;
+			if (currentClientInQuorum) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.handler.clientShouldHaveLeft(this._clientId!);
 			}
 			this._clientId = this.pendingClientId;
 		} else if (value === ConnectionState.Disconnected) {
@@ -625,7 +630,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// we could receive "Disconnected" event multiple times without getting connected and in that case we
 			// don't want to reset the timer as we still want to wait on original client which started this timer.
 			if (
-				client !== undefined &&
+				currentClientInQuorum &&
 				this.handler.shouldClientJoinWrite() &&
 				!this.waitingForLeaveOp // same as !this.prevClientLeftTimer.hasTimer
 			) {
@@ -636,7 +641,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					eventName: "noWaitOnDisconnected",
 					details: JSON.stringify({
 						clientId: this._clientId,
-						inQuorum: client !== undefined,
+						inQuorum: currentClientInQuorum,
 						waitingForLeaveOp: this.waitingForLeaveOp,
 						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
 					}),

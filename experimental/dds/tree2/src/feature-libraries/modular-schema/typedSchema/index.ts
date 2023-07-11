@@ -17,6 +17,7 @@ export {
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
+	LazyTreeSchema,
 } from "./typedTreeSchema";
 
 // Below here are things that are used by the above, but not part of the desired API surface.

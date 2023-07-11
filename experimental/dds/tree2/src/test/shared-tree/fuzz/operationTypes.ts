@@ -11,7 +11,7 @@ export type TreeOperation = TreeEdit | TransactionBoundary;
 
 export interface TreeEdit {
 	type: "edit";
-	contents: FieldEdit | NodeEdit;
+	contents: FieldEdit;
 }
 
 export interface TransactionBoundary {
@@ -55,34 +55,6 @@ export interface FuzzDelete extends NodeRangePath {
 	type: "delete";
 }
 
-export type FuzzNodeEditChange = SequenceNodeEdit | ValueNodeEdit | OptionalNodeEdit;
-
-export interface NodeEdit {
-	type: "nodeEdit";
-	edit: FuzzNodeEditChange;
-}
-
-export interface FuzzSetPayload {
-	nodeEditType: "setPayload";
-	path: UpPath;
-	value: number;
-}
-
-export interface SequenceNodeEdit {
-	type: "sequence";
-	edit: FuzzSetPayload;
-}
-
-export interface ValueNodeEdit {
-	type: "value";
-	edit: FuzzSetPayload;
-}
-
-export interface OptionalNodeEdit {
-	type: "optional";
-	edit: FuzzSetPayload;
-}
-
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;
 
 export interface TransactionStartOp {
@@ -105,7 +77,6 @@ export interface NodeRangePath {
 export interface EditGeneratorOpWeights {
 	insert: number;
 	delete: number;
-	setPayload: number;
 	start: number;
 	commit: number;
 	abort: number;
