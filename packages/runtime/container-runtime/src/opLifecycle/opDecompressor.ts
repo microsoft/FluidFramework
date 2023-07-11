@@ -9,6 +9,7 @@ import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-ut
 import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { IMessageProcessingResult } from "./definitions";
+import { IBatchMetadata } from "../metadata";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
@@ -34,7 +35,7 @@ export class OpDecompressor {
 			0x511 /* Only lz4 compression is supported */,
 		);
 
-		if (message.metadata?.batch === true && this.isCompressed(message)) {
+		if ((message.metadata as IBatchMetadata | undefined)?.batch === true && this.isCompressed(message)) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
 			if (message.compression) {
@@ -61,7 +62,7 @@ export class OpDecompressor {
 
 		if (
 			this.rootMessageContents !== undefined &&
-			message.metadata?.batch === undefined &&
+			(message.metadata as IBatchMetadata | undefined)?.batch === undefined &&
 			this.activeBatch
 		) {
 			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
@@ -73,7 +74,7 @@ export class OpDecompressor {
 			};
 		}
 
-		if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
+		if (this.rootMessageContents !== undefined && (message.metadata as IBatchMetadata | undefined)?.batch === false) {
 			// End of compressed batch
 			const returnMessage = newMessage(
 				message,
@@ -90,7 +91,7 @@ export class OpDecompressor {
 			};
 		}
 
-		if (message.metadata?.batch === undefined && this.isCompressed(message)) {
+		if ((message.metadata as IBatchMetadata | undefined)?.batch === undefined && this.isCompressed(message)) {
 			// Single compressed message
 			assert(
 				this.activeBatch === false,
@@ -144,7 +145,7 @@ export class OpDecompressor {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
 					type: message.type,
-					batch: message.metadata?.batch,
+					batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 				});
 				return true;
 			}
@@ -164,5 +165,6 @@ const newMessage = (
 	...originalMessage,
 	contents,
 	compression: undefined,
-	metadata: { ...originalMessage.metadata },
+	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
+	metadata: { ...(originalMessage.metadata as any) },
 });
