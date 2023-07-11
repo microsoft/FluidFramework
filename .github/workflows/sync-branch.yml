@@ -35,4 +35,4 @@ jobs:
           echo "$(pwd)" >> $GITHUB_PATH
       
       - name: Run merge command
-        run: flub merge branches -a ${{ secrets.GITHUB_TOKEN }} -p ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 10 --reviewers sonalideshpandemsft
+        run: flub merge branches -a ${{ secrets.GITHUB_TOKEN }} -p ${{ secrets.TEST_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 10 --reviewers sonalideshpandemsft -v
