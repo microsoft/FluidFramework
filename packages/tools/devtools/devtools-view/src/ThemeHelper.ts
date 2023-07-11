@@ -9,11 +9,19 @@ import {
 	teamsHighContrastTheme,
 	Theme,
 } from "@fluentui/react-components";
-import { ThemeOption } from "./components";
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
 teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
+
+/**
+ * An enum with options for the DevTools themes.
+ */
+export const enum ThemeOption {
+	Light = "Light",
+	Dark = "Dark",
+	HighContrast = "High Contrast",
+}
 
 /**
  * Light theme used by the devtools UI.

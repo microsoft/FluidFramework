@@ -36,9 +36,8 @@ import {
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
-import { ThemeContext } from "../ThemeHelper";
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
-import { ThemeOption } from "./SettingsView";
 
 /**
  * Set the default displayed size to 100.
@@ -304,7 +303,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
 
 	const [selectedEvent, setSelectedEvent] = React.useState<Item>();
-	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo } = React.useContext(ThemeContext);
 	const eventNameOptionsRef = useRef<string[]>([]);
 	React.useEffect(() => {
 		eventNameOptionsRef.current = eventNameOptions;

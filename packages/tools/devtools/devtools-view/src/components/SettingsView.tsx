@@ -13,16 +13,7 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeContext } from "../ThemeHelper";
-
-/**
- * An enum with options for the DevTools themes.
- */
-export const enum ThemeOption {
-	Light = "Light",
-	Dark = "Dark",
-	HighContrast = "High Contrast",
-}
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 
 const useStyles = makeStyles({
 	root: {
@@ -65,7 +56,7 @@ const useStyles = makeStyles({
  * Settings page for the devtools.
  */
 export function SettingsView(): React.ReactElement {
-	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo, setTheme } = React.useContext(ThemeContext);
 
 	const styles = useStyles();
 

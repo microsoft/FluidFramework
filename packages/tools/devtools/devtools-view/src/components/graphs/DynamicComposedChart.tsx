@@ -147,7 +147,7 @@ const createGraphColorPalette = (
  */
 export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
-	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo } = React.useContext(ThemeContext);
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
