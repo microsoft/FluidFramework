@@ -88,7 +88,6 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			testReportPrefix !== undefined
 				? `${packageJson.name} - ${testReportPrefix}`
 				: packageJson.name;
-		console.log("suite name", suiteName);
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				__dirname,
