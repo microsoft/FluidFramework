@@ -9,15 +9,15 @@ import { brand } from "../util";
 import { ChangeAtomId } from "./modular-schema";
 
 export class TreeIndex {
-    private readonly detachedFields = new Map<ChangeAtomId, FieldKey>();
+	private readonly detachedFields = new Map<ChangeAtomId, FieldKey>();
 
-    public constructor(private readonly name: string) {}
+	public constructor(private readonly name: string) {}
 
-    public getFieldKey(changeAtomId: ChangeAtomId, id: string): FieldKey {
-        assert(!this.detachedFields.has(changeAtomId), "Detached field already exists");
+	public getFieldKey(changeAtomId: ChangeAtomId, id: string): FieldKey {
+		assert(!this.detachedFields.has(changeAtomId), "Detached field already exists");
 
-        const fieldKey: FieldKey = brand(`${this.name  }-${  id}`);
-        this.detachedFields.set(changeAtomId, fieldKey);
-        return fieldKey;
-    }
+		const fieldKey: FieldKey = brand(`${this.name}-${id}`);
+		this.detachedFields.set(changeAtomId, fieldKey);
+		return fieldKey;
+	}
 }
