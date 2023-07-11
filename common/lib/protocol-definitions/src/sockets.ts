@@ -66,7 +66,8 @@ export interface IConnect {
 	 * Features supported might be service specific.
 	 * If we have standardized features across all services, they need to be exposed in more structured way.
 	 */
-	supportedFeatures?: Record<string, unknown>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	supportedFeatures?: Record<string, any>;
 
 	/**
 	 * Properties that client can send to server to tell info about client environment. These are a bunch of properties
@@ -159,7 +160,8 @@ export interface IConnected {
 	 * Features supported might be service specific.
 	 * If we have standardized features across all services, they need to be exposed in more structured way.
 	 */
-	supportedFeatures?: Record<string, unknown>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	supportedFeatures?: Record<string, any>;
 
 	/**
 	 * The time the client connected

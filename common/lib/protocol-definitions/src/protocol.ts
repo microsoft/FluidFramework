@@ -144,17 +144,20 @@ export interface IDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	contents: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	contents: any;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	metadata?: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	metadata?: any;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	serverMetadata?: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	serverMetadata?: any;
 
 	/**
 	 * Traces related to the packet.
@@ -234,17 +237,20 @@ export interface ISequencedDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	contents: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	contents: any;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	metadata?: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	metadata?: any;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	serverMetadata?: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	serverMetadata?: any;
 
 	/**
 	 * Origin branch information for the message.
@@ -295,7 +301,8 @@ export interface ISignalMessage {
 	// eslint-disable-next-line @rushstack/no-new-null
 	clientId: string | null;
 
-	content: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	content: any;
 
 	/**
 	 * Counts the number of signals sent by the client

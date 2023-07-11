@@ -108,7 +108,7 @@ export interface IConnect {
     mode: ConnectionMode;
     nonce?: string;
     relayUserAgent?: string;
-    supportedFeatures?: Record<string, unknown>;
+    supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -129,7 +129,7 @@ export interface IConnected {
     nonce?: string;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
-    supportedFeatures?: Record<string, unknown>;
+    supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
     timestamp?: number;
     version: string;
@@ -151,10 +151,10 @@ export interface IDocumentAttributes {
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
-    contents: unknown;
-    metadata?: unknown;
+    contents: any;
+    metadata?: any;
     referenceSequenceNumber: number;
-    serverMetadata?: unknown;
+    serverMetadata?: any;
     traces?: ITrace[];
     type: string;
 }
@@ -264,17 +264,17 @@ export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
     compression?: string;
-    contents: unknown;
+    contents: any;
     // (undocumented)
     data?: string;
     // @alpha
     expHash1?: string;
-    metadata?: unknown;
+    metadata?: any;
     minimumSequenceNumber: number;
     origin?: IBranchOrigin;
     referenceSequenceNumber: number;
     sequenceNumber: number;
-    serverMetadata?: unknown;
+    serverMetadata?: any;
     timestamp: number;
     traces?: ITrace[];
     type: string;
@@ -309,7 +309,7 @@ export interface ISignalMessage {
     clientConnectionNumber?: number;
     clientId: string | null;
     // (undocumented)
-    content: unknown;
+    content: any;
     referenceSequenceNumber?: number;
 }
 
