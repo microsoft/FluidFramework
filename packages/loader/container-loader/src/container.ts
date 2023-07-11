@@ -984,6 +984,11 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
+
+			// There is no user for summarizer, so we need to ensure dispose is called
+			if (this.client.details.type === summarizerClientType) {
+				this.dispose(error);
+			}
 		}
 	}
 
@@ -1995,7 +2000,11 @@ export class Container
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
-				if (this.deltaManager.hasCheckpointSequenceNumber) {
+				// Need to check that we have already loaded and fetched the snapshot.
+				if (
+					this.deltaManager.hasCheckpointSequenceNumber &&
+					this._lifecycleState === "loaded"
+				) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
@@ -2387,7 +2396,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @internal
+ * @experimental
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2398,5 +2407,13 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): string;
+	getPendingLocalState?(): string;
+
+	/**
+	 * Closes the container and returns serialized local state intended to be
+	 * given to a newly loaded container.
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	closeAndGetPendingLocalState(): string;
 }

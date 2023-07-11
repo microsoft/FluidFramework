@@ -66,6 +66,7 @@
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
@@ -76,7 +77,6 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.5.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",

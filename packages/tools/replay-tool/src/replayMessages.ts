@@ -6,7 +6,8 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,

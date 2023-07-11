@@ -24,6 +24,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeReviver,
+	ChangesetLocalId,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
@@ -214,8 +215,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				);
 			},
 			delete: (index: number, count: number): void => {
+				if (count === 0) {
+					return;
+				}
+				const id = this.modularBuilder.generateId(count);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.delete(index, count),
+					sequence.changeHandler.editor.delete(index, count, id),
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
@@ -248,8 +253,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				index: number,
 				count: number,
 				detachedBy: RevisionTag,
+				detachId: ChangesetLocalId,
 				reviver: NodeReviver,
-				detachIndex: number,
 				isIntention?: true,
 			): void => {
 				const change: FieldChangeset = brand(
@@ -257,8 +262,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						index,
 						count,
 						detachedBy,
+						detachId,
 						reviver,
-						detachIndex,
 						isIntention,
 					),
 				);
@@ -331,8 +336,8 @@ export interface SequenceFieldEditBuilder {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		detachId: ChangesetLocalId,
 		reviver: NodeReviver,
-		detachIndex: number,
 		isIntention?: true,
 	): void;
 }

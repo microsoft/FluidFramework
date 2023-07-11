@@ -28,16 +28,22 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start": "webpack serve",
+		"start:client:test": "webpack serve --config webpack.test.js",
 		"test": "npm run test:jest",
-		"test:jest": "jest --passWithNoTests",
+		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"fluid-framework": "workspace:~"
 	},

@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -44,7 +45,7 @@ type MapCallback = (
 	map: SharedMap,
 ) => void | Promise<void>;
 
-const getPendingStateWithoutClose = (container: IContainer): string => {
+const getPendingStateWithoutClose = (container: IContainerExperimental): string => {
 	const containerClose = container.close;
 	container.close = (message) => assert(message === undefined);
 	const pendingState = container.closeAndGetPendingLocalState();

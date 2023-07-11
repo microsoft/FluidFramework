@@ -9,7 +9,7 @@ import {
 	LoggingError,
 	ChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 
 import {
 	assert,

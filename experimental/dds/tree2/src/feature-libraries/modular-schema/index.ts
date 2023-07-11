@@ -71,4 +71,5 @@ export {
 	TypedSchemaCollection,
 	SchemaLibrary,
 	SchemaLibraryData,
+	LazyTreeSchema,
 } from "./typedSchema";
