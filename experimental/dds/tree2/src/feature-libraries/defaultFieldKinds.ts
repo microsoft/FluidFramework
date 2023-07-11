@@ -39,11 +39,7 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
-import {
-	counterCodecFamily,
-	makeOptionalFieldCodecFamily,
-	noChangeCodecFamily,
-} from "./defaultFieldChangeCodecs";
+import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
 /**
@@ -78,72 +74,6 @@ function brandedFieldKind<
 }
 
 /**
- * @returns a ChangeRebaser that assumes all the changes commute, meaning that order does not matter.
- */
-function commutativeRebaser<TChange>(data: {
-	compose: (changes: TChange[]) => TChange;
-	invert: (changes: TChange) => TChange;
-}): FieldChangeRebaser<TChange> {
-	const rebase = (change: TChange, _over: TChange) => change;
-	return referenceFreeFieldChangeRebaser({ ...data, rebase });
-}
-
-/**
- * Picks the last value written.
- *
- * TODO: it seems impossible for this to obey the desired axioms.
- * Specifically inverse needs to cancel, restoring the value from the previous change which was discarded.
- */
-export function lastWriteWinsRebaser<TChange>(data: {
-	noop: TChange;
-	invert: (changes: TChange) => TChange;
-}): FieldChangeRebaser<TChange> {
-	const compose = (changes: TChange[]) =>
-		changes.length >= 0 ? changes[changes.length - 1] : data.noop;
-	const rebase = (change: TChange, _over: TChange) => change;
-	return referenceFreeFieldChangeRebaser({ ...data, compose, rebase });
-}
-
-export interface Replacement<T> {
-	old: T;
-	new: T;
-}
-
-export type ReplaceOp<T> = Replacement<T> | 0;
-
-/**
- * Picks the last value written.
- *
- * Consistent if used on valid paths with correct old states.
- */
-export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
-	return referenceFreeFieldChangeRebaser({
-		rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>) => {
-			if (change === 0) {
-				return 0;
-			}
-			if (over === 0) {
-				return change;
-			}
-			return { old: over.new, new: change.new };
-		},
-		compose: (changes: ReplaceOp<T>[]) => {
-			const f = changes.filter((c): c is Replacement<T> => c !== 0);
-			if (f.length === 0) {
-				return 0;
-			}
-			for (let index = 1; index < f.length; index++) {
-				assert(f[index - 1].new === f[index].old, 0x3a4 /* adjacent replaces must match */);
-			}
-			return { old: f[0].old, new: f[f.length - 1].new };
-		},
-		invert: (changes: ReplaceOp<T>) => {
-			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
-		},
-	});
-}
-
-/**
  * ChangeHandler that only handles no-op / identity changes.
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
@@ -157,61 +87,6 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 	isEmpty: (change: 0) => true,
 };
-
-/**
- * ChangeHandler that does not support any changes.
- *
- * TODO: Due to floating point precision compose is not quite associative.
- * This may violate our requirements.
- * This could be fixed by making this integer only
- * and handling values past Number.MAX_SAFE_INTEGER (ex: via an arbitrarily large integer library)
- * or via modular arithmetic.
- */
-export const counterHandle: FieldChangeHandler<number> = {
-	rebaser: commutativeRebaser({
-		compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-		invert: (change: number) => -change,
-	}),
-	codecsFactory: () => counterCodecFamily,
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			setValue: change,
-		},
-	],
-	isEmpty: (change: number) => change === 0,
-};
-
-/**
- * Field kind for counters.
- * Stores a single value which corresponds to number which can be added to.
- *
- * This is an example of a few interesting things:
- *
- * - A field kind with some constraints on what can be under it type wise.
- * Other possible examples which would do this include sets, maps (for their keys),
- * or any domain specific specialized kinds.
- *
- * - A field kind with commutative edits.
- *
- * TODO:
- * What should the subtrees under this look like?
- * How does it prevent / interact with direct edits to the subtree (ex: set value)?
- * How should it use its type set?
- * How should it handle lack of associative addition due to precision and overflow?
- */
-export const counter: BrandedFieldKind<
-	"Counter",
-	Multiplicity.Value,
-	FieldEditor<number>
-> = brandedFieldKind(
-	"Counter",
-	Multiplicity.Value,
-	counterHandle,
-	(types, other) => other.kind.identifier === counter.identifier,
-	new Set(),
-);
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
@@ -522,7 +397,6 @@ function deltaForDelete(
 	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange);
-		deleteDelta.setValue = modify.setValue;
 		deleteDelta.fields = modify.fields;
 	}
 	return [deleteDelta];
@@ -685,7 +559,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, nodeKey, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.

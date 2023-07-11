@@ -46,7 +46,7 @@ export function generateRandomChange(
 				brand(0),
 			);
 		case Operation.Delete:
-			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10));
+			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
 		default:
 			unreachableCase(operation);
 	}
