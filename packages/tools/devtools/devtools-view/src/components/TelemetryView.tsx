@@ -38,6 +38,7 @@ import {
 import { useMessageRelay } from "../MessageRelayContext";
 import { ThemeContext } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
+import { ThemeOption } from "./SettingsView";
 
 /**
  * Set the default displayed size to 100.
@@ -396,7 +397,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 * @returns string representing the appropriate color
 	 */
 	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
-		if (themeInfo?.name !== "highContrast") {
+		if (themeInfo?.name !== ThemeOption.HighContrast) {
 			switch (eventCategory) {
 				case "generic":
 					return tokens.colorPaletteGreenForeground1;
