@@ -7308,7 +7308,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-base-previous': npm:@fluidframework/driver-base@2.0.0-internal.5.2.0
@@ -7335,7 +7334,6 @@ importers:
       socket.io-client: ^4.6.1
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -7371,7 +7369,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-web-cache-previous': npm:@fluidframework/driver-web-cache@2.0.0-internal.5.2.0
@@ -7391,7 +7388,6 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
@@ -7420,7 +7416,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -7438,7 +7433,6 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -7516,7 +7510,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-base': workspace:~
@@ -7555,7 +7548,6 @@ importers:
       url: ^0.11.0
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-base': link:../driver-base
@@ -8761,7 +8753,6 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
@@ -8793,7 +8784,6 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
@@ -9130,7 +9120,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -9163,7 +9152,6 @@ importers:
       url: ^0.11.0
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -9205,7 +9193,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -9229,7 +9216,6 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -9598,7 +9584,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
@@ -9629,7 +9614,6 @@ importers:
       ts-node: ^8.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
@@ -10167,7 +10151,6 @@ importers:
       '@fluid-tools/build-cli': ^0.20.0
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -10185,7 +10168,6 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.2.0
@@ -10559,7 +10541,6 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.20.0
-      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
@@ -10609,7 +10590,6 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
-      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
@@ -41063,7 +41043,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.87.0
+      webpack: 5.87.0_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:
