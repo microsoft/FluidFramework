@@ -331,6 +331,13 @@ describe("EditManager", () => {
 				checkChangeList(manager, [3, 4]);
 			});
 
+			it("disregards branches which are already forked off of the origin commit", () => {
+				// This is a regression test for an assert in trunk eviction which would throw even during the following valid scenario:
+				// There are no sequenced commits that require eviction, but there are one or more outstanding branches which are already based off of the origin commit.
+				// See "TODO:#4918:" in editManager.ts
+				editManagerFactory({}).manager.localBranch.fork().fork().dispose();
+			});
+
 			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 

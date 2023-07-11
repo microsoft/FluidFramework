@@ -1088,6 +1088,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
+    merge(view: SharedTreeView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
@@ -1854,11 +1855,13 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
-    merge(fork: SharedTreeView): void;
+    merge(view: SharedTreeView): void;
+    // (undocumented)
+    merge(view: SharedTreeView, disposeView: boolean): void;
     // (undocumented)
     readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
-    rebase(fork: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
     // (undocumented)
     redo(): void;

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from "@fluidframework/common-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -172,9 +173,19 @@ export interface ISharedTreeView extends AnchorLocator {
 
 	/**
 	 * Apply all the new changes on the given view to this view.
-	 * @param view - a view which was created by a call to `fork()`. It is not modified by this operation.
+	 * @param view - a view which was created by a call to `fork()`.
+	 * It is automatically disposed after the merge completes.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
 	merge(view: SharedTreeView): void;
+
+	/**
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - a view which was created by a call to `fork()`.
+	 * @param disposeView - whether or not to dispose `view` after the merge completes.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 */
+	merge(view: SharedTreeView, disposeView: boolean): void;
 
 	/**
 	 * Rebase the given view onto this view.
@@ -460,6 +471,10 @@ export class SharedTreeView implements ISharedTreeView {
 		);
 	}
 
+	public rebase(view: SharedTreeView): void {
+		view.branch.rebaseOnto(this.branch);
+	}
+
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
@@ -468,12 +483,20 @@ export class SharedTreeView implements ISharedTreeView {
 		view.rebase(this);
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.branch.merge(fork.branch);
-	}
-
-	public rebase(fork: SharedTreeView): void {
-		fork.branch.rebaseOnto(this.branch);
+	public merge(view: SharedTreeView): void;
+	public merge(view: SharedTreeView, disposeView: boolean): void;
+	public merge(view: SharedTreeView, disposeView = true): void {
+		assert(
+			!this.transaction.inProgress() || disposeView,
+			"A view that is merged into an in-progress transaction must be disposed",
+		);
+		while (view.transaction.inProgress()) {
+			view.transaction.commit();
+		}
+		this.branch.merge(view.branch);
+		if (disposeView) {
+			view.dispose();
+		}
 	}
 
 	public get root(): UnwrappedEditableField {
