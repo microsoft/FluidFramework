@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "fluid-build --task build:all ; echo \"IMPORTANT: The build script won't run checks automatically in the future. See https://github.com/microsoft/FluidFramework/wiki/Upcoming-repo-change:-build-task-will-no-longer-run-formatting-tasks for more information.\"",
+		"build": "fluid-build --task build:all ; echo \"IMPORTANT: The build script won't run checks automatically in the future. See <https://github.com/microsoft/FluidFramework/wiki/Upcoming-change:-The-build-task-will-no-longer-run-formatting-and-check-tasks> for more information.\"",
 		"build:all": "fluid-build --task build:all",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "fluid-build --task build:docs",
