@@ -259,7 +259,7 @@ export class MockContainerRuntimeFactory {
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
 
-		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		this.minSeq.set((msg.clientId as string), msg.referenceSequenceNumber);
 		msg.sequenceNumber = ++this.sequenceNumber;
 		msg.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {
