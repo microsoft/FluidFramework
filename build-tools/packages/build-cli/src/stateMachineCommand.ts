@@ -8,6 +8,7 @@ import { Machine } from "jssm";
 
 import { BaseCommand } from "./base";
 import { StateHandler } from "./handlers";
+import { testModeFlag } from "./flags";
 
 // type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 // 	typeof StateMachineCommand["baseFlags"] & T["flags"]
@@ -33,11 +34,7 @@ import { StateHandler } from "./handlers";
 export abstract class StateMachineCommand<T extends typeof Command> extends BaseCommand<T> {
 	static flags = {
 		// Test mode flags
-		testMode: Flags.boolean({
-			default: false,
-			description: "Enables test mode. This flag enables other flags used for testing.",
-			hidden: true,
-		}),
+		testMode: testModeFlag,
 		state: Flags.string({
 			description:
 				"A state to start in when the command initializes. Used to test the processing of specific states.",
