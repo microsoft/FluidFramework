@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
+import { IBatchMetadata } from "./metadata";
 
 type IRuntimeMessageMetadata =
 	| undefined
@@ -127,7 +128,8 @@ class ScheduleManagerCore {
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
 			const lastMessage = messages[messages.length - 1];
-			lastMessage.metadata = { ...lastMessage.metadata, batch: false };
+			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
+			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };
 		});
 
 		// Listen for updates and peek at the inbound
@@ -185,7 +187,7 @@ class ScheduleManagerCore {
 					{
 						type: message.type,
 						contentType: typeof message.contents,
-						batch: message.metadata?.batch,
+						batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 						compression: message.compression,
 						pauseSeqNum: this.pauseSequenceNumber,
 					},
