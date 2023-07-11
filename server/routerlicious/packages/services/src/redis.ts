@@ -51,7 +51,7 @@ export class RedisCache implements ICache {
 			expireAfterSeconds ?? this.expireAfterSeconds,
 		);
 		if (result !== "OK") {
-			throw result;
+			throw new Error(result);
 		}
 	}
 

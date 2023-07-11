@@ -282,6 +282,7 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerCluster) {
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
 				throw throttleErrorPerCluster;
 			}
 			const throttleErrorPerTenant = checkThrottleAndUsage(
@@ -291,6 +292,7 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerTenant) {
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
 				throw throttleErrorPerTenant;
 			}
 
