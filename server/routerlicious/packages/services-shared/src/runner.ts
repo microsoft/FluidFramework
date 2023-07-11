@@ -11,7 +11,11 @@ import {
 	IResourcesFactory,
 	IRunnerFactory,
 } from "@fluidframework/server-services-core";
-import { Lumberjack, LumberEventName } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	LumberEventName,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -110,6 +114,9 @@ export function runService<T extends IResources>(
 			process.exit(0);
 		},
 		async (error) => {
+			if (error.uncaughtException) {
+				runnerMetric.setProperty(CommonProperties.restartReason, "uncaughtException");
+			}
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
 				logger?.error(serializeError(error));

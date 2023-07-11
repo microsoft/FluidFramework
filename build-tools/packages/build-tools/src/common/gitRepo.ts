@@ -4,7 +4,7 @@
  */
 import { parseISO } from "date-fns";
 
-import { Logger } from "../common/logging";
+import { Logger } from "./logging";
 import { exec, execNoError } from "./utils";
 
 export class GitRepo {

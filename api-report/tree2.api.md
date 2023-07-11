@@ -1272,6 +1272,9 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @alpha
+export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha (undocumented)
@@ -1285,6 +1288,12 @@ export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Ke
 
 // @alpha
 export const localNodeKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
+
+// @alpha
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
 // @alpha
 interface MakeNominal {

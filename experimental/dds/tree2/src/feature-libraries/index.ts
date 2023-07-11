@@ -161,6 +161,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	LazyTreeSchema,
 	NodeExistenceState,
 } from "./modular-schema";
 

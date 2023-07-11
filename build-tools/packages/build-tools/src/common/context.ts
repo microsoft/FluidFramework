@@ -3,19 +3,25 @@
  * Licensed under the MIT License.
  */
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import * as semver from "semver";
 
 import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { Logger, defaultLogger } from "../common/logging";
-import { MonoRepo } from "../common/monoRepo";
+import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
-import { fatal, prereleaseSatisfies, MonoRepoKind, isMonoRepoKind } from "./utils";
+import { fatal } from "./utils";
 import { ReferenceVersionBag, VersionBag } from "./versionBag";
+
+function prereleaseSatisfies(packageVersion: string, range: string) {
+	// Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
+	return semver.satisfies(`${packageVersion}-zzz`, range);
+}
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
@@ -54,6 +60,8 @@ export class Context {
 	 *
 	 * @param reloadPackageJson - If true, the package.json for each package will be reloaded. Otherwise the cached
 	 * in-memory values will be used.
+	 *
+	 * @deprecated
 	 */
 	public collectVersions(reloadPackageJson = false): VersionBag {
 		if (reloadPackageJson) {
@@ -71,6 +79,9 @@ export class Context {
 		return versions;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public async collectVersionInfo(releaseGroup: string): Promise<ReferenceVersionBag> {
 		this.logger.info("  Resolving published dependencies");
 
@@ -173,6 +184,8 @@ export class Context {
 	/**
 	 * Given a release group to bump, this function determines whether any of its dependencies should be bumped to new
 	 * versions based on the latest published versions on npm.
+	 *
+	 * @deprecated
 	 */
 	public async collectBumpInfo(releaseGroup: string) {
 		const depVersions = await this.collectVersionInfo(releaseGroup);
@@ -180,6 +193,9 @@ export class Context {
 		return depVersions;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public async createBranch(branchName: string) {
 		if (await this.gitRepo.getShaForBranch(branchName)) {
 			fatal(`${branchName} already exists. Failed to create.`);
@@ -188,6 +204,9 @@ export class Context {
 		this.newBranches.push(branchName);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public async cleanUp() {
 		await this.gitRepo.switchBranch(this.originalBranchName);
 		for (const branch of this.newBranches) {
@@ -246,6 +265,8 @@ export class Context {
 	 * package. Otherwise, the value is assumed to be a release group, so the context is searched.
 	 *
 	 * @returns A version string.
+	 *
+	 * @deprecated
 	 */
 	public getVersion(key: string, versionBag?: VersionBag): string {
 		let ver = "";
@@ -324,6 +345,8 @@ export class Context {
 	 * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
 	 *
 	 * @internal
+	 *
+	 * @deprecated
 	 */
 	public async getAllVersions(
 		releaseGroupOrPackage: string,

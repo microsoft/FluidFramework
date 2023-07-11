@@ -61,6 +61,7 @@
 		"@fluid-internal/test-loader-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.20.0",
 		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
