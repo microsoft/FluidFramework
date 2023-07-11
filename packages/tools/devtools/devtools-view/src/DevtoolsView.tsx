@@ -39,6 +39,7 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
+import { useLogger } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
@@ -594,6 +595,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -604,6 +606,7 @@ function RefreshButton(): React.ReactElement {
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
+		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
 	}
 
 	return (
