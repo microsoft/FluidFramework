@@ -1384,7 +1384,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				// because scribe will not be involved
 				if (
 					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
-					!(JSON.parse(message.operation.contents) as ISummaryContent).details
+					!(JSON.parse(message.operation.contents as string) as ISummaryContent).details
 						?.includesProtocolTree
 				) {
 					addAdditionalContent = true;
