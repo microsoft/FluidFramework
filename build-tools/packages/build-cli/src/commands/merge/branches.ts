@@ -265,7 +265,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			reviewers: flags.reviewers,
 		};
 
-		this.log(`Initiate PR creation: ${prObject}}`);
+		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
 
 		const prNumber = await createPullRequest(prObject, this.logger);
 		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
