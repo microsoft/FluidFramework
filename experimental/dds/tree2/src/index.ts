@@ -131,7 +131,7 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeKeyFieldKey,
+	nodeKeyField,
 	nodeKeySchema,
 } from "./domains";
 
@@ -282,6 +282,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	nodeKeyFieldKey,
 } from "./feature-libraries";
 
 export {

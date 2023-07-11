@@ -41,11 +41,24 @@ const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");
+const barKey = brand<FieldKey>("bar");
 
 const root: UpPath = {
 	parent: undefined,
 	parentField: rootKey,
 	parentIndex: 0,
+};
+
+const root_foo0: UpPath = {
+	parent: root,
+	parentField: fooKey,
+	parentIndex: 0,
+};
+
+const root_foo1: UpPath = {
+	parent: root,
+	parentField: fooKey,
+	parentIndex: 1,
 };
 
 const root_foo2: UpPath = {
@@ -54,10 +67,28 @@ const root_foo2: UpPath = {
 	parentIndex: 2,
 };
 
+const root_foo0_foo0: UpPath = {
+	parent: root_foo0,
+	parentField: fooKey,
+	parentIndex: 0,
+};
+
 const root_foo2_foo5: UpPath = {
 	parent: root_foo2,
 	parentField: fooKey,
 	parentIndex: 5,
+};
+
+const root_bar0: UpPath = {
+	parent: root,
+	parentField: barKey,
+	parentIndex: 0,
+};
+
+const root_bar0_bar0: UpPath = {
+	parent: root_bar0,
+	parentField: barKey,
+	parentIndex: 0,
 };
 
 const nodeX = { type: jsonString.name, value: "X" };
@@ -385,5 +416,403 @@ describe("DefaultEditBuilder", () => {
 			};
 			expectForest(forest, expected);
 		});
+
+		it("Can move nodes to the right within a field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 1);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 3 },
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes to the left within a field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: fooKey }, 0);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+						{ type: jsonNumber.name, value: 0 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes across fields of the same parent", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+					bar: [{ type: jsonNumber.name, value: 0 }],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [{ type: jsonNumber.name, value: 0 }],
+					bar: [
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes to the right across subtrees of the same field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root_foo1, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes to the left across subtrees of the same field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo1, field: fooKey },
+				1,
+				3,
+				{ parent: root_foo0, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes across subtrees of different fields", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+					],
+					bar: [
+						{
+							type: jsonObject.name,
+							fields: {
+								bar: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root_bar0, field: barKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: jsonNumber.name, value: 0 }],
+							},
+						},
+					],
+					bar: [
+						{
+							type: jsonObject.name,
+							fields: {
+								bar: [
+									{ type: jsonNumber.name, value: 0 },
+									{ type: jsonNumber.name, value: 1 },
+									{ type: jsonNumber.name, value: 2 },
+									{ type: jsonNumber.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes across deep subtrees of different fields", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{
+										type: jsonObject.name,
+										fields: {
+											foo: [
+												{ type: jsonNumber.name, value: 0 },
+												{ type: jsonNumber.name, value: 1 },
+												{ type: jsonNumber.name, value: 2 },
+												{ type: jsonNumber.name, value: 3 },
+											],
+										},
+									},
+								],
+							},
+						},
+					],
+					bar: [
+						{
+							type: jsonObject.name,
+							fields: {
+								bar: [
+									{
+										type: jsonNumber.name,
+										fields: {
+											bar: [{ type: jsonNumber.name, value: 0 }],
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root_bar0_bar0, field: barKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{
+										type: jsonObject.name,
+										fields: {
+											foo: [{ type: jsonNumber.name, value: 0 }],
+										},
+									},
+								],
+							},
+						},
+					],
+					bar: [
+						{
+							type: jsonObject.name,
+							fields: {
+								bar: [
+									{
+										type: jsonNumber.name,
+										fields: {
+											bar: [
+												{ type: jsonNumber.name, value: 0 },
+												{ type: jsonNumber.name, value: 1 },
+												{ type: jsonNumber.name, value: 2 },
+												{ type: jsonNumber.name, value: 3 },
+											],
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move all nodes into another field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+					bar: [{ type: jsonNumber.name, value: 0 }],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					bar: [
+						{ type: jsonNumber.name, value: 0 },
+						{ type: jsonNumber.name, value: 1 },
+						{ type: jsonNumber.name, value: 2 },
+						{ type: jsonNumber.name, value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
 	});
 });
+
+function toJsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
+	readCursor.free();
+	return jsonable;
+}

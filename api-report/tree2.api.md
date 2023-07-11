@@ -483,6 +483,7 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     readonly [contextSymbol]: EditableTreeContext;
     [getField](fieldKey: FieldKey): EditableField;
+    readonly [localNodeKeySymbol]?: LocalNodeKey;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {
@@ -612,7 +613,7 @@ export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, existenceState?: NodeExistenceState): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -1295,7 +1296,7 @@ interface LocalFields {
 export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
 
 // @alpha
-export const localNodeKeySymbol: GlobalFieldKeySymbol;
+export const localNodeKeySymbol: unique symbol;
 
 // @alpha
 export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
@@ -1455,18 +1456,21 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-export const nodeKeyFieldKey: GlobalFieldKey;
+export const nodeKeyField: {
+    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
+    value: ValueSchema.String;
+    }>]>;
+};
+
+// @alpha
+export const nodeKeyFieldKey = "__n_id__";
 
 // @alpha (undocumented)
 export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {
 }
 
 // @alpha
-export function nodeKeySchema(): {
-    schema: SchemaLibrary;
-    field: GlobalFieldSchema<NodeKeyFieldKind>;
-    type: TreeSchemaIdentifier;
-};
+export const nodeKeySchema: SchemaLibrary;
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1804,7 +1808,7 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
-    revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
+    revive(index: number, count: number, detachedBy: RevisionTag, detachId: ChangesetLocalId, reviver: NodeReviver, isIntention?: true): void;
 }
 
 // @alpha

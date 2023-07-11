@@ -134,6 +134,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
+    // @deprecated (undocumented)
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;

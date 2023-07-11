@@ -37,10 +37,10 @@ import {
 	LocalNodeKey,
 	ForestRepairDataStore,
 	ModularChangeset,
+	nodeKeyFieldKey,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
-import { TransactionResult } from "../util";
-import { nodeKeyFieldKey } from "../domains";
+import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
@@ -269,7 +269,7 @@ export function createSharedTreeView(args?: {
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	nodeKeyManager?: NodeKeyManager;
-	nodeKeyIndex?: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
@@ -295,8 +295,13 @@ export function createSharedTreeView(args?: {
 			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
-	const context = getEditableTreeContext(forest, branch.editor, nodeKeyManager, nodeKeyFieldKey);
-	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(nodeKeyFieldKey);
+	const context = getEditableTreeContext(
+		forest,
+		branch.editor,
+		nodeKeyManager,
+		brand(nodeKeyFieldKey),
+	);
+	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(brand(nodeKeyFieldKey));
 	const events = args?.events ?? createEmitter();
 	return SharedTreeView[create](
 		branch,
@@ -322,7 +327,7 @@ export class SharedTreeView implements ISharedTreeView {
 		private readonly _forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		private readonly _nodeKeyManager: NodeKeyManager,
-		private readonly _nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		private readonly _nodeKeyIndex: NodeKeyIndex,
 		private readonly _events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
@@ -345,7 +350,7 @@ export class SharedTreeView implements ISharedTreeView {
 		forest: IEditableForest,
 		context: EditableTreeContext,
 		_nodeKeyManager: NodeKeyManager,
-		nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		nodeKeyIndex: NodeKeyIndex,
 		events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>,
 	): SharedTreeView {
 		return new SharedTreeView(
