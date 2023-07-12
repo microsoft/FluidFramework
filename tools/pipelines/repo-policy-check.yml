@@ -27,6 +27,7 @@ variables:
 steps:
 - template: templates/include-use-node-version.yml
   parameters:
+    buildDirectory: .
     version: '16.16.0'
 
 - template: templates/include-install-pnpm.yml

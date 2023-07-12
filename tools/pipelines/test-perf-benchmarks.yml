@@ -22,7 +22,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Large
+  default: andreiiacob-test-pool
 
 - name: memoryTestPackages
   type: object

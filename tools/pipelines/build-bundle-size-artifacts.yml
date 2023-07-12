@@ -48,7 +48,7 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: bundle-artifacts
-    poolBuild: Large
+    poolBuild: andreiiacob-test-pool
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default

@@ -159,7 +159,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Large
+      pool: andreiiacob-test-pool
       strategy:
         runOnce:
           deploy:
@@ -173,7 +173,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: Large
+      pool: andreiiacob-test-pool
       steps:
         - checkout: self
           submodules: false
@@ -188,6 +188,7 @@ stages:
 
         - template: templates/include-use-node-version.yml
           parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
             version: '16.16.0'
 
         - template: templates/include-install-pnpm.yml
@@ -227,7 +228,7 @@ stages:
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool: Large
+  pool: andreiiacob-test-pool
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -238,6 +239,7 @@ stages:
 
         - template: templates/include-use-node-version.yml
           parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
             version: '16.16.0'
 
         - task: UseDotNet@2

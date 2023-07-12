@@ -4,7 +4,7 @@
 parameters:
 - name: poolBuild
   type: object
-  default: Large
+  default: andreiiacob-test-pool
 
 - name: testWorkspace
   type: string
@@ -50,6 +50,7 @@ jobs:
     # Install
     - template: include-use-node-version.yml
       parameters:
+        buildDirectory: ${{ parameters.testWorkspace }}
         version: '16.16.0'
 
     - task: Bash@3
