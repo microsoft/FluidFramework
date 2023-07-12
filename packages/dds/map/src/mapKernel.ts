@@ -547,7 +547,8 @@ export class MapKernel {
 		// we will get the value for the pendingKeys and clear the map
 		const temp = new Map<string, ILocalValue>();
 		for (const key of this.pendingKeys.keys()) {
-			// Verify if the pending operation is a delete op, no need to retain it if so
+			// Verify if the most recent pending operation is a delete op, no need to retain it if so.
+			// This ensures the map size remains consistent.
 			if (this.data.has(key)) {
 				temp.set(key, this.data.get(key) as ILocalValue);
 			}
