@@ -324,7 +324,8 @@ class ScheduleManagerCore {
 				0x29f /* "we should be processing ops when there is no active batch" */,
 			);
 			this.pauseSequenceNumber = message.sequenceNumber;
-			this.currentBatchClientId = message.clientId;
+			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			this.currentBatchClientId = message.clientId as string;
 			// Start of the batch
 			// Only pause processing if queue has no other ops!
 			// If there are any other ops in the queue, processing will be stopped when they are processed!

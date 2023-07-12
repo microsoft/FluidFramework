@@ -379,7 +379,8 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		let summary: Summary | undefined;
 
 		// Check if summary already being watched, broadcast if so
-		const watcher = this.summaryWatchers.get(op.clientId);
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		const watcher = this.summaryWatchers.get(op.clientId as string);
 		if (watcher) {
 			summary = watcher.tryGetSummary(op.clientSequenceNumber);
 			if (summary) {
