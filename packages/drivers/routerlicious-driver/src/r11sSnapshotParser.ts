@@ -9,7 +9,7 @@ import { stringToBuffer } from "@fluidframework/common-utils";
 import { INormalizedWholeSummary } from "./contracts";
 
 /**
- * Build a tree heirarchy from a flat tree.
+ * Build a tree hierarchy from a flat tree.
  *
  * @param flatTree - a flat tree
  * @param treePrefixToRemove - tree prefix to strip

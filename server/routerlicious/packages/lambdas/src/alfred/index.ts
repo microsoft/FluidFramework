@@ -282,7 +282,8 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerCluster) {
-				return Promise.reject(throttleErrorPerCluster);
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
+				throw throttleErrorPerCluster;
 			}
 			const throttleErrorPerTenant = checkThrottleAndUsage(
 				connectThrottlerPerTenant,
@@ -291,7 +292,8 @@ export function configureWebSocketServices(
 				logger,
 			);
 			if (throttleErrorPerTenant) {
-				return Promise.reject(throttleErrorPerTenant);
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
+				throw throttleErrorPerTenant;
 			}
 
 			if (!message.token) {
