@@ -71,6 +71,6 @@ describe.skip("Pong", () => {
 
 			await timeoutPromise((resolve) => container.deltaManager.once("pong", () => resolve()));
 			assert.strictEqual(run, 1);
-		}).timeout(100 * 1000); // TODO: Remove timeout after done testing
+		});
 	});
 });
