@@ -252,7 +252,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			false,
 		);
 
-		const checkpointsTTLSeconds = config.get("checkpoints:checkpointsTTLInSeconds") ?? 864000;
+		const defaultTTLInSeconds = 864000;
+		const checkpointsTTLSeconds =
+			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
 		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
 		// Foreman agent uploader does not run locally.
