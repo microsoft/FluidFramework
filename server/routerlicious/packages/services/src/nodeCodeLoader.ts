@@ -51,7 +51,7 @@ export class NodeCodeLoader {
 	private async installOrWaitForPackages(pkg: string): Promise<string> {
 		const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
 		if (!dataStores) {
-			return Promise.reject(new Error("Invalid package"));
+			throw new Error("Invalid package");
 		}
 		const [, scope, name] = dataStores;
 

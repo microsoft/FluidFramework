@@ -20,7 +20,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
 	ChildLogger,

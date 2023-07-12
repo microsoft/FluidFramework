@@ -56,16 +56,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.20.0",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-driver-definitions-previous": "npm:@fluidframework/test-driver-definitions@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",

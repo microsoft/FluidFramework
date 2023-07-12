@@ -67,6 +67,8 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
+	lookupGlobalFieldSchema,
+	lookupTreeSchema,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -88,6 +90,7 @@ export {
 	FieldAdapter,
 	TreeAdapter,
 	MapTree,
+	LocalCommitSource,
 } from "./core";
 
 export {
@@ -129,7 +132,7 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeKeyFieldKey,
+	nodeKeyField,
 	nodeKeySchema,
 } from "./domains";
 
@@ -241,6 +244,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	LazyTreeSchema,
 	FieldGenerator,
 	TreeDataContext,
 	NodeExistenceState,
@@ -279,6 +283,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	nodeKeyFieldKey,
 } from "./feature-libraries";
 
 export {
