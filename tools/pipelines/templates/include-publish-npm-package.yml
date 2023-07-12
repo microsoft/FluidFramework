@@ -16,7 +16,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Large
+  default: Small
 
 stages:
 - stage: publish_npm_internal_test

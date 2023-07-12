@@ -60,7 +60,7 @@ parameters:
 
 - name: pool
   type: string
-  default: Large
+  default: Small
 
 - name: buildToolsVersionToInstall
   type: string

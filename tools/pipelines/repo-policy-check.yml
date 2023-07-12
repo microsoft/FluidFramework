@@ -16,7 +16,7 @@ pr:
 - release/*
 
 pool:
-  Large
+  Small
 
 variables:
 - name: skipComponentGovernanceDetection

@@ -145,7 +145,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: Large
+      pool: Small
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -173,7 +173,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: Large
+      pool: Small
       steps:
         - checkout: self
           submodules: false
@@ -292,7 +292,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Large
+  pool: Small
   dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site
