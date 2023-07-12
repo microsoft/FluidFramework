@@ -3112,6 +3112,9 @@ export class ContainerRuntime
 				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
+			} else if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
 				this.outbox.submit(message);
 			}
