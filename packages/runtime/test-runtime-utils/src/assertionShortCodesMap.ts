@@ -650,7 +650,6 @@ export const shortCodeMap = {
 	"0x39d": "Rollback segment removedClientId does not match local client",
 	"0x39f": "Local getPartialLength invoked without computing local partials.",
 	"0x3a0": "localInterval must be `SequenceInterval` when used with client",
-	"0x3a4": "adjacent replaces must match",
 	"0x3a6": "Cannot locate anchor which is not in this AnchorSet",
 	"0x3a7": "Must be in a field to delete",
 	"0x3a8": "Must be in a field to insert",
