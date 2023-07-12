@@ -48,11 +48,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 			multiple: true,
 		}),
-		creds: Flags.string({
-			description: "Username and email id for GitHub auth",
-			required: true,
-			multiple: true,
-		}),
 		...BaseCommand.flags,
 	};
 
@@ -81,7 +76,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		const [owner, repo] = context.originRemotePartialUrl.split("/");
+		// const [owner, repo] = context.originRemotePartialUrl.split("/");
+		const owner = "sonalideshpandemsft";
+		const repo = "FluidFramework";
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
@@ -99,13 +96,14 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
-			this.exit(-1);
+			this.exit(0);
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
 
-		const lastMergedCommit = await this.gitRepo.getMergeBase(
-			`${flags.source}`,
+		const lastMergedCommit = await this.gitRepo.getMergeBaseRemote(
+			flags.source,
+			this.remote,
 			`refs/remotes/${this.remote}/${flags.target}`,
 		);
 		this.log(
@@ -137,16 +135,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const tempBranchToCheckConflicts = `${flags.target}-automation`;
 		this.branchesToCleanup.push(tempBranchToCheckConflicts);
 
-		await this.gitRepo.gitClient
-			.checkoutBranch(
-				tempBranchToCheckConflicts,
-				`refs/remotes/${this.remote}/${flags.target}`,
-			)
-			.branch(["--set-upstream-to", `${tempBranchToCheckConflicts}`]);
+		await this.gitRepo.gitClient.checkoutBranch(
+			tempBranchToCheckConflicts,
+			`refs/remotes/${this.remote}/${flags.target}`,
+		);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
 			unmergedCommitList.slice(0, commitSize),
-			flags.creds,
 			this.gitRepo,
 			this.logger,
 		);
@@ -192,12 +187,17 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			)}`,
 		);
 
-		await this.gitRepo.gitClient.raw([
-			"config",
-			"--global",
-			`url.https://${flags.pat}@github.com/.insteadOf`,
-			"https://github.com/",
-		]);
+		/**
+		 * Error: "could not read Username for 'https://github.com/': No such device or address" - This error occurred while pushing the branch to the remote repository. To fix it, set the Git configuration using the following command, which substitutes the default GitHub URL with a custom URL that includes a secret token.
+		 * In summary, the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL with a custom URL that includes a secret token for secure authentication and authorization during Git operations, such as pushing to a remote repository on GitHub.
+		 */
+
+		// await this.gitRepo.gitClient.raw([
+		// 	"config",
+		// 	"--global",
+		// 	`url.https://${flags.pat}@github.com/.insteadOf`,
+		// 	"https://github.com/",
+		// ]);
 
 		await this.gitRepo.gitClient
 			.checkoutBranch(branchName, prHeadCommit)
@@ -336,13 +336,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
  */
 async function hasConflicts(
 	commitIds: string[],
-	creds: string[],
 	gitRepo: Repository,
 	log?: Logger,
 ): Promise<[boolean, number]> {
 	for (const [i, commit] of commitIds.entries()) {
 		// eslint-disable-next-line no-await-in-loop
-		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit, creds);
+		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
 		log?.verbose(`Can merge without conflicts ${commit}: ${mergesClean}`);
 		if (mergesClean === false) {
 			return [true, i];

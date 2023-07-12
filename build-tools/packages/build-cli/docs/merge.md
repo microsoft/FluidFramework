@@ -12,8 +12,7 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -p <value> -s <value> -t <value> -b <value> --reviewers <value> --creds <value> [-v |
-    --quiet] [-r <value>]
+  $ flub merge branches -p <value> -s <value> -t <value> -b <value> --reviewers <value> [-v | --quiet] [-r <value>]
 
 FLAGS
   -b, --batchSize=<value>  (required) Maximum number of commits to include in the pull request
@@ -21,7 +20,6 @@ FLAGS
   -r, --remote=<value>     [default: origin]
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name
-  --creds=<value>...       (required) Username and email id for GitHub auth
   --reviewers=<value>...   (required) Add reviewers to PR
 
 LOGGING FLAGS

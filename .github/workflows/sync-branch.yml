@@ -1,21 +1,26 @@
 name: Sync branches
 
-on:
-  schedule:
-    - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
+# on:
+#   schedule:
+#     - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
+
+on: 
+  push:
+    branches:
+      - main
 
 env:
   TARGET_BRANCH: next
   SOURCE_BRANCH: main
-  USERNAME: msfluid-bot
-  EMAIL: banana-bot@outlook.com
+  USERNAME: sonalideshpandemsft
+  EMAIL: sonalivdeshpande96@gmail.com
   BATCH: 10
   REVIEWER1: sonalideshpandemsft
 
 jobs:
   sync-branches:
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'microsoft'
+    # if: github.repository_owner == 'microsoft'
     steps: 
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
@@ -37,6 +42,12 @@ jobs:
           # add the bin dir of build-cli to the path
           cd packages/build-cli/bin
           echo "$(pwd)" >> $GITHUB_PATH
+
+      - name: Set username and email
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git config url.https://${{ secrets.TEST_PAT }}@github.com/.insteadOf https://github.com/
       
       - name: Run merge command
-        run: flub merge branches -p ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --creds $EMAIL --creds $USERNAME --reviewers $REVIEWER1 -v
+        run: flub merge branches -p ${{ secrets.TEST_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
