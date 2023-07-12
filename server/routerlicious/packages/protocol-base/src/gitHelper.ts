@@ -102,10 +102,4 @@ export function buildGitTreeHierarchy(
  *
  * @deprecated Use buildGitTreeHierarchy instead.
  */
-export function buildGitTreeHeirarchy(
-	flatTree: git.ITree,
-	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
-	removeAppTreePrefix = false,
-): ISnapshotTreeEx {
-	return buildGitTreeHierarchy(flatTree, blobsShaToPathCache, removeAppTreePrefix);
-}
+export const buildGitTreeHeirarchy = buildGitTreeHierarchy;
