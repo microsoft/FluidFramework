@@ -1366,9 +1366,13 @@ export class ContainerRuntime
 			closeContainer: this.closeFn,
 		});
 
-		context.quorum.on("removeMember", (clientId: string) => {
+		this._quorum = context.quorum;
+		this._quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._audience = context.audience!;
 
 		this.summaryStateUpdateMethod = this.mc.config.getString(
 			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
@@ -2287,13 +2291,14 @@ export class ContainerRuntime
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
+	private readonly _quorum: IQuorumClients;
 	public getQuorum(): IQuorumClients {
-		return this.context.quorum;
+		return this._quorum;
 	}
 
+	private readonly _audience: IAudience;
 	public getAudience(): IAudience {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.context.audience!;
+		return this._audience;
 	}
 
 	/**
