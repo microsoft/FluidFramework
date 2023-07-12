@@ -777,13 +777,16 @@ export class MapKernel {
 			0x2fe /* Invalid localOpMetadata in submit */,
 		);
 
-		// clear the old pending message id
+		// no need to submit messages for op's that have been aborted
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		assert(
-			pendingMessageIds !== undefined &&
-				pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-			0x2ff /* Unexpected pending message received */,
-		);
+		if (
+			pendingMessageIds === undefined ||
+			pendingMessageIds[0] !== localOpMetadata.pendingMessageId
+		) {
+			return;
+		}
+
+		// clear the old pending message id
 		pendingMessageIds.shift();
 		if (pendingMessageIds.length === 0) {
 			this.pendingKeys.delete(op.key);
