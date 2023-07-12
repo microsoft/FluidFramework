@@ -102,7 +102,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get clientId(): string | undefined;
     // (undocumented)
-    get closeFn(): (error?: ICriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
         logger?: ITelemetryLoggerExt;
         runSweep?: boolean;
@@ -128,7 +128,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    get disposeFn(): (error?: ICriticalContainerError) => void;
+    readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     ensureNoDataModelChanges<T>(callback: () => T): T;

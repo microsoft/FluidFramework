@@ -829,23 +829,8 @@ export class ContainerRuntime
 		return this.reSubmitCore;
 	}
 
-	public get disposeFn(): (error?: ICriticalContainerError) => void {
-		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		return this.context.disposeFn ?? this.context.closeFn;
-	}
-
-	public get closeFn(): (error?: ICriticalContainerError) => void {
-		if (this._summarizer !== undefined) {
-			// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-			return this.disposeFn;
-		}
-
-		// Also call disposeFn to retain functionality of runtime being disposed on close
-		return (error?: ICriticalContainerError) => {
-			this.context.closeFn(error);
-			this.context.disposeFn?.(error);
-		};
-	}
+	public readonly disposeFn: (error?: ICriticalContainerError) => void;
+	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;
@@ -1097,6 +1082,19 @@ export class ContainerRuntime
 
 		this.options = context.options;
 		this.clientDetails = context.clientDetails;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+
+		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+		this.disposeFn = context.disposeFn ?? context.closeFn;
+		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
+		this.closeFn = this.isSummarizerClient
+			? this.disposeFn
+			: (error?: ICriticalContainerError) => {
+					context.closeFn(error);
+					// Also call disposeFn to retain functionality of runtime being disposed on close
+					context.disposeFn?.(error);
+			  };
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
@@ -1221,9 +1219,6 @@ export class ContainerRuntime
 			// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
 			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
 		}
-
-		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
-		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
