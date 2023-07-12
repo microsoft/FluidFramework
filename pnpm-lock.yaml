@@ -15231,7 +15231,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.2.0
       '@fluidframework/runtime-utils': 2.0.0-internal.5.2.0
       '@fluidframework/shared-object-base': 2.0.0-internal.5.2.0
-      '@sinclair/typebox': 0.28.11
+      '@sinclair/typebox': 0.28.20
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -19290,7 +19290,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      tslib: 2.5.0
+      tslib: 2.6.0
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -20008,6 +20008,10 @@ packages:
   /@sigstore/protobuf-specs/0.1.0:
     resolution: {integrity: sha512-a31EnjuIDSX8IXBUib3cYLDRlPMU36AWX4xS8ysLaNu4ZzUesDiPt83pgrW2X1YLMe5L2HbDyaKK5BrL4cNKaQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    dev: true
+
+  /@sinclair/typebox/0.28.20:
+    resolution: {integrity: sha512-QCF3BGfacwD+3CKhGsMeixnwOmX4AWgm61nKkNdRStyLVu0mpVFYlDSY8gVBOOED1oSwzbJauIWl/+REj8K5+w==}
     dev: true
 
   /@sinclair/typebox/0.29.4:
@@ -41577,6 +41581,7 @@ packages:
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
+    dev: false
 
   /tslib/2.6.0:
     resolution: {integrity: sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==}
