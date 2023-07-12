@@ -298,7 +298,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
-// @public
+// @internal
 export function getSlideToSegoff(segoff: {
     segment: ISegment | undefined;
     offset: number | undefined;
