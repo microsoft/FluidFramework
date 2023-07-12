@@ -136,7 +136,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large
+        poolBuild: Small
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
@@ -160,7 +160,7 @@ stages:
       - template: templates/include-test-perf-benchmarks.yml
         parameters:
           testWorkspace: ${{ variables.testWorkspace }}
-          poolBuild: Large
+          poolBuild: Small
           customSteps:
 
           - task: Bash@3

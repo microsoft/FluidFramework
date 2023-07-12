@@ -123,7 +123,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: Large
+      pool: Small
       steps:
         - checkout: none
         - script: |
@@ -159,7 +159,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Large
+      pool: Small
       strategy:
         runOnce:
           deploy:
@@ -173,7 +173,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: Small
+      pool: Large
       steps:
         - checkout: self
           submodules: false
