@@ -147,6 +147,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		) => Promise<ISequencedDocumentMessage[]>,
 		private readonly requestFromSocket: (from: number, to: number) => void,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
+		private readonly isFirstSnapshotFromCache?: boolean,
 	) {}
 
 	public fetchMessages(
@@ -188,8 +189,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			this.requestFromSocket(from, to);
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
-			// This saves a bit of processing time
-			if (!this.firstCacheMiss) {
+			// This saves a bit of processing time. Also only consult cache, in case the
+			// snapshot came from cache.
+			if (!this.firstCacheMiss && this.isFirstSnapshotFromCache) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
 				// Set the firstCacheMiss as true in case we didn't get all the ops.
