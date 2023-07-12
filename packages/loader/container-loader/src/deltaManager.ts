@@ -649,6 +649,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				}
 			}
 		} finally {
+			if (controller.signal.aborted) {
+				this.logger.sendTelemetryEvent({
+					eventName: "DeltaManager_GetDeltasAborted",
+					fetchReason,
+					// Remove case to any when @types/node is upgraded to 16 (AB#4884)
+					reason: (controller.signal as any).reason,
+				});
+			}
 			this.closeAbortController.signal.onabort = null;
 			this._inbound.off("push", opListener);
 			assert(!opsFromFetch, 0x289 /* "logic error" */);
