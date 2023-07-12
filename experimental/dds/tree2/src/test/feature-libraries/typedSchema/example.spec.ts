@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema } from "../../../../core";
-import { FieldKinds, SchemaBuilder } from "../../../../feature-libraries";
+import { ValueSchema } from "../../../core";
+import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder("example");
 

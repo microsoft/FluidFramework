@@ -121,6 +121,7 @@ export {
 	Named,
 	FieldStoredSchema,
 	ValueSchema,
+	PrimitiveValueSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,

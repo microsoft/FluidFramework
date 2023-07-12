@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchemaIdentifier } from "../../../../core";
+import { TreeSchemaIdentifier } from "../../../core";
 import {
 	ArrayToUnion,
 	Unbrand,
 	WithDefault,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
+} from "../../../feature-libraries/typed-schema/typeUtils";
 import {
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,
 	requireTrue,
-} from "../../../../util";
+} from "../../../util";
 
 // These tests currently just cover the type checking, so its all compile time.
 

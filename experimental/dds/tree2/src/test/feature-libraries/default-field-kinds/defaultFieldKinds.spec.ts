@@ -15,12 +15,10 @@ import {
 	valueSymbol,
 	cursorFromContextualData,
 	SchemaBuilder,
-} from "../../feature-libraries";
+} from "../../../feature-libraries";
 // Allow import from file being tested.
 // eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../feature-libraries/defaultFieldKinds";
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKindsTypes from "../../feature-libraries/defaultFieldChangeTypes";
+import * as FieldKinds from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -31,15 +29,17 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	FieldKey,
-} from "../../core";
-import { JsonCompatibleReadOnly, brand } from "../../util";
+} from "../../../core";
+import { JsonCompatibleReadOnly, brand } from "../../../util";
 import {
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
 	makeEncodingTestSuite,
-} from "../utils";
-import { IJsonCodec } from "../../codec";
+} from "../../utils";
+import { IJsonCodec } from "../../../codec";
+// eslint-disable-next-line import/no-internal-modules
+import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
 const builder = new SchemaBuilder("defaultFieldKinds tests");
 const nodeSchema = builder.objectRecursive("Node", {
@@ -176,14 +176,12 @@ const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset
 };
 
 describe("Value field changesets", () => {
-	const fieldHandler: FieldChangeHandler<
-		FieldKindsTypes.OptionalChangeset,
-		FieldKinds.ValueFieldEditor
-	> = FieldKinds.value.changeHandler;
+	const fieldHandler: FieldChangeHandler<OptionalChangeset, FieldKinds.ValueFieldEditor> =
+		FieldKinds.value.changeHandler;
 
-	const childChange1: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange1 };
-	const childChange2: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange2 };
-	const childChange3: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange3 };
+	const childChange1: OptionalChangeset = { childChange: nodeChange1 };
+	const childChange2: OptionalChangeset = { childChange: nodeChange2 };
+	const childChange3: OptionalChangeset = { childChange: nodeChange3 };
 
 	const change1 = tagChange(
 		fieldHandler.editor.set(singleTextCursor(tree1), brand(1)),
@@ -194,7 +192,7 @@ describe("Value field changesets", () => {
 		mintRevisionTag(),
 	);
 
-	const change1WithChildChange: FieldKindsTypes.OptionalChangeset = {
+	const change1WithChildChange: OptionalChangeset = {
 		fieldChange: {
 			newContent: { set: tree1, changes: nodeChange1 },
 			wasEmpty: false,
@@ -206,7 +204,7 @@ describe("Value field changesets", () => {
 	/**
 	 * Represents the outcome of composing change1 and change2.
 	 */
-	const change1And2: TaggedChange<FieldKindsTypes.OptionalChangeset> = makeAnonChange({
+	const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
 		fieldChange: {
 			id: brand(2),
 			revision: change2.revision,
@@ -215,7 +213,7 @@ describe("Value field changesets", () => {
 		},
 	});
 
-	const revertChange2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
 				id: brand(2),
@@ -235,7 +233,7 @@ describe("Value field changesets", () => {
 	};
 
 	it("can be created", () => {
-		const expected: FieldKindsTypes.OptionalChangeset = {
+		const expected: OptionalChangeset = {
 			fieldChange: { newContent: { set: tree1 }, id: brand(1), wasEmpty: false },
 		};
 		assert.deepEqual(change1.change, expected);
@@ -359,7 +357,7 @@ describe("Value field changesets", () => {
 		assertMarkListEqual(actual, expected);
 	});
 
-	const encodingTestData: [string, FieldKindsTypes.OptionalChangeset][] = [
+	const encodingTestData: [string, OptionalChangeset][] = [
 		["with child change", change1WithChildChange],
 		["with repair data", revertChange2.change],
 	];
@@ -368,12 +366,11 @@ describe("Value field changesets", () => {
 });
 
 describe("Optional field changesets", () => {
-	const fieldHandler: FieldChangeHandler<FieldKindsTypes.OptionalChangeset> =
-		FieldKinds.optional.changeHandler;
+	const fieldHandler: FieldChangeHandler<OptionalChangeset> = FieldKinds.optional.changeHandler;
 	const editor: FieldKinds.OptionalFieldEditor =
 		fieldHandler.editor as FieldKinds.OptionalFieldEditor;
 
-	const change1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const change1: TaggedChange<OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
 				id: brand(1),
@@ -384,12 +381,12 @@ describe("Optional field changesets", () => {
 		mintRevisionTag(),
 	);
 
-	const change2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const change2: TaggedChange<OptionalChangeset> = tagChange(
 		editor.set(singleTextCursor(tree2), false, brand(2)),
 		mintRevisionTag(),
 	);
 
-	const revertChange2: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
 		{
 			fieldChange: {
 				id: brand(2),
@@ -406,7 +403,7 @@ describe("Optional field changesets", () => {
 	/**
 	 * Represents what change2 would have been had it been concurrent with change1.
 	 */
-	const change2PreChange1: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
 		editor.set(singleTextCursor(tree2), true, brand(2)),
 		change2.revision,
 	);
@@ -414,7 +411,7 @@ describe("Optional field changesets", () => {
 	/**
 	 * Represents the outcome of composing change1 and change2.
 	 */
-	const change1And2: TaggedChange<FieldKindsTypes.OptionalChangeset> = makeAnonChange({
+	const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
 		fieldChange: {
 			id: brand(2),
 			revision: change2.revision,
@@ -423,18 +420,14 @@ describe("Optional field changesets", () => {
 		},
 	});
 
-	const change4: TaggedChange<FieldKindsTypes.OptionalChangeset> = tagChange(
+	const change4: TaggedChange<OptionalChangeset> = tagChange(
 		editor.buildChildChange(0, nodeChange2),
 		mintRevisionTag(),
 	);
 
 	it("can be created", () => {
-		const actual: FieldKindsTypes.OptionalChangeset = editor.set(
-			singleTextCursor(tree1),
-			true,
-			brand(42),
-		);
-		const expected: FieldKindsTypes.OptionalChangeset = {
+		const actual: OptionalChangeset = editor.set(singleTextCursor(tree1), true, brand(42));
+		const expected: OptionalChangeset = {
 			fieldChange: { id: brand(42), newContent: { set: tree1 }, wasEmpty: true },
 		};
 		assert.deepEqual(actual, expected);
@@ -454,7 +447,7 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can compose child changes", () => {
-		const expected: FieldKindsTypes.OptionalChangeset = {
+		const expected: OptionalChangeset = {
 			fieldChange: {
 				id: brand(1),
 				revision: change1.revision,
@@ -481,7 +474,7 @@ describe("Optional field changesets", () => {
 			return nodeChange2;
 		};
 
-		const expected: FieldKindsTypes.OptionalChangeset = {
+		const expected: OptionalChangeset = {
 			fieldChange: { id: brand(1), wasEmpty: false },
 			childChange: nodeChange2,
 		};
@@ -525,8 +518,8 @@ describe("Optional field changesets", () => {
 		});
 
 		it("can rebase child change", () => {
-			const baseChange: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange1 };
-			const changeToRebase: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange2 };
+			const baseChange: OptionalChangeset = { childChange: nodeChange1 };
+			const changeToRebase: OptionalChangeset = { childChange: nodeChange2 };
 
 			const childRebaser = (
 				change: NodeChangeset | undefined,
@@ -537,7 +530,7 @@ describe("Optional field changesets", () => {
 				return nodeChange3;
 			};
 
-			const expected: FieldKindsTypes.OptionalChangeset = { childChange: nodeChange3 };
+			const expected: OptionalChangeset = { childChange: nodeChange3 };
 
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
@@ -660,7 +653,7 @@ describe("Optional field changesets", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, FieldKindsTypes.OptionalChangeset][] = [
+		const encodingTestData: [string, OptionalChangeset][] = [
 			["change", change1.change],
 			["with repair data", revertChange2.change],
 		];

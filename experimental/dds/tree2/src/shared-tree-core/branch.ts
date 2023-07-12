@@ -21,7 +21,7 @@ import {
 	rebaseBranch,
 	RevisionTag,
 } from "../core";
-import { EventEmitter } from "../events";
+import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -472,6 +472,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branch: SharedTreeBranch<TEditor, TChange>,
 	): [change: TChange, newCommits: GraphCommit<TChange>[]] | undefined {
 		this.assertNotDisposed();
+		branch.assertNotDisposed();
 		assert(
 			!branch.isTransacting(),
 			0x597 /* Branch may not be merged while transaction is in progress */,
@@ -539,10 +540,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/**
 	 * Dispose this branch, freezing its state.
-	 * Attempts to further mutate or dispose the branch will error.
+	 *
+	 * @remarks
+	 * Attempts to further mutate the branch will error.
+	 * Any transactions in progress will be aborted.
+	 * Calling dispose more than once has no effect.
 	 */
 	public dispose(): void {
-		this.assertNotDisposed();
+		if (this.disposed) {
+			return;
+		}
+
+		while (this.isTransacting()) {
+			this.abortTransaction();
+		}
 		this.disposed = true;
 		this.emit("dispose");
 	}
@@ -558,4 +569,26 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private assertNotDisposed(): void {
 		assert(!this.disposed, 0x66e /* Branch is disposed */);
 	}
+}
+
+/**
+ * Registers an event listener that fires when the given forkable object forks.
+ * The listener will also fire when any of those forks fork, and when those forks of forks fork, and so on.
+ * @param forkable - an object that emits an event when it is forked
+ * @param onFork - the fork event listener
+ * @returns a function which when called will deregister all registrations (including transitive) created by this function.
+ * The deregister function has undefined behavior if called more than once.
+ */
+export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void }>>(
+	forkable: T,
+	onFork: (fork: T) => void,
+): () => void {
+	const offs: (() => void)[] = [];
+	offs.push(
+		forkable.on("fork", (fork) => {
+			offs.push(onForkTransitive(fork, onFork));
+			onFork(fork);
+		}),
+	);
+	return () => offs.forEach((off) => off());
 }

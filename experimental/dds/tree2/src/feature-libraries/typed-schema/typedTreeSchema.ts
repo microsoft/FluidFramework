@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFieldSchema, ITreeSchema } from "../view";
+import { IFieldSchema, ITreeSchema } from "../modular-schema";
 import {
 	GlobalFieldKey,
 	GlobalFieldKeySymbol,
@@ -14,9 +14,9 @@ import {
 	TreeTypeSet,
 	ValueSchema,
 	symbolFromKey,
-} from "../../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../../util";
-import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
+} from "../../core";
+import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
+import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
