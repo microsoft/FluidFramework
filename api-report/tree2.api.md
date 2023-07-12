@@ -1728,7 +1728,7 @@ export class SchemaBuilder {
     readonly name: string;
     object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    primitive<Name extends string, T extends InternalTypes_2.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
+    primitive<Name extends string, T extends PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
     }>;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {

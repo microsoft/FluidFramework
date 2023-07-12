@@ -8,16 +8,15 @@ import {
 	Adapters,
 	FieldAdapter,
 	GlobalFieldKey,
+	PrimitiveValueSchema,
 	rootFieldKey,
 	TreeAdapter,
 	TreeSchemaIdentifier,
 	ValueSchema,
-} from "../../../core";
-import { Sourced, SchemaCollection } from "../view";
-import { brand, requireAssignableTo, RestrictiveReadonlyRecord } from "../../../util";
-import { optional, sequence, value, FieldKindTypes } from "../../defaultFieldKinds";
-import type { FieldKinds } from "../..";
-import { InternalTypes } from "../../schema-aware";
+} from "../../core";
+import { Sourced, SchemaCollection } from "../modular-schema";
+import { brand, requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
+import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
 import {
 	AllowedTypes,
@@ -274,7 +273,7 @@ export class SchemaBuilder {
 	 *
 	 * This is just a shorthand for a common case of `object`. See {@link SchemaBuilder.object} for details.
 	 */
-	public primitive<Name extends string, T extends InternalTypes.PrimitiveValueSchema>(
+	public primitive<Name extends string, T extends PrimitiveValueSchema>(
 		name: Name,
 		t: T,
 	): TreeSchema<Name, { value: T }> {
@@ -353,7 +352,7 @@ export class SchemaBuilder {
 	public static fieldOptional<T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.optional, T> {
-		return SchemaBuilder.field(optional, ...allowedTypes);
+		return SchemaBuilder.field(FieldKinds.optional, ...allowedTypes);
 	}
 
 	/**
@@ -367,7 +366,7 @@ export class SchemaBuilder {
 	public static fieldValue<T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.value, T> {
-		return SchemaBuilder.field(value, ...allowedTypes);
+		return SchemaBuilder.field(FieldKinds.value, ...allowedTypes);
 	}
 
 	/**
@@ -384,7 +383,7 @@ export class SchemaBuilder {
 	public static fieldSequence<T extends AllowedTypes>(
 		...t: T
 	): FieldSchema<typeof FieldKinds.sequence, T> {
-		return SchemaBuilder.field(sequence, ...t);
+		return SchemaBuilder.field(FieldKinds.sequence, ...t);
 	}
 
 	/**
