@@ -1056,6 +1056,11 @@ export class ContainerRuntime
 	private readonly idCompressorEnabled: boolean;
 
 	/**
+	 * Whether this client is the summarizer client itself (type is summarizerClientType)
+	 */
+	private readonly isSummarizerClient: boolean;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1121,7 +1126,7 @@ export class ContainerRuntime
 
 		this.messageAtLastSummary = metadata?.message;
 
-		this._connected = this.context.connected;
+		this._connected = context.connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
@@ -1150,7 +1155,7 @@ export class ContainerRuntime
 
 		const opSplitter = new OpSplitter(
 			chunks,
-			this.context.submitBatchFn,
+			context.submitBatchFn,
 			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1213,6 +1218,8 @@ export class ContainerRuntime
 			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
 		}
 
+		this.isSummarizerClient = context.clientDetails.type === summarizerClientType;
+
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
 			gcOptions: this.runtimeOptions.gcOptions,
@@ -1221,7 +1228,7 @@ export class ContainerRuntime
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
+			isSummarizerClient: this.isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
@@ -1339,7 +1346,7 @@ export class ContainerRuntime
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			containerContext: this.context,
+			containerContext: context,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
@@ -1359,7 +1366,7 @@ export class ContainerRuntime
 			closeContainer: this.closeFn,
 		});
 
-		this.context.quorum.on("removeMember", (clientId: string) => {
+		context.quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
@@ -1377,9 +1384,9 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.context.attachState !== AttachState.Attached ||
+			context.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingMessages();
-		this.context.updateDirtyContainerState(this.dirtyContainer);
+		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
@@ -1387,13 +1394,13 @@ export class ContainerRuntime
 			const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
 			const orderedClientCollection = new OrderedClientCollection(
 				orderedClientLogger,
-				this.context.deltaManager,
-				this.context.quorum,
+				context.deltaManager,
+				context.quorum,
 			);
 			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				orderedClientCollection,
-				electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+				electedSummarizerData ?? context.deltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 			);
 
@@ -1404,7 +1411,7 @@ export class ContainerRuntime
 				this.maxOpsSinceLastSummary,
 			);
 
-			if (this.context.clientDetails.type === summarizerClientType) {
+			if (this.isSummarizerClient) {
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1420,7 +1427,7 @@ export class ContainerRuntime
 						),
 				);
 			} else if (
-				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
+				SummarizerClientElection.clientDetailsPermitElection(context.clientDetails)
 			) {
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
@@ -1448,7 +1455,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(this.context.loader),
+					this.formRequestSummarizerFn(context.loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1522,11 +1529,11 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
-			if (this.context.clientDetails.type === summarizerClientType) {
+			if (this.isSummarizerClient) {
 				assert(
 					this._summarizer !== undefined,
 					0x5bf /* Summarizer object is undefined in a summarizer client */,
@@ -3556,7 +3563,7 @@ export class ContainerRuntime
 	}
 
 	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-		if (this.clientDetails.type === summarizerClientType) {
+		if (this.isSummarizerClient) {
 			return this.summarizer.summarizeOnDemand(...args);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.summarizeOnDemand(...args);
@@ -3569,7 +3576,7 @@ export class ContainerRuntime
 	};
 
 	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
-		if (this.clientDetails.type === summarizerClientType) {
+		if (this.isSummarizerClient) {
 			return this.summarizer.enqueueSummarize(...args);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.enqueueSummarize(...args);
