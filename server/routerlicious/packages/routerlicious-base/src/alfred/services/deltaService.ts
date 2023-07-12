@@ -11,6 +11,11 @@ import {
 	ITenantManager,
 	MongoManager,
 } from "@fluidframework/server-services-core";
+import {
+	BaseTelemetryProperties,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 export class DeltaService implements IDeltaService {
 	constructor(
@@ -25,22 +30,39 @@ export class DeltaService implements IDeltaService {
 		from?: number,
 		to?: number,
 	): Promise<ISequencedDocumentMessage[]> {
-		// Create an optional filter to restrict the delta range
-		const query: any = { documentId, tenantId };
-		if (from !== undefined || to !== undefined) {
-			query["operation.sequenceNumber"] = {};
+		const metricProperties = {
+			[BaseTelemetryProperties.tenantId]: tenantId,
+			[BaseTelemetryProperties.documentId]: documentId,
+			from,
+			to,
+		};
+		const metric = Lumberjack.newLumberMetric(
+			LumberEventName.GetDeltasFromDb,
+			metricProperties,
+		);
+		try {
+			// Create an optional filter to restrict the delta range
+			const query: any = { documentId, tenantId };
+			if (from !== undefined || to !== undefined) {
+				query["operation.sequenceNumber"] = {};
 
-			if (from !== undefined) {
-				query["operation.sequenceNumber"].$gt = from;
+				if (from !== undefined) {
+					query["operation.sequenceNumber"].$gt = from;
+				}
+
+				if (to !== undefined) {
+					query["operation.sequenceNumber"].$lt = to;
+				}
 			}
 
-			if (to !== undefined) {
-				query["operation.sequenceNumber"].$lt = to;
-			}
+			const sort = { "operation.sequenceNumber": 1 };
+			const deltas = this.queryDeltas(collectionName, query, sort);
+			metric.success("getDeltasFromDb succeeded");
+			return deltas;
+		} catch (err) {
+			metric.error("getDeltasFromDb failed");
+			throw err;
 		}
-
-		const sort = { "operation.sequenceNumber": 1 };
-		return this.queryDeltas(collectionName, query, sort);
 	}
 
 	public async getDeltasFromStorage(
@@ -50,17 +72,34 @@ export class DeltaService implements IDeltaService {
 		fromSeq?: number,
 		toSeq?: number,
 	): Promise<ISequencedDocumentMessage[]> {
-		const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
-		query["operation.sequenceNumber"] = {};
-		if (fromSeq !== undefined) {
-			query["operation.sequenceNumber"].$gt = fromSeq;
-		}
-		if (toSeq !== undefined) {
-			query["operation.sequenceNumber"].$lt = toSeq;
-		}
+		const metricProperties = {
+			[BaseTelemetryProperties.tenantId]: tenantId,
+			[BaseTelemetryProperties.documentId]: documentId,
+			fromSeq,
+			toSeq,
+		};
+		const metric = Lumberjack.newLumberMetric(
+			LumberEventName.GetDeltasFromStorage,
+			metricProperties,
+		);
+		try {
+			const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
+			query["operation.sequenceNumber"] = {};
+			if (fromSeq !== undefined) {
+				query["operation.sequenceNumber"].$gt = fromSeq;
+			}
+			if (toSeq !== undefined) {
+				query["operation.sequenceNumber"].$lt = toSeq;
+			}
 
-		const sort = { "operation.sequenceNumber": 1 };
-		return this.queryDeltas(collectionName, query, sort);
+			const sort = { "operation.sequenceNumber": 1 };
+			const deltas = this.queryDeltas(collectionName, query, sort);
+			metric.success("getDeltasFromStorage succeeded");
+			return deltas;
+		} catch (err) {
+			metric.error("getDeltasFromStorage failed");
+			throw err;
+		}
 	}
 
 	private async queryDeltas(
