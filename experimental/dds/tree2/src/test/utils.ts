@@ -692,6 +692,17 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual is a valid comparison (for example edits containing cursors).
+ *
+ * TODO:
+ * Consider extending this to allow testing in a way where encoded formats are compared,
+ * which can safely use deepEqual.
+ * Consider adding a custom comparison function for non encoded data.
+ * Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one).
  */
 export function makeEncodingTestSuite<TDecoded>(
 	family: ICodecFamily<TDecoded>,
