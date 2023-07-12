@@ -13,7 +13,6 @@ import {
 	initializeDevtools,
 } from "@fluid-experimental/devtools";
 import { FluidContainer, IFluidContainer, RootDataObject } from "@fluidframework/fluid-static";
-//import { SharedMap } from "@fluidframework/map"
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
 
@@ -24,7 +23,7 @@ const logger = new DevtoolsLogger();
 const devtools = initializeDevtools({ logger });
 
 // Render the text area in the DOM
-createContainerAndRenderInElement().then(({ fluidContainer, model }) => {
+createContainerAndRenderInElement().then((fluidContainer) => {
 	// Register the container with Devtools
 	registerContainerWithDevtools(devtools, fluidContainer, "e2e-test-container");
 });
@@ -33,7 +32,7 @@ createContainerAndRenderInElement().then(({ fluidContainer, model }) => {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement() {
+async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
 		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
 	);
@@ -81,7 +80,7 @@ async function createContainerAndRenderInElement() {
 		"collaborative-text",
 	)) as RootDataObject;
 	const fluidContainer = new FluidContainer(container, rootDataObject);
-	return { fluidContainer, model };
+	return fluidContainer;
 }
 
 /**

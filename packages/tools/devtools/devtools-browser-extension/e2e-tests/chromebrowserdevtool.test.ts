@@ -5,7 +5,6 @@
 
 import { globals } from "../jest.config";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
-// import { exec } from "child_process";
 
 describe("chrome browser...", () => {
 	const getValue = async (index: number, expectedValue: string) =>
@@ -36,7 +35,17 @@ describe("chrome browser...", () => {
 	});
 
 	it("Verify textarea is created", async () => {
-		const ta1 = await getValue(0, "");
-		expect(ta1).toEqual("");
+		const textArea = await getValue(0, "");
+		expect(textArea).toEqual("");
 	});
+
+	// it("Verify Devtools extension is opened", async () => {
+	// TODO
+	// 	const targets = await browser.targets();
+	// 	// console.log(targets);
+	// 	// chrome-extension://inmobceohkedafljagjfnbojplmlmgbk/devtools_app.html
+	// 	// document.querySelector("#containers-menu-section");
+	// 	// document.querySelector("#telemetry-menu-section");
+
+	// });
 });
