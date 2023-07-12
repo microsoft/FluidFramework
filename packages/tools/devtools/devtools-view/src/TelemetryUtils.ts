@@ -60,7 +60,7 @@ const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
  */
 export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
 	const [value, setValue] = React.useState(() => {
-		return getStorageValue(telemetryOptInKey, true);
+		return getStorageValue(telemetryOptInKey);
 	});
 
 	React.useEffect(() => {
@@ -89,14 +89,14 @@ export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
 	public send(event: ITelemetryBaseEvent): void {
-		const optIn = getStorageValue(telemetryOptInKey, true);
-		if (optIn === null || Boolean(optIn)) {
+		const optIn = getStorageValue(telemetryOptInKey);
+		if (optIn === true) {
 			this.baseLogger?.send(event);
 		}
 	}
 }
 
-function getStorageValue(key: string, defaultValue: boolean): boolean {
+function getStorageValue(key: string, defaultValue: boolean = false): boolean {
 	const saved = localStorage.getItem(key);
 	if (saved === null) {
 		return defaultValue;
