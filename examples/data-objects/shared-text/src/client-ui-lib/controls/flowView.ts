@@ -3584,7 +3584,7 @@ export class FlowView extends ui.Component {
 		} else {
 			if (opCursorPos !== undefined) {
 				this.remotePresenceFromEdit(
-					event.opArgs.sequencedMessage!.clientId,
+					event.opArgs.sequencedMessage!.clientId as string,
 					event.opArgs.sequencedMessage!.referenceSequenceNumber,
 					opCursorPos,
 				);

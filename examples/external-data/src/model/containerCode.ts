@@ -67,10 +67,8 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		);
 		// Register listener only once the model is fully loaded and ready
 		runtime.on("signal", (message) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			if (message?.content?.type === SignalType.ExternalDataChanged) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const taskListId = message?.content?.taskListId as string;
+			if ((message?.content as { type?: unknown } | undefined)?.type === SignalType.ExternalDataChanged) {
+				const taskListId =(message?.content as { taskListId?: unknown } | undefined)?.taskListId as string;
 				const taskList = taskListCollection.getTaskList(taskListId);
 				if (taskList === undefined) {
 					throw new Error(

@@ -29,12 +29,12 @@ describe("MergeTree.Client", () => {
 			originalClient.startOrUpdateCollaboration("A");
 			for (const group of file) {
 				for (const msg of group.msgs) {
-					if (!msgClients.has(msg.clientId)) {
+					if (!msgClients.has(msg.clientId as string)) {
 						const client = await TestClient.createFromClientSnapshot(
 							originalClient,
-							msg.clientId,
+							msg.clientId as string,
 						);
-						msgClients.set(msg.clientId, { client, msgs: [] });
+						msgClients.set(msg.clientId as string, { client, msgs: [] });
 					}
 				}
 			}
@@ -45,7 +45,7 @@ describe("MergeTree.Client", () => {
 				const initialText = logger.validate();
 				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
 				for (const msg of group.msgs) {
-					const msgClient = msgClients.get(msg.clientId)!;
+					const msgClient = msgClients.get(msg.clientId as string)!;
 					while (
 						msgClient.msgs.length > 0 &&
 						msg.referenceSequenceNumber > msgClient.client.getCurrentSeq()

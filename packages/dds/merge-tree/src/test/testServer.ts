@@ -57,7 +57,7 @@ export class TestServer extends TestClient {
 	applyMsg(msg: ISequencedDocumentMessage) {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			const clid = this.getShortClientId(msg.clientId);
+			const clid = this.getShortClientId(msg.clientId as string);
 			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
 		} else {
 			return false;

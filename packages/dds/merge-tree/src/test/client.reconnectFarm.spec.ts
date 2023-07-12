@@ -40,8 +40,8 @@ function applyMessagesWithReconnect(
 	// log and apply all the ops created in the round
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
-		if (reconnectingClientIds.includes(message.clientId)) {
-			reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
+		if (reconnectingClientIds.includes(message.clientId as string)) {
+			reconnectClientMsgs.get(message.clientId as string)!.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
 			clients.forEach((c) => c.applyMsg(message));
