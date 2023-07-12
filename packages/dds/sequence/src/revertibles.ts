@@ -383,11 +383,7 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-function getSlidePosition(
-	string: SharedString,
-	lref: LocalReferencePosition,
-	pos: number,
-): number {
+function getSlidePosition(string: SharedString, lref: LocalReferencePosition, pos: number): number {
 	const slide = getSlideToSegoff(
 		{ segment: lref.getSegment(), offset: undefined },
 		lref.slidingPreference,
