@@ -435,12 +435,10 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		if (matchingOption) {
 			const search = data.optionText !== undefined ? data.optionText : "";
 			setCustomSearch(search);
-			const eventNames = [];
-			eventNames.push(data.optionText);
 			usageLogger?.sendTelemetryEvent({
 				eventName: "TelemetryEventNameFilter",
 				details: {
-					eventNames,
+					eventNames: [data.optionText]
 				},
 			});
 		} else {
