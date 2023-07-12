@@ -20,7 +20,7 @@ import {
 	SortedSet,
 	getSlideToSegoff,
 } from "@fluidframework/merge-tree";
-import { IIntervalCollection, IntervalOpType, SequenceInterval } from "./intervalCollection";
+import { IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
