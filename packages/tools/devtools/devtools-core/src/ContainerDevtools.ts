@@ -13,6 +13,8 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	DataVisualizerGraph,
 	defaultVisualizers,
+	defaultEditors,
+	EditSharedObject,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
@@ -40,6 +42,7 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
+	SendEditData,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
 import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
@@ -83,6 +86,8 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 * provided when initializing the Devtools.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
+
+	dataEditors?: Record<string, EditSharedObject>;
 }
 
 /**
@@ -338,6 +343,15 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
+
+		[SendEditData.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as SendEditData.Message;
+			if (message.data.containerKey === this.containerKey) {
+				await this.editData(message.data.fluidObjectId, message.data.newData.toString());
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
@@ -460,10 +474,17 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, {
-						...defaultVisualizers,
-						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
-				  });
+				: new DataVisualizerGraph(
+						props.containerData,
+						{
+							...defaultVisualizers,
+							...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
+						},
+						{
+							...defaultEditors,
+							...props.dataEditors,
+						},
+				  );
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
@@ -564,5 +585,9 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
+	}
+
+	private async editData(fluidObjectId: FluidObjectId, newData: string): Promise<void> {
+		return this.dataVisualizer?.preformEdit(fluidObjectId, newData);
 	}
 }

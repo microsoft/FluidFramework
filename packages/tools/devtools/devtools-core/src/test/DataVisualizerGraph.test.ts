@@ -17,6 +17,7 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	VisualNodeKind,
+	defaultEditors,
 } from "../data-visualization";
 
 describe("DataVisualizerGraph unit tests", () => {
@@ -33,6 +34,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				counter: sharedCounter,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -74,6 +76,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				map: sharedMap,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -166,6 +169,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				cell: sharedCell,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();

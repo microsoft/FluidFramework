@@ -95,6 +95,8 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
+    // (undocumented)
+    dataEditors?: Record<string, EditSharedObject>;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
@@ -218,6 +220,19 @@ export namespace DisconnectContainer {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerKey;
+}
+
+// @public
+export type EditSharedObject = (sharedObject: ISharedObject, data: string, type: EditType) => Promise<void>;
+
+// @public
+export enum EditType {
+    // (undocumented)
+    boolean = "boolean",
+    // (undocumented)
+    number = "number",
+    // (undocumented)
+    string = "string"
 }
 
 // @public
@@ -348,8 +363,20 @@ export interface HasContainerKey {
 }
 
 // @internal
+export interface HasEditType {
+    // (undocumented)
+    editType: EditType[];
+}
+
+// @internal
 export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
+}
+
+// @internal
+export interface HasNewData {
+    // (undocumented)
+    newData: string | number;
 }
 
 // @internal
@@ -431,6 +458,16 @@ export namespace RootDataVisualizations {
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @internal
+export namespace SendEditData {
+    const MessageType = "SEND_EDIT_DATA";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export type MessageData = HasContainerKey & HasFluidObjectId & HasNewData & HasEditType;
+}
+
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
@@ -488,6 +525,9 @@ export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | Fl
 
 // @public
 export interface VisualNodeBase {
+    editProps?: {
+        editTypes?: EditType[];
+    };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;

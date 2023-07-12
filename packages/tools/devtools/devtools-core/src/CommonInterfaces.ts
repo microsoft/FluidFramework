@@ -45,3 +45,33 @@ export interface HasFluidObjectId {
 	 */
 	fluidObjectId: FluidObjectId;
 }
+
+/**
+ * Base interface used in message data for edits allowed by a particular Fluid object (DDS) via
+ * an enum.
+ *
+ * @public
+ */
+export enum EditType {
+	number = "number",
+	string = "string",
+	boolean = "boolean",
+}
+
+/**
+ * Base interface used in message data for edit events containing the allowed edits as an array of EditType.
+ *
+ * @internal
+ */
+export interface HasEditType {
+	editType: EditType[];
+}
+
+/**
+ * Base interface used in message data for edit events containing the new data.
+ *
+ * @internal
+ */
+export interface HasNewData {
+	newData: string | number;
+}

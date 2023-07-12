@@ -13,6 +13,8 @@ export {
 	visualizeChildData,
 	VisualizerNode,
 } from "./DataVisualization";
+export { defaultEditors } from "./DefaultEditors";
+export { EditSharedObject } from "./DataEditing";
 export {
 	defaultVisualizers,
 	visualizeSharedCell,

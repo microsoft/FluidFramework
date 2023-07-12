@@ -4,7 +4,8 @@
  */
 import React from "react";
 
-import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
+import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
+import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
@@ -13,22 +14,21 @@ import { TreeItem } from "./TreeItem";
 /**
  * {@link ValueView} input props.
  */
-export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode>;
+export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode> &
+	HasContainerKey;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
-	const { label, node } = props;
+	const { label, node, containerKey } = props;
 
 	const metadata = JSON.stringify(node.metadata);
 	const header = (
-		<TreeHeader
-			label={label}
-			nodeTypeMetadata={node.typeMetadata}
-			inlineValue={String(node.value)}
-			metadata={metadata}
-		/>
+		<>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+			<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
+		</>
 	);
 
 	return <TreeItem header={header} />;

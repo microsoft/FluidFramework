@@ -29,6 +29,7 @@ export {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
+	SendEditData,
 } from "./container-devtools-messages";
 export {
 	ContainerList,
