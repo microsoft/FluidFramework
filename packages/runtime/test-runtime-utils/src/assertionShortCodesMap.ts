@@ -815,7 +815,6 @@ export const shortCodeMap = {
 	"0x47b": "No repair data found",
 	"0x47c": "No repair data found",
 	"0x47d": "No repair data found",
-	"0x47e": "No repair data found",
 	"0x47f": "Keys in map must be sorted.",
 	"0x480": "Values in map must be sorted.",
 	"0x481": "Clusters must have a positive capacity",
@@ -946,7 +945,6 @@ export const shortCodeMap = {
 	"0x531": "can only node's index when in node",
 	"0x532": "invalid access to root's parent",
 	"0x533": "counts must match",
-	"0x534": "should be in node",
 	"0x535": "should be in field",
 	"0x536": "chunk should have been normalized",
 	"0x537": "should be in node",
@@ -1211,7 +1209,6 @@ export const shortCodeMap = {
 	"0x66e": "Branch is disposed",
 	"0x670": "Branch was registered more than once",
 	"0x671": "Expected branch to be tracked",
-	"0x672": "Expected no registered branches when clearing trunk",
 	"0x674": "Unexpected transaction is open while applying stashed ops",
 	"0x675": "branches must be related",
 	"0x676": "target commit is not in target branch",
@@ -1355,5 +1352,7 @@ export const shortCodeMap = {
 	"0x70c": "Non-empty RebaseQueue should not provide two empty marks",
 	"0x70d": "Only detach marks should empty cells",
 	"0x70e": "segment group must exist in pending list",
-	"0x70f": "Blob must be present in blobsContents"
+	"0x70f": "Blob must be present in blobsContents",
+	"0x710": "A view that is merged into an in-progress transaction must be disposed",
+	"0x711": "Expected no outstanding branches when clearing trunk"
 };
