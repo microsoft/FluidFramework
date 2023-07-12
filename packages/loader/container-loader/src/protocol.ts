@@ -99,3 +99,21 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		}
 	}
 }
+
+/**
+ * Function to check whether the protocol handler should process the Signal.
+ * The protocol handler should strictly handle only ClientJoin, ClientLeave
+ * and Clear signal types.
+ */
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
+	// Signal originates from server
+	if (message.clientId === null) {
+		const innerContent = message.content as { content: unknown; type: string };
+		return (
+			innerContent.type === SignalType.Clear ||
+			innerContent.type === SignalType.ClientJoin ||
+			innerContent.type === SignalType.ClientLeave
+		);
+	}
+	return false;
+}

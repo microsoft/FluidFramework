@@ -39,3 +39,8 @@ export {
 	tokenFromResponse,
 	TokenResponse,
 } from "./tokenFetch";
+export {
+	IProvideSessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
+	ISocketStorageDiscovery,
+} from "./sessionProvider";

@@ -9,6 +9,7 @@ import {
 	teamsHighContrastTheme,
 	Theme,
 } from "@fluentui/react-components";
+import { ThemeOption } from "./components";
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
@@ -20,14 +21,14 @@ teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
  */
 export function getFluentUIThemeToUse(): { name: string; theme: Theme } {
 	let defaultTheme = {
-		name: "light",
+		name: ThemeOption.Light,
 		theme: webLightTheme,
 	};
 
 	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
 	if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
 		defaultTheme = {
-			name: "dark",
+			name: ThemeOption.Dark,
 			theme: webDarkTheme,
 		};
 	}
@@ -36,7 +37,7 @@ export function getFluentUIThemeToUse(): { name: string; theme: Theme } {
 	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/forced-colors
 	if (window.matchMedia?.("(forced-colors: active)").matches) {
 		defaultTheme = {
-			name: "highcontrast",
+			name: ThemeOption.HighContrast,
 			theme: teamsHighContrastTheme,
 		};
 	}

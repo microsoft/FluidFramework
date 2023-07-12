@@ -7,13 +7,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import {
-	Repository,
-	createPullRequest,
-	getUserAccess,
-	pullRequestExists,
-	pullRequestInfo,
-} from "../../lib";
+import { Repository, createPullRequest, pullRequestExists, pullRequestInfo } from "../../lib";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -30,6 +24,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "a",
 			required: true,
 			env: "GITHUB_TOKEN",
+		}),
+		pat: Flags.string({
+			description: "GitHub Personal Access Token",
+			char: "p",
+			required: true,
 		}),
 		source: Flags.string({
 			description: "Source branch name",
@@ -50,6 +49,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			description: "",
 			char: "r",
 			default: "origin",
+		}),
+		reviewers: Flags.string({
+			description: "Add reviewers to PR",
+			required: true,
+			multiple: true,
 		}),
 		...BaseCommand.flags,
 	};
@@ -87,6 +91,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
 		this.remote = flags.remote;
+
 		const prExists: boolean = await pullRequestExists(
 			flags.auth,
 			prTitle,
@@ -112,6 +117,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			`refs/remotes/${this.remote}/${flags.source}`,
 		);
 
+		this.log(`Unmerged commit list: ${unmergedCommitList}`);
+
 		if (unmergedCommitList.length === 0) {
 			this.log(
 				chalk.green(
@@ -132,7 +139,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		await this.gitRepo.gitClient
 			.checkoutBranch(tempBranchToCheckConflicts, flags.target)
-			.push(this.remote, tempBranchToCheckConflicts)
 			.branch(["--set-upstream-to", `${this.remote}/${tempBranchToCheckConflicts}`]);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
@@ -212,7 +218,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		git push`;
 
 		if (prWillConflict === false) {
-			await this.gitRepo.gitClient.merge([flags.target, "-m", prTitle]);
+			await this.gitRepo.gitClient
+				.merge([flags.target, "-m", prTitle])
+				.push(this.remote, branchName);
 
 			/**
 			 * The below description is intended for PRs which may have CI failures with next.
@@ -236,30 +244,31 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		/**
 		 * fetch name of owner associated to the pull request
 		 */
-		const pr = await pullRequestInfo(flags.auth, owner, repo, prHeadCommit, this.logger);
-		console.debug(pr);
-		const author = pr.data?.[0]?.assignee?.login;
+		const pr = await pullRequestInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
+		if (pr === undefined) {
+			this.warning(`Unable to add assignee`);
+		}
+		const username = pr.data.author.login;
 		this.info(
-			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${author}`,
+			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${username}`,
 		);
-		const user = await getUserAccess(flags.auth, owner, repo, this.logger);
-		this.verbose(`List users with push access to main branch: ${JSON.stringify(user.data)}`);
 
 		const prObject = {
-			token: flags.auth,
+			token: flags.pat,
 			owner,
 			repo,
 			source: branchName,
 			target: flags.target,
-			assignee: author,
+			assignee: username,
 			title: prTitle,
 			description,
+			reviewers: flags.reviewers,
 		};
 
+		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
+
 		const prNumber = await createPullRequest(prObject, this.logger);
-		this.log(
-			`Opened pull request ${prNumber} for commit id ${prHeadCommit}. Please resolve the merge conflicts.`,
-		);
+		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
 	}
 
 	/**

@@ -70,6 +70,7 @@ export {
 	generateStableId,
 	useDeterministicStableId,
 	objectToMap,
+	oneFromSet,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -91,3 +92,5 @@ export {
 	getOrCreateSlotContent,
 	brandedSlot,
 } from "./brandedMap";
+
+export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";

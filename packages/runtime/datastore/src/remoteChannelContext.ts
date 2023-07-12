@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
