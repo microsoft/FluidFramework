@@ -60,7 +60,7 @@ parameters:
 
 - name: pool
   type: string
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: buildToolsVersionToInstall
   type: string

@@ -35,7 +35,7 @@ stages:
     jobs:
       - template: templates/include-test-real-service.yml
         parameters:
-          poolBuild: andreiiacob-test-pool
+          poolBuild: Large
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
@@ -54,7 +54,7 @@ stages:
     jobs:
       - template: templates/include-test-real-service.yml
         parameters:
-          poolBuild: andreiiacob-test-pool
+          poolBuild: Large
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
@@ -73,7 +73,7 @@ stages:
     jobs:
       - template: templates/include-test-real-service.yml
         parameters:
-          poolBuild: andreiiacob-test-pool
+          poolBuild: Large
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
@@ -92,7 +92,7 @@ stages:
     jobs:
       - template: templates/include-test-real-service.yml
         parameters:
-          poolBuild: andreiiacob-test-pool
+          poolBuild: Large
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start

@@ -102,6 +102,6 @@ extends:
     packageManager: pnpm
     buildDirectory: azure
     tagName: azure
-    poolBuild: andreiiacob-test-pool
+    poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: false

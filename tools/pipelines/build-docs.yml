@@ -123,7 +123,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: andreiiacob-test-pool
+      pool: Large
       steps:
         - checkout: none
         - script: |
@@ -145,7 +145,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: andreiiacob-test-pool
+      pool: Large
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -159,7 +159,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: andreiiacob-test-pool
+      pool: Large
       strategy:
         runOnce:
           deploy:
@@ -173,7 +173,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: andreiiacob-test-pool
+      pool: Large
       steps:
         - checkout: self
           submodules: false
@@ -228,7 +228,7 @@ stages:
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool: andreiiacob-test-pool
+  pool: Large
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -292,7 +292,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: andreiiacob-test-pool
+  pool: Large
   dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site

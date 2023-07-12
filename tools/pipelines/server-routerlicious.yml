@@ -95,7 +95,7 @@ extends:
     packageManagerInstallCommand: 'pnpm install --workspace-root --frozen-lockfile'
     packageManager: pnpm
     tagName: server
-    pool: andreiiacob-test-pool
+    pool: Large
     pack: true
     lint: true
     test: ci:test

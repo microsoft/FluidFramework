@@ -11,7 +11,7 @@ pr: none
 parameters:
 - name: poolBuild
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: stageNames
   type: object

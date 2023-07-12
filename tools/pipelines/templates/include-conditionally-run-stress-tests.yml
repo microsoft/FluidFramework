@@ -20,7 +20,7 @@ parameters:
 
 - name: pool
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 # Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the

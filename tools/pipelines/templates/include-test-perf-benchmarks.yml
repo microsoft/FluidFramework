@@ -4,7 +4,7 @@
 parameters:
 - name: poolBuild
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: testWorkspace
   type: string

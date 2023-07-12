@@ -24,7 +24,7 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: andreiiacob-test-pool
+  pool: Large
   jobs:
   - job:
     displayName: Run checks

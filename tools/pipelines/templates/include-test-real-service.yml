@@ -6,7 +6,7 @@
 parameters:
 - name: poolBuild
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: testPackage
   type: string

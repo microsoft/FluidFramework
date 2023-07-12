@@ -87,7 +87,7 @@ extends:
     taskBuildDocs: false
     taskLint: true
     taskLintName: ci:eslint
-    poolBuild: andreiiacob-test-pool
+    poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:

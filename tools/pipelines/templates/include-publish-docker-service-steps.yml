@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: containerRegistry
   type: string

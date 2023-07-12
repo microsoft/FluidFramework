@@ -46,11 +46,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: poolBuild
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: preCG
   type: stepList

@@ -25,7 +25,7 @@ parameters:
 
 - name: pool
   type: object
-  default: andreiiacob-test-pool
+  default: Large
 
 - name: publishFlags
   type: string
