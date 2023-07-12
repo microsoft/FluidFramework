@@ -275,7 +275,7 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveId,
-		Type.Omit(HasPlaceFields, ["lineage"]),
+		HasPlaceFields,
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
@@ -343,11 +343,7 @@ export interface Revive<TNodeChange = NodeChangeType>
 export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			// `lineage` is also included under CellTargetingMark.
-			// Typebox doesn't preserve optionality for fields included multiple times as part of Composite:
-			// https://github.com/sinclairzx81/typebox/issues/482.
-			// Even if it did, we would end up with inefficient-to-validate JSON schema by including it twice.
-			Type.Omit(HasReattachFields, ["lineage"]),
+			HasReattachFields,
 			HasChanges(tNodeChange),
 			CellTargetingMark,
 			Type.Object({
@@ -371,7 +367,7 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, 
 }
 export const ReturnTo = Type.Composite(
 	[
-		Type.Omit(HasReattachFields, ["lineage"]),
+		HasReattachFields,
 		HasRevisionTag,
 		HasMoveId,
 		CellTargetingMark,
