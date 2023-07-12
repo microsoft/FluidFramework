@@ -384,7 +384,6 @@ export function discardSharedStringRevertibles(
 }
 
 function getSlidePosition(
-	collection: IIntervalCollection<SequenceInterval>,
 	string: SharedString,
 	lref: LocalReferencePosition,
 	pos: number,
@@ -417,9 +416,9 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
@@ -444,9 +443,9 @@ function revertLocalChange(
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	collection.change(id, startSlidePos, endSlidePos);
 
 	string.removeLocalReferencePosition(revertible.start);
