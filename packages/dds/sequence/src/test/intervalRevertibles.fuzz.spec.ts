@@ -168,7 +168,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam);
+	const baseGenerator = makeOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
