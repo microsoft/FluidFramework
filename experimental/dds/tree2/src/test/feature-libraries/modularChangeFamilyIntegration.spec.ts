@@ -164,8 +164,8 @@ describe("ModularChangeFamily integration", () => {
 				moveTagged.revision,
 			);
 
-			const moveAndSetValue = family.compose([tagChange(insert, tag2), moveTagged]);
-			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
+			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
+			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(composed);
 			const expected: Delta.Root = new Map([
 				[fieldA, []],
