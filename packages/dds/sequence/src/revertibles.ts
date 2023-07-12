@@ -389,10 +389,21 @@ function getSlidePosition(string: SharedString, lref: LocalReferencePosition, po
 		lref.slidingPreference,
 	);
 	return slide?.segment !== undefined &&
+		slide.offset !== undefined &&
 		string.getPosition(slide.segment) !== -1 &&
 		(pos < 0 || pos >= string.getLength())
-		? string.getPosition(slide.segment) + (slide.offset === undefined ? 0 : slide.offset)
+		? string.getPosition(slide.segment) + slide.offset
 		: pos;
+}
+
+function isValidRange(start: number, end: number, string: SharedString) {
+	return (
+		start >= 0 &&
+		start < string.getLength() &&
+		end >= 0 &&
+		end < string.getLength() &&
+		start <= end
+	);
 }
 
 function revertLocalAdd(
@@ -417,6 +428,7 @@ function revertLocalDelete(
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
+	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
 	const int = collection.add(startSlidePos, endSlidePos, type, props);
 
 	idMap.forEach((newId, oldId) => {
@@ -441,6 +453,7 @@ function revertLocalChange(
 	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
+	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
 	collection.change(id, startSlidePos, endSlidePos);
 
 	string.removeLocalReferencePosition(revertible.start);

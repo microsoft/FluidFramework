@@ -241,6 +241,46 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 	});
+	it("change interval out of removed range - local refs are out of range so revert should not happen", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add(5, 8, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 1, 3);
+		sharedString.removeRange(5, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 4, end: 4 }]);
+	});
+	it("change interval into removed range - revert should move interval out of detached case into remaining string", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 4, 8);
+		sharedString.removeRange(4, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
+	});
 });
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
@@ -292,7 +332,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection = sharedString.getIntervalCollection("test");
 		collection2 = sharedString2.getIntervalCollection("test");
 	});
-
 	it("interval change, range remove, ack, revert change interval", () => {
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
 			appendChangeIntervalToRevertibles(

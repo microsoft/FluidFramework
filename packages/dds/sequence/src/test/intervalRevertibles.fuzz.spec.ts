@@ -168,7 +168,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam);
+	const baseGenerator = makeOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
@@ -187,11 +187,11 @@ describe("IntervalCollection fuzz testing", () => {
 					weights: {
 						revertWeight: 2,
 						addText: 2,
-						removeRange: 0,
+						removeRange: 1,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 0,
+						changeProperties: 2,
 					},
 				}),
 			),
