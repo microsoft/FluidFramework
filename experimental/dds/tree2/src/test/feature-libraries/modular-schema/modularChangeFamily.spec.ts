@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { TUnsafe, Type, Static, TSchema } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -17,9 +16,6 @@ import {
 	ModularChangeset,
 	RevisionInfo,
 } from "../../../feature-libraries";
-// TODO: this is not the file being tests, importing it should not be required here.
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -35,7 +31,7 @@ import {
 	assertIsRevisionTag,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { makeCodecFamily, noopValidator } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	assertDeltaEqual,
@@ -46,33 +42,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
-
-type ValueChangeset = FieldKinds.ReplaceOp<number>;
-
-const valueHandler: FieldChangeHandler<ValueChangeset> = {
-	rebaser: FieldKinds.replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-
-	intoDelta: (change, deltaFromChild) =>
-		change === 0
-			? []
-			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
-			  ],
-
-	isEmpty: (change) => change === 0,
-};
-
-const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
-);
+import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -649,16 +619,6 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	const jsonValidatorFail = {
-		compile: <Schema extends TSchema>(schema: Schema) => {
-			return {
-				check: (data: unknown): data is Static<Schema> => false,
-			};
-		},
-	};
-	const dummyFamilyForExcetions = new ModularChangeFamily(fieldKinds, {
-		jsonValidator: jsonValidatorFail,
-	});
 	describe("Encoding", () => {
 		const encodingTestData: [string, ModularChangeset][] = [
 			["without constraint", rootChange1a],
@@ -667,7 +627,7 @@ describe("ModularChangeFamily", () => {
 			["without node field changes", rootChangeWithoutNodeFieldChanges],
 		];
 
-		makeEncodingTestSuite(family.codecs, encodingTestData, dummyFamilyForExcetions.codecs);
+		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});
 
 	it("build child change", () => {

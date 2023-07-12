@@ -90,6 +90,7 @@ export {
 	FieldAdapter,
 	TreeAdapter,
 	MapTree,
+	LocalCommitSource,
 } from "./core";
 
 export {

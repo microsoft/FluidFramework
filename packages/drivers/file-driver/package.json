@@ -32,7 +32,6 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
@@ -41,10 +40,9 @@
 		"@fluidframework/replay-driver": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.20.0",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0",
-		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
