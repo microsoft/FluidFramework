@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
@@ -21,17 +20,8 @@ import { describeNoCompat } from "@fluid-internal/test-version-utils";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
+// TODO: enable this test in "next" (after server versions get bumped)
 describe.skip("Pong", () => {
-	let clock: sinon.SinonFakeTimers;
-
-	before(() => {
-		clock = sinon.useFakeTimers();
-	});
-
-	after(() => {
-		clock.restore();
-	});
-
 	describeNoCompat("Pong", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
