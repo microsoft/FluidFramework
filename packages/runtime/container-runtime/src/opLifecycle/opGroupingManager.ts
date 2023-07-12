@@ -25,10 +25,6 @@ export class OpGroupingManager {
 		}
 
 		for (const message of batch.content) {
-			// Blob attaches cannot be grouped (grouped batching would hide metadata)
-			if (message.type === ContainerMessageType.BlobAttach) {
-				return batch;
-			}
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);

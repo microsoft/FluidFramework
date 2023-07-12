@@ -7,18 +7,21 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	IEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
 	TypedEventEmitter,
 	assert,
 	performance,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryProperties,
+	TelemetryEventCategory,
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+} from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetailsInternal,
@@ -98,7 +101,6 @@ import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
-import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -109,19 +111,16 @@ import {
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import {
-	initQuorumValuesFromCodeDetails,
-	getCodeDetailsFromQuorumValues,
-	QuorumProxy,
-} from "./quorum";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
-	OnlyValidTermValue,
 	IProtocolHandler,
+	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
+	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
@@ -985,6 +984,11 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
+
+			// There is no user for summarizer, so we need to ensure dispose is called
+			if (this.client.details.type === summarizerClientType) {
+				this.dispose(error);
+			}
 		}
 	}
 
@@ -1996,7 +2000,11 @@ export class Container
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
-				if (this.deltaManager.hasCheckpointSequenceNumber) {
+				// Need to check that we have already loaded and fetched the snapshot.
+				if (
+					this.deltaManager.hasCheckpointSequenceNumber &&
+					this._lifecycleState === "loaded"
+				) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
@@ -2230,7 +2238,7 @@ export class Container
 
 	private processSignal(message: ISignalMessage) {
 		// No clientId indicates a system signal message.
-		if (message.clientId === null) {
+		if (protocolHandlerShouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
@@ -2307,17 +2315,18 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const deltaManagerProxy = new DeltaManagerProxy(this._deltaManager);
-		const quorumProxy = new QuorumProxy(this.protocolHandler.quorum);
+		const getSpecifiedCodeDetails = () =>
+			(this.protocolHandler.quorum.get("code") ??
+				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
 			snapshot,
 			this._loadedFromVersion,
-			deltaManagerProxy,
+			this._deltaManager,
 			this.storageAdapter,
-			quorumProxy,
+			this.protocolHandler.quorum,
 			this.protocolHandler.audience,
 			loader,
 			(type, contents, batch, metadata) =>
@@ -2333,9 +2342,10 @@ export class Container
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => deltaManagerProxy.serviceConfiguration,
+			() => this._deltaManager.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
+			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
@@ -2343,8 +2353,6 @@ export class Container
 		);
 		this._lifecycleEvents.once("disposed", () => {
 			context.dispose();
-			quorumProxy.dispose();
-			deltaManagerProxy.dispose();
 		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
@@ -2388,7 +2396,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @internal
+ * @experimental
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2399,5 +2407,13 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): string;
+	getPendingLocalState?(): string;
+
+	/**
+	 * Closes the container and returns serialized local state intended to be
+	 * given to a newly loaded container.
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	closeAndGetPendingLocalState(): string;
 }

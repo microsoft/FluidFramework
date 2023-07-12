@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "2.0.0-internal.5.2.0",
+	"version": "2.0.0-internal.5.3.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -81,10 +81,10 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/test-loader-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.20.0",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0",
-		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.5.0.0",
+		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.5.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -109,6 +109,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false
+			}
+		}
 	}
 }

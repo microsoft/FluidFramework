@@ -595,6 +595,13 @@ class PropertyFactory {
 	}
 
 	/**
+	 * @returns {Array.<string>} Array of the names of the registered types.
+	 */
+	listRegisteredTypes() {
+		return Array.from(this._localPrimitivePropertiesAndTemplates.keys);
+	}
+
+	/**
 	 * Recursively parses the object of the specified type and returns the created
 	 * array of PropertySets Templates. It does the same thing as the registerFrom()
 	 * function, but it returns the array of templates instead of registering them.

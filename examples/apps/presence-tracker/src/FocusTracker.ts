@@ -6,8 +6,9 @@
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
-import { IFluidContainer, IMember } from "fluid-framework";
+import { IMember } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;
@@ -46,7 +47,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	};
 
 	constructor(
-		container: IFluidContainer,
+		container: IContainer,
 		public readonly audience: ITinyliciousAudience,
 		private readonly signaler: Signaler,
 	) {

@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.21.0",
+	"version": "0.22.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,13 +66,14 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^17.6.5",
-		"@commitlint/config-conventional": "^17.6.5",
+		"@commitlint/cli": "^17.6.6",
+		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
 		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/test-tools": "^0.2.158186",
-		"@microsoft/api-documenter": "^7.22.18",
-		"@microsoft/api-extractor": "^7.35.3",
+		"@microsoft/api-documenter": "^7.22.24",
+		"@microsoft/api-extractor": "^7.36.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^7.6.0",
@@ -86,7 +87,7 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^9.8.4",
+		"syncpack": "^9.8.6",
 		"typescript": "~4.5.5"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
@@ -97,7 +98,10 @@
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"eslint": "8.6.0"
-			}
+			},
+			"ignoreMissing": [
+				"fluid-framework"
+			]
 		},
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",

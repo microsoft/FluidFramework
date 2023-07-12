@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Value, Delta, UpPath, FieldKey } from "../tree";
+import { Delta, UpPath, FieldKey } from "../tree";
 
 /**
  * An object that can queried for document data that was deleted in prior revisions.
@@ -30,15 +30,6 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag =
 		index: number,
 		count: number,
 	): TTree[];
-
-	/**
-	 * @param revision - The revision at which the value of interest was overwritten.
-	 * @param path - The path of the node whose value was overwritten at the given `revision`.
-	 * Note that the path must match the original path of the node at the provided `revision`.
-	 * WARNING: This may change soon.
-	 * @returns The value on the node at the given `path` that was overwritten at the given `revision`.
-	 */
-	getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 /**

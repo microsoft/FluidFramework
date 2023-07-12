@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
 import {
 	GraphCommit,
 	RevisionTag,
@@ -358,6 +358,7 @@ describe("Branches", () => {
 
 	it("cannot be mutated after disposal", () => {
 		const branch = create();
+		const fork = branch.fork();
 		branch.dispose();
 
 		function assertDisposed(fn: () => void): void {
@@ -366,14 +367,14 @@ describe("Branches", () => {
 
 		// These methods are not valid to call after disposal
 		assertDisposed(() => branch.fork());
-		assertDisposed(() => branch.rebaseOnto(branch));
+		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
 		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());
 		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => branch.abortTransaction());
-		assertDisposed(() => branch.dispose());
+		assertDisposed(() => fork.merge(branch));
 	});
 
 	it("correctly report whether they are in the middle of a transaction", () => {
@@ -504,6 +505,48 @@ describe("Branches", () => {
 					"Cannot merge a non-revertible branch into a revertible branch",
 				),
 		);
+	});
+
+	describe("transitive fork event", () => {
+		/** Creates forks at various "depths" and returns the number of forks created */
+		function forkTransitive<T extends { fork(): T }>(forkable: T): number {
+			forkable.fork();
+			const fork = forkable.fork();
+			fork.fork();
+			fork.fork().fork();
+			return 5;
+		}
+
+		it("registers listener on transitive forks", () => {
+			const branch = create();
+			const forks = new Set<DefaultBranch>();
+			onForkTransitive(branch, (fork) => forks.add(fork));
+			const expected = forkTransitive(branch);
+			assert.equal(forks.size, expected);
+		});
+
+		it("deregisters all listeners", () => {
+			const branch = create();
+			let forkCount = 0;
+			const deregister = onForkTransitive(branch, () => (forkCount += 1));
+			deregister();
+			forkTransitive(branch);
+			assert.equal(forkCount, 0);
+		});
+
+		it("registers listener on forks created inside of the listener", () => {
+			const branch = create();
+			let forkCount = 0;
+			onForkTransitive(branch, () => {
+				forkCount += 1;
+				assert(branch.hasListeners("fork"));
+				if (forkCount <= 1) {
+					branch.fork();
+				}
+			});
+			branch.fork();
+			assert.equal(forkCount, 2);
+		});
 	});
 
 	/** Creates a new root branch */

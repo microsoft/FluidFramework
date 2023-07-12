@@ -68,7 +68,7 @@ export class OrdererManager implements core.IOrdererManager {
 
 		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
 			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			return Promise.reject(new Error("Invalid ordering service endpoint"));
+			throw new Error("Invalid ordering service endpoint");
 		}
 
 		switch (tenant.orderer.type) {
@@ -151,6 +151,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -163,6 +164,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaReplicationFactor,
 			kafkaMaxBatchSize,
 			kafkaSslCACertFilePath,
+			eventHubConnString,
 		);
 
 		const redisConfig = config.get("redis");
@@ -551,7 +553,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
-			socketTracker = new utils.WebSocketTracker();
+			socketTracker = customizations?.webSocketTracker ?? new utils.WebSocketTracker();
 			tokenRevocationManager =
 				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
 			await tokenRevocationManager.initialize().catch((error) => {
