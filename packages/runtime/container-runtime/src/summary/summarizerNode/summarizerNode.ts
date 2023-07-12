@@ -397,7 +397,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 			referenceSequenceNumber: number;
 			latestSummaryUpdated?: boolean;
 			wasSummaryTracked?: boolean;
-			message?: string;
 		} = {
 			proposalHandle,
 			summaryRefSeq,
