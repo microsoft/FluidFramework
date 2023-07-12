@@ -79,4 +79,5 @@
 		"**/*.log": true,
 		"**/DS_Store": true,
 	},
+	"git-blame.gitWebUrl": "",
 }
