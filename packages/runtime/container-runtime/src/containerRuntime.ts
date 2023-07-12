@@ -1079,11 +1079,31 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.innerDeltaManager = context.deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
+		const {
+			options,
+			clientDetails,
+			connected,
+			baseSnapshot,
+			// submitFn,
+			// submitBatchFn,
+			// submitSummaryFn,
+			// submitSignalFn,
+			disposeFn,
+			closeFn,
+			deltaManager,
+			quorum,
+			audience,
+			loader,
+			pendingLocalState,
+			// updateDirtyContainerState,
+			supportedFeatures,
+		} = context;
 
-		this.options = context.options;
-		this.clientDetails = context.clientDetails;
+		this.innerDeltaManager = deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+
+		this.options = options;
+		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		this._getClientId = () => context.clientId;
@@ -1099,14 +1119,14 @@ export class ContainerRuntime
 		};
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		this.disposeFn = context.disposeFn ?? context.closeFn;
+		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient
 			? this.disposeFn
 			: (error?: ICriticalContainerError) => {
-					context.closeFn(error);
+					closeFn(error);
 					// Also call disposeFn to retain functionality of runtime being disposed on close
-					context.disposeFn?.(error);
+					disposeFn?.(error);
 			  };
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
@@ -1141,7 +1161,9 @@ export class ContainerRuntime
 
 		this.messageAtLastSummary = metadata?.message;
 
-		this._connected = context.connected;
+		// Note that we only need to pull the *initial* connected state from the context.
+		// Later updates come through calls to setConnectionState.
+		this._connected = connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
@@ -1211,7 +1233,7 @@ export class ContainerRuntime
 
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+			supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
@@ -1220,7 +1242,7 @@ export class ContainerRuntime
 			this._flushMode = runtimeOptions.flushMode;
 		}
 
-		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -1236,7 +1258,7 @@ export class ContainerRuntime
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
 			gcOptions: this.runtimeOptions.gcOptions,
-			baseSnapshot: context.baseSnapshot,
+			baseSnapshot,
 			baseLogger: this.mc.logger,
 			existing,
 			metadata,
@@ -1259,7 +1281,7 @@ export class ContainerRuntime
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
 			// Summary reference sequence number, undefined if no summary yet
-			context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
@@ -1276,12 +1298,12 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
-		if (context.baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(context.baseSnapshot);
+		if (baseSnapshot) {
+			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
 		}
 
 		this.dataStores = new DataStores(
-			getSummaryForDatastores(context.baseSnapshot, metadata),
+			getSummaryForDatastores(baseSnapshot, metadata),
 			this,
 			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
@@ -1324,7 +1346,7 @@ export class ContainerRuntime
 		);
 
 		this.scheduleManager = new ScheduleManager(
-			context.deltaManager,
+			this.innerDeltaManager,
 			this,
 			() => this.clientId,
 			ChildLogger.create(this.logger, "ScheduleManager"),
@@ -1379,13 +1401,13 @@ export class ContainerRuntime
 			closeContainer: this.closeFn,
 		});
 
-		this._quorum = context.quorum;
+		this._quorum = quorum;
 		this._quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._audience = context.audience!;
+		this._audience = audience!;
 
 		this.summaryStateUpdateMethod = this.mc.config.getString(
 			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
@@ -1401,7 +1423,7 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			context.attachState !== AttachState.Attached ||
+			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
@@ -1411,13 +1433,13 @@ export class ContainerRuntime
 			const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
 			const orderedClientCollection = new OrderedClientCollection(
 				orderedClientLogger,
-				context.deltaManager,
-				context.quorum,
+				this.innerDeltaManager,
+				this._quorum,
 			);
 			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				orderedClientCollection,
-				electedSummarizerData ?? context.deltaManager.lastSequenceNumber,
+				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 			);
 
@@ -1470,7 +1492,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(context.loader),
+					this.formRequestSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1544,7 +1566,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(context.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
