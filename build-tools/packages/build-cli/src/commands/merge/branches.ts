@@ -72,29 +72,22 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
-		this.verbose(flags.source);
-		this.verbose(flags.target);
-
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
 
 		if (this.gitRepo === undefined) {
-			this.verbose(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
+			this.log(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
-		this.verbose(`owner: ${owner} and repo: ${repo}`);
+		this.log(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
-		this.verbose(`initial branch: ${this.initialBranch}`);
-
 		this.remote = flags.remote;
-
-		this.verbose(`remote branch: ${this.remote}`);
 
 		const prExists: boolean = await pullRequestExists(
 			flags.pat,
@@ -106,18 +99,16 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
-			this.exit();
+			this.exit(-1);
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
-
-		this.verbose(`pr exists: ${prExists}`);
 
 		const lastMergedCommit = await this.gitRepo.getMergeBase(
 			`${flags.source}`,
 			`refs/remotes/${this.remote}/${flags.target}`,
 		);
-		this.verbose(
+		this.log(
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
 
@@ -126,10 +117,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			`${flags.source}`,
 		);
 
-		this.verbose(`Unmerged commit list: ${unmergedCommitList}`);
+		this.log(`Unmerged commit list: ${unmergedCommitList}`);
 
 		if (unmergedCommitList.length === 0) {
-			this.verbose(
+			this.log(
 				chalk.green(
 					`${flags.source} and ${flags.target} branches are in sync. No commits to merge`,
 				),
@@ -137,7 +128,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.exit(0);
 		}
 
-		this.verbose(
+		this.log(
 			`There are ${unmergedCommitList.length} unmerged commits between the ${flags.source} and ${flags.target} branches`,
 		);
 
@@ -195,7 +186,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const branchName = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
 		this.branchesToCleanup.push(branchName);
 
-		this.verbose(
+		this.log(
 			`Creating and checking out branch: ${branchName} at commit ${shortCommit(
 				prHeadCommit,
 			)}`,
@@ -286,7 +277,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			reviewers: flags.reviewers,
 		};
 
-		this.verbose(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
+		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
 
 		const prNumber = await createPullRequest(prObject, this.logger);
 		this.verbose(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);

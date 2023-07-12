@@ -203,7 +203,7 @@ export class Repository {
 			console.log(`Git merge result: ${mergeResult}`);
 			await this.git.merge(["--abort"]);
 		} catch (error: any) {
-			console.log(`in catch: ${error}`);
+			console.log(`inside catch: ${error}`);
 			await this.git.merge(["--abort"]);
 			return false;
 		}

@@ -10,6 +10,7 @@ env:
   USERNAME: msfluid-bot
   EMAIL: banana-bot@outlook.com
   BATCH: 10
+  REVIEWER1: sonalideshpandemsft
 
 jobs:
   sync-branches:
@@ -38,4 +39,4 @@ jobs:
           echo "$(pwd)" >> $GITHUB_PATH
       
       - name: Run merge command
-        run: flub merge branches -p ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --creds $EMAIL --creds $USERNAME --reviewers sonalideshpandemsft -v
+        run: flub merge branches -p ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --creds $EMAIL --creds $USERNAME --reviewers $REVIEWER1 -v
