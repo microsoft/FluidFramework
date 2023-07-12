@@ -49,10 +49,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Modify": {
 					const modify = deltaFromChild(mark.changes);
-					if (
-						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
-						modify.fields !== undefined
-					) {
+					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
 						out.pushOffset(1);

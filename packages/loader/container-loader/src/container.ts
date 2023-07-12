@@ -2003,7 +2003,11 @@ export class Container
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
-				if (this.deltaManager.hasCheckpointSequenceNumber) {
+				// Need to check that we have already loaded and fetched the snapshot.
+				if (
+					this.deltaManager.hasCheckpointSequenceNumber &&
+					this._lifecycleState === "loaded"
+				) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
