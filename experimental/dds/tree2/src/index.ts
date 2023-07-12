@@ -90,6 +90,7 @@ export {
 	FieldAdapter,
 	TreeAdapter,
 	MapTree,
+	LocalCommitSource,
 } from "./core";
 
 export {
@@ -271,7 +272,6 @@ export {
 	VisitorBindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,

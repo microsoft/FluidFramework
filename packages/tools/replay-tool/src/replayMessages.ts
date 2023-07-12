@@ -6,7 +6,8 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -380,10 +381,10 @@ export class ReplayTool {
 
 	private async setup() {
 		if (this.args.inDirName === undefined) {
-			return Promise.reject(new Error("Please provide --indir argument"));
+			throw new Error("Please provide --indir argument");
 		}
 		if (!fs.existsSync(this.args.inDirName)) {
-			return Promise.reject(new Error("File does not exist"));
+			throw new Error("File does not exist");
 		}
 
 		this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -438,9 +439,7 @@ export class ReplayTool {
 				);
 			}
 			if (this.mainDocument.currentOp > this.args.to) {
-				return Promise.reject(
-					new Error("--to argument is below snapshot starting op. Nothing to do!"),
-				);
+				throw new Error("--to argument is below snapshot starting op. Nothing to do!");
 			}
 		}
 

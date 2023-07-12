@@ -67,6 +67,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
@@ -86,9 +87,9 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.20.0",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.20.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/js-yaml": "^4.0.5",
 		"@types/mocha": "^9.1.1",

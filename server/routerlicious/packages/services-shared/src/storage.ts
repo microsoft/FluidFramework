@@ -465,7 +465,7 @@ export class DocumentStorage implements IDocumentStorage {
 				// Duplicate key errors are ignored
 				if (error.code !== 11000) {
 					// Needs to be a full rejection here
-					return Promise.reject(error);
+					throw error;
 				}
 			});
 			winston.info(`Inserted ${dbOps.length} ops into deltas DB`);

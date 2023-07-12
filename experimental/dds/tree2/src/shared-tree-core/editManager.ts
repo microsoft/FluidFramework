@@ -23,7 +23,7 @@ import {
 	UndoRedoManager,
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
-import { getChangeReplaceType, SharedTreeBranch } from "./branch";
+import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
@@ -147,8 +147,8 @@ export class EditManager<
 		// never evict the head. That sounds like a good thing, but because the trunk has a privileged
 		// relationship with the local branch (the local branch doesn't undergo normal rebasing), we can
 		// actually safely evict that last commit (assuming there are no other outstanding branches).
-		// TODO: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
-		this.localBranch.on("fork", (fork) => this.registerBranch(fork));
+		// TODO:#4918: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
+		onForkTransitive(this.localBranch, (fork) => this.registerBranch(fork));
 	}
 
 	/**
@@ -187,8 +187,6 @@ export class EditManager<
 
 		// Record the sequence number of the branch's base commit on the trunk
 		const trunkBase = { sequenceNumber: trackBranch(branch) };
-		// Whenever the branch forks, register the new fork
-		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offRebase = branch.on("change", (args) => {
 			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
@@ -200,7 +198,6 @@ export class EditManager<
 		const offDispose = branch.on("dispose", () => {
 			untrackBranch(branch, trunkBase.sequenceNumber);
 			this.trimTrunk();
-			offFork();
 			offRebase();
 			offDispose();
 		});
@@ -283,8 +280,12 @@ export class EditManager<
 		} else {
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
-				this.trunkBranches.isEmpty,
-				0x672 /* Expected no registered branches when clearing trunk */,
+				this.trunkBranches.isEmpty ||
+					// This handles the case when there are branches but they are already based off of the origin commit.
+					// TODO:#4918: Investigate if we can handle this case more gracefully by including the origin commit in `sequenceMap`
+					(this.trunkBranches.size === 1 &&
+						this.trunkBranches.minKey() === minimumPossibleSequenceNumber),
+				"Expected no outstanding branches when clearing trunk",
 			);
 			this.trunk.setHead(this.trunkBase);
 			this.sequenceMap.clear();
