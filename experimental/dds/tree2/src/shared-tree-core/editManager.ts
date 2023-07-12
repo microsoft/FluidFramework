@@ -187,7 +187,6 @@ export class EditManager<
 
 		// Record the sequence number of the branch's base commit on the trunk
 		const trunkBase = { sequenceNumber: trackBranch(branch) };
-		// Whenever the branch forks, register the new fork
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offRebase = branch.on("change", (args) => {
 			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
