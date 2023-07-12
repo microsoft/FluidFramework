@@ -57,7 +57,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
 	private firstVersionCall = true;
-	private _isFirstSnapshotFromCache: boolean = false;
+	private _isFirstSnapshotFromNetwork: boolean | undefined;
 	private readonly documentId: string;
 	private readonly snapshotUrl: string | undefined;
 	private readonly attachmentPOSTUrl: string | undefined;
@@ -94,8 +94,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 	}
 
-	public get isFirstSnapshotFromCache() {
-		return this._isFirstSnapshotFromCache;
+	public get isFirstSnapshotFromNetwork() {
+		return this._isFirstSnapshotFromNetwork;
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -340,8 +340,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
-					if (this.firstVersionCall && method === "cache") {
-						this._isFirstSnapshotFromCache = true;
+					if (this.firstVersionCall && method === "network" && !this.hostPolicy.summarizerClient) {
+						this._isFirstSnapshotFromNetwork = true;
 					}
 					const prefetchStartTime: number | undefined = (
 						retrievedSnapshot as IPrefetchSnapshotContents
