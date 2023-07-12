@@ -240,12 +240,12 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		onChangeSelection(Number(data.optionText));
-		usageLogger?.sendTelemetryEvent({ 
+		usageLogger?.sendTelemetryEvent({
 			eventName: "MaxTelemetryEventsUpdated",
 			details: {
-				maxEvents: data.optionText
-			}
-		 });
+				maxEvents: data.optionText,
+			},
+		});
 	};
 
 	return (
@@ -609,8 +609,8 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 								setSelectedEvent(item);
 								usageLogger?.sendTelemetryEvent({
 									eventName: "TelemetryEventClicked",
-									details:{
-										telemetryEventName:item.eventName
+									details: {
+										telemetryEventName: item.eventName,
 									},
 								});
 							}}
