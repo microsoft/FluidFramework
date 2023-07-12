@@ -58,6 +58,9 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
  * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
  * @returns the hierarchical tree
+ *
+ * @remarks
+ * This function is exported as two different names for backwards-compatibility.
  */
 export function buildGitTreeHierarchy(
 	flatTree: git.ITree,
@@ -92,3 +95,11 @@ export function buildGitTreeHierarchy(
 
 	return root;
 }
+
+/**
+ * The buildGitTreeHierarchy was misspelled when originally implemented, so it is exported here with the misspelled name
+ * so that code that expects the bad name can find it.
+ *
+ * @deprecated - Use buildGitTreeHierarchy instead.
+ */
+export { buildGitTreeHierarchy as buildGitTreeHeirarchy };
