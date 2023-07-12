@@ -136,12 +136,14 @@ export function appendDeleteIntervalToRevertibles(
 		interval.start.getOffset(),
 		startType,
 		undefined,
+		interval.start.slidingPreference,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
 		endType,
 		undefined,
+		interval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.DELETE,
@@ -184,12 +186,14 @@ export function appendChangeIntervalToRevertibles(
 		previousInterval.start.getOffset(),
 		startType,
 		undefined,
+		previousInterval.start.slidingPreference,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
 		endType,
 		undefined,
+		previousInterval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.CHANGE,
