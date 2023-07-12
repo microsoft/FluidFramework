@@ -16,7 +16,7 @@ export class RemoteMessageProcessor {
 		private readonly opGroupingManager: OpGroupingManager,
 	) {}
 
-	public get partialMessages(): ReadonlyMap<string | null, string[]> {
+	public get partialMessages(): ReadonlyMap<string, string[]> {
 		return this.opSplitter.chunks;
 	}
 

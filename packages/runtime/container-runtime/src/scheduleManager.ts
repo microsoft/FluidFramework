@@ -34,7 +34,7 @@ type IRuntimeMessageMetadata =
  */
 export class ScheduleManager {
 	private readonly deltaScheduler: DeltaScheduler;
-	private batchClientId: string | null | undefined;
+	private batchClientId: string | undefined;
 	private hitError = false;
 
 	constructor(
@@ -62,7 +62,8 @@ export class ScheduleManager {
 			this.deltaScheduler.batchBegin(message);
 
 			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-			this.batchClientId = batch ? message.clientId : undefined;
+			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			this.batchClientId = batch ? message.clientId as string : undefined;
 		}
 	}
 
@@ -98,7 +99,7 @@ export class ScheduleManager {
  */
 class ScheduleManagerCore {
 	private pauseSequenceNumber: number | undefined;
-	private currentBatchClientId: string | null | undefined;
+	private currentBatchClientId: string | undefined;
 	private localPaused = false;
 	private timePaused = 0;
 	private batchCount = 0;
