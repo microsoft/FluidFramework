@@ -159,7 +159,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Small
+      pool: Large
       strategy:
         runOnce:
           deploy:
