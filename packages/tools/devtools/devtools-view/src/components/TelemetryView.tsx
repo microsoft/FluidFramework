@@ -378,10 +378,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		const category = data.optionText !== undefined ? data.optionText : "";
 		setSelectedCategory(category);
+		const categories: string[] = [];
+		categories.push(category);
 		usageLogger?.sendTelemetryEvent({
 			eventName: "TelemetryEventCategoryChanged",
 			details: {
-				categories: ["type1", "type2"]
+				categories,
 			},
 		});
 	};
@@ -433,8 +435,13 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		if (matchingOption) {
 			const search = data.optionText !== undefined ? data.optionText : "";
 			setCustomSearch(search);
+			const eventNames = [];
+			eventNames.push(data.optionText);
 			usageLogger?.sendTelemetryEvent({
-				eventName: `TelemetryEventNameFilterTo${[data.optionText]}`,
+				eventName: "TelemetryEventNameFilter",
+				details: {
+					eventNames,
+				},
 			});
 		} else {
 			setCustomSearch("");
