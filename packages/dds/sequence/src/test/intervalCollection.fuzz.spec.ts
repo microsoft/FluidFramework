@@ -197,13 +197,13 @@ export function makeOperationGenerator(
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
-			alwaysLeaveChar? removeRangeLeaveChar : removeRange,
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
 			usableWeights.removeRange,
-			alwaysLeaveChar?
-				lengthSatisfies((length) => {
-					return length > 1;
-				}) :
-				hasNonzeroLength,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+				  })
+				: hasNonzeroLength,
 		],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
