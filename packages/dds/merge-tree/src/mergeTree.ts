@@ -554,9 +554,8 @@ export function findRootMergeBlock(
  * SlideOnRemove references is removed.
  * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
  * valid segment (i.e. the tree is empty).
- * @internal
  */
-export function getSlideToSegment(
+function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
@@ -598,6 +597,30 @@ export function getSlideToSegment(
 	}
 
 	return result.seg;
+}
+
+/**
+ * Returns the position to slide a reference to if a slide is required.
+ * @param segoff - The segment and offset to slide from
+ * @returns - segment and offset to slide the reference to
+ */
+export function getSlideToSegoff(
+	segoff: { segment: ISegment | undefined; offset: number | undefined },
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+) {
+	if (segoff.segment === undefined) {
+		return segoff;
+	}
+	const segment = getSlideToSegment(segoff.segment, slidingPreference);
+	if (segment === segoff.segment) {
+		return segoff;
+	}
+	const offset =
+		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	return {
+		segment,
+		offset,
+	};
 }
 
 /**

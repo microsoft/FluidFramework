@@ -60,7 +60,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree, getSlideToSegment } from "./mergeTree";
+import { MergeTree, getSlideToSegoff } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
@@ -1079,21 +1079,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Returns the position to slide a reference to if a slide is required.
 	 * @param segoff - The segment and offset to slide from
 	 * @returns - segment and offset to slide the reference to
+	 * @deprecated Use getSlideToSegoff function instead.
 	 */
 	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		if (segoff.segment === undefined) {
-			return segoff;
-		}
-		const segment = getSlideToSegment(segoff.segment);
-		if (segment === segoff.segment) {
-			return segoff;
-		}
-		const offset =
-			segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
-		return {
-			segment,
-			offset,
-		};
+		return getSlideToSegoff(segoff);
 	}
 
 	getPropertiesAtPosition(pos: number) {

@@ -46,7 +46,7 @@ export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
-	getSlideToSegment,
+	getSlideToSegoff,
 } from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
