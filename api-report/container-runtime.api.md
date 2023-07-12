@@ -136,7 +136,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get flushMode(): FlushMode;
     readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
-    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;

@@ -809,8 +809,9 @@ export class ContainerRuntime
 
 	public readonly options: ILoaderOptions;
 
+	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
-		return this.context.clientId;
+		return this._getClientId();
 	}
 
 	public readonly clientDetails: IClientDetails;
@@ -844,8 +845,9 @@ export class ContainerRuntime
 		return this.registry;
 	}
 
+	private readonly _getAttachState: () => AttachState;
 	public get attachState(): AttachState {
-		return this.context.attachState;
+		return this._getAttachState();
 	}
 
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
@@ -1084,6 +1086,17 @@ export class ContainerRuntime
 		this.clientDetails = context.clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+		this._getClientId = () => context.clientId;
+		this._getAttachState = () => context.attachState;
+		this.getAbsoluteUrl = async (relativeUrl: string) => {
+			if (context.getAbsoluteUrl === undefined) {
+				throw new Error("Driver does not implement getAbsoluteUrl");
+			}
+			if (this.attachState !== AttachState.Attached) {
+				return undefined;
+			}
+			return context.getAbsoluteUrl(relativeUrl);
+		};
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = context.disposeFn ?? context.closeFn;
@@ -2413,15 +2426,7 @@ export class ContainerRuntime
 		return summarizeResult.summary;
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-		if (this.context.getAbsoluteUrl === undefined) {
-			throw new Error("Driver does not implement getAbsoluteUrl");
-		}
-		if (this.attachState !== AttachState.Attached) {
-			return undefined;
-		}
-		return this.context.getAbsoluteUrl(relativeUrl);
-	}
+	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 
 	private async summarizeInternal(
 		fullTree: boolean,
