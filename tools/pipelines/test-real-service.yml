@@ -37,7 +37,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: andreiiacob-test-pool
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
@@ -52,7 +52,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: andreiiacob-test-pool
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
@@ -84,7 +84,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: andreiiacob-test-pool
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
@@ -115,7 +115,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: andreiiacob-test-pool
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
@@ -146,7 +146,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: andreiiacob-test-pool
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)

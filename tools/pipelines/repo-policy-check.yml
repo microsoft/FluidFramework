@@ -16,7 +16,7 @@ pr:
 - release/*
 
 pool:
-  Small
+  andreiiacob-test-pool
 
 variables:
 - name: skipComponentGovernanceDetection

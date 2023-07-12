@@ -123,7 +123,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: andreiiacob-test-pool
       steps:
         - checkout: none
         - script: |
@@ -145,7 +145,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: andreiiacob-test-pool
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -292,7 +292,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: andreiiacob-test-pool
   dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site

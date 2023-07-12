@@ -160,7 +160,7 @@ stages:
       - template: templates/include-test-perf-benchmarks.yml
         parameters:
           testWorkspace: ${{ variables.testWorkspace }}
-          poolBuild: Small
+          poolBuild: andreiiacob-test-pool
           customSteps:
 
           - task: Bash@3
