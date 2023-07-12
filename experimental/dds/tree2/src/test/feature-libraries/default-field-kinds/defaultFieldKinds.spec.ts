@@ -10,9 +10,13 @@ import {
 	NodeChangeset,
 	CrossFieldManager,
 } from "../../../feature-libraries";
-// Allow import from file being tested.
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
+import {
+	ValueFieldEditor,
+	valueChangeHandler,
+	valueFieldEditor,
+	// Allow import from file being tested.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
 import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
@@ -55,10 +59,7 @@ describe("defaultFieldKinds", () => {
 					wasEmpty: false,
 				},
 			};
-			assert.deepEqual(
-				FieldKinds.value.changeHandler.editor.set(testTreeCursor("tree1"), brand(1)),
-				expected,
-			);
+			assert.deepEqual(valueFieldEditor.set(testTreeCursor("tree1"), brand(1)), expected);
 		});
 	});
 
@@ -66,8 +67,8 @@ describe("defaultFieldKinds", () => {
 	// These tests are covering value field usage patterns of optional field's rebaser (which value field uses).
 	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
 	describe("value field rebaser", () => {
-		const fieldHandler: FieldChangeHandler<OptionalChangeset, FieldKinds.ValueFieldEditor> =
-			FieldKinds.value.changeHandler;
+		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
+			valueChangeHandler;
 
 		const childChange1: OptionalChangeset = { childChange: nodeChange1 };
 		const childChange2: OptionalChangeset = { childChange: nodeChange2 };
