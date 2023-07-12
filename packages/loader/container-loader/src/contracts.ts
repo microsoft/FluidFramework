@@ -148,8 +148,6 @@ export interface IConnectionManagerFactoryArgs {
 
 	/**
 	 * Called whenever ping/pong messages are roundtripped on connection.
-	 *
-	 * @deprecated No replacement API intended.
 	 */
 	readonly pongHandler: (latency: number) => void;
 
