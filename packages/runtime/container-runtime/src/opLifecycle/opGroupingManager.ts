@@ -19,8 +19,8 @@ export class OpGroupingManager {
 
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
-	public groupBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
-		if (batch.content.length < 2 || !this.groupedBatchingEnabled || disableGroupedBatching) {
+	public groupBatch(batch: IBatch): IBatch {
+		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
 			return batch;
 		}
 

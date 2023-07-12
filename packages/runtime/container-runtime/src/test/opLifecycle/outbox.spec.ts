@@ -832,12 +832,11 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.BlobAttach, "4"),
 		];
 
-		// submit will call submitBlobAttach depending on message type
-		outbox.submit(messages[0]);
+		outbox.submitBlobAttach(messages[0]);
 		outbox.submit(messages[1]);
 		outbox.submitBlobAttach(messages[2]);
 		outbox.submit(messages[3]);
-		outbox.submit(messages[4]);
+		outbox.submitBlobAttach(messages[4]);
 
 		outbox.flush();
 		assert.deepEqual(

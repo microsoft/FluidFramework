@@ -13,7 +13,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ICompressionRuntimeOptions } from "../containerRuntime";
+import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
 	BatchManager,
@@ -175,24 +175,7 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		if (message.type === ContainerMessageType.BlobAttach) {
-			return this.submitBlobAttach(message);
-		}
-
-		if (
-			!this.mainBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.contents?.length ?? 0,
-				batchSize: this.mainBatch.contentSizeInBytes,
-				count: this.mainBatch.length,
-				limit: this.mainBatch.options.hardLimit,
-			});
-		}
+		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
@@ -209,20 +192,8 @@ export class Outbox {
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
 			this.flushInternal(this.attachFlowBatch);
-			if (
-				!this.attachFlowBatch.push(
-					message,
-					this.isContextReentrant(),
-					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				)
-			) {
-				throw new GenericError("BatchTooLarge", /* error */ undefined, {
-					opSize: message.contents?.length ?? 0,
-					batchSize: this.attachFlowBatch.contentSizeInBytes,
-					count: this.attachFlowBatch.length,
-					limit: this.attachFlowBatch.options.hardLimit,
-				});
-			}
+
+			this.addMessageToBatchManager(this.attachFlowBatch, message);
 		}
 
 		// If compression is enabled, we will always successfully receive
@@ -241,20 +212,7 @@ export class Outbox {
 	public submitBlobAttach(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		if (
-			!this.blobAttachBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.contents?.length ?? 0,
-				batchSize: this.blobAttachBatch.contentSizeInBytes,
-				count: this.blobAttachBatch.length,
-				limit: this.blobAttachBatch.options.hardLimit,
-			});
-		}
+		this.addMessageToBatchManager(this.blobAttachBatch, message);
 
 		// If compression is enabled, we will always successfully receive
 		// blobAttach ops and compress then send them at the next JS turn, regardless
@@ -266,6 +224,23 @@ export class Outbox {
 			this.params.config.compressionOptions.minimumBatchSizeInBytes
 		) {
 			this.flushInternal(this.blobAttachBatch);
+		}
+	}
+
+	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
+		if (
+			!batchManager.push(
+				message,
+				this.isContextReentrant(),
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				opSize: message.contents?.length ?? 0,
+				batchSize: batchManager.contentSizeInBytes,
+				count: batchManager.length,
+				limit: batchManager.options.hardLimit,
+			});
 		}
 	}
 
@@ -354,11 +329,11 @@ export class Outbox {
 			this.params.containerContext.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return this.params.groupingManager.groupBatch(batch, disableGroupedBatching);
+			return disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch);
 		}
 
 		const compressedBatch = this.params.compressor.compressBatch(
-			this.params.groupingManager.groupBatch(batch, disableGroupedBatching),
+			disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch),
 		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
