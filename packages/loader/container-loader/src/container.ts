@@ -1061,6 +1061,11 @@ export class Container
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
+		if (this.closed || this._disposed) {
+			throw new UsageError(
+				"Pending state cannot be retried if the container is closed or disposed",
+			);
+		}
 		assert(
 			this.attachState === AttachState.Attached,
 			0x0d1 /* "Container should be attached before close" */,
