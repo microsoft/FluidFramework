@@ -98,7 +98,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
-    get clientDetails(): IClientDetails;
+    readonly clientDetails: IClientDetails;
     // (undocumented)
     get clientId(): string | undefined;
     // (undocumented)
@@ -180,7 +180,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
-    get options(): ILoaderOptions;
+    readonly options: ILoaderOptions;
     // (undocumented)
     orderSequentially<T>(callback: () => T): T;
     // (undocumented)

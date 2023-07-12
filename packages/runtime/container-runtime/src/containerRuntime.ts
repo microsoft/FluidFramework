@@ -807,17 +807,13 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public get options(): ILoaderOptions {
-		return this.context.options;
-	}
+	public readonly options: ILoaderOptions;
 
 	public get clientId(): string | undefined {
 		return this.context.clientId;
 	}
 
-	public get clientDetails(): IClientDetails {
-		return this.context.clientDetails;
-	}
+	public readonly clientDetails: IClientDetails;
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
@@ -1099,6 +1095,9 @@ export class ContainerRuntime
 		this.innerDeltaManager = context.deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
+		this.options = context.options;
+		this.clientDetails = context.clientDetails;
+
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		let loadSummaryNumber: number;
@@ -1223,7 +1222,7 @@ export class ContainerRuntime
 			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
 		}
 
-		this.isSummarizerClient = context.clientDetails.type === summarizerClientType;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 
 		this.garbageCollector = GarbageCollector.create({
@@ -1436,9 +1435,7 @@ export class ContainerRuntime
 							() => this.innerDeltaManager.active,
 						),
 				);
-			} else if (
-				SummarizerClientElection.clientDetailsPermitElection(context.clientDetails)
-			) {
+			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
