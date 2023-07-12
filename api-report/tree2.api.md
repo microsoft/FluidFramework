@@ -166,7 +166,6 @@ export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 export const BindingType: {
     readonly Delete: "delete";
     readonly Insert: "insert";
-    readonly SetValue: "setValue";
     readonly Invalidation: "invalidation";
     readonly Batch: "batch";
 };
@@ -1088,6 +1087,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
+    merge(view: SharedTreeView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
@@ -1528,8 +1528,6 @@ export interface OperationBinderEvents {
     delete(context: DeleteBindingContext): void;
     // (undocumented)
     insert(context: InsertBindingContext): void;
-    // (undocumented)
-    setValue(context: SetValueBindingContext): void;
 }
 
 // @alpha (undocumented)
@@ -1606,8 +1604,6 @@ export interface RangeEntry<T> {
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
     getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-    // (undocumented)
-    getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 // @alpha
@@ -1819,16 +1815,6 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @alpha
-export interface SetValueBindingContext extends BindingContext {
-    // (undocumented)
-    readonly path: UpPath;
-    // (undocumented)
-    readonly type: typeof BindingType.SetValue;
-    // (undocumented)
-    readonly value: TreeValue;
-}
-
-// @alpha
 export class SharedTreeFactory implements IChannelFactory {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
@@ -1861,11 +1847,13 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
-    merge(fork: SharedTreeView): void;
+    merge(view: SharedTreeView): void;
+    // (undocumented)
+    merge(view: SharedTreeView, disposeView: boolean): void;
     // (undocumented)
     readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
-    rebase(fork: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
     // (undocumented)
     redo(): void;
@@ -2269,7 +2257,7 @@ export interface ViewEvents {
 }
 
 // @alpha
-export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
