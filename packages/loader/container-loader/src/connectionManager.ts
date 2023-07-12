@@ -47,6 +47,7 @@ import {
 import {
 	ITelemetryLoggerExt,
 	TelemetryLogger,
+	isFluidError,
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
@@ -614,7 +615,15 @@ export class ConnectionManager implements IConnectionManager {
 					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
 					await new Promise<void>((resolve) => {
 						setTimeout(resolve, delayMs);
-						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+						// If the error has some status code, it means we probably reached to endpoint and got some error. In that case
+						// set the max time to be 8s as we want to retry at faster pace. Otherwise, wait for MaxReconnectDelayInMs at max.
+						delayMs = Math.min(
+							delayMs * 2,
+							isFluidError(origError) &&
+								origError.getTelemetryProperties().statusCode !== undefined
+								? 8000
+								: MaxReconnectDelayInMs,
+						);
 					});
 				}
 
