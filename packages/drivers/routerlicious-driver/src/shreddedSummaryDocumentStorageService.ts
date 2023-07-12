@@ -10,7 +10,7 @@ import {
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHeirarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
@@ -125,7 +125,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				return response;
 			},
 		);
-		const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHeirarchy(rawTree, this.blobsShaCache, true);
 		await this.snapshotTreeCache?.put(this.getCacheKey(tree.id), {
 			id: requestVersion.id,
 			snapshotTree: tree,

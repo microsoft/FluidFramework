@@ -69,7 +69,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
+		"@fluidframework/protocol-base": "^1.0.0-173913",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"abort-controller": "^3.0.0",
