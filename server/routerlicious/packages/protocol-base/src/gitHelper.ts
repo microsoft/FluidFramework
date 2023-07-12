@@ -100,6 +100,12 @@ export function buildGitTreeHierarchy(
  * The buildGitTreeHierarchy was misspelled when originally implemented, so it is exported here with the misspelled name
  * so that code that expects the bad name can find it.
  *
- * @deprecated - Use buildGitTreeHierarchy instead.
+ * @deprecated Use buildGitTreeHierarchy instead.
  */
-export { buildGitTreeHierarchy as buildGitTreeHeirarchy };
+export function buildGitTreeHeirarchy(
+	flatTree: git.ITree,
+	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
+	removeAppTreePrefix = false,
+): ISnapshotTreeEx {
+	return buildGitTreeHierarchy(flatTree, blobsShaToPathCache, removeAppTreePrefix);
+}
