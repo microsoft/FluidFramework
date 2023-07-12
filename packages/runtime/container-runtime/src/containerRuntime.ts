@@ -1061,6 +1061,11 @@ export class ContainerRuntime
 	private readonly isSummarizerClient: boolean;
 
 	/**
+	 * The id of the version used to initially load this runtime, or undefined if it's newly created.
+	 */
+	private readonly loadedFromVersionId: string | undefined;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1219,6 +1224,7 @@ export class ContainerRuntime
 		}
 
 		this.isSummarizerClient = context.clientDetails.type === summarizerClientType;
+		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
@@ -2892,7 +2898,7 @@ export class ContainerRuntime
 			} else if (lastAck === undefined) {
 				summaryContext = {
 					proposalHandle: undefined,
-					ackHandle: this.context.getLoadedFromVersion()?.id,
+					ackHandle: this.loadedFromVersionId,
 					referenceSequenceNumber: summaryRefSeqNum,
 				};
 			} else {
