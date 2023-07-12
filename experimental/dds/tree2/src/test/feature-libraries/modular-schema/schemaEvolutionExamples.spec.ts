@@ -9,14 +9,12 @@ import {
 	FieldSchema,
 	FullSchemaPolicy,
 	SchemaCollection,
-	allowsFieldSuperset,
-	allowsTreeSuperset,
 	ViewSchema,
 	SchemaBuilder,
-	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/modular-schema";
-
+	FieldKinds,
+	defaultSchemaPolicy,
+	emptyField,
+} from "../../../feature-libraries";
 import {
 	treeSchema,
 	fieldSchema,
@@ -36,7 +34,8 @@ import {
 	rootFieldKey,
 } from "../../../core";
 import { brand } from "../../../util";
-import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPolicy> {
 	public clone(): TestSchemaRepository {
@@ -108,8 +107,8 @@ describe("Schema Evolution Examples", () => {
 	const pointIdentifier: TreeSchemaIdentifier = brand("a68c1750-9fba-4b6e-8643-9d830e271c05");
 	const numberIdentifier: TreeSchemaIdentifier = brand("08b4087a-da53-45d1-86cd-15a2948077bf");
 
-	const number = contentTypesBuilder.primitive(numberIdentifier, ValueSchema.Number);
-	const codePoint = contentTypesBuilder.primitive("Primitive.CodePoint", ValueSchema.Number);
+	const number = contentTypesBuilder.leaf(numberIdentifier, ValueSchema.Number);
+	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct(textIdentifier, {

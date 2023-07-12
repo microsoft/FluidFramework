@@ -17,8 +17,7 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties as ITelemetryProperties_2 } from '@fluidframework/common-definitions';
-import { Lazy } from '@fluidframework/common-utils';
+import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -110,10 +109,10 @@ export interface IFluidErrorAnnotations {
 
 // @public
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties_2) => void;
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties_2;
+    getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;

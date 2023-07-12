@@ -44,7 +44,7 @@ export class CheckpointManager {
 
 		// No recovery once entering an error state
 		if (this.error) {
-			return Promise.reject(this.error);
+			throw this.error;
 		}
 
 		// Exit early if already caught up
@@ -103,7 +103,7 @@ export class CheckpointManager {
 				if (this.pendingCheckpoint) {
 					this.pendingCheckpoint.reject(this.error);
 				}
-				return Promise.reject(error);
+				throw error;
 			},
 		);
 	}

@@ -166,7 +166,6 @@ export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 export const BindingType: {
     readonly Delete: "delete";
     readonly Insert: "insert";
-    readonly SetValue: "setValue";
     readonly Invalidation: "invalidation";
     readonly Batch: "batch";
 };
@@ -483,6 +482,7 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     readonly [contextSymbol]: EditableTreeContext;
     [getField](fieldKey: FieldKey): EditableField;
+    readonly [localNodeKeySymbol]?: LocalNodeKey;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {
@@ -612,7 +612,7 @@ export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, existenceState?: NodeExistenceState): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -1087,6 +1087,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
+    merge(view: SharedTreeView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
@@ -1283,6 +1284,13 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
 // @alpha
+export enum LocalCommitSource {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha (undocumented)
@@ -1295,7 +1303,7 @@ interface LocalFields {
 export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
 
 // @alpha
-export const localNodeKeySymbol: GlobalFieldKeySymbol;
+export const localNodeKeySymbol: unique symbol;
 
 // @alpha
 export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
@@ -1455,18 +1463,21 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-export const nodeKeyFieldKey: GlobalFieldKey;
+export const nodeKeyField: {
+    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
+    value: ValueSchema.String;
+    }>]>;
+};
+
+// @alpha
+export const nodeKeyFieldKey = "__n_id__";
 
 // @alpha (undocumented)
 export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {
 }
 
 // @alpha
-export function nodeKeySchema(): {
-    schema: SchemaLibrary;
-    field: GlobalFieldSchema<NodeKeyFieldKind>;
-    type: TreeSchemaIdentifier;
-};
+export const nodeKeySchema: SchemaLibrary;
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1517,8 +1528,6 @@ export interface OperationBinderEvents {
     delete(context: DeleteBindingContext): void;
     // (undocumented)
     insert(context: InsertBindingContext): void;
-    // (undocumented)
-    setValue(context: SetValueBindingContext): void;
 }
 
 // @alpha (undocumented)
@@ -1595,8 +1604,6 @@ export interface RangeEntry<T> {
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
     getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-    // (undocumented)
-    getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 // @alpha
@@ -1717,7 +1724,7 @@ export class SchemaBuilder {
     readonly name: string;
     object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    primitive<Name extends string, T extends InternalTypes_2.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
+    primitive<Name extends string, T extends PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
     }>;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
@@ -1804,17 +1811,7 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
-    revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
-}
-
-// @alpha
-export interface SetValueBindingContext extends BindingContext {
-    // (undocumented)
-    readonly path: UpPath;
-    // (undocumented)
-    readonly type: typeof BindingType.SetValue;
-    // (undocumented)
-    readonly value: TreeValue;
+    revive(index: number, count: number, detachedBy: RevisionTag, detachId: ChangesetLocalId, reviver: NodeReviver, isIntention?: true): void;
 }
 
 // @alpha
@@ -1850,11 +1847,13 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
-    merge(fork: SharedTreeView): void;
+    merge(view: SharedTreeView): void;
+    // (undocumented)
+    merge(view: SharedTreeView, disposeView: boolean): void;
     // (undocumented)
     readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
-    rebase(fork: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
     // (undocumented)
     redo(): void;
@@ -2254,10 +2253,11 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+    revertible(source: LocalCommitSource): void;
 }
 
 // @alpha
-export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;

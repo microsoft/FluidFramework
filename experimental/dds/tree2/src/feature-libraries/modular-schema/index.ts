@@ -58,18 +58,3 @@ export {
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
 export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
-
-export {
-	SchemaBuilder,
-	TreeSchema,
-	FieldSchema,
-	GlobalFieldSchema,
-	Any,
-	AllowedTypes,
-	InternalTypedSchemaTypes,
-	allowedTypesToTypeSet,
-	TypedSchemaCollection,
-	SchemaLibrary,
-	SchemaLibraryData,
-	LazyTreeSchema,
-} from "./typedSchema";

@@ -40,9 +40,10 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @internal
+// @public
 export interface IContainerExperimental extends IContainer {
-    getPendingLocalState(): string;
+    closeAndGetPendingLocalState(): string;
+    getPendingLocalState?(): string;
 }
 
 // @public

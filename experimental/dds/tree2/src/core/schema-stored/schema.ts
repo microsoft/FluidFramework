@@ -95,6 +95,12 @@ export enum ValueSchema {
 }
 
 /**
+ * {@link ValueSchema} for privative types.
+ * @alpha
+ */
+export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
+
+/**
  * Set of allowed tree types.
  * Providing multiple values here allows polymorphism, tagged union style.
  *

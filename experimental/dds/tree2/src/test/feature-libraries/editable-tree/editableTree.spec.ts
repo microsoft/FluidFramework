@@ -5,16 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	EmptyKey,
-	Value,
-	symbolFromKey,
-	FieldKey,
-	GlobalFieldKey,
-	LocalFieldKey,
-	rootFieldKeySymbol,
-	JsonableTree,
-} from "../../../core";
+import { EmptyKey, Value, FieldKey, rootFieldKeySymbol, JsonableTree } from "../../../core";
 import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	EditableTree,
@@ -381,62 +372,6 @@ describe("editable-tree: read-only", () => {
 			expectFieldEquals(forest.schema, context.root, [emptyNode]);
 			context.free();
 		}
-	});
-
-	it("global fields are unwrapped", () => {
-		const builder = new SchemaBuilder("test", personSchemaLibrary);
-		const globalFieldKeyAsLocalField: LocalFieldKey = brand("globalFieldKey");
-		const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
-		const globalFieldSchema = builder.globalField(
-			globalFieldKey,
-			SchemaBuilder.field(FieldKinds.value, stringSchema),
-		);
-		const globalFieldSymbol = symbolFromKey(globalFieldKey);
-		const childWithGlobalFieldSchema = builder.object("Test:ChildWithGlobalField-1.0.0", {
-			local: {
-				[globalFieldKeyAsLocalField]: SchemaBuilder.field(
-					FieldKinds.optional,
-					stringSchema,
-				),
-			},
-			global: [globalFieldSchema] as const,
-		});
-		const rootSchema = SchemaBuilder.field(FieldKinds.optional, childWithGlobalFieldSchema);
-		const schemaData = builder.intoDocumentSchema(rootSchema);
-
-		const forest = setupForest(schemaData, {
-			[globalFieldKeyAsLocalField]: "foo",
-			[globalFieldSymbol]: "global foo",
-		});
-		const context = getReadonlyEditableTreeContext(forest);
-		assert(isEditableTree(context.unwrappedRoot));
-		assert.deepEqual(
-			context.unwrappedRoot[getField](globalFieldSymbol).getNode(0)[typeSymbol],
-			stringSchema,
-		);
-		const keys = new Set([globalFieldKeyAsLocalField, globalFieldSymbol]);
-		for (const ownKey of Reflect.ownKeys(context.unwrappedRoot)) {
-			assert(keys.delete(brand(ownKey)));
-		}
-		assert.equal(keys.size, 0);
-		assert.equal(context.unwrappedRoot[globalFieldSymbol], "global foo");
-		assert.equal(context.unwrappedRoot[globalFieldKeyAsLocalField], "foo");
-		assert.deepEqual(
-			Object.getOwnPropertyDescriptor(context.unwrappedRoot, globalFieldSymbol),
-			{
-				configurable: true,
-				enumerable: true,
-				value: "global foo",
-				writable: true,
-			},
-		);
-		assert.equal(
-			Object.getOwnPropertyDescriptor(context.unwrappedRoot, Symbol.for("whatever")),
-			undefined,
-		);
-		assert(globalFieldKey in context.unwrappedRoot);
-		assert(!(Symbol.for("whatever") in context.unwrappedRoot));
-		context.free();
 	});
 
 	it("primitives are unwrapped at root", () => {

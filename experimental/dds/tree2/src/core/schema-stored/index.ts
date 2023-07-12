@@ -22,6 +22,7 @@ export {
 	FieldKindSpecifier,
 	SchemaData,
 	NamedFieldSchema,
+	PrimitiveValueSchema,
 } from "./schema";
 export {
 	StoredSchemaRepository,
