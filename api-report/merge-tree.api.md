@@ -157,6 +157,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
+    // @deprecated
     getSlideToSegment(segoff: {
         segment: ISegment | undefined;
         offset: number | undefined;
@@ -296,6 +297,15 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// @public
+export function getSlideToSegoff(segoff: {
+    segment: ISegment | undefined;
+    offset: number | undefined;
+}, slidingPreference?: SlidingPreference): {
+    segment: ISegment | undefined;
+    offset: number | undefined;
+};
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {

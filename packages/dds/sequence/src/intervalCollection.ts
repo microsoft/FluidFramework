@@ -13,6 +13,7 @@ import {
 	Client,
 	compareReferencePositions,
 	createMap,
+	getSlideToSegoff,
 	ICombiningOp,
 	ISegment,
 	MergeTreeDeltaType,
@@ -829,7 +830,7 @@ function createPositionReference(
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
-		segoff = client.getSlideToSegment(segoff);
+		segoff = getSlideToSegoff(segoff);
 	} else {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -1367,6 +1368,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			}
 
 			if (props) {
+				// This check is intended to prevent scenarios where a random interval is created and then
+				// inserted into a collection. The aim is to ensure that the collection is created first
+				// then the user can create/add intervals based on the collection
+				if (
+					props[reservedRangeLabelsKey] !== undefined &&
+					props[reservedRangeLabelsKey][0] !== this.label
+				) {
+					throw new LoggingError(
+						"Adding an interval that belongs to another interval collection is not permitted",
+					);
+				}
 				interval.addProperties(props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
@@ -1882,10 +1894,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	previousInterval(pos: number): TInterval | undefined;
 
 	nextInterval(pos: number): TInterval | undefined;
-
-	getSlideToSegment(
-		lref: LocalReferencePosition,
-	): { segment: ISegment | undefined; offset: number | undefined } | undefined;
 }
 
 /**
@@ -1992,7 +2000,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = this.client.getSlideToSegment({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -2231,6 +2239,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		if (!props) {
 			throw new LoggingError("changeProperties should be called with a property set");
+		}
+		// prevent the overwriting of an interval label, it should remain unchanged
+		// once it has been inserted into the collection.
+		if (props[reservedRangeLabelsKey] !== undefined) {
+			throw new LoggingError(
+				"The label property should not be modified once inserted to the collection",
+			);
 		}
 
 		const interval = this.getIntervalById(id);
@@ -2535,7 +2550,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	public getSlideToSegment(
+	private getSlideToSegment(
 		lref: LocalReferencePosition,
 	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
 		if (!this.client) {
@@ -2545,7 +2560,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = this.client.getSlideToSegment(segoff);
+		const newSegoff = getSlideToSegoff(segoff);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined

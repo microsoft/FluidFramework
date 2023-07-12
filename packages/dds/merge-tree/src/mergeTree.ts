@@ -546,6 +546,84 @@ export function findRootMergeBlock(
 }
 
 /**
+ * @param segment - The segment to slide from.
+ * @param cache - Optional cache mapping segments to their sliding destinations.
+ * Excursions will be avoided for segments in the cache, and the cache will be populated with
+ * entries for all segments visited during excursion.
+ * This can reduce the number of times the tree needs to be scanned if a range containing many
+ * SlideOnRemove references is removed.
+ * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
+ * valid segment (i.e. the tree is empty).
+ */
+function getSlideToSegment(
+	segment: ISegment | undefined,
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	cache?: Map<ISegment, { seg?: ISegment }>,
+): ISegment | undefined {
+	if (!segment || !isRemovedAndAcked(segment)) {
+		return segment;
+	}
+
+	const cachedSegment = cache?.get(segment);
+	if (cachedSegment !== undefined) {
+		return cachedSegment.seg;
+	}
+	const result: { seg?: ISegment } = {};
+	cache?.set(segment, result);
+	const goFurtherToFindSlideToSegment = (seg) => {
+		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
+			result.seg = seg;
+			return false;
+		}
+		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+			cache.set(seg, result);
+		}
+		return true;
+	};
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	} else {
+		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+	}
+	if (result.seg !== undefined) {
+		return result.seg;
+	}
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+	} else {
+		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	}
+
+	return result.seg;
+}
+
+/**
+ * Returns the position to slide a reference to if a slide is required.
+ * @param segoff - The segment and offset to slide from
+ * @returns - segment and offset to slide the reference to
+ */
+export function getSlideToSegoff(
+	segoff: { segment: ISegment | undefined; offset: number | undefined },
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+) {
+	if (segoff.segment === undefined) {
+		return segoff;
+	}
+	const segment = getSlideToSegment(segoff.segment, slidingPreference);
+	if (segment === segoff.segment) {
+		return segoff;
+	}
+	const offset =
+		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	return {
+		segment,
+		offset,
+	};
+}
+
+/**
  * @internal
  */
 export class MergeTree {
@@ -834,62 +912,6 @@ export class MergeTree {
 	}
 
 	/**
-	 * @remarks Must only be used by client.
-	 * @param segment - The segment to slide from.
-	 * @param cache - Optional cache mapping segments to their sliding destinations.
-	 * Excursions will be avoided for segments in the cache, and the cache will be populated with
-	 * entries for all segments visited during excursion.
-	 * This can reduce the number of times the tree needs to be scanned if a range containing many
-	 * SlideOnRemove references is removed.
-	 * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
-	 * valid segment (i.e. the tree is empty).
-	 * @internal
-	 */
-	public _getSlideToSegment(
-		segment: ISegment | undefined,
-		slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-		cache?: Map<ISegment, { seg?: ISegment }>,
-	): ISegment | undefined {
-		if (!segment || !isRemovedAndAcked(segment)) {
-			return segment;
-		}
-
-		const cachedSegment = cache?.get(segment);
-		if (cachedSegment !== undefined) {
-			return cachedSegment.seg;
-		}
-		const result: { seg?: ISegment } = {};
-		cache?.set(segment, result);
-		const goFurtherToFindSlideToSegment = (seg) => {
-			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
-				result.seg = seg;
-				return false;
-			}
-			if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
-				cache.set(seg, result);
-			}
-			return true;
-		};
-
-		if (slidingPreference === SlidingPreference.BACKWARD) {
-			backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		} else {
-			forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		}
-		if (result.seg !== undefined) {
-			return result.seg;
-		}
-
-		if (slidingPreference === SlidingPreference.BACKWARD) {
-			forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		} else {
-			backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		}
-
-		return result.seg;
-	}
-
-	/**
 	 * Slides or removes references from the provided list of segments.
 	 *
 	 * The order of the references is preserved for references of the same sliding
@@ -985,11 +1007,7 @@ export class MergeTree {
 				return;
 			}
 
-			const slideToSegment = this._getSlideToSegment(
-				segment,
-				slidingPreference,
-				segmentCache,
-			);
+			const slideToSegment = getSlideToSegment(segment, slidingPreference, segmentCache);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 

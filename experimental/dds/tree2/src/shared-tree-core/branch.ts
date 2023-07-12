@@ -17,7 +17,7 @@ import {
 	UndoRedoManager,
 	tagChange,
 	TaggedChange,
-	UndoRedoManagerCommitType,
+	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
 } from "../core";
@@ -94,6 +94,11 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	change(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
+	 * Fired when a revertible change is made to this branch.
+	 */
+	revertible(type: LocalCommitSource): void;
+
+	/**
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
@@ -158,13 +163,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		change: TChange,
 		revision: RevisionTag,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
-		return this.applyChange(change, revision, UndoRedoManagerCommitType.Undoable);
+		return this.applyChange(change, revision, LocalCommitSource.Default);
 	}
 
 	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
+		undoRedoType: LocalCommitSource | undefined,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -186,6 +191,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
 			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
+			this.emit("revertible", undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
@@ -256,7 +262,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+				this.undoRedoManager.trackCommit(this.head, LocalCommitSource.Default);
+				this.emit("revertible", LocalCommitSource.Default);
 			}
 		}
 
@@ -346,7 +353,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager?.undo(this.getHead());
 		if (undoChange !== undefined) {
-			return this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
+			return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
 		}
 
 		return undefined;
@@ -369,7 +376,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const redoChange = this.undoRedoManager?.redo(this.getHead());
 		if (redoChange !== undefined) {
-			return this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
+			return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
 		}
 
 		return undefined;
@@ -399,14 +406,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Rebase the changes that have been applied to this branch over all the divergent changes in the given branch.
+	 * Rebase the changes that have been applied to this branch over divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
+	 *
+	 * @remarks
+	 * This operation can change the relative ordering between revertible commits therefore, the revertible event
+	 * is not emitted during this operation.
+	 *
 	 * @param branch - the branch to rebase onto
+	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
 	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
 	 * or undefined if nothing changed
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
+		upTo = branch.getHead(),
 	):
 		| [
 				change: TChange | undefined,
@@ -416,7 +430,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this, branch.getHead());
+		const rebaseResult = this.rebaseBranch(this, branch, upTo);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -446,6 +460,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
+	 *
+	 * @remarks
+	 * Revertible events are emitted for new local commits merged into this branch.
+	 *
+	 * @param branch - the branch to merge into this branch
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
 	 * or undefined if nothing changed
 	 */
@@ -459,7 +478,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
-		const rebaseResult = this.rebaseBranch(branch, this.head);
+		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -474,6 +493,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
 			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+
+			for (const commit of sourceCommits) {
+				const type = this.undoRedoManager.getCommitType(commit.revision);
+				if (type !== undefined) {
+					this.emit("revertible", type);
+				}
+			}
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
@@ -486,9 +512,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
-	private rebaseBranch(branch: SharedTreeBranch<TEditor, TChange>, onto: GraphCommit<TChange>) {
+	private rebaseBranch(
+		branch: SharedTreeBranch<TEditor, TChange>,
+		onto: SharedTreeBranch<TEditor, TChange>,
+		upTo = onto.getHead(),
+	) {
 		const { head, repairDataStoreProvider } = branch;
-		if (head === onto) {
+		if (head === upTo) {
 			return undefined;
 		}
 
@@ -496,8 +526,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.changeFamily.rebaser,
 			repairDataStoreProvider,
 			head,
-			onto,
-			onto,
+			upTo,
+			onto.getHead(),
 		);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {

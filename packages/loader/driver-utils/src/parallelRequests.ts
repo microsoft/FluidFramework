@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
@@ -309,9 +309,10 @@ export class ParallelRequests<T> {
 				if (to === this.latestRequested) {
 					// we can go after full chunk at the end if we received partial chunk, or more than asked
 					// Also if we got more than we asked to, we can actually use those ops!
-					if (payload.length !== 0) {
-						this.results.set(from, payload);
-						from += payload.length;
+					while (payload.length !== 0) {
+						const data = payload.splice(0, requestedLength);
+						this.results.set(from, data);
+						from += data.length;
 					}
 
 					this.latestRequested = from;

@@ -18,6 +18,7 @@ import {
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
+	getSlideToSegoff,
 } from "@fluidframework/merge-tree";
 import { IIntervalCollection, IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
@@ -135,12 +136,14 @@ export function appendDeleteIntervalToRevertibles(
 		interval.start.getOffset(),
 		startType,
 		undefined,
+		interval.start.slidingPreference,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
 		endType,
 		undefined,
+		interval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.DELETE,
@@ -183,12 +186,14 @@ export function appendChangeIntervalToRevertibles(
 		previousInterval.start.getOffset(),
 		startType,
 		undefined,
+		previousInterval.start.slidingPreference,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
 		endType,
 		undefined,
+		previousInterval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.CHANGE,
@@ -379,12 +384,14 @@ export function discardSharedStringRevertibles(
 }
 
 function getSlidePosition(
-	collection: IIntervalCollection<SequenceInterval>,
 	string: SharedString,
 	lref: LocalReferencePosition,
 	pos: number,
 ): number {
-	const slide = collection.getSlideToSegment(lref);
+	const slide = getSlideToSegoff(
+		{ segment: lref.getSegment(), offset: undefined },
+		lref.slidingPreference,
+	);
 	return slide?.segment !== undefined &&
 		slide.offset !== undefined &&
 		string.getPosition(slide.segment) !== -1 &&
@@ -403,7 +410,6 @@ function isValidRange(start: number, end: number, string: SharedString) {
 	);
 }
 
-// Uses of referenceRangeLabels will be removed once AB#4081 is completed.
 function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
@@ -420,9 +426,9 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
@@ -448,9 +454,9 @@ function revertLocalChange(
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(collection, string, revertible.start, start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(collection, string, revertible.end, end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
 	collection.change(id, startSlidePos, endSlidePos);
 
