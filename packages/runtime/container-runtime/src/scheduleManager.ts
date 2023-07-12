@@ -63,7 +63,7 @@ export class ScheduleManager {
 
 			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
 			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			this.batchClientId = batch ? message.clientId as string : undefined;
+			this.batchClientId = batch ? (message.clientId as string) : undefined;
 		}
 	}
 
@@ -266,7 +266,8 @@ class ScheduleManagerCore {
 					message,
 					{
 						runtimeVersion: pkgVersion,
-						batchClientId: this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
+						batchClientId:
+							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
 						messageType: message.type,
@@ -300,7 +301,8 @@ class ScheduleManagerCore {
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
-				batchClientId: this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
+				batchClientId:
+					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),
 				localMessage: message.clientId === this.getClientId(),

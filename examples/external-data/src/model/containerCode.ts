@@ -67,8 +67,12 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		);
 		// Register listener only once the model is fully loaded and ready
 		runtime.on("signal", (message) => {
-			if ((message?.content as { type?: unknown } | undefined)?.type === SignalType.ExternalDataChanged) {
-				const taskListId =(message?.content as { taskListId?: unknown } | undefined)?.taskListId as string;
+			if (
+				(message?.content as { type?: unknown } | undefined)?.type ===
+				SignalType.ExternalDataChanged
+			) {
+				const taskListId = (message?.content as { taskListId?: unknown } | undefined)
+					?.taskListId as string;
 				const taskList = taskListCollection.getTaskList(taskListId);
 				if (taskList === undefined) {
 					throw new Error(

@@ -41,7 +41,9 @@ function applyMessagesWithReconnect(
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
 		if (reconnectingClientIds.includes(message.clientId as string)) {
-			reconnectClientMsgs.get(message.clientId as string)!.push([message.contents as IMergeTreeOp, sg]);
+			reconnectClientMsgs
+				.get(message.clientId as string)!
+				.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
 			clients.forEach((c) => c.applyMsg(message));

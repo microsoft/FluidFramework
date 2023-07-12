@@ -72,7 +72,10 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if ((op.contents as { type?: unknown } | undefined)?.type !== OpGroupingManager.groupedBatchOp) {
+		if (
+			(op.contents as { type?: unknown } | undefined)?.type !==
+			OpGroupingManager.groupedBatchOp
+		) {
 			return [op];
 		}
 

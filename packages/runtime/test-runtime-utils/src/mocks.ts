@@ -260,7 +260,7 @@ export class MockContainerRuntimeFactory {
 		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		this.minSeq.set((msg.clientId as string), msg.referenceSequenceNumber);
+		this.minSeq.set(msg.clientId as string, msg.referenceSequenceNumber);
 		msg.sequenceNumber = ++this.sequenceNumber;
 		msg.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {

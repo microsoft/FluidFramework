@@ -42,7 +42,10 @@ export class OpDecompressor {
 			0x511 /* Only lz4 compression is supported */,
 		);
 
-		if ((message.metadata as IBatchMetadata | undefined)?.batch === true && this.isCompressed(message)) {
+		if (
+			(message.metadata as IBatchMetadata | undefined)?.batch === true &&
+			this.isCompressed(message)
+		) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
 			if (message.compression) {
@@ -55,7 +58,10 @@ export class OpDecompressor {
 
 			this.activeBatch = true;
 
-			const contents = IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64");
+			const contents = IsoBuffer.from(
+				(message.contents as IPackedContentsContents).packedContents,
+				"base64",
+			);
 			const decompressedMessage = decompress(contents);
 			const intoString = Uint8ArrayToString(decompressedMessage);
 			const asObj = JSON.parse(intoString);
@@ -81,7 +87,10 @@ export class OpDecompressor {
 			};
 		}
 
-		if (this.rootMessageContents !== undefined && (message.metadata as IBatchMetadata | undefined)?.batch === false) {
+		if (
+			this.rootMessageContents !== undefined &&
+			(message.metadata as IBatchMetadata | undefined)?.batch === false
+		) {
 			// End of compressed batch
 			const returnMessage = newMessage(
 				message,
@@ -98,14 +107,20 @@ export class OpDecompressor {
 			};
 		}
 
-		if ((message.metadata as IBatchMetadata | undefined)?.batch === undefined && this.isCompressed(message)) {
+		if (
+			(message.metadata as IBatchMetadata | undefined)?.batch === undefined &&
+			this.isCompressed(message)
+		) {
 			// Single compressed message
 			assert(
 				this.activeBatch === false,
 				0x4ba /* shouldn't receive compressed message in middle of a batch */,
 			);
 
-			const contents = IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64");
+			const contents = IsoBuffer.from(
+				(message.contents as IPackedContentsContents).packedContents,
+				"base64",
+			);
 			const decompressedMessage = decompress(contents);
 			const intoString = new TextDecoder().decode(decompressedMessage);
 			const asObj = JSON.parse(intoString);
@@ -143,9 +158,13 @@ export class OpDecompressor {
 				message.contents !== null &&
 				typeof message.contents === "object" &&
 				Object.keys(message.contents).length === 1 &&
-				typeof (message.contents as { packedContents?: unknown }).packedContents === "string" &&
+				typeof (message.contents as { packedContents?: unknown }).packedContents ===
+					"string" &&
 				(message.contents as IPackedContentsContents).packedContents.length > 0 &&
-				IsoBuffer.from((message.contents as IPackedContentsContents).packedContents, "base64").toString("base64") ===
+				IsoBuffer.from(
+					(message.contents as IPackedContentsContents).packedContents,
+					"base64",
+				).toString("base64") ===
 					(message.contents as IPackedContentsContents).packedContents
 			) {
 				this.logger.sendTelemetryEvent({

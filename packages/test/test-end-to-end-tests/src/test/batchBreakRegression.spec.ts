@@ -228,7 +228,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchStartIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === true,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === true,
 									);
 									if (batchStartIndex >= 0) {
 										newMessages[batchStartIndex] = {
@@ -269,7 +271,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 0) {
 									newMessages[batchEndIndex] = {
@@ -307,7 +311,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 1) {
 									ds.submit(newMessages.slice(0, batchEndIndex - 1));
@@ -343,7 +349,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchEndIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === false,
 									);
 									if (batchEndIndex >= 1) {
 										// set reference seq number to below min seq so the server nacks the batch
@@ -405,7 +413,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: unknown } | undefined)
+													?.batch === false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages

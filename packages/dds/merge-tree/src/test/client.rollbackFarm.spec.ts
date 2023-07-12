@@ -69,7 +69,10 @@ describe("MergeTree.Client", () => {
 				while (rollbackMsgs.length > 0) {
 					const msg = rollbackMsgs.pop();
 					// TODO: The type here is probably MergeTreeDeltaType but omitting GROUP, given the typing of the rollback method.
-					clients[msg![0].clientId as string].rollback?.({ type: (msg![0].contents as { type?: unknown }).type }, msg![1]);
+					clients[msg![0].clientId as string].rollback?.(
+						{ type: (msg![0].contents as { type?: unknown }).type },
+						msg![1],
+					);
 				}
 
 				logger.validate();

@@ -34,8 +34,12 @@ function applyMessagesWithReconnect(
 	const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] = [];
 	for (const messageData of messageDatas) {
 		if (messageData[0].clientId !== clients[1].longClientId) {
-			const index = clients.map((c) => c.longClientId).indexOf(messageData[0].clientId as string);
-			const localMetadata = stashClients[index].applyStashedOp(messageData[0].contents as IMergeTreeOp);
+			const index = clients
+				.map((c) => c.longClientId)
+				.indexOf(messageData[0].clientId as string);
+			const localMetadata = stashClients[index].applyStashedOp(
+				messageData[0].contents as IMergeTreeOp,
+			);
 			stashedOps.push([messageData[0].contents as IMergeTreeOp, localMetadata, index]);
 		}
 	}

@@ -91,7 +91,10 @@ describe("OpDecompressor", () => {
 		const result = decompressor.processMessage(generateCompressedBatchMessage(1));
 		assert.equal(result.state, "Processed");
 		assert.strictEqual((result.message.contents as ITestMessageContents).contents, "value0");
-		assert.strictEqual((result.message.metadata as { compressed?: unknown } | undefined)?.compressed, undefined);
+		assert.strictEqual(
+			(result.message.metadata as { compressed?: unknown } | undefined)?.compressed,
+			undefined,
+		);
 		assert.strictEqual(result.message.compression, undefined);
 	});
 
@@ -103,7 +106,10 @@ describe("OpDecompressor", () => {
 		});
 		assert.equal(result.state, "Processed");
 		assert.strictEqual((result.message.contents as ITestMessageContents).contents, "value0");
-		assert.strictEqual((result.message.metadata as { compressed?: unknown } | undefined)?.compressed, undefined);
+		assert.strictEqual(
+			(result.message.metadata as { compressed?: unknown } | undefined)?.compressed,
+			undefined,
+		);
 		assert.strictEqual(result.message.compression, undefined);
 
 		mockLogger.assertMatch([
@@ -128,22 +134,42 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assert.strictEqual((firstMessageResult.message.contents as ITestMessageContents).contents, "value0");
-		assert.strictEqual((firstMessageResult.message.metadata as { compressed?: unknown } | undefined)?.compressed, undefined);
+		assert.strictEqual(
+			(firstMessageResult.message.contents as ITestMessageContents).contents,
+			"value0",
+		);
+		assert.strictEqual(
+			(firstMessageResult.message.metadata as { compressed?: unknown } | undefined)
+				?.compressed,
+			undefined,
+		);
 		assert.strictEqual(firstMessageResult.message.compression, undefined);
 
 		for (let i = 1; i < 4; i++) {
 			const result = decompressor.processMessage(emptyMessage);
 			assert.equal(result.state, "Accepted");
-			assert.strictEqual((result.message.contents as ITestMessageContents).contents, `value${i}`);
-			assert.strictEqual((result.message.metadata as { compressed?: unknown } | undefined)?.compressed, undefined);
+			assert.strictEqual(
+				(result.message.contents as ITestMessageContents).contents,
+				`value${i}`,
+			);
+			assert.strictEqual(
+				(result.message.metadata as { compressed?: unknown } | undefined)?.compressed,
+				undefined,
+			);
 			assert.strictEqual(result.message.compression, undefined);
 		}
 
 		const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(lastMessageResult.state, "Processed");
-		assert.strictEqual((lastMessageResult.message.contents as ITestMessageContents).contents, "value4");
-		assert.strictEqual((lastMessageResult.message.metadata as { compressed?: unknown } | undefined)?.compressed, undefined);
+		assert.strictEqual(
+			(lastMessageResult.message.contents as ITestMessageContents).contents,
+			"value4",
+		);
+		assert.strictEqual(
+			(lastMessageResult.message.metadata as { compressed?: unknown } | undefined)
+				?.compressed,
+			undefined,
+		);
 		assert.strictEqual(lastMessageResult.message.compression, undefined);
 	});
 
@@ -152,7 +178,10 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assert.strictEqual((firstMessageResult.message.contents as ITestMessageContents).contents, "value0");
+		assert.strictEqual(
+			(firstMessageResult.message.contents as ITestMessageContents).contents,
+			"value0",
+		);
 
 		assert.throws(() => decompressor.processMessage({ ...emptyMessage, contents: {} }));
 	});
@@ -162,30 +191,48 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assert.strictEqual((firstMessageResult.message.contents as ITestMessageContents).contents, "value0");
+		assert.strictEqual(
+			(firstMessageResult.message.contents as ITestMessageContents).contents,
+			"value0",
+		);
 
 		for (let i = 1; i < 4; i++) {
 			const result = decompressor.processMessage(emptyMessage);
 			assert.equal(result.state, "Accepted");
-			assert.strictEqual((result.message.contents as ITestMessageContents).contents, `value${i}`);
+			assert.strictEqual(
+				(result.message.contents as ITestMessageContents).contents,
+				`value${i}`,
+			);
 		}
 
 		const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(lastMessageResult.state, "Processed");
-		assert.strictEqual((lastMessageResult.message.contents as ITestMessageContents).contents, "value4");
+		assert.strictEqual(
+			(lastMessageResult.message.contents as ITestMessageContents).contents,
+			"value4",
+		);
 
 		const nextRootMessage = generateCompressedBatchMessage(3);
 		const nextFirstMessageResult = decompressor.processMessage(nextRootMessage);
 		assert.equal(nextFirstMessageResult.state, "Accepted");
-		assert.strictEqual((nextFirstMessageResult.message.contents as ITestMessageContents).contents, "value0");
+		assert.strictEqual(
+			(nextFirstMessageResult.message.contents as ITestMessageContents).contents,
+			"value0",
+		);
 
 		const middleMessageResult = decompressor.processMessage(emptyMessage);
 		assert.equal(middleMessageResult.state, "Accepted");
-		assert.strictEqual((middleMessageResult.message.contents as ITestMessageContents).contents, "value1");
+		assert.strictEqual(
+			(middleMessageResult.message.contents as ITestMessageContents).contents,
+			"value1",
+		);
 
 		const endBatchEmptyMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(endBatchEmptyMessageResult.state, "Processed");
-		assert.strictEqual((endBatchEmptyMessageResult.message.contents as ITestMessageContents).contents, "value2");
+		assert.strictEqual(
+			(endBatchEmptyMessageResult.message.contents as ITestMessageContents).contents,
+			"value2",
+		);
 	});
 
 	it("Ignores ops without compression", () => {

@@ -121,7 +121,11 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
 		// Retain the adjusted op in order to adjust future remote ops.
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		this.sequencedOps.push({ seq: messageSeq, client: remoteClient as string, op: remoteOp as TOp });
+		this.sequencedOps.push({
+			seq: messageSeq,
+			client: remoteClient as string,
+			op: remoteOp as TOp,
+		});
 
 		// The incoming sequenced op is now part of the "global" state.  Apply it to "this.global"
 		// now.

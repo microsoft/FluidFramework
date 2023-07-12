@@ -98,7 +98,10 @@ describe("RemoteMessageProcessor", () => {
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
 
-		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, ["decompress", "reconstruct"]);
+		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
+			"decompress",
+			"reconstruct",
+		]);
 		assert.deepStrictEqual(result.contents, message.contents.contents);
 	});
 

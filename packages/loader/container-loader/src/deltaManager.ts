@@ -301,7 +301,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
-			assert((batch[0].metadata as IBatchMetadata)?.batch === true, 0x3ca /* no start batch markup */);
+			assert(
+				(batch[0].metadata as IBatchMetadata)?.batch === true,
+				0x3ca /* no start batch markup */,
+			);
 			assert(
 				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,

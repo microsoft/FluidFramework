@@ -296,7 +296,9 @@ export class PendingStateManager implements IDisposable {
 		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = (this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined)?.batch;
+			const batchBeginMetadata = (
+				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
+			)?.batch;
 
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
@@ -314,7 +316,10 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId === null ? "null" : this.pendingBatchBeginMessage.clientId,
+								batchClientId:
+									this.pendingBatchBeginMessage.clientId === null
+										? "null"
+										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
