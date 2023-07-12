@@ -10,7 +10,6 @@ import {
 	FieldChangeRebaser,
 	FieldKind,
 	Multiplicity,
-	ModularChangeFamily,
 	FieldEditor,
 	NodeChangeset,
 	genericFieldKind,
@@ -35,13 +34,17 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail } from "../../../util";
+import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { typeboxValidator } from "../../../external-utilities";
 import {
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
-import { makeCodecFamily, makeValueCodec } from "../../../codec";
+// eslint-disable-next-line import/no-internal-modules
+import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { singleJsonCursor } from "../../../domains";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -52,7 +55,12 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
-		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+		change === 0
+			? []
+			: [
+					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
+			  ],
 
 	isEmpty: (change) => change === 0,
 };
@@ -86,7 +94,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
-	isEmpty: (change) => change.fieldChanges === undefined && change.valueChange === undefined,
+	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
 const singleNodeField = new FieldKind(
@@ -101,7 +109,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds);
+const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -161,10 +169,6 @@ const nodeChange3: NodeChangeset = {
 	fieldChanges: new Map([
 		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
 	]),
-	valueConstraint: {
-		value: "a",
-		violated: false,
-	},
 };
 
 const rootChange1a: ModularChangeset = {
@@ -266,40 +270,6 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
-			},
-		],
-	]),
-};
-
-const testValue = "Test Value";
-const nodeValueOverwrite: ModularChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(
-					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { value: testValue },
-					}),
-				),
-			},
-		],
-	]),
-};
-
-const detachedBy = mintRevisionTag();
-const nodeValueRevert: ModularChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(
-					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { value: testValue },
-					}),
-				),
 			},
 		],
 	]),
@@ -442,22 +412,9 @@ describe("ModularChangeFamily", () => {
 				change: brand(valueChange1a),
 			};
 
-			const value1 = "Value 1";
-			const nodeChange1: NodeChangeset = {
-				valueChange: { value: value1 },
-			};
-
-			const change1B: FieldChange = {
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeChange1),
-			};
-
 			const change1: TaggedChange<ModularChangeset> = tagChange(
 				{
-					fieldChanges: new Map([
-						[fieldA, change1A],
-						[fieldB, change1B],
-					]),
+					fieldChanges: new Map([[fieldA, change1A]]),
 				},
 				tag1,
 			);
@@ -492,12 +449,10 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expectedNodeChange: NodeChangeset = {
-				valueChange: { revision: change1.revision, value: value1 },
 				fieldChanges: new Map([
 					[
 						fieldA,
 						{
-							revision: change2.revision,
 							fieldKind: valueField.identifier,
 							change: brand(valueChange2),
 						},
@@ -510,7 +465,6 @@ describe("ModularChangeFamily", () => {
 					[
 						fieldA,
 						{
-							revision: change1.revision,
 							fieldKind: valueField.identifier,
 							change: brand(valueChange1a),
 						},
@@ -613,15 +567,23 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Modify,
-					setValue: 1,
+					type: Delta.MarkType.Delete,
+					count: 1,
+				},
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleJsonCursor(1)],
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Modify,
-					setValue: 2,
+					type: Delta.MarkType.Delete,
+					count: 1,
+				},
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleJsonCursor(2)],
 				},
 			];
 
@@ -638,29 +600,6 @@ describe("ModularChangeFamily", () => {
 			]);
 
 			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
-		});
-
-		it("value overwrite", () => {
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					setValue: testValue,
-				},
-			];
-			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
-			assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
-		});
-
-		it("value revert", () => {
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					setValue: testValue,
-				},
-			];
-			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
-			const actual = family.intoDelta(nodeValueRevert);
-			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 
@@ -702,20 +641,6 @@ describe("ModularChangeFamily", () => {
 		};
 
 		assert.deepEqual(changes, [expectedChange]);
-	});
-
-	it("build value change", () => {
-		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver, new AnchorSet());
-		const path: UpPath = {
-			parent: undefined,
-			parentField: fieldA,
-			parentIndex: 0,
-		};
-
-		editor.setValue(path, testValue);
-		const changes = getChanges();
-		assert.deepEqual(changes, [nodeValueOverwrite]);
 	});
 
 	it("Revision metadata", () => {
@@ -790,7 +715,9 @@ describe("ModularChangeFamily", () => {
 			(a, b) => false,
 			new Set(),
 		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
+			jsonValidator: noopValidator,
+		});
 
 		const changeA: ModularChangeset = {
 			fieldChanges: new Map([

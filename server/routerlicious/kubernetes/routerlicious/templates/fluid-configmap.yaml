@@ -25,6 +25,7 @@ data:
             "globalDbEnabled": {{ .Values.mongodb.globalDbEnabled }},
             "expireAfterSeconds": {{ .Values.mongodb.expireAfterSeconds }},
             "createCosmosDBIndexes": {{ .Values.mongodb.createCosmosDBIndexes }},
+            "directConnection": {{ .Values.mongodb.directConnection }},
             "softDeletionRetentionPeriodMs": {{ .Values.mongodb.softDeletionRetentionPeriodMs }},
             "offlineWindowMs": {{ .Values.mongodb.offlineWindowMs }},
             "softDeletionEnabled": {{ .Values.mongodb.softDeletionEnabled }},
@@ -53,7 +54,12 @@ data:
                 "rdkafkaConsumeTimeout": 5,
                 "rdkafkaMaxConsumerCommitRetries": 10
             },
-            "customRestartOnKafkaErrorCodes": {{ .Values.kafka.customRestartOnKafkaErrorCodes }}
+            "customRestartOnKafkaErrorCodes": [
+                {{- $lastIndex := sub (len .Values.kafka.customRestartOnKafkaErrorCodes) 1}}
+                {{- range $i, $tenant := .Values.kafka.customRestartOnKafkaErrorCodes }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -64,8 +70,8 @@ data:
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
-            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
-            },
+            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
+        },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
@@ -78,17 +84,17 @@ data:
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
                     "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerTenant.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getSession }}}
+                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getSession }}
                 },
                 "restCallsPerCluster": {
                     "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerCluster.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}}
+                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}
                 },
                 "socketConnectionsPerTenant": {{ toJson .Values.alfred.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.alfred.throttling.socketConnectionsPerCluster }},
                 "submitOps": {{ toJson .Values.alfred.throttling.submitOps }},
-                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}}
+                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",

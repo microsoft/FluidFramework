@@ -5,10 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { fail } from "../../util";
+import { brand, fail } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
+	getIntention,
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
@@ -20,16 +21,19 @@ import {
 	EmptyInputCellMark,
 	DetachEvent,
 	Modify,
+	MoveId,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
 	getMoveEffect,
-	getOrAddEffect,
+	setMoveEffect,
 	isMoveMark,
 	MoveEffectTable,
 	MoveMark,
+	getModifyAfter,
+	MoveEffect,
 } from "./moveEffectTable";
 import {
 	getInputLength,
@@ -52,6 +56,7 @@ import {
 	getMarkMoveId,
 	withRevision,
 	markEmptiesCells,
+	splitMark,
 } from "./utils";
 
 /**
@@ -102,7 +107,7 @@ function composeMarkLists<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
+	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new ComposeQueue(
 		undefined,
 		baseMarkList,
@@ -140,7 +145,7 @@ function composeMarkLists<TNodeChange>(
 		}
 	}
 
-	return amendComposeI(factory.list, composeChild, moveEffects);
+	return factory.list;
 }
 
 /**
@@ -181,13 +186,15 @@ function composeMarks<TNodeChange>(
 		const moveInId = getMarkMoveId(baseMark);
 		if (nodeChange !== undefined && moveInId !== undefined) {
 			assert(isMoveMark(baseMark), 0x68e /* Only move marks have move IDs */);
-			getOrAddEffect(
+			setModifyAfter(
 				moveEffects,
 				CrossFieldTarget.Source,
 				baseMark.revision,
 				baseMark.id,
-				true,
-			).modifyAfter = nodeChange;
+				baseMark.count,
+				nodeChange,
+				composeChild,
+			);
 			return baseMark;
 		}
 		return withNodeChange(baseMark, nodeChange);
@@ -200,31 +207,39 @@ function composeMarks<TNodeChange>(
 				isMoveMark(baseMark) && isMoveMark(newMark),
 				0x68f /* Only move marks have move IDs */,
 			);
-			const srcEffect = getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Source,
-				baseMark.revision,
-				baseMark.id,
-				true,
-			);
 
-			const dstEffect = getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				newMark.revision ?? newRev,
-				newMark.id,
-				true,
-			);
-
+			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
-				// BUG 4280: This will drop any node changes the marks had.
-				// In practice the node changes will typically also be inverses so this problem should rarely be noticeable.
-				srcEffect.shouldRemove = true;
-				dstEffect.shouldRemove = true;
+			if (
+				areInverseMovesAtIntermediateLocation(
+					baseMark,
+					baseIntention,
+					newMark,
+					newIntention,
+				)
+			) {
+				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
+				if (nodeChange !== undefined) {
+					setModifyAfter(
+						moveEffects,
+						CrossFieldTarget.Source,
+						baseMark.revision,
+						baseMark.id,
+						baseMark.count,
+						nodeChange,
+						composeChild,
+					);
+				}
 			} else {
-				srcEffect.mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
+				setReplacementMark(
+					moveEffects,
+					CrossFieldTarget.Source,
+					baseMark.revision,
+					baseMark.id,
+					baseMark.count,
+					withRevision(withNodeChange(newMark, nodeChange), newRev),
+				);
 			}
 
 			return { count: 0 };
@@ -232,13 +247,14 @@ function composeMarks<TNodeChange>(
 
 		if (moveInId !== undefined) {
 			assert(isMoveMark(baseMark), 0x690 /* Only move marks have move IDs */);
-			getOrAddEffect(
+			setReplacementMark(
 				moveEffects,
 				CrossFieldTarget.Source,
 				baseMark.revision,
 				baseMark.id,
-				true,
-			).mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
+				baseMark.count,
+				withRevision(withNodeChange(newMark, nodeChange), newRev),
+			);
 			return { count: 0 };
 		}
 
@@ -247,18 +263,39 @@ function composeMarks<TNodeChange>(
 
 			// The nodes attached by `baseMark` have been moved by `newMark`.
 			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
-			getOrAddEffect(
+			setReplacementMark(
 				moveEffects,
 				CrossFieldTarget.Destination,
 				newMark.revision ?? newRev,
 				newMark.id,
-				true,
-			).mark = withNodeChange(baseMark, nodeChange);
+				newMark.count,
+				withNodeChange(baseMark, nodeChange),
+			);
 			return { count: 0 };
 		}
 		// TODO: Create modify mark for transient node.
 		return { count: 0 };
 	} else {
+		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
+			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
+			const nodeChanges = getModifyAfter(
+				moveEffects,
+				baseMark.revision,
+				baseMark.id,
+				baseMark.count,
+			);
+
+			// We return a placeholder instead of a modify because there may be more node changes on `newMark`'s source mark
+			// which need to be included here.
+			// We will remove the placeholder during `amendCompose`.
+			return {
+				type: "Placeholder",
+				count: baseMark.count,
+				revision: baseMark.revision,
+				id: baseMark.id,
+				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+			};
+		}
 		const length = getMarkLength(baseMark);
 		return createModifyMark(length, nodeChange);
 	}
@@ -333,7 +370,7 @@ function amendComposeI<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
+	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new MarkQueue(
 		marks,
 		undefined,
@@ -349,27 +386,41 @@ function amendComposeI<TNodeChange>(
 		switch (mark.type) {
 			case "MoveOut":
 			case "ReturnFrom": {
-				const effect = getMoveEffect(
+				const replacementMark = getReplacementMark(
 					moveEffects,
 					CrossFieldTarget.Source,
 					mark.revision,
 					mark.id,
+					mark.count,
 				);
-				mark = effect.mark ?? mark;
-				delete effect.mark;
+				mark = replacementMark ?? mark;
 				break;
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				const effect = getMoveEffect(
+				const replacementMark = getReplacementMark(
 					moveEffects,
 					CrossFieldTarget.Destination,
 					mark.revision,
 					mark.id,
+					mark.count,
 				);
-				mark = effect.mark ?? mark;
-				delete effect.mark;
+				mark = replacementMark ?? mark;
 				break;
+			}
+			case "Placeholder": {
+				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
+				if (modifyAfter !== undefined) {
+					const changes = composeChildChanges(
+						mark.changes,
+						modifyAfter,
+						undefined,
+						composeChild,
+					);
+					mark = createModifyMark(mark.count, changes);
+				} else {
+					mark = createModifyMark(mark.count, mark.changes);
+				}
 			}
 			default:
 				break;
@@ -530,15 +581,14 @@ export class ComposeQueue<T> {
 				case "MoveOut":
 				case "ReturnFrom":
 					{
-						const effect = getMoveEffect(
+						const newMark = getReplacementMark(
 							this.moveEffects,
 							CrossFieldTarget.Source,
 							baseMark.revision,
 							baseMark.id,
+							baseMark.count,
 						);
 
-						const newMark = effect.mark;
-						delete effect.mark;
 						if (newMark !== undefined) {
 							return { newMark };
 						}
@@ -560,15 +610,14 @@ export class ComposeQueue<T> {
 				case "MoveIn":
 				case "ReturnTo":
 					{
-						const effect = getMoveEffect(
+						const baseMark = getReplacementMark(
 							this.moveEffects,
 							CrossFieldTarget.Destination,
 							newMark.revision ?? this.newRevision,
 							newMark.id,
+							newMark.count,
 						);
 
-						const baseMark = effect.mark;
-						delete effect.mark;
 						if (baseMark !== undefined) {
 							return { baseMark };
 						}
@@ -600,6 +649,103 @@ export class ComposeQueue<T> {
 	}
 }
 
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
+function getReplacementMark<T>(
+	moveEffects: MoveEffectTable<T>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+): Mark<T> | undefined {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count);
+	if (effect?.value.mark === undefined) {
+		return undefined;
+	}
+
+	const lastTargetId = (id as number) + count - 1;
+	const lastEffectId = effect.start + effect.length - 1;
+	assert(
+		effect.start <= id && lastEffectId >= lastTargetId,
+		0x6e9 /* Expected effect to cover entire mark */,
+	);
+
+	let mark = effect.value.mark;
+	assert(
+		getMarkLength(mark) === effect.length,
+		0x6ea /* Expected replacement mark to be same length as number of cells replaced */,
+	);
+
+	// The existing effect may cover more cells than the area we are querying.
+	// We only want to return the portion of the replacement mark which covers the cells from this query.
+	// We should then delete the replacement mark from the portion of the effect which covers the query range,
+	// and trim the replacement marks in the portion of the effect before and after the query range.
+	const cellsBefore = id - effect.start;
+	if (cellsBefore > 0) {
+		const [markBefore, newMark] = splitMark(mark, cellsBefore);
+		const effectBefore = { ...effect.value, mark: markBefore };
+		setMoveEffect(
+			moveEffects,
+			target,
+			revision,
+			brand(effect.start),
+			cellsBefore,
+			effectBefore,
+			false,
+		);
+		mark = newMark;
+	}
+
+	const cellsAfter = lastEffectId - lastTargetId;
+	if (cellsAfter > 0) {
+		const [newMark, markAfter] = splitMark(mark, cellsAfter);
+		const effectAfter = { ...effect.value, mark: markAfter };
+		setMoveEffect(
+			moveEffects,
+			target,
+			revision,
+			brand(lastTargetId + 1),
+			cellsAfter,
+			effectAfter,
+			false,
+		);
+		mark = newMark;
+	}
+
+	const newEffect = { ...effect.value };
+	delete newEffect.mark;
+	setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
+	return mark;
+}
+
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
+function setReplacementMark<T>(
+	moveEffects: MoveEffectTable<T>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+	mark: Mark<T>,
+) {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
+	let newEffect: MoveEffect<T>;
+	if (effect !== undefined) {
+		assert(
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
+			0x6eb /* Expected effect to cover entire mark */,
+		);
+		newEffect = { ...effect.value, mark };
+	} else {
+		newEffect = { mark };
+	}
+	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
+}
+
 interface ComposeMarks<T> {
 	baseMark?: Mark<T>;
 	newMark?: Mark<T>;
@@ -607,18 +753,21 @@ interface ComposeMarks<T> {
 
 /**
  * Returns whether `baseMark` and `newMark` are inverses.
- * It is assumed that both marks are active and `baseMark` is an attach.
+ * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
+ * This means that the marks are at the location of the moved content after the first move takes place, but before the second.
  */
-function areInverseMoves(
+function areInverseMovesAtIntermediateLocation(
 	baseMark: MoveMark<unknown>,
 	baseIntention: RevisionTag | undefined,
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
 	assert(
-		baseMark.type === "MoveIn" || baseMark.type === "ReturnTo",
-		0x698 /* TODO: Handle case where `baseMark` is a detach */,
+		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
+			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
+		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
+
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}
@@ -628,13 +777,6 @@ function areInverseMoves(
 	}
 
 	return false;
-}
-
-function getIntention(
-	rev: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
 
 // TODO: Try to share more logic with the version in rebase.ts.
@@ -729,4 +871,38 @@ function compareCellPositions(
 	// The creation of those cells should happen in this composition, so they must be later in the base mark list.
 	// This is true because there may be any number of changesets between the base and new changesets, which the new changeset might be refering to the cells of.
 	return -Infinity;
+}
+
+// It is expected that the range from `id` to `id + count - 1` has the same move effect.
+// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
+// to match the ranges in `moveEffects`.
+// TODO: Reduce the duplication between this and other MoveEffect helpers
+function setModifyAfter<T>(
+	moveEffects: MoveEffectTable<T>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+	modifyAfter: T,
+	composeChanges: NodeChangeComposer<T>,
+) {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
+	let newEffect: MoveEffect<unknown>;
+	if (effect !== undefined) {
+		assert(
+			effect.start <= id && effect.start + effect.length >= (id as number) + count,
+			0x6ec /* Expected effect to cover entire mark */,
+		);
+		const nodeChange =
+			effect.value.modifyAfter !== undefined
+				? composeChanges([
+						makeAnonChange(effect.value.modifyAfter),
+						tagChange(modifyAfter, revision),
+				  ])
+				: modifyAfter;
+		newEffect = { ...effect.value, modifyAfter: nodeChange };
+	} else {
+		newEffect = { modifyAfter };
+	}
+	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }

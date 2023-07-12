@@ -15,7 +15,7 @@
 			"localRoot": "${workspaceFolder}",
 			"remoteRoot": "/usr/src/server",
 			"protocol": "inspector",
-			"trace": "sm"
-		}
-	]
+			"trace": "sm",
+		},
+	],
 }

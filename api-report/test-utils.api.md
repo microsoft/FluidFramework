@@ -45,9 +45,9 @@ import { ISharedMap } from '@fluidframework/map';
 import { ISummarizer } from '@fluidframework/container-runtime';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
@@ -74,7 +74,7 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 }>;
 
 // @public
-export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger): Promise<{
+export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger, configProvider?: IConfigProviderBase): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -279,9 +279,9 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    get ITestFluidObject(): this;
+    initialize(existing: boolean): Promise<void>;
     // (undocumented)
-    static load(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntries: Map<string, IChannelFactory>, existing: boolean): Promise<TestFluidObject>;
+    get ITestFluidObject(): this;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -342,10 +342,10 @@ export class TestObjectProvider implements ITestObjectProvider {
     waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
-// @public (undocumented)
+// @public
 export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public (undocumented)

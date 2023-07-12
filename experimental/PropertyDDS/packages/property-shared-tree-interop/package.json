@@ -1,0 +1,66 @@
+{
+	"name": "@fluid-experimental/property-shared-tree-interop",
+	"version": "2.0.0-internal.5.3.0",
+	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "experimental/PropertyDDS/packages/property-shared-tree-interop"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "dist/index.js",
+	"module": "lib/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "concurrently npm:build:compile npm:lint",
+		"build:commonjs": "npm run tsc && npm run build:test",
+		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:full": "npm run build",
+		"build:full:compile": "npm run build:compile",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"test": "npm run test:jest",
+		"test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:jest": "jest",
+		"tsc": "tsc"
+	},
+	"dependencies": {
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
+		"@fluidframework/common-utils": "^1.1.1"
+	},
+	"devDependencies": {
+		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@types/jest": "22.2.3",
+		"@types/node": "^14.18.38",
+		"concurrently": "^7.6.0",
+		"eslint": "~8.6.0",
+		"eslint-config-prettier": "~8.5.0",
+		"jest": "^26.6.3",
+		"jest-junit": "^10.0.0",
+		"prettier": "~2.6.2",
+		"rimraf": "^4.4.0",
+		"ts-jest": "^26.4.4",
+		"typescript": "~4.5.5"
+	},
+	"jest-junit": {
+		"outputDirectory": "nyc",
+		"outputName": "jest-junit-report.xml"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
+	}
+}

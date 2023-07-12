@@ -9,7 +9,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 
 // @public
@@ -36,6 +36,7 @@ export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enableDiscovery?: boolean;
     enableInternalSummaryCaching: boolean;
+    enableLongPollingDowngrade: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;

@@ -4,14 +4,13 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
@@ -24,12 +23,11 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
@@ -116,18 +114,6 @@ export interface IConnectionDetails {
 }
 
 // @public
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
-    initialClients: ISignalClient[];
-    // (undocumented)
-    mode: ConnectionMode;
-    // (undocumented)
-    reason: string;
-    // (undocumented)
-    version: string;
-}
-
-// @public
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
@@ -157,7 +143,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 // @public
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
     readonly audience: IAudience | undefined;
@@ -175,15 +161,11 @@ export interface IContainerContext extends IDisposable {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
-    // @deprecated (undocumented)
-    readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -193,8 +175,6 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // (undocumented)
-    readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
@@ -243,13 +223,7 @@ export interface IContainerLoadMode {
 export type ICriticalContainerError = IErrorBase;
 
 // @public
-export interface IDeltaHandlerStrategy {
-    process: (message: ISequencedDocumentMessage) => void;
-    processSignal: (message: ISignalMessage) => void;
-}
-
-// @public
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
     readonly hasCheckpointSequenceNumber: boolean;
@@ -277,11 +251,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
-    (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
-    // @deprecated (undocumented)
-    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
@@ -551,6 +521,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

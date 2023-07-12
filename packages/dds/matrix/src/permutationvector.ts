@@ -9,7 +9,6 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	BaseSegment,
 	ISegment,
@@ -21,7 +20,7 @@ import {
 	MergeTreeMaintenanceType,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -141,7 +140,6 @@ export class PermutationVector extends Client {
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
-				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 

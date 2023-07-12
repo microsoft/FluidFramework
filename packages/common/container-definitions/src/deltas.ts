@@ -3,20 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IEventProvider,
-	IEvent,
-	IErrorEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	ConnectionMode,
 	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
@@ -40,31 +34,6 @@ export interface IConnectionDetails {
 	 * that is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
-}
-
-/**
- * Internal version of IConnectionDetails with props are only exposed internally
- */
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-	mode: ConnectionMode;
-	version: string;
-	initialClients: ISignalClient[];
-	reason: string;
-}
-
-/**
- * Interface used to define a strategy for handling incoming delta messages
- */
-export interface IDeltaHandlerStrategy {
-	/**
-	 * Processes the message.
-	 */
-	process: (message: ISequencedDocumentMessage) => void;
-
-	/**
-	 * Processes the signal.
-	 */
-	processSignal: (message: ISignalMessage) => void;
 }
 
 /**
@@ -111,17 +80,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	/**
 	 * @deprecated No replacement API recommended.
 	 */
-	(event: "allSentOpsAckd", listener: () => void);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
 	(event: "pong", listener: (latency: number) => void);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "processTime", listener: (latency: number) => void);
 
 	/**
 	 * Emitted when the {@link IDeltaManager} completes connecting to the Fluid service.
@@ -162,10 +121,7 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  */
-export interface IDeltaManager<T, U>
-	extends IEventProvider<IDeltaManagerEvents>,
-		IDeltaSender,
-		IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/** The queue of inbound delta messages */
 	readonly inbound: IDeltaQueue<T>;
 
@@ -320,4 +276,7 @@ export type ReadOnlyInfo =
 			readonly permissions: boolean | undefined;
 			/** read-only with no delta stream connection */
 			readonly storageOnly: boolean;
+			/** extra info on why connection to delta stream is not possible. This info might be provided
+			 * if storageOnly is set to true */
+			readonly storageOnlyReason?: string;
 	  };

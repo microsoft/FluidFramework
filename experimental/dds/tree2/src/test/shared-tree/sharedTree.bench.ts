@@ -16,9 +16,10 @@ import {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber, jsonSchema } from "../../domains";
+import { jsonNumber, jsonSchema, singleJsonCursor } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
+import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
@@ -46,18 +47,14 @@ const nodesCountDeep = [
 const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	local: {
-		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
-	},
+const linkedListSchema = deepBuilder.structRecursive("linkedList", {
+	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 });
 
 const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
 
-const wideRootSchema = wideBuilder.object("WideRoot", {
-	local: {
-		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
-	},
+const wideRootSchema = wideBuilder.struct("WideRoot", {
+	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 });
 
 const wideSchema = wideBuilder.intoDocumentSchema(
@@ -68,7 +65,7 @@ const deepSchema = deepBuilder.intoDocumentSchema(
 	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 /**
  * JS object like a deep tree.
@@ -309,12 +306,14 @@ describe("SharedTree benchmarks", () => {
 							initialTree: makeJsDeepTree(numberOfNodes, 1),
 							schema: deepSchema,
 						});
-						const path = deepPath(numberOfNodes + 1);
+						const path = deepPath(numberOfNodes);
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, value);
+							tree.editor
+								.valueField({ parent: path, field: localFieldKey })
+								.set(singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -359,12 +358,22 @@ describe("SharedTree benchmarks", () => {
 							schema: wideSchema,
 						});
 
-						const path = wideLeafPath(numberOfNodes - 1);
+						const rootPath = {
+							parent: undefined,
+							parentField: rootFieldKeySymbol,
+							parentIndex: 0,
+						};
+						const nodeIndex = numberOfNodes - 1;
+						const editor = tree.editor.sequenceField({
+							parent: rootPath,
+							field: localFieldKey,
+						});
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, setCount);
+							editor.delete(nodeIndex, 1);
+							editor.insert(nodeIndex, [singleJsonCursor(value)]);
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -372,7 +381,9 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedTreeData(
-								tree.storedSchema,
+								{
+									schema: tree.storedSchema,
+								},
 								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
@@ -414,6 +425,45 @@ describe("SharedTree benchmarks", () => {
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
 						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	// Note that this runs the computation for several peers.
+	// In practice, this computation is distributed across peers, so the actual time reported is
+	// divided by the number of peers.
+	describe("rebasing commits", () => {
+		const commitCounts = [1, 10, 20];
+		const nbPeers = 5;
+		for (const nbCommits of commitCounts) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const provider = new TestTreeProviderLite(nbPeers);
+						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+								const peer = provider.trees[iPeer];
+								insert(peer, 0, `p${iPeer}c${iCommit}`);
+							}
+						}
+
+						// Measure
+						const before = state.timer.now();
+						provider.processMessages();
+						const after = state.timer.now();
+						// Divide the duration by the number of peers so we get the average time per peer.
+						duration = state.timer.toSeconds(before, after) / nbPeers;
 					} while (state.recordBatch(duration));
 				},
 				// Force batch size of 1

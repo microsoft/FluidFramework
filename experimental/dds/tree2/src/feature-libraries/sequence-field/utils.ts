@@ -6,20 +6,19 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
-	addToNestedSet,
 	fail,
+	getFirstFromRangeMap,
 	getOrAddEmptyToMap,
-	getOrAddInNestedMap,
-	NestedMap,
-	nestedSetContains,
+	RangeMap,
 	StackyIterator,
-	tryGetFromNestedMap,
 } from "../../util";
 import {
+	addCrossFieldQuery,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	IdAllocator,
+	setInCrossFieldMap,
 } from "../modular-schema";
 import {
 	Attach,
@@ -48,15 +47,7 @@ import {
 	NoopMarkType,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import {
-	applyMoveEffectsToMark,
-	getMoveEffect,
-	isMoveMark,
-	makeMergeable,
-	MoveEffectTable,
-	MoveMark,
-	splitMove,
-} from "./moveEffectTable";
+import { applyMoveEffectsToMark, isMoveMark, MoveEffectTable } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
 	return mark.type === "Modify";
@@ -201,6 +192,7 @@ export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T
 		case "ReturnFrom":
 		case "ReturnTo":
 		case "Revive":
+		case "Placeholder":
 			return true;
 		case "Insert":
 		case "MoveIn":
@@ -230,6 +222,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case "MoveOut":
 			return true;
 		case "Modify":
+		case "Placeholder":
 			return mark.detachEvent !== undefined;
 		case "ReturnFrom":
 			return mark.detachEvent !== undefined || !mark.isDstConflicted;
@@ -259,6 +252,7 @@ export function getMarkLength(mark: Mark<unknown>): number {
 		case "ReturnFrom":
 		case "ReturnTo":
 		case "Revive":
+		case "Placeholder":
 			return mark.count;
 		default:
 			unreachableCase(type);
@@ -306,13 +300,7 @@ export function isDeleteMark<TNodeChange>(
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark<T>(
-	lhs: Mark<T>,
-	rhs: Readonly<Mark<T>>,
-	revision: RevisionTag | undefined,
-	moveEffects: MoveEffectTable<T> | undefined,
-	recordMerges: boolean,
-): boolean {
+export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean {
 	if (rhs.type !== lhs.type) {
 		return false;
 	}
@@ -363,17 +351,10 @@ export function tryExtendMark<T>(
 			const lhsMoveIn = lhs as MoveIn | ReturnTo;
 			if (
 				isEqualPlace(lhsMoveIn, rhs) &&
-				moveEffects !== undefined &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-				tryMergeMoves(
-					CrossFieldTarget.Destination,
-					lhsMoveIn,
-					rhs,
-					revision,
-					moveEffects,
-					recordMerges,
-				)
+				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
 			) {
+				lhsMoveIn.count += rhs.count;
 				return true;
 			}
 			break;
@@ -383,36 +364,11 @@ export function tryExtendMark<T>(
 			lhsDetach.count += rhs.count;
 			return true;
 		}
-		case "MoveOut": {
-			const lhsMoveOut = lhs as MoveOut<T>;
-			if (
-				moveEffects !== undefined &&
-				tryMergeMoves(
-					CrossFieldTarget.Source,
-					lhsMoveOut,
-					rhs,
-					revision,
-					moveEffects,
-					recordMerges,
-				)
-			) {
-				return true;
-			}
-			break;
-		}
+		case "MoveOut":
 		case "ReturnFrom": {
-			const lhsReturn = lhs as ReturnFrom<T>;
-			if (
-				moveEffects !== undefined &&
-				tryMergeMoves(
-					CrossFieldTarget.Source,
-					lhsReturn,
-					rhs,
-					revision,
-					moveEffects,
-					recordMerges,
-				)
-			) {
+			const lhsMoveOut = lhs as MoveOut<T> | ReturnFrom<T>;
+			if ((lhsMoveOut.id as number) + lhsMoveOut.count === rhs.id) {
+				lhsMoveOut.count += rhs.count;
 				return true;
 			}
 			break;
@@ -428,49 +384,6 @@ export function tryExtendMark<T>(
 		}
 		default:
 			break;
-	}
-	return false;
-}
-
-function tryMergeMoves<T>(
-	target: CrossFieldTarget,
-	left: MoveMark<T>,
-	right: MoveMark<T>,
-	revision: RevisionTag | undefined,
-	moveEffects: MoveEffectTable<T>,
-	recordMerges: boolean,
-): boolean {
-	const rev = left.revision ?? revision;
-	const oppEnd =
-		target === CrossFieldTarget.Source ? CrossFieldTarget.Destination : CrossFieldTarget.Source;
-
-	const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id, false).mergeRight;
-	if (prevMergeId !== undefined && prevMergeId !== right.id) {
-		makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
-	} else {
-		makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
-	}
-
-	const leftEffect = getMoveEffect(moveEffects, target, rev, left.id);
-	if (leftEffect.mergeRight === right.id) {
-		const rightEffect = getMoveEffect(moveEffects, target, rev, right.id);
-		assert(rightEffect.mergeLeft === left.id, 0x56d /* Inconsistent merge info */);
-		const nextId = rightEffect.mergeRight;
-		if (nextId !== undefined) {
-			makeMergeable(moveEffects, target, rev, left.id, nextId);
-		} else {
-			leftEffect.mergeRight = undefined;
-		}
-
-		if (recordMerges) {
-			splitMove(moveEffects, target, revision, left.id, right.id, left.count, right.count);
-
-			// TODO: This breaks the nextId mergeability, and would also be overwritten if we merged again
-			makeMergeable(moveEffects, target, revision, left.id, right.id);
-		}
-
-		left.count += right.count;
-		return true;
 	}
 	return false;
 }
@@ -603,7 +516,7 @@ export class DetachedNodeTracker {
 		genId: IdAllocator,
 	): TaggedChange<Changeset<T>> {
 		const moveEffects = newMoveEffectTable<T>();
-		const factory = new MarkListFactory<T>(change.revision, moveEffects);
+		const factory = new MarkListFactory<T>();
 		const iter = new StackyIterator(change.change);
 		while (!iter.done) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -618,14 +531,7 @@ export class DetachedNodeTracker {
 			if (isReattach(cloned) && cloned.detachEvent !== undefined) {
 				let remainder: Reattach<T> = cloned;
 				for (let i = 1; i < cloned.count; ++i) {
-					const [head, tail] = splitMark(
-						remainder,
-						change.revision,
-						1,
-						genId,
-						moveEffects,
-						false,
-					);
+					const [head, tail] = splitMark(remainder, 1);
 					this.updateMark(head, change.revision, moveEffects);
 					factory.push(head);
 					remainder = tail;
@@ -639,7 +545,7 @@ export class DetachedNodeTracker {
 
 		// We may need to apply the effects of updateMoveSrcDetacher for some marks if those were located
 		// before their corresponding detach mark.
-		const factory2 = new MarkListFactory<T>(change.revision, moveEffects);
+		const factory2 = new MarkListFactory<T>();
 		for (const mark of factory.list) {
 			const splitMarks = applyMoveEffectsToMark(mark, change.revision, moveEffects, true);
 			factory2.push(...splitMarks);
@@ -777,8 +683,8 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: NestedMap<RevisionTag | undefined, MoveId, T>;
-	mapDst: NestedMap<RevisionTag | undefined, MoveId, T>;
+	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
 	reset: () => void;
 }
 
@@ -788,8 +694,8 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
 	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
-	const mapDst: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
+	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
 	const getMap = (target: CrossFieldTarget) =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
@@ -808,29 +714,30 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: MoveId,
+			count: number,
 			addDependency: boolean,
 		) => {
 			if (addDependency) {
-				addToNestedSet(getQueries(target), revision, id);
+				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return tryGetFromNestedMap(getMap(target), revision, id);
+			return getFirstFromRangeMap(getMap(target).get(revision) ?? [], id, count);
 		},
-		getOrCreate: (
+		set: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: MoveId,
-			defaultValue: T,
+			count: number,
+			value: T,
 			invalidateDependents: boolean,
 		) => {
-			if (invalidateDependents && nestedSetContains(getQueries(target), revision, id)) {
+			if (
+				invalidateDependents &&
+				getFirstFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !==
+					undefined
+			) {
 				table.isInvalidated = true;
 			}
-			return getOrAddInNestedMap<RevisionTag | undefined, MoveId, T>(
-				getMap(target),
-				revision,
-				id,
-				defaultValue,
-			);
+			setInCrossFieldMap(getMap(target), revision, id, count, value);
 		},
 
 		reset: () => {
@@ -862,14 +769,7 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<T, TMark extends Mark<T>>(
-	mark: TMark,
-	revision: RevisionTag | undefined,
-	length: number,
-	genId: IdAllocator,
-	moveEffects: MoveEffectTable<T>,
-	recordMoveEffect: boolean = false,
-): [TMark, TMark] {
+export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number): [TMark, TMark] {
 	const markLength = getMarkLength(mark);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
@@ -892,29 +792,8 @@ export function splitMark<T, TMark extends Mark<T>>(
 			];
 		case "MoveIn":
 		case "ReturnTo": {
-			const newId = genId();
-			splitMove(
-				moveEffects,
-				CrossFieldTarget.Source,
-				mark.revision ?? revision,
-				mark.id,
-				newId,
-				length,
-				remainder,
-			);
-			if (recordMoveEffect) {
-				splitMove(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					mark.revision ?? revision,
-					mark.id,
-					newId,
-					length,
-					remainder,
-				);
-			}
 			const mark1: TMark = { ...mark, count: length };
-			const mark2: TMark = { ...mark, id: newId, count: remainder };
+			const mark2: TMark = { ...mark, id: (mark.id as number) + length, count: remainder };
 			if (mark.type === "ReturnTo") {
 				if (mark.detachEvent !== undefined) {
 					(mark2 as ReturnTo).detachEvent = splitDetachEvent(mark.detachEvent, length);
@@ -954,31 +833,10 @@ export function splitMark<T, TMark extends Mark<T>>(
 		case "MoveOut":
 		case "ReturnFrom": {
 			// TODO: Handle detach index for ReturnFrom
-			const newId = genId();
-			splitMove(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				mark.revision ?? revision,
-				mark.id,
-				newId,
-				length,
-				remainder,
-			);
-			if (recordMoveEffect) {
-				splitMove(
-					moveEffects,
-					CrossFieldTarget.Source,
-					mark.revision ?? revision,
-					mark.id,
-					newId,
-					length,
-					remainder,
-				);
-			}
 			const mark1 = { ...mark, count: length };
 			const mark2 = {
 				...mark,
-				id: newId,
+				id: (mark.id as number) + length,
 				count: remainder,
 			};
 			if (mark.detachEvent !== undefined) {
@@ -986,6 +844,8 @@ export function splitMark<T, TMark extends Mark<T>>(
 			}
 			return [mark1, mark2];
 		}
+		case "Placeholder":
+			fail("TODO");
 		default:
 			unreachableCase(type);
 	}
@@ -1036,6 +896,7 @@ export function getNodeChange<TNodeChange>(mark: Mark<TNodeChange>): TNodeChange
 		case "MoveOut":
 		case "ReturnFrom":
 		case "Revive":
+		case "Placeholder":
 			return mark.changes;
 		default:
 			unreachableCase(type);
@@ -1062,7 +923,8 @@ export function withNodeChange<TNodeChange>(
 		case "Modify":
 		case "MoveOut":
 		case "ReturnFrom":
-		case "Revive": {
+		case "Revive":
+		case "Placeholder": {
 			const newMark = { ...mark };
 			if (changes !== undefined) {
 				newMark.changes = changes;

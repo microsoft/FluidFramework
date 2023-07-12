@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TooltipHost } from "@fluentui/react";
-import { Button, useId } from "@fluentui/react-components";
+import { Button, Tooltip } from "@fluentui/react-components";
 import React from "react";
 
 import { SharedCell } from "@fluidframework/cell";
@@ -43,8 +42,6 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 		};
 	}, [emojiCell, isSmiley, setIsSmiley]);
 
-	const buttonTooltipId = useId("emoji-button");
-
 	const emoji = isSmiley === undefined ? "😐" : isSmiley ? "🙂" : "☹️";
 
 	function onClick(): void {
@@ -52,14 +49,8 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 	}
 
 	return (
-		<TooltipHost content="Toggle Emoji" id={buttonTooltipId}>
-			<Button
-				onClick={onClick}
-				aria-describedby={buttonTooltipId}
-				size="large"
-				shape="square"
-				icon={emoji}
-			/>
-		</TooltipHost>
+		<Tooltip content="Toggle emoji" relationship="description">
+			<Button onClick={onClick} size="large" shape="square" icon={emoji} />
+		</Tooltip>
 	);
 }

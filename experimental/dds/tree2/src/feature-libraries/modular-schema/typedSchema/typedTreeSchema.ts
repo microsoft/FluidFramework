@@ -15,7 +15,7 @@ import {
 	ValueSchema,
 	symbolFromKey,
 } from "../../../core";
-import { MakeNominal, Assume } from "../../../util";
+import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
@@ -152,6 +152,7 @@ export type Any = typeof Any;
 /**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
+ * @alpha
  */
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
@@ -172,7 +173,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
  * @alpha
  */
 export interface TreeSchemaSpecification {
-	readonly local?: { readonly [key: string]: FieldSchema };
+	readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
 	readonly global?: FlexList<GlobalFieldSchema>;
 	readonly extraLocalFields?: FieldSchema;
 	readonly extraGlobalFields?: boolean;

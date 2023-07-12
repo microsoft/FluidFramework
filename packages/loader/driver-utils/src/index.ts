@@ -42,10 +42,14 @@ export { RateLimiter } from "./rateLimiter";
 export { readAndParse } from "./readAndParse";
 export { IProgress, runWithRetry } from "./runWithRetry";
 export {
-	combineAppAndProtocolSummary,
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
+export {
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	blobHeadersBlobName,
+} from "./adapters";

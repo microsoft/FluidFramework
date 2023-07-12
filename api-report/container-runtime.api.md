@@ -18,7 +18,7 @@ import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-defin
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -215,7 +215,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
-    }): Promise<IRootSummaryTreeWithStats>;
+    }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
@@ -436,11 +436,6 @@ export interface IRefreshSummaryAckOptions {
     readonly summaryRefSeq: number;
 }
 
-// @public
-export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
-    gcStats?: IGCStats;
-}
-
 // @public @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
@@ -484,7 +479,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
 // @public (undocumented)
@@ -653,6 +648,12 @@ export enum RuntimeMessage {
 }
 
 // @public
+export interface SubmitSummaryFailureData {
+    // (undocumented)
+    stage: SummaryStage;
+}
+
+// @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @public
@@ -742,6 +743,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
+
+// @public
+export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";

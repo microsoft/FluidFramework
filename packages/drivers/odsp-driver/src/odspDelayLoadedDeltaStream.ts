@@ -25,13 +25,17 @@ import {
 	TokenFetchOptions,
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import { ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
-import { getWithRetryForTokenRefresh, TokenFetchOptionsEx } from "./odspUtils";
+import {
+	getJoinSessionCacheKey,
+	getWithRetryForTokenRefresh,
+	TokenFetchOptionsEx,
+} from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -79,7 +83,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
-		this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
+		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
 	}
 
 	public get resolvedUrl(): IResolvedUrl {
@@ -284,14 +288,21 @@ export class OdspDelayLoadedDeltaStream {
 			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
 				for (const code of e.facetCodes) {
 					switch (code) {
+						case "sessionForbidden":
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
+						case "sessionForbiddenOnCheckoutFile":
+						case "sessionForbiddenOnInvisibleMinorVersion":
 							// This document can only be opened in storage-only mode.
 							// DeltaManager will recognize this error
 							// and load without a delta stream connection.
 							this.policies = { ...this.policies, storageOnly: true };
-							throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
+							throw new DeltaStreamConnectionForbiddenError(
+								`Storage-only due to ${code}`,
+								{ driverVersion },
+								code,
+							);
 						default:
 							continue;
 					}

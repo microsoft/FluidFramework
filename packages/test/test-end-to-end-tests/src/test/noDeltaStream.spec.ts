@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";

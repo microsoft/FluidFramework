@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -130,16 +135,11 @@ export interface IBatchMessage {
 }
 
 /**
- * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
- * This allows the Container to terminate the connection to the IRuntime.
- *
- * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
- * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and the Container has created a new ContainerContext.
+ * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
+ * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
+ * if you intend them to be consumed/called from the runtime layer.
  */
-export interface IContainerContext extends IDisposable {
-	/** @deprecated Please pass in existing directly in instantiateRuntime */
-	readonly existing: boolean | undefined;
+export interface IContainerContext {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
@@ -171,7 +171,6 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
-	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
 	/**
@@ -197,20 +196,6 @@ export interface IContainerContext extends IDisposable {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
-
-	/**
-	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
-	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
-	 * and scenarios which can change in the future.
-	 */
-	readonly id: string;
-
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

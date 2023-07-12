@@ -11,6 +11,7 @@ import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import { updatePackageJsonFile } from "../../common/npmPackage";
+import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -67,7 +68,7 @@ function packageMayChooseToPublishToNPM(name: string): boolean {
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
 function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
-	return name.startsWith("@fluid-internal/") || name.startsWith("@fluid-msinternal/");
+	return name.startsWith("@fluid-internal/");
 }
 
 /**
@@ -99,7 +100,6 @@ function packageIsFluidPackage(name: string): boolean {
 		name.startsWith("@fluid-example/") ||
 		name.startsWith("@fluid-experimental/") ||
 		name.startsWith("@fluid-internal/") ||
-		name.startsWith("@fluid-msinternal/") ||
 		name.startsWith("@fluid-tools/") ||
 		name === "fluid-framework" ||
 		name === "fluidframework-docs" ||
@@ -554,6 +554,79 @@ export const handlers: Handler[] = [
 			});
 
 			return { resolved: true };
+		},
+	},
+	{
+		name: "npm-package-json-script-clean",
+		match,
+		handler: (file) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingScripts: string[] = [];
+
+			if (hasScriptsField) {
+				const hasBuildScript = Object.prototype.hasOwnProperty.call(json.scripts, "build");
+				const hasCleanScript = Object.prototype.hasOwnProperty.call(json.scripts, "clean");
+
+				if (hasBuildScript && !hasCleanScript) {
+					missingScripts.push(`clean`);
+				}
+			}
+
+			return missingScripts.length > 0
+				? `${file} is missing the following scripts: \n\t${missingScripts.join("\n\t")}`
+				: undefined;
+		},
+	},
+	{
+		name: "npm-package-json-script-dep",
+		match,
+		handler: (file, root) => {
+			const manifest = getFluidBuildConfig(root);
+			const commandPackages = manifest.policy?.dependencies?.commandPackages;
+			if (commandPackages === undefined) {
+				return;
+			}
+			const commandDep = new Map(commandPackages);
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingDeps: string[] = [];
+
+			if (hasScriptsField) {
+				const commands = new Set(
+					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+				);
+				for (const command of commands.values()) {
+					const dep = commandDep.get(command);
+					if (
+						dep &&
+						json.dependencies?.[dep] === undefined &&
+						json.devDependencies?.[dep] === undefined
+					) {
+						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
+					}
+				}
+			}
+
+			return missingDeps.length > 0
+				? `${file} is missing the following dependencies or devDependencies: \n\t${missingDeps.join(
+						"\n\t",
+				  )}`
+				: undefined;
 		},
 	},
 ];

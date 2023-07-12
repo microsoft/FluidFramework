@@ -4,7 +4,7 @@
  */
 
 import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../core";
-import { NodeChangeset } from "./modular-schema";
+import { ChangeAtomId, ChangesetLocalId, NodeChangeset } from "./modular-schema";
 
 export type NodeUpdate =
 	| {
@@ -16,16 +16,24 @@ export type NodeUpdate =
 			 * The node being restored.
 			 */
 			revert: ITreeCursorSynchronous;
-			revision: RevisionTag | undefined;
+			changeId: ChangeAtomId;
 			changes?: NodeChangeset;
 	  };
 
-export interface ValueChangeset {
-	value?: NodeUpdate;
-	changes?: NodeChangeset;
-}
-
 export interface OptionalFieldChange {
+	/**
+	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+	 * Globally unique across all changesets when paired with the changeset's revision tag.
+	 */
+	readonly id: ChangesetLocalId;
+
+	/**
+	 * When populated, indicates the revision that this field change is associated with.
+	 * Is left undefined when the revision is the same as that of the whole changeset
+	 * (which would also be undefined in the case of an anonymous changeset).
+	 */
+	readonly revision?: RevisionTag;
+
 	/**
 	 * The new content for the trait. If undefined, the trait will be cleared.
 	 */
@@ -49,11 +57,11 @@ export interface OptionalChangeset {
 	childChange?: NodeChangeset;
 
 	/**
-	 * The revision the node `childChange` is referring to was deleted in.
+	 * The change that the node `childChange` is referring to was deleted by.
 	 * If undefined, `childChange` refers to the node currently in this field.
 	 *
 	 * This representation is sufficient for representing changes to the node present before this changeset and
 	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
 	 */
-	deletedBy?: RevisionTag;
+	deletedBy?: ChangeAtomId;
 }
