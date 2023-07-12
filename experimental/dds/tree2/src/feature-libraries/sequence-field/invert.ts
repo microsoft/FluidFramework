@@ -118,7 +118,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
-						detachEvent: { revision: mark.revision ?? revision, localId: mark.id },
+						detachEvent: mark.detachIdOverride ?? { revision: mark.revision ?? revision, localId: mark.id },
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: mark.revision ?? revision,
@@ -142,6 +142,7 @@ function invertMark<TNodeChange>(
 						type: "Delete",
 						count: mark.count,
 						id: mark.detachEvent.localId,
+						detachIdOverride: mark.detachEvent,
 					},
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
@@ -193,38 +194,51 @@ function invertMark<TNodeChange>(
 					true,
 				);
 			}
+			const detachEvent = mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
+				? mark.detachIdOverride
+				: { revision: mark.revision ?? revision ?? fail("Revision must be defined"), localId: mark.id };
+
 			return [
 				{
 					type: "ReturnTo",
 					id: mark.id,
 					count: mark.count,
-					detachEvent: {
-						revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-						localId: mark.id,
-					},
+					detachEvent,
 				},
 			];
 		}
-		case "MoveIn":
-		case "ReturnTo": {
+		case "MoveIn": {
 			if (mark.isSrcConflicted) {
-				return mark.type === "ReturnTo" && mark.detachEvent === undefined
-					? [{ count: mark.count }]
-					: [];
-			}
-			if (mark.type === "ReturnTo") {
-				if (mark.detachEvent === undefined) {
-					// The nodes were already attached, so the mark did not affect them.
-					return [{ count: mark.count }];
-				} else if (isConflictedReattach(mark)) {
-					// The nodes were not attached and could not be attached.
-					return [];
-				}
+				return [];
 			}
 
 			const invertedMark: ReturnFrom<TNodeChange> = {
 				type: "ReturnFrom",
 				id: mark.id,
+				count: mark.count,
+			};
+
+			return applyMovedChanges(invertedMark, revision, crossFieldManager);
+		}
+		case "ReturnTo": {
+			if (mark.isSrcConflicted) {
+				return mark.detachEvent === undefined
+					? [{ count: mark.count }]
+					: [];
+			}
+		
+			if (mark.detachEvent === undefined) {
+				// The nodes were already attached, so the mark did not affect them.
+				return [{ count: mark.count }];
+			} else if (isConflictedReattach(mark)) {
+				// The nodes were not attached and could not be attached.
+				return [];
+			}		
+
+			const invertedMark: ReturnFrom<TNodeChange> = {
+				type: "ReturnFrom",
+				id: mark.id,
+				detachIdOverride: mark.detachEvent,
 				count: mark.count,
 			};
 

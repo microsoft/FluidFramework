@@ -161,50 +161,33 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
-				if (name2 === "Revive") {
-					it.skip(title, () => {
-						/**
-						 * These cases are currently disabled because `change2Updated` will be a conflicted revive,
-						 * as the nodes it is targeting have been last detached by `inverse2`.
-						 * Since `change2Updated` will does have the same effect as `change2`, rebasing over it will not take `r3` back to `r1`.
-						 * This will be fixed by restoring the previous detach ID when "unreviving" a node.
-						 */
-					});
-				} else {
-					it(title, () => {
-						const maxOffset = 4;
-						for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
-							for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-								const tracker = new SF.DetachedNodeTracker();
-								const change1 = tagChange(makeChange1(offset1, maxOffset), tag8);
-								const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
-								if (!SF.areRebasable(change1.change, change2.change)) {
-									continue;
-								}
-								const inverse2 = tagRollbackInverse(
-									invert(change2),
-									tag6,
-									change2.revision,
-								);
-								const r1 = rebaseTagged(change1, change2);
-								tracker.apply(change2);
-								const r2 = rebaseTagged(r1, inverse2);
-								tracker.apply(inverse2);
-								// We need to update change2 to ensure it refers to detached nodes by the detach
-								// that last affected them.
-								// TODO: This should not be necessary, as in a real sandwich rebase, this step would not happen.
-								const change2Updated = tracker.update(change2);
-								const r3 = rebaseTagged(r2, change2Updated);
-								tracker.apply(change2Updated);
-								// We need to update r1 to ensure it refers to detached nodes by the detach
-								// that last affected them. This is for comparison only.
-								const r1Updated = tracker.update(r1);
-								assert.deepEqual(r3, r1Updated);
-								// assert.deepEqual(r3, r1);
+			it(title, () => {
+					const maxOffset = 4;
+					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
+						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
+							const tracker = new SF.DetachedNodeTracker();
+							const change1 = tagChange(makeChange1(offset1, maxOffset), tag8);
+							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
+							if (!SF.areRebasable(change1.change, change2.change)) {
+								continue;
 							}
+							const inverse2 = tagRollbackInverse(
+								invert(change2),
+								tag6,
+								change2.revision,
+							);
+							const r1 = rebaseTagged(change1, change2);
+							tracker.apply(change2);
+							const r2 = rebaseTagged(r1, inverse2);
+							tracker.apply(inverse2);
+							const r3 = rebaseTagged(r2, change2);
+							// We need to update r1 to ensure it refers to detached nodes by the detach
+							// that last affected them. This is for comparison only.
+							const r1Updated = tracker.update(r1);
+							assert.deepEqual(r3, r1Updated);
 						}
-					});
-				}
+					}
+				});
 			}
 		}
 	});
@@ -235,9 +218,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const inv = tagRollbackInverse(invert(taggedChange), tag2, taggedChange.revision);
 				tracker.apply(taggedChange);
 				tracker.apply(inv);
-				// TODO: Use the original change instead once composes handles this correctly.
-				const updatedChange = tracker.update(taggedChange);
-				const changes = [inv, updatedChange];
+				const changes = [inv, taggedChange];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
 				assert.deepEqual(delta, []);

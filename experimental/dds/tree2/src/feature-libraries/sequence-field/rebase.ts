@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
+	ChangeAtomId,
 	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -325,8 +326,7 @@ function rebaseMark<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
-	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
+	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);	
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
@@ -371,7 +371,12 @@ function rebaseMark<TNodeChange>(
 			}
 		}
 		assert(isDetachMark(baseMark), "Only detach marks should empty cells");
-		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseMark.id);
+		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
+		const detachEvent = baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
+			? baseMark.detachIdOverride
+			: { revision: baseMarkIntention, localId: baseMark.id };
+
+		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
@@ -540,15 +545,14 @@ function rebaseNodeChange<TNodeChange>(
 
 function makeDetachedMark<T>(
 	mark: NoopMark | ExistingCellMark<T>,
-	detachIntention: RevisionTag,
-	detachId: ChangesetLocalId,
+	detachEvent: ChangeAtomId,
 ): Mark<T> {
 	if (isNoopMark(mark)) {
 		return { count: 0 };
 	}
 
 	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
-	return { ...mark, detachEvent: { revision: detachIntention, localId: detachId } };
+	return { ...mark, detachEvent };
 }
 
 function withoutDetachEvent<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {

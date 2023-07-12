@@ -71,7 +71,7 @@ export function isActiveReattach<TNodeChange>(
 // TODO: Name is misleading
 export function isConflictedReattach<TNodeChange>(
 	mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> {
+): boolean {
 	return isReattach(mark) && isReattachConflicted(mark);
 }
 
@@ -101,6 +101,13 @@ export function getCellId(
 			return { revision: rev, localId: mark.id };
 		}
 		return undefined;
+	}
+
+	if (markEmptiesCells(mark)) {
+		assert(isDetachMark(mark), "Only detach marks should empty cells");
+		return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
+			? mark.detachIdOverride
+			: { revision: mark.revision ?? revision, localId: mark.id }
 	}
 
 	return mark.detachEvent;
@@ -811,25 +818,19 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		case "Delete": {
 			const mark1 = { ...mark, count: length };
 			const id2: ChangesetLocalId = brand((mark.id as number) + length);
-			const mark2 =
-				mark.detachEvent !== undefined
-					? {
-							...mark,
-							id: id2,
-							count: remainder,
-							detachEvent: splitDetachEvent(mark.detachEvent, length),
-					  }
-					: {
-							...mark,
-							id: id2,
-							count: remainder,
-					  };
+			const mark2 = { ...mark, id: id2, count: remainder };
+			const mark2Delete = mark2 as Delete<T>;
+			if (mark2Delete.detachEvent !== undefined) {
+				mark2Delete.detachEvent = splitDetachEvent(mark2Delete.detachEvent, length);
+			}
 
+			if (mark2Delete.detachIdOverride !== undefined) {
+				mark2Delete.detachIdOverride = splitDetachEvent(mark2Delete.detachIdOverride, length);
+			}
 			return [mark1, mark2];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			// TODO: Handle detach index for ReturnFrom
 			const mark1 = { ...mark, count: length };
 			const mark2 = {
 				...mark,
@@ -838,6 +839,13 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			};
 			if (mark.detachEvent !== undefined) {
 				(mark2 as Detach).detachEvent = splitDetachEvent(mark.detachEvent, length);
+			}
+
+			if (mark2.type === "ReturnFrom") {
+				const mark2Return = mark2 as ReturnFrom<T>;
+				if (mark2Return.detachIdOverride !== undefined) {
+					mark2Return.detachIdOverride = splitDetachEvent(mark2Return.detachIdOverride, length);
+				}
 			}
 			return [mark1, mark2];
 		}

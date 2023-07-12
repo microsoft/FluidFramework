@@ -268,6 +268,7 @@ export interface Delete<TNodeChange = NodeChangeType>
 	type: "Delete";
 	count: NodeCount;
 	id: ChangesetLocalId;
+	detachIdOverride?: ChangeAtomId;
 }
 
 // Note: inconsistent naming here is to avoid shadowing Effects.Delete
@@ -354,6 +355,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 		CellTargetingMark {
 	type: "ReturnFrom";
 	count: NodeCount;
+	detachIdOverride?: ChangeAtomId;
 
 	/**
 	 * When true, the corresponding ReturnTo has a conflict.
