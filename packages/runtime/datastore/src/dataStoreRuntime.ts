@@ -583,10 +583,13 @@ export class FluidDataStoreRuntime
 		return this.audience;
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		this.verifyNotClosed();
 
-		return this.dataStoreContext.uploadBlob(blob);
+		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

@@ -65,6 +65,21 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			provider.updateDocumentId(container.resolvedUrl);
 		});
 
+		it("blob is aborted", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const ac = new AbortController();
+			ac.abort("abort test");
+
+			try {
+				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				assert.fail("Should not succeed");
+			} catch (error) {
+				console.log(error);
+				assert.strictEqual(error, "abort test");
+			}
+		});
+
 		it("blob is attached after usage in map", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
