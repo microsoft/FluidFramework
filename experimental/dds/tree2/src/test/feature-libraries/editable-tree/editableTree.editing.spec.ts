@@ -61,14 +61,13 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
-// TODO: There are two kinds of users of this in this file. Both should be changed:
-// Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
-// Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
 function createSharedTrees(
 	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
 	data?: JsonableTree[],
-	numberOfTrees = 1,
 ): readonly [TestTreeProviderLite, readonly ISharedTree[]] {
+	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests
+	// involving more than 1 tree should be moved elsewhere.
+	const numberOfTrees = 1;
 	const provider = new TestTreeProviderLite(numberOfTrees);
 	for (const tree of provider.trees) {
 		assert(tree.isAttached());
