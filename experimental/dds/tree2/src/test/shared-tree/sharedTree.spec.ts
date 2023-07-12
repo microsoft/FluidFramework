@@ -1574,7 +1574,7 @@ describe("SharedTree", () => {
 		itView("can be mutated after merging", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "A");
-			parent.merge(child);
+			parent.merge(child, false);
 			setTestValue(child, "B");
 			assert.deepEqual(getTestValues(parent), ["A"]);
 			assert.deepEqual(getTestValues(child), ["A", "B"]);
@@ -1585,7 +1585,7 @@ describe("SharedTree", () => {
 		itView("can rebase after merging", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "A");
-			parent.merge(child);
+			parent.merge(child, false);
 			setTestValue(parent, "B");
 			child.rebaseOnto(parent);
 			assert.deepEqual(getTestValues(child), ["A", "B"]);
@@ -1699,22 +1699,27 @@ describe("SharedTree", () => {
 			view.transaction.start();
 			const fork = view.fork();
 			pushTestValueDirect(fork, 42);
-			view.merge(fork);
+			assert.throws(
+				() => view.merge(fork, false),
+				(e) =>
+					validateAssertionError(
+						e,
+						"A view that is merged into an in-progress transaction must be disposed",
+					),
+			);
+			view.merge(fork, true);
 			view.transaction.commit();
 			assert.equal(getTestValue(view), 42);
 		});
 
-		itView("fail if in progress when view merges", (view) => {
+		itView("automatically commit if in progress when view merges", (view) => {
 			const fork = view.fork();
 			fork.transaction.start();
-			assert.throws(
-				() => view.merge(fork),
-				(e) =>
-					validateAssertionError(
-						e,
-						"Branch may not be merged while transaction is in progress",
-					),
-			);
+			pushTestValueDirect(fork, 42);
+			pushTestValueDirect(fork, 43);
+			view.merge(fork, false);
+			assert.deepEqual(getTestValues(fork), [42, 43]);
+			assert.equal(fork.transaction.inProgress(), false);
 		});
 
 		itView("do not close across forks", (view) => {
@@ -1876,7 +1881,8 @@ describe("SharedTree", () => {
 				child.transaction.start();
 				pushTestValueDirect(child, "C");
 				child.transaction.commit();
-				parent.merge(child);
+				// TODO:#4925: It should not be necessary to keep the child undisposed here.
+				parent.merge(child, false);
 				assert.deepEqual(getTestValues(parent), ["A", "B", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
