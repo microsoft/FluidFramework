@@ -237,6 +237,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 											...newMessages[batchStartIndex],
 											metadata: {
 												// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 												...(newMessages[batchStartIndex].metadata as any),
 												batch: undefined,
 											},
@@ -280,6 +281,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 										...newMessages[batchEndIndex],
 										metadata: {
 											// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+											// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 											...(newMessages[batchEndIndex].metadata as any),
 											batch: undefined,
 										},

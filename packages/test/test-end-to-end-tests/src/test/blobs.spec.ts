@@ -81,9 +81,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		const blobOpP = new Promise<void>((resolve, reject) =>
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
-					(op.metadata as { blobId?: unknown } | undefined)?.blobId
-						? resolve()
-						: reject(new Error("no op metadata"));
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -213,9 +215,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			const blobOpP = new Promise<void>((resolve, reject) =>
 				dataStore._context.containerRuntime.on("op", (op) => {
 					if (op.type === ContainerMessageType.BlobAttach) {
-						(op.metadata as { blobId?: unknown } | undefined)?.blobId
-							? resolve()
-							: reject(new Error("no op metadata"));
+						if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+							resolve();
+						} else {
+							reject(new Error("no op metadata"));
+						}
 					}
 				}),
 			);
@@ -260,9 +264,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					(op.contents as { type?: unknown } | undefined)?.type ===
 					ContainerMessageType.BlobAttach
 				) {
-					(op.metadata as { blobId?: unknown } | undefined)?.blobId
-						? resolve()
-						: reject(new Error("no op metadata"));
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);

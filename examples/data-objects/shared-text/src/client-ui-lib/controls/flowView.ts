@@ -3584,6 +3584,7 @@ export class FlowView extends ui.Component {
 		} else {
 			if (opCursorPos !== undefined) {
 				this.remotePresenceFromEdit(
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 					event.opArgs.sequencedMessage!.clientId as string,
 					event.opArgs.sequencedMessage!.referenceSequenceNumber,
 					opCursorPos,

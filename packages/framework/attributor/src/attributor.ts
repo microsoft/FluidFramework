@@ -89,6 +89,7 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			const client = audience.getMember(message.clientId as string);
 			if (message.type === "op") {
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.

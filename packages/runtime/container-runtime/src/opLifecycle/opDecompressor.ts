@@ -8,8 +8,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms } from "../containerRuntime";
-import { IMessageProcessingResult } from "./definitions";
 import { IBatchMetadata } from "../metadata";
+import { IMessageProcessingResult } from "./definitions";
 
 /**
  * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -191,5 +191,6 @@ const newMessage = (
 	contents,
 	compression: undefined,
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 	metadata: { ...(originalMessage.metadata as any) },
 });
