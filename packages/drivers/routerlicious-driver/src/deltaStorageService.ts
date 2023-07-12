@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
@@ -18,11 +18,7 @@ import {
 	emptyMessageStream,
 	streamObserver,
 } from "@fluidframework/driver-utils";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	TelemetryNullLogger,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 
@@ -73,7 +69,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
-				validateMessages("snapshotOps", messages, from, this.logger);
+				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
@@ -83,7 +79,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 			}
 
 			const ops = await this.deltaStorageService.get(this.tenantId, this.id, from, to);
-			validateMessages("storage", ops.messages, from, this.logger);
+			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
 			opsFromStorage += ops.messages.length;
 			return ops;
 		};
@@ -101,7 +97,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 			fromTotal, // inclusive
 			toTotal, // exclusive
 			MaxBatchDeltas,
-			new TelemetryNullLogger(),
+			this.logger,
 			abortSignal,
 			fetchReason,
 		);
@@ -139,7 +135,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 		const ops = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
-				eventName: "getDeltas",
+				eventName: "OpsFetch",
 				from,
 				to,
 			},

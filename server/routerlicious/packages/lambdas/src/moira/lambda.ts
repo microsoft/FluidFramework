@@ -110,7 +110,7 @@ export class MoiraLambda implements IPartitionLambda {
 
 		for (const message of messages) {
 			if (message?.operation?.type === "op") {
-				const contents = JSON.parse(message.operation.contents);
+				const contents = JSON.parse(message.operation.contents as string);
 				const opData = contents.contents?.contents?.content?.contents;
 				if (opData && opData.op === 0 && opData.changeSet !== undefined) {
 					// At this point is checked to be submitted to Moira

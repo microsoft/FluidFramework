@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
 	ITelemetryBaseLogger,
 	IDisposable,
-	IEvent,
-	IEventProvider,
-} from "@fluidframework/common-definitions";
-import {
 	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,

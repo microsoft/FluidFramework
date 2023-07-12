@@ -18,7 +18,7 @@ import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/comm
 import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
@@ -708,11 +708,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-		const NACKedSegmentGroup = this._mergeTree.pendingSegments.shift()?.data;
+		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
-			0x034 /* "Segment group not at head of merge tree pending queue" */,
+			0x034 /* "Segment group not at head of pending rebase queue" */,
 		);
+		if (this.pendingRebase?.empty) {
+			this.pendingRebase = undefined;
+		}
 
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -906,6 +909,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private lastNormalizationRefSeq = 0;
+
+	private pendingRebase: List<SegmentGroup> | undefined;
 	/**
 	 * Given an pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
@@ -916,6 +921,24 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		resetOp: IMergeTreeOp,
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
+		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
+			let firstGroup: SegmentGroup;
+			if (Array.isArray(segmentGroup)) {
+				if (segmentGroup.length === 0) {
+					// sometimes we rebase to an empty op
+					return createGroupOp();
+				}
+				firstGroup = segmentGroup[0];
+			} else {
+				firstGroup = segmentGroup;
+			}
+			const firstGroupNode = this._mergeTree.pendingSegments.find(
+				(node) => node.data === firstGroup,
+			);
+			assert(firstGroupNode !== undefined, "segment group must exist in pending list");
+			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
+		}
+
 		const rebaseTo = this.getCollabWindow().currentSeq;
 		if (rebaseTo !== this.lastNormalizationRefSeq) {
 			this.emit("normalize", this);
