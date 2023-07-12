@@ -792,6 +792,19 @@ describe("Map", () => {
 					assert.equal(map2.size, 0);
 				});
 
+				it("should count the key with undefined value concurrent to a clear op", () => {
+					map1.clear();
+					map2.set("1", undefined);
+
+					containerRuntimeFactory.processSomeMessages(1);
+					assert.equal(map1.size, 0);
+					assert.equal(map2.size, 1);
+
+					containerRuntimeFactory.processSomeMessages(1);
+					assert.equal(map1.size, 1);
+					assert.equal(map2.size, 1);
+				});
+
 				it("should count keys correctly after local operations", () => {
 					map1.set("1", 1);
 					map1.set("2", 1);
