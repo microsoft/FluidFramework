@@ -11,17 +11,17 @@ import {
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
-	ITelemetryGenericEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
-} from "@fluidframework/common-definitions";
-import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryGenericEvent,
+	ITelemetryBaseLogger,
+	ITelemetryBaseEvent,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,

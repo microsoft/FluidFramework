@@ -26,7 +26,7 @@ import {
 	VisualizeSharedObject,
 	HasContainerKey,
 } from "@fluid-experimental/devtools-core";
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**

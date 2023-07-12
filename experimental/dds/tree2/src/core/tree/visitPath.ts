@@ -4,7 +4,6 @@
  */
 import * as Delta from "./delta";
 import { UpPath } from "./pathTree";
-import { Value } from "./types";
 
 /**
  * Delta visitor for the path tree.
@@ -30,12 +29,4 @@ export interface PathVisitor {
 	 * @param content - content which is being inserted.
 	 */
 	onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-
-	/**
-	 * A value is set on a node.
-	 *
-	 * @param path - location of the node
-	 * @param value - value being set
-	 */
-	onSetValue(path: UpPath, value: Value): void;
 }

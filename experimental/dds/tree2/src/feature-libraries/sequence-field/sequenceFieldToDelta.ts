@@ -49,10 +49,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Modify": {
 					const modify = deltaFromChild(mark.changes);
-					if (
-						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
-						modify.fields !== undefined
-					) {
+					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
 						out.pushOffset(1);
@@ -123,5 +120,5 @@ function deltaFromNodeChange<TNodeChange>(
 }
 
 function isEmptyModify(modify: Delta.Modify): boolean {
-	return modify.fields === undefined && modify.setValue === undefined;
+	return modify.fields === undefined;
 }

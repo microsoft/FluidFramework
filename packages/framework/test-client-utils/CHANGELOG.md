@@ -1,5 +1,9 @@
 # @fluidframework/test-client-utils
 
+## 2.0.0-internal.5.2.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.5.1.0
 
 ### Minor Changes

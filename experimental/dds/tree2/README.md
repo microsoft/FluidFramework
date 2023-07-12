@@ -322,6 +322,7 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
+            schema-view
             forest-->schema-stored
             rebase-->tree
             change-family-->repair
@@ -330,8 +331,8 @@ flowchart
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
-            undo-->change-family
             undo-->rebase
+            undo-->change-family
         end
         core-->events-->util
         core-->id-compressor-->util

@@ -46,7 +46,7 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should do nothing when rolling back nothing", () => {
-			batchManager.push(getMessage("1"));
+			batchManager.push(getMessage("1"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
 			checkpoint.rollback(rollBackCallback);
 
@@ -56,9 +56,9 @@ describe("Pending State Manager", () => {
 
 		it("should succeed when rolling back entire pending stack", () => {
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -70,10 +70,10 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should succeed when rolling back part of pending stack", () => {
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -86,7 +86,7 @@ describe("Pending State Manager", () => {
 		it("should throw and close when rollback fails", () => {
 			rollbackShouldThrow = true;
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			assert.throws(() => {
 				checkpoint.rollback(rollBackCallback);
 			});

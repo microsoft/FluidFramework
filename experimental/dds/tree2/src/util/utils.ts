@@ -338,3 +338,18 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 	}
 	return map;
 }
+
+/**
+ * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ */
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
+	if (set === undefined) {
+		return undefined;
+	}
+	if (set.size !== 1) {
+		return undefined;
+	}
+	for (const item of set) {
+		return item;
+	}
+}

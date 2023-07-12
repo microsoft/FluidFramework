@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { GlobalFieldKey, TreeStoredSchema, ValueSchema, symbolFromKey } from "../../core";
+import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
-import { FieldKinds, forbidden } from "../defaultFieldKinds";
+import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { EditableTree, getField } from "./editableTreeTypes";
 
@@ -30,7 +30,7 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 		schema.localFields.size === 0 &&
 		schema.globalFields.size === 0 &&
 		schema.extraGlobalFields === false &&
-		schema.extraLocalFields.kind.identifier === forbidden.identifier
+		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
 	);
 }
 
@@ -80,23 +80,22 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
  * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
  */
 export function getStableNodeKey(
-	nodeKeyFieldKey: GlobalFieldKey,
+	nodeKeyFieldKey: LocalFieldKey,
 	node: EditableTree,
 ): StableNodeKey | undefined {
-	const nodeKeyFieldKeySymbol = symbolFromKey(nodeKeyFieldKey);
-	if (nodeKeyFieldKeySymbol in node) {
+	if (nodeKeyFieldKey in node) {
 		// Get the ID via a wrapped node rather than an unwrapped node (`node[nodeKeyFieldKeySymbol]`)
 		// so that the field kind can be checked
-		const field = node[getField](nodeKeyFieldKeySymbol);
+		const field = node[getField](nodeKeyFieldKey);
 		assert(
 			field.fieldSchema.kind.identifier === FieldKinds.nodeKey.identifier,
-			"Invalid node key field kind",
+			0x6df /* Invalid node key field kind */,
 		);
 		const nodeKeyNode = field.getNode(0);
 		const id = nodeKeyNode[valueSymbol];
 		assert(
 			typeof id === "string" && isStableId(id),
-			"Malformed value encountered in node key field",
+			0x6e0 /* Malformed value encountered in node key field */,
 		);
 		return brand(id);
 	}

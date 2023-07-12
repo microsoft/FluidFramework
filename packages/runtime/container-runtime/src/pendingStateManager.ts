@@ -4,9 +4,10 @@
  */
 
 import { IDisposable } from "@fluidframework/common-definitions";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
@@ -209,9 +210,13 @@ export class PendingStateManager implements IDisposable {
 				}
 			}
 
-			// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-			const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-			nextMessage.localOpMetadata = localOpMetadata;
+			try {
+				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				nextMessage.localOpMetadata = localOpMetadata;
+			} catch (error) {
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+			}
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

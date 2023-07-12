@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 
 import {
-	Value,
 	FieldKey,
 	rootFieldKeySymbol,
 	UpPath,
@@ -44,23 +43,6 @@ describe("editable-tree: event subscription", () => {
 		unsubscribeChanging();
 		emitter.emit("childrenChanging", node);
 		assert.deepEqual(log, [node]);
-	});
-
-	it("consumes value changing events with correct args", () => {
-		const { address, forest } = retrieveAddressNode();
-		const log: Map<Value, UpPath> = new Map();
-		const unsubscribeChanging = address[on]("changing", (upPath: UpPath, value: Value) => {
-			log.set(value, upPath);
-		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
-		emitter.emit("valueChanging", node, 122);
-		unsubscribeChanging();
-		emitter.emit("valueChanging", node, 123);
-		assert.deepEqual(log, new Map([[122, node]]));
 	});
 
 	it("consumes subtree changing events returning void, ie. no path visitor", () => {
@@ -103,11 +85,6 @@ describe("editable-tree: event subscription", () => {
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
-				onSetValue(path: UpPath, value: Value): void {
-					assert.equal(value, "xyz");
-					assert.deepEqual(path, node);
-					visitLog.push(path);
-				},
 			};
 			return visitor;
 		});
@@ -122,12 +99,11 @@ describe("editable-tree: event subscription", () => {
 		visitors.forEach((visitor) => {
 			visitor.onDelete(node, 11);
 			visitor.onInsert(node, insertContent);
-			visitor.onSetValue(node, "xyz");
 		});
 		unsubscribeChanging();
 		emitter.emit("subtreeChanging", node);
 		assert.deepEqual(log, [node]);
-		assert.deepEqual(visitLog, [node, node, node]);
+		assert.deepEqual(visitLog, [node, node]);
 	});
 });
 
