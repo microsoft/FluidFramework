@@ -4,8 +4,8 @@
  */
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
-import { EncodedJsonableTree, RevisionTagSchema } from "../core";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modular-schema";
+import { EncodedJsonableTree, RevisionTagSchema } from "../../core";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
 
 export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([

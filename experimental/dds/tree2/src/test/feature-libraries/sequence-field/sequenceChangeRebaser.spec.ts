@@ -55,7 +55,7 @@ function generateLineage(
 }
 
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
-	["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
+	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
 	[
 		"MInsert",
 		(i) =>

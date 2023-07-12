@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, ICodecOptions } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
-	FieldKindIdentifier,
 	AnchorSet,
 	Delta,
 	UpPath,
@@ -15,24 +14,19 @@ import {
 	RevisionTag,
 	ChangeFamilyEditor,
 	FieldUpPath,
-} from "../core";
-import { brand, isReadonlyArray } from "../util";
+} from "../../core";
+import { brand, isReadonlyArray } from "../../util";
 import {
-	FieldKind,
 	ModularChangeFamily,
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
 	NodeReviver,
 	ChangesetLocalId,
-} from "./modular-schema";
-import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+} from "../modular-schema";
+import { fieldKinds, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
-
-const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
-);
 
 /**
  * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
@@ -43,7 +37,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecOptions: ICodecOptions) {
-		this.modularFamily = new ModularChangeFamily(defaultFieldKinds, codecOptions);
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {

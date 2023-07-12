@@ -13,9 +13,9 @@ import {
 	tagChange,
 	FieldStoredSchema,
 	TreeTypeSet,
-} from "../core";
-import { brand, fail, Mutable } from "../util";
-import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
+} from "../../core";
+import { brand, fail, Mutable } from "../../util";
+import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	FieldKind,
 	Multiplicity,
@@ -36,9 +36,9 @@ import {
 	getIntention,
 	NodeExistenceState,
 	ChangesetLocalId,
-} from "./modular-schema";
-import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { populateChildModifications } from "./deltaUtils";
+} from "../modular-schema";
+import { sequenceFieldChangeHandler, SequenceFieldEditor } from "../sequence-field";
+import { populateChildModifications } from "../deltaUtils";
 import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 
