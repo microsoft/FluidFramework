@@ -30,10 +30,11 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
-		"test": "npm run test:jest",
+		"test": "npm run test:jest && npm run test:screenshots",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:screenshots": "node ./screenshot-tests.mjs",
 		"tsc": "tsc"
 	},
 	"dependencies": {
