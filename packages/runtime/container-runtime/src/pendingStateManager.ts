@@ -66,6 +66,7 @@ export interface IRuntimeStateHandler {
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	activeConnection: () => boolean;
 }
 
 /**
@@ -368,9 +369,6 @@ export class PendingStateManager implements IDisposable {
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
-		if (remainingPendingMessagesCount === 0) {
-			return;
-		}
 
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
@@ -429,10 +427,15 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 
-		this.logger?.sendTelemetryEvent({
-			eventName: "PendingStatesReplayed",
-			count: initialPendingMessagesCount,
-			clientId: this.stateHandler.clientId(),
-		});
+		// We replayPendingOps on read connections too - we expect these to get nack'd though, and to then reconnect
+		// on a write connection and replay again. This filters out the replay that happens on the read connection so
+		// we only see the replays on write connections (that have a chance to go through).
+		if (this.stateHandler.activeConnection()) {
+			this.logger?.sendTelemetryEvent({
+				eventName: "PendingStatesReplayed",
+				count: initialPendingMessagesCount,
+				clientId: this.stateHandler.clientId(),
+			});
+		}
 	}
 }
