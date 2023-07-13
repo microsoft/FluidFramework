@@ -6,7 +6,7 @@
 import { globals } from "../jest.config";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
 
-describe("chrome browser...", () => {
+describe("End to end tests", () => {
 	const getValue = async (index: number, expectedValue: string) =>
 		retryWithEventualValue(
 			() =>
