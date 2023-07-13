@@ -1319,7 +1319,7 @@ export class ContainerRuntime
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
 				reSubmitBatch: this.reSubmitBatch.bind(this),
-				activeConnection: () => this.innerDeltaManager.active,
+				isActiveConnection: () => this.innerDeltaManager.active,
 			},
 			pendingRuntimeState?.pending,
 			this.logger,

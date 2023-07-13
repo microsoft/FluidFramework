@@ -66,7 +66,7 @@ export interface IRuntimeStateHandler {
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
-	activeConnection: () => boolean;
+	isActiveConnection: () => boolean;
 }
 
 /**
@@ -427,10 +427,10 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 
-		// We replayPendingOps on read connections too - we expect these to get nack'd though, and to then reconnect
+		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
 		// on a write connection and replay again. This filters out the replay that happens on the read connection so
 		// we only see the replays on write connections (that have a chance to go through).
-		if (this.stateHandler.activeConnection()) {
+		if (this.stateHandler.isActiveConnection()) {
 			this.logger?.sendTelemetryEvent({
 				eventName: "PendingStatesReplayed",
 				count: initialPendingMessagesCount,
