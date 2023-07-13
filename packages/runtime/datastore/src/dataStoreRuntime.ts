@@ -19,6 +19,7 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
@@ -63,7 +64,6 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	requestFluidObject,
-	packagePathToTelemetryProperty,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
@@ -504,7 +504,7 @@ export class FluidDataStoreRuntime
 		if (!this.localChannelContextQueue.has(channel.id)) {
 			this.localChannelContextQueue.set(
 				channel.id,
-				this.contexts.get(channel.id) as LocalChannelContextBase,
+				this.ensureContext(channel.id) as LocalChannelContextBase,
 			);
 		}
 	}
@@ -923,7 +923,7 @@ export class FluidDataStoreRuntime
 		this.pendingAttach.set(channel.id, message);
 		this.submit(DataStoreMessageType.Attach, message);
 
-		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
+		const context = this.ensureContext(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
 	}
 
@@ -955,11 +955,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x183 /* "There should be a channel context for the op" */,
-				);
+				const channelContext = this.ensureContext(envelope.address);
 				channelContext.reSubmit(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -984,11 +980,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x2ed /* "There should be a channel context for the op" */,
-				);
+				const channelContext = this.ensureContext(envelope.address);
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -999,8 +991,7 @@ export class FluidDataStoreRuntime
 
 	public async applyStashedOp(content: any): Promise<unknown> {
 		const envelope = content as IEnvelope;
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+		const channelContext = this.ensureContext(envelope.address);
 		await channelContext.getChannel();
 		return channelContext.applyStashedOp(envelope.contents);
 	}
@@ -1024,8 +1015,7 @@ export class FluidDataStoreRuntime
 			contents: envelope.contents,
 		};
 
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x185 /* "Channel not found" */);
+		const channelContext = this.ensureContext(envelope.address);
 		channelContext.processOp(transformed, local, localOpMetadata);
 
 		return channelContext;
@@ -1098,22 +1088,49 @@ export class FluidDataStoreRuntime
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
-			channelType,
-			channelId: {
-				value: channelId,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStorePackagePath: packagePathToTelemetryProperty(
-				this.dataStoreContext.packagePath,
-			),
 			stack: generateStack(),
+			...buildTaggedTelemetryProperties({
+				channelType,
+				channelId,
+				fluidDataStoreId: this.id,
+				fluidDataStorePackagePath: this.dataStoreContext.packagePath,
+			}),
 		});
 		this.localChangesTelemetryCount--;
 	}
+
+	private ensureContext(channelId: string): IChannelContext {
+		const context = this.contexts.get(channelId);
+		if (context !== undefined) {
+			return context;
+		}
+
+		throw new LoggingError(
+			"channel context does not exist",
+			buildTaggedTelemetryProperties({
+				channelId,
+				fluidDataStoreId: this.id,
+				fluidDataStorePackagePath: this.dataStoreContext.packagePath,
+			}),
+		);
+	}
+}
+
+function buildTaggedTelemetryProperties(props: {
+	channelType?: string;
+	channelId?: string;
+	fluidDataStoreId?: string;
+	fluidDataStorePackagePath?: readonly string[];
+}) {
+	return Object.keys(props).reduce<ITelemetryProperties>((pv, cv) => {
+		if (props[cv] !== undefined) {
+			pv[cv] = {
+				value: Array.isArray(props[cv]) ? props[cv].join("/") : props[cv],
+				tag: TelemetryDataTag.CodeArtifact,
+			};
+		}
+		return pv;
+	}, {});
 }
 
 /**
