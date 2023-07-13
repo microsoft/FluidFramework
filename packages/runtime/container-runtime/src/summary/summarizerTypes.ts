@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
@@ -338,7 +339,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+	run(onBehalfOf: string, eventEmitter?: EventEmitter): Promise<SummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.

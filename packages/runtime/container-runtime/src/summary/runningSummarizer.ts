@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
@@ -67,6 +68,7 @@ export class RunningSummarizer implements IDisposable {
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
+		eventEmitter?: EventEmitter,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -79,6 +81,7 @@ export class RunningSummarizer implements IDisposable {
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
+			eventEmitter,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -164,6 +167,7 @@ export class RunningSummarizer implements IDisposable {
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
+		private readonly eventEmitter?: EventEmitter,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -643,7 +647,8 @@ export class RunningSummarizer implements IDisposable {
 						cancellationToken,
 					);
 					const result = await resultSummarize.receivedSummaryAckOrNack;
-
+					const summarizeResult = await resultSummarize.summarySubmitted;
+					this.eventEmitter?.emit("experimentalSummary", summarizeResult);
 					if (result.success) {
 						return;
 					}

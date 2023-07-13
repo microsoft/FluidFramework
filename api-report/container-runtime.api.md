@@ -474,7 +474,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     readonly ISummarizer?: ISummarizer;
     // (undocumented)
-    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, eventEmitter?: EventEmitter): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
@@ -677,7 +677,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     recordSummaryAttempt?(summaryRefSeqNum?: number): void;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, eventEmitter?: EventEmitter): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)

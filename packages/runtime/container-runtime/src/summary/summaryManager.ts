@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
@@ -106,7 +107,7 @@ export class SummaryManager implements IDisposable {
 			initialDelayMs = defaultInitialDelayMs,
 			opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
-		private readonly disableHeuristics?: boolean,
+		private readonly emitter?: EventEmitter,
 	) {
 		this.logger = ChildLogger.create(parentLogger, "SummaryManager", {
 			all: { clientId: () => this.latestClientId },
@@ -270,7 +271,7 @@ export class SummaryManager implements IDisposable {
 				return PerformanceEvent.timedExecAsync(
 					this.logger,
 					{ eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
-					async () => summarizer.run(clientId, this.disableHeuristics),
+					async () => summarizer.run(clientId, this.emitter),
 				);
 			})
 			.then((reason: string) => {

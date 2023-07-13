@@ -128,9 +128,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return fluidObject.ISummarizer;
 	}
 
-	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
+	public async run(
+		onBehalfOf: string,
+		eventEmitter?: EventEmitter,
+	): Promise<SummarizerStopReason> {
 		try {
-			return await this.runCore(onBehalfOf);
+			return await this.runCore(onBehalfOf, eventEmitter);
 		} catch (error) {
 			this.stop("summarizerException");
 			throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
@@ -155,7 +158,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		this.runtime.disposeFn();
 	}
 
-	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
+	private async runCore(
+		onBehalfOf: string,
+		eventEmitter?: EventEmitter,
+	): Promise<SummarizerStopReason> {
 		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
 			this.runtime,
 		);
@@ -174,7 +180,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			return runCoordinator.waitCancelled;
 		}
 
-		const runningSummarizer = await this.start(onBehalfOf, runCoordinator);
+		const runningSummarizer = await this.start(onBehalfOf, runCoordinator, eventEmitter);
 
 		// Wait for either external signal to cancel, or loss of connectivity.
 		const stopReason = await stopP;
@@ -230,6 +236,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	private async start(
 		onBehalfOf: string,
 		runCoordinator: ICancellableSummarizerController,
+		eventEmitter?: EventEmitter,
 	): Promise<RunningSummarizer> {
 		if (this.runningSummarizer) {
 			if (this.runningSummarizer.disposed) {
@@ -275,6 +282,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
 			this.runtime,
+			eventEmitter,
 		);
 		this.runningSummarizer = runningSummarizer;
 		this.starting = false;

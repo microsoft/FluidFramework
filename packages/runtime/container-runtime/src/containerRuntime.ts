@@ -1008,11 +1008,6 @@ export class ContainerRuntime
 		return this.summaryConfiguration.state === "disabled";
 	}
 
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
-	}
-
 	private readonly maxOpsSinceLastSummary: number;
 	private getMaxOpsSinceLastSummary(): number {
 		return this.summaryConfiguration.state !== "disabled"
@@ -1177,7 +1172,6 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1458,7 +1452,7 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
+					this, // EventEmitter
 				);
 				this.summaryManager.start();
 			}
