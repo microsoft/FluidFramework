@@ -22,7 +22,7 @@ steps:
     script: |
       # Output installed node versions
       n ls
-      sudo chown -R $(whoami) /usr/local/lib/node_modules
+      sudo chown -R $(whoami) /usr/local/
       # Use the specified node version
       n ${{ parameters.version }}
       # Output the node version
