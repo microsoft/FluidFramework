@@ -23,6 +23,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { PendingLocalState } from "@fluidframework/container-runtime/dist/test";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 const mapId = "map";
 const directoryId = "directoryKey";
@@ -65,7 +66,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			provider.updateDocumentId(container.resolvedUrl);
 		});
 
-		it("blob is aborted", async function () {
+		it("blob is aborted before uploading", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const ac = new AbortController();
@@ -74,9 +75,36 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			try {
 				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
 				assert.fail("Should not succeed");
-			} catch (error) {
-				console.log(error);
-				assert.strictEqual(error, "abort test");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted before uploading");
+			}
+		});
+
+		it("blob is aborted while uploading", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const ac = new AbortController();
+			
+			try {
+				const p = dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				ac.abort();
+				await p;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while uploading");
+			}
+		});
+
+		it("blob is aborted after uploading", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const ac = new AbortController();
+			
+			try {
+				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				ac.abort();
+			} catch (error: any) {
+				assert.fail("Should succeed");
 			}
 		});
 

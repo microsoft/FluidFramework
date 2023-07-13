@@ -137,7 +137,7 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
-	uploadP?: Promise<ICreateBlobResponse>;
+	uploadP?: Promise<ICreateBlobResponse | void>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 	attached?: boolean;
@@ -457,6 +457,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x385 /* For clarity and paranoid defense against adding future attachment states */,
 		);
 
+		if (signal?.aborted) {
+			throw(Error("aborted before uploading"));//signal as any).reason));
+		}
+
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
 		// storage ID mapping is created.
 		const localId = uuid();
@@ -470,6 +474,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
+		if(signal){
+			signal.addEventListener('abort', () => {
+				this.deletePendingBlob(localId);
+				pendingEntry.handleP.reject(Error("aborted while uploading"));
+			}, {once: true});
+		}
+
 		return pendingEntry.handleP.promise;
 	}
 
@@ -477,42 +488,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		localId: string,
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<ICreateBlobResponse> {
+	): Promise<ICreateBlobResponse | void> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "createBlob" },
-			async () => this.createBlobInStorage(blob, signal),
+			async () => this.getStorage().createBlob(blob),
 			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
 		).then(
-			(response) => this.onUploadResolve(localId, response),
+			(response) => this.onUploadResolve(localId, response, signal),
 			async (err) => this.onUploadReject(localId, err, signal),
 		);
-	}
-
-	private async createBlobInStorage(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<ICreateBlobResponse> {
-		return new Promise((resolve, reject) => {
-			// If the signal is already aborted, immediately throw in order to reject the promise.
-			if (signal?.aborted) {
-				reject((signal as any).reason);
-			  }
-
-			// Perform the main purpose of the API
-			// Call resolve(result) when done.
-			const result = this.getStorage().createBlob(blob);
-			resolve(result);
-
-			// Watch for 'abort' signals
-			if(signal){
-			signal.onabort = () => {
-				// We can't stop the server upload but we can reject the promise
-				// TODO add the abort signal to the driver layer
-				reject((signal as any).reason);
-			};
-		}
-		});
 	}
 
 	/**
@@ -538,7 +523,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
+	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL, signal?: AbortSignal) {
+		if(signal?.aborted === true) {
+			return;
+		}
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		assert(
@@ -590,13 +578,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	private async onUploadReject(localId: string, error, signal?: AbortSignal) {
+		if(signal?.aborted === true) {
+			return;
+		}
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		if (signal?.aborted) {
-			entry.handleP.reject(error);
-			this.deletePendingBlob(localId);
-			throw error;
-		}
 		if (!this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
