@@ -3515,8 +3515,6 @@ export class ContainerRuntime
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
 		if (this.summaryStateUpdateMethod === "restart") {
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3526,14 +3524,13 @@ export class ContainerRuntime
 					versionId: versionId != null ? versionId : undefined,
 					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
-				error,
+				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
-			throw error;
 		}
 
 		return snapshotResults;

@@ -148,7 +148,7 @@ export async function createSummarizerWithTestConfig(
 		...config,
 		runtimeOptions: {
 			...config.runtimeOptions,
-			summaryOptions: defaultSummaryOptions,
+			summaryOptions: config.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
 			...config.loaderProps,
