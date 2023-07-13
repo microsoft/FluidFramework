@@ -17,7 +17,7 @@ import {
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import {
 	assertDocumentTypeInfo,
@@ -201,9 +201,6 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			this._mainContainer?.resolvedUrl,
 		);
 		const request: IRequest = {
-			headers: {
-				[LoaderHeader.cache]: false,
-			},
 			url: requestUrl,
 		};
 

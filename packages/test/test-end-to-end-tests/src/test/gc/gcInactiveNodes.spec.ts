@@ -71,7 +71,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 	 */
 	async function createSummarizerClient(config: ITestContainerConfig) {
 		const requestHeader = {
-			[LoaderHeader.cache]: false,
 			[LoaderHeader.clientDetails]: {
 				capabilities: { interactive: true },
 				type: "summarizer",

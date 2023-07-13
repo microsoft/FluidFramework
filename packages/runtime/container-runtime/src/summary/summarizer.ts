@@ -105,7 +105,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	public static async create(loader: ILoader, url: string): Promise<ISummarizer> {
 		const request: IRequest = {
 			headers: {
-				[LoaderHeader.cache]: false,
 				[LoaderHeader.clientDetails]: {
 					capabilities: { interactive: false },
 					type: summarizerClientType,

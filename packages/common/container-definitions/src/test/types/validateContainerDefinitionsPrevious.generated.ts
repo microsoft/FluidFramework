@@ -998,6 +998,7 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>);
 use_old_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*
@@ -1298,6 +1299,7 @@ declare function get_old_EnumDeclaration_LoaderHeader():
 declare function use_current_EnumDeclaration_LoaderHeader(
     use: TypeOnly<current.LoaderHeader>);
 use_current_EnumDeclaration_LoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_LoaderHeader());
 
 /*

@@ -17,7 +17,7 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-internal/test-version-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
@@ -213,9 +213,6 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			this._mainContainer?.resolvedUrl,
 		);
 		const request: IRequest = {
-			headers: {
-				[LoaderHeader.cache]: false,
-			},
 			url: requestUrl,
 		};
 

@@ -7,7 +7,7 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -138,9 +138,6 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			this.containerUrl,
 		);
 		const testRequest: IRequest = {
-			headers: {
-				[LoaderHeader.cache]: false,
-			},
 			url: requestUrl,
 		};
 

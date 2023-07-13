@@ -79,6 +79,12 @@
 			},
 			"InterfaceDeclaration_IDeltaManager": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoaderHeader": {
+				"backCompat": false
+			},
+			"EnumDeclaration_LoaderHeader": {
+				"forwardCompat": false
 			}
 		}
 	}

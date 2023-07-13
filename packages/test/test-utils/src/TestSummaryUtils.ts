@@ -39,7 +39,6 @@ async function createSummarizerCore(
 
 	const request: IRequest = {
 		headers: {
-			[LoaderHeader.cache]: false,
 			[LoaderHeader.clientDetails]: {
 				capabilities: { interactive: false },
 				type: summarizerClientType,

@@ -205,7 +205,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	it("loaded container is paused using loader pause flags", async () => {
 		// load the container paused
 		const headers: IRequestHeader = {
-			[LoaderHeader.cache]: false,
 			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
 		};
 		const url = await container.getAbsoluteUrl("");

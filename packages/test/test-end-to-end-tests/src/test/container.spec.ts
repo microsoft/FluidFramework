@@ -719,7 +719,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		// when loading the container during the loader.resolve() call.
 		const request: IRequest = {
 			headers: {
-				[LoaderHeader.cache]: false,
 				[LoaderHeader.clientDetails]: {
 					capabilities: { interactive: false },
 					type: "myContainerType",

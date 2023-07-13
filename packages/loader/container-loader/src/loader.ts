@@ -45,14 +45,6 @@ import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
 
-function canUseCache(request: IRequest): boolean {
-	if (request.headers === undefined) {
-		return true;
-	}
-
-	return request.headers[LoaderHeader.cache] !== false;
-}
-
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
 ): asserts resolved is IResolvedUrl {
@@ -75,23 +67,19 @@ export class RelativeLoader implements ILoader {
 
 	public async resolve(request: IRequest): Promise<IContainer> {
 		if (request.url.startsWith("/")) {
-			if (canUseCache(request)) {
-				return this.container;
-			} else {
-				ensureResolvedUrlDefined(this.container.resolvedUrl);
-				const container = await this.container.clone(
-					{
-						resolvedUrl: { ...this.container.resolvedUrl },
-						version: request.headers?.[LoaderHeader.version] ?? undefined,
-						loadMode: request.headers?.[LoaderHeader.loadMode],
-					},
-					{
-						canReconnect: request.headers?.[LoaderHeader.reconnect],
-						clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-					},
-				);
-				return container;
-			}
+			ensureResolvedUrlDefined(this.container.resolvedUrl);
+			const container = await this.container.clone(
+				{
+					resolvedUrl: { ...this.container.resolvedUrl },
+					version: request.headers?.[LoaderHeader.version] ?? undefined,
+					loadMode: request.headers?.[LoaderHeader.loadMode],
+				},
+				{
+					canReconnect: request.headers?.[LoaderHeader.reconnect],
+					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+				},
+			);
+			return container;
 		}
 
 		if (this.loader === undefined) {
@@ -302,7 +290,6 @@ export async function requestResolvedObjectFromContainer(
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
-	private readonly containers = new Map<string, Promise<Container>>();
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
 
@@ -351,19 +338,7 @@ export class Loader implements IHostLoader {
 	}
 
 	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(this.services, codeDetails);
-
-		if (this.cachingEnabled) {
-			container.once("attached", () => {
-				ensureResolvedUrlDefined(container.resolvedUrl);
-				const parsedUrl = parseUrl(container.resolvedUrl.url);
-				if (parsedUrl !== undefined) {
-					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
-				}
-			});
-		}
-
-		return container;
+		return Container.createDetached(this.services, codeDetails);
 	}
 
 	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
@@ -395,30 +370,6 @@ export class Loader implements IHostLoader {
 		);
 	}
 
-	private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
-		const key =
-			request.headers?.[LoaderHeader.version] !== undefined
-				? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
-				: parsedUrl.id;
-		return key;
-	}
-
-	private addToContainerCache(key: string, containerP: Promise<Container>) {
-		this.containers.set(key, containerP);
-		containerP
-			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
-					this.containers.delete(key);
-				} else {
-					container.once("closed", () => {
-						this.containers.delete(key);
-					});
-				}
-			})
-			.catch((error) => {});
-	}
-
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
@@ -447,26 +398,9 @@ export class Loader implements IHostLoader {
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
-		const canCache =
-			this.cachingEnabled &&
-			request.headers[LoaderHeader.cache] !== false &&
-			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
-		let container: Container;
-		if (canCache) {
-			const key = this.getKeyForContainerCache(request, parsed);
-			const maybeContainer = await this.containers.get(key);
-			if (maybeContainer !== undefined) {
-				container = maybeContainer;
-			} else {
-				const containerP = this.loadContainer(request, resolvedAsFluid);
-				this.addToContainerCache(key, containerP);
-				container = await containerP;
-			}
-		} else {
-			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
-		}
+		const container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 
 		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
 			await new Promise<void>((resolve, reject) => {
@@ -482,10 +416,6 @@ export class Loader implements IHostLoader {
 		}
 
 		return { container, parsed };
-	}
-
-	private get cachingEnabled() {
-		return this.services.options.cache !== false;
 	}
 
 	private async loadContainer(

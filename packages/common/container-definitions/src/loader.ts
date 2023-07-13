@@ -553,12 +553,6 @@ export type ILoaderOptions = {
  * Accepted header keys for requests coming to the Loader
  */
 export enum LoaderHeader {
-	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
-	 * Override the Loader's default caching behavior for this container.
-	 */
-	cache = "fluid-cache",
-
 	clientDetails = "fluid-client-details",
 
 	/**
@@ -622,10 +616,6 @@ export interface IContainerLoadMode {
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
-	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
-	 */
-	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.sequenceNumber]: number;
