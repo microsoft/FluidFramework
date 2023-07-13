@@ -135,7 +135,7 @@ function invertMark<TNodeChange>(
 			if (!isReattachConflicted(mark)) {
 				assert(
 					mark.detachEvent !== undefined,
-					"Active reattach should have a detach event",
+					0x707 /* Active reattach should have a detach event */,
 				);
 				const inverse = withNodeChange(
 					{

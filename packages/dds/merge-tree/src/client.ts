@@ -935,7 +935,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			const firstGroupNode = this._mergeTree.pendingSegments.find(
 				(node) => node.data === firstGroup,
 			);
-			assert(firstGroupNode !== undefined, "segment group must exist in pending list");
+			assert(
+				firstGroupNode !== undefined,
+				0x70e /* segment group must exist in pending list */,
+			);
 			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
 		}
 
