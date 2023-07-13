@@ -45,7 +45,7 @@ const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referen
 /**
  * Key under which a map for arbitrary "NodeProperty" data is stored.
  */
-const nodePropertyField = "properties";
+export const nodePropertyField = "properties";
 
 type PropertyDDSContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
 
@@ -112,7 +112,7 @@ function buildTreeSchema(
 		} else {
 			assert(type === typeid, "Unexpected typeid discrepancy");
 			const cache: { treeSchema?: TreeSchema } = {};
-			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
+			treeSchemaMap.set(typeid, () => cache.treeSchema ?? fail("missing schema"));
 			const fields = new Map<string, FieldSchema>();
 			buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
@@ -125,12 +125,17 @@ function buildTreeSchema(
 					fields,
 				);
 			}
+			if (typeid === nodePropertyType) {
+				cache.treeSchema = nodePropertySchema;
+				return cache.treeSchema;
+			}
 			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
 				assert(!fields.has(nodePropertyField), "name collision for nodePropertyField");
 				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
-			return builder.struct(typeid, fieldsObject);
+			cache.treeSchema = builder.struct(typeid, fieldsObject);
+			return cache.treeSchema;
 		}
 	} else {
 		// `typeid === basePropertyType` is only allowed to happen if type is omitted from a generic typeid (e.g. "array<>").
@@ -151,7 +156,7 @@ function buildTreeSchema(
 		}
 		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: TreeSchema } = {};
-		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
+		treeSchemaMap.set(currentTypeid, () => cache.treeSchema ?? fail("missing schema"));
 		const fieldSchema = buildFieldSchema(
 			builder,
 			treeSchemaMap,
@@ -296,7 +301,13 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 }
 
 const builtinBuilder = new SchemaBuilder("PropertyDDS to SharedTree builtin schema builder");
-const nodePropertySchema = builtinBuilder.map(nodePropertyType, SchemaBuilder.fieldOptional(Any));
+// TODO:
+// It might make sense for all builtins (not specific to the particular schema being processed),
+// to be put into one library like this.
+export const nodePropertySchema = builtinBuilder.map(
+	nodePropertyType,
+	SchemaBuilder.fieldOptional(Any),
+);
 const builtinLibrary = builtinBuilder.intoLibrary();
 
 /**
@@ -322,7 +333,7 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	);
 	// That's enough to just add "NodeProperty" type as all other
 	// dependent built-in types will be added through inheritances.
-	treeSchemaMap.set(nodePropertyType, nodePropertySchema);
+	buildTreeSchema(builder, treeSchemaMap, allChildrenByType, nodePropertyType);
 	extraTypes?.forEach((extraType) =>
 		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, extraType),
 	);
