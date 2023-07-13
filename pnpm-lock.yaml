@@ -90,7 +90,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-services-client': ^1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -242,7 +242,7 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-tools': ^0.2.158186
@@ -3547,7 +3547,7 @@ importers:
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/view-adapters': workspace:~
@@ -4771,7 +4771,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -5215,7 +5215,7 @@ importers:
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/test-utils': workspace:~
       async: ^3.2.2
       aws-sdk: 2.547.0
@@ -6899,14 +6899,14 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^1.0.0-173913
+      '@fluidframework/gitresources': 1.0.0-173913
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.5.2.0
-      '@fluidframework/server-services-client': ^1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -7525,13 +7525,13 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/local-driver-previous': npm:@fluidframework/local-driver@2.0.0-internal.5.2.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
-      '@fluidframework/server-services-client': ^1.0.0-173913
-      '@fluidframework/server-services-core': ^1.0.0-173913
-      '@fluidframework/server-test-utils': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
+      '@fluidframework/server-services-core': 1.0.0-173913
+      '@fluidframework/server-test-utils': 1.0.0-173913
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/jsrsasign': ^8.0.8
@@ -7610,12 +7610,12 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^1.0.0-173913
+      '@fluidframework/gitresources': 1.0.0-173913
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/odsp-driver-previous': npm:@fluidframework/odsp-driver@2.0.0-internal.5.2.0
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
@@ -7834,12 +7834,12 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^1.0.0-173913
+      '@fluidframework/gitresources': 1.0.0-173913
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-internal.5.2.0
-      '@fluidframework/server-services-client': ^1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
@@ -7984,7 +7984,7 @@ importers:
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-services-client': ^1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
       '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.5.2.0
       '@types/jsrsasign': ^8.0.8
@@ -8991,7 +8991,7 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
@@ -9136,9 +9136,9 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils-previous': npm:@fluidframework/driver-utils@2.0.0-internal.5.2.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^1.0.0-173913
+      '@fluidframework/gitresources': 1.0.0-173913
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
@@ -9446,7 +9446,7 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.0-173913
+      '@fluidframework/protocol-base': 1.0.0-173913
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -9851,7 +9851,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -10008,7 +10008,7 @@ importers:
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/replay-driver': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/test-utils': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
@@ -10225,7 +10225,7 @@ importers:
       '@fluidframework/odsp-urlresolver': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
       '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
@@ -11508,8 +11508,8 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-local-server': ^1.0.0-173913
-      '@fluidframework/server-services-client': ^1.0.0-173913
+      '@fluidframework/server-local-server': 1.0.0-173913
+      '@fluidframework/server-services-client': 1.0.0-173913
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
