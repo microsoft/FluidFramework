@@ -133,6 +133,13 @@ const testCases: EncodingTestData<SummaryData<TestChange>, string> = {
 				}),
 			],
 			["non-object", ""],
+			[
+				"commit with parent field",
+				JSON.stringify({
+					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
+					branches: [],
+				}),
+			],
 		],
 	},
 };

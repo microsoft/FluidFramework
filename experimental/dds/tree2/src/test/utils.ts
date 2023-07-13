@@ -714,27 +714,35 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			for (const [name, data] of encodingTestData.successes) {
-				describe(name, () => {
-					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
-						assertEquivalent(decoded, data);
-					});
+			describe("can json roundtrip", () => {
+				for (const includeStringification of [false, true]) {
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data] of encodingTestData.successes) {
+								it(name, () => {
+									let encoded = codec.json.encode(data);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = codec.json.decode(encoded);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
+				}
+			});
 
-					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
-						assertEquivalent(decoded, data);
-					});
-
-					it("binary roundtrip", () => {
+			describe("can binary roundtrip", () => {
+				for (const [name, data] of encodingTestData.successes) {
+					it(name, () => {
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(encoded);
 						assertEquivalent(decoded, data);
 					});
-				});
-			}
+				}
+			});
 
 			const failureCases = encodingTestData.failures?.[version] ?? [];
 			if (failureCases.length > 0) {
