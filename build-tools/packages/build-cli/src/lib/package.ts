@@ -791,7 +791,6 @@ export async function npmCheckUpdates2(
 	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
 	depsToUpdate: ReleasePackage[],
 	releaseGroupFilter: ReleaseGroup | undefined,
-	// depUpdateType: VersionBumpType,
 	// eslint-disable-next-line default-param-last
 	prerelease = false,
 	log?: Logger,
@@ -799,13 +798,13 @@ export async function npmCheckUpdates2(
 	updatedPackages: Package[];
 	updatedDependencies: PackageVersionMap;
 }> {
-	log?.info(`inside function`);
+	log?.info(`Calculating dependency updates...`);
+
 	/**
 	 * A map of packages that should be updated, and their latest version.
 	 */
-	log?.info(`Calculating dependency updates...`);
 	const dependencyVersionMap = await findDepUpdates(depsToUpdate, prerelease, log);
-	log?.verbose(JSON.stringify(dependencyVersionMap, undefined, 2));
+	log?.verbose(`Dependencies to update:\n${JSON.stringify(dependencyVersionMap, undefined, 2)}`);
 
 	log?.info(`Determining packages to update...`);
 	const packagesToUpdate = await getPackagesToUpdate(
@@ -815,11 +814,11 @@ export async function npmCheckUpdates2(
 		log,
 	);
 	log?.verbose(
-		JSON.stringify(
+		`Packages to update:\n${JSON.stringify(
 			packagesToUpdate.map((p) => p.name),
 			undefined,
 			2,
-		),
+		)}`,
 	);
 
 	log?.verbose(
