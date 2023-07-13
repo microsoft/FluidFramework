@@ -52,7 +52,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-services-client": "^0.1038.4000",
+		"@fluidframework/server-services-client": "^1.0.0-173913",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^0.26.0"
 	},
