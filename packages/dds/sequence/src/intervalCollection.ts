@@ -100,7 +100,11 @@ export interface ISerializedInterval {
 	end: number;
 	/** Interval type to create */
 	intervalType: IntervalType;
+	/**
+	 * The stickiness of this interval
+	 */
 	stickiness?: IntervalStickiness;
+	isExclusive: boolean;
 	/** Any properties the interval has */
 	properties?: PropertySet;
 }
@@ -122,7 +126,7 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  * [start, end, sequenceNumber, intervalType, properties, stickiness?]
  */
 export type CompressedSerializedInterval =
-	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
+	| [number, number, number, IntervalType, PropertySet, IntervalStickiness, boolean]
 	| [number, number, number, IntervalType, PropertySet];
 
 export interface ISerializedIntervalCollectionV2 {
@@ -146,6 +150,8 @@ function decompressInterval(
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness: interval[5],
+		// todo: no ?? false
+		isExclusive: interval[6] ?? false,
 	};
 }
 
@@ -345,6 +351,8 @@ export class Interval implements ISerializableInterval {
 			intervalType: 0,
 			sequenceNumber: 0,
 			start: this.start,
+			// todo: remove
+			isExclusive: false,
 		};
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
@@ -509,7 +517,6 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public propertyManager: PropertiesManager;
 
-	// todo: isExclusive boolean field
 	constructor(
 		private readonly client: Client,
 		/**
@@ -523,6 +530,7 @@ export class SequenceInterval implements ISerializableInterval {
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
+		public readonly isExclusive: boolean,
 		props?: PropertySet,
 		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
@@ -581,6 +589,8 @@ export class SequenceInterval implements ISerializableInterval {
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
+			stickiness: this.stickiness,
+			isExclusive: this.isExclusive,
 		};
 
 		if (this.properties) {
@@ -602,6 +612,7 @@ export class SequenceInterval implements ISerializableInterval {
 			this.start,
 			this.end,
 			this.intervalType,
+			this.isExclusive,
 			this.properties,
 			this.stickiness,
 		);
@@ -675,6 +686,7 @@ export class SequenceInterval implements ISerializableInterval {
 			minReferencePosition(this.start, b.start),
 			maxReferencePosition(this.end, b.end),
 			this.intervalType,
+			this.isExclusive,
 		);
 	}
 
@@ -711,7 +723,6 @@ export class SequenceInterval implements ISerializableInterval {
 		end: number,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
@@ -731,7 +742,9 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				startReferenceSlidingPreference(stickiness),
+				startReferenceSlidingPreference(this.stickiness),
+				this.isExclusive &&
+					startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -747,14 +760,24 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				endReferenceSlidingPreference(stickiness),
+				endReferenceSlidingPreference(this.stickiness),
+				this.isExclusive &&
+					endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
 			}
 		}
 
-		const newInterval = new SequenceInterval(this.client, startRef, endRef, this.intervalType);
+		const newInterval = new SequenceInterval(
+			this.client,
+			startRef,
+			endRef,
+			this.intervalType,
+			this.isExclusive,
+			undefined,
+			this.stickiness,
+		);
 		if (this.properties) {
 			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
@@ -791,9 +814,9 @@ export function createPositionReferenceFromSegoff(
 			segoff.segment,
 			segoff.offset,
 			refType,
-			canSlideToEndpoint,
 			undefined,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 		return ref;
 	}
@@ -933,6 +956,7 @@ export function createSequenceInterval(
 		startLref,
 		endLref,
 		intervalType,
+		canBeExclusive,
 		rangeProp,
 		stickiness,
 	);
@@ -1477,9 +1501,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				segment,
 				ref.getOffset(),
 				ReferenceType.Transient,
-				(ref as any).canSlideToEndpoint ?? false,
 				ref.properties,
 				ref.slidingPreference,
+				(ref as any).canSlideToEndpoint,
 			);
 		};
 		if (interval instanceof SequenceInterval) {
@@ -2201,13 +2225,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
-			const serializedInterval = {
+			const serializedInterval: ISerializedInterval = {
 				end,
 				intervalType,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				start,
 				stickiness,
+				isExclusive: canBeExclusive,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -2530,7 +2555,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const { intervalType, properties, stickiness } = serializedInterval;
+		const { intervalType, properties, stickiness, isExclusive } = serializedInterval;
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
@@ -2544,7 +2569,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			intervalType,
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 			properties,
-			// stickiness,
+			stickiness,
+			isExclusive,
 		};
 
 		if (

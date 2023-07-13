@@ -232,4 +232,22 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
+
+	it("maintains sliding preference on references after reconnect", () => {
+		clients[0].sharedString.insertText(0, "D");
+		clients[0].containerRuntime.connected = false;
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_1.add(
+			0,
+			0,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+			IntervalStickiness.START,
+		);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
 });

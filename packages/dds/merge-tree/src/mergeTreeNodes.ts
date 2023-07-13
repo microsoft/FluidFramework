@@ -133,7 +133,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
-	 * Whether or not this segment is a special segment denoting the start of
+	 * Whether or not this segment is a special segment denoting the start or
 	 * end of the tree
 	 */
 	readonly isEndpoint?: boolean;

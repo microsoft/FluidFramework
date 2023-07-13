@@ -998,7 +998,7 @@ export class MergeTree {
 			const endpointRefsToAdd = currentSlideGroup.map((collection) =>
 				filterLocalReferencePositions(
 					collection,
-					(ref) => pred(ref) && ref.canSlideToEndpoint,
+					(ref) => pred(ref) && !!ref.canSlideToEndpoint,
 				),
 			);
 
@@ -2358,9 +2358,9 @@ export class MergeTree {
 		segment: ISegmentLeaf,
 		offset: number,
 		refType: ReferenceType,
-		canSlideToEndpoint: boolean,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		if (
 			isRemovedAndAcked(segment) &&
@@ -2378,9 +2378,9 @@ export class MergeTree {
 		const segRef = localRefs.createLocalRef(
 			offset,
 			refType,
-			canSlideToEndpoint,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 
 		if (refTypeIncludesFlag(refType, hierRefTypes)) {

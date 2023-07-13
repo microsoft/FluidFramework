@@ -157,7 +157,6 @@ function appendLocalRemoveToRevertibles(
 			t.segment,
 			0,
 			ReferenceType.SlideOnRemove,
-			false,
 			props,
 		);
 		ref.callbacks = mergeTreeWithRevert.__mergeTreeRevertible.refCallbacks;

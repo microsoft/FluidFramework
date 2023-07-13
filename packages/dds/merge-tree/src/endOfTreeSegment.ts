@@ -184,11 +184,7 @@ export class StartOfTreeSegment implements ISegment, IRemovalInfo {
 		return this.getStartSegProps().index;
 	}
 	get ordinal() {
-		// just compute an arbitrarily big ordinal
-		// we base it on the depth of the tree
-		// to ensure it is bigger than all ordinals in
-		// the tree, as each layer appends to the previous
-		return String.fromCharCode(0x00).repeat(this.getStartSegProps().depth);
+		return String.fromCharCode(0x00);
 	}
 
 	/*
