@@ -9,3 +9,11 @@ Directly calling dispose() on the IDeltaManager puts the system in an inconsiste
 ## Move closeAndGetPendingLocalState to IContainerExperimental
 
 This change deprecates the experimental method closeAndGetPendingLocalState on IContainer and moves it to IContainerExperimental. IContainerExperimental is an interface that is easily casted to, which enables partners to access experimental features for testing and evaluation. Moving the experimental method off IContainer will reduce exposure and churn on that production interface as we iterate on and finalize our experimental features. Experimental features should not be used in production environments.
+
+## New API getRelaySessionInfo in odsp-driver
+
+`OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` now provide a new API `getRelaySessionInfo` to surface relay session info from cache.
+
+## New interfaces to discover getRelaySessionInfo API
+
+There are new interfaces `IRelaySessionAwareDriverFactory` and `IProvideSessionAwareDriverFactory` in odsp-driver-definitions that enable using the provider pattern to discover the new API `getRelaySessionInfo` in odsp-driver.
