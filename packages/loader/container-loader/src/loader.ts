@@ -46,11 +46,7 @@ import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
 
 function canUseCache(request: IRequest): boolean {
-	if (request.headers === undefined) {
-		return true;
-	}
-
-	return request.headers[LoaderHeader.cache] !== false;
+	return request.headers?.[LoaderHeader.cache] === true;
 }
 
 function ensureResolvedUrlDefined(
@@ -449,7 +445,7 @@ export class Loader implements IHostLoader {
 			parsed.version ?? request.headers[LoaderHeader.version];
 		const canCache =
 			this.cachingEnabled &&
-			request.headers[LoaderHeader.cache] !== false &&
+			request.headers[LoaderHeader.cache] === true &&
 			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
@@ -485,7 +481,7 @@ export class Loader implements IHostLoader {
 	}
 
 	private get cachingEnabled() {
-		return this.services.options.cache !== false;
+		return this.services.options.cache === true;
 	}
 
 	private async loadContainer(

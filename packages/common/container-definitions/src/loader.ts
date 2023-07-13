@@ -623,7 +623,7 @@ export interface IContainerLoadMode {
  */
 export interface ILoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
