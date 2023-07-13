@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../core";
-import { ChangeAtomId, ChangesetLocalId, NodeChangeset } from "./modular-schema";
+import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../../core";
+import { ChangeAtomId, ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeUpdate =
 	| {

@@ -431,7 +431,7 @@ export class DetachedNodeTracker {
 		for (const mark of change.change) {
 			const inputLength: number = getInputLength(mark);
 			if (markEmptiesCells(mark)) {
-				assert(isDetachMark(mark), "Only detach marks should empty cells");
+				assert(isDetachMark(mark), 0x70d /* Only detach marks should empty cells */);
 				const newNodes: Map<number, ChangeAtomId> = new Map();
 				const after = index + inputLength;
 				for (const [k, v] of this.nodes) {
