@@ -26,6 +26,8 @@ import {
 	npmCheckUpdates,
 } from "../../lib";
 import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
+// eslint-disable-next-line import/no-internal-modules
+import { npmCheckUpdates2 } from "../../lib/package";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -48,7 +50,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
 			description: "Bump the current version of the dependency according to this bump type.",
-			default: "minor",
 		}),
 		prerelease: Flags.boolean({
 			dependsOn: ["updateType"],
@@ -69,6 +70,12 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
+		updateChecker: Flags.string({
+			description:
+				"Specify the implementation to use to update dependencies. The default, 'ncu', uses npm-check-updates under the covers. The 'homegrown' value is a new experimental updater written specifically for the Fluid Framework repo. This flag is experimental and may change or be removed at any time.",
+			helpGroup: "EXPERIMENTAL",
+			options: ["ncu", "homegrown"],
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -187,16 +194,39 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error(`Unknown dependency update type: ${flags.updateType}`);
 		}
 
-		const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
-			context,
-			flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
-			depsToUpdate,
-			isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
-			flags.updateType,
-			/* prerelease */ flags.prerelease,
-			/* writeChanges */ true,
-			this.logger,
-		);
+		if (flags.updateChecker === "") {
+			this.info(`skipping ncu`);
+			await npmCheckUpdates2(
+				context,
+				flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+				depsToUpdate,
+				isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
+				/* prerelease */ flags.prerelease,
+				this.logger,
+			);
+			this.exit();
+		}
+
+		const { updatedPackages, updatedDependencies } =
+			flags.updateChecker === "homegrown"
+				? await npmCheckUpdates2(
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
+						/* prerelease */ flags.prerelease,
+						this.logger,
+				  )
+				: await npmCheckUpdates(
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
+						flags.updateType,
+						/* prerelease */ flags.prerelease,
+						/* writeChanges */ true,
+						this.logger,
+				  );
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
