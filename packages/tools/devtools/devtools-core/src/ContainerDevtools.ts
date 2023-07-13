@@ -7,6 +7,7 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
@@ -347,7 +348,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[SendEditData.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as SendEditData.Message;
 			if (message.data.containerKey === this.containerKey) {
-				await this.editData(message.data.fluidObjectId, message.data.newData.toString());
+				await this.editData(message.data.fluidObjectId, message.data.newData);
 				return true;
 			}
 			return false;
@@ -587,7 +588,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 
-	private async editData(fluidObjectId: FluidObjectId, newData: string): Promise<void> {
+	private async editData(fluidObjectId: FluidObjectId, newData: Serializable): Promise<void> {
 		return this.dataVisualizer?.preformEdit(fluidObjectId, newData);
 	}
 }

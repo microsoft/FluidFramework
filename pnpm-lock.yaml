@@ -10741,6 +10741,7 @@ importers:
       '@fluidframework/container-utils': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
@@ -10781,6 +10782,7 @@ importers:
       '@fluidframework/container-utils': link:../../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.2.0

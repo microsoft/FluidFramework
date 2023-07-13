@@ -8,6 +8,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { EditType, FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
@@ -225,7 +226,7 @@ export class DataVisualizerGraph
 		return this.visualizerNodes.get(fluidObjectId)?.render() ?? undefined;
 	}
 
-	public async preformEdit(fluidObjectId: FluidObjectId, newData: string): Promise<void> {
+	public async preformEdit(fluidObjectId: FluidObjectId, newData: Serializable): Promise<void> {
 		return this.visualizerNodes.get(fluidObjectId)?.preformEdit(newData);
 	}
 
@@ -415,7 +416,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		);
 	}
 
-	public async preformEdit(value: string): Promise<void> {
+	public async preformEdit(value: Serializable): Promise<void> {
 		// eslint-disable-next-line no-void
 		void this.editSharedObject(this.sharedObject, value, EditType.string);
 	}

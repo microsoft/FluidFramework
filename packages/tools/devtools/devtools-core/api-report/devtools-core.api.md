@@ -15,6 +15,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @internal
@@ -223,7 +224,7 @@ export namespace DisconnectContainer {
 }
 
 // @public
-export type EditSharedObject = (sharedObject: ISharedObject, data: string, type: EditType) => Promise<void>;
+export type EditSharedObject = (sharedObject: ISharedObject, data: Serializable, type: EditType) => Promise<void>;
 
 // @public
 export enum EditType {

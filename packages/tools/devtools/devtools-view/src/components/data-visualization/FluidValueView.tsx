@@ -8,7 +8,7 @@ import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devto
 import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeHeader } from "./TreeHeader";
+// import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";
 
 /**
@@ -22,11 +22,11 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
-
-	const metadata = JSON.stringify(node.metadata);
+	console.log(label);
+	// const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<>
-			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+			{/* <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} /> */}
 			<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
 		</>
 	);

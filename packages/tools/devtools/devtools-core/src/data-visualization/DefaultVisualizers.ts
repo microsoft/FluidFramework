@@ -48,6 +48,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		children: { data: renderedData },
 		typeMetadata: "SharedCell",
 		nodeKind: VisualNodeKind.FluidTreeNode,
+		editProps: { editTypes: [EditType.string, EditType.number, EditType.number] },
 	};
 };
 

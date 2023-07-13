@@ -24,9 +24,11 @@ export interface EditableValueViewProps {
 export function EditableValueView(props: EditableValueViewProps): React.ReactElement {
 	const { node, containerKey } = props;
 	const messageRelay = useMessageRelay();
-
 	const [value, setValue] = React.useState<string>(String(node.value));
 	const [isEditing, setIsEditing] = React.useState<boolean>(false);
+	const [isTextBox, setIsTextBox] = React.useState<boolean>(
+		node.typeMetadata === "number" || node.typeMetadata === "SharedCounter" ? false : true,
+	);
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
@@ -80,38 +82,44 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 
 	const dropdownStyle = {
 		fontSize: "10px",
-		color: "red",
+		color: tokens.colorPaletteRedBorderActive,
 		minWidth: "30px",
 	};
 
-	// if (node.editProps === undefined) {
-	// 	return <></>;
-	// }
-
 	return (
 		<>
-			{/* {node.editProps.editTypes} */}
-			{(node.editProps?.editTypes) ? "hello" : node.editProps?.editTypes ? "test" : "nope"
-} 
-			{/* {node.editProps.editTypes.length > 0 ? "hello" : "test"} */}
 			<div>
-				<Dropdown
-					style={dropdownStyle}
-					size="small"
-					defaultValue={node.typeMetadata === undefined ? "" : ` (${node.typeMetadata})`}
-					onClick={(event): void => event.preventDefault()}
-					appearance="underline"
-					color={tokens.colorPaletteRedBorderActive}
-				>
-					{node.editProps.editTypes.map((option) => (
-						<Option
-							style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}
-							key={option}
-						>
-							{option}
-						</Option>
-					))}
-				</Dropdown>
+				data <span style={dropdownStyle}>({node.typeMetadata}) </span>:
+				{/* {node.editProps?.editTypes?.length !== undefined &&
+				node.editProps?.editTypes?.length > 1 ? (
+					<Dropdown
+						style={dropdownStyle}
+						size="small"
+						defaultValue={
+							node.typeMetadata === undefined ? "" : ` (${node.typeMetadata})`
+						}
+						onClick={(event): void => event.preventDefault()}
+						appearance="underline"
+						color={tokens.colorPaletteRedBorderActive}
+						onOptionSelect={(): void => {
+							return;
+						}}
+					>
+						{node.editProps?.editTypes?.map((option) => (
+							<Option
+								style={{
+									color: tokens.colorPaletteRedBorderActive,
+									fontSize: "10px",
+								}}
+								key={option}
+							>
+								{option}
+							</Option>
+						))}
+					</Dropdown>
+				) : (
+					<span style={dropdownStyle}>({node.typeMetadata})</span>
+				)} */}
 			</div>
 			<Input
 				size="small"
@@ -124,6 +132,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 				onFocus={onFocus}
 				onBlur={onBlur}
 				onKeyDown={onKeyDown}
+				type={isTextBox ? "text" : "number"}
 			/>
 		</>
 	);

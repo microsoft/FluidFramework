@@ -13,6 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { EditSharedObject } from "./DataEditing";
 
 /**
@@ -20,6 +21,7 @@ import { EditSharedObject } from "./DataEditing";
  */
 export const editSharedCell: EditSharedObject = async (
 	sharedObject: ISharedObject,
+	newData: Serializable,
 ): Promise<void> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
@@ -31,8 +33,10 @@ export const editSharedCell: EditSharedObject = async (
  */
 export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
+	newData: number,
 ): Promise<void> => {
 	const sharedCounter = sharedObject as SharedCounter;
+	sharedCounter.increment(Math.floor(newData) - sharedCounter.value);
 	console.log(sharedCounter);
 };
 

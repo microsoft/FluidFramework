@@ -4,6 +4,7 @@
  */
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { EditType } from "../CommonInterfaces";
 
 // Ideas:
@@ -37,6 +38,6 @@ export type SharedObjectType = string;
  */
 export type EditSharedObject = (
 	sharedObject: ISharedObject,
-	data: string,
+	data: Serializable,
 	type: EditType,
 ) => Promise<void>;
