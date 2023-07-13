@@ -29,11 +29,11 @@ import {
 import {
 	assert,
 	delay,
-	LazyPromise,
 	Trace,
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -183,6 +183,7 @@ import {
 	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { IBatchMetadata } from "./metadata";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -437,24 +438,9 @@ export interface IContainerRuntimeOptions {
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
 	 *
-	 * For safety, {@link IContainerRuntimeOptions#enableBatchRebasing} needs to also be enabled to ensure
-	 * consistency across clients.
-	 *
 	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
-	/**
-	 * Configures if the runtime should rebase a batch of ops when it detects op reentrancy,
-	 * when an op is created as the result of processing another op. Usually this is the case
-	 * when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the
-	 * reentrant op will have a different reference sequence number  than the rest of the ops in
-	 * the batch, resulting in  a different view of the state of the data model. Therefore all ops
-	 * must be resubmitted and rebased to the current reference sequence number to be in agreement
-	 * about the state of the data model.
-	 *
-	 * @experimental Not ready for use.
-	 */
-	readonly enableBatchRebasing?: boolean;
 }
 
 /**
@@ -702,7 +688,6 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
-			enableBatchRebasing = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -801,7 +786,6 @@ export class ContainerRuntime
 				enableRuntimeIdCompressor,
 				enableOpReentryCheck,
 				enableGroupedBatching,
-				enableBatchRebasing,
 			},
 			containerScope,
 			logger,
@@ -856,6 +840,11 @@ export class ContainerRuntime
 	}
 
 	public get closeFn(): (error?: ICriticalContainerError) => void {
+		if (this._summarizer !== undefined) {
+			// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
+			return this.disposeFn;
+		}
+
 		// Also call disposeFn to retain functionality of runtime being disposed on close
 		return (error?: ICriticalContainerError) => {
 			this.context.closeFn(error);
@@ -1352,9 +1341,6 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
-		const enableBatchRebasing =
-			runtimeOptions.enableBatchRebasing &&
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchRebasing") !== true;
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1365,7 +1351,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				enableBatchRebasing,
+				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1536,7 +1522,6 @@ export class ContainerRuntime
 				idCompressorEnabled: this.idCompressorEnabled,
 				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
-				enableBatchRebasing,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -2072,7 +2057,7 @@ export class ContainerRuntime
 								local,
 								type: message.type,
 								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 								compression: message.compression,
 							},
 						);
@@ -3138,6 +3123,9 @@ export class ContainerRuntime
 				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
+			} else if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
 				this.outbox.submit(message);
 			}

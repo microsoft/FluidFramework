@@ -55,6 +55,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -80,6 +81,7 @@ scribe:
   replicas: 8
   getDeltasViaAlfred: true
   verifyLastOpPersistence: false
+  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000

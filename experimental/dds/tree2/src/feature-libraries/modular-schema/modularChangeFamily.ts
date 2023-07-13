@@ -623,6 +623,7 @@ export class ModularChangeFamily
 					genId,
 					manager,
 					revisionMetadata,
+					existenceState,
 				);
 				const rebasedFieldChange: FieldChange = {
 					fieldKind: fieldKind.identifier,
