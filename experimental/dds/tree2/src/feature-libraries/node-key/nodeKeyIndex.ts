@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { LocalFieldKey, SchemaData, ValueSchema } from "../../core";
-import { FieldKinds } from "../defaultFieldKinds";
+import { FieldKinds } from "../default-field-kinds";
 import {
 	EditableTree,
 	EditableTreeContext,
