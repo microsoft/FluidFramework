@@ -79,7 +79,7 @@ function buildTreeSchema(
 	allChildrenByType: InheritingChildrenByType,
 	type: string,
 ): LazyTreeSchema {
-	assert(type !== basePropertyType, `"BaseProperty" shall not be used in schemas.`);
+	assert(type !== basePropertyType, 0x6ff /* "BaseProperty" shall not be used in schemas. */);
 	const { typeid, context, isEnum } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
 		fail(`Unknown context "${context}" in typeid "${type}"`);
@@ -105,7 +105,7 @@ function buildTreeSchema(
 		if (TypeIdHelper.isPrimitiveType(type)) {
 			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
 		} else {
-			assert(type === typeid, "Unexpected typeid discrepancy");
+			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { treeSchema?: TreeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
 			const local = buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, {});
@@ -127,7 +127,7 @@ function buildTreeSchema(
 		const isAnyType = TypeIdHelper.extractTypeId(type) === "" && typeid === basePropertyType;
 		assert(
 			typeid !== basePropertyType || isAnyType,
-			`"BaseProperty" shall not be used in schemas.`,
+			0x701 /* "BaseProperty" shall not be used in schemas. */,
 		);
 		const currentTypeid = TypeIdHelper.createSerializationTypeId(
 			isAnyType ? Any : typeid,
@@ -188,7 +188,7 @@ function buildLocalFields(
 			} else {
 				assert(
 					property.typeid !== basePropertyType,
-					`"BaseProperty" shall not be used in schemas.`,
+					0x702 /* "BaseProperty" shall not be used in schemas. */,
 				);
 				const currentTypeid =
 					property.context && property.context !== singleContext

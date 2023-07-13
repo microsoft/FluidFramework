@@ -793,7 +793,10 @@ export class Container
 				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
 				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
-				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+				dmLastMsqSeqClientId: () =>
+					this.deltaManager?.lastMessage?.clientId === null
+						? "null"
+						: this.deltaManager?.lastMessage?.clientId,
 				dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 				connectionStateDuration: () =>
 					performance.now() - this.connectionTransitionTimes[this.connectionState],
@@ -1060,6 +1063,11 @@ export class Container
 	public getPendingLocalState(): string {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
+		}
+		if (this.closed || this._disposed) {
+			throw new UsageError(
+				"Pending state cannot be retried if the container is closed or disposed",
+			);
 		}
 		assert(
 			this.attachState === AttachState.Attached,
