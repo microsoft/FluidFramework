@@ -326,7 +326,7 @@ function rebaseMark<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);	
+	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
@@ -372,9 +372,10 @@ function rebaseMark<TNodeChange>(
 		}
 		assert(isDetachMark(baseMark), "Only detach marks should empty cells");
 		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
-		const detachEvent = baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
-			? baseMark.detachIdOverride
-			: { revision: baseMarkIntention, localId: baseMark.id };
+		const detachEvent =
+			baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
+				? baseMark.detachIdOverride
+				: { revision: baseMarkIntention, localId: baseMark.id };
 
 		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);
 	} else if (markFillsCells(baseMark)) {

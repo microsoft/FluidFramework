@@ -511,9 +511,10 @@ export class ComposeQueue<T> {
 					);
 					return this.dequeueNew();
 				}
-				baseCellId = baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
-					? baseMark.detachIdOverride
-					: { revision: baseIntention, localId: baseMark.id };
+				baseCellId =
+					baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
+						? baseMark.detachIdOverride
+						: { revision: baseIntention, localId: baseMark.id };
 			} else if (baseMark.type === "MoveIn") {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);

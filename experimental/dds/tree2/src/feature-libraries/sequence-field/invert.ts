@@ -118,7 +118,10 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
-						detachEvent: mark.detachIdOverride ?? { revision: mark.revision ?? revision, localId: mark.id },
+						detachEvent: mark.detachIdOverride ?? {
+							revision: mark.revision ?? revision,
+							localId: mark.id,
+						},
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: mark.revision ?? revision,
@@ -194,9 +197,13 @@ function invertMark<TNodeChange>(
 					true,
 				);
 			}
-			const detachEvent = mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
-				? mark.detachIdOverride
-				: { revision: mark.revision ?? revision ?? fail("Revision must be defined"), localId: mark.id };
+			const detachEvent =
+				mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
+					? mark.detachIdOverride
+					: {
+							revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+							localId: mark.id,
+					  };
 
 			return [
 				{
@@ -222,18 +229,16 @@ function invertMark<TNodeChange>(
 		}
 		case "ReturnTo": {
 			if (mark.isSrcConflicted) {
-				return mark.detachEvent === undefined
-					? [{ count: mark.count }]
-					: [];
+				return mark.detachEvent === undefined ? [{ count: mark.count }] : [];
 			}
-		
+
 			if (mark.detachEvent === undefined) {
 				// The nodes were already attached, so the mark did not affect them.
 				return [{ count: mark.count }];
 			} else if (isConflictedReattach(mark)) {
 				// The nodes were not attached and could not be attached.
 				return [];
-			}		
+			}
 
 			const invertedMark: ReturnFrom<TNodeChange> = {
 				type: "ReturnFrom",

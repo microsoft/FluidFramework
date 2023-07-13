@@ -69,9 +69,7 @@ export function isActiveReattach<TNodeChange>(
 }
 
 // TODO: Name is misleading
-export function isConflictedReattach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): boolean {
+export function isConflictedReattach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
 	return isReattach(mark) && isReattachConflicted(mark);
 }
 
@@ -107,7 +105,7 @@ export function getCellId(
 		assert(isDetachMark(mark), "Only detach marks should empty cells");
 		return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
 			? mark.detachIdOverride
-			: { revision: mark.revision ?? revision, localId: mark.id }
+			: { revision: mark.revision ?? revision, localId: mark.id };
 	}
 
 	return mark.detachEvent;
@@ -825,7 +823,10 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			}
 
 			if (mark2Delete.detachIdOverride !== undefined) {
-				mark2Delete.detachIdOverride = splitDetachEvent(mark2Delete.detachIdOverride, length);
+				mark2Delete.detachIdOverride = splitDetachEvent(
+					mark2Delete.detachIdOverride,
+					length,
+				);
 			}
 			return [mark1, mark2];
 		}
@@ -844,7 +845,10 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			if (mark2.type === "ReturnFrom") {
 				const mark2Return = mark2 as ReturnFrom<T>;
 				if (mark2Return.detachIdOverride !== undefined) {
-					mark2Return.detachIdOverride = splitDetachEvent(mark2Return.detachIdOverride, length);
+					mark2Return.detachIdOverride = splitDetachEvent(
+						mark2Return.detachIdOverride,
+						length,
+					);
 				}
 			}
 			return [mark1, mark2];
