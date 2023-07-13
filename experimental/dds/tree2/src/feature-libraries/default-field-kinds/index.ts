@@ -5,7 +5,6 @@
 
 export {
 	FieldKinds,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,
