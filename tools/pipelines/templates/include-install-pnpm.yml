@@ -46,6 +46,6 @@ steps:
     script: |
       echo "Using node $(node --version)"
       sudo corepack enable
-      pnpm -v
+      echo "Using pnpm $(pnpm -v)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       pnpm config set -g workspace-concurrency 0
