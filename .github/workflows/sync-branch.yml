@@ -41,11 +41,16 @@ jobs:
       # the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL 
       # with a custom URL that includes a secret token for secure authentication and authorization during Git operations, 
       # such as pushing to a remote repository on GitHub.
+      # https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
       - name: Set Git config
+        env: 
+          TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
         run: |
           git config user.name $USERNAME
           git config user.email $EMAIL
-          git config url.https://${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}@github.com/.insteadOf https://github.com/ 
+          git config url.https://${{ env.TOKEN }}@github.com/.insteadOf https://github.com/ 
       
       - name: Run merge command
-        run: flub merge branches -p ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
+        env: 
+          TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+        run: flub merge branches -p $TOKEN -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
