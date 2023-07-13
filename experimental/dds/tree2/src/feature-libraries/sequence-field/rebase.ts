@@ -775,7 +775,7 @@ function compareCellPositions(
 
 	if (newId !== undefined) {
 		const offset = getOffsetInCellRange(
-			baseMark.lineage,
+			baseId.lineage,
 			newId.revision,
 			newId.localId,
 			newLength,
@@ -783,21 +783,24 @@ function compareCellPositions(
 		if (offset !== undefined) {
 			return offset > 0 ? offset : -Infinity;
 		}
+
+		const newOffset = getOffsetInCellRange(
+			newId.lineage,
+			baseId.revision,
+			baseId.localId,
+			baseLength,
+		);
+		if (newOffset !== undefined) {
+			return newOffset > 0 ? -newOffset : Infinity;
+		}
 	}
 
-	const newOffset = getOffsetInCellRange(
-		newMark.lineage,
-		baseId.revision,
-		baseId.localId,
-		baseLength,
-	);
-	if (newOffset !== undefined) {
-		return newOffset > 0 ? -newOffset : Infinity;
-	}
 
-	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
-	if (cmp !== 0) {
-		return Math.sign(cmp) * Infinity;
+	if (newId !== undefined) {
+		const cmp = compareLineages(baseId.lineage, newId.lineage);
+		if (cmp !== 0) {
+			return Math.sign(cmp) * Infinity;
+		}
 	}
 
 	if (isNewAttach(newMark)) {

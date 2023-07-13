@@ -88,6 +88,15 @@ export const LineageEvent = Type.Object({
 	offset: Type.Readonly(Type.Number()),
 });
 
+export interface CellId extends ChangeAtomId {
+	/**
+	 * History of detaches adjacent to the cells described by this `ChangeAtomId`.
+	 */	
+	lineage?: LineageEvent[];
+}
+
+export const CellId = Type.Intersect([EncodedChangeAtomId, Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent))})]);
+
 export interface HasChanges<TNodeChange = NodeChangeType> {
 	changes?: TNodeChange;
 }
@@ -147,17 +156,10 @@ export interface CellTargetingMark {
 	 * Describes the detach which last emptied target cells.
 	 * Undefined if the target cells are not empty in this mark's input context.
 	 */
-	detachEvent?: ChangeAtomId;
-
-	/**
-	 * Lineage of detaches adjacent to the cells since `detachEvent`.
-	 * Should be empty if the cells are full in this mark's input context.
-	 */
-	lineage?: LineageEvent[];
+	detachEvent?: CellId;
 }
 export const CellTargetingMark = Type.Object({
-	detachEvent: Type.Optional(EncodedChangeAtomId),
-	lineage: Type.Optional(Type.Array(LineageEvent)),
+	detachEvent: Type.Optional(CellId),
 });
 
 export interface NoopMark extends CellTargetingMark {
@@ -178,7 +180,7 @@ export const NoopMark = Type.Intersect([
 ]);
 
 export interface DetachedCellMark extends CellTargetingMark {
-	detachEvent: ChangeAtomId;
+	detachEvent: CellId;
 }
 export const DetachedCellMark = Type.Intersect([
 	CellTargetingMark,
