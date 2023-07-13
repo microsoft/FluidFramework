@@ -37,6 +37,7 @@ import { brand, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
+	EncodingTestData,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
@@ -45,6 +46,9 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
+// Allows typechecking test data used in modulaChangeFamily's codecs.
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -604,10 +608,12 @@ describe("ModularChangeFamily", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, ModularChangeset][] = [
-			["without constrain", rootChange1a],
-			["with constrain", rootChange3],
-		];
+		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
+			successes: [
+				["without constrain", rootChange1a],
+				["with constrain", rootChange3],
+			],
+		};
 
 		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});
