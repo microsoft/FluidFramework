@@ -47,18 +47,14 @@ const nodesCountDeep = [
 const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	local: {
-		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
-	},
+const linkedListSchema = deepBuilder.structRecursive("linkedList", {
+	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 });
 
 const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
 
-const wideRootSchema = wideBuilder.object("WideRoot", {
-	local: {
-		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
-	},
+const wideRootSchema = wideBuilder.struct("WideRoot", {
+	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 });
 
 const wideSchema = wideBuilder.intoDocumentSchema(

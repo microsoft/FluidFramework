@@ -76,6 +76,7 @@ import {
 	createRoomLeaveMessage,
 	CheckpointReason,
 	ICheckpoint,
+	IServerMetadata,
 } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -581,7 +582,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						(this.serviceConfiguration.deli.enableWriteClientSignals ||
 							(sequencedMessage.serverMetadata &&
 								typeof sequencedMessage.serverMetadata === "object" &&
-								sequencedMessage.serverMetadata.createSignal))
+								(sequencedMessage.serverMetadata as IServerMetadata).createSignal))
 					) {
 						const dataContent = this.extractDataContent(
 							message as IRawOperationMessage,
@@ -955,7 +956,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					this.clientSeqManager.count() === 0
 				) {
 					// add server metadata to indicate the last client left
-					(message.operation.serverMetadata ??= {}).noClient = true;
+					message.operation.serverMetadata ??= {};
+					(message.operation.serverMetadata as IServerMetadata).noClient = true;
 				}
 			} else if (message.operation.type === MessageType.ClientJoin) {
 				const clientJoinMessage = dataContent as IClientJoin;
@@ -1384,7 +1386,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				// because scribe will not be involved
 				if (
 					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
-					!(JSON.parse(message.operation.contents) as ISummaryContent).details
+					!(JSON.parse(message.operation.contents as string) as ISummaryContent).details
 						?.includesProtocolTree
 				) {
 					addAdditionalContent = true;
