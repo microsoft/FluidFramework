@@ -245,6 +245,7 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
+		//* Needs to include compatDetails - Write failing test first
 		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
 		// Stringified content does not match
 		if (pendingMessage.content !== messageContent) {

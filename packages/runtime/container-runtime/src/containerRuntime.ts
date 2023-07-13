@@ -37,13 +37,14 @@ import {
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
+	createChildMonitoringContext,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
-	createChildMonitoringContext,
+	isFluidError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -214,9 +215,77 @@ export enum ContainerMessageType {
 	IdAllocation = "idAllocation",
 }
 
+/**
+ * How should an older client handle an unrecognized remote op?
+ *
+ * @internal
+ */
+export type CompatModeBehavior =
+	/** Ignore the op. It won't be persisted if this client summarizes */
+	| "Ignore"
+	/** Fail processing immediately. (The container will close) */
+	| "FailToProcess";
+
+/**
+ * All the info an older client would need to know how to handle an unrecognized remote op
+ *
+ * @internal
+ */
+export interface IContainerRuntimeMessageCompatDetails {
+	/** How should an older client handle an unrecognized remote op? */
+	behavior: CompatModeBehavior;
+}
+
 export interface ContainerRuntimeMessage {
-	contents: any;
 	type: ContainerMessageType;
+	contents: any;
+	compatDetails?: IContainerRuntimeMessageCompatDetails;
+}
+
+/**
+ * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
+ * promoted up to the outer object
+ */
+export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
+
+/** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
+export function requireContainerRuntimeMessage(
+	message: any,
+): asserts message is ContainerRuntimeMessage {
+	const maybeContainerRuntimeMessage = message as ContainerRuntimeMessage;
+	switch (maybeContainerRuntimeMessage.type) {
+		case ContainerMessageType.Attach:
+		case ContainerMessageType.Alias:
+		case ContainerMessageType.FluidDataStoreOp:
+		case ContainerMessageType.BlobAttach:
+		case ContainerMessageType.IdAllocation:
+		case ContainerMessageType.ChunkedOp:
+		case ContainerMessageType.Rejoin:
+			return;
+		default: {
+			// Type safety on missing known cases
+			((_: never) => {})(maybeContainerRuntimeMessage.type);
+
+			// If it has compatDetails, we may be able to handle it
+			if (maybeContainerRuntimeMessage.compatDetails !== undefined) {
+				return;
+			}
+
+			const error = DataProcessingError.create(
+				// Former assert 0x3ce
+				"Runtime message of unknown type",
+				"OpProcessing",
+				message,
+				{
+					type: message.type,
+					contentType: typeof message.contents,
+					batch: message.metadata?.batch,
+					compression: message.compression,
+				},
+			);
+			throw error;
+		}
+	}
 }
 
 export interface ISummaryBaseConfiguration {
@@ -1961,14 +2030,14 @@ export class ContainerRuntime
 	 */
 	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const { type, contents } = JSON.parse(serializedContent);
+		const { type, contents, compatDetails } = JSON.parse(serializedContent);
 		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type, contents };
+		return { type, contents, compatDetails };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseOpContent(op);
+		const { type, contents, compatDetails } = this.parseOpContent(op);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents as IEnvelope);
@@ -1987,8 +2056,19 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
-			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+			default: {
+				//* Have a canonical way/place to define the default behavior?
+				const compatBehavior = compatDetails?.behavior ?? "FailToProcess";
+				//* Does compatBehavior apply to stashed ops the same as remote ops?  It's kind of the reverse - it'll be old ops not new ones
+				switch (compatBehavior) {
+					case "FailToProcess":
+						unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+					case "Ignore":
+						return;
+					default:
+						unreachableCase(compatBehavior);
+				}
+			}
 		}
 	}
 
@@ -2125,6 +2205,11 @@ export class ContainerRuntime
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
+		//* Just fail below
+		if (runtimeMessage) {
+			requireContainerRuntimeMessage(message);
+		}
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -2186,6 +2271,20 @@ export class ContainerRuntime
 						this.closeFn(error);
 						throw error;
 					}
+					const containerRuntimeMessage = message as SequencedContainerRuntimeMessage;
+					//* Have a canonical way/place to define the default behavior?
+					const compatBehavior =
+						containerRuntimeMessage.compatDetails?.behavior ?? "FailToProcess";
+					switch (compatBehavior) {
+						case "FailToProcess":
+							//*
+							throw DataProcessingError.create("", "");
+						case "Ignore":
+							return;
+						default:
+							unreachableCase(compatBehavior);
+					}
+				}
 			}
 
 			this.emit("op", message, runtimeMessage);
@@ -3417,6 +3516,7 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			default:
+				// Don't check message.compatDetails because this is for resubmitting a local opp - this is truly unexpected
 				unreachableCase(
 					message.type,
 					`Unknown ContainerMessageType [type: ${message.type}]`,
@@ -3426,7 +3526,7 @@ export class ContainerRuntime
 
 	private rollback(content: string | undefined, localOpMetadata: unknown) {
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseOpContent(content);
+		const { type, contents, compatDetails } = this.parseOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -3434,7 +3534,10 @@ export class ContainerRuntime
 				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
 				break;
 			default:
-				throw new Error(`Can't rollback ${type}`);
+				//* Is this right, or just let it throw?
+				if (compatDetails?.behavior !== "Ignore") {
+					throw new Error(`Can't rollback ${type}`);
+				}
 		}
 	}
 
