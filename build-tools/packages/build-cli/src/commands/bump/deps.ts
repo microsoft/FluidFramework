@@ -194,19 +194,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error(`Unknown dependency update type: ${flags.updateType}`);
 		}
 
-		if (flags.updateChecker === "") {
-			this.info(`skipping ncu`);
-			await npmCheckUpdates2(
-				context,
-				flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
-				depsToUpdate,
-				isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
-				/* prerelease */ flags.prerelease,
-				this.logger,
-			);
-			this.exit();
-		}
-
 		const { updatedPackages, updatedDependencies } =
 			flags.updateChecker === "homegrown"
 				? await npmCheckUpdates2(
