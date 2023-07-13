@@ -123,34 +123,37 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	});
 
 	it("Can attribute content from multiple collaborators", async function () {
-		// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
-		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
-			this.skip();
+		// Skip the test if the error happens on tinylicious or t9s driver
+		try {
+			const attributor = createRuntimeAttributor();
+			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
+			const sharedString1 = await sharedStringFromContainer(container1);
+			const container2 = await provider.loadTestContainer(testContainerConfig);
+			const sharedString2 = await sharedStringFromContainer(container2);
+
+			const text = "client 1";
+			sharedString1.insertText(0, text);
+			assertAttributionMatches(sharedString1, 3, attributor, "local");
+			await provider.ensureSynchronized();
+			sharedString2.insertText(0, "client 2, ");
+			await provider.ensureSynchronized();
+			assert.equal(sharedString1.getText(), "client 2, client 1");
+
+			assert(
+				container1.clientId !== undefined && container2.clientId !== undefined,
+				"Both containers should have client ids.",
+			);
+			assertAttributionMatches(sharedString1, 3, attributor, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString1, 13, attributor, {
+				user: container1.audience.getMember(container1.clientId)?.user,
+			});
+		} catch (error) {
+			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+				this.skip();
+			}
 		}
-		const attributor = createRuntimeAttributor();
-		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
-		const sharedString1 = await sharedStringFromContainer(container1);
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const sharedString2 = await sharedStringFromContainer(container2);
-
-		const text = "client 1";
-		sharedString1.insertText(0, text);
-		assertAttributionMatches(sharedString1, 3, attributor, "local");
-		await provider.ensureSynchronized();
-		sharedString2.insertText(0, "client 2, ");
-		await provider.ensureSynchronized();
-		assert.equal(sharedString1.getText(), "client 2, client 1");
-
-		assert(
-			container1.clientId !== undefined && container2.clientId !== undefined,
-			"Both containers should have client ids.",
-		);
-		assertAttributionMatches(sharedString1, 3, attributor, {
-			user: container1.audience.getMember(container2.clientId)?.user,
-		});
-		assertAttributionMatches(sharedString1, 13, attributor, {
-			user: container1.audience.getMember(container1.clientId)?.user,
-		});
 	});
 
 	it("attributes content created in a detached state", async () => {
