@@ -570,7 +570,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 							selectContainer(`${containerKey}`);
 							usageLogger?.sendTelemetryEvent({
 								eventName: "ContainerClicked",
-								containerKey,
 							});
 						}}
 					/>

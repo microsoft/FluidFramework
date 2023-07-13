@@ -609,9 +609,6 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 								setSelectedEvent(item);
 								usageLogger?.sendTelemetryEvent({
 									eventName: "TelemetryEventClicked",
-									details: {
-										telemetryEventName: item.eventName,
-									},
 								});
 							}}
 						>
