@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "../contractsPublic";
+import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getJoinSessionCacheKey } from "../odspUtils";
 

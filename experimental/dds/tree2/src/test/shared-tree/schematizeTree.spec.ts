@@ -16,7 +16,7 @@ const root = builder.primitive("root", ValueSchema.Number);
 const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.object("root", { value: ValueSchema.Serializable });
+const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
 const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 describe("schematizeView", () => {

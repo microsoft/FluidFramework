@@ -166,7 +166,8 @@ class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		await Promise.all(handlePs);
+		const handles: IFluidHandle<ArrayBufferLike>[] = await Promise.all(handlePs);
+		handles.forEach((handle) => handle.attachGraph());
 	}
 
 	public async processAll() {
@@ -254,7 +255,7 @@ const validateSummary = (runtime: MockRuntime) => {
 };
 
 describe("BlobManager", () => {
-	const handlePs: Promise<any>[] = [];
+	const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
@@ -297,7 +298,6 @@ describe("BlobManager", () => {
 	});
 
 	afterEach(async () => {
-		await Promise.all(handlePs);
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 	});

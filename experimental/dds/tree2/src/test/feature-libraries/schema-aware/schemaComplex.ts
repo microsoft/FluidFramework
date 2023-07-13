@@ -14,14 +14,12 @@ const builder = new SchemaBuilder("Complex Schema Example");
 // Schema
 export const stringTaskSchema = builder.primitive("StringTask", ValueSchema.String);
 // Polymorphic recursive schema:
-export const listTaskSchema = builder.objectRecursive("ListTask", {
-	local: {
-		items: SchemaBuilder.fieldRecursive(
-			FieldKinds.sequence,
-			stringTaskSchema,
-			() => listTaskSchema,
-		),
-	},
+export const listTaskSchema = builder.structRecursive("ListTask", {
+	items: SchemaBuilder.fieldRecursive(
+		FieldKinds.sequence,
+		stringTaskSchema,
+		() => listTaskSchema,
+	),
 });
 
 {
