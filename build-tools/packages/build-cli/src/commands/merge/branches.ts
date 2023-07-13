@@ -76,9 +76,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		// const [owner, repo] = context.originRemotePartialUrl.split("/");
-		const owner = "sonalideshpandemsft";
-		const repo = "FluidFramework";
+		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
@@ -96,7 +94,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
-			this.exit(0);
+			this.exit(-1);
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
@@ -112,7 +110,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		const unmergedCommitList: string[] = await this.gitRepo.revList(
 			lastMergedCommit,
-			`${flags.source}`,
+			flags.source,
 		);
 
 		this.log(`Unmerged commit list: ${unmergedCommitList}`);
@@ -186,18 +184,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				prHeadCommit,
 			)}`,
 		);
-
-		/**
-		 * Error: "could not read Username for 'https://github.com/': No such device or address" - This error occurred while pushing the branch to the remote repository. To fix it, set the Git configuration using the following command, which substitutes the default GitHub URL with a custom URL that includes a secret token.
-		 * In summary, the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL with a custom URL that includes a secret token for secure authentication and authorization during Git operations, such as pushing to a remote repository on GitHub.
-		 */
-
-		// await this.gitRepo.gitClient.raw([
-		// 	"config",
-		// 	"--global",
-		// 	`url.https://${flags.pat}@github.com/.insteadOf`,
-		// 	"https://github.com/",
-		// ]);
 
 		await this.gitRepo.gitClient
 			.checkoutBranch(branchName, prHeadCommit)

@@ -103,6 +103,16 @@ export class Repository {
 		return base;
 	}
 
+	/**
+	 * @param ref1 - The first ref to compare.
+	 * @param ref2 - The ref to compare against.
+	 * @returns The ref of the merge base between the two refs.
+	 */
+	public async getMergeBase(ref1: string, ref2: string): Promise<string> {
+		const base = await this.gitClient.raw("merge-base", `${ref1}`, ref2);
+		return base;
+	}
+
 	private async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
 		const divergedAt = await this.getMergeBaseRemote(ref, remote);
 		// Now we can find which files we added
@@ -188,10 +198,9 @@ export class Repository {
 		try {
 			console.log(`Checking merge conflicts for: ${commit}`);
 			mergeResult = await this.git.merge([commit, "--no-commit", "--no-ff"]);
-			console.log(`Git merge result: ${mergeResult}`);
 			await this.git.merge(["--abort"]);
-		} catch (error: any) {
-			console.log(`inside catch: ${error}`);
+		} catch {
+			console.log(`Merge result conflicts exists for: ${commit}`);
 			await this.git.merge(["--abort"]);
 			return false;
 		}

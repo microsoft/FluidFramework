@@ -97,13 +97,13 @@ export async function createPullRequest(
 	});
 
 	log.log(`Adding reviewer to pull request ${newPr.data.number}`);
-	// await octokit.request(REVIEWER, {
-	// 	owner: pr.owner,
-	// 	repo: pr.repo,
-	// 	pull_number: newPr.data.number,
-	// 	reviewers: pr.reviewers,
-	// 	team_reviewers: [""],
-	// });
+	await octokit.request(REVIEWER, {
+		owner: pr.owner,
+		repo: pr.repo,
+		pull_number: newPr.data.number,
+		reviewers: pr.reviewers,
+		team_reviewers: [""],
+	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);
 	await octokit.request(LABEL, {
