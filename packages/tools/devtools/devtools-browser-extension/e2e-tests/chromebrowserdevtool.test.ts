@@ -40,12 +40,11 @@ describe("chrome browser...", () => {
 	});
 
 	// it("Verify Devtools extension is opened", async () => {
-	// TODO
+	// 	//TODO
 	// 	const targets = await browser.targets();
-	// 	// console.log(targets);
+	// 	console.log(targets);
 	// 	// chrome-extension://inmobceohkedafljagjfnbojplmlmgbk/devtools_app.html
 	// 	// document.querySelector("#containers-menu-section");
 	// 	// document.querySelector("#telemetry-menu-section");
-
 	// });
 });

@@ -15,7 +15,6 @@ module.exports = {
 	globals: {
 		PATH: `http://localhost:${mappedPort}`,
 	},
-	testTimeout: 30000,
 	testMatch: ["**/e2e-tests/?(*.)+(spec|test).[t]s"],
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	transform: {
