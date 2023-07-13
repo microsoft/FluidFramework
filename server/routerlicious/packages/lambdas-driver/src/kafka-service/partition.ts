@@ -50,9 +50,10 @@ export class Partition extends EventEmitter {
 		this.q = queue((message: IQueuedMessage, callback) => {
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const optionalPromise = this.lambda!.handler(message);
+				const optionalPromise = this.lambda!.handler(message)
+					?.then(callback as any)
+					.catch(callback);
 				if (optionalPromise) {
-					optionalPromise.then(callback as any).catch(callback);
 					return;
 				}
 

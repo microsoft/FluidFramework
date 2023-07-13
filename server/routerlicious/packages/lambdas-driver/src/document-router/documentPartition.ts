@@ -43,12 +43,13 @@ export class DocumentPartition {
 			try {
 				if (!this.corrupt) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const optionalPromise = this.lambda!.handler(message);
-					if (optionalPromise) {
-						optionalPromise.then(callback as any).catch((error) => {
+					const optionalPromise = this.lambda!.handler(message)
+						?.then(callback as any)
+						.catch((error) => {
 							this.markAsCorrupt(error, message);
 							callback();
 						});
+					if (optionalPromise) {
 						return;
 					}
 				} else {
