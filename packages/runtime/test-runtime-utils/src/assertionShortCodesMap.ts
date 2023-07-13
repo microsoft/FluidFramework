@@ -557,7 +557,6 @@ export const shortCodeMap = {
 	"0x2fc": "Invalid localOpMetadata for clear",
 	"0x2fd": "pendingMessageId does not match",
 	"0x2fe": "Invalid localOpMetadata in submit",
-	"0x2ff": "Unexpected pending message received",
 	"0x304": "Id cannot contain slashes",
 	"0x305": "registerDependent on disposed Dependee",
 	"0x306": "invalidateDependents on disposed Dependee",
