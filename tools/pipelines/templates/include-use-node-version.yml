@@ -22,6 +22,7 @@ steps:
     script: |
       # Output installed node versions
       n ls
+      chown +w ${whoami} /usr/local/lib/node_modules
       # Use the specified node version
       n ${{ parameters.version }}
       # Output the node version
