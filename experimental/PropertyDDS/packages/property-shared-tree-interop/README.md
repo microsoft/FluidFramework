@@ -1,6 +1,6 @@
 # @fluid-experimental/property-shared-tree-interop
 
-This package contains tools and utilities, that should help application developers to migrate their projects
+This package contains tools and utilities that should help application developers migrate their projects
 from `PropertyDDS` to the new `SharedTree` DDS (see the
 [@fluid-experimental/tree2](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/README.md)).
 
@@ -44,7 +44,7 @@ as well as `NodeProperty`, `NamedProperty`, `NamedNodeProperty` and `Relationshi
 
 ### Limitations
 
-The main limitation is currently the runtime nature of the converter, which means that developers can only buid applications using the general purpose APIs of the `EditableTree` without static types. Using the resulting schema to generate static types using e.g. a `schema-aware` API (see [`schema-aware`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/schema-aware/README.md)) of the `SharedTree`is currently still a work in progress.
+The main limitation is currently the runtime nature of the converter, which means that developers can only buid applications using the general purpose APIs of the `EditableTree` without static types. Using the resulting schema to generate static types using e.g. a `schema-aware` API (see [`schema-aware`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/schema-aware/README.md)) of the `SharedTree` is currently still a work in progress.
 
 In addition, the following concepts are currently not supported by the schema converter and/or the `SharedTree`:
 
@@ -53,4 +53,4 @@ In addition, the following concepts are currently not supported by the schema co
 -   constants;
 -   enums (currently supported as just a primitive number schema);
 -   default values;
--   implicit type definitions. The `PropertyDDS` schema allows to define a structure of a child property in-place instead of explicitly defining its type using a `typeid` attribute. Such "implicit" types would probably require to auto-generate their type names in order to be properly converted into the `SharedTree` schema.
+-   implicit type definitions. The `PropertyDDS` schema allows to define a structure of a child property in-place instead of explicitly defining its type using a `typeid` attribute. Such "implicit" types would probably require auto-generating their type names in order to be properly converted into the `SharedTree` schema.

@@ -13,9 +13,7 @@ import {
 	PathVisitor,
 	NamedTreeSchema,
 	isCursor,
-	GlobalFieldKeySymbol,
 } from "../../core";
-import { brand } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
@@ -24,6 +22,7 @@ import {
 	valueSymbol,
 	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
+import { LocalNodeKey } from "../node-key";
 import { EditableTreeContext } from "./editableTreeContext";
 
 /**
@@ -64,7 +63,7 @@ export const contextSymbol: unique symbol = Symbol("editable-tree:context");
  * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
  * @alpha
  */
-export const localNodeKeySymbol: GlobalFieldKeySymbol = brand(Symbol("editable-tree:localNodeKey"));
+export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNodeKey");
 
 /**
  * A symbol for subscribing to events.
@@ -134,6 +133,11 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The name of the node type.
 	 */
 	readonly [typeNameSymbol]: TreeSchemaIdentifier;
+
+	/**
+	 * {@link LocalNodeKey} that identifies this node.
+	 */
+	readonly [localNodeKeySymbol]?: LocalNodeKey;
 
 	/**
 	 * The type of the node.

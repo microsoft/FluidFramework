@@ -90,7 +90,9 @@ export class BroadcasterLambda implements IPartitionLambda {
 					topic = `${ticketedSignalMessage.tenantId}/${ticketedSignalMessage.documentId}`;
 
 					if (this.clientManager && ticketedSignalMessage.operation) {
-						const signalContent = JSON.parse(ticketedSignalMessage.operation.content);
+						const signalContent = JSON.parse(
+							ticketedSignalMessage.operation.content as string,
+						);
 						const signalType: MessageType | undefined =
 							typeof signalContent.type === "string" ? signalContent.type : undefined;
 						switch (signalType) {

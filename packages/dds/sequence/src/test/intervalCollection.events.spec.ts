@@ -108,7 +108,7 @@ describe("SharedString interval collection event spec", () => {
 				const [{ interval, local, op }] = eventLog;
 				assert.deepEqual(interval, { start: 0, end: 1 });
 				assert.equal(local, false);
-				assert.equal(op?.contents.type, "act");
+				assert.equal((op?.contents as { type?: unknown }).type, "act");
 			}
 		});
 	});
@@ -156,7 +156,7 @@ describe("SharedString interval collection event spec", () => {
 				const [{ interval, local, op }] = eventLog;
 				assert.deepEqual(interval, { start: 0, end: 1 });
 				assert.equal(local, false);
-				assert.equal(op?.contents.type, "act");
+				assert.equal((op?.contents as { type?: unknown }).type, "act");
 			}
 		});
 	});
@@ -220,7 +220,7 @@ describe("SharedString interval collection event spec", () => {
 				assert.deepEqual(interval, { start: 2, end: 3 });
 				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 				assert.equal(local, false);
-				assert.equal(op?.contents.type, "act");
+				assert.equal((op?.contents as { type?: unknown }).type, "act");
 				assert.equal(slide, false);
 			}
 		});
@@ -264,7 +264,7 @@ describe("SharedString interval collection event spec", () => {
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
-					assert.equal(op?.contents.type, "act");
+					assert.equal((op?.contents as { type?: unknown }).type, "act");
 					assert.equal(slide, true);
 				}
 			});
@@ -283,7 +283,7 @@ describe("SharedString interval collection event spec", () => {
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
-					assert.equal(op?.contents.type, "act");
+					assert.equal((op?.contents as { type?: unknown }).type, "act");
 					assert.equal(slide, true);
 				}
 			});
@@ -337,7 +337,7 @@ describe("SharedString interval collection event spec", () => {
 				const [{ id, deltas, local, op }] = eventLog;
 				assert.equal(id, intervalId);
 				assert.equal(local, false);
-				assert.equal(op?.contents.type, "act");
+				assert.equal((op?.contents as { type?: unknown }).type, "act");
 				assert.deepEqual(deltas, { foo: null });
 			}
 		});
@@ -354,7 +354,7 @@ describe("SharedString interval collection event spec", () => {
 				const { id, deltas, local, op } = eventLog[1];
 				assert.equal(id, intervalId);
 				assert.equal(local, false);
-				assert.equal(op?.contents.type, "act");
+				assert.equal((op?.contents as { type?: unknown }).type, "act");
 				assert.deepEqual(deltas, { applies: null });
 			}
 		});

@@ -95,7 +95,7 @@ export class CopierLambda implements IPartitionLambda {
 			// All other errors result in a rejected promise.
 			if (error.code !== 11000) {
 				// Needs to be a full rejection here
-				return Promise.reject(error);
+				throw error;
 			}
 		});
 	}

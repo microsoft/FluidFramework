@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
+import { IBatchMetadata } from "./metadata";
 
 /**
  * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew
@@ -211,9 +213,13 @@ export class PendingStateManager implements IDisposable {
 				}
 			}
 
-			// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-			const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-			nextMessage.localOpMetadata = localOpMetadata;
+			try {
+				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				nextMessage.localOpMetadata = localOpMetadata;
+			} catch (error) {
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+			}
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -266,7 +272,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if (message.metadata?.batch) {
+		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
 				!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
@@ -294,10 +300,12 @@ export class PendingStateManager implements IDisposable {
 			0x16d /* "There is no pending batch begin message" */,
 		);
 
-		const batchEndMetadata = message.metadata?.batch;
+		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;
+			const batchBeginMetadata = (
+				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
+			)?.batch;
 
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
@@ -315,7 +323,10 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId,
+								batchClientId:
+									this.pendingBatchBeginMessage.clientId === null
+										? "null"
+										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
