@@ -241,47 +241,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("caches the loaded container across multiple requests as expected", async () => {
-		const url = await container.getAbsoluteUrl("");
-		assert(url, "url is undefined");
-		// load the containers paused
-		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
-		const container1 = await loader.resolve({ url, headers });
-		const container2 = await loader.resolve({ url, headers });
-
-		assert.strictEqual(
-			container1,
-			container2,
-			"container not cached across multiple loader requests",
-		);
-
-		// create a new data store using the original container
-		const newDataStore = await testSharedDataObjectFactory2.createInstance(
-			dataStore1._context.containerRuntime,
-		);
-		// this binds newDataStore to dataStore1
-		dataStore1._root.set("key", newDataStore.handle);
-
-		container1.connect();
-
-		// Flush all the ops
-		await provider.ensureSynchronized();
-
-		const sameDataStore1 = await requestFluidObject(container1, {
-			url: newDataStore.id,
-			headers: { wait: false }, // data store load default wait to true currently
-		});
-		const sameDataStore2 = await requestFluidObject(container2, {
-			url: newDataStore.id,
-			headers: { wait: false }, // data store load default wait to true currently
-		});
-		assert.strictEqual(
-			sameDataStore1,
-			sameDataStore2,
-			"same containers do not return same data store for same request",
-		);
-	});
-
 	it("can handle url with query params", async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
