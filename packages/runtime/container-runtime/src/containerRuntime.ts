@@ -1323,8 +1323,10 @@ export class ContainerRuntime
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
 				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
 			},
 			pendingRuntimeState?.pending,
+			this.logger,
 		);
 
 		const disableCompression = this.mc.config.getBoolean(
