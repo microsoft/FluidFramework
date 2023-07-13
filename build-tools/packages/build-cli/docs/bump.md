@@ -98,7 +98,7 @@ FLAGS
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Only bump dependencies of this package. You can use scoped or unscoped package names. For
                                example, both @fluid-tools/markdown-magic and markdown-magic are valid.
-  -t, --updateType=<option>    Bump the current version of the dependency according to this bump type.
+  -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
   -x, --skipChecks             Skip all checks.
   --[no-]commit                Commit changes to a new branch.

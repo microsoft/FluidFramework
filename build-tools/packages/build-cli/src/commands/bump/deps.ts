@@ -49,6 +49,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 	static flags = {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
+			default: "minor",
 			description: "Bump the current version of the dependency according to this bump type.",
 		}),
 		prerelease: Flags.boolean({
