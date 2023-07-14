@@ -120,7 +120,7 @@ export const NodesMark = <Schema extends TSchema>(tNodeChange: Schema, tTree: Sc
 		NodesAnchor(Type.Union([CellChanges(tNodeChange, tTree), Type.Undefined()])),
 		Type.Object(
 			{
-				type: Type.Literal("Nodes"),
+				type: Type.Literal("Cells"),
 			},
 			{ additionalProperties: false },
 		),

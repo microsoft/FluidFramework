@@ -4,16 +4,18 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag, TaggedChange } from "../../core";
+import { RevisionTag, TaggedChange, tagChange } from "../../core";
 import {
 	fail,
 	getFirstFromRangeMap,
 	getOrAddEmptyToMap,
+	Mutable,
 	RangeMap,
 	StackyIterator,
 } from "../../util";
 import {
 	addCrossFieldQuery,
+	ChangeAtomId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -21,33 +23,49 @@ import {
 	setInCrossFieldMap,
 } from "../modular-schema";
 import {
-	Attach,
-	Detach,
-	HasChanges,
-	HasRevisionTag,
-	HasTiebreakPolicy,
-	Insert,
+	Alloc,
+	Clear,
 	LineageEvent,
 	Mark,
 	Modify,
-	MoveIn,
-	NewAttach,
-	MoveOut,
-	Reattach,
-	ReturnFrom,
-	ReturnTo,
-	NoopMark,
 	Changeset,
-	MoveId,
-	Revive,
-	Delete,
 	DetachEvent,
-	EmptyInputCellMark,
-	ExistingCellMark,
-	NoopMarkType,
-} from "./format";
+	CellsMark,
+	NodesAnchor,
+	CellChanges,
+	CellChange,
+	Fill,
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { applyMoveEffectsToMark, isMoveMark, MoveEffectTable } from "./moveEffectTable";
+
+export interface DeleteNode extends Clear {
+	readonly targetCell?: undefined;
+}
+
+export function isDelete(cellChange: CellChange<unknown, unknown>): cellChange is DeleteNode {
+	return cellChange.type === "Clear" && cellChange.targetCell === undefined;
+}
+
+export interface MoveIn<TTree> extends Fill<TTree> {
+	readonly content: ChangeAtomId;
+}
+
+export interface ActiveMoveIn<TTree> extends MoveIn<TTree> {
+	readonly isSrcMuted?: undefined;
+}
+
+export function isMoveIn<TNodeChange, TTree>(
+	cellChange: CellChange<TNodeChange, TTree>,
+): cellChange is MoveIn<TTree> {
+	return cellChange.type === "Fill" && !Array.isArray(cellChange.content);
+}
+
+export function isActiveMoveIn<TNodeChange, TTree>(
+	cellChange: CellChange<TNodeChange, TTree>,
+): cellChange is ActiveMoveIn<TTree> {
+	return isMoveIn(cellChange) && cellChange.isSrcMuted === undefined;
+}
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
 	return mark.type === "Modify";
@@ -57,7 +75,7 @@ export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAt
 	return mark.type === "Insert" || mark.type === "MoveIn";
 }
 
-export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
+export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Alloc<TNodeChange> {
 	return isNewAttach(mark) || isReattach(mark);
 }
 
@@ -111,16 +129,30 @@ export function getCellId(
 	return mark.detachEvent;
 }
 
-export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
-	const clone = { ...mark };
-	if (clone.type === "Insert" || clone.type === "Revive") {
-		clone.content = [...clone.content];
-	}
-	if (isAttach(clone) && clone.lineage !== undefined) {
-		clone.lineage = [...clone.lineage];
-	}
-	return clone;
-}
+// export function cloneMark<TMark extends Mark<TNodeChange, TTree>, TNodeChange, TTree>(
+// 	mark: TMark,
+// ): TMark {
+// 	let clone: Mutable<TMark>;
+// 	const type = mark.type;
+// 	switch (type) {
+// 		case "Place": {
+// 			const cellChanges = cloneCellChanges(mark.payload.changes);
+// 			clone = { ...mark, payload: { ...mark.payload, changes: cellChanges } };
+// 			break;
+// 		}
+// 		case "Nodes": {
+// 			const cellChanges = cloneCellChanges(mark.payload);
+// 			clone = { ...mark, payload: cellChanges };
+// 			break;
+// 		}
+// 		default:
+// 			unreachableCase(type);
+// 	}
+// 	if (clone.lineage !== undefined) {
+// 		clone.lineage = [...clone.lineage];
+// 	}
+// 	return clone;
+// }
 
 /**
  * @returns `true` iff `lhs` and `rhs`'s `HasTiebreakPolicy` fields are structurally equal.
@@ -259,10 +291,6 @@ export function getMarkLength(mark: Mark<unknown>): number {
 	}
 }
 
-export function isNoopMark(mark: Mark<unknown>): mark is NoopMark {
-	return mark.type === NoopMarkType;
-}
-
 export function getOffsetAtRevision(
 	lineage: LineageEvent[] | undefined,
 	reattachRevision: RevisionTag | undefined,
@@ -282,7 +310,7 @@ export function getOffsetAtRevision(
 
 export function isDetachMark<TNodeChange>(
 	mark: Mark<TNodeChange> | undefined,
-): mark is Detach<TNodeChange> {
+): mark is Clear<TNodeChange> {
 	const type = mark?.type;
 	return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
 }
@@ -360,7 +388,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			break;
 		}
 		case "Delete": {
-			const lhsDetach = lhs as Detach;
+			const lhsDetach = lhs as Clear;
 			lhsDetach.count += rhs.count;
 			return true;
 		}
@@ -840,7 +868,7 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 				count: remainder,
 			};
 			if (mark.detachEvent !== undefined) {
-				(mark2 as Detach).detachEvent = splitDetachEvent(mark.detachEvent, length);
+				(mark2 as Clear).detachEvent = splitDetachEvent(mark.detachEvent, length);
 			}
 			return [mark1, mark2];
 		}

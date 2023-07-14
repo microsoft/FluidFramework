@@ -38,21 +38,6 @@ export interface LineageEvent {
 	readonly offset: number;
 }
 
-/**
- * Identifies an empty cell.
- */
-export interface DetachEvent {
-	/**
-	 * The intention of edit which last emptied the cell.
-	 */
-	revision: RevisionTag;
-
-	/**
-	 * The absolute position of the node in this cell in the input context of the revision which emptied it.
-	 */
-	index: number;
-}
-
 export interface PlaceAnchor<T> {
 	/**
 	 * Omit if `Tiebreak.Right` for terseness.
@@ -74,7 +59,7 @@ export interface NodesAnchor<T> {
 	 * Describes the detach which last emptied target cells.
 	 * Undefined if the target cells are not empty in this anchor's input context.
 	 */
-	readonly detachEvent?: DetachEvent;
+	readonly detachEvent?: ChangeAtomId;
 
 	/**
 	 * Lineage of detaches adjacent to the cells since `detachEvent`.
@@ -94,7 +79,7 @@ export interface ShallowCellChange {
 
 	/**
 	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
+	 * Only set for changes in marks which are a composition of multiple revisions.
 	 */
 	readonly revision?: RevisionTag;
 }
@@ -134,11 +119,11 @@ export interface Clear extends ShallowCellChange {
 	 */
 	readonly isMove?: true;
 	/**
-	 * Whether the effect of clearing the cells is tied to the nodes or to the cells.
-	 * If true, then rebasing over a move of the nodes will transfer the clear effect to the destination cells.
-	 * This is used to support "replace" merge semantics.
+	 * Whether the effect of clearing the cells is tied to the cells (true) or to the nodes (undefined).
+	 * If undefined, then rebasing over a move of the nodes will transfer the clear effect to the destination cells.
+	 * True can be is used to support "replace" merge semantics.
 	 */
-	readonly followNodes?: true;
+	readonly targetCell?: true;
 }
 
 /**
@@ -149,6 +134,13 @@ export interface Clear extends ShallowCellChange {
 export interface Modify<TNodeChange> {
 	readonly type: "Modify";
 	readonly changes: TNodeChange;
+
+	/**
+	 * Describes the "Clear" operation which last deleted the node that is being modified.
+	 * Undefined if the node had not been deleted at the time of the modify.
+	 * This is needed because multiple nodes may successively exist in a given cell.
+	 */
+	readonly detachEvent?: ChangeAtomId;
 }
 
 export type CellChange<TNodeChange, TTree> = Fill<TTree> | Modify<TNodeChange> | Clear;
@@ -162,16 +154,26 @@ export type CellChanges<TNodeChange, TTree> = readonly CellChange<TNodeChange, T
 
 export interface PlaceMark<TNodeChange, TTree> extends PlaceAnchor<Alloc<TNodeChange, TTree>> {
 	readonly type: "Place";
+	/**
+	 * The revision this mark is part of.
+	 * Only set for marks in fields which are a composition of multiple revisions.
+	 */
+	readonly revision?: RevisionTag;
 }
 
-export interface NodesMark<TNodeChange, TTree>
-	extends NodesAnchor<CellChanges<TNodeChange, TTree> | undefined> {
-	readonly type: "Nodes";
+export interface CellsMark<TNodeChange, TTree>
+	extends NodesAnchor<CellChanges<TNodeChange, TTree>> {
+	readonly type: "Cells";
+	/**
+	 * The revision this mark is part of.
+	 * Only set for marks in fields which are a composition of multiple revisions.
+	 */
+	readonly revision?: RevisionTag;
 }
 
 export type Mark<TNodeChange, TTree> =
 	| PlaceMark<TNodeChange, TTree>
-	| NodesMark<TNodeChange, TTree>;
+	| CellsMark<TNodeChange, TTree>;
 
 export type MarkList<TNodeChange, TTree> = readonly Mark<TNodeChange, TTree>[];
 

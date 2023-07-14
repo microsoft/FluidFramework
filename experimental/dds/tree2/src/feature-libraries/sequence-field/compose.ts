@@ -4,9 +4,17 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
 import {
+	ITreeCursorSynchronous,
+	makeAnonChange,
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+} from "../../core";
+import { brand, fail, Mutable } from "../../util";
+import {
+	areChangeAtomIdsEqual,
+	ChangeAtomId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
@@ -17,12 +25,12 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ExistingCellMark,
-	EmptyInputCellMark,
-	DetachEvent,
 	Modify,
-	MoveId,
-} from "./format";
+	PlaceMark,
+	CellsMark,
+	CellChanges,
+	CellChange,
+} from "./types";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -38,9 +46,7 @@ import {
 import {
 	getInputLength,
 	getOutputLength,
-	isNoopMark,
 	getOffsetAtRevision,
-	cloneMark,
 	isDeleteMark,
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
@@ -57,12 +63,17 @@ import {
 	withRevision,
 	markEmptiesCells,
 	splitMark,
+	isMoveIn,
+	isActiveMoveIn,
+	isDelete,
 } from "./utils";
 
 /**
  * @alpha
  */
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
+
+type WipCellChanges<TNodeChange, TTree> = Mutable<CellChange<TNodeChange, TTree>>[];
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -76,7 +87,7 @@ export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function compose<TNodeChange>(
+export function compose<TNodeChange, TTree = ITreeCursorSynchronous>(
 	changes: TaggedChange<Changeset<TNodeChange>>[],
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
@@ -98,15 +109,15 @@ export function compose<TNodeChange>(
 	return composed;
 }
 
-function composeMarkLists<TNodeChange>(
-	baseMarkList: MarkList<TNodeChange>,
+function composeMarkLists<TNodeChange, TTree>(
+	baseMarkList: MarkList<TNodeChange, TTree>,
 	newRev: RevisionTag | undefined,
-	newMarkList: MarkList<TNodeChange>,
+	newMarkList: MarkList<TNodeChange, TTree>,
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
-): MarkList<TNodeChange> {
+): MarkList<TNodeChange, TTree> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new ComposeQueue(
 		undefined,
@@ -127,15 +138,14 @@ function composeMarkLists<TNodeChange>(
 			);
 			factory.push(baseMark);
 		} else if (baseMark === undefined) {
-			factory.push(composeMark(newMark, newRev, composeChild));
+			factory.push(composeNewMark(newMark, newRev, composeChild));
 		} else {
 			// Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
 			// start at the same location in the revision after the base changes.
 			// They therefore refer to the same range for that revision.
 			const composedMark = composeMarks(
-				baseMark,
+				{ baseMark, newMark },
 				newRev,
-				newMark,
 				composeChild,
 				genId,
 				moveEffects,
@@ -148,6 +158,52 @@ function composeMarkLists<TNodeChange>(
 	return factory.list;
 }
 
+function composeNewMark<TNodeChange, TTree, TMark extends Mark<TNodeChange, TTree>>(
+	mark: TMark,
+	revision: RevisionTag | undefined,
+	composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+	const clone: Mutable<PlaceMark<TNodeChange, TTree> | CellsMark<TNodeChange, TTree>> = {
+		...mark,
+	};
+	if (revision !== undefined && mark.revision === undefined) {
+		clone.revision = revision;
+	}
+	if (clone.lineage !== undefined) {
+		clone.lineage = [...clone.lineage];
+	}
+	clone.payload =
+		clone.type === "Place"
+			? {
+					...clone.payload,
+					changes: composeNewCellChanges(
+						clone.payload.changes,
+						clone.revision ?? revision,
+						composeChild,
+					),
+			  }
+			: composeNewCellChanges(clone.payload, clone.revision ?? revision, composeChild);
+	return clone as TMark;
+}
+
+export function composeNewCellChanges<TNodeChange, TTree>(
+	cellChanges: CellChanges<TNodeChange, TTree>,
+	revision: RevisionTag | undefined,
+	composeChild: NodeChangeComposer<TNodeChange>,
+): CellChanges<TNodeChange, TTree> {
+	const clones: CellChange<TNodeChange, TTree>[] = [];
+	for (const cellChange of cellChanges) {
+		const clone: Mutable<CellChange<TNodeChange, TTree>> = { ...cellChange };
+		if (clone.type === "Modify") {
+			clone.changes = composeChild([tagChange(clone.changes, revision)]);
+		} else if (clone.type === "Fill" && Array.isArray(clone.content)) {
+			clone.content = [...clone.content];
+		}
+		clones.push(clone);
+	}
+	return clones;
+}
+
 /**
  * Composes two marks where `newMark` is based on the state produced by `baseMark`.
  * @param baseMark - The mark to compose with `newMark`.
@@ -157,165 +213,200 @@ function composeMarkLists<TNodeChange>(
  * Its input range should be the same as `baseMark`'s output range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
-function composeMarks<TNodeChange>(
-	baseMark: Mark<TNodeChange>,
+function composeMarks<TNodeChange, TTree>(
+	{ baseMark, newMark }: ComposableMarks<TNodeChange, TTree>,
 	newRev: RevisionTag | undefined,
-	newMark: Mark<TNodeChange>,
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
-): Mark<TNodeChange> {
-	const nodeChange = composeChildChanges(
-		getNodeChange(baseMark),
-		getNodeChange(newMark),
-		newRev,
-		composeChild,
-	);
-
-	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isNoopMark(baseMark)) {
-			return withNodeChange(newMark, nodeChange);
-		} else if (isNoopMark(newMark)) {
-			return withNodeChange(baseMark, nodeChange);
-		}
-		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
-	} else if (!markHasCellEffect(baseMark)) {
-		return withRevision(withNodeChange(newMark, nodeChange), newRev);
-	} else if (!markHasCellEffect(newMark)) {
-		const moveInId = getMarkMoveId(baseMark);
-		if (nodeChange !== undefined && moveInId !== undefined) {
-			assert(isMoveMark(baseMark), 0x68e /* Only move marks have move IDs */);
-			setModifyAfter(
-				moveEffects,
-				CrossFieldTarget.Source,
-				baseMark.revision,
-				baseMark.id,
-				baseMark.count,
-				nodeChange,
-				composeChild,
-			);
-			return baseMark;
-		}
-		return withNodeChange(baseMark, nodeChange);
-	} else if (areInputCellsEmpty(baseMark)) {
-		const moveInId = getMarkMoveId(baseMark);
-		const moveOutId = getMarkMoveId(newMark);
-
-		if (moveInId !== undefined && moveOutId !== undefined) {
-			assert(
-				isMoveMark(baseMark) && isMoveMark(newMark),
-				0x68f /* Only move marks have move IDs */,
-			);
-
-			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
-			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
-			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (
-				areInverseMovesAtIntermediateLocation(
-					baseMark,
-					baseIntention,
-					newMark,
-					newIntention,
-				)
-			) {
-				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
-				if (nodeChange !== undefined) {
-					setModifyAfter(
-						moveEffects,
-						CrossFieldTarget.Source,
-						baseMark.revision,
-						baseMark.id,
-						baseMark.count,
-						nodeChange,
-						composeChild,
-					);
-				}
-			} else {
-				setReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Source,
-					baseMark.revision,
-					baseMark.id,
-					baseMark.count,
-					withRevision(withNodeChange(newMark, nodeChange), newRev),
-				);
-			}
-
-			return { count: 0 };
-		}
-
-		if (moveInId !== undefined) {
-			assert(isMoveMark(baseMark), 0x690 /* Only move marks have move IDs */);
-			setReplacementMark(
-				moveEffects,
-				CrossFieldTarget.Source,
-				baseMark.revision,
-				baseMark.id,
-				baseMark.count,
-				withRevision(withNodeChange(newMark, nodeChange), newRev),
-			);
-			return { count: 0 };
-		}
-
-		if (moveOutId !== undefined) {
-			assert(isMoveMark(newMark), 0x691 /* Only move marks have move IDs */);
-
-			// The nodes attached by `baseMark` have been moved by `newMark`.
-			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
-			setReplacementMark(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				newMark.revision ?? newRev,
-				newMark.id,
-				newMark.count,
-				withNodeChange(baseMark, nodeChange),
-			);
-			return { count: 0 };
-		}
-		// TODO: Create modify mark for transient node.
-		return { count: 0 };
+): Mark<TNodeChange, TTree> {
+	if (baseMark.type === "Place") {
+		const changes = composeCellChanges(
+			baseMark.payload.changes,
+			newMark.payload,
+			newMark.count,
+			newMark.detachEvent !== undefined,
+			newRev,
+			composeChild,
+			genId,
+			moveEffects,
+			revisionMetadata,
+		);
+		return { ...baseMark, payload: { ...baseMark.payload, changes } };
 	} else {
-		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
-			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
-			const nodeChanges = getModifyAfter(
-				moveEffects,
-				baseMark.revision,
-				baseMark.id,
-				baseMark.count,
-			);
-
-			// We return a placeholder instead of a modify because there may be more node changes on `newMark`'s source mark
-			// which need to be included here.
-			// We will remove the placeholder during `amendCompose`.
-			return {
-				type: "Placeholder",
-				count: baseMark.count,
-				revision: baseMark.revision,
-				id: baseMark.id,
-				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
-			};
-		}
-		const length = getMarkLength(baseMark);
-		return createModifyMark(length, nodeChange);
+		const changes = composeCellChanges(
+			baseMark.payload,
+			newMark.payload,
+			newMark.count,
+			newMark.detachEvent !== undefined,
+			newRev,
+			composeChild,
+			genId,
+			moveEffects,
+			revisionMetadata,
+		);
+		return { ...baseMark, payload: changes };
 	}
 }
 
-function createModifyMark<TNodeChange>(
-	length: number,
-	nodeChange: TNodeChange | undefined,
-	cellId?: DetachEvent,
-): Mark<TNodeChange> {
-	if (nodeChange === undefined) {
-		return { count: cellId === undefined ? length : 0 };
+function composeCellChanges<TNodeChange, TTree>(
+	baseChanges: CellChanges<TNodeChange, TTree>,
+	newChanges: CellChanges<TNodeChange, TTree>,
+	count: number,
+	// baseStartsEmpty: boolean,
+	newStartsEmpty: boolean,
+	newRev: RevisionTag | undefined,
+	composeChild: NodeChangeComposer<TNodeChange>,
+	genId: IdAllocator,
+	moveEffects: MoveEffectTable<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
+): CellChanges<TNodeChange, TTree> {
+	if (baseChanges.length === 0) {
+		return newChanges;
 	}
-
-	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
-	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
-	if (cellId !== undefined) {
-		mark.detachEvent = cellId;
+	if (newChanges.length === 0) {
+		return baseChanges;
 	}
-	return mark;
+	let cellIsEmpty = newStartsEmpty;
+	// This cast should be safe because we ensure that the base mark's cell changes array is cloned.
+	// TODO: capture that fact in the type system so we can compiler-enforce it.
+	const wipBaseChange = baseChanges as WipCellChanges<TNodeChange, TTree>;
+	for (const newChange of newChanges) {
+		if (newChange.type === "Modify") {
+			// We can start iterating from the end of baseChanges because we know that any new changes that have
+			// already been added to wipBaseChange do not contain a relevant cell change.
+			let iBase = baseChanges.length - 1;
+			while (iBase >= 0) {
+				const baseChange = wipBaseChange[iBase];
+				if (
+					baseChange.type === "Modify" &&
+					areChangeAtomIdsEqual(baseChange.detachEvent, newChange.detachEvent)
+				) {
+					// baseChange modifies the same node.
+					baseChange.changes = composeChild([
+						makeAnonChange(baseChange.changes),
+						tagChange(newChange.changes, newRev),
+					]);
+					break;
+				} else if (isActiveMoveIn(baseChange)) {
+					if (newChange.detachEvent !== undefined) {
+						// baseChange moves-in the node that is being modified by newChange.
+						// We must send the modification to the source cell.
+						setModifyAfter(
+							moveEffects,
+							CrossFieldTarget.Source,
+							baseChange.revision,
+							baseChange.id,
+							count,
+							newChange.changes,
+							composeChild,
+						);
+						break;
+					} else {
+						// How can we tell if the node being modified by newChange is the node moved in by baseChange?
+						// If we assume that a cell will only ever be occupied by a single node, then all active
+						// move-ins in this cell must be carrying the node that is being modified by newChange.
+						// TODO: support different nodes in a cell.
+						setModifyAfter(
+							moveEffects,
+							CrossFieldTarget.Source,
+							baseChange.revision,
+							baseChange.id,
+							count,
+							newChange.changes,
+							composeChild,
+						);
+						break;
+					}
+				} else if (baseChange.type === "Clear") {
+					const baseRev = baseChange.revision;
+					assert(baseRev !== undefined, "Base marks should have a revision");
+					const detachEvent: ChangeAtomId = { revision: baseRev, localId: baseChange.id };
+					if (areChangeAtomIdsEqual(detachEvent, newChange.detachEvent)) {
+						// baseChange deletes the node that is being modified by newChange.
+						// If a similar Modify or a relevant MoveIn were present in the baseChange, we would have
+						// encountered it already.
+						iBase = -1;
+						break;
+					}
+				}
+				iBase -= 1;
+			}
+			if (iBase < 0) {
+				wipBaseChange.push(newChange);
+			}
+		} else if (isDelete(newChange)) {
+			// We can start iterating from the end of baseChanges because we know that any new changes that have
+			// already been added to wipBaseChange do not contain a relevant cell change.
+			let iBase = baseChanges.length - 1;
+			while (iBase >= 0) {
+				const baseChange = wipBaseChange[iBase];
+				if (isActiveMoveIn(baseChange)) {
+					if (newChange.detachEvent !== undefined) {
+						// baseChange moves-in the node that is being modified by newChange.
+						// We must send the modification to the source cell.
+						setModifyAfter(
+							moveEffects,
+							CrossFieldTarget.Source,
+							baseChange.revision,
+							baseChange.id,
+							count,
+							newChange.changes,
+							composeChild,
+						);
+						break;
+					} else {
+						// How can we tell if the node being modified by newChange is the node moved in by baseChange?
+						// If we assume that a cell will only ever be occupied by a single node, then all active
+						// move-ins in this cell must be carrying the node that is being modified by newChange.
+						// TODO: support different nodes in a cell.
+						setModifyAfter(
+							moveEffects,
+							CrossFieldTarget.Source,
+							baseChange.revision,
+							baseChange.id,
+							count,
+							newChange.changes,
+							composeChild,
+						);
+						break;
+					}
+				} else if (baseChange.type === "Clear") {
+					const baseRev = baseChange.revision;
+					assert(baseRev !== undefined, "Base marks should have a revision");
+					const detachEvent: ChangeAtomId = { revision: baseRev, localId: baseChange.id };
+					if (areChangeAtomIdsEqual(detachEvent, newChange.detachEvent)) {
+						// baseChange deletes the node that is being modified by newChange.
+						// If a similar Modify or a relevant MoveIn were present in the baseChange, we would have
+						// encountered it already.
+						iBase = -1;
+						break;
+					}
+				}
+				iBase -= 1;
+			}
+			if (iBase < 0) {
+				wipBaseChange.push(newChange);
+			}
+		} else {
+			wipBaseChange.push(newChange);
+		}
+	}
+	// const baseChange = baseChanges[baseChanges.length - 1];
+	// if (baseChange.type === "Modify") {
+	// 	const newChange = newChanges[0];
+	// 	if (newChange.type === "Modify") {
+	// 		const composedChildChanges = composeChildChanges(
+	// 			baseChange,
+	// 			newChange,
+	// 			newRev,
+	// 			composeChild,
+	// 		);
+	// 		return [...baseChanges.slice(0, -1), composedChildChanges, ...newChanges.slice(1)];
+	// 	}
+	// }
+	return wipBaseChange;
 }
 
 function composeChildChanges<TNodeChange>(
@@ -333,120 +424,49 @@ function composeChildChanges<TNodeChange>(
 	}
 }
 
-function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
-	mark: TMark,
-	revision: RevisionTag | undefined,
-	composeChild: NodeChangeComposer<TNodeChange>,
-): TMark {
-	if (isNoopMark(mark)) {
-		return mark;
-	}
+// function composeChildChanges<TNodeChange>(
+// 	baseChange: Modify<TNodeChange>,
+// 	newChange: Modify<TNodeChange>,
+// 	newRevision: RevisionTag | undefined,
+// 	composeChild: NodeChangeComposer<TNodeChange>,
+// ): Modify<TNodeChange> {
+// 	return {
+// 		type: "Modify",
+// 		changes: composeChild([
+// 			makeAnonChange(baseChange.changes),
+// 			tagChange(newChange.changes, newRevision),
+// 		]),
+// 	};
+// }
 
-	const cloned = cloneMark(mark);
-	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
-	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
-		cloned.revision = revision;
-	}
-
-	if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
-		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
-		return cloned;
-	}
-
-	return cloned;
-}
-
-export function amendCompose<TNodeChange>(
-	marks: MarkList<TNodeChange>,
+export function amendCompose<TNodeChange, TTree>(
+	marks: MarkList<TNodeChange, TTree>,
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
-): MarkList<TNodeChange> {
-	return amendComposeI(marks, composeChild, manager as MoveEffectTable<TNodeChange>);
+): MarkList<TNodeChange, TTree> {
+	return marks;
 }
 
-function amendComposeI<TNodeChange>(
-	marks: MarkList<TNodeChange>,
-	composeChild: NodeChangeComposer<TNodeChange>,
-	moveEffects: MoveEffectTable<TNodeChange>,
-): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>();
-	const queue = new MarkQueue(
-		marks,
-		undefined,
-		moveEffects,
-		true,
-		() => fail("Should not generate IDs"),
-		// TODO: Should pass in revision for new changes
-		(a, b) => composeChildChanges(a, b, undefined, composeChild),
-	);
-
-	while (!queue.isEmpty()) {
-		let mark = queue.dequeue();
-		switch (mark.type) {
-			case "MoveOut":
-			case "ReturnFrom": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Source,
-					mark.revision,
-					mark.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
-			case "MoveIn":
-			case "ReturnTo": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					mark.revision,
-					mark.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
-			case "Placeholder": {
-				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
-				if (modifyAfter !== undefined) {
-					const changes = composeChildChanges(
-						mark.changes,
-						modifyAfter,
-						undefined,
-						composeChild,
-					);
-					mark = createModifyMark(mark.count, changes);
-				} else {
-					mark = createModifyMark(mark.count, mark.changes);
-				}
-			}
-			default:
-				break;
-		}
-		factory.push(mark);
-	}
-
-	return factory.list;
-}
-
-export class ComposeQueue<T> {
-	private readonly baseMarks: MarkQueue<T>;
-	private readonly newMarks: MarkQueue<T>;
+export class ComposeQueue<TNodeChange, TTree> {
+	private readonly baseMarks: MarkQueue<TNodeChange, TTree>;
+	private readonly newMarks: MarkQueue<TNodeChange, TTree>;
 	private readonly baseIndex: IndexTracker;
 	private readonly baseGap: GapTracker;
 	private readonly cancelledInserts: Set<RevisionTag> = new Set();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
-		baseMarks: Changeset<T>,
+		baseMarks: Changeset<TNodeChange, TTree>,
 		private readonly newRevision: RevisionTag | undefined,
-		newMarks: Changeset<T>,
+		newMarks: Changeset<TNodeChange, TTree>,
 		genId: IdAllocator,
-		private readonly moveEffects: MoveEffectTable<T>,
+		private readonly moveEffects: MoveEffectTable<TNodeChange>,
 		private readonly revisionMetadata: RevisionMetadataSource,
-		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		composeChanges?: (
+			a: TNodeChange | undefined,
+			b: TNodeChange | undefined,
+		) => TNodeChange | undefined,
 	) {
 		this.baseIndex = new IndexTracker(revisionMetadata.getIndex);
 		this.baseGap = new GapTracker(revisionMetadata.getIndex);
@@ -493,7 +513,7 @@ export class ComposeQueue<T> {
 		return this.baseMarks.isEmpty() && this.newMarks.isEmpty();
 	}
 
-	public pop(): ComposeMarks<T> {
+	public pop(): Partial<ComposableMarks<TNodeChange, TTree>> {
 		const output = this.popImpl();
 		if (output.baseMark !== undefined) {
 			this.baseIndex.advance(output.baseMark);
@@ -502,7 +522,7 @@ export class ComposeQueue<T> {
 		return output;
 	}
 
-	private popImpl(): ComposeMarks<T> {
+	private popImpl(): Partial<ComposableMarks<TNodeChange, TTree>> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		if (baseMark === undefined && newMark === undefined) {
@@ -573,7 +593,7 @@ export class ComposeQueue<T> {
 		}
 	}
 
-	private dequeueBase(length: number = 0): ComposeMarks<T> {
+	private dequeueBase(length: number = 0): ComposableMarks<TNodeChange> {
 		const baseMark = this.baseMarks.dequeue();
 
 		if (baseMark !== undefined) {
@@ -602,7 +622,7 @@ export class ComposeQueue<T> {
 		return { baseMark, newMark: length > 0 ? { count: length } : undefined };
 	}
 
-	private dequeueNew(length: number = 0): ComposeMarks<T> {
+	private dequeueNew(length: number = 0): ComposableMarks<TNodeChange> {
 		const newMark = this.newMarks.dequeue();
 
 		if (newMark !== undefined) {
@@ -634,7 +654,7 @@ export class ComposeQueue<T> {
 		};
 	}
 
-	private dequeueBoth(): ComposeMarks<T> {
+	private dequeueBoth(): ComposableMarks<TNodeChange> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		assert(
@@ -746,9 +766,9 @@ function setReplacementMark<T>(
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
-interface ComposeMarks<T> {
-	baseMark?: Mark<T>;
-	newMark?: Mark<T>;
+interface ComposableMarks<TNodeChange, TTree> {
+	baseMark: Mark<TNodeChange, TTree>;
+	newMark: CellsMark<TNodeChange, TTree>;
 }
 
 /**

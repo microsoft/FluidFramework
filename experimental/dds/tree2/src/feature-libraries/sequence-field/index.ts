@@ -4,11 +4,11 @@
  */
 
 export {
-	Attach,
+	Alloc as Attach,
 	NewAttach,
 	Changeset,
 	Delete,
-	Detach,
+	Clear as Detach,
 	Effects,
 	HasChanges,
 	HasMoveId,

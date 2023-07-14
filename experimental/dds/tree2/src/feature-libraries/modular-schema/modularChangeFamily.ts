@@ -48,6 +48,7 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
+	ChangeAtomId,
 	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
@@ -1236,4 +1237,17 @@ function revisionInfoFromTaggedChange(
 		revInfos.push(info);
 	}
 	return revInfos;
+}
+
+export function areChangeAtomIdsEqual(
+	lhs: ChangeAtomId | undefined,
+	rhs: ChangeAtomId | undefined,
+): boolean {
+	if (lhs === rhs) {
+		return true;
+	}
+	if (lhs === undefined || rhs === undefined) {
+		return false;
+	}
+	return lhs.revision === rhs.revision && lhs.localId === rhs.localId;
 }

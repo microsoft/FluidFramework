@@ -6,21 +6,24 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { IdAllocator } from "../modular-schema";
-import { Mark } from "./format";
+import { Mark } from "./types";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
 import { getMarkLength, splitMark } from "./utils";
 
-export class MarkQueue<T> {
-	private readonly stack: Mark<T>[] = [];
+export class MarkQueue<TNodeChange, TTree> {
+	private readonly stack: Mark<TNodeChange, TTree>[] = [];
 	private index = 0;
 
 	public constructor(
-		private readonly list: readonly Mark<T>[],
+		private readonly list: readonly Mark<TNodeChange, TTree>[],
 		public readonly revision: RevisionTag | undefined,
-		private readonly moveEffects: MoveEffectTable<T>,
+		private readonly moveEffects: MoveEffectTable<TNodeChange>,
 		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		private readonly composeChanges?: (
+			a: TNodeChange | undefined,
+			b: TNodeChange | undefined,
+		) => TNodeChange | undefined,
 	) {
 		this.list = list;
 	}
@@ -29,13 +32,13 @@ export class MarkQueue<T> {
 		return this.peek() === undefined;
 	}
 
-	public dequeue(): Mark<T> {
+	public dequeue(): Mark<TNodeChange, TTree> {
 		const output = this.tryDequeue();
 		assert(output !== undefined, 0x4e2 /* Unexpected end of mark queue */);
 		return output;
 	}
 
-	public tryDequeue(): Mark<T> | undefined {
+	public tryDequeue(): Mark<TNodeChange, TTree> | undefined {
 		if (this.stack.length > 0) {
 			return this.stack.pop();
 		} else if (this.index < this.list.length) {
@@ -69,7 +72,7 @@ export class MarkQueue<T> {
 	 * The caller must verify that the next mark (as returned by peek) is longer than this length.
 	 * @param length - The length to dequeue, measured in the input context.
 	 */
-	public dequeueUpTo(length: number): Mark<T> {
+	public dequeueUpTo(length: number): Mark<TNodeChange, TTree> {
 		const mark = this.dequeue();
 		if (getMarkLength(mark) <= length) {
 			return mark;
@@ -80,7 +83,7 @@ export class MarkQueue<T> {
 		return mark1;
 	}
 
-	public peek(): Mark<T> | undefined {
+	public peek(): Mark<TNodeChange, TTree> | undefined {
 		const mark = this.tryDequeue();
 		if (mark !== undefined) {
 			this.stack.push(mark);

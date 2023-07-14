@@ -35,7 +35,7 @@ import {
 	isNoopMark,
 } from "./utils";
 import {
-	Attach,
+	Alloc,
 	Changeset,
 	Mark,
 	MarkList,
@@ -675,7 +675,7 @@ function getMovedMark<T>(
 }
 
 function handleCurrAttach<T>(
-	currMark: Attach<T>,
+	currMark: Alloc<T>,
 	factory: MarkListFactory<T>,
 	lineageRequests: LineageRequest<T>[],
 	offset: number,
@@ -696,7 +696,7 @@ function handleCurrAttach<T>(
 }
 
 interface LineageRequest<T> {
-	mark: Attach<T>;
+	mark: Alloc<T>;
 	offset: number;
 }
 
@@ -711,7 +711,7 @@ function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) 
 	}
 }
 
-function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag) {
+function tryRemoveLineageEvent<T>(mark: Alloc<T>, revisionToRemove: RevisionTag) {
 	if (mark.lineage === undefined) {
 		return;
 	}

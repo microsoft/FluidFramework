@@ -58,6 +58,7 @@ export {
 	ModularEditBuilder,
 	EditDescription,
 	revisionMetadataSourceFromInfo,
+	areChangeAtomIdsEqual,
 } from "./modularChangeFamily";
 export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
 
