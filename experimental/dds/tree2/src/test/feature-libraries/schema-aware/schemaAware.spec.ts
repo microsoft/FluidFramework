@@ -278,8 +278,8 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test simple recursive cases:
 	{
 		const builder2 = new SchemaBuilder("Schema Aware recursive");
-		const rec = builder2.objectRecursive("rec", {
-			local: { x: SchemaBuilder.fieldRecursive(optional, () => rec) },
+		const rec = builder2.structRecursive("rec", {
+			x: SchemaBuilder.fieldRecursive(optional, () => rec),
 		});
 
 		type RecObjectSchema = typeof rec;

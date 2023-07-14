@@ -67,7 +67,6 @@ export class TreeSchema<
 	>;
 
 	public readonly extraLocalFields: FieldSchema;
-	public readonly extraGlobalFields: boolean;
 	public readonly value: WithDefault<
 		Assume<T, TreeSchemaSpecification>["value"],
 		ValueSchema.Nothing
@@ -85,7 +84,6 @@ export class TreeSchema<
 		);
 		this.localFields = objectToMapTyped(this.localFieldsObject);
 		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
-		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
 		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
 			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
@@ -180,7 +178,6 @@ export interface TreeSchemaSpecification {
 	readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
 	readonly global?: FlexList<GlobalFieldSchema>;
 	readonly extraLocalFields?: FieldSchema;
-	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
 
