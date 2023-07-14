@@ -68,7 +68,7 @@ describe("EditManagerSummarizer", () => {
 		const output = codec.decode(s1);
 		assert.deepEqual(output, input);
 		const s2 = codec.encode(output);
-		assert.equal(s1, s2);
+		assert.deepEqual(s1, s2);
 	});
 
 	// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.

@@ -29,7 +29,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
@@ -81,7 +81,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
 } from "../core";
-import { JsonCompatible, brand, makeArray } from "../util";
+import { JsonCompatible, Mutable, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
@@ -352,7 +352,8 @@ export class TestTreeProviderLite {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime();
+			const runtime = new MockFluidDataStoreRuntime({ clientId: generateStableId() });
+			(runtime as Mutable<MockFluidDataStoreRuntime>).id = "tree-provider-lite-data-store";
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
