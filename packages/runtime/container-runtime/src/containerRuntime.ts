@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
+	IBatchMessage,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -830,6 +831,21 @@ export class ContainerRuntime
 		return this.reSubmitCore;
 	}
 
+	private readonly submitFn: (
+		type: MessageType,
+		contents: any,
+		batch: boolean,
+		appData?: any,
+	) => number;
+	private readonly submitBatchFn: (
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number,
+	) => number;
+	private readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
+	private readonly submitSignalFn: (contents: any) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1052,7 +1068,7 @@ export class ContainerRuntime
 	 * @internal
 	 */
 	protected constructor(
-		private readonly context: IContainerContext,
+		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
 		metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
@@ -1084,10 +1100,10 @@ export class ContainerRuntime
 			clientDetails,
 			connected,
 			baseSnapshot,
-			// submitFn,
-			// submitBatchFn,
-			// submitSummaryFn,
-			// submitSignalFn,
+			submitFn,
+			submitBatchFn,
+			submitSummaryFn,
+			submitSignalFn,
 			disposeFn,
 			closeFn,
 			deltaManager,
@@ -1100,6 +1116,13 @@ export class ContainerRuntime
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+
+		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
+		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
+		this.submitFn = submitFn;
+		this.submitBatchFn = submitBatchFn;
+		this.submitSummaryFn = submitSummaryFn;
+		this.submitSignalFn = submitSignalFn;
 
 		this.options = options;
 		this.clientDetails = clientDetails;
@@ -1195,7 +1218,7 @@ export class ContainerRuntime
 
 		const opSplitter = new OpSplitter(
 			chunks,
-			context.submitBatchFn,
+			this.submitBatchFn,
 			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1384,7 +1407,9 @@ export class ContainerRuntime
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			containerContext: context,
+			submitFn: this.submitFn,
+			submitBatchFn: this.submitBatchFn,
+			deltaManager: this.innerDeltaManager,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
@@ -2394,12 +2419,12 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: any) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.context.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope);
 	}
 
 	public submitDataStoreSignal(address: string, type: string, content: any) {
 		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.context.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3224,9 +3249,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
 
 		// back-compat: ADO #1385: Make this call unconditional in the future
-		return this.context.submitSummaryFn !== undefined
-			? this.context.submitSummaryFn(contents, referenceSequenceNumber)
-			: this.context.submitFn(MessageType.Summarize, contents, false);
+		return this.submitSummaryFn !== undefined
+			? this.submitSummaryFn(contents, referenceSequenceNumber)
+			: this.submitFn(MessageType.Summarize, contents, false);
 	}
 
 	/**

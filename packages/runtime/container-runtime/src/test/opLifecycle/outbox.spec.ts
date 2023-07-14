@@ -185,11 +185,15 @@ describe("Outbox", () => {
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		enableGroupedBatching?: boolean;
-	}) =>
-		new Outbox({
+	}) => {
+		const { submitFn, submitBatchFn, deltaManager } = params.context;
+
+		return new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			containerContext: params.context,
+			submitFn,
+			submitBatchFn,
+			deltaManager,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,
@@ -208,6 +212,7 @@ describe("Outbox", () => {
 			opReentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
+	};
 
 	beforeEach(() => {
 		state.deltaManagerFlushCalls = 0;
