@@ -29,12 +29,14 @@ export class DeltaService implements IDeltaService {
 		documentId: string,
 		from?: number,
 		to?: number,
+		caller?: string,
 	): Promise<ISequencedDocumentMessage[]> {
 		const metricProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			[BaseTelemetryProperties.documentId]: documentId,
 			from,
 			to,
+			caller,
 		};
 		const metric = Lumberjack.newLumberMetric(
 			LumberEventName.GetDeltasFromDb,

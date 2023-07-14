@@ -147,6 +147,7 @@ export function create(
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+			const caller = request.query.token?.toString().length > 0 ? "external" : "scribe";
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
@@ -155,6 +156,7 @@ export function create(
 				getParam(request.params, "id"),
 				from,
 				to,
+				caller,
 			);
 
 			handleResponse(deltasP, response, undefined, 500);
