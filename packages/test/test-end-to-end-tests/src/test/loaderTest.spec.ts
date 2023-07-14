@@ -189,7 +189,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	it("can create data object using url with second id, having distinct value from default", async () => {
 		const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
 		assert(url, "dataStore2 url is undefined");
-		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
+		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, {
+			url,
+			headers: { [LoaderHeader.cache]: true },
+		});
 
 		dataStore1._root.set("color", "purple");
 		dataStore2._root.set("color", "pink");
