@@ -695,7 +695,8 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
  *
  * It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
- * they require assert.deepEqual is a valid comparison (for example edits containing cursors).
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
  *
  * TODO:
  * Consider extending this to allow testing in a way where encoded formats are compared,

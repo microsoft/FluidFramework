@@ -36,8 +36,8 @@ const nodeChange2 = changeSetForChild("nodeChange2");
 const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
 
 const failCrossFieldManager: CrossFieldManager = {
-	get: () => assert.fail("Should query CrossFieldManager"),
-	set: () => assert.fail("Should modify CrossFieldManager"),
+	get: () => assert.fail("Should not query CrossFieldManager"),
+	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
 const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {

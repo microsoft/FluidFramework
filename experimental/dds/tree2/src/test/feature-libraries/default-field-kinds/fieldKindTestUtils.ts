@@ -39,7 +39,7 @@ export const fooKey: FieldKey = brand("foo");
 /**
  * Create a NodeChangeset with a child change to the foo field.
  */
-export function changeSetForChild(change: unknown): NodeChangeset {
+export function changesetForChild(change: unknown): NodeChangeset {
 	return {
 		fieldChanges: new Map([
 			[
