@@ -1169,7 +1169,7 @@ export class ContainerRuntime
 		// TODO: Consider that the Container could just listen to these events itself, or even more appropriately maybe the
 		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
 		this.on("dirty", () => context.updateDirtyContainerState(true));
-		this.on("clean", () => context.updateDirtyContainerState(false));
+		this.on("saved", () => context.updateDirtyContainerState(false));
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
