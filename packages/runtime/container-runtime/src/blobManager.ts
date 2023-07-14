@@ -458,7 +458,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 
 		if (signal?.aborted) {
-			throw(Error("aborted before uploading"));//signal as any).reason));
+			throw Error("aborted before uploading");
 		}
 
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
@@ -474,11 +474,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
-		if(signal){
-			signal.addEventListener('abort', () => {
-				this.deletePendingBlob(localId);
-				pendingEntry.handleP.reject(Error("aborted while uploading"));
-			}, {once: true});
+		if (signal) {
+			signal.addEventListener(
+				"abort",
+				() => {
+					if (!pendingEntry.handleP.isCompleted) {
+						this.deletePendingBlob(localId);
+						pendingEntry.handleP.reject(Error("aborted while uploading"));
+					}
+				},
+				{ once: true }, // to remove the listener after being triggered
+			);
 		}
 
 		return pendingEntry.handleP.promise;
@@ -523,8 +529,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL, signal?: AbortSignal) {
-		if(signal?.aborted === true) {
+	private onUploadResolve(
+		localId: string,
+		response: ICreateBlobResponseWithTTL,
+		signal?: AbortSignal,
+	) {
+		if (signal?.aborted === true) {
 			return;
 		}
 		const entry = this.pendingBlobs.get(localId);
@@ -578,7 +588,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	private async onUploadReject(localId: string, error, signal?: AbortSignal) {
-		if(signal?.aborted === true) {
+		if (signal?.aborted === true) {
 			return;
 		}
 		const entry = this.pendingBlobs.get(localId);

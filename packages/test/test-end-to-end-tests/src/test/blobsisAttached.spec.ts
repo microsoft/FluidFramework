@@ -17,13 +17,12 @@ import {
 	timeoutPromise,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { PendingLocalState } from "@fluidframework/container-runtime/dist/test";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 const mapId = "map";
 const directoryId = "directoryKey";
@@ -84,9 +83,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const ac = new AbortController();
-			
+
 			try {
-				const p = dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				const p = dataStore1.runtime.uploadBlob(
+					stringToBuffer(testString, "utf-8"),
+					ac.signal,
+				);
 				ac.abort();
 				await p;
 				assert.fail("Should not succeed");
@@ -97,12 +99,47 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("blob is aborted after uploading", async function () {
 			const testString = "this is a test string";
+			const testKey = "a blob";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const ac = new AbortController();
+
+			try {
+				const blob = await dataStore1.runtime.uploadBlob(
+					stringToBuffer(testString, "utf-8"),
+					ac.signal,
+				);
+				ac.abort();
+				map.set(testKey, blob);
+			} catch (error: any) {
+				assert.fail("Should succeed");
+			}
+		});
+
+		it("blob is aborted while waiting for op", async function () {
+			const testString = "this is a test string";
+			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const ac = new AbortController();
-			
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+
 			try {
-				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				const blob = await dataStore1.runtime.uploadBlob(
+					stringToBuffer(testString, "utf-8"),
+					ac.signal,
+				);
 				ac.abort();
+				await provider.ensureSynchronized();
+				const pendingBlobs = (
+					runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState
+				).pendingAttachmentBlobs;
+				const acked = Object.values<any>(pendingBlobs)[0].acked;
+				assert.strictEqual(acked, true);
+				map.set(testKey, blob);
+				assert.strictEqual(
+					bufferToString(await map.get(testKey).get(), "utf-8"),
+					testString,
+				);
 			} catch (error: any) {
 				assert.fail("Should succeed");
 			}
