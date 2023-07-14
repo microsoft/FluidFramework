@@ -699,11 +699,11 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
  * This can be problematic for some cases (for example edits containing cursors).
  *
  * TODO:
- * Consider extending this to allow testing in a way where encoded formats are compared,
- * which can safely use deepEqual.
- * Consider adding a custom comparison function for non encoded data.
- * Consider adding a way to test that specific values have specific encodings.
- * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one).
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
 export function makeEncodingTestSuite<TDecoded>(
 	family: ICodecFamily<TDecoded>,
