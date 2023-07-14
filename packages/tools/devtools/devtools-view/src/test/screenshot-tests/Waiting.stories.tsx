@@ -3,30 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { Waiting } from "../../components/Waiting";
-import { ContextsDecorator } from "./ScreenshotTestUtilities";
+import { testContextDecorator } from "./ScreenshotTestUtilities";
 
 export default {
 	title: "Waiting",
 	component: Waiting,
-	decorators: [
-		(story: () => React.ReactElement): React.ReactElement => (
-			<ContextsDecorator>{story()}</ContextsDecorator>
-		),
-	],
+	decorators: [testContextDecorator],
 };
 
 /**
- * Waiting component with no label provided.
+ * {@link Waiting} with no label provided.
  */
 export const DefaultLabel = {
 	args: {},
 };
 
 /**
- * Waiting component with an explicit, custom label provided.
+ * {@link Waiting} with a custom label provided.
  */
 export const CustomLabel = {
 	args: {

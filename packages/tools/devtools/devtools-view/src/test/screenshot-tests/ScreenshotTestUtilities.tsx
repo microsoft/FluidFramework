@@ -14,10 +14,10 @@ import { LoggerContext } from "../../TelemetryUtils";
 import { getFluentUIThemeToUse } from "../../ThemeHelper";
 
 /**
- * {@link ContextsDecorator} input props.
+ * {@link TestContexts} input props.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type ContextsDecoratorProps = React.PropsWithChildren<{}>;
+export type TestContextsProps = React.PropsWithChildren<{}>;
 
 /**
  * Wraps the input children in the contexts required by Devtools view components.
@@ -28,7 +28,7 @@ export type ContextsDecoratorProps = React.PropsWithChildren<{}>;
  *
  * 3. The required FluentUI theming context
  */
-export function ContextsDecorator(props: ContextsDecoratorProps): React.ReactElement {
+export function TestContexts(props: TestContextsProps): React.ReactElement {
 	const { children } = props;
 
 	const themeInfo = getFluentUIThemeToUse();
@@ -41,4 +41,11 @@ export function ContextsDecorator(props: ContextsDecoratorProps): React.ReactEle
 			</LoggerContext.Provider>
 		</MessageRelayContext.Provider>
 	);
+}
+
+/**
+ * Storybook context for wrapping components in {@link TestContexts}.
+ */
+export function testContextDecorator(story: () => React.ReactElement): React.ReactElement {
+	return <TestContexts>{story()}</TestContexts>;
 }
