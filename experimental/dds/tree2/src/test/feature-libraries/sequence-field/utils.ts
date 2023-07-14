@@ -189,20 +189,3 @@ export function getMaxIdTagged(
 export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
 }
-
-export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
-	let nextId = 0;
-	const mappings = new Map<SF.MoveId, SF.MoveId>();
-	for (const mark of change) {
-		if (SF.isMoveMark(mark)) {
-			let newId = mappings.get(mark.id);
-			if (newId === undefined) {
-				newId = brand(nextId++);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				mappings.set(mark.id, newId!);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			mark.id = newId!;
-		}
-	}
-}
