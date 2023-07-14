@@ -411,7 +411,7 @@ describe("Editing", () => {
 
 			const expectedState: JsonCompatible = ["A"];
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], expectedState);
