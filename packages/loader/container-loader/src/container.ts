@@ -523,11 +523,12 @@ export class Container
 
 	public get closed(): boolean {
 		return (
-			this._lifecycleState === "closing" ||
-			this._lifecycleState === "closed" ||
-			this._lifecycleState === "disposing" ||
-			this._lifecycleState === "disposed"
+			this._lifecycleState === "closing" || this._lifecycleState === "closed" || this.disposed
 		);
+	}
+
+	public get disposed(): boolean {
+		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
 	private _attachState = AttachState.Detached;
