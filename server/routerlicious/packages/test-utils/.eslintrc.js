@@ -12,5 +12,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
 		"no-case-declarations": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };
