@@ -60,7 +60,7 @@ export class DeltaService implements IDeltaService {
 			metric.success("getDeltasFromDb succeeded");
 			return deltas;
 		} catch (err) {
-			metric.error("getDeltasFromDb failed");
+			metric.error("getDeltasFromDb failed", err);
 			throw err;
 		}
 	}
@@ -97,7 +97,7 @@ export class DeltaService implements IDeltaService {
 			metric.success("getDeltasFromStorage succeeded");
 			return deltas;
 		} catch (err) {
-			metric.error("getDeltasFromStorage failed");
+			metric.error("getDeltasFromStorage failed", err);
 			throw err;
 		}
 	}
