@@ -22,7 +22,13 @@ import { getFluentUIThemeToUse } from "../../ThemeHelper";
 export type TestContextProps = React.PropsWithChildren<{}>;
 
 /**
- * TODO
+ * Wraps the input children in the contexts required by Devtools view components.
+ *
+ * 1. {@link MessageRelayContext}
+ *
+ * 2. {@link LoggerContext}
+ *
+ * 3. FluentUI's ThemeProvider with the default theme.
  */
 export function TestContext(props: TestContextProps): React.ReactElement {
 	const { children } = props;
