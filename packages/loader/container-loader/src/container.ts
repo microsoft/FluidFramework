@@ -1672,7 +1672,6 @@ export class Container
 			}, // IQuorumSnapShot
 		);
 
-		// The load context - given we seeded the quorum - will be great
 		await this.instantiateRuntime(codeDetails, undefined);
 
 		this.setLoaded();
