@@ -2340,8 +2340,6 @@ export class Container
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
-
-		this.emit("contextChanged", codeDetails);
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean) => {
