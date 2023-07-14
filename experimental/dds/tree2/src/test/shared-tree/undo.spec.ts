@@ -127,12 +127,12 @@ describe("Undo and redo", () => {
 			// Perform the edits where the last edit is the one to undo
 			edit(view, fork);
 
-			view.merge(fork);
+			view.merge(fork, false);
 			expectJsonTree(view, editedState);
 
 			view.undo();
 
-			view.merge(fork);
+			view.merge(fork, false);
 			expectJsonTree(view, parentUndoState ?? initialState);
 
 			view.redo();

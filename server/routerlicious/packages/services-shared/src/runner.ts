@@ -42,7 +42,7 @@ export async function run<T extends IResources>(
 			error.forceKill = true;
 			error.runnerStopException = innerError;
 		});
-		return Promise.reject(error);
+		throw error;
 	});
 
 	process.on("SIGTERM", () => {

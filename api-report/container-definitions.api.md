@@ -30,7 +30,7 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -289,7 +289,6 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;

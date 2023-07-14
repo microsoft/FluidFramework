@@ -29,11 +29,11 @@ import {
 import {
 	assert,
 	delay,
-	LazyPromise,
 	Trace,
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -183,6 +183,7 @@ import {
 	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { IBatchMetadata } from "./metadata";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -823,14 +824,14 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	public get reSubmitFn(): (
-		type: ContainerMessageType,
-		content: any,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		return this.reSubmitCore;
+	/** @deprecated - The functionality is no longer exposed publicly */
+	public get reSubmitFn() {
+		return (
+			type: ContainerMessageType,
+			contents: any,
+			localOpMetadata: unknown,
+			opMetadata: Record<string, unknown> | undefined,
+		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
 	}
 
 	public get disposeFn(): (error?: ICriticalContainerError) => void {
@@ -1263,7 +1264,7 @@ export class ContainerRuntime
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(context.baseSnapshot, metadata),
 			this,
-			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
+			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
 				(
 					summarizeInternal: SummarizeInternalFn,
@@ -1290,10 +1291,14 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-						localId,
-						blobId,
-					});
+					this.submit(
+						{ type: ContainerMessageType.BlobAttach, contents: undefined },
+						undefined,
+						{
+							localId,
+							blobId,
+						},
+					);
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
@@ -1318,8 +1323,10 @@ export class ContainerRuntime
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
 				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
 			},
 			pendingRuntimeState?.pending,
+			this.logger,
 		);
 
 		const disableCompression = this.mc.config.getBoolean(
@@ -1840,14 +1847,11 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	private parseOpContent(serializedContent?: string): {
-		type: ContainerMessageType;
-		contents: unknown;
-	} {
+	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const parsed = JSON.parse(serializedContent);
-		assert(parsed.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
+		const { type, contents } = JSON.parse(serializedContent);
+		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
+		return { type, contents };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
@@ -1990,6 +1994,12 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
+	/**
+	 * Direct the message to the correct subsystem for processing, and implement other side effects
+	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
+	 * @param local - Did this client send the op?
+	 * @param runtimeMessage - Does this appear like a current ContainerRuntimeMessage?  If true, certain validation will occur.
+	 */
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -2049,7 +2059,7 @@ export class ContainerRuntime
 								local,
 								type: message.type,
 								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 								compression: message.compression,
 							},
 						);
@@ -2297,7 +2307,7 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+	private isContainerMessageDirtyable({ type, contents }: ContainerRuntimeMessage) {
 		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
 		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
 		if (type === ContainerMessageType.Attach) {
@@ -2994,7 +3004,10 @@ export class ContainerRuntime
 			address: id,
 			contents,
 		};
-		this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+		this.submit(
+			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
+			localOpMetadata,
+		);
 	}
 
 	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
@@ -3003,7 +3016,7 @@ export class ContainerRuntime
 			throw new UsageError("malformedDataStoreAliasMessage");
 		}
 
-		this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
+		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
 	}
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -3046,8 +3059,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		type: ContainerMessageType,
-		contents: any,
+		containerRuntimeMessage: ContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
 	): void {
@@ -3060,7 +3072,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const serializedContent = JSON.stringify({ type, contents });
+		const serializedContent = JSON.stringify(containerRuntimeMessage);
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
@@ -3071,6 +3083,7 @@ export class ContainerRuntime
 			});
 		}
 
+		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
 			type,
@@ -3112,6 +3125,9 @@ export class ContainerRuntime
 				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
+			} else if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
 				this.outbox.submit(message);
 			}
@@ -3126,7 +3142,7 @@ export class ContainerRuntime
 			throw error;
 		}
 
-		if (this.isContainerMessageDirtyable(type, contents)) {
+		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
 			this.updateDocumentDirtyState(true);
 		}
 	}
@@ -3239,38 +3255,38 @@ export class ContainerRuntime
 
 	private reSubmit(message: IPendingBatchMessage) {
 		// Need to parse from string for back-compat
-		const { contents, type } = this.parseOpContent(message.content);
-		this.reSubmitCore(type, contents, message.localOpMetadata, message.opMetadata);
+		const containerRuntimeMessage = this.parseOpContent(message.content);
+		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
-	 * @param content - The content of the original message.
+	 * @param message - The original ContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmitCore(
-		type: ContainerMessageType,
-		content: any,
+		message: ContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		switch (type) {
+		const contents = message.contents;
+		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
+				this.dataStores.resubmitDataStoreOp(contents, localOpMetadata);
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Remove the stashedState from the op if it's a stashed op
-				if (content.stashedState !== undefined) {
-					delete content.stashedState;
+				if (contents.stashedState !== undefined) {
+					delete contents.stashedState;
 				}
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				throw new Error(`chunkedOp not expected here`);
@@ -3278,10 +3294,13 @@ export class ContainerRuntime
 				this.blobManager.reSubmit(opMetadata);
 				break;
 			case ContainerMessageType.Rejoin:
-				this.submit(type, content);
+				this.submit(message);
 				break;
 			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+				unreachableCase(
+					message.type,
+					`Unknown ContainerMessageType [type: ${message.type}]`,
+				);
 		}
 	}
 
@@ -3511,8 +3530,6 @@ export class ContainerRuntime
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
 		if (this.summaryStateUpdateMethod === "restart") {
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3522,14 +3539,13 @@ export class ContainerRuntime
 					versionId: versionId != null ? versionId : undefined,
 					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
-				error,
+				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
-			throw error;
 		}
 
 		return snapshotResults;

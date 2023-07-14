@@ -321,7 +321,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 ) {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = tree.blobsContents[id];
-	assert(blob !== undefined, "Blob must be present in blobsContents");
+	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");
 }

@@ -578,7 +578,7 @@ export class ComposeQueue<T> {
 			} else if (baseMark.type === "MoveIn") {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
-				assert(baseIntention !== undefined, "Base mark must have an intention");
+				assert(baseIntention !== undefined, 0x706 /* Base mark must have an intention */);
 				baseCellId = { revision: baseIntention, localId: baseMark.id };
 			} else {
 				assert(

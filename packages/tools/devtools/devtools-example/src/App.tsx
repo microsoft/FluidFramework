@@ -144,9 +144,9 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 
 	const builder = new SchemaBuilder("Devtools_Example_SharedTree");
 
-	const stringSchema = builder.primitive("string-property", ValueSchema.String);
-	const numberSchema = builder.primitive("number-property", ValueSchema.Number);
-	const booleanSchema = builder.primitive("boolean-property", ValueSchema.Boolean);
+	const stringSchema = builder.leaf("string-property", ValueSchema.String);
+	const numberSchema = builder.leaf("number-property", ValueSchema.Number);
+	const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
 
 	const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
 
