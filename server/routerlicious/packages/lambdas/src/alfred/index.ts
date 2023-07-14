@@ -727,8 +727,12 @@ export function configureWebSocketServices(
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
+			const baseLumberjackProperties = getLumberBaseProperties(
+				connectionMessage.id,
+				connectionMessage.tenantId,
+			);
 			connectMetric.setProperties({
-				...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,
 				[CommonProperties.connectionCount]: connectionsMap.size,
 				[CommonProperties.connectionClients]: JSON.stringify(
@@ -773,7 +777,13 @@ export function configureWebSocketServices(
 						);
 						// We have already received disconnect for this connection.
 						disconnectDocumentP
-							.catch(() => {})
+							.catch((error) => {
+								Lumberjack.error(
+									"Error encountered in disconnectDocumentP",
+									{ ...baseLumberjackProperties },
+									error,
+								);
+							})
 							.finally(() => {
 								// We might need to re-run disconnect handler after previous disconnect handler completes.
 								// DisconnectDocument internally handles the cases where we have already run disconnect for
@@ -796,6 +806,7 @@ export function configureWebSocketServices(
 									LumberEventName.DisconnectDocumentRetry,
 								);
 								disconnectRetryMetric.setProperties({
+									...baseLumberjackProperties,
 									[CommonProperties.connectionCount]: connectionsMap.size,
 									[CommonProperties.connectionClients]: JSON.stringify(
 										Array.from(connectionsMap.keys()),
@@ -804,15 +815,6 @@ export function configureWebSocketServices(
 										Array.from(roomMap.keys()),
 									),
 								});
-
-								if (roomMap.size >= 1) {
-									const rooms = Array.from(roomMap.values());
-									const documentId = rooms[0].documentId;
-									const tenantId = rooms[0].tenantId;
-									disconnectRetryMetric.setProperties({
-										...getLumberBaseProperties(documentId, tenantId),
-									});
-								}
 
 								disconnectDocument()
 									.then(() => {
