@@ -21,18 +21,42 @@ Next, to build the code, run `npm run build` from the root of the mono-repo, or 
 -   Note: Once you have run a build from the root, assuming no other changes outside of this package, you may run `npm run build` directly within this directory for a faster build.
     If you make changes to any of this package's local dependencies, you will need to run a build again from the root before building again from directly within this package.
 
-### Test
+### Testing
 
-To run the tests, first ensure you have followed the [build](#build) steps above.
-Next, run `npm run test` from a terminal within this directory.
+This package uses 2 flavors of testing:
 
-### Test Sandbox App
+1. [Component-level unit tests](#unit-tests)
+2. Visual regression "tests"
 
-This package has a simple testing app that sets up a Container with some simple data for testing the debug view, as well as some interactive controls for testing live editing / collaboration scenarios.
+To run all of the tests, run `npm run test` from a terminal within this directory.
+Note: you will need to have [built the code](#build) before running the unit tests.
 
-To run the app, navigate to the root of this package and run `npm run start:test-app`.
+#### Unit Tests
 
--   This will launch a local [Tinylicious](https://fluidframework.com/docs/testing/tinylicious/) service and serve the app at <http://localhost:8080/>.
+This package uses [jest](https://jestjs.io/) and [testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+to power its unit tests.
+The corresponding test modules can be found under `src/test`.
+
+To run only the unit tests, first ensure you have followed the [build](#build) steps above.
+Next, run `npm run test:jest` from a terminal within this directory.
+
+#### Visual Regression Tests
+
+In addition to our unit tests, we also utilize image-based visual regression tests to ensure our theming / styling are
+as expected.
+This is particularly important for ensuring we meet our visual accessibility requirements.
+
+The test modules for these tests are written using [Storybook "stories"](https://storybook.js.org/docs/react/writing-stories/introduction)
+and live under `src/test/screenshot-tests`.
+The corresponding screenshot assets live under `src/test/screenshot-tests/__screenshots__`.
+
+Note: these tests don't do any direct validation.
+Instead, if underlying component logic has changed, then any corresponding screenshot artifacts will be updated.
+It is up to the developer and code reviewers to verify if the changes are expected and acceptable.
+Our pipelines verify that building and testing does not generate uncommitted changes to git, so out-of-date screenshots
+should be caught in pull requests.
+
+To run only the visual regression tests, run `npm run test:screenshots` from a terminal within this directory.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
