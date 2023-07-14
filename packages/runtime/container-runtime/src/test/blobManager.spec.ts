@@ -123,10 +123,18 @@ class MockRuntime
 		this.ops.push({ metadata: { localId, blobId } });
 	}
 
-	public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-		const P = this.blobManager.createBlob(blob);
-		this.handlePs.push(P);
-		return P;
+	public async createBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		try {
+			const P = this.blobManager.createBlob(blob, signal);
+			this.handlePs.push(P);
+			return P;
+		} catch (error: any) {
+			console.log(error);
+			throw error;
+		}
 	}
 
 	public async getBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
@@ -257,7 +265,7 @@ const validateSummary = (runtime: MockRuntime) => {
 describe("BlobManager", () => {
 	const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
 	let runtime: MockRuntime;
-	let createBlob: (blob: ArrayBufferLike) => Promise<void>;
+	let createBlob: (blob: ArrayBufferLike, signal?: AbortSignal) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let mc: MonitoringContext;
 	let injectedSettings: Record<string, ConfigTypes> = {};
@@ -284,8 +292,8 @@ describe("BlobManager", () => {
 		};
 
 		// create blob and await the handle after the test
-		createBlob = async (blob: ArrayBufferLike) => {
-			const handleP = runtime.createBlob(blob);
+		createBlob = async (blob: ArrayBufferLike, signal?: AbortSignal) => {
+			const handleP = runtime.createBlob(blob, signal);
 			handlePs.push(handleP);
 			await waitForBlob(blob);
 		};
@@ -351,6 +359,20 @@ describe("BlobManager", () => {
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 3);
 		assert.strictEqual(summaryData.redirectTable.size, 3);
+	});
+
+	it("abort before upload", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const ac = new AbortController();
+		ac.abort("abort test");
+		try {
+			await createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+			await runtime.processAll();
+			assert.fail("Should not succeed");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "aborted before uploading");
+		}
 	});
 
 	it("detached snapshot", async () => {
