@@ -772,56 +772,61 @@ export function configureWebSocketServices(
 							`ConnectDocument completed after disconnect was handled.`,
 						);
 						// We have already received disconnect for this connection.
-						disconnectDocumentP.finally(() => {
-							// We might need to re-run disconnect handler after previous disconnect handler completes.
-							// DisconnectDocument internally handles the cases where we have already run disconnect for
-							// roomsMap and connectionsMap so that we don't duplicate disconnect efforts.
-							// The primary need for this retry is when we receive "disconnect" in the narrow window after
-							// "connect_document" but before "connectDocumentP" is defined.
-							const alreadyDisconnectedAllConnections: boolean =
-								connectionsMap.size === clientIdConnectionsDisconnected.size;
-							const alreadyDisconnectedAllClients: boolean =
-								roomMap.size === clientIdClientsDisconnected.size;
-							if (
-								alreadyDisconnectedAllConnections &&
-								alreadyDisconnectedAllClients
-							) {
-								// Don't retry disconnect if all connections and clients are already handled.
-								return;
-							}
+						disconnectDocumentP
+							.catch(() => {})
+							.finally(() => {
+								// We might need to re-run disconnect handler after previous disconnect handler completes.
+								// DisconnectDocument internally handles the cases where we have already run disconnect for
+								// roomsMap and connectionsMap so that we don't duplicate disconnect efforts.
+								// The primary need for this retry is when we receive "disconnect" in the narrow window after
+								// "connect_document" but before "connectDocumentP" is defined.
+								const alreadyDisconnectedAllConnections: boolean =
+									connectionsMap.size === clientIdConnectionsDisconnected.size;
+								const alreadyDisconnectedAllClients: boolean =
+									roomMap.size === clientIdClientsDisconnected.size;
+								if (
+									alreadyDisconnectedAllConnections &&
+									alreadyDisconnectedAllClients
+								) {
+									// Don't retry disconnect if all connections and clients are already handled.
+									return;
+								}
 
-							const disconnectRetryMetric = Lumberjack.newLumberMetric(
-								LumberEventName.DisconnectDocumentRetry,
-							);
-							disconnectRetryMetric.setProperties({
-								[CommonProperties.connectionCount]: connectionsMap.size,
-								[CommonProperties.connectionClients]: JSON.stringify(
-									Array.from(connectionsMap.keys()),
-								),
-								[CommonProperties.roomClients]: JSON.stringify(
-									Array.from(roomMap.keys()),
-								),
-							});
-
-							if (roomMap.size >= 1) {
-								const rooms = Array.from(roomMap.values());
-								const documentId = rooms[0].documentId;
-								const tenantId = rooms[0].tenantId;
+								const disconnectRetryMetric = Lumberjack.newLumberMetric(
+									LumberEventName.DisconnectDocumentRetry,
+								);
 								disconnectRetryMetric.setProperties({
-									...getLumberBaseProperties(documentId, tenantId),
+									[CommonProperties.connectionCount]: connectionsMap.size,
+									[CommonProperties.connectionClients]: JSON.stringify(
+										Array.from(connectionsMap.keys()),
+									),
+									[CommonProperties.roomClients]: JSON.stringify(
+										Array.from(roomMap.keys()),
+									),
 								});
-							}
 
-							disconnectDocument()
-								.then(() => {
-									disconnectRetryMetric.success(
-										`Successfully retried disconnect.`,
-									);
-								})
-								.catch((error) => {
-									disconnectRetryMetric.error(`Disconnect retry failed.`, error);
-								});
-						});
+								if (roomMap.size >= 1) {
+									const rooms = Array.from(roomMap.values());
+									const documentId = rooms[0].documentId;
+									const tenantId = rooms[0].tenantId;
+									disconnectRetryMetric.setProperties({
+										...getLumberBaseProperties(documentId, tenantId),
+									});
+								}
+
+								disconnectDocument()
+									.then(() => {
+										disconnectRetryMetric.success(
+											`Successfully retried disconnect.`,
+										);
+									})
+									.catch((error) => {
+										disconnectRetryMetric.error(
+											`Disconnect retry failed.`,
+											error,
+										);
+									});
+							});
 					}
 				});
 		});
