@@ -7,7 +7,7 @@ import path from "path";
 import { createSnapshot, verifyEqualPastSnapshot } from "./utils";
 import { generateTestTrees } from "./testTrees";
 
-const regenerateSnapshots = true;
+const regenerateSnapshots = false;
 
 const dirPathTail = "src/test/snapshots/files";
 const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
