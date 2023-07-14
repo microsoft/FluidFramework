@@ -142,6 +142,7 @@ interface PendingBlob {
 	minTTLInSeconds?: number;
 	attached?: boolean;
 	acked?: boolean;
+	abortSignal?: AbortSignal;
 }
 
 export interface IPendingBlobs {
@@ -468,9 +469,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			blob,
 			status: PendingBlobStatus.OnlinePendingUpload,
 			handleP: new Deferred(),
-			uploadP: this.uploadBlob(localId, blob, signal),
+			uploadP: this.uploadBlob(localId, blob),
 			attached: false,
 			acked: false,
+			abortSignal: signal,
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
@@ -479,7 +481,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				"abort",
 				() => {
 					if (!pendingEntry.handleP.isCompleted) {
-						this.deletePendingBlob(localId);
 						pendingEntry.handleP.reject(Error("aborted while uploading"));
 					}
 				},
@@ -493,7 +494,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async uploadBlob(
 		localId: string,
 		blob: ArrayBufferLike,
-		signal?: AbortSignal,
 	): Promise<ICreateBlobResponse | void> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -501,8 +501,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			async () => this.getStorage().createBlob(blob),
 			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
 		).then(
-			(response) => this.onUploadResolve(localId, response, signal),
-			async (err) => this.onUploadReject(localId, err, signal),
+			(response) => this.onUploadResolve(localId, response),
+			async (err) => this.onUploadReject(localId, err),
 		);
 	}
 
@@ -529,16 +529,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	private onUploadResolve(
-		localId: string,
-		response: ICreateBlobResponseWithTTL,
-		signal?: AbortSignal,
-	) {
-		if (signal?.aborted === true) {
-			return;
-		}
+	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
+		if (entry.abortSignal?.aborted === true) {
+			this.deletePendingBlob(localId);
+			return;
+		}
 		assert(
 			entry.status === PendingBlobStatus.OnlinePendingUpload ||
 				entry.status === PendingBlobStatus.OfflinePendingUpload,
@@ -587,12 +584,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return response;
 	}
 
-	private async onUploadReject(localId: string, error, signal?: AbortSignal) {
-		if (signal?.aborted === true) {
-			return;
-		}
+	private async onUploadReject(localId: string, error: any) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
+		if (entry.abortSignal?.aborted === true) {
+			this.deletePendingBlob(localId);
+			return;
+		}
 		if (!this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
