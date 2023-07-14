@@ -5,7 +5,7 @@
 
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
-import { ChangeAtomId, ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
+import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	Changeset,

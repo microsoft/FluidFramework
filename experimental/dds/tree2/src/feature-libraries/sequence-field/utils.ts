@@ -337,7 +337,7 @@ function areMergeableChangeAtoms(
 		return lhs === undefined && rhs === undefined;
 	}
 
-	return lhs.revision === rhs.revision && lhs.localId + lhsCount === rhs.localId;
+	return lhs.revision === rhs.revision && (lhs.localId as number) + lhsCount === rhs.localId;
 }
 
 /**
