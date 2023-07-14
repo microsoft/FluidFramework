@@ -174,6 +174,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ScheduleManager } from "./scheduleManager";
 import {
 	BatchMessage,
+	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
@@ -583,6 +584,30 @@ export function getDeviceSpec() {
 }
 
 /**
+ * Older loader doesn't have a submitBatchFn member, this is the older way of submitting a batch.
+ * Rather than exposing the submitFn (now deprecated) and IDeltaManager (dangerous to hand out) to the Outbox,
+ * we can provide a partially-applied function to keep those items private to the ContainerRuntime.
+ */
+export const makeLegacySendBatchFn =
+	(
+		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
+	) =>
+	(batch: IBatch) => {
+		for (const message of batch.content) {
+			submitFn(
+				MessageType.Operation,
+				// For back-compat (submitFn only works on deserialized content)
+				message.contents === undefined ? undefined : JSON.parse(message.contents),
+				true, // batch
+				message.metadata,
+			);
+		}
+
+		deltaManager.flush();
+	};
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
@@ -837,10 +862,12 @@ export class ContainerRuntime
 		batch: boolean,
 		appData?: any,
 	) => number;
-	private readonly submitBatchFn: (
-		batch: IBatchMessage[],
-		referenceSequenceNumber?: number,
-	) => number;
+	/**
+	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
+	 */
+	private readonly submitBatchFn:
+		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
+		| undefined;
 	private readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
@@ -1404,12 +1431,14 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
+
+		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
+
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			submitFn: this.submitFn,
 			submitBatchFn: this.submitBatchFn,
-			deltaManager: this.innerDeltaManager,
+			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {

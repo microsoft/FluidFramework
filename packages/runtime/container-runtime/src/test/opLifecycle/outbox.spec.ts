@@ -30,6 +30,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ICompressionRuntimeOptions,
+	makeLegacySendBatchFn,
 } from "../../containerRuntime";
 
 describe("Outbox", () => {
@@ -188,12 +189,13 @@ describe("Outbox", () => {
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
+		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, deltaManager);
+
 		return new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			submitFn,
 			submitBatchFn,
-			deltaManager,
+			legacySendBatchFn,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,

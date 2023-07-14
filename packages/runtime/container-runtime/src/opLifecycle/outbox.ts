@@ -10,13 +10,8 @@ import {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import {
-	IBatchMessage,
-	ICriticalContainerError,
-	IDeltaManager,
-} from "@fluidframework/container-definitions";
+import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
@@ -41,9 +36,10 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
-	readonly deltaManager: IDeltaManager<unknown, unknown>;
+	readonly submitBatchFn:
+		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
+		| undefined;
+	readonly legacySendBatchFn: (batch: IBatch) => void;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -395,17 +391,7 @@ export class Outbox {
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
-			for (const message of batch.content) {
-				this.params.submitFn(
-					MessageType.Operation,
-					// For back-compat (submitFn only works on deserialized content)
-					message.contents === undefined ? undefined : JSON.parse(message.contents),
-					true, // batch
-					message.metadata,
-				);
-			}
-
-			this.params.deltaManager.flush();
+			this.params.legacySendBatchFn(batch);
 		} else {
 			assert(
 				batch.referenceSequenceNumber !== undefined,
