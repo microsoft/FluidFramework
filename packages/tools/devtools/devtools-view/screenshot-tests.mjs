@@ -5,6 +5,7 @@
 
 import reactPlugin from "@previewjs/plugin-react";
 import { generateScreenshots } from "@previewjs/screenshot";
+import chalk from "chalk";
 import { chromium } from "playwright";
 
 async function runScreenshotTests() {
@@ -21,14 +22,20 @@ async function runScreenshotTests() {
 		onScreenshotGenerated({ filePath, name }) {
 			console.log(`${filePath} 📸 ${name}`);
 		},
-		onError: (error, options) => {
-			console.error(error);
-			return false;
-		},
 	});
 	await browser.close();
 }
 
-runScreenshotTests().then(() => {
-	console.log("Screenshots generated successfully!");
-}, console.error);
+runScreenshotTests().then(
+	() => {
+		console.log(chalk.green("SUCCESS: Story screenshots generated!"));
+		process.exit(0);
+	},
+	(error) => {
+		console.error(
+			chalk.red("FAILURE: Story screenshot generation failed due to an error: "),
+			error,
+		);
+		process.exit(1);
+	},
+);

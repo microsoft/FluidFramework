@@ -11208,6 +11208,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/recharts': ^1.8.24
       '@types/testing-library__jest-dom': ^5.14.5
+      chalk: ^2.4.2
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -11267,6 +11268,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/recharts': 1.8.24
       '@types/testing-library__jest-dom': 5.14.5
+      chalk: 2.4.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -12508,7 +12510,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.22.5
-      chalk: 2.4.1
+      chalk: 2.4.2
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -14715,7 +14717,7 @@ packages:
       '@types/is-ci': 3.0.0
       '@types/semver': 6.2.3
       ansi-colors: 4.1.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       enquirer: 2.3.6
       external-editor: 3.1.0
       fs-extra: 7.0.1
@@ -14755,7 +14757,7 @@ packages:
     dependencies:
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       fs-extra: 7.0.1
       semver: 5.7.1
     dev: true
@@ -14791,7 +14793,7 @@ packages:
   /@changesets/logger/0.0.5:
     resolution: {integrity: sha512-gJyZHomu8nASHpaANzc6bkQMO9gU/ib20lqew1rVx753FOxffnCrJlGIeQVxNWCqM+o6OOleCo/ivL8UAO5iFw==}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
     dev: true
 
   /@changesets/parse/0.3.16:
@@ -14819,7 +14821,7 @@ packages:
       '@changesets/logger': 0.0.5
       '@changesets/parse': 0.3.16
       '@changesets/types': 5.2.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       fs-extra: 7.0.1
       p-filter: 2.1.0
     dev: true
@@ -26446,7 +26448,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -27613,7 +27615,7 @@ packages:
     engines: {node: '>= 4.0'}
     dependencies:
       '@types/q': 1.5.5
-      chalk: 2.4.1
+      chalk: 2.4.2
       q: 1.5.1
     dev: true
 
@@ -28651,7 +28653,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.2.0
       async-retry: 1.2.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -28697,7 +28699,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.2.4
       async-retry: 1.2.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -31430,7 +31432,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.22.5
-      chalk: 2.4.1
+      chalk: 2.4.2
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -33311,7 +33313,7 @@ packages:
     resolution: {integrity: sha512-h+xtnyk4EwKvFWHrUYsWErEVR+igKtLdchu+o0Z1RL7VU/jVMFbYir2bp6bAj8efFNxWqHX0dIss6fJQ+/+qeQ==}
     dependencies:
       ansi-escapes: 3.2.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       cli-width: 2.2.1
       external-editor: 2.2.0
@@ -34750,7 +34752,7 @@ packages:
     dependencies:
       '@jest/types': 24.9.0
       camelcase: 5.3.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       jest-get-type: 24.9.0
       leven: 3.1.0
       pretty-format: 24.9.0
@@ -35704,7 +35706,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -37006,7 +37008,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -39198,7 +39200,7 @@ packages:
     resolution: {integrity: sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==}
     engines: {node: '>=4.0.0'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       source-map: 0.6.1
       supports-color: 5.5.0
 
@@ -44256,7 +44258,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       boxen: 1.3.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       configstore: 3.1.5
       import-lazy: 2.1.0
       is-ci: 1.2.1
