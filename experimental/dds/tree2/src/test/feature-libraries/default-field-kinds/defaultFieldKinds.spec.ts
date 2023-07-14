@@ -29,6 +29,7 @@ import {
 } from "../../../core";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
 import {
+	EncodingTestData,
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
@@ -335,10 +336,12 @@ describe("Value field changesets", () => {
 		assertMarkListEqual(actual, expected);
 	});
 
-	const encodingTestData: [string, OptionalChangeset][] = [
-		["with child change", change1WithChildChange],
-		["with repair data", revertChange2.change],
-	];
+	const encodingTestData: EncodingTestData<OptionalChangeset, unknown> = {
+		successes: [
+			["with child change", change1WithChildChange],
+			["with repair data", revertChange2.change],
+		],
+	};
 
 	makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
 });

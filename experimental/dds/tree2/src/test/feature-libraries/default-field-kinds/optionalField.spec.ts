@@ -32,6 +32,7 @@ import {
 } from "../../../core";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
 import {
+	EncodingTestData,
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
@@ -483,10 +484,12 @@ describe("Optional field changesets", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, OptionalChangeset][] = [
-			["change", change1.change],
-			["with repair data", revertChange2.change],
-		];
+		const encodingTestData: EncodingTestData<OptionalChangeset, unknown> = {
+			successes: [
+				["change", change1.change],
+				["with repair data", revertChange2.change],
+			],
+		};
 
 		makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
 	});
