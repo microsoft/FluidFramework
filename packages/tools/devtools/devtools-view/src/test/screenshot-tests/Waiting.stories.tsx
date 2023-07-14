@@ -6,14 +6,14 @@
 import React from "react";
 
 import { Waiting } from "../../components/Waiting";
-import { ThemeDecorators } from "./ScreenshotTestUtilities";
+import { ThemesDecorator } from "./ScreenshotTestUtilities";
 
 export default {
 	title: "Waiting",
 	component: Waiting,
 	decorators: [
 		(story: () => React.ReactElement): React.ReactElement => (
-			<ThemeDecorators>{story()}</ThemeDecorators>
+			<ThemesDecorator>{story()}</ThemesDecorator>
 		),
 	],
 };

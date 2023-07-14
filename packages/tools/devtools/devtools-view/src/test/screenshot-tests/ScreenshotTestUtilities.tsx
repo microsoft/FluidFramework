@@ -14,10 +14,10 @@ import { LoggerContext } from "../../TelemetryUtils";
 import { ThemeInfo, darkTheme, highContrastTheme, lightTheme } from "../../ThemeHelper";
 
 /**
- * {@link ContextDecorators} input props.
+ * {@link ContextsDecorator} input props.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-type ContextDecoratorsProps = React.PropsWithChildren<{}>;
+type ContextsDecoratorProps = React.PropsWithChildren<{}>;
 
 /**
  * Wraps the input children in the contexts required by Devtools view components.
@@ -26,7 +26,7 @@ type ContextDecoratorsProps = React.PropsWithChildren<{}>;
  *
  * 2. {@link LoggerContext}
  */
-function ContextDecorators(props: ContextDecoratorsProps): React.ReactElement {
+function ContextsDecorator(props: ContextsDecoratorProps): React.ReactElement {
 	const { children } = props;
 
 	// TODO: extract relay and logger into constants
@@ -42,9 +42,9 @@ function ContextDecorators(props: ContextDecoratorsProps): React.ReactElement {
 const allThemes: ThemeInfo[] = [lightTheme, darkTheme, highContrastTheme];
 
 /**
- * {@link ThemeDecorators} input props.
+ * {@link ThemesDecorator} input props.
  */
-export type ThemeDecoratorsProps = React.PropsWithChildren<{
+export type ThemesDecoratorProps = React.PropsWithChildren<{
 	/**
 	 * The themes in which the child tree should be rendered.
 	 *
@@ -54,18 +54,18 @@ export type ThemeDecoratorsProps = React.PropsWithChildren<{
 }>;
 
 /**
- * TODO
+ * Renders the provided children in each of the specified theme contexts, each in its own div.
  */
-export function ThemeDecorators(props: ThemeDecoratorsProps): React.ReactElement {
+export function ThemesDecorator(props: ThemesDecoratorProps): React.ReactElement {
 	const { children, themes = allThemes } = props;
 
 	return (
-		<ContextDecorators>
+		<ContextsDecorator>
 			{themes.map(({ name: themeName, theme }) => (
 				<FluentProvider key={themeName} theme={theme}>
 					{children}
 				</FluentProvider>
 			))}
-		</ContextDecorators>
+		</ContextsDecorator>
 	);
 }
