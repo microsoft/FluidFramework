@@ -136,7 +136,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
+			options: { cache: true },
+		});
 		container = await createAndAttachContainer(
 			provider.defaultCodeDetails,
 			loader,
@@ -246,7 +248,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
 		// load the containers paused
-		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
+		const headers: IRequestHeader = {
+			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+			[LoaderHeader.cache]: true,
+		};
 		const container1 = await loader.resolve({ url, headers });
 		const container2 = await loader.resolve({ url, headers });
 
