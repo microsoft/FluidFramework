@@ -8,13 +8,22 @@ import { createChromelessWorkspace } from "@previewjs/chromeless";
 import reactPlugin from "@previewjs/plugin-react";
 import chalk from "chalk";
 import { globby } from "globby";
+import * as path from "path";
 import { chromium } from "playwright";
 
 // The below implementation is derived from @previewjs/screenshot, but updated to allow parametric testing
 // of test "stories" in different theme contexts.
 // https://github.com/fwouts/previewjs/blob/main/screenshot/src/index.ts
 
-const storyFilePathPattern = "src/test/screenshot-tests/**/*.stories.tsx";
+/**
+ * Pattern used to discover test "story" modules for screenshot tests.
+ */
+const storyFilePathPattern = "src/test/screenshot-tests/*.stories.tsx";
+
+/**
+ * Output directory, relative to the test "story", under which the generated screenshots will be saved.
+ */
+const outputDirectoryPath = "src/test/screenshot-tests/__screenshots__";
 
 /**
  * The supported themes in which each test "story" will be rendered.
@@ -49,12 +58,14 @@ async function generateScreenshots() {
 			component.componentId,
 		);
 
-		const storyModuleName = storyFilePath.match(/(.*?)\.stories\.tsx/)[1];
+		const storyFileName = path.basename(storyFilePath);
+
+		const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)[1];
 
 		// Generate a separate screenshot for each of our supported themes
 		for (const theme of themes) {
 			const testName = `${storyModuleName}-${storyName} (${theme})`;
-			const screenshotFilePath = `${testName}.png`;
+			const screenshotFilePath = path.join(outputDirectoryPath, `${testName}.png`);
 
 			const page = await browser.newPage({
 				colorScheme: colorSchemeFromTheme(theme), // Dark mode vs light mode setting
