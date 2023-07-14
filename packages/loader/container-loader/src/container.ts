@@ -1564,8 +1564,7 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
 		const codeDetails = this.getCodeDetailsFromQuorum();
-		await this.instantiateContext(
-			true, // existing
+		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
 			pendingLocalState?.pendingRuntimeState,
@@ -1653,7 +1652,7 @@ export class Container
 		};
 	}
 
-	private async createDetached(source: IFluidCodeDetails) {
+	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
 			term: OnlyValidTermValue,
@@ -1663,7 +1662,7 @@ export class Container
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Need to just seed the source data in the code quorum. Quorum itself is empty
-		const qValues = initQuorumValuesFromCodeDetails(source);
+		const qValues = initQuorumValuesFromCodeDetails(codeDetails);
 		this.initializeProtocolState(
 			attributes,
 			{
@@ -1673,10 +1672,7 @@ export class Container
 			}, // IQuorumSnapShot
 		);
 
-		// The load context - given we seeded the quorum - will be great
-		await this.instantiateContextDetached(
-			false, // existing
-		);
+		await this.instantiateRuntime(codeDetails, undefined);
 
 		this.setLoaded();
 	}
@@ -1713,10 +1709,7 @@ export class Container
 			}, // IQuorumSnapShot
 		);
 
-		await this.instantiateContextDetached(
-			true, // existing
-			snapshotTree,
-		);
+		await this.instantiateRuntime(codeDetails, snapshotTree);
 
 		this.setLoaded();
 	}
@@ -2263,17 +2256,7 @@ export class Container
 		return { snapshot, versionId: version?.id };
 	}
 
-	private async instantiateContextDetached(existing: boolean, snapshot?: ISnapshotTree) {
-		const codeDetails = this.getCodeDetailsFromQuorum();
-		if (codeDetails === undefined) {
-			throw new Error("pkg should be provided in create flow!!");
-		}
-
-		await this.instantiateContext(existing, codeDetails, snapshot);
-	}
-
-	private async instantiateContext(
-		existing: boolean,
+	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
 		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
@@ -2309,6 +2292,8 @@ export class Container
 		const getSpecifiedCodeDetails = () =>
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
+
+		const existing = snapshot !== undefined;
 
 		const context = new ContainerContext(
 			this.options,
@@ -2354,8 +2339,6 @@ export class Container
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
-
-		this.emit("contextChanged", codeDetails);
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean) => {
