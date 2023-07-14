@@ -28,6 +28,7 @@ import {
 	UpPath,
 	mintRevisionTag,
 	tagRollbackInverse,
+	assertIsRevisionTag,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -145,6 +146,21 @@ const nodeChange3: NodeChangeset = {
 	]),
 };
 
+const nodeChange4: NodeChangeset = {
+	fieldChanges: new Map([
+		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+	]),
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
+const nodeChangeWithoutFieldChanges: NodeChangeset = {
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
 const rootChange1a: ModularChangeset = {
 	fieldChanges: new Map([
 		[
@@ -244,6 +260,36 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
+			},
+		],
+	]),
+};
+
+const dummyMaxId = 10;
+const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const rootChange4: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChange4),
+			},
+		],
+	]),
+};
+
+const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChangeWithoutFieldChanges),
 			},
 		],
 	]),
@@ -582,6 +628,8 @@ describe("ModularChangeFamily", () => {
 			successes: [
 				["without constrain", rootChange1a],
 				["with constrain", rootChange3],
+				["with node existence constraint", rootChange4],
+				["without node field changes", rootChangeWithoutNodeFieldChanges],
 			],
 		};
 
