@@ -4,94 +4,37 @@
  */
 
 import path from "path";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { TestTreeProviderLite, initializeTestTree } from "../utils";
-import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, UpPath } from "../../core";
-import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { singleTextCursor } from "../../feature-libraries";
 import { createSnapshot, verifyEqualPastSnapshot } from "./utils";
+import { generateTestTrees } from "./testTrees";
 
-const regenerateSnapshots = false;
+const regenerateSnapshots = true;
 
 const dirPathTail = "src/test/snapshots/files";
-const fieldKeyA: FieldKey = brand("FieldA");
-const fieldKeyB: FieldKey = brand("FieldB");
-const fieldKeyC: FieldKey = brand("FieldC");
+const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
 
-function generateTree(fields: FieldKey[], height: number, nodesPerField: number): ISharedTree {
-	const provider = new TestTreeProviderLite();
-	const tree = provider.trees[0];
-	initializeTestTree(tree);
-	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
-	provider.processMessages();
-	return tree;
-}
-
-function generateTreeRecursively(
-	tree: ISharedTreeView,
-	parent: UpPath | undefined,
-	fieldKeys: FieldKey[],
-	height: number,
-	nodesPerField: number,
-	currentValue: { value: number },
-): void {
-	if (height === 0) {
-		return;
-	}
-
-	for (const fieldKey of fieldKeys) {
-		const fieldUpPath = {
-			parent,
-			field: fieldKey,
-		};
-		const field = tree.editor.sequenceField(fieldUpPath);
-
-		for (let i = 0; i < nodesPerField; i++) {
-			const writeCursor = singleTextCursor({
-				type: brand("TestValue"),
-				value: currentValue.toString,
-			});
-			field.insert(i, writeCursor);
-
-			currentValue.value++;
-
-			generateTreeRecursively(
-				tree,
-				{ parent, parentField: fieldKey, parentIndex: i },
-				fieldKeys,
-				height - 1,
-				nodesPerField,
-				currentValue,
-			);
-		}
-	}
-}
-
-async function generateSummary(): Promise<ISummaryTreeWithStats> {
-	const tree = useDeterministicStableId(() =>
-		generateTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3),
-	);
-	return tree.summarize(true);
+function getFilepath(name: string): string {
+	return path.join(dirPath, `${name}.json`);
 }
 
 describe("Summary snapshot", () => {
-	let filePath: string;
-	before(() => {
-		const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
-		filePath = `${dirPath}/summary_snapshot.json`;
-	});
-
 	// Only run this test when you want to regenerate the snapshot.
 	if (regenerateSnapshots) {
-		it("regenerate", async () => {
-			const summary = await generateSummary();
-			await createSnapshot(filePath, summary);
-		});
-	} else {
-		it("is equal to previous one", async () => {
-			const summary = await generateSummary();
-			await verifyEqualPastSnapshot(filePath, summary);
+		it.only("regenerate", async () => {
+			await Promise.all(
+				generateTestTrees().map(async ({ name, tree }) => {
+					const { summary } = await tree.summarize(true);
+					await createSnapshot(getFilepath(name), summary);
+				}),
+			);
 		});
 	}
+
+	describe("matches the historical snapshot", () => {
+		for (const { name, tree } of generateTestTrees()) {
+			it(`for ${name}`, async () => {
+				const { summary } = await tree.summarize(true);
+				await verifyEqualPastSnapshot(getFilepath(name), summary);
+			});
+		}
+	});
 });
