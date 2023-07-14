@@ -122,6 +122,10 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		},
 	});
 
+	/**
+	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
+	 * the skipping or take actions accordingly if it is.
+	 */
 	itSkipsOnFailure(
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
