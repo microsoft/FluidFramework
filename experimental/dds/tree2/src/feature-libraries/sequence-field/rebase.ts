@@ -378,6 +378,10 @@ function rebaseMark<TNodeChange>(
 				: { revision: baseMarkIntention, localId: baseMark.id };
 
 		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);
+
+		if (baseMark.type !== "MoveOut" && baseMark.detachLineageOverride !== undefined) {
+			rebasedMark.lineage = baseMark.detachLineageOverride;
+		}
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
@@ -635,13 +639,7 @@ function amendRebaseI<TNodeChange>(
 		}
 	}
 
-	// We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
-	// A second pass through MarkListFactory will handle any remaining merges.
-	const factory2 = new MarkListFactory<TNodeChange>();
-	for (const mark of factory.list) {
-		factory2.push(mark);
-	}
-	return factory2.list;
+	return factory.list;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.

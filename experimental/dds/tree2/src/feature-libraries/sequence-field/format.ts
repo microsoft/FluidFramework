@@ -261,14 +261,24 @@ export const MoveIn = Type.Intersect([
 	}),
 ]);
 
+export interface InverseAttachFields {
+	detachIdOverride?: ChangeAtomId;
+	detachLineageOverride?: LineageEvent[];
+}
+
+export const InverseAttachFields = Type.Object({
+	detachIdOverride: Type.Optional(EncodedChangeAtomId),
+	detachLineageOverride: Type.Optional(Type.Array(LineageEvent)),
+});
+
 export interface Delete<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		CellTargetingMark,
+		InverseAttachFields {
 	type: "Delete";
 	count: NodeCount;
 	id: ChangesetLocalId;
-	detachIdOverride?: ChangeAtomId;
 }
 
 // Note: inconsistent naming here is to avoid shadowing Effects.Delete
@@ -277,6 +287,7 @@ export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 		HasRevisionTag,
 		HasChanges(tNodeChange),
 		CellTargetingMark,
+		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("Delete"),
 			id: ChangesetLocalIdSchema,
@@ -352,10 +363,10 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		CellTargetingMark,
+		InverseAttachFields {
 	type: "ReturnFrom";
 	count: NodeCount;
-	detachIdOverride?: ChangeAtomId;
 
 	/**
 	 * When true, the corresponding ReturnTo has a conflict.
@@ -369,6 +380,7 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 		HasMoveId,
 		HasChanges(tNodeChange),
 		CellTargetingMark,
+		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
 			count: NodeCount,

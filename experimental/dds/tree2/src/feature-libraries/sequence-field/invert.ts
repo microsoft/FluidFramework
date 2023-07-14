@@ -13,7 +13,7 @@ import {
 	IdAllocator,
 	NodeReviver,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut } from "./format";
+import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut, Revive, Delete, ReturnTo } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -115,21 +115,22 @@ function invertMark<TNodeChange>(
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			if (mark.detachEvent === undefined) {
-				const inverse = withNodeChange(
-					{
-						type: "Revive",
-						detachEvent: mark.detachIdOverride ?? {
-							revision: mark.revision ?? revision,
-							localId: mark.id,
-						},
-						content: reviver(revision, inputIndex, mark.count),
-						count: mark.count,
-						inverseOf: mark.revision ?? revision,
+				const revive: Revive<TNodeChange> = {
+					type: "Revive",
+					detachEvent: mark.detachIdOverride ?? {
+						revision: mark.revision ?? revision,
+						localId: mark.id,
 					},
-					invertNodeChange(mark.changes, inputIndex, invertChild),
-				);
+					content: reviver(revision, inputIndex, mark.count),
+					count: mark.count,
+					inverseOf: mark.revision ?? revision,
+				};
 
-				return [inverse];
+				if (mark.detachLineageOverride !== undefined) {
+					revive.lineage = mark.detachLineageOverride;
+				}
+
+				return [withNodeChange(revive, invertNodeChange(mark.changes, inputIndex, invertChild))];
 			}
 			// TODO: preserve modifications to the removed nodes.
 			return [];
@@ -140,14 +141,19 @@ function invertMark<TNodeChange>(
 					mark.detachEvent !== undefined,
 					"Active reattach should have a detach event",
 				);
-				const inverse = withNodeChange(
-					{
-						type: "Delete",
-						count: mark.count,
-						id: mark.detachEvent.localId,
-						detachIdOverride: mark.detachEvent,
-					},
-					invertNodeChange(mark.changes, inputIndex, invertChild),
+
+				const deleteMark: Delete<TNodeChange> = {
+					type: "Delete",
+					count: mark.count,
+					id: mark.detachEvent.localId,
+					detachIdOverride: mark.detachEvent,
+				};
+
+				if (mark.lineage !== undefined) {
+					deleteMark.detachLineageOverride = mark.lineage;
+				}
+
+				const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
 				return [inverse];
 			}
@@ -197,22 +203,27 @@ function invertMark<TNodeChange>(
 					true,
 				);
 			}
+			
 			const detachEvent =
-				mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
-					? mark.detachIdOverride
-					: {
-							revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-							localId: mark.id,
-					  };
+			mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
+				? mark.detachIdOverride
+				: {
+						revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+						localId: mark.id,
+				  };
 
-			return [
-				{
-					type: "ReturnTo",
-					id: mark.id,
-					count: mark.count,
-					detachEvent,
-				},
-			];
+			const returnTo: ReturnTo = {
+				type: "ReturnTo",
+				id: mark.id,
+				count: mark.count,
+				detachEvent,
+			}
+
+			if (mark.type === "ReturnFrom" && mark.detachLineageOverride !== undefined) {
+				returnTo.lineage = mark.detachLineageOverride;
+			}
+
+			return [returnTo];
 		}
 		case "MoveIn": {
 			if (mark.isSrcConflicted) {
@@ -246,6 +257,10 @@ function invertMark<TNodeChange>(
 				detachIdOverride: mark.detachEvent,
 				count: mark.count,
 			};
+
+			if (mark.lineage !== undefined) {
+				invertedMark.lineage = mark.lineage;
+			}
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}

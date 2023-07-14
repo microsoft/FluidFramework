@@ -18,6 +18,7 @@ import {
 	toDelta,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
+import { merge } from "../../objMerge";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -94,7 +95,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-							const tracker = new SF.DetachedNodeTracker();
 							const change1 = tagChange(makeChange1(offset1, maxOffset), tag7);
 							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
@@ -102,11 +102,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							}
 							const inv = tagRollbackInverse(invert(change2), tag6, tag5);
 							const r1 = rebaseTagged(change1, change2);
-							tracker.apply(change2);
 							const r2 = rebaseTagged(r1, inv);
-							tracker.apply(inv);
-							const change1Updated = tracker.update(change1);
-							checkDeltaEquality(r2.change, change1Updated.change);
+							assert.deepEqual(r2.change, change1.change);
 						}
 					}
 				});
@@ -165,7 +162,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-							const tracker = new SF.DetachedNodeTracker();
 							const change1 = tagChange(makeChange1(offset1, maxOffset), tag8);
 							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
@@ -177,14 +173,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 								change2.revision,
 							);
 							const r1 = rebaseTagged(change1, change2);
-							tracker.apply(change2);
 							const r2 = rebaseTagged(r1, inverse2);
-							tracker.apply(inverse2);
 							const r3 = rebaseTagged(r2, change2);
-							// We need to update r1 to ensure it refers to detached nodes by the detach
-							// that last affected them. This is for comparison only.
-							const r1Updated = tracker.update(r1);
-							assert.deepEqual(r3, r1Updated);
+							assert.deepEqual(r3, r1);
 						}
 					}
 				});
