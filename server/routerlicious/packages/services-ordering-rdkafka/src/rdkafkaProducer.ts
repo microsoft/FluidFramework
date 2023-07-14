@@ -13,7 +13,7 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { Deferred } from "@fluidframework/common-utils";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
@@ -307,6 +307,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Produce the boxcars to Kafka
 	 */
 	private sendBoxcar(boxcar: IPendingBoxcar): void {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(boxcar.documentId, boxcar.tenantId),
+		};
 		const boxcarMessage: IBoxcarMessage = {
 			contents: boxcar.messages,
 			documentId: boxcar.documentId,
@@ -366,7 +369,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						}).catch((error) => {
 							Lumberjack.error(
 								"Error encountered when handling producer error in sendBoxcar()",
-								undefined,
+								{ ...lumberjackProperties },
 								error,
 							);
 						});
@@ -400,7 +403,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			}).catch((error) => {
 				Lumberjack.error(
 					"Error encountered when handling producer error in sendBoxcar() catch block",
-					undefined,
+					{ ...lumberjackProperties },
 					error,
 				);
 			});
