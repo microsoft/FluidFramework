@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { FluentProvider } from "@fluentui/react-components";
+import React from "react";
 
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { MockMessageRelay } from "../MockMessageRelay";
 import { MessageRelayContext } from "../../MessageRelayContext";
 import { LoggerContext } from "../../TelemetryUtils";
-import { ThemeInfo, darkTheme, highContrastTheme, lightTheme } from "../../ThemeHelper";
+import { getFluentUIThemeToUse } from "../../ThemeHelper";
 
 /**
  * {@link ContextsDecorator} input props.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-type ContextsDecoratorProps = React.PropsWithChildren<{}>;
+export type ContextsDecoratorProps = React.PropsWithChildren<{}>;
 
 /**
  * Wraps the input children in the contexts required by Devtools view components.
@@ -25,47 +25,20 @@ type ContextsDecoratorProps = React.PropsWithChildren<{}>;
  * 1. {@link MessageRelayContext}
  *
  * 2. {@link LoggerContext}
+ *
+ * 3. The required FluentUI theming context
  */
-function ContextsDecorator(props: ContextsDecoratorProps): React.ReactElement {
+export function ContextsDecorator(props: ContextsDecoratorProps): React.ReactElement {
 	const { children } = props;
+
+	const themeInfo = getFluentUIThemeToUse();
 
 	// TODO: extract relay and logger into constants
 	return (
 		<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
 			<LoggerContext.Provider value={new TelemetryNullLogger()}>
-				{children}
+				<FluentProvider theme={themeInfo.theme}>{children}</FluentProvider>
 			</LoggerContext.Provider>
 		</MessageRelayContext.Provider>
-	);
-}
-
-const allThemes: ThemeInfo[] = [lightTheme, darkTheme, highContrastTheme];
-
-/**
- * {@link ThemesDecorator} input props.
- */
-export type ThemesDecoratorProps = React.PropsWithChildren<{
-	/**
-	 * The themes in which the child tree should be rendered.
-	 *
-	 * @defaultValue All supported themes.
-	 */
-	themes?: ThemeInfo[];
-}>;
-
-/**
- * Renders the provided children in each of the specified theme contexts, each in its own div.
- */
-export function ThemesDecorator(props: ThemesDecoratorProps): React.ReactElement {
-	const { children, themes = allThemes } = props;
-
-	return (
-		<ContextsDecorator>
-			{themes.map(({ name: themeName, theme }) => (
-				<FluentProvider key={themeName} theme={theme}>
-					{children}
-				</FluentProvider>
-			))}
-		</ContextsDecorator>
 	);
 }

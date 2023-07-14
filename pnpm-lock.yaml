@@ -11196,8 +11196,9 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
+      '@previewjs/api': ^13.0.0
+      '@previewjs/chromeless': ^7.0.3
       '@previewjs/plugin-react': ^11.0.0
-      '@previewjs/screenshot': ^0.2.3
       '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
@@ -11216,6 +11217,7 @@ importers:
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
+      globby: ^13.2.2
       jest: ^26.6.3
       jest-junit: ^10.0.0
       playwright: ^1.36.0
@@ -11256,8 +11258,9 @@ importers:
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@14.18.47
+      '@previewjs/api': 13.0.0
+      '@previewjs/chromeless': 7.0.3_@types+node@14.18.47
       '@previewjs/plugin-react': 11.0.0_fp7xzpaoapil7fmsy5rxmaxtey
-      '@previewjs/screenshot': 0.2.3_fp7xzpaoapil7fmsy5rxmaxtey
       '@testing-library/dom': 8.20.0
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
@@ -11276,6 +11279,7 @@ importers:
       eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
+      globby: 13.2.2
       jest: 26.6.3
       jest-junit: 10.0.0
       playwright: 1.36.0
@@ -21372,31 +21376,6 @@ packages:
     dependencies:
       '@previewjs/serializable-values': 7.0.2
       '@previewjs/type-analyzer': 8.0.2
-    dev: true
-
-  /@previewjs/screenshot/0.2.3_fp7xzpaoapil7fmsy5rxmaxtey:
-    resolution: {integrity: sha512-W20tC8/73P4l2spEod5imfCLSjq0rnrXzBxMNjaa4kxG24tx2yTgKeNsgINVYu/nwy6wuPhv092K3qpnma62BA==}
-    engines: {node: ^14.18.0 || >=16.0.0}
-    dependencies:
-      '@previewjs/api': 13.0.0
-      '@previewjs/chromeless': 7.0.3_@types+node@14.18.47
-      '@previewjs/core': 23.0.1_@types+node@14.18.47
-      '@previewjs/plugin-react': 11.0.0_fp7xzpaoapil7fmsy5rxmaxtey
-      globby: 13.2.2
-      playwright: 1.36.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - debug
-      - less
-      - lightningcss
-      - sass
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - vite
     dev: true
 
   /@previewjs/serializable-values/7.0.2:
