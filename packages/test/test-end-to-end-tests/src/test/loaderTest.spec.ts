@@ -347,7 +347,11 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
 		assert(url, "Container should return absolute url");
 
-		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
+		const headers = {
+			wait: false,
+			[RuntimeHeaders.viaHandle]: true,
+			[LoaderHeader.cache]: true,
+		};
 		// Request to the newly created data store with headers.
 		const response = await loader.request({ url, headers });
 
