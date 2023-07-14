@@ -8,7 +8,7 @@ import { isStableId } from "@fluidframework/container-runtime";
 import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
-import { FieldKinds, forbidden } from "../defaultFieldKinds";
+import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { EditableTree, getField } from "./editableTreeTypes";
 
@@ -30,7 +30,7 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 		schema.localFields.size === 0 &&
 		schema.globalFields.size === 0 &&
 		schema.extraGlobalFields === false &&
-		schema.extraLocalFields.kind.identifier === forbidden.identifier
+		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
 	);
 }
 

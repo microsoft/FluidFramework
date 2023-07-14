@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFieldSchema, ITreeSchema } from "../view";
+import { IFieldSchema, ITreeSchema } from "../modular-schema";
 import {
 	GlobalFieldKey,
 	GlobalFieldKeySymbol,
@@ -14,9 +14,9 @@ import {
 	TreeTypeSet,
 	ValueSchema,
 	symbolFromKey,
-} from "../../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../../util";
-import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
+} from "../../core";
+import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
+import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
@@ -164,6 +164,10 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
+/**
+ * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
+ * @alpha
+ */
 export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
 }
@@ -204,6 +208,10 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {
 		return undefined;

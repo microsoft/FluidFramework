@@ -4,11 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { GlobalFieldKey, TreeSchemaIdentifier } from "../../../core";
-import { SchemaCollection } from "../view";
-import { fail } from "../../../util";
-import { defaultSchemaPolicy } from "../../defaultSchema";
-import { forbidden, value } from "../../defaultFieldKinds";
+import { GlobalFieldKey, TreeSchemaIdentifier } from "../../core";
+import { SchemaCollection } from "../modular-schema";
+import { fail } from "../../util";
+import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
 import { SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
 import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
@@ -141,7 +140,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if (tree.extraLocalFields.kind === value) {
+			if (tree.extraLocalFields.kind === FieldKinds.value) {
 				errors.push(
 					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible local field keys to have a value under them.`,
 				);
@@ -206,7 +205,7 @@ export function validateField(
 				kind.identifier
 			}" which isn't a reference to the default kind with that identifier.`,
 		);
-	} else if (kind === forbidden) {
+	} else if (kind === FieldKinds.forbidden) {
 		errors.push(
 			`${describeField()} explicitly uses "forbidden" kind, which is not recommended.`,
 		);
