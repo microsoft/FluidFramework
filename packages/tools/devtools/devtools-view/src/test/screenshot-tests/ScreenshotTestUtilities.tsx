@@ -39,7 +39,7 @@ function ContextDecorators(props: ContextDecoratorsProps): React.ReactElement {
 	);
 }
 
-const themes: ThemeInfo[] = [lightTheme, darkTheme, highContrastTheme];
+const allThemes: ThemeInfo[] = [lightTheme, darkTheme, highContrastTheme];
 
 /**
  * {@link ThemeDecorators} input props.
@@ -57,7 +57,7 @@ export type ThemeDecoratorsProps = React.PropsWithChildren<{
  * TODO
  */
 export function ThemeDecorators(props: ThemeDecoratorsProps): React.ReactElement {
-	const { children } = props;
+	const { children, themes = allThemes } = props;
 
 	return (
 		<ContextDecorators>
