@@ -19,7 +19,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, itSkipsOnFailure } from "@fluid-internal/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
@@ -108,9 +108,10 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 		},
 	});
 
-	it("Can attribute content from multiple collaborators", async function () {
-		// Skip the test if the error happens on tinylicious or t9s driver
-		try {
+	itSkipsOnFailure(
+		"Can attribute content from multiple collaborators",
+		["tinylicious", "t9s"],
+		async () => {
 			const attributor = createRuntimeAttributor();
 			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 			const sharedCell1 = await sharedCellFromContainer(container1);
@@ -139,12 +140,8 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 			assertAttributionMatches(sharedCell1, attributor, {
 				user: container2.audience.getMember(container1.clientId)?.user,
 			});
-		} catch (error) {
-			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
-				this.skip();
-			}
-		}
-	});
+		},
+	);
 
 	it("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
