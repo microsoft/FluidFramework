@@ -14,7 +14,11 @@ import {
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
+import {
+	EncodingTestData,
+	fakeTaggedRepair as fakeRepair,
+	makeEncodingTestSuite,
+} from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
@@ -403,21 +407,23 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, GenericChangeset][] = [
-			[
-				"Misc",
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown> = {
+			successes: [
 				[
-					{
-						index: 0,
-						nodeChange: nodeChange0To1,
-					},
-					{
-						index: 2,
-						nodeChange: nodeChange1To2,
-					},
+					"Misc",
+					[
+						{
+							index: 0,
+							nodeChange: nodeChange0To1,
+						},
+						{
+							index: 2,
+							nodeChange: nodeChange1To2,
+						},
+					],
 				],
 			],
-		];
+		};
 
 		const throwCodec: IJsonCodec<any> = {
 			encode: unexpectedDelegate,

@@ -43,8 +43,7 @@ export class NodeCodeLoader {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return entry;
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			Promise.reject(new Error("Invalid Package"));
+			throw new Error("Invalid Package");
 		}
 	}
 

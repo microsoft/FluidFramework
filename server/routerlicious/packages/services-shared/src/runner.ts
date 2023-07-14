@@ -105,15 +105,15 @@ export function runService<T extends IResources>(
 	const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
 	const runningP = run(config, resourceFactory, runnerFactory, logger);
 
-	runningP.then(
-		async () => {
+	runningP
+		.then(async () => {
 			await executeAndWait(() => {
 				logger?.info("Exiting");
 				runnerMetric.success(`${group} exiting.`);
 			}, waitInMs);
 			process.exit(0);
-		},
-		async (error) => {
+		})
+		.catch(async (error) => {
 			if (error.uncaughtException) {
 				runnerMetric.setProperty(CommonProperties.restartReason, "uncaughtException");
 			}
@@ -127,8 +127,7 @@ export function runService<T extends IResources>(
 			} else {
 				process.exit(1);
 			}
-		},
-	);
+		});
 }
 
 /*
