@@ -8,14 +8,13 @@ import {
 	Adapters,
 	FieldAdapter,
 	GlobalFieldKey,
-	PrimitiveValueSchema,
 	rootFieldKey,
 	TreeAdapter,
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../core";
 import { Sourced, SchemaCollection } from "../modular-schema";
-import { brand, requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
+import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
 import {
@@ -64,7 +63,6 @@ export type RecursiveTreeSchemaSpecification = unknown;
 export class SchemaBuilder {
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly globalFieldSchema: Map<GlobalFieldKey, GlobalFieldSchema> = new Map();
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 
@@ -98,33 +96,6 @@ export class SchemaBuilder {
 	private addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
 		assert(!this.treeSchema.has(schema.name), 0x6ab /* Conflicting TreeSchema names */);
 		this.treeSchema.set(schema.name, schema as TreeSchema);
-	}
-
-	/**
-	 * Define (and add to this library) a schema for an object.
-	 *
-	 * The name must be unique among all object schema in the the document schema.
-	 */
-	public object<Name extends string, T extends TreeSchemaSpecification>(
-		name: Name,
-		t: T,
-	): TreeSchema<Name, T> {
-		const schema = new TreeSchema(this, name, t);
-		this.addNodeSchema(schema);
-		return schema;
-	}
-
-	/**
-	 * Same as `object` but with less type safety and works for recursive objects.
-	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
-	 *
-	 * See note on RecursiveTreeSchema for details.
-	 */
-	public objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(
-		name: Name,
-		t: T,
-	): TreeSchema<Name, T> {
-		return this.object(name, t as TreeSchemaSpecification) as TreeSchema<Name, T>;
 	}
 
 	/**
@@ -268,20 +239,6 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Define (and add to this library) a schema for an object that just wraps a primitive value.
-	 * Such objects will be implicitly unwrapped to the value in some APIs.
-	 *
-	 * This is just a shorthand for a common case of `object`. See {@link SchemaBuilder.object} for details.
-	 */
-	public primitive<Name extends string, T extends PrimitiveValueSchema>(
-		name: Name,
-		t: T,
-	): TreeSchema<Name, { value: T }> {
-		// TODO: add "primitive" metadata to schema, and set it here.
-		return this.object(name, { value: t });
-	}
-
-	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
 	 * Such nodes will be implicitly unwrapped to the value in some APIs.
 	 *
@@ -304,31 +261,13 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Define (and add to this library) a schema for a global field.
-	 * Global fields can be included in the schema for multiple objects.
-	 *
-	 * The key must be unique among all object global fields in the the document schema.
-	 *
-	 * See {@link SchemaBuilder.field} for how to build the `field` parameter.
-	 */
-	public globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(
-		key: string,
-		field: FieldSchema<Kind, Types>,
-	): GlobalFieldSchema<Kind, Types> {
-		const schema = new GlobalFieldSchema(this, brand(key), field);
-		assert(!this.globalFieldSchema.has(schema.key), 0x6ac /* Conflicting global field keys */);
-		this.globalFieldSchema.set(schema.key, schema);
-		return schema;
-	}
-
-	/**
 	 * Define a schema for a field.
 	 *
 	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
-	 * @returns a field which can be used as a local field (see {@link SchemaBuilder.object}),
-	 * global fields (see {@link SchemaBuilder.globalField}) or the root field (see {@link SchemaBuilder.intoDocumentSchema}).
+	 * @returns a field which can be used as a struct field (see {@link SchemaBuilder.struct}),
+	 * a map field (see {@link SchemaBuilder.map}), or the root field (see {@link SchemaBuilder.intoDocumentSchema}).
 	 */
 	public static field<Kind extends FieldKindTypes, T extends AllowedTypes>(
 		kind: Kind,
@@ -408,7 +347,7 @@ export class SchemaBuilder {
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			globalFieldSchema: this.globalFieldSchema,
+			globalFieldSchema: new Map(),
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
