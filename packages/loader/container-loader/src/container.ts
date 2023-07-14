@@ -556,7 +556,6 @@ export class Container
 	private inboundQueuePausedFromInit = true;
 	private firstConnection = true;
 	private readonly connectionTransitionTimes: number[] = [];
-	private messageCountAfterDisconnection: number = 0;
 	private _loadedFromVersion: IVersion | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
@@ -2061,26 +2060,11 @@ export class Container
 		}
 		const state = this.connectionState === ConnectionState.Connected;
 
-		const logOpsOnReconnect: boolean =
-			this.connectionState === ConnectionState.Connected &&
-			!this.firstConnection &&
-			this.connectionMode === "write";
-		if (logOpsOnReconnect) {
-			this.messageCountAfterDisconnection = 0;
-		}
-
 		// Both protocol and context should not be undefined if we got so far.
 
 		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
-
-		if (logOpsOnReconnect) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "OpsSentOnReconnect",
-				count: this.messageCountAfterDisconnection,
-			});
-		}
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
@@ -2156,7 +2140,6 @@ export class Container
 			return -1;
 		}
 
-		this.messageCountAfterDisconnection += 1;
 		this.noopHeuristic?.notifyMessageSent();
 		return this._deltaManager.submit(
 			type,
