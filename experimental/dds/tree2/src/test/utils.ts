@@ -705,6 +705,18 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
+ *
+ * TODO:
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
 export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	family: ICodecFamily<TDecoded>,
