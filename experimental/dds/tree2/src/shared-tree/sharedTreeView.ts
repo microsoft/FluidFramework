@@ -520,7 +520,7 @@ export class SharedTreeView implements ISharedTreeView {
 	public merge(view: SharedTreeView, disposeView = true): void {
 		assert(
 			!this.transaction.inProgress() || disposeView,
-			"A view that is merged into an in-progress transaction must be disposed",
+			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();

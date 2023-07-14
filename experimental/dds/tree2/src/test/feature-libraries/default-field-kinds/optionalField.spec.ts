@@ -21,6 +21,7 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import {
+	EncodingTestData,
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,

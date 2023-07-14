@@ -45,6 +45,7 @@ import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
+import { IBlobMetadata } from "./metadata";
 
 /**
  * This class represents blob (long string)
@@ -628,8 +629,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
-		const localId = message.metadata?.localId;
-		const blobId = message.metadata?.blobId;
+		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
+		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
 		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be

@@ -164,6 +164,10 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
+/**
+ * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
+ * @alpha
+ */
 export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
 }
@@ -204,6 +208,10 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {
 		return undefined;

@@ -19,7 +19,11 @@ import {
 	LocalFieldKey,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
+import {
+	convertPropertyToSharedTreeSchema as convertSchema,
+	nodePropertyField,
+	nodePropertySchema,
+} from "../schemaConverter";
 import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
 
 describe("schema converter", () => {
@@ -50,19 +54,17 @@ describe("schema converter", () => {
 			});
 		});
 
-		it(`has built-in node types and collections`, () => {
-			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
-			["NodeProperty", "NamedNodeProperty", "NamedProperty", "RelationshipProperty"].forEach(
-				(typeName) => {
+		["NodeProperty", "NamedNodeProperty", "NamedProperty", "RelationshipProperty"].forEach(
+			(typeName) => {
+				it(`has built-in ${typeName} node type and collections`, () => {
+					const fullSchemaData = convertSchema(FieldKinds.optional, Any);
+
 					const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
 					assert(propertySchema !== undefined);
 					if (typeName === "NamedProperty") {
 						assert(propertySchema.extraLocalFields.types !== undefined);
 						assert.equal(propertySchema.extraLocalFields.types.size, 0);
-						assert.deepEqual(
-							propertySchema.extraLocalFields.kind,
-							FieldKinds.forbidden,
-						);
+						assert.equal(propertySchema.extraLocalFields.kind, FieldKinds.forbidden);
 						const idFieldSchema =
 							propertySchema.localFields.get(brand("guid")) ?? fail("expected field");
 						assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
@@ -71,11 +73,22 @@ describe("schema converter", () => {
 							["String"],
 						);
 					} else {
-						assert(propertySchema.extraLocalFields.types === undefined);
-						assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.optional);
 						if (typeName === "NodeProperty") {
+							assert(propertySchema.extraLocalFields.types === undefined);
+							assert.deepEqual(
+								propertySchema.extraLocalFields.kind,
+								FieldKinds.optional,
+							);
 							assert.deepEqual([...propertySchema.localFields], []);
 						} else {
+							assert.deepEqual(
+								propertySchema.localFields.get(brand(nodePropertyField))?.types,
+								new Set([nodePropertySchema.name]),
+							);
+							assert.equal(
+								propertySchema.extraLocalFields.kind,
+								FieldKinds.forbidden,
+							);
 							const idFieldSchema =
 								propertySchema.localFields.get(brand("guid")) ??
 								fail("expected field");
@@ -103,9 +116,9 @@ describe("schema converter", () => {
 					assert(
 						fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined,
 					);
-				},
-			);
-		});
+				});
+			},
+		);
 
 		it("can use any type as root", () => {
 			{
@@ -223,19 +236,26 @@ describe("schema converter", () => {
 			);
 			const nodeProperty = lookupTreeSchema(fullSchemaData, brand("NodeProperty"));
 			const testOptional = lookupTreeSchema(fullSchemaData, brand("Test:Optional-1.0.0"));
-			assert.deepEqual(testOptional?.extraLocalFields, nodeProperty?.extraLocalFields);
+
+			assert.equal(nodeProperty, nodePropertySchema);
+			assert.equal(testOptional?.extraLocalFields.kind, FieldKinds.forbidden);
+
 			const miscField = testOptional?.localFields.get(brand("misc"));
 			assert(miscField?.types !== undefined);
 			assert.deepEqual(
-				[...miscField.types],
-				[
-					"NodeProperty",
+				miscField.types,
+				new Set([
+					nodePropertySchema.name,
 					"NamedNodeProperty",
 					"RelationshipProperty",
 					"Test:Child-1.0.0",
 					"Test:Optional-1.0.0",
-				],
+				]),
 			);
+
+			const mapField = testOptional?.localFields.get(brand(nodePropertyField));
+			assert(mapField?.types !== undefined);
+			assert.deepEqual(mapField.types, new Set([nodePropertySchema.name]));
 		});
 
 		it(`can use "NodeProperty" as root`, () => {
@@ -255,12 +275,11 @@ describe("schema converter", () => {
 
 			// 60 types (all types, their arrays and maps)
 			assert.equal(fullSchemaData.treeSchema.size, 60);
-			const nodePropertySchema = lookupTreeSchema(fullSchemaData, brand("NodeProperty"));
-			assert.deepEqual(nodePropertySchema.extraLocalFields.kind, FieldKinds.optional);
-			assert.deepEqual([...nodePropertySchema.localFields], []);
-			assert.deepEqual([...nodePropertySchema.globalFields], []);
-			assert.equal(nodePropertySchema.extraGlobalFields, false);
-			assert.equal(nodePropertySchema.value, ValueSchema.Nothing);
+			const nodePropertySchemaLookedUp = lookupTreeSchema(
+				fullSchemaData,
+				brand("NodeProperty"),
+			);
+			assert.equal(nodePropertySchemaLookedUp, nodePropertySchema);
 		});
 
 		it("can convert property with array context", () => {

@@ -7,15 +7,15 @@ import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
 import { mintRevisionTag } from "../../../core";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
-import { makeEncodingTestSuite } from "../../utils";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 import { IJsonCodec } from "../../../codec";
 // eslint-disable-next-line import/no-internal-modules
 import { makeOptionalFieldCodecFamily } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeCodecs";
-import { changeSetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
-const nodeChange1 = changeSetForChild("nodeChange1");
+const nodeChange1 = changesetForChild("nodeChange1");
 
 const encodedChild = "encoded child";
 
@@ -60,11 +60,13 @@ const change1WithChildChange: OptionalChangeset = {
 
 describe("defaultFieldChangeCodecs", () => {
 	describe("OptionalChangeset", () => {
-		const encodingTestData: [string, OptionalChangeset][] = [
-			["change", change1],
-			["with child change", change1WithChildChange],
-			["with repair data", revertChange2],
-		];
+		const encodingTestData: EncodingTestData<OptionalChangeset, unknown> = {
+			successes: [
+				["change", change1],
+				["with child change", change1WithChildChange],
+				["with repair data", revertChange2],
+			],
+		};
 
 		makeEncodingTestSuite(makeOptionalFieldCodecFamily(childCodec1), encodingTestData);
 	});

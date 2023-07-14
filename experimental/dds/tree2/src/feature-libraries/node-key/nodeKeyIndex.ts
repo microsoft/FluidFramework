@@ -112,11 +112,11 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 			assert(field !== undefined, 0x6e2 /* Found node key that is not in schema */);
 			assert(
 				field.kind.identifier === FieldKinds.nodeKey.identifier,
-				"Found node key that is not in schema",
+				0x704 /* Found node key that is not in schema */,
 			);
 			assert(
 				oneFromSet(field.types) === nodeKeyTreeIdentifier,
-				"Found node key that is not in schema",
+				0x705 /* Found node key that is not in schema */,
 			);
 
 			yield [key, node];

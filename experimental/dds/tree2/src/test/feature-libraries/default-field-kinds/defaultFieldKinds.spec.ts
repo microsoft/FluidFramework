@@ -22,16 +22,16 @@ import { brand } from "../../../util";
 import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
-import { changeSetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.
  * This change has no actual meaning, and can be used in tests where the type of child change in not relevant.
  */
-const arbitraryChildChange = changeSetForChild("arbitraryChildChange");
+const arbitraryChildChange = changesetForChild("arbitraryChildChange");
 
-const nodeChange1 = changeSetForChild("nodeChange1");
-const nodeChange2 = changeSetForChild("nodeChange2");
+const nodeChange1 = changesetForChild("nodeChange1");
+const nodeChange2 = changesetForChild("nodeChange2");
 
 const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
 
