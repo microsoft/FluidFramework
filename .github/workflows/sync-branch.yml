@@ -52,5 +52,6 @@ jobs:
       
       - name: Run merge command
         env: 
-          TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
-        run: flub merge branches -p $TOKEN -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
+          GITHUB_PAT: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+        # PAT is loaded automatically from env variable
+        run: flub merge branches -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
