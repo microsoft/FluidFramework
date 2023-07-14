@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -406,6 +407,47 @@ export function spyOnMethod(
 	return () => {
 		prototype[methodName] = method;
 	};
+}
+
+/**
+ * @returns `true` iff the given delta has a visible impact on the document tree.
+ */
+export function isDeltaVisible(delta: Delta.MarkList): boolean {
+	for (const mark of delta) {
+		if (typeof mark === "object") {
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.Modify: {
+					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+						return true;
+					}
+					if (mark.fields !== undefined) {
+						for (const field of mark.fields.values()) {
+							if (isDeltaVisible(field)) {
+								return true;
+							}
+						}
+					}
+					break;
+				}
+				case Delta.MarkType.Insert: {
+					if (mark.isTransient !== true) {
+						return true;
+					}
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.Delete:
+					return true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			return false;
+		}
+	}
+	return false;
 }
 
 /**
