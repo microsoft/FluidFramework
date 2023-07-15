@@ -6,7 +6,7 @@
 import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	isFluidError,
 	loggerToMonitoringContext,
 	MonitoringContext,
@@ -171,8 +171,12 @@ export class RunningSummarizer implements IDisposable {
 		};
 
 		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(baseLogger, "Running", {
-				all: telemetryProps,
+			createChildLogger({
+				base: baseLogger,
+				namespace: "Running",
+				properties: {
+					all: telemetryProps,
+				},
 			}),
 		);
 
@@ -200,7 +204,7 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// Note: summarizeCount (from ChildLogger definition) may be 0,
+			// Note: summarizeCount (from createChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({

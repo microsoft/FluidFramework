@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
@@ -60,7 +60,10 @@ function createCompatSuite(
 							},
 						});
 					} catch (error) {
-						const logger = ChildLogger.create(getTestLogger?.(), "DescribeCompatSetup");
+						const logger = createChildLogger({
+							base: getTestLogger?.(),
+							namespace: "DescribeCompatSetup",
+						});
 						logger.sendErrorEvent(
 							{
 								eventName: "TestObjectProviderLoadFailed",

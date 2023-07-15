@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	EventEmitterWithErrorHandling,
 	loggerToMonitoringContext,
 	MonitoringContext,
@@ -107,12 +107,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
 
-		this.logger = ChildLogger.create(runtime.logger, undefined, {
-			all: {
-				sharedObjectId: uuid(),
-				ddsType: {
-					value: this.attributes.type,
-					tag: TelemetryDataTag.CodeArtifact,
+		this.logger = createChildLogger({
+			base: runtime.logger,
+			properties: {
+				all: {
+					sharedObjectId: uuid(),
+					ddsType: {
+						value: this.attributes.type,
+						tag: TelemetryDataTag.CodeArtifact,
+					},
 				},
 			},
 		});

@@ -13,12 +13,20 @@ import { debug as registerDebug, IDebugger } from "debug";
 import {
 	TelemetryLogger,
 	MultiSinkLogger,
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+export function createDebugLogger(props: {
+	namespace: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt {
+	return DebugLogger.create(props.namespace, props.properties);
+}
 /**
  * Implementation of debug logger
+ * @deprecated - use createDebugLogger instead.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**
@@ -72,7 +80,7 @@ export class DebugLogger extends TelemetryLogger {
 		multiSinkLogger.addLogger(
 			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
+		multiSinkLogger.addLogger(createChildLogger({ base: baseLogger, namespace }));
 
 		return multiSinkLogger;
 	}

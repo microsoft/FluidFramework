@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { compress } from "lz4js";
@@ -20,7 +20,7 @@ export class OpCompressor {
 	private readonly logger;
 
 	constructor(logger: ITelemetryLoggerExt) {
-		this.logger = ChildLogger.create(logger, "OpCompressor");
+		this.logger = createChildLogger({ base: logger, namespace: "OpCompressor" });
 	}
 
 	public compressBatch(batch: IBatch): IBatch {

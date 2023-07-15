@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import {
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
@@ -288,9 +288,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
-	ChildLogger.create(logger, "OdspDriver", {
-		all: {
-			driverVersion,
+	createChildLogger({
+		base: logger,
+		namespace: "OdspDriver",
+		properties: {
+			all: {
+				driverVersion,
+			},
 		},
 	});
 

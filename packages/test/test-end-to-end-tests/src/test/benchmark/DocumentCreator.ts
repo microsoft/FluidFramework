@@ -4,7 +4,7 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DocumentType,
 	BenchmarkType,
@@ -56,14 +56,17 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  * @param props - Properties for initializing the Document Creator.
  */
 export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
-	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
-		all: {
-			driverType: props.provider.driver.type,
-			driverEndpointName: props.provider.driver.endpointName,
-			benchmarkType: props.benchmarkType,
-			testDocument: props.testName,
-			testDocumentType: props.documentType,
-			details: JSON.stringify(props.documentTypeInfo),
+	const logger = createChildLogger({
+		base: getTestLogger?.(),
+		properties: {
+			all: {
+				driverType: props.provider.driver.type,
+				driverEndpointName: props.provider.driver.endpointName,
+				benchmarkType: props.benchmarkType,
+				testDocument: props.testName,
+				testDocumentType: props.documentType,
+				details: JSON.stringify(props.documentTypeInfo),
+			},
 		},
 	});
 	const documentProps: IDocumentProps = { ...props, logger };

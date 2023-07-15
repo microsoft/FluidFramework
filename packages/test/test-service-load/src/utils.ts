@@ -19,7 +19,7 @@ import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -57,8 +57,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		profile: string;
 		runId: number | undefined;
 	}) {
-		return ChildLogger.create(await this.loggerP, undefined, {
-			all: dimensions,
+		return createChildLogger({
+			base: await this.loggerP,
+			properties: {
+				all: dimensions,
+			},
 		});
 	}
 

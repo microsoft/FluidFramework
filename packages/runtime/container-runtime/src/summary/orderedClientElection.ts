@@ -4,7 +4,7 @@
  */
 /* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -106,7 +106,7 @@ export class OrderedClientCollection
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {
 		super();
-		this.logger = ChildLogger.create(logger, "OrderedClientCollection");
+		this.logger = createChildLogger({ base: logger, namespace: "OrderedClientCollection" });
 		const members = quorum.getMembers();
 		for (const [clientId, client] of members) {
 			this.addClient(clientId, client);

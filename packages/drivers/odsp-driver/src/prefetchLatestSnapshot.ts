@@ -16,7 +16,7 @@ import {
 	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
@@ -65,7 +65,9 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+	const odspLogger = createOdspLogger(
+		createChildLogger({ base: logger, namespace: "PrefetchSnapshot" }),
+	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 	const resolvedUrlData: IOdspUrlParts = {

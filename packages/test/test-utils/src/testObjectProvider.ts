@@ -29,7 +29,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	MultiSinkLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -277,12 +281,15 @@ export class TestObjectProvider implements ITestObjectProvider {
 	get logger(): EventAndErrorTrackingLogger {
 		if (this._logger === undefined) {
 			this._logger = new EventAndErrorTrackingLogger(
-				ChildLogger.create(getTestLogger?.(), undefined, {
-					all: {
-						driverType: this.driver.type,
-						driverEndpointName: this.driver.endpointName,
-						driverTenantName: this.driver.tenantName,
-						driverUserIndex: this.driver.userIndex,
+				createChildLogger({
+					base: getTestLogger?.(),
+					properties: {
+						all: {
+							driverType: this.driver.type,
+							driverEndpointName: this.driver.endpointName,
+							driverTenantName: this.driver.tenantName,
+							driverUserIndex: this.driver.userIndex,
+						},
 					},
 				}),
 			);

@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	IFluidErrorBase,
 	LoggingError,
 	wrapErrorAndLog,
@@ -90,7 +90,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
-		this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
+		this.logger = createChildLogger({ base: this.runtime.logger, namespace: "Summarizer" });
 	}
 
 	/**

@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
@@ -98,11 +98,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
-		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
-			all: {
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
+		this.logger = createChildLogger({
+			base: baseLogger,
+			properties: {
+				all: {
+					id: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: this.telemetryNodeId,
+					},
 				},
 			},
 		});

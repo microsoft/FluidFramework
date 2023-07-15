@@ -42,7 +42,7 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	createChildLogger,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -137,7 +137,7 @@ export class DataStores implements IDisposable {
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
-		this.mc = loggerToMonitoringContext(ChildLogger.create(baseLogger));
+		this.mc = loggerToMonitoringContext(createChildLogger({ base: baseLogger }));
 		this.containerRuntimeHandle = new FluidObjectHandle(
 			this.runtime,
 			"/",

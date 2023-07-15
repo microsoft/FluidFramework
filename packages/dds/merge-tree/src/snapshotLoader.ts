@@ -7,7 +7,7 @@
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
@@ -34,7 +34,7 @@ export class SnapshotLoader {
 		logger: ITelemetryLoggerExt,
 		private readonly serializer: IFluidSerializer,
 	) {
-		this.logger = ChildLogger.create(logger, "SnapshotLoader");
+		this.logger = createChildLogger({ base: logger, namespace: "SnapshotLoader" });
 	}
 
 	public async initialize(

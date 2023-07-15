@@ -25,7 +25,7 @@ import {
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
 	loggerToMonitoringContext,
@@ -137,7 +137,9 @@ export class DocumentDeltaConnection
 			);
 		});
 
-		this.mc = loggerToMonitoringContext(ChildLogger.create(logger, "DeltaConnection"));
+		this.mc = loggerToMonitoringContext(
+			createChildLogger({ base: logger, namespace: "DeltaConnection" }),
+		);
 
 		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);

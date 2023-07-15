@@ -9,7 +9,7 @@ import {
 	ILocationRedirectionError,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * Checks if the error is location redirection error.
@@ -39,7 +39,7 @@ export async function resolveWithLocationRedirectionHandling<T>(
 	baseLogger?: ITelemetryBaseLogger,
 ): Promise<T> {
 	let req: IRequest = request;
-	const logger = ChildLogger.create(baseLogger, "LocationRedirection");
+	const logger = createChildLogger({ base: baseLogger, namespace: "LocationRedirection" });
 	for (;;) {
 		try {
 			return await api(req);

@@ -6,7 +6,7 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	DebugLogger,
 	IConfigProviderBase,
 	loggerToMonitoringContext,
@@ -343,7 +343,9 @@ export class Loader implements IHostLoader {
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
+		this.mc = loggerToMonitoringContext(
+			createChildLogger({ base: this.services.subLogger, namespace: "Loader" }),
+		);
 	}
 
 	public get IFluidRouter(): IFluidRouter {

@@ -14,9 +14,13 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITelemetryLogger,
+} from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -168,7 +172,7 @@ class Document {
 	private documentSeqNumber = 0;
 	private from: number = -1;
 	private snapshotFileName: string = "";
-	private docLogger: TelemetryLogger;
+	private docLogger: ITelemetryLogger;
 	private originalSummarySeqs: number[];
 
 	public constructor(
@@ -212,7 +216,9 @@ class Document {
 			deltaConnection,
 		);
 
-		this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+		this.docLogger = createChildLogger({
+			base: new Logger(this.containerDescription, errorHandler),
+		});
 		this.container = await loadContainer(
 			documentServiceFactory,
 			FileStorageDocumentName,

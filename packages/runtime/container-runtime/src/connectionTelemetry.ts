@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -75,7 +79,7 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		this.logger = ChildLogger.create(logger, "OpPerf");
+		this.logger = createChildLogger({ base: logger, namespace: "OpPerf" });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));

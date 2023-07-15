@@ -7,7 +7,7 @@ import { IDBPDatabase } from "idb";
 import { assert } from "@fluidframework/common-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {
 	getFluidCacheIndexedDbInstance,
@@ -73,7 +73,7 @@ export class FluidCache implements IPersistedCache {
 	private dbReuseCount: number = -1;
 
 	constructor(config: FluidCacheConfig) {
-		this.logger = ChildLogger.create(config.logger);
+		this.logger = createChildLogger({ base: config.logger });
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
 		this.closeDbAfterMs = config.closeDbAfterMs ?? 0;

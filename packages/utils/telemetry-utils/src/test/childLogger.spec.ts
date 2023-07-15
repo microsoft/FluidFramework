@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ChildLogger } from "../logger";
+import { ChildLogger, createChildLogger } from "../logger";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
@@ -29,7 +29,7 @@ describe("ChildLogger", () => {
 		assert(sent, "event should be sent");
 
 		sent = false;
-		const childLogger2 = ChildLogger.create(childLogger1, "test2");
+		const childLogger2 = createChildLogger({ base: childLogger1, namespace: "test2" });
 
 		childLogger2.send({ category: "generic", eventName: "test2" });
 		assert(sent, "event should be sent");
@@ -48,7 +48,7 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger, "test1");
+		const childLogger1 = createChildLogger({ base: logger, namespace: "test1" });
 
 		sent = false;
 		const childLogger2 = ChildLogger.create(childLogger1, "test2", {
@@ -130,10 +130,10 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger);
+		const childLogger1 = createChildLogger({ base: logger });
 
 		sent = false;
-		const childLogger2 = ChildLogger.create(childLogger1, "test2");
+		const childLogger2 = createChildLogger({ base: childLogger1, namespace: "test2" });
 
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");
@@ -149,10 +149,10 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger, "test1");
+		const childLogger1 = createChildLogger({ base: logger, namespace: "test1" });
 
 		sent = false;
-		const childLogger2 = ChildLogger.create(childLogger1);
+		const childLogger2 = createChildLogger({ base: childLogger1 });
 
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");
@@ -168,10 +168,10 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger);
+		const childLogger1 = createChildLogger({ base: logger });
 
 		sent = false;
-		const childLogger2 = ChildLogger.create(childLogger1);
+		const childLogger2 = createChildLogger({ base: childLogger1 });
 
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");

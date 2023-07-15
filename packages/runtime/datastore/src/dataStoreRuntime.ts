@@ -5,7 +5,7 @@
 
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	generateStack,
 	LoggingError,
 	loggerToMonitoringContext,
@@ -252,8 +252,12 @@ export class FluidDataStoreRuntime
 		);
 
 		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
-				all: { dataStoreId: uuid() },
+			createChildLogger({
+				base: dataStoreContext.logger,
+				namespace: "FluidDataStoreRuntime",
+				properties: {
+					all: { dataStoreId: uuid() },
+				},
 			}),
 		);
 

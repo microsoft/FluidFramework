@@ -35,7 +35,7 @@ import {
 } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
-	ChildLogger,
+	createChildLogger,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
@@ -671,9 +671,12 @@ export class ContainerRuntime
 		const passLogger =
 			backCompatContext.taggedLogger ??
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
-		const logger = ChildLogger.create(passLogger, undefined, {
-			all: {
-				runtimeVersion: pkgVersion,
+		const logger = createChildLogger({
+			base: passLogger,
+			properties: {
+				all: {
+					runtimeVersion: pkgVersion,
+				},
 			},
 		});
 
@@ -1090,7 +1093,9 @@ export class ContainerRuntime
 		this.innerDeltaManager = context.deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
+		this.mc = loggerToMonitoringContext(
+			createChildLogger({ base: this.logger, namespace: "ContainerRuntime" }),
+		);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1233,7 +1238,7 @@ export class ContainerRuntime
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
-			ChildLogger.create(this.logger, "SummarizerNode"),
+			createChildLogger({ base: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
 			async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
@@ -1312,7 +1317,7 @@ export class ContainerRuntime
 			context.deltaManager,
 			this,
 			() => this.clientId,
-			ChildLogger.create(this.logger, "ScheduleManager"),
+			createChildLogger({ base: this.logger, namespace: "ScheduleManager" }),
 		);
 
 		this.pendingStateManager = new PendingStateManager(
@@ -1391,7 +1396,10 @@ export class ContainerRuntime
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
 		} else {
-			const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
+			const orderedClientLogger = createChildLogger({
+				base: this.logger,
+				namespace: "OrderedClientElection",
+			});
 			const orderedClientCollection = new OrderedClientCollection(
 				orderedClientLogger,
 				this.context.deltaManager,
@@ -2709,8 +2717,11 @@ export class ContainerRuntime
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
-		const summaryNumberLogger = ChildLogger.create(summaryLogger, undefined, {
-			all: { summaryNumber },
+		const summaryNumberLogger = createChildLogger({
+			base: summaryLogger,
+			properties: {
+				all: { summaryNumber },
+			},
 		});
 
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
@@ -2718,7 +2729,11 @@ export class ContainerRuntime
 		let latestSnapshotVersionId: string | undefined;
 		if (refreshLatestAck) {
 			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
-				ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }),
+				createChildLogger({
+					base: summaryNumberLogger,
+					namespace: undefined,
+					properties: { all: { safeSummary: true } },
+				}),
 			);
 			const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
 			latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;

@@ -7,7 +7,7 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	LoggingError,
-	ChildLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 
@@ -240,7 +240,11 @@ export class SummaryGenerator {
 		cancellationToken: ISummaryCancellationToken,
 	): Promise<void> {
 		const { refreshLatestAck, fullTree } = options;
-		const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
+		const logger = createChildLogger({
+			base: this.logger,
+			namespace: undefined,
+			properties: { all: summarizeProps },
+		});
 
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
 		// first summary are basically the time since the summarizer was loaded.

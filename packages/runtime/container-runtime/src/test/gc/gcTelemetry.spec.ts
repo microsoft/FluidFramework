@@ -13,7 +13,7 @@ import {
 	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
-	ChildLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	GCNodeType,
@@ -155,7 +155,7 @@ describe("GC Telemetry Tracker", () => {
 	beforeEach(() => {
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(
-			ChildLogger.create(mockLogger, "GarbageCollector"),
+			createChildLogger({ base: mockLogger, namespace: "GarbageCollector" }),
 			configProvider(injectedSettings),
 		);
 		unreferencedNodesState = new Map();

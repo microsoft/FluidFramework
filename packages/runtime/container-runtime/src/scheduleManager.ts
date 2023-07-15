@@ -5,7 +5,7 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
@@ -45,7 +45,7 @@ export class ScheduleManager {
 	) {
 		this.deltaScheduler = new DeltaScheduler(
 			this.deltaManager,
-			ChildLogger.create(this.logger, "DeltaScheduler"),
+			createChildLogger({ base: this.logger, namespace: "DeltaScheduler" }),
 		);
 		void new ScheduleManagerCore(deltaManager, getClientId, logger);
 	}

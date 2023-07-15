@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -200,7 +200,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client = new Client(
 			segmentFromSpec,
-			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
+			createChildLogger({
+				base: this.logger,
+				namespace: "SharedSegmentSequence.MergeTreeClient",
+			}),
 			dataStoreRuntime.options,
 		);
 
