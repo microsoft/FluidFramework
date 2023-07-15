@@ -178,12 +178,13 @@ class MockRuntime
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
-	public async processAll() {
+	public async processAll(ac?: AbortController) {
 		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
 			const p1 = this.processBlobs();
 			const p2 = this.processHandles();
 			this.processOps();
 			await Promise.race([p1, p2]);
+			ac?.abort();
 			this.processOps();
 			await Promise.all([p1, p2]);
 		}
@@ -366,13 +367,68 @@ describe("BlobManager", () => {
 		await runtime.connect();
 		const ac = new AbortController();
 		ac.abort("abort test");
+		let handleP;
 		try {
-			await createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
 			await runtime.processAll();
 			assert.fail("Should not succeed");
 		} catch (error: any) {
 			assert.strictEqual(error.message, "aborted before uploading");
 		}
+		assert(handleP);
+		await assert.rejects(handleP);
+	});
+
+	it("abort while upload", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const ac = new AbortController();
+		let handleP;
+		try {
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			await runtime.processAll();
+			assert.fail("Should not succeed");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "aborted while uploading");
+		}
+		assert(handleP);
+		await assert.rejects(handleP);
+	});
+
+	it("abort after upload", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const ac = new AbortController();
+		let handleP;
+		try {
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
+			await runtime.processAll();
+			ac.abort("abort test");
+		} catch (error: any) {
+			assert.fail("abort after processing should not throw");
+		}
+		assert(handleP);
+		await assert.doesNotReject(handleP);
+	});
+
+	it("abort while waiting for op", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const ac = new AbortController();
+		let handleP;
+		try {
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
+			await runtime.processAll(ac);
+		} catch (error: any) {
+			assert.fail("abort while waiting for op should not throw");
+		}
+		assert(handleP);
+		await assert.doesNotReject(handleP);
 	});
 
 	it("detached snapshot", async () => {

@@ -480,7 +480,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			signal.addEventListener(
 				"abort",
 				() => {
-					if (!pendingEntry.handleP.isCompleted) {
+					if (
+						!pendingEntry.handleP.isCompleted &&
+						pendingEntry.status !== PendingBlobStatus.OnlinePendingOp
+					) {
 						pendingEntry.handleP.reject(Error("aborted while uploading"));
 					}
 				},
