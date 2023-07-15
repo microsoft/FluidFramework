@@ -1919,8 +1919,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
 
-		Promise.all([this.lastSendP, this.lastNoClientP]).then(
-			() => {
+		Promise.all([this.lastSendP, this.lastNoClientP])
+			.then(() => {
 				const checkpointParams = this.generateCheckpoint(reason);
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
@@ -1942,8 +1942,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
 				};
 				Lumberjack.info(checkpointResult, lumberjackProperties);
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;
 				this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
 					messageMetaData: {
@@ -1961,8 +1961,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					tenantId: this.tenantId,
 					documentId: this.documentId,
 				});
-			},
-		);
+			});
 	}
 
 	/**

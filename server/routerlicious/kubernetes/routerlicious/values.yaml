@@ -55,6 +55,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:

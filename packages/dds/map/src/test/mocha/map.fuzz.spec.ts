@@ -101,15 +101,7 @@ describe("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),
-		generatorFactory: () =>
-			takeAsync(
-				100,
-				makeGenerator({
-					// This suite currently fails when `.clear()` operations are enabled.
-					// AB#4612 tracks resolving that and making this nonzero.
-					clearWeight: 0,
-				}),
-			),
+		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMapsAreEquivalent,
 	};

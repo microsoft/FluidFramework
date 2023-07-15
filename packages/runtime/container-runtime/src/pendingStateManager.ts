@@ -9,9 +9,11 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
+import { IBatchMetadata } from "./metadata";
 
 /**
  * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew
@@ -64,6 +66,7 @@ export interface IRuntimeStateHandler {
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	isActiveConnection: () => boolean;
 }
 
 /**
@@ -135,6 +138,7 @@ export class PendingStateManager implements IDisposable {
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
 		/**
 		 * Convert old local state format to the new format (IPendingMessageOld to IPendingMessageNew)
@@ -269,7 +273,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if (message.metadata?.batch) {
+		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
 				!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
@@ -297,10 +301,12 @@ export class PendingStateManager implements IDisposable {
 			0x16d /* "There is no pending batch begin message" */,
 		);
 
-		const batchEndMetadata = message.metadata?.batch;
+		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;
+			const batchBeginMetadata = (
+				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
+			)?.batch;
 
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
@@ -318,7 +324,10 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId,
+								batchClientId:
+									this.pendingBatchBeginMessage.clientId === null
+										? "null"
+										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
@@ -358,18 +367,16 @@ export class PendingStateManager implements IDisposable {
 			0x174 /* "initial states should be empty before replaying pending" */,
 		);
 
-		let pendingMessagesCount = this.pendingMessages.length;
-		if (pendingMessagesCount === 0) {
-			return;
-		}
+		const initialPendingMessagesCount = this.pendingMessages.length;
+		let remainingPendingMessagesCount = this.pendingMessages.length;
 
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
 		// which must not be replayed.
-		while (pendingMessagesCount > 0) {
+		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
-			pendingMessagesCount--;
+			remainingPendingMessagesCount--;
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
@@ -382,14 +389,14 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
-					pendingMessagesCount > 0,
+					remainingPendingMessagesCount > 0,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
 				const batch: IPendingBatchMessage[] = [];
 
 				// check is >= because batch end may be last pending message
-				while (pendingMessagesCount >= 0) {
+				while (remainingPendingMessagesCount >= 0) {
 					batch.push({
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
@@ -399,11 +406,11 @@ export class PendingStateManager implements IDisposable {
 					if (pendingMessage.opMetadata?.batch === false) {
 						break;
 					}
-					assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
+					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
 
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					pendingMessage = this.pendingMessages.shift()!;
-					pendingMessagesCount--;
+					remainingPendingMessagesCount--;
 					assert(
 						pendingMessage.opMetadata?.batch !== true,
 						0x556 /* Batch start needs a corresponding batch end */,
@@ -418,6 +425,17 @@ export class PendingStateManager implements IDisposable {
 					opMetadata: pendingMessage.opMetadata,
 				});
 			}
+		}
+
+		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
+		// on a write connection and replay again. This filters out the replay that happens on the read connection so
+		// we only see the replays on write connections (that have a chance to go through).
+		if (this.stateHandler.isActiveConnection()) {
+			this.logger?.sendTelemetryEvent({
+				eventName: "PendingStatesReplayed",
+				count: initialPendingMessagesCount,
+				clientId: this.stateHandler.clientId(),
+			});
 		}
 	}
 }

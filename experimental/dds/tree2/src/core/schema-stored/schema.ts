@@ -196,34 +196,6 @@ export interface TreeStoredSchema {
 	readonly extraLocalFields: FieldStoredSchema;
 
 	/**
-	 * If true,
-	 * GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
-	 * Such fields must still be in schema with their global FieldStoredSchema.
-	 *
-	 * This allows for the "augmentations" pattern where
-	 * users can attach information they understand to any tree without risk of name collisions.
-	 * This is not the only way to do "augmentations":
-	 * another approach is for the applications that wish to add them to include
-	 * the augmentation in their view schema on the nodes they with to augment,
-	 * and update the stored schema to permit them as needed.
-	 *
-	 * This schema system could work with extraGlobalFields unconditionally on
-	 * (justified as allowing augmentations everywhere though requiring stored schema changes),
-	 * or unconditionally off (requiring augmentations to sometimes update stored schema).
-	 * Simplifying this system to not have extraGlobalFields and default it to on or off is a design decision which
-	 * doesn't impact the rest of this system,
-	 * and thus is being put off for now.
-	 *
-	 * Unlike with extraLocalFields, only non-empty global fields have to be in schema here,
-	 * so the existence of a global value field does not immediately make all TreeStoredSchema permitting extra global fields
-	 * out of schema if they are missing said field.
-	 *
-	 * TODO: this approach is inconsistent and should likely be redesigned
-	 * so global and local extra fields work more similarly.
-	 */
-	readonly extraGlobalFields: boolean;
-
-	/**
 	 * There are several approaches for how to store actual data in the tree
 	 * (special node types, special field contents, data on nodes etc.)
 	 * as well as several options about how the data should be modeled at this level

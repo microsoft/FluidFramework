@@ -19,7 +19,7 @@
                         "tree": {
                             "SchemaString": {
                                 "type": 2,
-                                "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestValue\",\"extraGlobalFields\":false,\"extraLocalFields\":{\"kind\":\"Sequence\"},\"globalFields\":[\"globalFieldKey\"],\"localFields\":[{\"kind\":\"Optional\",\"types\":[\"TestValue\"],\"name\":\"optionalChild\"}],\"value\":0}],\"globalFieldSchema\":[{\"kind\":\"Value\",\"name\":\"globalFieldKey\"},{\"kind\":\"Value\",\"name\":\"rootFieldKey\"}]}"
+                                "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestValue\",\"extraLocalFields\":{\"kind\":\"Sequence\"},\"globalFields\":[\"globalFieldKey\"],\"localFields\":[{\"kind\":\"Optional\",\"types\":[\"TestValue\"],\"name\":\"optionalChild\"}],\"value\":0}],\"globalFieldSchema\":[{\"kind\":\"Value\",\"name\":\"globalFieldKey\"},{\"kind\":\"Value\",\"name\":\"rootFieldKey\"}]}"
                             }
                         }
                     },
@@ -40,7 +40,7 @@
         "treeNodeCount": 5,
         "blobNodeCount": 3,
         "handleNodeCount": 0,
-        "totalBlobSize": 38526,
+        "totalBlobSize": 38500,
         "unreferencedBlobSize": 0
     }
 }

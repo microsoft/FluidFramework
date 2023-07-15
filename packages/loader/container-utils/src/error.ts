@@ -201,7 +201,7 @@ export const extractSafePropertiesFromMessage = (
 		>
 	>,
 ) => ({
-	messageClientId: messageLike.clientId,
+	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,
 	messageReferenceSequenceNumber: messageLike.referenceSequenceNumber,
