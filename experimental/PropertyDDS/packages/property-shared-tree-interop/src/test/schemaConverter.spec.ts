@@ -110,7 +110,6 @@ describe("schema converter", () => {
 						}
 					}
 					assert.deepEqual([...propertySchema.globalFields], []);
-					assert.equal(propertySchema.extraGlobalFields, false);
 					assert.equal(propertySchema.value, ValueSchema.Nothing);
 					assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
 					assert(
@@ -214,7 +213,6 @@ describe("schema converter", () => {
 				[],
 			);
 			assert.deepEqual([...(neverTreeSchema.globalFields ?? fail("expected empty set"))], []);
-			assert.equal(neverTreeSchema.extraGlobalFields, false);
 		});
 
 		it(`does not support types with nested properties`, () => {
@@ -297,7 +295,6 @@ describe("schema converter", () => {
 			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
 			assert.deepEqual([...arraySchema.globalFields], []);
-			assert.equal(arraySchema.extraGlobalFields, false);
 			assert.equal(arraySchema.value, ValueSchema.Nothing);
 			assert.equal(arraySchema.localFields.size, 1);
 			const primary = getPrimaryField(arraySchema);
@@ -330,7 +327,6 @@ describe("schema converter", () => {
 			);
 			assert.deepEqual([...mapSchema.localFields], []);
 			assert.deepEqual([...mapSchema.globalFields], []);
-			assert.equal(mapSchema.extraGlobalFields, false);
 			assert.equal(mapSchema.value, ValueSchema.Nothing);
 		});
 

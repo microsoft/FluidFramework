@@ -9,7 +9,13 @@ import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
-import { areInputCellsEmpty, areOutputCellsEmpty, getMarkLength, getNodeChange } from "./utils";
+import {
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
+	getMarkLength,
+	getNodeChange,
+	markIsTransient,
+} from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -21,7 +27,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 	for (const mark of marks) {
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
-		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
+		} else if (
+			areInputCellsEmpty(mark) &&
+			areOutputCellsEmpty(mark) &&
+			(!markIsTransient(mark) || mark.changes === undefined)
+		) {
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
@@ -33,6 +43,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: cursors,
 					};
+					if (mark.transientDetach !== undefined) {
+						insertMark.isTransient = true;
+					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
@@ -81,6 +94,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: mark.content,
 					};
+					if (mark.transientDetach !== undefined) {
+						insertMark.isTransient = true;
+					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
