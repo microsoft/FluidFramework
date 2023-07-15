@@ -443,9 +443,10 @@ export class Loader implements IHostLoader {
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
+		const cacheHeader = request.headers[LoaderHeader.cache];
 		const canCache =
-			this.cachingEnabled &&
-			request.headers[LoaderHeader.cache] === true &&
+			// Take header value if present, else use ILoaderOptions.cache value
+			(cacheHeader !== undefined ? cacheHeader === true : this.cachingEnabled) &&
 			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
