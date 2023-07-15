@@ -10,6 +10,8 @@ import {
 	generateStack,
 	ITelemetryLoggerExt,
 	MonitoringContext,
+	tagData,
+	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
@@ -23,7 +25,6 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -161,7 +162,7 @@ export class GCTelemetryTracker {
 		const { usageType, currentReferenceTimestampMs, packagePath, id, fromId, ...propsToLog } =
 			nodeUsageProps;
 		const eventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
-			id: tagAsCodeArtifact(id),
+			...tagData(TelemetryDataTag.CodeArtifact, { id, fromId }),
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
 			age:
@@ -171,7 +172,6 @@ export class GCTelemetryTracker {
 				state === UnreferencedState.Inactive
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
-			fromId: fromId ? tagAsCodeArtifact(fromId) : undefined,
 			...propsToLog,
 			...this.createContainerMetadata,
 		};
@@ -184,7 +184,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					url: tagAsCodeArtifact(id),
+					url: tagData(TelemetryDataTag.CodeArtifact, { id }).id,
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
@@ -277,8 +277,10 @@ export class GCTelemetryTracker {
 			if (missingExplicitRoutes.length > 0) {
 				logger.sendErrorEvent({
 					eventName: "gcUnknownOutboundReferences",
-					id: tagAsCodeArtifact(nodeId),
-					routes: tagAsCodeArtifact(JSON.stringify(missingExplicitRoutes)),
+					...tagData(TelemetryDataTag.CodeArtifact, {
+						id: nodeId,
+						routes: JSON.stringify(missingExplicitRoutes),
+					}),
 				});
 			}
 		}
@@ -318,8 +320,10 @@ export class GCTelemetryTracker {
 					}),
 					id,
 					fromId,
-					pkg: pkg ? tagAsCodeArtifact(pkg.join("/")) : undefined,
-					fromPkg: fromPkg ? tagAsCodeArtifact(fromPkg.join("/")) : undefined,
+					...tagData(TelemetryDataTag.CodeArtifact, {
+						pkg: pkg?.join("/"),
+						fromPkg: fromPkg?.join("/"),
+					}),
 				};
 
 				if (state === UnreferencedState.Inactive) {
@@ -379,7 +383,8 @@ export class GCTelemetryTracker {
 					lastSummaryTime,
 					...this.createContainerMetadata,
 				}),
-				id: tagAsCodeArtifact(JSON.stringify(deletedNodeIds)),
+				id: tagData(TelemetryDataTag.CodeArtifact, { id: JSON.stringify(deletedNodeIds) })
+					.id,
 			});
 		}
 	}

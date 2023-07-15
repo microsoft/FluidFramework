@@ -66,7 +66,9 @@ import {
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
+	tagData,
 	TelemetryDataTag,
+	TelemetryLogger,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -261,7 +263,7 @@ export abstract class FluidDataStoreContext
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
-	protected readonly mc: MonitoringContext;
+	protected readonly mc: MonitoringContext<TelemetryLogger>;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
@@ -317,7 +319,13 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
+			ChildLogger.create(this.logger, "FluidDataStoreContext", {
+				all: {
+					fluidDataStorePackagePath: () => packagePathToTelemetryProperty(this.pkg),
+					isSummaryInProgress: () => this.summarizerNode.isSummaryInProgress?.(),
+					...tagData(TelemetryDataTag.CodeArtifact, { fluidDataStoreId: this.id }),
+				},
+			}),
 		);
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
@@ -374,10 +382,15 @@ export abstract class FluidDataStoreContext
 		failedPkgPath?: string,
 		fullPackageName?: readonly string[],
 	): never {
-		throw new LoggingError(reason, {
-			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
-			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
-		});
+		throw new LoggingError(
+			reason,
+			this.mc.logger.extendErrorProperties(
+				tagData(TelemetryDataTag.CodeArtifact, {
+					failedPkgPath,
+					fullPackageName: fullPackageName?.join("/"),
+				}),
+			),
+		);
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
@@ -389,13 +402,7 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties({
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					packageName: packagePathToTelemetryProperty(this.pkg),
-				});
+				errorWrapped.addTelemetryProperties(this.mc.logger.extendErrorProperties());
 				this.channelDeferred?.reject(errorWrapped);
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
@@ -790,10 +797,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
 				},
 				error,
 			);
@@ -916,13 +919,6 @@ export abstract class FluidDataStoreContext
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
-			type,
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			packageName: packagePathToTelemetryProperty(this.pkg),
-			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(),
 		});
 		this.localChangesTelemetryCount--;

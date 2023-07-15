@@ -12,6 +12,8 @@ import {
 	MonitoringContext,
 	raiseConnectedEvent,
 	TelemetryDataTag,
+	TelemetryLogger,
+	tagData,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -19,7 +21,6 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
@@ -200,7 +201,7 @@ export class FluidDataStoreRuntime
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
-	private readonly mc: MonitoringContext;
+	private readonly mc: MonitoringContext<TelemetryLogger>;
 	public get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
@@ -251,17 +252,21 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
-				all: { dataStoreId: uuid() },
-			}),
-		);
-
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
 		this.deltaManager = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
+
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+				all: { dataStoreId: uuid() },
+				error: tagData(TelemetryDataTag.CodeArtifact, {
+					fluidDataStoreId: this.id,
+					fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				}),
+			}),
+		);
 
 		const tree = dataStoreContext.baseSnapshot;
 
@@ -1089,12 +1094,9 @@ export class FluidDataStoreRuntime
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			stack: generateStack(),
-			...buildTaggedTelemetryProperties({
-				channelType,
-				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath,
-			}),
+			...this.mc.logger.extendErrorProperties(
+				tagData(TelemetryDataTag.CodeArtifact, { channelId, channelType }),
+			),
 		});
 		this.localChangesTelemetryCount--;
 	}
@@ -1107,30 +1109,11 @@ export class FluidDataStoreRuntime
 
 		throw new LoggingError(
 			"channel context does not exist",
-			buildTaggedTelemetryProperties({
-				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath,
-			}),
+			this.mc.logger.extendErrorProperties(
+				tagData(TelemetryDataTag.CodeArtifact, { channelId }),
+			),
 		);
 	}
-}
-
-function buildTaggedTelemetryProperties(props: {
-	channelType?: string;
-	channelId?: string;
-	fluidDataStoreId?: string;
-	fluidDataStorePackagePath?: readonly string[];
-}) {
-	return Object.keys(props).reduce<ITelemetryProperties>((pv, cv) => {
-		if (props[cv] !== undefined) {
-			pv[cv] = {
-				value: Array.isArray(props[cv]) ? props[cv].join("/") : props[cv],
-				tag: TelemetryDataTag.CodeArtifact,
-			};
-		}
-		return pv;
-	}, {});
 }
 
 /**

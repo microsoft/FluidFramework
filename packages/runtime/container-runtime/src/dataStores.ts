@@ -46,6 +46,7 @@ import {
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
+	tagData,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -243,10 +244,7 @@ export class DataStores implements IDisposable {
 				"Duplicate DataStore created with existing id",
 				{
 					...extractSafePropertiesFromMessage(message),
-					dataStoreId: {
-						value: attachMessage.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
+					...tagData(TelemetryDataTag.CodeArtifact, { dataStoreId: attachMessage.id }),
 				},
 			);
 			throw error;
@@ -559,10 +557,7 @@ export class DataStores implements IDisposable {
 			assert(!local, 0x163 /* "Missing datastore for local signal" */);
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalFluidDataStoreNotFound",
-				fluidDataStoreId: {
-					value: address,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
+				...tagData(TelemetryDataTag.CodeArtifact, { fluidDataStoreId: address }),
 			});
 			return;
 		}

@@ -28,6 +28,7 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -48,6 +49,20 @@ export enum TelemetryDataTag {
 	/** Personal data of a variety of classifications that pertains to the user */
 	UserData = "UserData",
 }
+export const tagData = <T extends Record<string, TelemetryEventPropertyType>>(
+	tag: TelemetryDataTag,
+	values: T,
+) =>
+	(Object.entries(values) as [keyof T, T[keyof T]][])
+		.filter((e): e is [keyof T, Exclude<T[keyof T], undefined>] => e[1] !== undefined)
+		.reduce<{
+			[P in keyof T]:
+				| (T[P] extends undefined ? undefined : never)
+				| { value: Exclude<T[P], undefined>; tag: typeof tag };
+		}>((pv, cv) => {
+			pv[cv[0]] = { value: cv[1], tag };
+			return pv;
+		}, {} as any);
 
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
@@ -211,6 +226,18 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		if (this.namespace !== undefined) {
 			newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
 		}
+		return this.extendProperties(newEvent, includeErrorProps);
+	}
+
+	public extendErrorProperties(extend: ITelemetryProperties = {}): ITelemetryProperties {
+		this.extendProperties(extend, true);
+		return extend;
+	}
+
+	private extendProperties<T extends ITelemetryPropertiesExt>(
+		eventLike: T,
+		includeErrorProps: boolean,
+	) {
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
 			properties.push(this.properties.all);
@@ -220,7 +247,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			for (const props of properties) {
 				if (props !== undefined) {
 					for (const key of Object.keys(props)) {
-						if (event[key] !== undefined) {
+						if (eventLike[key] !== undefined) {
 							continue;
 						}
 						const getterOrValue = props[key];
@@ -228,13 +255,14 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
 						if (value !== undefined) {
-							newEvent[key] = value;
+							// @ts-expect-error what
+							eventLike[key] = value;
 						}
 					}
 				}
 			}
 		}
-		return newEvent;
+		return eventLike;
 	}
 }
 
@@ -276,7 +304,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 				default:
 					// If we encounter a tag we don't recognize
 					// then we must assume we should scrub.
-					newEvent[key] = "REDACTED (unknown tag)";
+					newEvent[key] = `REDACTED (unknown tag: ${tag})`;
 					break;
 			}
 		}
@@ -284,12 +312,34 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	}
 }
 
+const childLoggerType = "__fluid_child_logger";
+
+export function createChildLogger(props?: {
+	baseLogger?: ITelemetryBaseLogger;
+	namespace?: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}) {
+	return ChildLogger.create(props?.baseLogger, props?.namespace, props?.properties);
+}
+
 /**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
+ * @deprecated - Use createChildLogger instead
  */
 export class ChildLogger extends TelemetryLogger {
+	private static is(logger?: ITelemetryBaseLogger): logger is ChildLogger {
+		if (logger instanceof ChildLogger) {
+			return true;
+		}
+		const maybe = logger as ChildLogger;
+		if (maybe.type === childLoggerType) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Create child logger
 	 * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -304,7 +354,7 @@ export class ChildLogger extends TelemetryLogger {
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
-		if (baseLogger instanceof ChildLogger) {
+		if (ChildLogger.is(baseLogger)) {
 			const combinedProperties: ITelemetryLoggerPropertyBags = {};
 			for (const extendedProps of [baseLogger.properties, properties]) {
 				if (extendedProps !== undefined) {
@@ -340,6 +390,7 @@ export class ChildLogger extends TelemetryLogger {
 		);
 	}
 
+	private readonly type = childLoggerType;
 	private constructor(
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
@@ -363,9 +414,17 @@ export class ChildLogger extends TelemetryLogger {
 	}
 }
 
+export function createMultiSinkLogger(props: {
+	namespace?: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}) {
+	return new MultiSinkLogger(props.namespace, props.properties);
+}
+
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
+ * @deprecated - use createMultiSinkLogger instead
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[] = [];
@@ -596,6 +655,7 @@ export class TelemetryUTLogger implements ITelemetryLoggerExt {
 /**
  * Null logger
  * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - for internal use only
  */
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 	/**
@@ -611,6 +671,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 /**
  * Null logger
  * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - for internal use only
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}

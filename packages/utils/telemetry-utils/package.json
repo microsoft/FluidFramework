@@ -102,6 +102,22 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ChildLogger": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_DebugLogger": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockLogger": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MultiSinkLogger": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TelemetryLogger": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

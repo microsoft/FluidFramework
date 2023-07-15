@@ -27,6 +27,10 @@ import {
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	MonitoringContext,
+	TelemetryLogger,
+	loggerToMonitoringContext,
+	tagData,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -78,7 +82,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
 	private wipSkipRecursion = false;
 
-	protected readonly logger: ITelemetryLoggerExt;
+	protected readonly mc: MonitoringContext<TelemetryLogger>;
 
 	/**
 	 * Do not call constructor directly.
@@ -98,14 +102,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
-		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
-			all: {
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
-				},
-			},
-		});
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(baseLogger, undefined /* namespace */, {
+				all: tagData(TelemetryDataTag.CodeArtifact, { id: this.telemetryNodeId }),
+			}),
+		);
 	}
 
 	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
@@ -403,7 +404,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			referenceSequenceNumber: this.referenceSequenceNumber,
 		};
 		return PerformanceEvent.timedExecAsync(
-			this.logger,
+			this.mc.logger,
 			{
 				eventName: "refreshLatestSummary",
 				...eventProps,
@@ -439,7 +440,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 						summaryRefSeq,
 						pendingSize: this.pendingSummaries.size ?? undefined,
 					};
-					this.logger.sendTelemetryEvent({
+					this.mc.logger.sendTelemetryEvent({
 						eventName: "PendingSummaryNotFound",
 						proposalHandle,
 						referenceSequenceNumber: this.referenceSequenceNumber,
@@ -639,7 +640,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNode(
-			this.logger,
+			this.mc.logger,
 			summarizeInternalFn,
 			config,
 			createDetails.changeSequenceNumber,
@@ -806,15 +807,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Creates and throws an error due to unexpected conditions.
 	 */
 	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
-		const error = new LoggingError(eventProps.eventName, {
-			...eventProps,
-			referenceSequenceNumber: this.wipReferenceSequenceNumber,
-			id: {
-				tag: TelemetryDataTag.CodeArtifact,
-				value: this.telemetryNodeId,
-			},
-		});
-		this.logger.sendErrorEvent(eventProps, error);
+		const error = new LoggingError(
+			eventProps.eventName,
+			this.mc.logger.extendErrorProperties({
+				...eventProps,
+				referenceSequenceNumber: this.wipReferenceSequenceNumber,
+			}),
+		);
+		this.mc.logger.sendErrorEvent(eventProps, error);
 		throw error;
 	}
 }

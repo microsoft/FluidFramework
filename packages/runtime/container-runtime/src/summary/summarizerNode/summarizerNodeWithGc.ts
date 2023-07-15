@@ -367,15 +367,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				// If a pending summary exists, it must have used routes since GC is enabled.
 				const summaryNodeWithGC = summaryNode as SummaryNodeWithGC;
 				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
-					const error = new LoggingError("MissingGCStateInPendingSummary", {
-						proposalHandle,
-						referenceSequenceNumber,
-						id: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: this.telemetryNodeId,
-						},
-					});
-					this.logger.sendErrorEvent(
+					const error = new LoggingError(
+						"MissingGCStateInPendingSummary",
+						this.mc.logger.extendErrorProperties({
+							proposalHandle,
+							referenceSequenceNumber,
+						}),
+					);
+					this.mc.logger.sendErrorEvent(
 						{
 							eventName: error.message,
 						},
@@ -533,7 +532,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNodeWithGC(
-			this.logger,
+			this.mc.logger,
 			summarizeInternalFn,
 			{
 				...config,

@@ -307,6 +307,8 @@ export function trimLeadingAndTrailingSlashes(str: string) {
 
 /**
  * Tags the passed value as a CodeArtifact and returns the tagged value.
+ * @deprecated - no longer used. will be removed in the next release
+ *
  */
 export function tagAsCodeArtifact(value: string) {
 	return {

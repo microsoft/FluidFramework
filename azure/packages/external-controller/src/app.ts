@@ -11,7 +11,6 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
@@ -111,12 +110,8 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
-	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
-	// and hook to the Telemetry system
-	const baseLogger = new TelemetryNullLogger();
-
 	// Wrap telemetry logger for use with Devtools
-	const devtoolsLogger = new DevtoolsLogger(baseLogger);
+	const devtoolsLogger = new DevtoolsLogger();
 
 	const clientProps = {
 		connection: connectionConfig,

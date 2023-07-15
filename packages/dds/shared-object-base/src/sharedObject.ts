@@ -13,6 +13,7 @@ import {
 	MonitoringContext,
 	SampledTelemetryHelper,
 	TelemetryDataTag,
+	tagData,
 } from "@fluidframework/telemetry-utils";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -110,10 +111,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.logger = ChildLogger.create(runtime.logger, undefined, {
 			all: {
 				sharedObjectId: uuid(),
-				ddsType: {
-					value: this.attributes.type,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
+				...tagData(TelemetryDataTag.CodeArtifact, { ddsType: this.attributes.type }),
 			},
 		});
 		this.mc = loggerToMonitoringContext(this.logger);

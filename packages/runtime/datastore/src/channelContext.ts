@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag, tagData } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
@@ -147,34 +147,28 @@ export async function loadChannelFactoryAndAttributes(
 	// messages.
 	const channelFactoryType = attributes ? attributes.type : attachMessageType;
 	if (channelFactoryType === undefined) {
-		throw new DataCorruptionError("channelTypeNotAvailable", {
-			channelId: {
-				value: channelId,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			dataStoreId: {
-				value: dataStoreContext.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			dataStorePackagePath: dataStoreContext.packagePath.join("/"),
-			channelFactoryType: attachMessageType,
-		});
+		throw new DataCorruptionError(
+			"channelTypeNotAvailable",
+			tagData(TelemetryDataTag.CodeArtifact, {
+				channelId,
+				dataStoreId: dataStoreContext.id,
+				channelFactoryType,
+				dataStorePackagePath: dataStoreContext.packagePath.join("/"),
+			}),
+		);
 	}
 	const factory = registry.get(channelFactoryType);
 	if (factory === undefined) {
 		// TODO: dataStoreId may require a different tag from PackageData #7488
-		throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
-			channelId: {
-				value: channelId,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			dataStoreId: {
-				value: dataStoreContext.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			dataStorePackagePath: dataStoreContext.packagePath.join("/"),
-			channelFactoryType,
-		});
+		throw new DataCorruptionError(
+			"channelFactoryNotRegisteredForGivenType",
+			tagData(TelemetryDataTag.CodeArtifact, {
+				channelId,
+				dataStoreId: dataStoreContext.id,
+				channelFactoryType,
+				dataStorePackagePath: dataStoreContext.packagePath.join("/"),
+			}),
+		);
 	}
 	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
 	// from the factory.
@@ -197,15 +191,11 @@ export async function loadChannel(
 	) {
 		logger.sendTelemetryEvent({
 			eventName: "ChannelAttributesVersionMismatch",
-			channelType: { value: attributes.type, tag: TelemetryDataTag.CodeArtifact },
-			channelSnapshotVersion: {
-				value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			channelCodeVersion: {
-				value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
+			...tagData(TelemetryDataTag.CodeArtifact, {
+				channelType: attributes.type,
+				channelSnapshotVersion: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
+				channelCodeVersion: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
+			}),
 		});
 	}
 

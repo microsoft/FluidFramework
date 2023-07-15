@@ -22,12 +22,12 @@ import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -41,7 +41,26 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 // @public (undocumented)
 export const connectedEventName = "connected";
 
-// @public
+// @public (undocumented)
+export function createChildLogger(props?: {
+    baseLogger?: ITelemetryBaseLogger;
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): TelemetryLogger;
+
+// @public (undocumented)
+export function createDebugLogger(props: {
+    namespace: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): TelemetryLogger;
+
+// @public (undocumented)
+export function createMultiSinkLogger(props: {
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): MultiSinkLogger;
+
+// @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
@@ -253,7 +272,7 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public
+// @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
     constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
     addLogger(logger?: ITelemetryBaseLogger): void;
@@ -308,6 +327,12 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
+// @public (undocumented)
+export const tagData: <T extends Record<string, TelemetryEventPropertyType>>(tag: TelemetryDataTag, values: T) => { [P in keyof T]: {
+        value: Exclude<T[P], undefined>;
+        tag: TelemetryDataTag;
+    } | (T[P] extends undefined ? undefined : never); };
+
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
@@ -336,6 +361,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     // (undocumented)
     static readonly eventNamespaceSeparator = ":";
     // (undocumented)
+    extendErrorProperties(extend?: ITelemetryProperties): ITelemetryProperties;
+    // (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
     protected readonly namespace?: string | undefined;
@@ -356,7 +383,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     }, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;

@@ -47,6 +47,7 @@ declare function get_old_ClassDeclaration_ChildLogger():
 declare function use_current_ClassDeclaration_ChildLogger(
     use: TypeOnly<current.ChildLogger>);
 use_current_ClassDeclaration_ChildLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ChildLogger());
 
 /*
@@ -95,6 +96,7 @@ declare function get_old_ClassDeclaration_DebugLogger():
 declare function use_current_ClassDeclaration_DebugLogger(
     use: TypeOnly<current.DebugLogger>);
 use_current_ClassDeclaration_DebugLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DebugLogger());
 
 /*
@@ -503,6 +505,7 @@ declare function get_old_ClassDeclaration_MockLogger():
 declare function use_current_ClassDeclaration_MockLogger(
     use: TypeOnly<current.MockLogger>);
 use_current_ClassDeclaration_MockLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockLogger());
 
 /*
@@ -551,6 +554,7 @@ declare function get_old_ClassDeclaration_MultiSinkLogger():
 declare function use_current_ClassDeclaration_MultiSinkLogger(
     use: TypeOnly<current.MultiSinkLogger>);
 use_current_ClassDeclaration_MultiSinkLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MultiSinkLogger());
 
 /*
@@ -743,6 +747,7 @@ declare function get_old_ClassDeclaration_TelemetryLogger():
 declare function use_current_ClassDeclaration_TelemetryLogger(
     use: TypeOnly<current.TelemetryLogger>);
 use_current_ClassDeclaration_TelemetryLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TelemetryLogger());
 
 /*

@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	TelemetryDataTag,
+	TelemetryLogger,
+	loggerToMonitoringContext,
+	tagData,
+} from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -126,17 +134,10 @@ class DataStore implements IDataStore {
 			this.runtime.submitDataStoreAliasOp(message, resolve);
 		})
 			.catch((error) => {
-				this.logger.sendErrorEvent(
+				this.mc.logger.sendErrorEvent(
 					{
 						eventName: "AliasingException",
-						alias: {
-							value: alias,
-							tag: TelemetryDataTag.UserData,
-						},
-						internalId: {
-							value: this.internalId,
-							tag: TelemetryDataTag.CodeArtifact,
-						},
+						...tagData(TelemetryDataTag.UserData, { alias }),
 					},
 					error,
 				);
@@ -169,14 +170,23 @@ class DataStore implements IDataStore {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 
+	private readonly mc: MonitoringContext<TelemetryLogger>;
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
 		private readonly runtime: ContainerRuntime,
 		private readonly datastores: DataStores,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryLoggerExt,
 	) {
 		this.pendingAliases = datastores.pendingAliases;
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(logger, undefined, {
+				error: {
+					...tagData(TelemetryDataTag.CodeArtifact, { id: this.internalId }),
+					alias: () => tagData(TelemetryDataTag.UserData, { alias: this.alias }).alias,
+				},
+			}),
+		);
 	}
 
 	public get IFluidRouter() {

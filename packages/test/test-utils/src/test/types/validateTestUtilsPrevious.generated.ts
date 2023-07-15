@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_EventAndErrorTrackingLogger():
 declare function use_current_ClassDeclaration_EventAndErrorTrackingLogger(
     use: TypeOnly<current.EventAndErrorTrackingLogger>);
 use_current_ClassDeclaration_EventAndErrorTrackingLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_EventAndErrorTrackingLogger());
 
 /*
@@ -359,6 +360,7 @@ declare function get_old_ClassDeclaration_TestObjectProvider():
 declare function use_current_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<current.TestObjectProvider>);
 use_current_ClassDeclaration_TestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProvider());
 
 /*

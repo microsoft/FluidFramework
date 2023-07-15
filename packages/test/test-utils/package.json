@@ -114,6 +114,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TestObjectProvider": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_EventAndErrorTrackingLogger": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

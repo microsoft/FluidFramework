@@ -17,8 +17,15 @@ import {
 	ITelemetryLoggerPropertyBags,
 } from "./logger";
 
+export function createDebugLogger(props: {
+	namespace: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}) {
+	return DebugLogger.create(props.namespace, props.properties);
+}
 /**
  * Implementation of debug logger
+ * @deprecated - use createDebugLogger instead.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**

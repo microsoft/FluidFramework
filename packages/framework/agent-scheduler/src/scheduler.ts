@@ -21,7 +21,7 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { tagData, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -131,9 +131,10 @@ export class AgentScheduler
 	public async register(...taskUrls: string[]): Promise<void> {
 		for (const taskUrl of taskUrls) {
 			if (this.registeredTasks.has(taskUrl)) {
-				throw new UsageError(`Task is already registered`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(
+					`Task is already registered`,
+					tagData(TelemetryDataTag.CodeArtifact, { taskUrl }),
+				);
 			}
 		}
 		const unregisteredTasks: string[] = [];
@@ -148,13 +149,14 @@ export class AgentScheduler
 		return this.registerCore(unregisteredTasks);
 	}
 
-	public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
-		if (this.locallyRunnableTasks.has(taskId)) {
-			throw new UsageError(`Task is already attempted`, {
-				taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskId },
-			});
+	public async pick(taskUrl: string, worker: () => Promise<void>): Promise<void> {
+		if (this.locallyRunnableTasks.has(taskUrl)) {
+			throw new UsageError(
+				`Task is already attempted`,
+				tagData(TelemetryDataTag.CodeArtifact, { taskUrl }),
+			);
 		}
-		this.locallyRunnableTasks.set(taskId, worker);
+		this.locallyRunnableTasks.set(taskUrl, worker);
 
 		// We have a policy to disallow non-interactive clients from taking tasks.  Callers of pick() can
 		// either perform this check proactively and call conditionally, or catch the error (in which case
@@ -166,9 +168,9 @@ export class AgentScheduler
 
 		// Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
 		if (this.isActive()) {
-			const currentClient = this.getTaskClientId(taskId);
+			const currentClient = this.getTaskClientId(taskUrl);
 			if (currentClient === undefined || currentClient === null) {
-				await this.writeCore(taskId, this.clientId);
+				await this.writeCore(taskUrl, this.clientId);
 			}
 		}
 	}
@@ -177,9 +179,10 @@ export class AgentScheduler
 		const active = this.isActive();
 		for (const taskUrl of taskUrls) {
 			if (!this.locallyRunnableTasks.has(taskUrl)) {
-				throw new UsageError(`Task was never registered`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(
+					`Task was never registered`,
+					tagData(TelemetryDataTag.CodeArtifact, { taskUrl }),
+				);
 			}
 			if (!this.runningTasks.has(taskUrl)) {
 				// If we got disconnected (and are attached), tasks that we WERE picked for at the time of disconnect
@@ -188,18 +191,20 @@ export class AgentScheduler
 				// ourselves clearing the task upon reconnect.
 				// This UsageError is to enforce that the caller should check AgentScheduler.pickedTasks before trying
 				// to release a task.
-				throw new UsageError(`Task is not currently picked`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(
+					`Task is not currently picked`,
+					tagData(TelemetryDataTag.CodeArtifact, { taskUrl }),
+				);
 			}
 			// We may only release tasks that we KNOW we hold (detached state or connected and own the CRC).  If we're
 			// attached+disconnected then we'll lose the task automatically, and so may not release manually (someone
 			// else might hold it by the time we reconnect)
 			assert(active, 0x119 /* "This agent became inactive while releasing" */);
 			if (this.getTaskClientId(taskUrl) !== this.clientId) {
-				throw new UsageError(`Task was never picked`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(
+					`Task was never picked`,
+					tagData(TelemetryDataTag.CodeArtifact, { taskUrl }),
+				);
 			}
 		}
 		return this.releaseCore([...taskUrls]);
