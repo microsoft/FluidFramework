@@ -7,8 +7,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import { Repository, createPullRequest, pullRequestExists } from "../../lib";
-import { getCommitInfo } from "../../lib/github";
+import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../lib";
 
 interface CleanupBranch {
 	branch: string;
@@ -56,6 +55,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			description: "Add reviewers to PR",
 			required: true,
 			multiple: true,
+		}),
+		createPr: Flags.boolean({
+			description: "Use --no-createPr to skip creating a PR. Useful for testing.",
+			hidden: true,
+			default: true,
+			allowNo: true,
 		}),
 		...BaseCommand.flags,
 	};
@@ -147,7 +152,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.verbose(`Unmerged commit list: ${unmergedCommitList.map((c) => shortCommit(c))}`);
 
 		/**
-		 * tempBranchToCheckConflicts` is used to check the conflicts of each commit with the target branch.
+		 * tempBranchToCheckConflicts is used to check the conflicts of each commit with the target branch.
 		 */
 		const tempBranchToCheckConflicts = `${flags.target}-automation`;
 		this.branchesToCleanup.push({
@@ -239,7 +244,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const description: string = getDescription({
 			source: flags.source,
 			target: flags.target,
-			mergeBranch: mergeBranch,
+			mergeBranch,
 			prTitle,
 		});
 
@@ -258,22 +263,24 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.verbose(`PR object: ${JSON.stringify(prObject)}}`);
 
 		// We're about to create the PR, so we need to push mergeBranch upstream
-		// Also push the branch to the remote and set its upstream.
-		this.gitRepo.gitClient
+		// Also push the local branch to the remote and set its upstream.
+		await this.gitRepo.gitClient
 			.push(this.remote, mergeBranch)
 			.branch(["--set-upstream-to", `${this.remote}/${mergeBranch}`]);
-
-		let prNumber = "";
-		try {
-			prNumber = await createPullRequest(prObject, this.logger);
-		} catch (e: unknown) {
-			// There was an error when creating the pull rrequest, so clean up the remote branch.
-			this.errorLog(`Error creating pull request: ${e}`);
-			this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: true });
-			throw e;
+		if (flags.createPr) {
+			let prNumber = "";
+			try {
+				prNumber = await createPullRequest(prObject, this.logger);
+			} catch (error: unknown) {
+				// There was an error when creating the pull rrequest, so clean up the remote branch.
+				this.errorLog(`Error creating pull request: ${error}`);
+				this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: true });
+				throw error;
+			}
+			this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
+		} else {
+			this.error(`Skipped opening pull request.`);
 		}
-
-		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
 	}
 
 	/**
