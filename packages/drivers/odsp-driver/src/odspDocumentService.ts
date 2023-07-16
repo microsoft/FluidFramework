@@ -227,7 +227,7 @@ export class OdspDocumentService implements IDocumentService {
 				}
 			},
 			(ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
-			this.storageManager?.isFirstSnapshotFromNetwork,
+			() => this.storageManager,
 		);
 	}
 

@@ -340,12 +340,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
-					if (
-						this.firstVersionCall &&
-						method === "network" &&
-						!this.hostPolicy.summarizerClient
-					) {
-						this._isFirstSnapshotFromNetwork = true;
+					if (this.firstVersionCall) {
+						this._isFirstSnapshotFromNetwork = method === "cache" ? false : true;
 					}
 					const prefetchStartTime: number | undefined = (
 						retrievedSnapshot as IPrefetchSnapshotContents
