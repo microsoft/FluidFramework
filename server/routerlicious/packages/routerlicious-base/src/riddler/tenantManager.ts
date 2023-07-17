@@ -427,10 +427,7 @@ export class TenantManager {
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
-				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-				if (setKeyInCacheSucceeded) {
-					this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheSuccess);
-				}
+				await this.setKeyInCache(tenantId, cacheKeys);
 			}
 
 			return {
