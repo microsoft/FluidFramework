@@ -293,7 +293,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	}
 }
 
-const childLoggerType = "__fluid_child_logger";
+const childLoggerType = "__fluid_child_logger" as const;
 
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -315,7 +315,7 @@ export class ChildLogger extends TelemetryLogger {
 			return true;
 		}
 		const maybe = logger as ChildLogger | undefined;
-		if (maybe?.type === childLoggerType) {
+		if (maybe?.[childLoggerType] === childLoggerType) {
 			return true;
 		}
 		return false;
@@ -371,7 +371,7 @@ export class ChildLogger extends TelemetryLogger {
 		);
 	}
 
-	private readonly type = childLoggerType;
+	private readonly [childLoggerType] = childLoggerType;
 	private constructor(
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,

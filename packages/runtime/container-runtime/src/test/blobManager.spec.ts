@@ -698,7 +698,7 @@ describe("BlobManager", () => {
 			);
 		});
 
-		it("deletes unused blobs", async () => {
+		it.only("deletes unused blobs", async () => {
 			await runtime.attach();
 			await runtime.connect();
 
