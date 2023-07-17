@@ -17,11 +17,13 @@ import { chromium } from "playwright";
 
 /**
  * Pattern used to discover test "story" modules for screenshot tests.
+ * Relative to the package root.
  */
 const storyFilePathPattern = "src/test/screenshot-tests/*.stories.tsx";
 
 /**
- * Output directory, relative to the test "story", under which the generated screenshots will be saved.
+ * Output directory under which the generated screenshots will be saved.
+ * Relative to the package root.
  */
 const outputDirectoryPath = "src/test/screenshot-tests/__screenshots__";
 
