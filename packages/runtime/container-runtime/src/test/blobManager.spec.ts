@@ -127,14 +127,9 @@ class MockRuntime
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandle<ArrayBufferLike>> {
-		try {
-			const P = this.blobManager.createBlob(blob, signal);
-			this.handlePs.push(P);
-			return P;
-		} catch (error: any) {
-			console.log(error);
-			throw error;
-		}
+		const P = this.blobManager.createBlob(blob, signal);
+		this.handlePs.push(P);
+		return P;
 	}
 
 	public async getBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
