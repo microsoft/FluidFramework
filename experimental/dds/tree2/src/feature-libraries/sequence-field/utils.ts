@@ -31,9 +31,9 @@ import {
 	Changeset,
 	DetachEvent,
 	CellsMark,
-	NodesAnchor,
-	CellChanges,
-	CellChange,
+	CellsAnchor,
+	CellBoundChanges,
+	CellShallowChange,
 	Fill,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
@@ -43,7 +43,9 @@ export interface DeleteNode extends Clear {
 	readonly targetCell?: undefined;
 }
 
-export function isDelete(cellChange: CellChange<unknown, unknown>): cellChange is DeleteNode {
+export function isDelete(
+	cellChange: CellShallowChange<unknown, unknown>,
+): cellChange is DeleteNode {
 	return cellChange.type === "Clear" && cellChange.targetCell === undefined;
 }
 
@@ -56,13 +58,13 @@ export interface ActiveMoveIn<TTree> extends MoveIn<TTree> {
 }
 
 export function isMoveIn<TNodeChange, TTree>(
-	cellChange: CellChange<TNodeChange, TTree>,
+	cellChange: CellShallowChange<TNodeChange, TTree>,
 ): cellChange is MoveIn<TTree> {
 	return cellChange.type === "Fill" && !Array.isArray(cellChange.content);
 }
 
 export function isActiveMoveIn<TNodeChange, TTree>(
-	cellChange: CellChange<TNodeChange, TTree>,
+	cellChange: CellShallowChange<TNodeChange, TTree>,
 ): cellChange is ActiveMoveIn<TTree> {
 	return isMoveIn(cellChange) && cellChange.isSrcMuted === undefined;
 }

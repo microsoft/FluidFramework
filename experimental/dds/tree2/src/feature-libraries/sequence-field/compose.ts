@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	ITreeCursorSynchronous,
 	makeAnonChange,
@@ -11,10 +11,11 @@ import {
 	tagChange,
 	TaggedChange,
 } from "../../core";
-import { brand, fail, Mutable } from "../../util";
+import { brand, mapNestedMap, Mutable, NestedMap, setInNestedMap } from "../../util";
 import {
 	areChangeAtomIdsEqual,
 	ChangeAtomId,
+	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
@@ -25,11 +26,14 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	Modify,
 	PlaceMark,
 	CellsMark,
+	CellBoundChanges,
+	CellShallowChange,
 	CellChanges,
-	CellChange,
+	NodeBoundChanges,
+	NodeBoundChange,
+	Change,
 } from "./types";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -37,10 +41,8 @@ import { MarkQueue } from "./markQueue";
 import {
 	getMoveEffect,
 	setMoveEffect,
-	isMoveMark,
 	MoveEffectTable,
 	MoveMark,
-	getModifyAfter,
 	MoveEffect,
 } from "./moveEffectTable";
 import {
@@ -56,14 +58,8 @@ import {
 	isExistingCellMark,
 	getMarkLength,
 	isDetachMark,
-	getNodeChange,
-	markHasCellEffect,
-	withNodeChange,
-	getMarkMoveId,
-	withRevision,
 	markEmptiesCells,
 	splitMark,
-	isMoveIn,
 	isActiveMoveIn,
 	isDelete,
 } from "./utils";
@@ -73,7 +69,12 @@ import {
  */
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 
-type WipCellChanges<TNodeChange, TTree> = Mutable<CellChange<TNodeChange, TTree>>[];
+type ChangeAtomMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId | undefined, T>;
+
+interface MutableCellChanges<TNodeChange, TTree> {
+	cellBound: Mutable<CellShallowChange<TTree>>[];
+	nodeBound: ChangeAtomMap<Mutable<NodeBoundChange<TNodeChange, TTree>>[]>;
+}
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -88,13 +89,13 @@ type WipCellChanges<TNodeChange, TTree> = Mutable<CellChange<TNodeChange, TTree>
  * - Support for slices is not implemented.
  */
 export function compose<TNodeChange, TTree = ITreeCursorSynchronous>(
-	changes: TaggedChange<Changeset<TNodeChange>>[],
+	changes: TaggedChange<Changeset<TNodeChange, TTree>>[],
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
-): Changeset<TNodeChange> {
-	let composed: Changeset<TNodeChange> = [];
+): Changeset<TNodeChange, TTree> {
+	let composed: Changeset<TNodeChange, TTree> = [];
 	for (const change of changes) {
 		composed = composeMarkLists(
 			composed,
@@ -155,6 +156,7 @@ function composeMarkLists<TNodeChange, TTree>(
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return factory.list;
 }
 
@@ -172,17 +174,22 @@ function composeNewMark<TNodeChange, TTree, TMark extends Mark<TNodeChange, TTre
 	if (clone.lineage !== undefined) {
 		clone.lineage = [...clone.lineage];
 	}
-	clone.payload =
-		clone.type === "Place"
-			? {
-					...clone.payload,
-					changes: composeNewCellChanges(
-						clone.payload.changes,
-						clone.revision ?? revision,
-						composeChild,
-					),
-			  }
-			: composeNewCellChanges(clone.payload, clone.revision ?? revision, composeChild);
+	if (clone.type === "Place") {
+		clone.placePayload = {
+			...clone.placePayload,
+			changes: composeNewCellChanges(
+				clone.placePayload.changes,
+				clone.revision ?? revision,
+				composeChild,
+			),
+		};
+	} else {
+		clone.cellPayload = composeNewCellChanges(
+			clone.cellPayload,
+			clone.revision ?? revision,
+			composeChild,
+		);
+	}
 	return clone as TMark;
 }
 
@@ -191,17 +198,38 @@ export function composeNewCellChanges<TNodeChange, TTree>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): CellChanges<TNodeChange, TTree> {
-	const clones: CellChange<TNodeChange, TTree>[] = [];
-	for (const cellChange of cellChanges) {
-		const clone: Mutable<CellChange<TNodeChange, TTree>> = { ...cellChange };
+	const nodeBound: NestedMap<
+		RevisionTag | undefined,
+		ChangesetLocalId | undefined,
+		NodeBoundChanges<TNodeChange, TTree>
+	> = mapNestedMap(cellChanges.nodeBound, (nodeChanges) => {
+		return composeNewChanges(nodeChanges, revision, composeChild);
+	});
+
+	// TODO: change composeNewChanges signature to guarantee that it doesn't introduce new kinds of changes
+	const cellBound = composeNewChanges(
+		cellChanges.cellBound,
+		revision,
+		composeChild,
+	) as CellBoundChanges<TTree>;
+
+	return { nodeBound, cellBound };
+}
+
+export function composeNewChanges<TNodeChange, TTree>(
+	changes: readonly Change<TNodeChange, TTree>[],
+	revision: RevisionTag | undefined,
+	composeChild: NodeChangeComposer<TNodeChange>,
+): Change<TNodeChange, TTree>[] {
+	return changes.map((cellChange) => {
+		const clone = { ...cellChange };
 		if (clone.type === "Modify") {
 			clone.changes = composeChild([tagChange(clone.changes, revision)]);
 		} else if (clone.type === "Fill" && Array.isArray(clone.content)) {
 			clone.content = [...clone.content];
 		}
-		clones.push(clone);
-	}
-	return clones;
+		return clone;
+	});
 }
 
 /**
@@ -223,8 +251,8 @@ function composeMarks<TNodeChange, TTree>(
 ): Mark<TNodeChange, TTree> {
 	if (baseMark.type === "Place") {
 		const changes = composeCellChanges(
-			baseMark.payload.changes,
-			newMark.payload,
+			baseMark.placePayload.changes,
+			newMark.cellPayload,
 			newMark.count,
 			newMark.detachEvent !== undefined,
 			newRev,
@@ -233,11 +261,11 @@ function composeMarks<TNodeChange, TTree>(
 			moveEffects,
 			revisionMetadata,
 		);
-		return { ...baseMark, payload: { ...baseMark.payload, changes } };
+		return { ...baseMark, placePayload: { ...baseMark.placePayload, changes } };
 	} else {
 		const changes = composeCellChanges(
-			baseMark.payload,
-			newMark.payload,
+			baseMark.cellPayload,
+			newMark.cellPayload,
 			newMark.count,
 			newMark.detachEvent !== undefined,
 			newRev,
@@ -246,12 +274,12 @@ function composeMarks<TNodeChange, TTree>(
 			moveEffects,
 			revisionMetadata,
 		);
-		return { ...baseMark, payload: changes };
+		return { ...baseMark, cellPayload: changes };
 	}
 }
 
 function composeCellChanges<TNodeChange, TTree>(
-	baseChanges: CellChanges<TNodeChange, TTree>,
+	baseChanges: MutableCellChanges<TNodeChange, TTree>,
 	newChanges: CellChanges<TNodeChange, TTree>,
 	count: number,
 	// baseStartsEmpty: boolean,
@@ -262,16 +290,110 @@ function composeCellChanges<TNodeChange, TTree>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): CellChanges<TNodeChange, TTree> {
-	if (baseChanges.length === 0) {
-		return newChanges;
-	}
-	if (newChanges.length === 0) {
+	// Cell changes can just be concatenated
+	baseChanges.cellBound.splice(baseChanges.cellBound.length, 0, ...newChanges.cellBound);
+
+	if (newChanges.nodeBound.size === 0) {
 		return baseChanges;
 	}
+	// Each bucket of node-bound changes may move to a different cell.
+	// If there's an active move-in in the cell changes (we don't currently support node-bound move-ins),
+	// we must send the node-bound changes to the source cell.
+	// If there's a base modify for a node in the cell, then we can compose the modifies.
+	for (const [revision, newInnerMap] of newChanges.nodeBound) {
+		const baseInnerMap = baseChanges.nodeBound.get(revision);
+		for (const [localId, newNodeChanges] of newInnerMap) {
+			if (newNodeChanges.length === 0) {
+				continue;
+			}
+			// Should the node changes remain in this cell, and if so, under what pair of keys?
+			// The "live" node in the input context of the new changeset may have been introduced by a fill from the
+			// base changeset, in which case the node changes should be stored under the fill's ChangeAtomId.
+			// The "removed" nodes in the input context of the new changeset may have been removed by a clear from the
+			// base changeset, in which case the node changes should be stored under the clear's ChangeAtomId.
+
+			const baseNodeChanges = baseInnerMap?.get(localId);
+			if (baseNodeChanges !== undefined) {
+				// The fact that the base changeset has node-bound changes for this node means that the node was not
+				// moved or deleted as part of the base changeset.
+				// We can therefore compose the two sets of node-bound changes under this cell.
+			} else {
+				// The base changeset may have inserted, deleted, or moved the node to this cell.
+				// We need to look through the base changes to find out.
+				if (localId === undefined) {
+					// These new node-bound changes target the existing node in the input context of the new changeset.
+				} else {
+					const firstNewChange = newNodeChanges[0];
+					if (
+						firstNewChange.type === "Fill" &&
+						firstNewChange.revision === revision &&
+						firstNewChange.id === localId
+					) {
+						// The node was created by the new changeset.
+						setInNestedMap(
+							baseChanges.nodeBound,
+							revision,
+							localId,
+							composeNewChanges(newNodeChanges, newRev, composeChild),
+						);
+					} else {
+						// The node was either created, deleted, moved here, or left untouched by the base changeset.
+						let lastAtomId: ChangeAtomId = { revision, localId };
+						let iBase = baseChanges.cellBound.length - 1;
+						while (iBase >= 0) {
+							const baseCellBoundChange = baseChanges.cellBound[iBase];
+							if (
+								baseCellBoundChange.revision === lastAtomId.revision &&
+								baseCellBoundChange.id === lastAtomId.localId
+							) {
+								const type = baseCellBoundChange.type;
+								switch (type) {
+									case "Fill": {
+										if (isActiveMoveIn(baseCellBoundChange)) {
+											setModifyAfter(
+												moveEffects,
+												CrossFieldTarget.Source,
+												lastAtomId.revision,
+												lastAtomId.localId,
+												count,
+												newNodeChanges,
+												composeChild,
+											);
+										} else {
+											assert(
+												baseCellBoundChange.isSrcMuted === undefined,
+												"No change should target a node based on the destination of its failed move",
+											);
+										}
+										// Stop looking
+										iBase = -1;
+										break;
+									}
+									case "Clear": {
+										assert(
+											baseCellBoundChange.isMove === undefined,
+											"No new change should target a node based on a base move-out",
+										);
+										// At the time this clear operation was applied, the node was alive in this cell.
+										// The question is: was this node moved in or inserted by the base changeset prior to that?
+										break;
+									}
+									default:
+										unreachableCase(type);
+								}
+							}
+							iBase -= 1;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	let cellIsEmpty = newStartsEmpty;
 	// This cast should be safe because we ensure that the base mark's cell changes array is cloned.
 	// TODO: capture that fact in the type system so we can compiler-enforce it.
-	const wipBaseChange = baseChanges as WipCellChanges<TNodeChange, TTree>;
+	const wipBaseChange = baseChanges as MutableCellChanges<TNodeChange, TTree>;
 	for (const newChange of newChanges) {
 		if (newChange.type === "Modify") {
 			// We can start iterating from the end of baseChanges because we know that any new changes that have

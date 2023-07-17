@@ -15,6 +15,17 @@
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
+ * A readonly dictionary whose values are keyed off of two objects (key1, key2).
+ * As it is a nested map, size() will return the number of distinct key1s.
+ * If you need constant-time access to the number of values, use SizedNestedMap instead.
+ *
+ * This code assumes values will not be undefined (keys can be undefined).
+ *
+ * @alpha
+ */
+export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>;
+
+/**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
  *
  * @alpha
@@ -146,6 +157,34 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
 		map.delete(key1);
 	}
 	return deleted;
+}
+
+/**
+ * Creates a nested map with identical keys but whose values have been mapped with the given function.
+ *
+ * @alpha
+ */
+export function mapNestedMap<Key1, Key2, ValueIn, ValueOut>(
+	map: ReadonlyNestedMap<Key1, Key2, ValueIn>,
+	func: (value: ValueIn) => ValueOut,
+): NestedMap<Key1, Key2, ValueOut> {
+	return mapMap(map, (innerMap) => mapMap(innerMap, func));
+}
+
+/**
+ * Creates a map with identical keys but whose values have been mapped with the given function.
+ *
+ * @alpha
+ */
+export function mapMap<Key, ValueIn, ValueOut>(
+	map: ReadonlyMap<Key, ValueIn>,
+	func: (value: ValueIn) => ValueOut,
+): Map<Key, ValueOut> {
+	const clone = new Map<Key, ValueOut>();
+	for (const [key, value] of map) {
+		clone.set(key, func(value));
+	}
+	return clone;
 }
 
 /**
