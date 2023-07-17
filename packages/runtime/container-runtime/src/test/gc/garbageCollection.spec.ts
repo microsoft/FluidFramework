@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -16,7 +16,6 @@ import {
 	ISummarizeResult,
 	gcDeletedBlobKey,
 	channelsTreeName,
-	IGarbageCollectionSnapshotData,
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -46,6 +45,7 @@ import {
 	disableSweepLogKey,
 	stableGCVersion,
 	tagAsCodeArtifact,
+	IGarbageCollectionSnapshotData,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
@@ -159,7 +159,6 @@ describe("Garbage Collection Tests", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
-			getContainerDiagnosticId: () => "someDocId",
 		});
 	}
 	let gc: GcWithPrivates | undefined;

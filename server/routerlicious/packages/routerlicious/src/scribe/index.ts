@@ -44,6 +44,7 @@ export async function scribeCreate(
 	const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 	const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 	const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+	const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 	const sendTopic = config.get("lambdas:deli:topic");
 	const kafkaClientId = config.get("scribe:kafkaClientId");
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
@@ -54,6 +55,8 @@ export async function scribeCreate(
 	const verifyLastOpPersistence =
 		(config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
 	const transientTenants = config.get("shared:transientTenants") as string[];
+	const disableTransientTenantFiltering =
+		(config.get("scribe:disableTransientTenantFiltering") as boolean) ?? true;
 	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled") as boolean;
 	const restartOnCheckpointFailure =
 		(config.get("scribe:restartOnCheckpointFailure") as boolean) ?? true;
@@ -131,6 +134,7 @@ export async function scribeCreate(
 		kafkaReplicationFactor,
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
+		eventHubConnString,
 	);
 
 	const externalOrdererUrl = config.get("worker:serverUrl");
@@ -159,6 +163,7 @@ export async function scribeCreate(
 		getDeltasViaAlfred,
 		verifyLastOpPersistence,
 		transientTenants,
+		disableTransientTenantFiltering,
 		checkpointService,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -13,7 +13,6 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
-	ensureFluidResolvedUrl,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
@@ -28,6 +27,8 @@ import {
 	SharingLinkRole,
 	ShareLinkTypes,
 	ISharingLinkKind,
+	ISocketStorageDiscovery,
+	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
@@ -40,6 +41,7 @@ import {
 	toInstrumentedOdspTokenFetcher,
 	IExistingFileInfo,
 	isNewFileInfo,
+	getJoinSessionCacheKey,
 } from "./odspUtils";
 
 /**
@@ -49,12 +51,34 @@ import {
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore
+	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
+{
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
 	public get snapshotPrefetchResultCache() {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
+
+	public get IRelaySessionAwareDriverFactory() {
+		return this;
+	}
+
+	/**
+	 * This function would return info about relay service session only if this factory established (or attempted to
+	 * establish) connection very recently. Otherwise, it will return undefined.
+	 * @param resolvedUrl - resolved url for container
+	 * @returns - Current join session response stored in cache. Undefined if not present.
+	 */
+	public async getRelayServiceSessionInfo(
+		resolvedUrl: IResolvedUrl,
+	): Promise<ISocketStorageDiscovery | undefined> {
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
+			getJoinSessionCacheKey(odspResolvedUrl),
+		);
+		return joinSessionResponse?.joinSessionResponse;
 	}
 
 	public async createContainer(
@@ -63,8 +87,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(createNewResolvedUrl);
-
 		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,

@@ -2,52 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import {
-	AsyncGenerator,
-	makeRandom,
-	performFuzzActionsAsync,
-	SaveInfo,
-} from "@fluid-internal/stochastic-test-utils";
-import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils";
-import {
-	FuzzTestState,
-	makeOpGenerator,
-	makeOpGeneratorFromFilePath,
-	EditGeneratorOpWeights,
-} from "./fuzzEditGenerators";
-import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
+import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { fuzzReducer } from "./fuzzEditReducers";
+import { onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
-	seed: number,
-	saveInfo?: SaveInfo,
-): Promise<FuzzTestState> {
-	const random = makeRandom(seed);
-	const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-	await provider.ensureSynchronized();
-
-	const initialState: FuzzTestState = {
-		random,
-		trees: provider.trees,
-		testTreeProvider: provider,
-		numberOfEdits: 0,
-	};
-	await initialState.testTreeProvider?.ensureSynchronized();
-
-	const finalState = await performFuzzActionsAsync(
-		generator,
-		fuzzReducer,
-		initialState,
-		saveInfo,
-	);
-	await finalState.testTreeProvider?.ensureSynchronized();
-	checkTreesAreSynchronized(finalState.trees);
-	return finalState;
-}
+const baseOptions = {
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	reconnectProbability: 0.5,
+};
 
 /**
  * Fuzz tests in this suite are meant to exercise as much of the SharedTree code as possible and do so in the most
@@ -60,33 +30,30 @@ export async function performFuzzActions(
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		setPayload: 1,
-	};
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
+	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
 	describe("Everything", () => {
-		runFuzzBatch(
-			makeOpGenerator,
-			performFuzzActions,
-			opsPerRun,
-			runsPerBatch,
-			random,
-			editGeneratorOpWeights,
-		);
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: validateTreeConsistency,
+		};
+		const options = {
+			...baseOptions,
+			defaultTestCount: runsPerBatch,
+		};
+		createDDSFuzzSuite(model, options);
 	});
-});
-
-describe.skip("Re-run form ops saved on file", () => {
-	// For using saved operations set the value of the runSeed used to saved the ops in the file.
-	const runSeed = 0;
-	const filepath = path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`);
-	it(`with seed ${runSeed}`, async () => {
-		await performFuzzActions(await makeOpGeneratorFromFilePath(filepath), runSeed);
-	}).timeout(20000);
 });

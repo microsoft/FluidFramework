@@ -314,9 +314,16 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 
 	const { context, releaseGroup, releaseVersion, shouldCheckBranch } = data;
 	assert(context !== undefined, "Context is undefined.");
-	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	if (!isReleaseGroup(releaseGroup)) {
+		// must be a package
+		assert(
+			context.fullPackageMap.has(releaseGroup),
+			`Package ${releaseGroup} not found in context.`,
+		);
+	}
+
 	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
 	if (shouldCheckBranch) {

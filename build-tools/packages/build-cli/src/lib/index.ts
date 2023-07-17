@@ -15,6 +15,7 @@ export {
 } from "./branches";
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
+export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
@@ -30,7 +31,7 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
-export { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "./github";
+export { createPullRequest, pullRequestExists, pullRequestInfo } from "./github";
 export {
 	getRanges,
 	PackageVersionList,

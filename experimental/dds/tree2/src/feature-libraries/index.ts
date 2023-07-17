@@ -2,16 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export {
-	DefaultChangeset,
-	DefaultChangeFamily,
-	defaultChangeFamily,
-	DefaultEditBuilder,
-	IDefaultEditBuilder,
-	ValueFieldEditBuilder,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-} from "./defaultChangeFamily";
+
 export {
 	EditableField,
 	EditableTree,
@@ -31,6 +22,41 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	localNodeKeySymbol,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
@@ -52,6 +78,8 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
+	FieldGenerator,
+	TreeDataContext,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -59,7 +87,7 @@ export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
-export { getSchemaString } from "./schemaIndexFormat";
+export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,
@@ -73,20 +101,16 @@ export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
-
 export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
-	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -109,13 +133,18 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	ValueConstraint,
-	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
 	SchemaCollection,
 	IFieldSchema,
 	ITreeSchema,
+	Sourced,
+	NodeExistsConstraint,
+	NodeExistenceState,
+	BrandedFieldKind,
+} from "./modular-schema";
+
+export {
 	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
@@ -125,10 +154,9 @@ export {
 	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	Sourced,
-	NodeExistsConstraint,
-	NodeExistenceStateChange,
-} from "./modular-schema";
+	LazyTreeSchema,
+	InternalTypedSchemaTypes,
+} from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -139,20 +167,38 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
-
-export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export {
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	StableNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
+} from "./node-key";
 
 export {
 	FieldKinds,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
-} from "./defaultFieldKinds";
+	DefaultChangeset,
+	DefaultChangeFamily,
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+	SequenceFieldEditBuilder,
+	defaultSchemaPolicy,
+	emptyField,
+	neverField,
+	neverTree,
+} from "./default-field-kinds";
 
 export {
 	UntypedField,

@@ -13,6 +13,7 @@
 		"globalDbEnabled": false,
 		"expireAfterSeconds": -1,
 		"createCosmosDBIndexes": false,
+		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
 		"offlineWindowMs": 86400000,
 		"softDeletionEnabled": false,
@@ -41,7 +42,8 @@
 			"rdkafkaAutomaticConsume": true,
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
-		}
+		},
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -52,7 +54,9 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"kafkaCheckpointOnReprocessingOp": false
+		"checkpointsTTLInSeconds": 864000,
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
 	},
 	"apiCounters": {
 		"fetchTenantKeyMetricMs": 60000
@@ -143,7 +147,8 @@
 		},
 		"getDeltasViaAlfred": true,
 		"verifyLastOpPersistence": false,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true
 	},
 	"system": {
 		"httpServer": {
@@ -232,22 +237,38 @@
 	"redis": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -315,6 +336,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }

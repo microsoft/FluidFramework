@@ -8,7 +8,7 @@ import * as semver from "semver";
 
 import { FileHashCache } from "../common/fileHashCache";
 import { defaultLogger } from "../common/logging";
-import { Package, Packages } from "../common/npmPackage";
+import { Package } from "../common/npmPackage";
 import { Timer } from "../common/timer";
 import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
@@ -23,7 +23,7 @@ import {
 import registerDebug from "debug";
 
 const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
-const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { log } = defaultLogger;
@@ -53,6 +53,7 @@ class TaskStats {
 	public leafUpToDateCount = 0;
 	public leafBuiltCount = 0;
 	public leafExecTimeTotal = 0;
+	public leafQueueWaitTimeTotal = 0;
 }
 
 class BuildContext {
@@ -208,9 +209,45 @@ export class BuildPackage {
 		return dependentTasks;
 	}
 
+	public finalizeDependentTasks() {
+		// Set up the dependencies for "before"
+		this.tasks.forEach((task) => {
+			if (task.taskName === undefined) {
+				return;
+			}
+			const taskConfig = this.taskDefinitions[task.taskName];
+			if (taskConfig === undefined) {
+				return;
+			}
+			if (taskConfig.before.includes("*")) {
+				this.tasks.forEach((depTask) => {
+					if (depTask !== task) {
+						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						depTask.dependentTasks!.push(task);
+					}
+				});
+			} else {
+				for (const dep of taskConfig.before) {
+					const depTask = this.tasks.get(dep);
+					if (depTask === undefined) {
+						continue;
+					}
+					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					depTask.dependentTasks!.push(task);
+				}
+			}
+		});
+	}
+
 	public initializeDependentLeafTasks() {
 		this.tasks.forEach((task) => {
 			task.initializeDependentLeafTasks();
+		});
+	}
+
+	public initializeWeight() {
+		this.tasks.forEach((task) => {
+			task.initializeWeight();
 		});
 	}
 
@@ -242,6 +279,14 @@ export class BuildPackage {
 			}
 		}
 		return this.buildP;
+	}
+
+	public async getLockFileHash() {
+		const lockfile = this.pkg.getLockFilePath();
+		if (lockfile) {
+			return this.buildContext.fileHashCache.getFileHash(lockfile);
+		}
+		throw new Error("Lock file not found");
 	}
 }
 
@@ -305,26 +350,25 @@ export class BuildGraph {
 		this.buildContext.fileHashCache.clear();
 		const q = Task.createTaskQueue();
 		const p: Promise<BuildResult>[] = [];
+		let hasError = false;
+		q.error((err, task) => {
+			console.error(
+				`${task.task.nameColored}: Internal uncaught exception: ${err}\n${err.stack}`,
+			);
+			hasError = true;
+		});
 		try {
 			this.buildPackages.forEach((node) => {
 				p.push(node.build(q));
 			});
-
+			await q.drain();
+			if (hasError) {
+				return BuildResult.Failed;
+			}
 			return summarizeBuildResult(await Promise.all(p));
 		} finally {
 			this.buildContext.workerPool?.reset();
 		}
-	}
-
-	public async clean() {
-		const cleanPackages: Package[] = [];
-		this.buildPackages.forEach((node) => {
-			if (options.matchedOnly === true && !node.pkg.matched) {
-				return;
-			}
-			cleanPackages.push(node.pkg);
-		});
-		return Packages.clean(cleanPackages, true);
 	}
 
 	public get numSkippedTasks(): number {
@@ -333,6 +377,10 @@ export class BuildGraph {
 
 	public get totalElapsedTime(): number {
 		return this.buildContext.taskStats.leafExecTimeTotal;
+	}
+
+	public get totalQueueWaitTime(): number {
+		return this.buildContext.taskStats.leafQueueWaitTimeTotal;
 	}
 
 	public get taskFailureSummary(): string {
@@ -477,9 +525,21 @@ export class BuildGraph {
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
+			node.finalizeDependentTasks();
+		});
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
 			node.initializeDependentLeafTasks();
 		});
 
 		traceGraph("dependent task initialized");
+
+		// All the task has been created, initialize the dependent tasks
+		this.buildPackages.forEach((node) => {
+			node.initializeWeight();
+		});
+
+		traceGraph("task weight initialized");
 	}
 }

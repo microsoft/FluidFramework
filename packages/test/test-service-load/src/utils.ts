@@ -11,8 +11,9 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -213,7 +214,7 @@ export async function initialize(
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.close();
+	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

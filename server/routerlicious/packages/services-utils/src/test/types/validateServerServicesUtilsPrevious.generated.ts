@@ -35,6 +35,7 @@ declare function get_current_ClassDeclaration_DummyTokenRevocationManager():
 declare function use_old_ClassDeclaration_DummyTokenRevocationManager(
     use: TypeOnly<old.DummyTokenRevocationManager>);
 use_old_ClassDeclaration_DummyTokenRevocationManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DummyTokenRevocationManager());
 
 /*

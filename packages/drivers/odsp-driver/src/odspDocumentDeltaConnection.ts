@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IConnect,
@@ -59,7 +63,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLogger) {
+	public static find(key: string, logger: ITelemetryLoggerExt) {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -239,7 +243,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLogger,
+		telemetryLogger: ITelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
@@ -267,7 +271,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-
+		const connectionId = uuid();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
@@ -276,7 +280,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
 			driverVersion: pkgVersion,
-			nonce: uuid(),
+			nonce: connectionId,
 			epoch: epochTracker.fluidEpoch,
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
@@ -293,6 +297,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			socketReference,
 			telemetryLogger,
 			enableMultiplexing,
+			connectionId,
 		);
 
 		try {
@@ -355,7 +360,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): SocketReference {
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
@@ -386,10 +391,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
+		connectionId?: string,
 	) {
-		super(socket, documentId, logger, false, uuid());
+		super(socket, documentId, logger, false, connectionId);
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -592,7 +598,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout);
+		await super.initialize(connectMessage, timeout).finally(() => {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptInfo",
+				...this.getConnectionDetailsProps(),
+			});
+		});
 	}
 
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {

@@ -4,11 +4,10 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
@@ -43,6 +42,7 @@ export async function exportFile(
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -71,6 +71,7 @@ export async function exportFile(
 						logger,
 						options,
 						timeout,
+						disableNetworkFetch,
 					),
 				);
 
@@ -93,11 +94,18 @@ export async function exportFile(
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
+	disableNetworkFetch: boolean = false,
 ): Promise<string> {
 	const fn = async () => {
+		if (disableNetworkFetch) {
+			global.fetch = async () => {
+				throw new Error("Network fetch is not allowed");
+			};
+		}
+
 		const loader = new Loader({
 			urlResolver: new FakeUrlResolver(),
 			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
@@ -114,9 +122,11 @@ export async function createContainerAndExecute(
 		});
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			const result = await fluidFileConverter.execute(container, options);
-			container.close();
-			return result;
+			try {
+				return await fluidFileConverter.execute(container, options);
+			} finally {
+				container.dispose();
+			}
 		});
 	};
 

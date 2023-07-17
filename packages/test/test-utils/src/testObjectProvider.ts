@@ -11,23 +11,22 @@ import {
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
-	ITelemetryGenericEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
-} from "@fluidframework/common-definitions";
-import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryGenericEvent,
+	ITelemetryBaseLogger,
+	ITelemetryBaseEvent,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -146,8 +145,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();
@@ -499,7 +497,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
+	public async ensureSynchronized(): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized();
 	}
 

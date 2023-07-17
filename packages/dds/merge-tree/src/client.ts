@@ -13,12 +13,12 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
+import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
@@ -60,7 +60,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { MergeTree, getSlideToSegoff } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
@@ -107,7 +107,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
-		public readonly logger: ITelemetryLogger,
+		public readonly logger: ITelemetryLoggerExt,
 		options?: PropertySet,
 	) {
 		super();
@@ -708,11 +708,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-		const NACKedSegmentGroup = this._mergeTree.pendingSegments.shift()?.data;
+		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
-			0x034 /* "Segment group not at head of merge tree pending queue" */,
+			0x034 /* "Segment group not at head of pending rebase queue" */,
 		);
+		if (this.pendingRebase?.empty) {
+			this.pendingRebase = undefined;
+		}
 
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -906,6 +909,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private lastNormalizationRefSeq = 0;
+
+	private pendingRebase: List<SegmentGroup> | undefined;
 	/**
 	 * Given an pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
@@ -916,6 +921,27 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		resetOp: IMergeTreeOp,
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
+		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
+			let firstGroup: SegmentGroup;
+			if (Array.isArray(segmentGroup)) {
+				if (segmentGroup.length === 0) {
+					// sometimes we rebase to an empty op
+					return createGroupOp();
+				}
+				firstGroup = segmentGroup[0];
+			} else {
+				firstGroup = segmentGroup;
+			}
+			const firstGroupNode = this._mergeTree.pendingSegments.find(
+				(node) => node.data === firstGroup,
+			);
+			assert(
+				firstGroupNode !== undefined,
+				0x70e /* segment group must exist in pending list */,
+			);
+			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
+		}
+
 		const rebaseTo = this.getCollabWindow().currentSeq;
 		if (rebaseTo !== this.lastNormalizationRefSeq) {
 			this.emit("normalize", this);
@@ -1079,21 +1105,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Returns the position to slide a reference to if a slide is required.
 	 * @param segoff - The segment and offset to slide from
 	 * @returns - segment and offset to slide the reference to
+	 * @deprecated Use getSlideToSegoff function instead.
 	 */
 	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		if (segoff.segment === undefined) {
-			return segoff;
-		}
-		const segment = this._mergeTree._getSlideToSegment(segoff.segment);
-		if (segment === segoff.segment) {
-			return segoff;
-		}
-		const offset =
-			segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
-		return {
-			segment,
-			offset,
-		};
+		return getSlideToSegoff(segoff);
 	}
 
 	getPropertiesAtPosition(pos: number) {

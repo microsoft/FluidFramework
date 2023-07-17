@@ -11,7 +11,11 @@ import {
 	IResourcesFactory,
 	IRunnerFactory,
 } from "@fluidframework/server-services-core";
-import { Lumberjack, LumberEventName } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	LumberEventName,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -36,15 +40,34 @@ export async function run<T extends IResources>(
 			logger?.error(`Could not stop runner due to error: ${innerError}`);
 			Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
 			error.forceKill = true;
+			error.runnerStopException = innerError;
 		});
-		return Promise.reject(error);
+		throw error;
 	});
 
 	process.on("SIGTERM", () => {
 		Lumberjack.info(`Received SIGTERM request to stop the service.`);
-		runner.stop().catch((error) => {
+		runner.stop("sigterm").catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
+		});
+	});
+
+	process.on("uncaughtException", (uncaughtException, origin) => {
+		Lumberjack.error(
+			`Encountered uncaughtException while running service`,
+			{ origin },
+			uncaughtException,
+		);
+		runner.stop("uncaughtException", uncaughtException).catch((innerError) => {
+			logger?.error(
+				`Could not stop runner after uncaughtException event due to error: ${innerError}`,
+			);
+			Lumberjack.error(
+				`Could not stop runner after uncaughtException event due to error`,
+				undefined,
+				innerError,
+			);
 		});
 	});
 
@@ -82,15 +105,18 @@ export function runService<T extends IResources>(
 	const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
 	const runningP = run(config, resourceFactory, runnerFactory, logger);
 
-	runningP.then(
-		async () => {
+	runningP
+		.then(async () => {
 			await executeAndWait(() => {
 				logger?.info("Exiting");
 				runnerMetric.success(`${group} exiting.`);
 			}, waitInMs);
 			process.exit(0);
-		},
-		async (error) => {
+		})
+		.catch(async (error) => {
+			if (error.uncaughtException) {
+				runnerMetric.setProperty(CommonProperties.restartReason, "uncaughtException");
+			}
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
 				logger?.error(serializeError(error));
@@ -101,8 +127,7 @@ export function runService<T extends IResources>(
 			} else {
 				process.exit(1);
 			}
-		},
-	);
+		});
 }
 
 /*

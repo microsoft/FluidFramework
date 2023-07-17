@@ -5,7 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
+import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	AnchorSet,
 	assertIsRevisionTag,
@@ -16,7 +16,6 @@ import {
 	GraphCommit,
 	IRepairDataStoreProvider,
 	mintCommit,
-	rebaseBranch,
 	rebaseChange,
 	RevisionTag,
 	SessionId,
@@ -24,22 +23,8 @@ import {
 	UndoRedoManager,
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
-import { getChangeReplaceType, SharedTreeBranch } from "./branch";
-
-export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-/**
- * Contains a single change to the `SharedTree` and associated metadata
- */
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {
-	/** An identifier representing the session/user/client that made this commit */
-	readonly sessionId: SessionId;
-}
-/**
- * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
- */
-export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
-	sequenceNumber: SeqNumber;
-}
+import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
+import { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
@@ -83,7 +68,9 @@ export class EditManager<
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly peerLocalBranches: Map<SessionId, GraphCommit<TChangeset>> = new Map();
+	// TODO:#4593: Add test to ensure that peer branches are never initialized with a repairDataStoreProvider
+	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
+		new Map();
 
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
@@ -131,7 +118,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -139,15 +126,18 @@ export class EditManager<
 			revision: nullRevisionTag,
 			change: changeFamily.rebaser.compose([]),
 		};
-		this.localBranchUndoRedoManager = UndoRedoManager.create(
-			repairDataStoreProvider,
-			changeFamily,
-		);
+		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
+		this.trunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			repairDataStoreProvider.clone(),
+			this.trunkUndoRedoManager,
+		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
+			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
 			anchors,
 		);
@@ -157,8 +147,8 @@ export class EditManager<
 		// never evict the head. That sounds like a good thing, but because the trunk has a privileged
 		// relationship with the local branch (the local branch doesn't undergo normal rebasing), we can
 		// actually safely evict that last commit (assuming there are no other outstanding branches).
-		// TODO: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
-		this.localBranch.on("fork", (fork) => this.registerBranch(fork));
+		// TODO:#4918: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
+		onForkTransitive(this.localBranch, (fork) => this.registerBranch(fork));
 	}
 
 	/**
@@ -197,8 +187,6 @@ export class EditManager<
 
 		// Record the sequence number of the branch's base commit on the trunk
 		const trunkBase = { sequenceNumber: trackBranch(branch) };
-		// Whenever the branch forks, register the new fork
-		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offRebase = branch.on("change", (args) => {
 			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
@@ -210,7 +198,6 @@ export class EditManager<
 		const offDispose = branch.on("dispose", () => {
 			untrackBranch(branch, trunkBase.sequenceNumber);
 			this.trimTrunk();
-			offFork();
 			offRebase();
 			offDispose();
 		});
@@ -256,19 +243,13 @@ export class EditManager<
 		// The new tail of the trunk is the commit at or just past the new minimum trunk sequence number
 		const searchResult = this.sequenceMap.getPairOrNextHigher(trunkTailSearchKey);
 		if (searchResult !== undefined) {
-			const [_, newTrunkTail] = searchResult;
+			const [, newTrunkTail] = searchResult;
 			// Don't do any work if the commit found by the search is already the tail of the trunk
 			if (newTrunkTail.parent !== this.trunkBase) {
 				// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 				// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
-				for (const [sessionId, branch] of this.peerLocalBranches) {
-					const [rebasedBranch] = rebaseBranch(
-						this.changeFamily.rebaser,
-						branch,
-						newTrunkTail,
-						this.trunk.getHead(),
-					);
-					this.peerLocalBranches.set(sessionId, rebasedBranch);
+				for (const [, branch] of this.peerLocalBranches) {
+					branch.rebaseOnto(this.trunk, newTrunkTail);
 				}
 
 				// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
@@ -299,8 +280,12 @@ export class EditManager<
 		} else {
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
-				this.trunkBranches.isEmpty,
-				0x672 /* Expected no registered branches when clearing trunk */,
+				this.trunkBranches.isEmpty ||
+					// This handles the case when there are branches but they are already based off of the origin commit.
+					// TODO:#4918: Investigate if we can handle this case more gracefully by including the origin commit in `sequenceMap`
+					(this.trunkBranches.size === 1 &&
+						this.trunkBranches.minKey() === minimumPossibleSequenceNumber),
+				0x711 /* Expected no outstanding branches when clearing trunk */,
 			);
 			this.trunk.setHead(this.trunkBase);
 			this.sequenceMap.clear();
@@ -349,7 +334,7 @@ export class EditManager<
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
-					findCommonAncestor([branch, branchPath], this.trunk.getHead()) ??
+					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
 					fail("Expected branch to be based on trunk");
 
 				return [
@@ -397,7 +382,10 @@ export class EditManager<
 				findAncestor(this.trunk.getHead(), (r) => r.revision === branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
 
-			this.peerLocalBranches.set(sessionId, branch.commits.reduce(mintCommit, commit));
+			this.peerLocalBranches.set(
+				sessionId,
+				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+			);
 		}
 	}
 
@@ -417,11 +405,15 @@ export class EditManager<
 
 	/**
 	 * Needs to be called after a summary is loaded.
-	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
+	 * local's after a summary load.
 	 */
 	public afterSummaryLoad(): void {
-		this.trunkUndoRedoManager.repairDataStoreProvider =
-			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
+		assert(
+			this.localBranch.repairDataStoreProvider !== undefined,
+			0x6cb /* Local branch must maintain repair data */,
+		);
+		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
@@ -436,7 +428,7 @@ export class EditManager<
 			);
 			assert(
 				firstLocalCommit !== undefined,
-				"Received a sequenced change from the local session despite having no local changes",
+				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 			);
 
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
@@ -455,35 +447,34 @@ export class EditManager<
 
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-		const [rebasedBranch] = rebaseBranch(
-			this.changeFamily.rebaser,
-			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
-			baseRevisionInTrunk,
-			this.trunk.getHead(),
+		const peerLocalBranch = getOrCreate(
+			this.peerLocalBranches,
+			newCommit.sessionId,
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
-		if (rebasedBranch === this.trunk.getHead()) {
+		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
 			this.pushToTrunk(sequenceNumber, newCommit);
-			this.peerLocalBranches.set(newCommit.sessionId, this.trunk.getHead());
+			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
+			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
 			const newChangeFullyRebased = rebaseChange(
 				this.changeFamily.rebaser,
 				newCommit.change,
-				rebasedBranch,
+				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
-				this.localBranch.repairStore,
 			);
 
-			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
-
+			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushToTrunk(sequenceNumber, {
 				...newCommit,
 				change: newChangeFullyRebased,
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
+		this.localBranch.rebaseOnto(this.trunk);
 	}
 
 	public findLocalCommit(
@@ -512,21 +503,11 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-			this.changeFamily.intoDelta(commit.change),
-		);
+		this.trunk.repairDataStoreProvider?.applyChange(commit.change);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);
 	}
-}
-
-/**
- * A branch off of the trunk for use in summaries
- */
-export interface SummarySessionBranch<TChangeset> {
-	readonly base: RevisionTag;
-	readonly commits: Commit<TChangeset>[];
 }
 
 /**

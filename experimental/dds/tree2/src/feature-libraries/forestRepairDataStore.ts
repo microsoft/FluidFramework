@@ -22,12 +22,10 @@ import {
 	RevisionTag,
 	SparseNode,
 	UpPath,
-	Value,
 } from "../core";
 import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
-	value?: Map<RevisionTag, Value>;
 	node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
@@ -35,20 +33,24 @@ type RepairDataNode = SparseNode<RepairData | undefined>;
 const repairDataFactory = (): RepairData => ({});
 const undefinedFactory = (): undefined => undefined;
 
-export class ForestRepairDataStore implements RepairDataStore {
+export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	private readonly root: RepairDataNode;
 
-	public constructor(private readonly forest: IForestSubscription) {
+	public constructor(
+		private readonly forest: IForestSubscription,
+		private readonly intoDelta: (change: TChange) => Delta.Root,
+	) {
 		this.root = new SparseNode<RepairData | undefined>(EmptyKey, 0, undefined, undefined);
 	}
 
-	public capture(change: Delta.Root, revision: RevisionTag): void {
+	public capture(change: TChange, revision: RevisionTag): void {
 		/**
 		 * Cursor used to traverse the forest and build fetch the repair data.
 		 * Note that the cursor is implicitly captured by the functions below, which have requirements for the cursor.
 		 * Calling those functions requires that the cursor be in the appropriate state.
 		 */
 		const cursor = this.forest.allocateCursor();
+		const delta = this.intoDelta(change);
 
 		/**
 		 * Visits the node `cursor` is positioned at.
@@ -72,9 +74,9 @@ export class ForestRepairDataStore implements RepairDataStore {
 		 * Visits the field `cursor` is positioned at.
 		 * Restores the `cursor` to that same position before exiting.
 		 */
-		function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
+		function visitField(field: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
 			let index = 0;
-			for (const mark of delta) {
+			for (const mark of field) {
 				if (typeof mark === "number") {
 					// Untouched nodes
 					index += mark;
@@ -115,19 +117,6 @@ export class ForestRepairDataStore implements RepairDataStore {
 		 * Restores the `cursor` to that same position before exiting.
 		 */
 		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
-			// Note that the check below returns true for properties that are present on the object even if they
-			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
-			// `undefined` as opposed to leaving the value unchanged.
-			if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-				if (node.data === undefined) {
-					node.data = repairDataFactory();
-				}
-				const value = cursor.value;
-				if (node.data.value === undefined) {
-					node.data.value = new Map();
-				}
-				node.data.value.set(revision, value);
-			}
 			if (modify.fields !== undefined) {
 				visitFieldMarks(modify.fields, node);
 			}
@@ -160,7 +149,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
-		visitFieldMarks(change, this.root);
+		visitFieldMarks(delta, this.root);
 		cursor.free();
 	}
 
@@ -194,47 +183,42 @@ export class ForestRepairDataStore implements RepairDataStore {
 			return cursor;
 		});
 	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		const data = getDescendant(this.root, path).data;
-		const valueMap = data?.value;
-		assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
-		return valueMap.get(revision);
-	}
 }
 
-export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
+export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
 	private frozenForest: IForestSubscription | undefined;
 
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly storedSchema: InMemoryStoredSchemaRepository,
+		private readonly intoDelta: (change: TChange) => Delta.Root,
 	) {}
 
 	public freeze(): void {
 		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
 	}
 
-	public applyDelta(change: Delta.Root): void {
+	public applyChange(change: TChange): void {
 		if (this.frozenForest === undefined) {
-			this.forest.applyDelta(change);
+			this.forest.applyDelta(this.intoDelta(change));
 		}
 	}
 
-	public createRepairData(): ForestRepairDataStore {
+	public createRepairData(): ForestRepairDataStore<TChange> {
 		const repairDataStore =
 			this.frozenForest !== undefined
-				? new ForestRepairDataStore(this.frozenForest)
-				: new ForestRepairDataStore(this.forest);
+				? new ForestRepairDataStore(this.frozenForest, this.intoDelta)
+				: new ForestRepairDataStore(this.forest, this.intoDelta);
 		this.frozenForest = undefined;
 		return repairDataStore;
 	}
 
-	public clone(forest?: IEditableForest): ForestRepairDataStoreProvider {
+	public clone(forest?: IEditableForest): ForestRepairDataStoreProvider<TChange> {
 		const storedSchema = this.storedSchema.clone();
 		return new ForestRepairDataStoreProvider(
 			forest ?? this.forest.clone(storedSchema, new AnchorSet()),
 			storedSchema,
+			this.intoDelta,
 		);
 	}
 }

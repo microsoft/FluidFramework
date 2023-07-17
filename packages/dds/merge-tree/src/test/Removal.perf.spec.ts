@@ -8,7 +8,6 @@ import { MergeTreeDeltaType } from "../ops";
 import { appendToMergeTreeDeltaRevertibles, MergeTreeDeltaRevertible } from "../revertibles";
 import { markRangeRemoved } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
-import { createRevertDriver } from "./testClient";
 
 describe("MergeTree remove", () => {
 	let summary;
@@ -80,11 +79,10 @@ describe("MergeTree remove", () => {
 			},
 			benchmarkFnAsync: async () => {
 				const str = await loadSnapshot(summary);
-				const driver = createRevertDriver(str);
 
 				const revertibles: MergeTreeDeltaRevertible[] = [];
 				str.on("delta", (_op, delta) => {
-					appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
+					appendToMergeTreeDeltaRevertibles(delta, revertibles);
 				});
 
 				const op = str.removeRangeLocal(0, length - 1);

@@ -5,17 +5,20 @@
 
 import {
 	IDisposable,
-	ITelemetryLogger,
+	FluidObject,
+	IRequest,
+	IResponse,
+	IFluidHandle,
 	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -59,6 +62,7 @@ import {
 import {
 	ChildLogger,
 	generateStack,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -162,7 +166,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.clientDetails;
 	}
 
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this._containerRuntime.logger;
 	}
 
@@ -393,7 +397,7 @@ export abstract class FluidDataStoreContext
 					packageName: packagePathToTelemetryProperty(this.pkg),
 				});
 				this.channelDeferred?.reject(errorWrapped);
-				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
 		}
 		return this.channelDeferred.promise;
@@ -783,7 +787,7 @@ export abstract class FluidDataStoreContext
 			this.channelDeferred.resolve(this.channel);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
 					fluidDataStoreId: {

@@ -5,7 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -16,8 +16,9 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Lazy, LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -176,7 +177,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -289,7 +290,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,

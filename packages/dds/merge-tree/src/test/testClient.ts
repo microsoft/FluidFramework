@@ -25,11 +25,10 @@ import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceTy
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
-import { MergeTree } from "../mergeTree";
+import { getSlideToSegoff, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { LocalReferencePosition } from "../localReference";
 import { DetachedReferencePosition } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
 import { TestSerializer } from "./testSerializer";
@@ -410,7 +409,7 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
 		if (segoff.segment === undefined || segoff.offset === undefined) {
 			return DetachedReferencePosition;
 		}
@@ -527,14 +526,9 @@ export type TestClientRevertibleDriver = MergeTreeRevertibleDriver &
 
 export const createRevertDriver = (client: TestClient): TestClientRevertibleDriver => {
 	return {
-		createLocalReferencePosition: client.createLocalReferencePosition.bind(client),
-
 		removeRange(start: number, end: number) {
 			const op = client.removeRangeLocal(start, end);
 			this.submitOpCallback?.(op);
-		},
-		getPosition(segment: ISegment): number {
-			return client.getPosition(segment);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
 			const op = client.annotateRangeLocal(start, end, props, undefined);
@@ -544,10 +538,6 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			const op = client.insertSegmentLocal(pos, client.specToSegment(spec));
 			this.submitOpCallback?.(op);
 		},
-		localReferencePositionToPosition(lref: LocalReferencePosition): number {
-			return client.localReferencePositionToPosition(lref);
-		},
-		getContainingSegment: client.getContainingSegment.bind(client),
 	};
 };
 

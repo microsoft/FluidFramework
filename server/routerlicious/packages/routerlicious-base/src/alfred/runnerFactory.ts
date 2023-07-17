@@ -17,7 +17,7 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -68,7 +68,7 @@ export class OrdererManager implements core.IOrdererManager {
 
 		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
 			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			return Promise.reject(new Error("Invalid ordering service endpoint"));
+			throw new Error("Invalid ordering service endpoint");
 		}
 
 		switch (tenant.orderer.type) {
@@ -111,7 +111,8 @@ export class AlfredResources implements core.IResources {
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
 		public socketTracker?: core.IWebSocketTracker,
-		public tokenManager?: core.ITokenRevocationManager,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
+		public revokedTokenChecker?: core.IRevokedTokenChecker,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -127,8 +128,10 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
+		const tokenRevocationManagerP = this.tokenRevocationManager
+			? this.tokenRevocationManager.close()
+			: Promise.resolve();
+		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
 	}
 }
 
@@ -148,6 +151,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -160,6 +164,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaReplicationFactor,
 			kafkaMaxBatchSize,
 			kafkaSslCACertFilePath,
+			eventHubConnString,
 		);
 
 		const redisConfig = config.get("redis");
@@ -172,7 +177,20 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			host: redisConfig2.host,
 			port: redisConfig2.port,
 			password: redisConfig2.pass,
+			connectTimeout: redisConfig2.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfig2.enableOfflineQueue,
 		};
+		if (redisConfig2.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptions2.enableAutoPipelining = true;
+			redisOptions2.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfig2.tls) {
 			redisOptions2.tls = {
 				servername: redisConfig2.host,
@@ -183,10 +201,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis(redisOptions2);
+		const redisClient = new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache = new Redis(redisOptions2);
+		const redisClientForJwtCache = new Redis.default(redisOptions2);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -234,6 +252,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			false,
 		);
 
+		const defaultTTLInSeconds = 864000;
+		const checkpointsTTLSeconds =
+			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
+		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+
 		// Foreman agent uploader does not run locally.
 		// TODO: Make agent uploader run locally.
 		const foremanConfig = config.get("foreman");
@@ -261,7 +284,20 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			host: redisConfigForThrottling.host,
 			port: redisConfigForThrottling.port,
 			password: redisConfigForThrottling.pass,
+			connectTimeout: redisConfigForThrottling.connectTimeout,
+			enableReadyCheck: true,
+			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
+			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
 		};
+		if (redisConfigForThrottling.enableAutoPipelining) {
+			/**
+			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+			 * More info: https://github.com/luin/ioredis#autopipelining
+			 */
+			redisOptionsForThrottling.enableAutoPipelining = true;
+			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
+		}
 		if (redisConfigForThrottling.tls) {
 			redisOptionsForThrottling.tls = {
 				servername: redisConfigForThrottling.host,
@@ -273,7 +309,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -443,13 +479,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				host: redisConfig.host,
 				port: redisConfig.port,
 				password: redisConfig.pass,
+				connectTimeout: redisConfig.connectTimeout,
+				enableReadyCheck: true,
+				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+				enableOfflineQueue: redisConfig.enableOfflineQueue,
 			};
+			if (redisConfig.enableAutoPipelining) {
+				/**
+				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+				 * More info: https://github.com/luin/ioredis#autopipelining
+				 */
+				redisOptions.enableAutoPipelining = true;
+				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
+			}
 			if (redisConfig.tls) {
 				redisOptions.tls = {
 					servername: redisConfig.host,
 				};
 			}
-			const redisClientForLogging = new Redis(redisOptions);
+			const redisClientForLogging = new Redis.default(redisOptions);
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 
@@ -496,13 +545,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
-		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		/**
+		 * Always have a revoked token checker,
+		 * just make sure it rejects existing revoked tokens even with the feature flag disabled
+		 */
+		const revokedTokenChecker: core.IRevokedTokenChecker =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
+		const tokenRevocationEnabled: boolean = utils.getBooleanFromConfig(
+			"tokenRevocation:enable",
+			config,
+		);
 		let socketTracker: core.IWebSocketTracker | undefined;
-		let tokenManager: core.ITokenRevocationManager | undefined;
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
-			socketTracker = new utils.WebSocketTracker();
-			tokenManager = new utils.DummyTokenRevocationManager();
-			await tokenManager.initialize();
+			socketTracker = customizations?.webSocketTracker ?? new utils.WebSocketTracker();
+			tokenRevocationManager =
+				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
+			await tokenRevocationManager.initialize().catch((error) => {
+				// Do NOT crash the service if token revocation feature cannot be initialized properly.
+				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
+			});
 		}
 
 		return new AlfredResources(
@@ -533,7 +595,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			verifyMaxMessageSize,
 			redisCache,
 			socketTracker,
-			tokenManager,
+			tokenRevocationManager,
+			revokedTokenChecker,
 		);
 	}
 }
@@ -565,7 +628,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
 			resources.socketTracker,
-			resources.tokenManager,
+			resources.tokenRevocationManager,
+			resources.revokedTokenChecker,
 		);
 	}
 }

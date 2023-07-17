@@ -12,11 +12,35 @@ import {
 	Table,
 	TableHeader,
 	TableHeaderCell,
+	makeStyles,
 } from "@fluentui/react-components";
 import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
-import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
+import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
+import {
+	clientIdTooltipText,
+	userIdTooltipText,
+	clientModeTooltipText,
+	clientScopesTooltipText,
+} from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
+
+const audienceStateStyle = makeStyles({
+	currentUser: {
+		"backgroundColor": tokens.colorPaletteGreenBackground2,
+		"&:hover": {
+			backgroundColor: tokens.colorPaletteGreenBackground2,
+		},
+	},
+	currentUserHighContrast: {
+		"color": "#FFF",
+		"&:hover": {
+			color: "#FFF",
+			backgroundColor: "#000",
+		},
+	},
+});
 
 /**
  * Represents audience state data filtered to the attributes that will be displayed in the state table.
@@ -34,6 +58,9 @@ export interface AudienceStateTableProps {
  */
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
+
+	const style = audienceStateStyle();
 
 	// Columns for rendering audience state
 	const audienceStateColumns = [
@@ -66,12 +93,18 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "mode" && (
-								<LabelCellLayout icon={<EditRegular />}>
+								<LabelCellLayout
+									icon={<EditRegular />}
+									infoTooltipContent={clientModeTooltipText}
+								>
 									{column.label}
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "scopes" && (
-								<LabelCellLayout icon={<Search12Regular />}>
+								<LabelCellLayout
+									icon={<Search12Regular />}
+									infoTooltipContent={clientScopesTooltipText}
+								>
 									{column.label}
 								</LabelCellLayout>
 							)}
@@ -88,11 +121,13 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 					return (
 						<TableRow
 							key={itemIndex}
-							style={{
-								backgroundColor: isCurrentUser
-									? tokens.colorPaletteGreenBorder1
-									: "",
-							}}
+							className={
+								isCurrentUser
+									? themeInfo.name === ThemeOption.HighContrast
+										? style.currentUserHighContrast
+										: style.currentUser
+									: ""
+							}
 						>
 							<TableCell>
 								{item.clientId}
@@ -104,7 +139,11 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							</TableCell>
 							<TableCell>{item.mode}</TableCell>
 							<TableCell>
-								<span>{item.scopes.join("\n")}</span>
+								<ul>
+									{item.scopes.map((each_scope, index) => (
+										<li key={index}>{each_scope}</li>
+									))}
+								</ul>
 							</TableCell>
 						</TableRow>
 					);

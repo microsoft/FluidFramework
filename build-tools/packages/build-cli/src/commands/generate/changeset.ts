@@ -9,16 +9,23 @@ import chalk from "chalk";
 import humanId from "human-id";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
+import GenerateUpcomingCommand from "./upcoming";
+import { ReleaseGroup } from "../../releaseGroups";
 
+/**
+ * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
+ * the target branch.
+ */
+const BRANCH_PROMPT_LIMIT = 10;
 const DEFAULT_BRANCH = "main";
 const INSTRUCTIONS = `
 ↑/↓: Change selection
 Space: Toggle selection
-a: Toggle all
 Enter: Done`;
 
 /**
@@ -41,7 +48,7 @@ interface Choice {
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
 	static summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
 	static aliases: string[] = [
-		// 'cangesets add' is the changesets cli command.
+		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
 	];
 
@@ -97,10 +104,10 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		changesetPath?: string;
 	}> {
 		const context = await this.getContext();
-		const { all, branch, empty, uiMode } = this.flags;
+		const { all, empty, uiMode } = this.flags;
+		let { branch } = this.flags;
 
 		if (empty) {
-			// TODO: This only works for the root release group (client). Is that OK?
 			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
 			// eslint-disable-next-line @typescript-eslint/no-shadow
 			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
@@ -118,10 +125,31 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		const remote = await repo.getRemote(context.originRemotePartialUrl);
 
 		if (remote === undefined) {
-			// Logs and exits
 			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`, { exit: 1 });
 		}
 		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
+
+		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
+		// undefined because there's a default value for the flag.
+		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
+		if (!usedBranchFlag) {
+			const { packages } = await repo.getChangedSinceRef(branch, remote, context);
+
+			if (packages.length > BRANCH_PROMPT_LIMIT) {
+				const answer = await prompts({
+					type: "select",
+					name: "selectedBranch",
+					message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to the ${branch} branch. Maybe you meant to select a different target branch?`,
+					choices: [
+						{ title: "next", value: "next" },
+						{ title: "main", value: "main" },
+						{ title: "lts", value: "lts" },
+					],
+					initial: branch === "next" ? 0 : branch === "main" ? 1 : 2,
+				});
+				branch = answer.selectedBranch;
+			}
+		}
 
 		const {
 			packages: changedPackages,
@@ -160,9 +188,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 				...rg.packages
 					.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-					.sort((a, b) =>
-						a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-					)
+					.sort((a, b) => packageComparer(a, b, changedPackages))
 					.map((pkg) => {
 						const changed = changedPackages.some((cp) => cp.name === pkg.name);
 						return {
@@ -184,7 +210,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			choices.push({
-				title: changed ? `${pkg.nameColored} ${chalk.red.bold("(changed)")}` : pkg.name,
+				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
 				value: pkg,
 				selected: changed,
 			});
@@ -197,9 +223,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
 						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-						.sort((a, b) =>
-							a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-						)
+						.sort((a, b) => packageComparer(a, b, changedPackages))
 						.map((pkg) => {
 							return {
 								title: pkg.name,
@@ -211,29 +235,60 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 		}
 
-		const response = await prompts({
-			choices: [...choices, { title: " ", heading: true, disabled: true }],
-			instructions: INSTRUCTIONS,
-			message: "Choose which packages to include in the changeset. Type to filter the list.",
-			name: "selectedPackages",
-			optionsPerPage: 5,
-			type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
-			onState: (state: any) => {
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-				if (state.aborted) {
-					process.nextTick(() => this.exit(1));
-				}
+		const questions: prompts.PromptObject[] = [
+			{
+				name: "selectedPackages",
+				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
+				choices: [...choices, { title: " ", heading: true, disabled: true }],
+				instructions: INSTRUCTIONS,
+				message:
+					"Choose which packages to include in the changeset. Type to filter the list.",
+				optionsPerPage: 5,
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			} as any, // Typed as any because the typings don't include the optionsPerPage property.
+			{
+				name: "summary",
+				type: "text",
+				message: "Enter a summary of the change.",
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
 			},
-		});
+			{
+				name: "description",
+				type: "text",
+				message: "Enter a longer description of the change.",
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			},
+		];
 
+		const response = await prompts(questions);
 		const selectedPackages: Package[] = response.selectedPackages;
 		const bumpType = getDefaultBumpTypeForBranch(branch) ?? "minor";
 
 		const newFile = await createChangesetFile(
 			context.gitRepo.resolvedRoot,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
+			`${response.summary.trim()}\n\n${response.description}`,
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
+
+		// Update the UPCOMING.md file
+		await GenerateUpcomingCommand.run(["--releaseGroup", "client", "--releaseType", bumpType]);
+
 		this.logHr();
 		this.log(`Created new changeset: ${chalk.green(changesetPath)}`);
 		return {
@@ -252,7 +307,10 @@ async function createChangesetFile(
 	const changesetID = humanId({ separator: "-", capitalize: false });
 	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
 	const changesetContent = await createChangesetContent(packages, body);
-	await writeFile(changesetPath, changesetContent);
+	await writeFile(
+		changesetPath,
+		prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
+	);
 	return changesetPath;
 }
 
@@ -264,7 +322,7 @@ async function createChangesetContent(
 	for (const [pkg, bump] of packages.entries()) {
 		lines.push(`"${pkg.name}": ${bump}`);
 	}
-	lines.push("---");
+	lines.push("---", "\n");
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;
@@ -276,4 +334,29 @@ function isIncludedByDefault(pkg: Package): boolean {
 	}
 
 	return true;
+}
+
+/**
+ * Compares two packages for sorting purposes. Packages that have changed are sorted first.
+ *
+ * @param a - The first package to compare.
+ * @param b - The second package to compare.
+ * @param changedPackages - An array of changed packages.
+ */
+function packageComparer(a: Package, b: Package, changedPackages: Package[]): number {
+	const aChanged = changedPackages.some((cp) => cp.name === a.name);
+	const bChanged = changedPackages.some((cp) => cp.name === b.name);
+
+	// If a has changed but b hasn't, then a should be sorted earlier.
+	if (aChanged && !bChanged) {
+		return -1;
+	}
+
+	// If a hasn't changed but b has, then b should be sorted earlier.
+	if (!aChanged && bChanged) {
+		return 1;
+	}
+
+	// Otherwise, compare by name.
+	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
 }

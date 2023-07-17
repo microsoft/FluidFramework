@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -38,7 +39,7 @@ import {
 	createSharedTreeView,
 } from "../shared-tree";
 import {
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
@@ -49,6 +50,9 @@ import {
 	mapTreeFromCursor,
 	namedTreeSchema,
 	NodeReviver,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -76,9 +80,11 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
+	TaggedChange,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
+import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities
@@ -196,7 +202,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: SharedTreeFactory = new SharedTreeFactory(),
+		factory: SharedTreeFactory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -217,6 +223,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
+					enableRuntimeIdCompressor: true,
 				},
 			);
 
@@ -339,7 +346,10 @@ export class TestTreeProviderLite {
 	 * provider.processMessages();
 	 * ```
 	 */
-	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+	public constructor(
+		trees = 1,
+		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
@@ -400,6 +410,47 @@ export function spyOnMethod(
 }
 
 /**
+ * @returns `true` iff the given delta has a visible impact on the document tree.
+ */
+export function isDeltaVisible(delta: Delta.MarkList): boolean {
+	for (const mark of delta) {
+		if (typeof mark === "object") {
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.Modify: {
+					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+						return true;
+					}
+					if (mark.fields !== undefined) {
+						for (const field of mark.fields.values()) {
+							if (isDeltaVisible(field)) {
+								return true;
+							}
+						}
+					}
+					break;
+				}
+				case Delta.MarkType.Insert: {
+					if (mark.isTransient !== true) {
+						return true;
+					}
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.Delete:
+					return true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
@@ -429,7 +480,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		private readonly onCreate: (tree: ISharedTree) => void,
 		private readonly onLoad?: (tree: ISharedTree) => void,
 	) {
-		super();
+		super({ jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
@@ -502,6 +553,10 @@ export const fakeTaggedRepair = createFakeRepair(
 export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
+}
+
+export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
 }
 
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
@@ -602,14 +657,17 @@ const testSchema: SchemaData = {
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state: JsonableTree,
+	state?: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-	// Apply an edit to the tree which inserts a node with a value
-	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-	field.insert(0, writeCursor);
+
+	if (state) {
+		// Apply an edit to the tree which inserts a node with a value
+		const writeCursor = singleTextCursor(state);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		field.insert(0, writeCursor);
+	}
 }
 
 export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
@@ -621,10 +679,10 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 	}
 }
 
-export class MockRepairDataStore implements RepairDataStore {
+export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
 
-	public capture(change: Delta.Root, revision: RevisionTag): void {
+	public capture(change: TChange, revision: RevisionTag): void {
 		const existing = this.capturedData.get(revision);
 
 		if (existing === undefined) {
@@ -649,58 +707,105 @@ export class MockRepairDataStore implements RepairDataStore {
 	}
 }
 
-export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+export const mockIntoDelta = (delta: Delta.Root) => delta;
+
+export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
 	public freeze(): void {
 		// Noop
 	}
 
-	public applyDelta(change: Delta.Root): void {
+	public applyChange(change: TChange): void {
 		// Noop
 	}
 
-	public createRepairData(): MockRepairDataStore {
+	public createRepairData(): MockRepairDataStore<TChange> {
 		return new MockRepairDataStore();
 	}
 
-	public clone(): IRepairDataStoreProvider {
+	public clone(): IRepairDataStoreProvider<TChange> {
 		return new MockRepairDataStoreProvider();
 	}
 }
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily);
+	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
 }
+
+export interface EncodingTestData<TDecoded, TEncoded> {
+	/**
+	 * Contains test cases which should round-trip successfully through all persisted formats.
+	 */
+	successes: [name: string, data: TDecoded][];
+	/**
+	 * Contains malformed encoded data which a particular version's codec should fail to decode.
+	 */
+	failures?: { [version: string]: [name: string, data: TEncoded][] };
+}
+
+const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
+ *
+ * TODO:
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded>(
+export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	family: ICodecFamily<TDecoded>,
-	encodingTestData: [name: string, data: TDecoded][],
+	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			for (const [name, data] of encodingTestData) {
-				describe(name, () => {
-					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
-						assert.deepEqual(decoded, data);
-					});
+			describe("can json roundtrip", () => {
+				for (const includeStringification of [false, true]) {
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data] of encodingTestData.successes) {
+								it(name, () => {
+									let encoded = codec.json.encode(data);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = codec.json.decode(encoded);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
+				}
+			});
 
-					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
-						assert.deepEqual(decoded, data);
-					});
-
-					it("binary roundtrip", () => {
+			describe("can binary roundtrip", () => {
+				for (const [name, data] of encodingTestData.successes) {
+					it(name, () => {
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(encoded);
-						assert.deepEqual(decoded, data);
+						assertEquivalent(decoded, data);
 					});
+				}
+			});
+
+			const failureCases = encodingTestData.failures?.[version] ?? [];
+			if (failureCases.length > 0) {
+				describe("rejects malformed data", () => {
+					for (const [name, encodedData] of failureCases) {
+						it(name, () => {
+							assert.throws(() => codec.json.decode(encodedData as JsonCompatible));
+						});
+					}
 				});
 			}
 		});
@@ -723,4 +828,19 @@ export function testChangeReceiver<TChange>(
 	const changes: TChange[] = [];
 	const changeReceiver = (change: TChange) => changes.push(change);
 	return [changeReceiver, () => [...changes]];
+}
+
+export function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<unknown>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
 }

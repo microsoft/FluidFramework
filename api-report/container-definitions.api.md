@@ -11,7 +11,7 @@ import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
@@ -29,8 +29,8 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -115,15 +115,15 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public
+// @public @deprecated
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
+    // @deprecated (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
+    // @deprecated (undocumented)
     reason: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     version: string;
 }
 
@@ -134,13 +134,15 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
+    // @deprecated (undocumented)
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
-    dispose?(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError): void;
+    readonly disposed?: boolean;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -157,7 +159,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 // @public
-export interface IContainerContext extends IDisposable {
+export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
     readonly audience: IAudience | undefined;
@@ -173,16 +175,20 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated (undocumented)
+    dispose(error?: Error): void;
+    // @deprecated (undocumented)
+    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    // @deprecated
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
@@ -193,7 +199,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -242,16 +248,22 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public
+// @public @deprecated
 export interface IDeltaHandlerStrategy {
+    // @deprecated
     process: (message: ISequencedDocumentMessage) => void;
+    // @deprecated
     processSignal: (message: ISignalMessage) => void;
 }
 
 // @public
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
+    // @deprecated (undocumented)
+    dispose(error?: Error): void;
+    // @deprecated (undocumented)
+    readonly disposed: boolean;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -278,7 +290,6 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
@@ -551,6 +562,7 @@ export type ReadOnlyInfo = {
     readonly forced: boolean;
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 ```

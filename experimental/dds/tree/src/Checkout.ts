@@ -4,8 +4,9 @@
  */
 
 import { assert } from '@fluidframework/common-utils';
-import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IDisposable, IErrorEvent, ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ChildLogger, EventEmitterWithErrorHandling, ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { IErrorEvent } from '@fluidframework/common-definitions';
+import { IDisposable, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';
@@ -115,7 +116,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 */
 	private currentEdit?: GenericTransaction;
 
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	public disposed: boolean = false;
 

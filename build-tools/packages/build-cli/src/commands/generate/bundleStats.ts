@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { execSync } from "child_process";
-import { copySync, existsSync, readJSONSync } from "fs-extra";
+import { copySync, existsSync, readJson } from "fs-extra";
 import path from "path";
 
 import { BaseCommand } from "../../base";
+import { PnpmListEntry, pnpmList } from "../../pnpm";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
 	static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
 	static flags = {
 		packageMetadataPath: Flags.file({
 			description:
-				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna list --all --json` is used.",
+				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `pnpm -r list --depth -1 --json` is used.",
 			required: false,
 			hidden: true,
 		}),
@@ -28,11 +28,11 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
-		const lernaOutput =
-			flags.packageMetadataPath ??
-			JSON.parse(execSync("npx lerna list --all --json").toString());
+		const pkgList = await (flags.packageMetadataPath === undefined
+			? pnpmList(process.cwd())
+			: (readJson(flags.packageMetadataPath) as Promise<PnpmListEntry[]>));
 
-		if (!Array.isArray(lernaOutput)) {
+		if (!Array.isArray(pkgList) || pkgList.length === 0) {
 			this.error("failed to get package information");
 		}
 
@@ -41,13 +41,12 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 		let hasSmallAssetError = false;
 		const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
-		for (const pkg of lernaOutput) {
-			if (pkg.location === undefined) {
-				this.exit(-1);
-				this.error("missing location in lerna package entry");
+		for (const pkg of pkgList) {
+			if (pkg.path === undefined) {
+				this.error(`Missing path in pnpm list results for ${pkg.name}`, { exit: -1 });
 			}
 
-			const packageAnalysisPath = path.join(pkg.location, "bundleAnalysis");
+			const packageAnalysisPath = path.join(pkg.path, "bundleAnalysis");
 			if (existsSync(packageAnalysisPath)) {
 				this.log(`found bundleAnalysis for ${pkg.name}`);
 
@@ -57,7 +56,8 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					this.error(`${reportPath} is missing; bundle analysis may not be accurate.`);
 				}
 
-				const report = readJSONSync(reportPath);
+				// eslint-disable-next-line no-await-in-loop
+				const report = await readJson(reportPath);
 				if (report.assets?.length === undefined || report.assets?.length === 0) {
 					this.error(`${reportPath} doesn't have any assets info`);
 				}
@@ -69,7 +69,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					}
 
 					if (asset.size < flags.smallestAssetSize) {
-						this.warn(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
+						this.warning(
+							`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`,
+						);
 						hasSmallAssetError = true;
 					}
 				}

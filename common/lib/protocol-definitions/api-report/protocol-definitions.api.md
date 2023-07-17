@@ -4,7 +4,6 @@
 
 ```ts
 
-import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
@@ -212,7 +211,7 @@ export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Om
 }
 
 // @public
-export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
@@ -231,7 +230,7 @@ export interface IQuorumClientsEvents extends IErrorEvent {
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 // @public
-export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
     // (undocumented)
     get(key: string): unknown;
     // (undocumented)

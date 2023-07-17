@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -20,7 +20,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -260,7 +259,9 @@ export class MockContainerRuntimeFactory {
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
 
-		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		this.minSeq.set(msg.clientId as string, msg.referenceSequenceNumber);
 		msg.sequenceNumber = ++this.sequenceNumber;
 		msg.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {
@@ -427,7 +428,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLogger = DebugLogger.create(
+	public readonly logger: ITelemetryLoggerExt = DebugLogger.create(
 		"fluid:MockFluidDataStoreRuntime",
 	);
 	public quorum = new MockQuorumClients();

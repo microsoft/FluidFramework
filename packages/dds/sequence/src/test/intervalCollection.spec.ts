@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import {
+	ReferenceType,
+	SlidingPreference,
+	reservedRangeLabelsKey,
+} from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -14,10 +18,11 @@ import {
 	MockStorage,
 	MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
-	IntervalCollection,
+	IIntervalCollection,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -57,7 +62,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 
 const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IntervalCollection<SequenceInterval>,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -453,8 +458,8 @@ describe("SharedString interval collections", () => {
 		});
 
 		describe("remain consistent on double-delete", () => {
-			let collection: IntervalCollection<SequenceInterval>;
-			let collection2: IntervalCollection<SequenceInterval>;
+			let collection: IIntervalCollection<SequenceInterval>;
+			let collection2: IIntervalCollection<SequenceInterval>;
 			beforeEach(() => {
 				sharedString.insertText(0, "01234");
 				collection = sharedString.getIntervalCollection("test");
@@ -1112,7 +1117,7 @@ describe("SharedString interval collections", () => {
 			// references to now equal ones can cause issues.
 			// The immediate way this manifests is that attempting to remove the interval fails
 			// in red-black tree code, since the key isn't at the expected location.
-			let collection: IntervalCollection<SequenceInterval>;
+			let collection: IIntervalCollection<SequenceInterval>;
 			beforeEach(() => {
 				sharedString.insertText(0, "ABCDEFG");
 				collection = sharedString.getIntervalCollection("test");
@@ -1288,21 +1293,21 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "hello world");
 			containerRuntimeFactory.processAllMessages();
 
-			const collection1: IntervalCollection<SequenceInterval> =
+			const collection1: IIntervalCollection<SequenceInterval> =
 				sharedString.getIntervalCollection("test1");
 			const interval1 = collection1.add(0, 1, IntervalType.SlideOnRemove);
 			const intervalId1 = interval1.getIntervalId();
 			assert(intervalId1);
 			collection1.change(intervalId1, 1, 4);
 
-			const collection2: IntervalCollection<SequenceInterval> =
+			const collection2: IIntervalCollection<SequenceInterval> =
 				sharedString2.getIntervalCollection("test2");
 			const interval2 = collection2.add(0, 2, IntervalType.SlideOnRemove);
 			const intervalId2 = interval2.getIntervalId();
 			assert(intervalId2);
 			collection2.removeIntervalById(intervalId2);
 
-			const collection3: IntervalCollection<SequenceInterval> =
+			const collection3: IIntervalCollection<SequenceInterval> =
 				sharedString2.getIntervalCollection("test3");
 			collection3.add(0, 3, IntervalType.SlideOnRemove);
 
@@ -1425,8 +1430,8 @@ describe("SharedString interval collections", () => {
 		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let sharedString2: SharedString;
 
-		let collection1: IntervalCollection<SequenceInterval>;
-		let collection2: IntervalCollection<SequenceInterval>;
+		let collection1: IIntervalCollection<SequenceInterval>;
+		let collection2: IIntervalCollection<SequenceInterval>;
 		let interval: SequenceInterval;
 
 		beforeEach(async () => {
@@ -1730,6 +1735,39 @@ describe("SharedString interval collections", () => {
 				assert.equal(collection.detachIndex(mockIntervalIndex), true);
 				assert.equal(collection.detachIndex(mockIntervalIndex), false);
 			});
+		});
+	});
+
+	describe("maintain consistency between the collection label and that in interval properties", () => {
+		let collection;
+
+		beforeEach(() => {
+			sharedString.initializeLocal();
+			collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "xyz");
+		});
+
+		it("can not insert the interval which does not belong to this collection", () => {
+			assert.throws(
+				() => {
+					collection.add(1, 1, IntervalType.SlideOnRemove, {
+						[reservedRangeLabelsKey]: ["test2"],
+					});
+				},
+				LoggingError,
+				"The collection is unable to add an interval which does not belong to it",
+			);
+		});
+
+		it("can not modify the interval's label after it has been inserted to the collection", () => {
+			const id = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			assert.throws(
+				() => {
+					collection.changeProperties(id, { [reservedRangeLabelsKey]: ["test2"] });
+				},
+				LoggingError,
+				"The label property of an interval should not be modified once inserted to the collection",
+			);
 		});
 	});
 });

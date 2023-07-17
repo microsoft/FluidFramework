@@ -9,13 +9,17 @@ import {
 	IdAllocator,
 	idAllocatorFromMaxId,
 	RevisionInfo,
-	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
+import {
+	assertMarkListEqual,
+	deepFreeze,
+	defaultRevisionMetadataFromChanges,
+	fakeTaggedRepair as fakeRepair,
+} from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -30,8 +34,11 @@ export function composeNoVerify(
 	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
-export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, TestChange.compose);
+export function compose(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, TestChange.compose, revInfos);
 }
 
 export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
@@ -52,21 +59,6 @@ export function shallowCompose<T>(
 	);
 }
 
-function defaultRevisionMetadataFromChanges(
-	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
-): RevisionMetadataSource {
-	const revInfos: RevisionInfo[] = [];
-	for (const change of changes) {
-		if (change.revision !== undefined) {
-			revInfos.push({
-				revision: change.revision,
-				rollbackOf: change.rollbackOf,
-			});
-		}
-	}
-	return revisionMetadataSourceFromInfo(revInfos);
-}
-
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
@@ -74,7 +66,7 @@ function composeI<T>(
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(
+	let composed = SF.compose(
 		changes,
 		composer,
 		idAllocator,
@@ -86,7 +78,7 @@ function composeI<T>(
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		SF.amendCompose(composed, composer, idAllocator, moveEffects);
+		composed = SF.amendCompose(composed, composer, idAllocator, moveEffects);
 		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;
@@ -196,21 +188,4 @@ export function getMaxIdTagged(
 
 export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
-}
-
-export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
-	let nextId = 0;
-	const mappings = new Map<SF.MoveId, SF.MoveId>();
-	for (const mark of change) {
-		if (SF.isMoveMark(mark)) {
-			let newId = mappings.get(mark.id);
-			if (newId === undefined) {
-				newId = brand(nextId++);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				mappings.set(mark.id, newId!);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			mark.id = newId!;
-		}
-	}
 }

@@ -3,29 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import {
-	assert,
-	Deferred,
-	LazyPromise,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
-import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	generateStack,
 	LoggingError,
@@ -34,6 +13,22 @@ import {
 	raiseConnectedEvent,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
+import {
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
+import {
+	IAudience,
+	IDeltaManager,
+	AttachState,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions";
+import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
+import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -206,7 +201,7 @@ export class FluidDataStoreRuntime
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 

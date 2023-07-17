@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -35,6 +36,7 @@ export class Partition extends EventEmitter {
 		factory: IPartitionLambdaFactory,
 		consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 	) {
 		super();
 
@@ -48,9 +50,10 @@ export class Partition extends EventEmitter {
 		this.q = queue((message: IQueuedMessage, callback) => {
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const optionalPromise = this.lambda!.handler(message);
+				const optionalPromise = this.lambda!.handler(message)
+					?.then(callback as any)
+					.catch(callback);
 				if (optionalPromise) {
-					optionalPromise.then(callback as any).catch(callback);
 					return;
 				}
 
@@ -62,13 +65,13 @@ export class Partition extends EventEmitter {
 		this.q.pause();
 
 		this.lambdaP = factory.create(undefined, this.context);
-		this.lambdaP.then(
-			(lambda) => {
+		this.lambdaP
+			.then((lambda) => {
 				this.lambda = lambda;
 				this.lambdaP = undefined;
 				this.q.resume();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				if (this.closed) {
 					return;
 				}
@@ -78,8 +81,7 @@ export class Partition extends EventEmitter {
 				};
 				this.emit("error", error, errorData);
 				this.q.kill();
-			},
-		);
+			});
 
 		this.q.error((error) => {
 			const errorData: IContextErrorData = {
@@ -114,14 +116,12 @@ export class Partition extends EventEmitter {
 		} else if (this.lambdaP) {
 			// asynchronously close the lambda since it's not created yet
 			this.lambdaP
-				.then(
-					(lambda) => {
-						lambda.close(closeType);
-					},
-					(error) => {
-						// Lambda never existed - no need to close
-					},
-				)
+				.then((lambda) => {
+					lambda.close(closeType);
+				})
+				.catch((error) => {
+					// Lambda never existed - no need to close
+				})
 				.finally(() => {
 					this.lambda = undefined;
 					this.lambdaP = undefined;
@@ -157,6 +157,22 @@ export class Partition extends EventEmitter {
 		await drainedP;
 
 		// Checkpoint at the latest offset
-		await this.checkpointManager.flush();
+		try {
+			await this.checkpointManager.flush();
+		} catch (err) {
+			Lumberjack.error(
+				"Error during checkpointManager.flush call",
+				{
+					partition: this.id,
+					ignoreCheckpointFlushExceptionFlag: this.config?.get(
+						"checkpoints:ignoreCheckpointFlushException",
+					),
+				},
+				err,
+			);
+			if (!this.config?.get("checkpoints:ignoreCheckpointFlushException")) {
+				throw err;
+			} // else, dont throw the error so that the service continues to shut down gracefully
+		}
 	}
 }

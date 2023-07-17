@@ -6,10 +6,15 @@ import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/data
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
 import { AnchorSet } from "../../core";
-import { defaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
+import { typeboxValidator } from "../../external-utilities";
+import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
 
-/** A `SharedTreeCore` with protected methods exposed but no additional behavior */
+/**
+ * A `SharedTreeCore` with
+ * - some protected methods exposed
+ * - encoded data schema validation enabled
+ */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	private static readonly attributes: IChannelAttributes = {
 		type: "TestSharedTreeCore",
@@ -25,9 +30,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	) {
 		super(
 			summarizables,
-			defaultChangeFamily,
+			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
 			anchors,
 			new MockRepairDataStoreProvider(),
+			{ jsonValidator: typeboxValidator },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

@@ -7,7 +7,6 @@ export { buildSnapshotTree } from "./buildSnapshotTree";
 export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";
-export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
 export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {
@@ -50,3 +49,8 @@ export {
 	isCombinedAppAndProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
+export {
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	blobHeadersBlobName,
+} from "./adapters";

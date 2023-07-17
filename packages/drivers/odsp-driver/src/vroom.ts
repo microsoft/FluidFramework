@@ -4,13 +4,13 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
 import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -41,7 +41,7 @@ export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
 	method: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
 	requestSocketToken: boolean,
