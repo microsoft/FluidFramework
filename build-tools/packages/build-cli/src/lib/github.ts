@@ -23,12 +23,21 @@ export async function pullRequestExists(
 	owner: string,
 	repo: string,
 	log: CommandLogger,
-): Promise<boolean> {
+): Promise<{ found: boolean; url?: string; number?: number }> {
 	log.verbose(`Checking if pull request with title="${title}" exists----------------`);
 	const octokit = new Octokit({ auth: token });
 	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 
-	return response.data.some((d) => d.title === title);
+	const found = response.data.find((d) => d.title === title);
+	if (found === undefined) {
+		return { found: false };
+	}
+
+	return {
+		found: true,
+		url: found.html_url,
+		number: found.number,
+	};
 }
 
 /**

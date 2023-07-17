@@ -25,10 +25,10 @@ variables:
   value: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
-- template: templates/include-use-node-version.yml
-  parameters:
-    buildDirectory: .
-    version: '16.16.0'
+- task: UseNode@1
+  displayName: Use Node 16.x
+  inputs:
+    version: 16.x
 
 - template: templates/include-install-pnpm.yml
   parameters:

@@ -75,7 +75,7 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/react": "^17.0.44",
 		"@types/sinon": "^7.0.13",
 		"concurrently": "^7.6.0",

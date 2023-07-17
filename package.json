@@ -172,7 +172,7 @@
 			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
 		],
 		"overrides": {
-			"@types/node": "^14.18.38",
+			"@types/node": "^16.18.38",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
