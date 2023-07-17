@@ -28,10 +28,10 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
-	convertWholeSummaryTreeToSummaryTree,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
@@ -163,12 +163,13 @@ export function create(
 				: (request.body.id as string) || uuid();
 
 			Lumberjack.info(
-				`Whole summary length= ${JSON.stringify(request.body.summary).length}.`,
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
 			// Summary information
-			const summary = convertWholeSummaryTreeToSummaryTree(request.body.summary);
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
 
-			Lumberjack.info(`SummaryTree length = ${JSON.stringify(summary).length}.`);
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
 
