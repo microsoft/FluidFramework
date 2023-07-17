@@ -115,19 +115,25 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		// sender hadn't yet seen at the time they sent the op.
 		for (const { op, seq, client } of this.sequencedOps) {
 			if (remoteRefSeq < seq && remoteClient !== client) {
-				remoteOp = this.transform(remoteOp, op);
+				remoteOp = this.transform(remoteOp as TOp, op);
 			}
 		}
 
 		// Retain the adjusted op in order to adjust future remote ops.
-		this.sequencedOps.push({ seq: messageSeq, client: remoteClient, op: remoteOp });
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		this.sequencedOps.push({
+			seq: messageSeq,
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			client: remoteClient as string,
+			op: remoteOp as TOp,
+		});
 
 		// The incoming sequenced op is now part of the "global" state.  Apply it to "this.global"
 		// now.
 		//
 		// TODO: If the op is local, we could defer applying the remoteOp and wait and see if
 		//       the global state catches up with our local state.
-		this.global = this.applyCore(this.global, remoteOp);
+		this.global = this.applyCore(this.global, remoteOp as TOp);
 
 		if (local) {
 			this.pendingOps.shift();
@@ -138,7 +144,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			// Adjust our queue of locally pending ops to account for the incoming op so that they
 			// may be reapplied to the global state if needed.
 			for (let i = 0; i < this.pendingOps.length; i++) {
-				this.pendingOps[i] = this.transform(this.pendingOps[i], remoteOp);
+				this.pendingOps[i] = this.transform(this.pendingOps[i], remoteOp as TOp);
 			}
 		}
 	}

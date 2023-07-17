@@ -6,7 +6,9 @@
 import React from "react";
 import {
 	Dropdown,
+	Link,
 	Option,
+	Switch,
 	makeStyles,
 	teamsHighContrastTheme,
 	webDarkTheme,
@@ -14,6 +16,7 @@ import {
 } from "@fluentui/react-components";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper";
+import { useTelemetryOptIn } from "../TelemetryUtils";
 
 const useStyles = makeStyles({
 	root: {
@@ -59,6 +62,7 @@ export function SettingsView(): React.ReactElement {
 	const { themeInfo, setTheme } = React.useContext(ThemeContext);
 
 	const styles = useStyles();
+	const [optedIn, setOptedIn] = useTelemetryOptIn();
 
 	function handleThemeChange(
 		_event,
@@ -109,6 +113,22 @@ export function SettingsView(): React.ReactElement {
 					<Option value={ThemeOption.Dark}>Dark</Option>
 					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
 				</Dropdown>
+			</div>
+			<div className={styles.section}>
+				<h4 className={styles.sectionHeader}>Usage telemetry</h4>
+				<Link
+					href="https://go.microsoft.com/fwlink/?LinkId=521839"
+					target="_blank"
+					rel="noreferrer"
+					inline
+				>
+					Microsoft Privacy Statement
+				</Link>
+				<Switch
+					label="Send usage telemetry to Microsoft"
+					checked={optedIn}
+					onChange={(ev, data): void => setOptedIn(data.checked)}
+				/>
 			</div>
 		</div>
 	);

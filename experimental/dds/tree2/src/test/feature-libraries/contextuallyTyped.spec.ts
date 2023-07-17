@@ -65,7 +65,7 @@ describe("ContextuallyTyped", () => {
 
 	it("applyTypesFromContext omits empty fields", () => {
 		const builder = new SchemaBuilder("applyTypesFromContext");
-		const numberSchema = builder.primitive("number", ValueSchema.Number);
+		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
 		const numbersObject = builder.struct("numbers", { numbers: numberSequence });
 		const schema = builder.intoDocumentSchema(numberSequence);
@@ -78,7 +78,7 @@ describe("ContextuallyTyped", () => {
 
 	it("applyTypesFromContext omits empty primary fields", () => {
 		const builder = new SchemaBuilder("applyTypesFromContext");
-		const numberSchema = builder.primitive("number", ValueSchema.Number);
+		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
 		const primaryObject = builder.struct("numbers", { [EmptyKey]: numberSequence });
 		const schema = builder.intoDocumentSchema(numberSequence);
@@ -90,7 +90,7 @@ describe("ContextuallyTyped", () => {
 	describe("cursorFromContextualData adds field", () => {
 		it("for empty contextual data.", () => {
 			const builder = new SchemaBuilder("cursorFromContextualData");
-			const generatedSchema = builder.primitive("generated", ValueSchema.String);
+			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 			const nodeSchema = builder.struct("node", {
 				foo: SchemaBuilder.fieldValue(generatedSchema),
 			});
@@ -123,7 +123,7 @@ describe("ContextuallyTyped", () => {
 
 		it("for nested contextual data.", () => {
 			const builder = new SchemaBuilder("Identifier Domain");
-			const generatedSchema = builder.primitive("generated", ValueSchema.String);
+			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 
 			const nodeSchema = builder.structRecursive("node", {
 				foo: SchemaBuilder.fieldValue(generatedSchema),

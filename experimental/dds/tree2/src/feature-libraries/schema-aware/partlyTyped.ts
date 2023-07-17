@@ -5,7 +5,7 @@
 
 import { FieldStoredSchema, ITreeCursor } from "../../core";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
-import { Optional, Sequence, ValueFieldKind } from "../defaultFieldKinds";
+import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
 import { NewFieldContent } from "../editable-tree";
 import { UntypedField, UntypedTreeCore } from "../untypedTree";
 

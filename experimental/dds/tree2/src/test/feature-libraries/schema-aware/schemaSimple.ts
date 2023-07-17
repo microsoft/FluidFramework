@@ -8,7 +8,7 @@ import { ValueSchema, SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder } 
 const builder = new SchemaBuilder("Simple Schema");
 
 // Schema
-export const numberSchema = builder.primitive("number", ValueSchema.Number);
+export const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 export const pointSchema = builder.struct("point", {
 	x: SchemaBuilder.fieldValue(numberSchema),
