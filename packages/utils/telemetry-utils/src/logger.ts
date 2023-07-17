@@ -314,8 +314,8 @@ export class ChildLogger extends TelemetryLogger {
 		if (logger instanceof ChildLogger) {
 			return true;
 		}
-		const maybe = logger as ChildLogger;
-		if (maybe.type === childLoggerType) {
+		const maybe = logger as ChildLogger | undefined;
+		if (maybe?.type === childLoggerType) {
 			return true;
 		}
 		return false;
