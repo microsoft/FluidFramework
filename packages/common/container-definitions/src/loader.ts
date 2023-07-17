@@ -629,7 +629,7 @@ export interface IContainerLoadMode {
 	/**
 	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
 	 */
-	freezeAfterLoad?: boolean;
+	pauseAfterLoad?: boolean;
 }
 
 /**

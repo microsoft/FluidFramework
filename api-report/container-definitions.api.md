@@ -215,9 +215,9 @@ export interface IContainerEvents extends IEvent {
 export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
-    freezeAfterLoad?: boolean;
     // (undocumented)
     opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
+    pauseAfterLoad?: boolean;
 }
 
 // @public

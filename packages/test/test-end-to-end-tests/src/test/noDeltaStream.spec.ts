@@ -29,7 +29,7 @@ import { describeFullCompat } from "@fluid-internal/test-version-utils";
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
 	opsBeforeReturn: [undefined, "sequenceNumber", "cached", "all"],
-	freezeAfterLoad: [undefined, true, false],
+	pauseAfterLoad: [undefined, true, false],
 });
 
 const testConfigs = generatePairwiseOptions({
@@ -278,7 +278,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					);
 				}
 
-				if (testConfig.loadOptions.freezeAfterLoad !== true) {
+				if (testConfig.loadOptions.pauseAfterLoad !== true) {
 					storageOnlyContainer.connect();
 					assert.strictEqual(deltaManager.active, false, "deltaManager.active");
 					assert.ok(
