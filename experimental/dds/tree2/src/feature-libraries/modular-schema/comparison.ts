@@ -40,16 +40,12 @@ export function allowsTreeSuperset(
 	) {
 		return false;
 	}
-	if (original.extraGlobalFields && !superset.extraGlobalFields) {
-		return false;
-	}
 	if (
 		!compareSets({
 			a: original.globalFields,
 			b: superset.globalFields,
 			// true iff the original field must always be empty, or superset supports extra global fields.
 			aExtra: (originalField) =>
-				superset.extraGlobalFields ||
 				allowsFieldSuperset(
 					policy,
 					originalData,

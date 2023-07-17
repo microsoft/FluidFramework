@@ -22,7 +22,13 @@ export {
 } from "./crossFieldQueries";
 export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
+export {
+	FieldKind,
+	FullSchemaPolicy,
+	Multiplicity,
+	BrandedFieldKind,
+	brandedFieldKind,
+} from "./fieldKind";
 export {
 	IdAllocator,
 	FieldChangeHandler,

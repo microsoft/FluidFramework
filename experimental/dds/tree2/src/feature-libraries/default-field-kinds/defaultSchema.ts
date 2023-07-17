@@ -26,7 +26,6 @@ export const neverTree: TreeStoredSchema = {
 	localFields: emptyMap,
 	globalFields: emptySet,
 	extraLocalFields: neverField,
-	extraGlobalFields: false,
 	value: ValueSchema.Nothing,
 };
 

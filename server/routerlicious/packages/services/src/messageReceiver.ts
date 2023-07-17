@@ -28,16 +28,23 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 
 		// We don't need to ack the task messages since they will be part of next help message if unacked.
 		// TODO: Reject messages and make sure the sender knows.
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.channel.consume(
-			this.taskQueueName,
-			(msgBuffer) => {
-				const msgString = msgBuffer.content.toString();
-				const msg = JSON.parse(msgString) as ITaskMessage;
-				this.events.emit("message", msg);
-			},
-			{ noAck: true },
-		);
+		this.channel
+			.consume(
+				this.taskQueueName,
+				(msgBuffer) => {
+					const msgString = msgBuffer.content.toString();
+					const msg = JSON.parse(msgString) as ITaskMessage;
+					this.events.emit("message", msg);
+				},
+				{ noAck: true },
+			)
+			.catch((error) => {
+				Lumberjack.error(
+					"Error encountered when acking task messages in RabbitmqReceiver.initialize()",
+					undefined,
+					error,
+				);
+			});
 
 		this.connection.on("error", (error) => {
 			this.events.emit("error", error);

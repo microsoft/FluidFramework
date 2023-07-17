@@ -5,165 +5,39 @@
 
 import { strict as assert } from "assert";
 import {
-	ContextuallyTypedNodeDataObject,
 	FieldChangeHandler,
 	IdAllocator,
 	NodeChangeset,
-	NodeReviver,
-	jsonableTreeFromCursor,
-	singleTextCursor,
-	valueSymbol,
-	cursorFromContextualData,
-	SchemaBuilder,
+	CrossFieldManager,
 } from "../../../feature-libraries";
-// Allow import from file being tested.
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
 import {
-	makeAnonChange,
-	RevisionTag,
-	TaggedChange,
-	Delta,
-	mintRevisionTag,
-	ValueSchema,
-	tagChange,
-	tagRollbackInverse,
-	FieldKey,
-} from "../../../core";
-import { JsonCompatibleReadOnly, brand } from "../../../util";
-import {
-	assertMarkListEqual,
-	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
-	makeEncodingTestSuite,
-} from "../../utils";
-import { IJsonCodec } from "../../../codec";
+	ValueFieldEditor,
+	valueChangeHandler,
+	valueFieldEditor,
+	// Allow import from file being tested.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
+import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
+import { brand } from "../../../util";
+import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
-const builder = new SchemaBuilder("defaultFieldKinds tests");
-const nodeSchema = builder.objectRecursive("Node", {
-	value: ValueSchema.String,
-	local: { foo: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
-});
+/**
+ * A change to a child encoding as a simple placeholder string.
+ * This change has no actual meaning, and can be used in tests where the type of child change in not relevant.
+ */
+const arbitraryChildChange = changesetForChild("arbitraryChildChange");
 
-const schemaData = builder.intoLibrary();
+const nodeChange1 = changesetForChild("nodeChange1");
+const nodeChange2 = changesetForChild("nodeChange2");
 
-const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
-	[valueSymbol]: "value1",
-	foo: { [valueSymbol]: "value3" },
-};
+const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
 
-// TODO: This file is mainly working with in memory representations.
-// Therefore it should not be using JsonableTrees.
-// The usages of this (and other JsonableTrees) such as ValueChangeset should be changed to use
-// a tree format intended for in memory use, such as Cursor or MapTree.
-// TODO: Figure out issue with deepfreezing here
-const tree1 = jsonableTreeFromCursor(
-	cursorFromContextualData(
-		{
-			schema: schemaData,
-		},
-		new Set([nodeSchema.name]),
-		tree1ContextuallyTyped,
-	),
-);
-
-const tree2 = { type: nodeSchema.name, value: "value2" };
-const fooKey: FieldKey = brand("foo");
-const nodeChange1: NodeChangeset = {
-	fieldChanges: new Map([
-		[
-			fooKey,
-			{
-				fieldKind: FieldKinds.optional.identifier,
-				change: brand({ type: nodeSchema.name, value: "value3" }),
-			},
-		],
-	]),
-};
-const nodeChange2: NodeChangeset = {
-	fieldChanges: new Map([
-		[
-			fooKey,
-			{
-				fieldKind: FieldKinds.optional.identifier,
-				change: brand({ type: nodeSchema.name, value: "value4" }),
-			},
-		],
-	]),
-};
-const nodeChange3: NodeChangeset = {
-	fieldChanges: new Map([
-		[
-			fooKey,
-			{
-				fieldKind: FieldKinds.optional.identifier,
-				change: brand({ type: nodeSchema.name, value: "value5" }),
-			},
-		],
-	]),
-};
-
-const unexpectedDelegate = () => assert.fail("Should not be called");
-const idAllocator: IdAllocator = unexpectedDelegate;
-
-const crossFieldManager = {
-	get: unexpectedDelegate,
-	set: unexpectedDelegate,
-	addDependency: unexpectedDelegate,
-	invalidate: unexpectedDelegate,
-};
-
-const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
-	assert.deepEqual(child, nodeChange1);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{
-						type: Delta.MarkType.Insert,
-						content: [singleTextCursor({ type: nodeSchema.name, value: "value3" })],
-					},
-				],
-			],
-		]),
-	};
-};
-
-const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
-	assert.deepEqual(child, nodeChange2);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{
-						type: Delta.MarkType.Insert,
-						content: [singleTextCursor({ type: nodeSchema.name, value: "value4" })],
-					},
-				],
-			],
-		]),
-	};
-};
-
-const encodedChild = "encoded child";
-
-const childCodec1: IJsonCodec<NodeChangeset> = {
-	encode: (change: NodeChangeset) => {
-		assert.deepEqual(change, nodeChange1);
-		return encodedChild;
-	},
-	decode: (encodedChange: JsonCompatibleReadOnly) => {
-		assert.equal(encodedChange, encodedChild);
-		return nodeChange1;
-	},
+const failCrossFieldManager: CrossFieldManager = {
+	get: () => assert.fail("Should not query CrossFieldManager"),
+	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
 const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -172,492 +46,175 @@ const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset
 		changes.map((c) => c.change),
 		[nodeChange1, nodeChange2],
 	);
-	return nodeChange3;
+	return arbitraryChildChange;
 };
 
-describe("Value field changesets", () => {
-	const fieldHandler: FieldChangeHandler<OptionalChangeset, FieldKinds.ValueFieldEditor> =
-		FieldKinds.value.changeHandler;
-
-	const childChange1: OptionalChangeset = { childChange: nodeChange1 };
-	const childChange2: OptionalChangeset = { childChange: nodeChange2 };
-	const childChange3: OptionalChangeset = { childChange: nodeChange3 };
-
-	const change1 = tagChange(
-		fieldHandler.editor.set(singleTextCursor(tree1), brand(1)),
-		mintRevisionTag(),
-	);
-	const change2 = tagChange(
-		fieldHandler.editor.set(singleTextCursor(tree2), brand(2)),
-		mintRevisionTag(),
-	);
-
-	const change1WithChildChange: OptionalChangeset = {
-		fieldChange: {
-			newContent: { set: tree1, changes: nodeChange1 },
-			wasEmpty: false,
-			id: brand(1),
-			revision: change1.revision,
-		},
-	};
-
-	/**
-	 * Represents the outcome of composing change1 and change2.
-	 */
-	const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
-		fieldChange: {
-			id: brand(2),
-			revision: change2.revision,
-			newContent: { set: tree2 },
-			wasEmpty: false,
-		},
-	});
-
-	const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
-		{
-			fieldChange: {
-				id: brand(2),
-				newContent: {
-					revert: singleTextCursor(tree1),
-					changeId: { revision: change2.revision, localId: brand(2) },
+describe("defaultFieldKinds", () => {
+	describe("valueFieldEditor.set", () => {
+		it("valueFieldEditor.set", () => {
+			const expected: OptionalChangeset = {
+				fieldChange: {
+					newContent: { set: testTree("tree1") },
+					id: brand(1),
+					wasEmpty: false,
 				},
-				wasEmpty: false,
-			},
-		},
-		mintRevisionTag(),
-	);
-
-	const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
-		assert.equal(changes.length, 1);
-		return changes[0].change;
-	};
-
-	it("can be created", () => {
-		const expected: OptionalChangeset = {
-			fieldChange: { newContent: { set: tree1 }, id: brand(1), wasEmpty: false },
-		};
-		assert.deepEqual(change1.change, expected);
-	});
-
-	it("can be composed", () => {
-		const composed = fieldHandler.rebaser.compose(
-			[change1, change2],
-			simpleChildComposer,
-			idAllocator,
-			crossFieldManager,
-			defaultRevisionMetadataFromChanges([change1, change2]),
-		);
-
-		assert.deepEqual(composed, change1And2.change);
-	});
-
-	it("can be composed with child changes", () => {
-		const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
-		assert.deepEqual(
-			fieldHandler.rebaser.compose(
-				[change1, taggedChildChange1],
-				simpleChildComposer,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([change1, taggedChildChange1]),
-			),
-			change1WithChildChange,
-		);
-
-		const composition = fieldHandler.rebaser.compose(
-			[makeAnonChange(childChange1), change1],
-			simpleChildComposer,
-			idAllocator,
-			crossFieldManager,
-			defaultRevisionMetadataFromChanges([change1]),
-		);
-		assert.deepEqual(composition, {
-			fieldChange: { ...change1.change.fieldChange, revision: change1.revision },
-			childChange: nodeChange1,
+			};
+			assert.deepEqual(valueFieldEditor.set(testTreeCursor("tree1"), brand(1)), expected);
 		});
-
-		assert.deepEqual(
-			fieldHandler.rebaser.compose(
-				[makeAnonChange(childChange1), makeAnonChange(childChange2)],
-				childComposer1_2,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([]),
-			),
-			childChange3,
-		);
 	});
 
-	it("can invert children", () => {
-		const childInverter = (child: NodeChangeset): NodeChangeset => {
-			assert.deepEqual(child, nodeChange1);
-			return nodeChange2;
-		};
+	// TODO:
+	// These tests are covering value field usage patterns of optional field's rebaser (which value field uses).
+	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
+	describe("value field rebaser", () => {
+		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
+			valueChangeHandler;
 
-		const inverted = fieldHandler.rebaser.invert(
-			{ revision: mintRevisionTag(), change: change1WithChildChange },
-			childInverter,
-			fakeRepair,
-			idAllocator,
-			crossFieldManager,
+		const childChange1: OptionalChangeset = { childChange: nodeChange1 };
+		const childChange2: OptionalChangeset = { childChange: nodeChange2 };
+		const childChange3: OptionalChangeset = { childChange: arbitraryChildChange };
+
+		const change1 = tagChange(
+			fieldHandler.editor.set(testTreeCursor("tree1"), brand(1)),
+			mintRevisionTag(),
+		);
+		const change2 = tagChange(
+			fieldHandler.editor.set(testTreeCursor("tree2"), brand(2)),
+			mintRevisionTag(),
 		);
 
-		assert.deepEqual(inverted.childChange, nodeChange2);
-	});
-
-	it("can be rebased", () => {
-		const childRebaser = () => assert.fail("Should not be called");
-
-		assert.deepEqual(
-			fieldHandler.rebaser.rebase(
-				change2.change,
-				makeAnonChange(change1WithChildChange),
-				childRebaser,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([]),
-			),
-			change2.change,
-		);
-	});
-
-	it("can rebase child changes", () => {
-		const childRebaser = (
-			change: NodeChangeset | undefined,
-			base: NodeChangeset | undefined,
-		) => {
-			assert.deepEqual(change, nodeChange2);
-			assert.deepEqual(base, nodeChange1);
-			return nodeChange3;
-		};
-
-		const baseChange = fieldHandler.editor.buildChildChange(0, nodeChange1);
-		const changeToRebase = fieldHandler.editor.buildChildChange(0, nodeChange2);
-
-		assert.deepEqual(
-			fieldHandler.rebaser.rebase(
-				changeToRebase,
-				makeAnonChange(baseChange),
-				childRebaser,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([]),
-			),
-			childChange3,
-		);
-	});
-
-	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
-
-		const actual = fieldHandler.intoDelta(revertChange2.change, deltaFromChild1);
-		assertMarkListEqual(actual, expected);
-	});
-
-	const encodingTestData: [string, OptionalChangeset][] = [
-		["with child change", change1WithChildChange],
-		["with repair data", revertChange2.change],
-	];
-
-	makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
-});
-
-describe("Optional field changesets", () => {
-	const fieldHandler: FieldChangeHandler<OptionalChangeset> = FieldKinds.optional.changeHandler;
-	const editor: FieldKinds.OptionalFieldEditor =
-		fieldHandler.editor as FieldKinds.OptionalFieldEditor;
-
-	const change1: TaggedChange<OptionalChangeset> = tagChange(
-		{
+		const change1WithChildChange: OptionalChangeset = {
 			fieldChange: {
-				id: brand(1),
-				newContent: { set: tree1, changes: nodeChange1 },
-				wasEmpty: true,
-			},
-		},
-		mintRevisionTag(),
-	);
-
-	const change2: TaggedChange<OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), false, brand(2)),
-		mintRevisionTag(),
-	);
-
-	const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
-		{
-			fieldChange: {
-				id: brand(2),
-				newContent: {
-					revert: singleTextCursor(tree1),
-					changeId: { revision: change2.revision, localId: brand(2) },
-				},
+				newContent: { set: testTree("tree1"), changes: nodeChange1 },
 				wasEmpty: false,
-			},
-		},
-		mintRevisionTag(),
-	);
-
-	/**
-	 * Represents what change2 would have been had it been concurrent with change1.
-	 */
-	const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
-		editor.set(singleTextCursor(tree2), true, brand(2)),
-		change2.revision,
-	);
-
-	/**
-	 * Represents the outcome of composing change1 and change2.
-	 */
-	const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
-		fieldChange: {
-			id: brand(2),
-			revision: change2.revision,
-			newContent: { set: tree2 },
-			wasEmpty: true,
-		},
-	});
-
-	const change4: TaggedChange<OptionalChangeset> = tagChange(
-		editor.buildChildChange(0, nodeChange2),
-		mintRevisionTag(),
-	);
-
-	it("can be created", () => {
-		const actual: OptionalChangeset = editor.set(singleTextCursor(tree1), true, brand(42));
-		const expected: OptionalChangeset = {
-			fieldChange: { id: brand(42), newContent: { set: tree1 }, wasEmpty: true },
-		};
-		assert.deepEqual(actual, expected);
-	});
-
-	it("can be composed", () => {
-		const childComposer = (_: TaggedChange<NodeChangeset>[]) =>
-			assert.fail("Should not be called");
-		const composed = fieldHandler.rebaser.compose(
-			[change1, change2],
-			childComposer,
-			idAllocator,
-			crossFieldManager,
-			defaultRevisionMetadataFromChanges([change1, change2]),
-		);
-		assert.deepEqual(composed, change1And2.change);
-	});
-
-	it("can compose child changes", () => {
-		const expected: OptionalChangeset = {
-			fieldChange: {
 				id: brand(1),
 				revision: change1.revision,
-				wasEmpty: true,
-				newContent: { set: tree1, changes: nodeChange3 },
 			},
 		};
 
-		assert.deepEqual(
-			fieldHandler.rebaser.compose(
-				[change1, change4],
-				childComposer1_2,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([change1, change4]),
-			),
-			expected,
-		);
-	});
+		/**
+		 * Represents the outcome of composing change1 and change2.
+		 */
+		const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
+			fieldChange: {
+				id: brand(2),
+				revision: change2.revision,
+				newContent: { set: testTree("tree2") },
+				wasEmpty: false,
+			},
+		});
 
-	it("can be inverted", () => {
-		const childInverter = (change: NodeChangeset) => {
-			assert.deepEqual(change, nodeChange1);
-			return nodeChange2;
+		const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
+			assert.equal(changes.length, 1);
+			return changes[0].change;
 		};
 
-		const expected: OptionalChangeset = {
-			fieldChange: { id: brand(1), wasEmpty: false },
-			childChange: nodeChange2,
-		};
+		it("can be composed", () => {
+			const composed = fieldHandler.rebaser.compose(
+				[change1, change2],
+				simpleChildComposer,
+				failIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([change1, change2]),
+			);
 
-		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-			assert.equal(revision, change1.revision);
-			assert.equal(index, 0);
-			assert.equal(count, 1);
-			return [singleTextCursor(tree1)];
-		};
+			assert.deepEqual(composed, change1And2.change);
+		});
 
-		assert.deepEqual(
-			fieldHandler.rebaser.invert(
-				change1,
+		it("can be composed with child changes", () => {
+			const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
+			assert.deepEqual(
+				fieldHandler.rebaser.compose(
+					[change1, taggedChildChange1],
+					simpleChildComposer,
+					failIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([change1, taggedChildChange1]),
+				),
+				change1WithChildChange,
+			);
+
+			const composition = fieldHandler.rebaser.compose(
+				[makeAnonChange(childChange1), change1],
+				simpleChildComposer,
+				failIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([change1]),
+			);
+			assert.deepEqual(composition, {
+				fieldChange: { ...change1.change.fieldChange, revision: change1.revision },
+				childChange: nodeChange1,
+			});
+
+			assert.deepEqual(
+				fieldHandler.rebaser.compose(
+					[makeAnonChange(childChange1), makeAnonChange(childChange2)],
+					childComposer1_2,
+					failIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([]),
+				),
+				childChange3,
+			);
+		});
+
+		it("can invert children", () => {
+			const childInverter = (child: NodeChangeset): NodeChangeset => {
+				assert.deepEqual(child, nodeChange1);
+				return nodeChange2;
+			};
+
+			const inverted = fieldHandler.rebaser.invert(
+				{ revision: mintRevisionTag(), change: change1WithChildChange },
 				childInverter,
-				repair,
-				idAllocator,
-				crossFieldManager,
-			),
-			expected,
-		);
-	});
+				fakeRepair,
+				failIdAllocator,
+				failCrossFieldManager,
+			);
 
-	describe("Rebasing", () => {
+			assert.deepEqual(inverted.childChange, nodeChange2);
+		});
+
 		it("can be rebased", () => {
-			const childRebaser = (
-				_change: NodeChangeset | undefined,
-				_base: NodeChangeset | undefined,
-			) => assert.fail("Should not be called");
+			const childRebaser = () => assert.fail("Should not be called");
+
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
-					change2PreChange1.change,
-					change1,
+					change2.change,
+					makeAnonChange(change1WithChildChange),
 					childRebaser,
-					idAllocator,
-					crossFieldManager,
-					defaultRevisionMetadataFromChanges([change1]),
+					failIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([]),
 				),
 				change2.change,
 			);
 		});
 
-		it("can rebase child change", () => {
-			const baseChange: OptionalChangeset = { childChange: nodeChange1 };
-			const changeToRebase: OptionalChangeset = { childChange: nodeChange2 };
-
+		it("can rebase child changes", () => {
 			const childRebaser = (
 				change: NodeChangeset | undefined,
 				base: NodeChangeset | undefined,
-			): NodeChangeset | undefined => {
+			) => {
 				assert.deepEqual(change, nodeChange2);
 				assert.deepEqual(base, nodeChange1);
-				return nodeChange3;
+				return arbitraryChildChange;
 			};
 
-			const expected: OptionalChangeset = { childChange: nodeChange3 };
+			const baseChange = fieldHandler.editor.buildChildChange(0, nodeChange1);
+			const changeToRebase = fieldHandler.editor.buildChildChange(0, nodeChange2);
 
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
 					changeToRebase,
 					makeAnonChange(baseChange),
 					childRebaser,
-					idAllocator,
-					crossFieldManager,
+					failIdAllocator,
+					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
 				),
-				expected,
+				childChange3,
 			);
 		});
-
-		it("can rebase a child change over a delete and revive of target node", () => {
-			const tag1 = mintRevisionTag();
-			const tag2 = mintRevisionTag();
-			const changeToRebase = editor.buildChildChange(0, nodeChange1);
-			const deletion = tagChange(editor.set(undefined, false, brand(1)), tag1);
-			const revive = tagRollbackInverse(
-				fieldHandler.rebaser.invert(
-					deletion,
-					() => assert.fail("Should not need to invert children"),
-					fakeRepair,
-					idAllocator,
-					crossFieldManager,
-				),
-				tag2,
-				tag1,
-			);
-
-			const childRebaser = (
-				nodeChange: NodeChangeset | undefined,
-				baseNodeChange: NodeChangeset | undefined,
-			) => {
-				assert(baseNodeChange === undefined);
-				assert(nodeChange === nodeChange1);
-				return nodeChange;
-			};
-
-			const changeToRebase2 = fieldHandler.rebaser.rebase(
-				changeToRebase,
-				deletion,
-				childRebaser,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([deletion]),
-			);
-
-			const changeToRebase3 = fieldHandler.rebaser.rebase(
-				changeToRebase2,
-				revive,
-				childRebaser,
-				idAllocator,
-				crossFieldManager,
-				defaultRevisionMetadataFromChanges([revive]),
-			);
-
-			assert.deepEqual(changeToRebase3, changeToRebase);
-		});
-	});
-
-	it("can be converted to a delta when field was empty", () => {
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Insert,
-				content: [singleTextCursor(tree1)],
-				fields: new Map([
-					[
-						fooKey,
-						[
-							{ type: Delta.MarkType.Delete, count: 1 },
-							{
-								type: Delta.MarkType.Insert,
-								content: [
-									singleTextCursor({ type: nodeSchema.name, value: "value3" }),
-								],
-							},
-						],
-					],
-				]),
-			},
-		];
-
-		assertMarkListEqual(fieldHandler.intoDelta(change1.change, deltaFromChild1), expected);
-	});
-
-	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
-
-		const actual = fieldHandler.intoDelta(revertChange2.change, deltaFromChild1);
-		assertMarkListEqual(actual, expected);
-	});
-
-	it("can be converted to a delta with only child changes", () => {
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([
-					[
-						fooKey,
-						[
-							{ type: Delta.MarkType.Delete, count: 1 },
-							{
-								type: Delta.MarkType.Insert,
-								content: [
-									singleTextCursor({ type: nodeSchema.name, value: "value4" }),
-								],
-							},
-						],
-					],
-				]),
-			},
-		];
-
-		assertMarkListEqual(fieldHandler.intoDelta(change4.change, deltaFromChild2), expected);
-	});
-
-	describe("Encoding", () => {
-		const encodingTestData: [string, OptionalChangeset][] = [
-			["change", change1.change],
-			["with repair data", revertChange2.change],
-		];
-
-		makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
 	});
 });

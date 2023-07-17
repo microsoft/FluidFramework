@@ -165,7 +165,6 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 		return {
 			globalFields: original.globalFields,
 			extraLocalFields: original.extraLocalFields,
-			extraGlobalFields: original.extraGlobalFields,
 			value: original.value,
 			localFields,
 		};

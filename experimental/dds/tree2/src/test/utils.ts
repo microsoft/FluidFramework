@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -409,6 +410,47 @@ export function spyOnMethod(
 }
 
 /**
+ * @returns `true` iff the given delta has a visible impact on the document tree.
+ */
+export function isDeltaVisible(delta: Delta.MarkList): boolean {
+	for (const mark of delta) {
+		if (typeof mark === "object") {
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.Modify: {
+					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+						return true;
+					}
+					if (mark.fields !== undefined) {
+						for (const field of mark.fields.values()) {
+							if (isDeltaVisible(field)) {
+								return true;
+							}
+						}
+					}
+					break;
+				}
+				case Delta.MarkType.Insert: {
+					if (mark.isTransient !== true) {
+						return true;
+					}
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.Delete:
+					return true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
@@ -689,36 +731,81 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
 	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
 }
 
+export interface EncodingTestData<TDecoded, TEncoded> {
+	/**
+	 * Contains test cases which should round-trip successfully through all persisted formats.
+	 */
+	successes: [name: string, data: TDecoded][];
+	/**
+	 * Contains malformed encoded data which a particular version's codec should fail to decode.
+	 */
+	failures?: { [version: string]: [name: string, data: TEncoded][] };
+}
+
+const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
+
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
+ *
+ * TODO:
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded>(
+export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	family: ICodecFamily<TDecoded>,
-	encodingTestData: [name: string, data: TDecoded][],
+	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			for (const [name, data] of encodingTestData) {
-				describe(name, () => {
-					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
-						assert.deepEqual(decoded, data);
-					});
+			describe("can json roundtrip", () => {
+				for (const includeStringification of [false, true]) {
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data] of encodingTestData.successes) {
+								it(name, () => {
+									let encoded = codec.json.encode(data);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = codec.json.decode(encoded);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
+				}
+			});
 
-					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
-						assert.deepEqual(decoded, data);
-					});
-
-					it("binary roundtrip", () => {
+			describe("can binary roundtrip", () => {
+				for (const [name, data] of encodingTestData.successes) {
+					it(name, () => {
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(encoded);
-						assert.deepEqual(decoded, data);
+						assertEquivalent(decoded, data);
 					});
+				}
+			});
+
+			const failureCases = encodingTestData.failures?.[version] ?? [];
+			if (failureCases.length > 0) {
+				describe("rejects malformed data", () => {
+					for (const [name, encodedData] of failureCases) {
+						it(name, () => {
+							assert.throws(() => codec.json.decode(encodedData as JsonCompatible));
+						});
+					}
 				});
 			}
 		});
