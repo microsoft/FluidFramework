@@ -10913,8 +10913,6 @@ importers:
       typescript: ~4.5.5
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluentui/react': 8.109.4_74b3ggvk3akyhuq4eydyx3fqim
       '@fluid-experimental/devtools-core': link:../devtools-core
@@ -10985,9 +10983,7 @@ importers:
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
       webpack: 5.83.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_dfe3q2c2dnof5cignr4xxddwka
-      webpack-dev-server: 4.6.0_qrfhhavll5uorjbg2snjvnp22u
-      webpack-merge: 5.8.0
+      webpack-cli: 4.10.0_webpack@5.83.0
 
   packages/tools/devtools/devtools-core:
     specifiers:
