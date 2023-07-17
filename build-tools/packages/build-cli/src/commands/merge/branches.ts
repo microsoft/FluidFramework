@@ -222,14 +222,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			)}`,
 		);
 		await this.gitRepo.gitClient.checkoutBranch(mergeBranch, prHeadCommit);
+		// Clean up the local mergeBranch in case of a failure.
+		this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: false });
 
 		// Delete the temp branch we created earlier. It's safe to delete the branch now because we checked out a new branch
 		// in the previous step.
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
 		await this.gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
-
-		// Clean up the local mergeBranch in case of a failure.
-		this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: false });
 
 		// If we determined that the PR won't conflict, merge the remote target branch with the HEAD (which is mergeBranch
 		// that we created and checked out earlier). We will create the PR at the new commit; in other words, the PR will
