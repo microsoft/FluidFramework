@@ -23,10 +23,10 @@ import {
 	recordDependency,
 	ChangeFamilyEditor,
 } from "../core";
+import { JsonCompatibleReadOnly } from "../util";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
 import { EditManager, SummaryData } from "./editManager";
 import { makeEditManagerCodec } from "./editManagerCodecs";
-import { JsonCompatibleReadOnly } from "../util";
 
 /**
  * The storage key for the blob in the summary containing EditManager data

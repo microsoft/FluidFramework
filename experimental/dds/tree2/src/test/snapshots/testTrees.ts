@@ -9,15 +9,6 @@ import { FieldKey, UpPath, ValueSchema, rootFieldKeySymbol } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
 import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
-const builder = new SchemaBuilder("Persisted test trees");
-const handleSchema = builder.leaf("Handle", ValueSchema.Serializable);
-const numberSchema = builder.leaf("Number", ValueSchema.Number);
-// builder.leaf("Nothing", ValueSchema.Nothing)
-const primitivesSchema = builder.struct("Primitives", {
-	handle: SchemaBuilder.fieldOptional(handleSchema),
-	number: SchemaBuilder.fieldOptional(numberSchema),
-});
-
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
 const fieldKeyC: FieldKey = brand("FieldC");
