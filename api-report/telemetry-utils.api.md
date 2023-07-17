@@ -49,6 +49,9 @@ export function createChildLogger(props?: {
 }): ITelemetryLoggerExt;
 
 // @public (undocumented)
+export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
+
+// @public (undocumented)
 export function createDebugLogger(props: {
     namespace: string;
     properties?: ITelemetryLoggerPropertyBags;
