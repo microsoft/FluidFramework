@@ -121,6 +121,7 @@ export {
 	Named,
 	FieldStoredSchema,
 	ValueSchema,
+	PrimitiveValueSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -180,4 +181,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, LocalCommitSource } from "./undo";

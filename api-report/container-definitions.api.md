@@ -142,6 +142,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
+    readonly disposed?: boolean;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -289,7 +290,6 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;

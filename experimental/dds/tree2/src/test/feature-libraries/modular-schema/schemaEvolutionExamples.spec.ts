@@ -9,14 +9,12 @@ import {
 	FieldSchema,
 	FullSchemaPolicy,
 	SchemaCollection,
-	allowsFieldSuperset,
-	allowsTreeSuperset,
 	ViewSchema,
 	SchemaBuilder,
-	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/modular-schema";
-
+	FieldKinds,
+	defaultSchemaPolicy,
+	emptyField,
+} from "../../../feature-libraries";
 import {
 	treeSchema,
 	fieldSchema,
@@ -36,7 +34,8 @@ import {
 	rootFieldKey,
 } from "../../../core";
 import { brand } from "../../../util";
-import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPolicy> {
 	public clone(): TestSchemaRepository {

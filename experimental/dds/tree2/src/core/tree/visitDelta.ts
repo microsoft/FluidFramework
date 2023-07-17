@@ -157,14 +157,14 @@ function visitModify(
 }
 
 function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
-	let containsMoves = false;
+	let listHasMoveOrDelete = false;
 	let index = 0;
 	for (const mark of delta) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
 		} else {
-			let result = false;
+			let markHasMoveOrDelete = false;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
@@ -172,11 +172,11 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					// Handled in the second pass
 					visitModify(index, mark, visitor, config);
 					index += mark.count;
-					result = true;
+					markHasMoveOrDelete = true;
 					break;
 				case Delta.MarkType.MoveOut:
-					result = visitModify(index, mark, visitor, config);
-					if (result) {
+					markHasMoveOrDelete = visitModify(index, mark, visitor, config);
+					if (markHasMoveOrDelete) {
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
 					visitor.onMoveOut(index, mark.count, mark.moveId);
@@ -188,25 +188,26 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					);
 					break;
 				case Delta.MarkType.Modify:
-					result = visitModify(index, mark, visitor, config);
+					markHasMoveOrDelete = visitModify(index, mark, visitor, config);
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
 					visitor.onInsert(index, mark.content);
-					result = visitModify(index, mark, visitor, config);
+					markHasMoveOrDelete =
+						visitModify(index, mark, visitor, config) || (mark.isTransient ?? false);
 					index += mark.content.length;
 					break;
 				case Delta.MarkType.MoveIn:
 					// Handled in the second pass
-					result = true;
+					markHasMoveOrDelete = true;
 					break;
 				default:
 					unreachableCase(type);
 			}
-			containsMoves ||= result;
+			listHasMoveOrDelete ||= markHasMoveOrDelete;
 		}
 	}
-	return containsMoves;
+	return listHasMoveOrDelete;
 }
 
 function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
@@ -232,7 +233,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					break;
 				case Delta.MarkType.Insert:
 					visitModify(index, mark, visitor, config);
-					if (mark.isTransient === true) {
+					if (mark.isTransient ?? false) {
 						visitor.onDelete(index, mark.content.length);
 					} else {
 						index += mark.content.length;

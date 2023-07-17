@@ -212,9 +212,21 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
+export interface Transient {
+	/**
+	 * The details of the change that deletes the transient content.
+	 */
+	transientDetach: ChangeAtomId;
+}
+export const Transient = Type.Object({ detachedBy: EncodedChangeAtomId });
+
+export type CanBeTransient = Partial<Transient>;
+export const CanBeTransient = Type.Partial(Transient);
+
 export interface Insert<TNodeChange = NodeChangeType>
 	extends HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
@@ -229,6 +241,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		Type.Object({
 			type: Type.Literal("Insert"),
@@ -306,6 +319,7 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 export interface Revive<TNodeChange = NodeChangeType>
 	extends HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "Revive";
@@ -316,6 +330,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		CellTargetingMark,
 		Type.Object({

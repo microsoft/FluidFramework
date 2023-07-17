@@ -50,7 +50,8 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
