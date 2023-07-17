@@ -33,7 +33,7 @@
 		"test": "concurrently npm:test:mocha npm:test:jest",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:end-to-end": "npm run test:jest",
-		"test:jest": "jest --detectOpenHandles",
+		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:mocha": "npm run mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
