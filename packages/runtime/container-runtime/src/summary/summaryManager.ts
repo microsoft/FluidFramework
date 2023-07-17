@@ -109,7 +109,7 @@ export class SummaryManager implements IDisposable {
 		private readonly disableHeuristics?: boolean,
 	) {
 		this.logger = createChildLogger({
-			base: parentLogger,
+			logger: parentLogger,
 			namespace: "SummaryManager",
 			properties: {
 				all: { clientId: () => this.latestClientId },

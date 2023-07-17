@@ -45,7 +45,7 @@ export class ScheduleManager {
 	) {
 		this.deltaScheduler = new DeltaScheduler(
 			this.deltaManager,
-			createChildLogger({ base: this.logger, namespace: "DeltaScheduler" }),
+			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
 		);
 		void new ScheduleManagerCore(deltaManager, getClientId, logger);
 	}

@@ -101,7 +101,7 @@ export class Outbox {
 
 	constructor(private readonly params: IOutboxParameters) {
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: params.logger, namespace: "Outbox" }),
+			createChildLogger({ logger: params.logger, namespace: "Outbox" }),
 		);
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==

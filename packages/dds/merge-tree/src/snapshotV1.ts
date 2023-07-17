@@ -49,7 +49,7 @@ export class SnapshotV1 {
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
-		this.logger = createChildLogger({ base: logger, namespace: "Snapshot" });
+		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
 		this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
 		const { currentSeq, minSeq } = mergeTree.collabWindow;

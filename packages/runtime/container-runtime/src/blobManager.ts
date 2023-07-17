@@ -233,7 +233,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	) {
 		super();
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: this.runtime.logger, namespace: "BlobManager" }),
+			createChildLogger({ logger: this.runtime.logger, namespace: "BlobManager" }),
 		);
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =

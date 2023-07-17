@@ -45,7 +45,7 @@ export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	const { usageTelemetryLogger, messageRelay } = props;
 	const consoleLogger = new ConsoleVerboseLogger(usageTelemetryLogger);
 	const telemetryOptInLogger = new TelemetryOptInLogger(consoleLogger);
-	const topLevelLogger = createChildLogger({ base: telemetryOptInLogger });
+	const topLevelLogger = createChildLogger({ logger: telemetryOptInLogger });
 	topLevelLogger?.sendTelemetryEvent({ eventName: "DevtoolsPanelRendered" });
 
 	return (

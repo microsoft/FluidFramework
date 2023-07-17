@@ -125,7 +125,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 			this.tree.emit('error', error);
 		});
 		this.tree = tree;
-		this.logger = createChildLogger({ base: this.tree.logger, namespace: 'Checkout' });
+		this.logger = createChildLogger({ logger: this.tree.logger, namespace: 'Checkout' });
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
 		}

@@ -241,7 +241,7 @@ export class SummaryGenerator {
 	): Promise<void> {
 		const { refreshLatestAck, fullTree } = options;
 		const logger = createChildLogger({
-			base: this.logger,
+			logger: this.logger,
 			namespace: undefined,
 			properties: { all: summarizeProps },
 		});

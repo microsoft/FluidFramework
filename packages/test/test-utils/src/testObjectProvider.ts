@@ -282,7 +282,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		if (this._logger === undefined) {
 			this._logger = new EventAndErrorTrackingLogger(
 				createChildLogger({
-					base: getTestLogger?.(),
+					logger: getTestLogger?.(),
 					properties: {
 						all: {
 							driverType: this.driver.type,

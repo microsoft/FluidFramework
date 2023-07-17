@@ -26,7 +26,7 @@ export function createLogger(
 			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
 
 	const logger = createChildLogger({
-		base: fileLogger,
+		logger: fileLogger,
 		namespace: "LocalSnapshotRunnerApp",
 		properties: {
 			all: { Event_Time: () => Date.now() },

@@ -79,7 +79,7 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		this.logger = createChildLogger({ base: logger, namespace: "OpPerf" });
+		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));

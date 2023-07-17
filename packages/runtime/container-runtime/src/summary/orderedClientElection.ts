@@ -106,7 +106,7 @@ export class OrderedClientCollection
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {
 		super();
-		this.logger = createChildLogger({ base: logger, namespace: "OrderedClientCollection" });
+		this.logger = createChildLogger({ logger, namespace: "OrderedClientCollection" });
 		const members = quorum.getMembers();
 		for (const [clientId, client] of members) {
 			this.addClient(clientId, client);

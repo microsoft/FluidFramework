@@ -34,7 +34,7 @@ export class SnapshotLoader {
 		logger: ITelemetryLoggerExt,
 		private readonly serializer: IFluidSerializer,
 	) {
-		this.logger = createChildLogger({ base: logger, namespace: "SnapshotLoader" });
+		this.logger = createChildLogger({ logger, namespace: "SnapshotLoader" });
 	}
 
 	public async initialize(

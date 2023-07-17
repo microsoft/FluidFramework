@@ -139,7 +139,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		this.mc = loggerToMonitoringContext(
 			createChildLogger({
-				base: createParams.baseLogger,
+				logger: createParams.baseLogger,
 				namespace: "GarbageCollector",
 				properties: {
 					all: { completedGCRuns: () => this.completedRuns },
@@ -471,7 +471,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const logger = options.logger
 			? createChildLogger({
-					base: options.logger,
+					logger: options.logger,
 					properties: {
 						all: { completedGCRuns: () => this.completedRuns },
 					},

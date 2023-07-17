@@ -61,8 +61,8 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		return deltaConnection;
 	}
 
-	constructor(socket: Socket, documentId: string, baseLogger?: ITelemetryBaseLogger) {
-		super(socket, documentId, createChildLogger({ base: baseLogger }));
+	constructor(socket: Socket, documentId: string, logger?: ITelemetryBaseLogger) {
+		super(socket, documentId, createChildLogger({ logger }));
 	}
 
 	/**

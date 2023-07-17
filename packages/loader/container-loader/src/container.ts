@@ -770,7 +770,7 @@ export class Container
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
-			base: subLogger,
+			logger: subLogger,
 			properties: {
 				all: {
 					clientType, // Differentiating summarizer container from main container
@@ -808,7 +808,7 @@ export class Container
 
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: this.subLogger, namespace: "Container" }),
+			createChildLogger({ logger: this.subLogger, namespace: "Container" }),
 		);
 
 		this._deltaManager = this.createDeltaManager();
@@ -1785,7 +1785,7 @@ export class Container
 		);
 
 		const protocolLogger = createChildLogger({
-			base: this.subLogger,
+			logger: this.subLogger,
 			namespace: "ProtocolHandler",
 		});
 
@@ -1898,7 +1898,7 @@ export class Container
 		const serviceProvider = () => this.service;
 		const deltaManager = new DeltaManager<ConnectionManager>(
 			serviceProvider,
-			createChildLogger({ base: this.subLogger, namespace: "DeltaManager" }),
+			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
 			() => this.activeConnection(),
 			(props: IConnectionManagerFactoryArgs) =>
 				new ConnectionManager(
@@ -1906,7 +1906,7 @@ export class Container
 					() => this.isDirty,
 					this.client,
 					this._canReconnect,
-					createChildLogger({ base: this.subLogger, namespace: "ConnectionManager" }),
+					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
 				),
 		);

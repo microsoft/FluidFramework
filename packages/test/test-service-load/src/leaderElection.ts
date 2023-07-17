@@ -17,7 +17,7 @@ export class LeaderElection {
 
 	constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
 		this.logger = createChildLogger({
-			base: this.dataStoreRuntime.logger,
+			logger: this.dataStoreRuntime.logger,
 			namespace: "SignalLeaderElection",
 		});
 	}

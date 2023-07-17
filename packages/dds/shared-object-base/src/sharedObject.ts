@@ -108,7 +108,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
 
 		this.logger = createChildLogger({
-			base: runtime.logger,
+			logger: runtime.logger,
 			properties: {
 				all: {
 					sharedObjectId: uuid(),

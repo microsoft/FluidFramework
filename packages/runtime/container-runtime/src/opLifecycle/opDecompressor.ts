@@ -33,7 +33,7 @@ export class OpDecompressor {
 	private readonly logger;
 
 	constructor(logger: ITelemetryLoggerExt) {
-		this.logger = createChildLogger({ base: logger, namespace: "OpDecompressor" });
+		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
 	}
 
 	public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {

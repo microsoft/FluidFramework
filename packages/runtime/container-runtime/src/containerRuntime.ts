@@ -672,7 +672,7 @@ export class ContainerRuntime
 			backCompatContext.taggedLogger ??
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
-			base: passLogger,
+			logger: passLogger,
 			properties: {
 				all: {
 					runtimeVersion: pkgVersion,
@@ -1094,7 +1094,7 @@ export class ContainerRuntime
 		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: this.logger, namespace: "ContainerRuntime" }),
+			createChildLogger({ logger: this.logger, namespace: "ContainerRuntime" }),
 		);
 
 		let loadSummaryNumber: number;
@@ -1238,7 +1238,7 @@ export class ContainerRuntime
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
-			createChildLogger({ base: this.logger, namespace: "SummarizerNode" }),
+			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
 			async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
@@ -1317,7 +1317,7 @@ export class ContainerRuntime
 			context.deltaManager,
 			this,
 			() => this.clientId,
-			createChildLogger({ base: this.logger, namespace: "ScheduleManager" }),
+			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
 		);
 
 		this.pendingStateManager = new PendingStateManager(
@@ -1397,7 +1397,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
 		} else {
 			const orderedClientLogger = createChildLogger({
-				base: this.logger,
+				logger: this.logger,
 				namespace: "OrderedClientElection",
 			});
 			const orderedClientCollection = new OrderedClientCollection(
@@ -2718,7 +2718,7 @@ export class ContainerRuntime
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
 		const summaryNumberLogger = createChildLogger({
-			base: summaryLogger,
+			logger: summaryLogger,
 			properties: {
 				all: { summaryNumber },
 			},
@@ -2730,7 +2730,7 @@ export class ContainerRuntime
 		if (refreshLatestAck) {
 			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
 				createChildLogger({
-					base: summaryNumberLogger,
+					logger: summaryNumberLogger,
 					namespace: undefined,
 					properties: { all: { safeSummary: true } },
 				}),

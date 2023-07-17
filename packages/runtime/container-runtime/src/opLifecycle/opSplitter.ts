@@ -33,7 +33,7 @@ export class OpSplitter {
 		logger: ITelemetryLoggerExt,
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
-		this.logger = createChildLogger({ base: logger, namespace: "OpSplitter" });
+		this.logger = createChildLogger({ logger, namespace: "OpSplitter" });
 	}
 
 	public get isBatchChunkingEnabled(): boolean {

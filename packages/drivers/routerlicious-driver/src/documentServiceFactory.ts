@@ -119,7 +119,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = createChildLogger({ base: logger, namespace: "RouterliciousDriver" });
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -248,7 +248,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 		const logger2 = createChildLogger({
-			base: logger,
+			logger,
 			namespace: "RouterliciousDriver",
 			properties: {
 				all: { driverVersion },

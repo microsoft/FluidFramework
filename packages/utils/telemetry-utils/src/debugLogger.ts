@@ -80,7 +80,7 @@ export class DebugLogger extends TelemetryLogger {
 		multiSinkLogger.addLogger(
 			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
-		multiSinkLogger.addLogger(createChildLogger({ base: baseLogger, namespace }));
+		multiSinkLogger.addLogger(createChildLogger({ logger: baseLogger, namespace }));
 
 		return multiSinkLogger;
 	}

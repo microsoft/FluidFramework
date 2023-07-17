@@ -217,7 +217,7 @@ class Document {
 		);
 
 		this.docLogger = createChildLogger({
-			base: new Logger(this.containerDescription, errorHandler),
+			logger: new Logger(this.containerDescription, errorHandler),
 		});
 		this.container = await loadContainer(
 			documentServiceFactory,

@@ -296,11 +296,11 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 const childLoggerType = "__fluid_child_logger";
 
 export function createChildLogger(props?: {
-	base?: ITelemetryBaseLogger;
+	logger?: ITelemetryBaseLogger;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt {
-	return ChildLogger.create(props?.base, props?.namespace, props?.properties);
+	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
 }
 
 /**

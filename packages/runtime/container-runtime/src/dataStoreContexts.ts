@@ -47,7 +47,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
-		this._logger = createChildLogger({ base: baseLogger });
+		this._logger = createChildLogger({ logger: baseLogger });
 	}
 
 	[Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {

@@ -201,7 +201,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
-				base: this.logger,
+				logger: this.logger,
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
 			dataStoreRuntime.options,

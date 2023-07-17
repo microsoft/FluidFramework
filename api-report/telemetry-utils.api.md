@@ -43,7 +43,7 @@ export const connectedEventName = "connected";
 
 // @public (undocumented)
 export function createChildLogger(props?: {
-    base?: ITelemetryBaseLogger;
+    logger?: ITelemetryBaseLogger;
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;

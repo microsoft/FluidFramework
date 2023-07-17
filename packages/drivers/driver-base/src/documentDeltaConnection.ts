@@ -138,7 +138,7 @@ export class DocumentDeltaConnection
 		});
 
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: logger, namespace: "DeltaConnection" }),
+			createChildLogger({ logger, namespace: "DeltaConnection" }),
 		);
 
 		this.on("newListener", (event, _listener) => {

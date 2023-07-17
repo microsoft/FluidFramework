@@ -548,12 +548,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
 		this.logger = createChildLogger({
-			base: runtime.logger,
+			logger: runtime.logger,
 			namespace: 'SharedTree',
 			properties: sharedTreeTelemetryProperties,
 		});
 		this.sequencedEditAppliedLogger = createChildLogger({
-			base: this.logger,
+			logger: this.logger,
 			namespace: 'SequencedEditApplied',
 			properties: sharedTreeTelemetryProperties,
 		});

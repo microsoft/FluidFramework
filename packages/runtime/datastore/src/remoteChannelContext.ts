@@ -62,7 +62,7 @@ export class RemoteChannelContext implements IChannelContext {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
 		this.subLogger = createChildLogger({
-			base: runtime.logger,
+			logger: runtime.logger,
 			namespace: "RemoteChannelContext",
 		});
 

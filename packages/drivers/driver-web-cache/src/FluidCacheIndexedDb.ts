@@ -46,7 +46,7 @@ export function getFluidCacheIndexedDbInstance(
 					// Catch any error done when attempting to delete the older version.
 					// If the object does not exist db will throw.
 					// We can now assume that the old version is no longer there regardless.
-					createChildLogger({ base: logger }).sendErrorEvent(
+					createChildLogger({ logger }).sendErrorEvent(
 						{
 							eventName: FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
 						},

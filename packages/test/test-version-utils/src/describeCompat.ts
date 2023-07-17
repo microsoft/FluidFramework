@@ -61,7 +61,7 @@ function createCompatSuite(
 						});
 					} catch (error) {
 						const logger = createChildLogger({
-							base: getTestLogger?.(),
+							logger: getTestLogger?.(),
 							namespace: "DescribeCompatSetup",
 						});
 						logger.sendErrorEvent(

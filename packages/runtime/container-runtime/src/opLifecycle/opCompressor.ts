@@ -20,7 +20,7 @@ export class OpCompressor {
 	private readonly logger;
 
 	constructor(logger: ITelemetryLoggerExt) {
-		this.logger = createChildLogger({ base: logger, namespace: "OpCompressor" });
+		this.logger = createChildLogger({ logger, namespace: "OpCompressor" });
 	}
 
 	public compressBatch(batch: IBatch): IBatch {

@@ -66,7 +66,7 @@ export async function prefetchLatestSnapshot(
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
 	const odspLogger = createOdspLogger(
-		createChildLogger({ base: logger, namespace: "PrefetchSnapshot" }),
+		createChildLogger({ logger, namespace: "PrefetchSnapshot" }),
 	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 

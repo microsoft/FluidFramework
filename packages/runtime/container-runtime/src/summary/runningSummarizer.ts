@@ -172,7 +172,7 @@ export class RunningSummarizer implements IDisposable {
 
 		this.mc = loggerToMonitoringContext(
 			createChildLogger({
-				base: baseLogger,
+				logger: baseLogger,
 				namespace: "Running",
 				properties: {
 					all: telemetryProps,

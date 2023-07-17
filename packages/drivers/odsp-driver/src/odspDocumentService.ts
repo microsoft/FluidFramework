@@ -132,7 +132,7 @@ export class OdspDocumentService implements IDocumentService {
 
 		this.mc = loggerToMonitoringContext(
 			createChildLogger({
-				base: logger,
+				logger,
 				properties: {
 					all: {
 						odc: isOdcOrigin(

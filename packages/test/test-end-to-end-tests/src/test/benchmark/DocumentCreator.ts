@@ -57,7 +57,7 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  */
 export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
 	const logger = createChildLogger({
-		base: getTestLogger?.(),
+		logger: getTestLogger?.(),
 		properties: {
 			all: {
 				driverType: props.provider.driver.type,

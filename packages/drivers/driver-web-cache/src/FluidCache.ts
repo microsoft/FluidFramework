@@ -73,7 +73,7 @@ export class FluidCache implements IPersistedCache {
 	private dbReuseCount: number = -1;
 
 	constructor(config: FluidCacheConfig) {
-		this.logger = createChildLogger({ base: config.logger });
+		this.logger = createChildLogger({ logger: config.logger });
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
 		this.closeDbAfterMs = config.closeDbAfterMs ?? 0;

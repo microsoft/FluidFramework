@@ -130,7 +130,7 @@ export async function getLogger(
 		baseLogger.transformEvents(transformEvents);
 	}
 	return createChildLogger({
-		base: baseLogger,
+		logger: baseLogger,
 		namespace: config.namespace,
 		properties: {
 			all: {

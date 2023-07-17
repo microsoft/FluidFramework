@@ -137,7 +137,7 @@ export class DataStores implements IDisposable {
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
-		this.mc = loggerToMonitoringContext(createChildLogger({ base: baseLogger }));
+		this.mc = loggerToMonitoringContext(createChildLogger({ logger: baseLogger }));
 		this.containerRuntimeHandle = new FluidObjectHandle(
 			this.runtime,
 			"/",

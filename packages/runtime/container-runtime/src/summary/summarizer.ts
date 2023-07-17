@@ -90,7 +90,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
-		this.logger = createChildLogger({ base: this.runtime.logger, namespace: "Summarizer" });
+		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "Summarizer" });
 	}
 
 	/**

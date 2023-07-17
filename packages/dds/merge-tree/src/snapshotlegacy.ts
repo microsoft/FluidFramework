@@ -61,7 +61,7 @@ export class SnapshotLegacy {
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
-		this.logger = createChildLogger({ base: logger, namespace: "Snapshot" });
+		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
 		this.chunkSize =
 			mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
 	}

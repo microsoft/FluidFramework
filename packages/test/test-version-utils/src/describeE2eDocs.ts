@@ -277,7 +277,7 @@ function createE2EDocCompatSuite(
 							);
 						} catch (error) {
 							const logger = createChildLogger({
-								base: getTestLogger?.(),
+								logger: getTestLogger?.(),
 								namespace: "DescribeE2EDocs",
 							});
 							logger.sendErrorEvent(

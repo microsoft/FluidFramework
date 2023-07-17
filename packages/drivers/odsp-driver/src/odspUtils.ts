@@ -289,7 +289,7 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
 	createChildLogger({
-		base: logger,
+		logger,
 		namespace: "OdspDriver",
 		properties: {
 			all: {

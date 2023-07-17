@@ -58,7 +58,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		runId: number | undefined;
 	}) {
 		return createChildLogger({
-			base: await this.loggerP,
+			logger: await this.loggerP,
 			properties: {
 				all: dimensions,
 			},

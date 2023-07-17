@@ -155,7 +155,7 @@ describe("GC Telemetry Tracker", () => {
 	beforeEach(() => {
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(
-			createChildLogger({ base: mockLogger, namespace: "GarbageCollector" }),
+			createChildLogger({ logger: mockLogger, namespace: "GarbageCollector" }),
 			configProvider(injectedSettings),
 		);
 		unreferencedNodesState = new Map();

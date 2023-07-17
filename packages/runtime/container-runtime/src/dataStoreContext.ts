@@ -317,7 +317,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: this.logger, namespace: "FluidDataStoreContext" }),
+			createChildLogger({ logger: this.logger, namespace: "FluidDataStoreContext" }),
 		);
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,

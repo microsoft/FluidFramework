@@ -21,7 +21,7 @@ export class BatchTracker {
 		batchCountSamplingRate: number,
 		dateTimeProvider: () => number = () => performance.now(),
 	) {
-		this.logger = createChildLogger({ base: logger, namespace: "Batching" });
+		this.logger = createChildLogger({ logger, namespace: "Batching" });
 
 		this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
 			this.startBatchSequenceNumber = message.sequenceNumber;

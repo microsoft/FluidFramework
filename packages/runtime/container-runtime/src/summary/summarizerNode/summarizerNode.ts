@@ -99,7 +99,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
 		this.logger = createChildLogger({
-			base: baseLogger,
+			logger: baseLogger,
 			properties: {
 				all: {
 					id: {

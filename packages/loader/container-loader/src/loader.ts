@@ -344,7 +344,7 @@ export class Loader implements IHostLoader {
 			subLogger: subMc.logger,
 		};
 		this.mc = loggerToMonitoringContext(
-			createChildLogger({ base: this.services.subLogger, namespace: "Loader" }),
+			createChildLogger({ logger: this.services.subLogger, namespace: "Loader" }),
 		);
 	}
 
