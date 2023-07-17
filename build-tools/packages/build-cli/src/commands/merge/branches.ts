@@ -208,13 +208,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		// Create a new local branch to serve as the merge HEAD, at the prHeadCommit found earlier.
 		const mergeBranch = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
-		// Only clean up this branch locally
 		this.log(
 			`Creating and checking out new branch: ${mergeBranch} at commit ${shortCommit(
 				prHeadCommit,
 			)}`,
 		);
 		await this.gitRepo.gitClient.checkoutBranch(mergeBranch, prHeadCommit);
+		// Only clean up this branch locally
 		this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: false });
 
 		// If we determined that the PR won't conflict, merge the remote target branch with the HEAD (which is mergeBranch
@@ -272,7 +272,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			try {
 				prNumber = await createPullRequest(prObject, this.logger);
 			} catch (error: unknown) {
-				// There was an error when creating the pull rrequest, so clean up the remote branch.
+				// There was an error when creating the pull request, so clean up the remote branch.
 				this.errorLog(`Error creating pull request: ${error}`);
 				this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: true });
 				throw error;
