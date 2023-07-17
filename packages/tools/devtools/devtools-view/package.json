@@ -19,7 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"clean": "rimraf \"_api-extractor-temp\" \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
+		"clean": "rimraf '_api-extractor-temp' 'coverage' 'dist' 'nyc' '*.tsbuildinfo' '*.build.log' --glob",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
