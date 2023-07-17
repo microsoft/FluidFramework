@@ -83,7 +83,7 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachedBy: RevisionTag,
-	detachId: ChangesetLocalId,
+	detachId?: ChangesetLocalId,
 	reviver = fakeRepair,
 	lineage?: SF.LineageEvent[],
 	lastDetach?: ChangeAtomId,
@@ -92,7 +92,7 @@ function createReviveChangeset(
 		startIndex,
 		count,
 		detachedBy,
-		detachId,
+		detachId ?? brand(0),
 		reviver,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;

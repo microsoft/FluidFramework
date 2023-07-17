@@ -57,7 +57,6 @@ const TreeSchemaFormat = Type.Object(
 		localFields: Type.Array(NamedLocalFieldSchemaFormat),
 		globalFields: Type.Array(GlobalFieldKeySchema),
 		extraLocalFields: FieldSchemaFormat,
-		extraGlobalFields: Type.Boolean(),
 		// TODO: don't use external type here.
 		value: Type.Enum(ValueSchema),
 	},
@@ -124,7 +123,6 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
-		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: encodeField(schema.extraLocalFields),
 		globalFields: [...schema.globalFields].sort(),
 		localFields: [...schema.localFields]
@@ -178,7 +176,6 @@ function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
 
 function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
 	const out: TreeStoredSchema = {
-		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: decodeField(schema.extraLocalFields),
 		globalFields: new Set(schema.globalFields),
 		localFields: new Map(
