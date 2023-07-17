@@ -6,12 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	ContainerKey,
-	DevtoolsLogger,
-	IDevtools,
-	initializeDevtools,
-} from "@fluid-experimental/devtools";
+import { ContainerKey, DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
 import { FluidContainer, IFluidContainer, RootDataObject } from "@fluidframework/fluid-static";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
@@ -25,7 +20,7 @@ const devtools = initializeDevtools({ logger });
 // Render the text area in the DOM
 createContainerAndRenderInElement().then((fluidContainer) => {
 	// Register the container with Devtools
-	registerContainerWithDevtools(devtools, fluidContainer, "e2e-test-container");
+	registerContainerWithDevtools(fluidContainer, "e2e-test-container");
 });
 
 /**
@@ -84,10 +79,9 @@ async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
 }
 
 /**
- * Registers container described by the input `containerInfo` with the provided devtools instance.
+ * Registers the provided {@link IFluidContainer} with the devtools.
  */
 function registerContainerWithDevtools(
-	devtools: IDevtools,
 	container: IFluidContainer,
 	containerKey: ContainerKey,
 ): void {
