@@ -141,6 +141,7 @@ export {
 	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceState,
+	BrandedFieldKind,
 } from "./modular-schema";
 
 export {
@@ -180,7 +181,6 @@ export {
 
 export {
 	FieldKinds,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,

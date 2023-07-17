@@ -18,13 +18,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	static description = "Sync branches depending on the batch size passed";
 
 	static flags = {
-		auth: Flags.string({
-			description:
-				"GitHub authentication token. For security reasons, this value should be passed using the GITHUB_TOKEN environment variable.",
-			char: "a",
-			required: true,
-			env: "GITHUB_TOKEN",
-		}),
 		pat: Flags.string({
 			description: "GitHub Personal Access Token",
 			char: "p",
@@ -84,7 +77,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		}
 
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
-
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
@@ -93,7 +85,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.remote = flags.remote;
 
 		const prExists: boolean = await pullRequestExists(
-			flags.auth,
+			flags.pat,
 			prTitle,
 			owner,
 			repo,
@@ -102,19 +94,21 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prExists) {
 			this.verbose(`Open pull request exists`);
-			this.exit(-1);
+			return;
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
 		}
 
-		const lastMergedCommit = await this.gitRepo.getMergeBase(flags.source, flags.target);
+		const remoteTargetBranch = `refs/remotes/${this.remote}/${flags.target}`;
+
+		const lastMergedCommit = await this.gitRepo.getMergeBase(flags.source, remoteTargetBranch);
 		this.log(
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
 
 		const unmergedCommitList: string[] = await this.gitRepo.revList(
 			lastMergedCommit,
-			`refs/remotes/${this.remote}/${flags.source}`,
+			flags.source,
 		);
 
 		this.log(`Unmerged commit list: ${unmergedCommitList}`);
@@ -125,7 +119,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 					`${flags.source} and ${flags.target} branches are in sync. No commits to merge`,
 				),
 			);
-			this.exit(0);
+			return;
 		}
 
 		this.log(
@@ -137,9 +131,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const tempBranchToCheckConflicts = `${flags.target}-automation`;
 		this.branchesToCleanup.push(tempBranchToCheckConflicts);
 
-		await this.gitRepo.gitClient
-			.checkoutBranch(tempBranchToCheckConflicts, flags.target)
-			.branch(["--set-upstream-to", `${this.remote}/${tempBranchToCheckConflicts}`]);
+		await this.gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, remoteTargetBranch);
 
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
 			unmergedCommitList.slice(0, commitSize),
@@ -182,11 +174,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const branchName = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
 		this.branchesToCleanup.push(branchName);
 
-		this.verbose(
+		this.log(
 			`Creating and checking out branch: ${branchName} at commit ${shortCommit(
 				prHeadCommit,
 			)}`,
 		);
+
 		await this.gitRepo.gitClient
 			.checkoutBranch(branchName, prHeadCommit)
 			.push(this.remote, branchName)
@@ -219,7 +212,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
-				.merge([flags.target, "-m", prTitle])
+				.fetch(this.remote)
+				.merge([`${this.remote}/${flags.target}`, "-m", prTitle])
 				.push(this.remote, branchName);
 
 			/**
@@ -268,7 +262,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
 
 		const prNumber = await createPullRequest(prObject, this.logger);
-		this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
+		this.verbose(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
 	}
 
 	/**

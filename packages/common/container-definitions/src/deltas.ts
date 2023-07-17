@@ -126,7 +126,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	(event: "allSentOpsAckd", listener: () => void);
 
 	/**
-	 * @deprecated No replacement API recommended.
+	 * Emitted periodically with latest information on network roundtrip latency
 	 */
 	(event: "pong", listener: (latency: number) => void);
 

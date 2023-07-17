@@ -168,7 +168,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	 * See TODO on `SharedTree.processCore`.
 	 */
 	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
-		const op: JsonCompatibleReadOnly = message.contents;
+		const op = message.contents as JsonCompatibleReadOnly;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(typeof op.data === "string", 0x6ca /* SchemaOps should have string data */);
 			const data = this.codec.decode(op.data);
