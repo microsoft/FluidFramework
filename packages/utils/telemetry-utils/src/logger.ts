@@ -64,6 +64,8 @@ export interface ITelemetryLoggerPropertyBags {
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
+ *
+ * @deprecated - In a subsequent release this type will no longer be exported, use ITelemetryLogger instead
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public static readonly eventNamespaceSeparator = ":";
