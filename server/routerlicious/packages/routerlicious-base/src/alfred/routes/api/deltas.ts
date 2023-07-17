@@ -21,7 +21,7 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
 
 export function create(
@@ -36,6 +36,7 @@ export function create(
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
+	const getDeltasRequestMaxOpsRange = config.get("alfred:getDeltasRequestMaxOpsRange");
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -148,6 +149,19 @@ export function create(
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 			const caller = request.query.caller?.toString();
+
+			const clientRequestSize = to - from - 1;
+			if (clientRequestSize > getDeltasRequestMaxOpsRange) {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							400,
+							`Requested too many ops. Max ops range is: ${getDeltasRequestMaxOpsRange}`,
+						),
+					),
+					response,
+				);
+			}
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
