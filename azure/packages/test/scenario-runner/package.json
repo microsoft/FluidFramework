@@ -94,7 +94,7 @@
 		"@types/js-yaml": "^4.0.5",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",

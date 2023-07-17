@@ -61,48 +61,46 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
-// TODO: There are two kinds of users of this in this file. Both should be changed:
-// Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
-// Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
-function createSharedTrees(
+function createSharedTree(
 	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
 	data?: JsonableTree[],
-	numberOfTrees = 1,
-): readonly [TestTreeProviderLite, readonly ISharedTree[]] {
+): ISharedTree {
+	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests
+	// involving more than 1 tree should be moved elsewhere.
+	const numberOfTrees = 1;
 	const provider = new TestTreeProviderLite(numberOfTrees);
-	for (const tree of provider.trees) {
-		assert(tree.isAttached());
-	}
-	provider.trees[0].schematize({
+	const tree = provider.trees[0];
+	assert(tree.isAttached());
+	tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree: data?.map(singleTextCursor),
 		schema: schemaData,
 	});
-	provider.trees[0].storedSchema.update(schemaData);
+	tree.storedSchema.update(schemaData);
 	if (data !== undefined) {
-		provider.trees[0].context.root.content = data.map(singleTextCursor);
+		tree.context.root.content = data.map(singleTextCursor);
 	}
 	provider.processMessages();
-	return [provider, provider.trees];
+	return tree;
 }
 
 describe("editable-tree: editing", () => {
 	it("edit using contextually typed API", () => {
-		const [, trees] = createSharedTrees(fullSchemaData, [personJsonableTree()]);
-		assert.equal((trees[0].root as Person).name, "Adam");
+		const tree = createSharedTree(fullSchemaData, [personJsonableTree()]);
+		assert.equal((tree.root as Person).name, "Adam");
 		// delete optional root
-		trees[0].root = undefined;
-		assert.equal(trees[0].root, undefined);
+		tree.root = undefined;
+		assert.equal(tree.root, undefined);
 
 		// create optional root
-		trees[0].root = { name: "Mike" };
-		assert.deepEqual(clone(trees[0].root), { name: "Mike" });
+		tree.root = { name: "Mike" };
+		assert.deepEqual(clone(tree.root), { name: "Mike" });
 
 		// replace optional root
-		trees[0].root = { name: "Peter", adult: true };
+		tree.root = { name: "Peter", adult: true };
 
-		assert(isContextuallyTypedNodeDataObject(trees[0].root));
-		const maybePerson = trees[0].root;
+		assert(isContextuallyTypedNodeDataObject(tree.root));
+		const maybePerson = tree.root;
 		// unambiguously typed field
 		maybePerson.age = 150;
 
@@ -119,7 +117,7 @@ describe("editable-tree: editing", () => {
 		// ambiguous type since there are multiple options which are numbers:
 		assert.throws(
 			() => (maybePerson.salary = 99.99),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"data compatible with more than one type allowed by the schema",
@@ -150,7 +148,7 @@ describe("editable-tree: editing", () => {
 		};
 		// make sure the value is not set at the primary field parent node
 		{
-			const person = trees[0].root as Person;
+			const person = tree.root as Person;
 			assert(isEditableTree(person.address));
 			const phones = person.address[getField](brand("phones"));
 			assert.equal(phones.getNode(0)[valueSymbol], undefined);
@@ -214,10 +212,10 @@ describe("editable-tree: editing", () => {
 	});
 
 	it("edit using typed data model", () => {
-		const [, trees] = createSharedTrees(fullSchemaData);
+		const tree = createSharedTree(fullSchemaData);
 
-		trees[0].root = getPerson();
-		const person = trees[0].root as Person;
+		tree.root = getPerson();
+		const person = tree.root as Person;
 
 		// check initial data
 		{
@@ -334,16 +332,16 @@ describe("editable-tree: editing", () => {
 
 	describe(`can move nodes`, () => {
 		it("to the left within the same field", () => {
-			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isEditableTree(trees[0].root));
+			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
-			trees[0].root[getField](localFieldKey).insertNodes(0, [
+			tree.root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
-			const field_0 = trees[0].root[localFieldKey];
+			const field_0 = tree.root[localFieldKey];
 			assert(isEditableField(field_0));
 			assert.deepEqual([...field_0], ["foo", "bar"]);
 
@@ -354,16 +352,16 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to the right within the same field", () => {
-			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isEditableTree(trees[0].root));
+			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
-			trees[0].root[getField](localFieldKey).insertNodes(0, [
+			tree.root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
-			const field_0 = trees[0].root[localFieldKey];
+			const field_0 = tree.root[localFieldKey];
 			assert(isEditableField(field_0));
 			assert.deepEqual([...field_0], ["foo", "bar"]);
 
@@ -374,24 +372,24 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to a different field", () => {
-			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isEditableTree(trees[0].root));
+			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
-			trees[0].root[getField](localFieldKey).insertNodes(0, [
+			tree.root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
-			trees[0].root[getField](otherFieldKey).insertNodes(0, [
+			tree.root[getField](otherFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
-			const field_0 = trees[0].root[localFieldKey];
+			const field_0 = tree.root[localFieldKey];
 			assert(isEditableField(field_0));
 			assert.deepEqual([...field_0], ["foo", "bar"]);
 
-			const field_1 = trees[0].root[otherFieldKey];
+			const field_1 = tree.root[otherFieldKey];
 			assert(isEditableField(field_1));
 			assert.deepEqual([...field_1], ["foo", "bar"]);
 
@@ -428,7 +426,8 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field], ["first", "second", "third"]);
 			assert.throws(
 				() => field.insertNodes(5, ["x"]),
-				(e) => validateAssertionError(e, "Index must be less than or equal to length."),
+				(e: Error) =>
+					validateAssertionError(e, "Index must be less than or equal to length."),
 				"Expected exception was not thrown",
 			);
 		});
@@ -446,7 +445,7 @@ describe("editable-tree: editing", () => {
 
 			assert.throws(
 				() => field.replaceNodes(1, ["x"]),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"Index must be less than length or, if the field is empty, be 0.",
@@ -566,7 +565,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content
@@ -637,7 +636,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content

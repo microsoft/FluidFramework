@@ -419,7 +419,7 @@ describe("editable-tree: read-only", () => {
 			expectFieldEquals(forest.schema, context.unwrappedRoot, []);
 			assert.throws(
 				() => (context.unwrappedRoot as EditableField).getNode(0),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"A child node must exist at index to get it without unwrapping.",
@@ -592,7 +592,6 @@ describe("editable-tree: read-only", () => {
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
 		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, new Set());
 		assert.deepEqual([...simplePhonesSchema.globalFields], []);
-		assert.equal(simplePhonesSchema.extraGlobalFields, false);
 		assert.equal(simplePhonesSchema.localFields.size, 1);
 		const simplePhonesPrimaryKey = [...simplePhonesSchema.localFields.keys()][0];
 		// primary key must be the same across the schema

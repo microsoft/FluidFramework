@@ -523,11 +523,12 @@ export class Container
 
 	public get closed(): boolean {
 		return (
-			this._lifecycleState === "closing" ||
-			this._lifecycleState === "closed" ||
-			this._lifecycleState === "disposing" ||
-			this._lifecycleState === "disposed"
+			this._lifecycleState === "closing" || this._lifecycleState === "closed" || this.disposed
 		);
+	}
+
+	public get disposed(): boolean {
+		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
 	private _attachState = AttachState.Detached;
@@ -556,7 +557,6 @@ export class Container
 	private inboundQueuePausedFromInit = true;
 	private firstConnection = true;
 	private readonly connectionTransitionTimes: number[] = [];
-	private messageCountAfterDisconnection: number = 0;
 	private _loadedFromVersion: IVersion | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
@@ -1565,8 +1565,7 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
 		const codeDetails = this.getCodeDetailsFromQuorum();
-		await this.instantiateContext(
-			true, // existing
+		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
 			pendingLocalState?.pendingRuntimeState,
@@ -1654,7 +1653,7 @@ export class Container
 		};
 	}
 
-	private async createDetached(source: IFluidCodeDetails) {
+	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
 			term: OnlyValidTermValue,
@@ -1664,7 +1663,7 @@ export class Container
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Need to just seed the source data in the code quorum. Quorum itself is empty
-		const qValues = initQuorumValuesFromCodeDetails(source);
+		const qValues = initQuorumValuesFromCodeDetails(codeDetails);
 		this.initializeProtocolState(
 			attributes,
 			{
@@ -1674,10 +1673,7 @@ export class Container
 			}, // IQuorumSnapShot
 		);
 
-		// The load context - given we seeded the quorum - will be great
-		await this.instantiateContextDetached(
-			false, // existing
-		);
+		await this.instantiateRuntime(codeDetails, undefined);
 
 		this.setLoaded();
 	}
@@ -1714,10 +1710,7 @@ export class Container
 			}, // IQuorumSnapShot
 		);
 
-		await this.instantiateContextDetached(
-			true, // existing
-			snapshotTree,
-		);
+		await this.instantiateRuntime(codeDetails, snapshotTree);
 
 		this.setLoaded();
 	}
@@ -2061,26 +2054,11 @@ export class Container
 		}
 		const state = this.connectionState === ConnectionState.Connected;
 
-		const logOpsOnReconnect: boolean =
-			this.connectionState === ConnectionState.Connected &&
-			!this.firstConnection &&
-			this.connectionMode === "write";
-		if (logOpsOnReconnect) {
-			this.messageCountAfterDisconnection = 0;
-		}
-
 		// Both protocol and context should not be undefined if we got so far.
 
 		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
-
-		if (logOpsOnReconnect) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "OpsSentOnReconnect",
-				count: this.messageCountAfterDisconnection,
-			});
-		}
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
@@ -2156,7 +2134,6 @@ export class Container
 			return -1;
 		}
 
-		this.messageCountAfterDisconnection += 1;
 		this.noopHeuristic?.notifyMessageSent();
 		return this._deltaManager.submit(
 			type,
@@ -2280,17 +2257,7 @@ export class Container
 		return { snapshot, versionId: version?.id };
 	}
 
-	private async instantiateContextDetached(existing: boolean, snapshot?: ISnapshotTree) {
-		const codeDetails = this.getCodeDetailsFromQuorum();
-		if (codeDetails === undefined) {
-			throw new Error("pkg should be provided in create flow!!");
-		}
-
-		await this.instantiateContext(existing, codeDetails, snapshot);
-	}
-
-	private async instantiateContext(
-		existing: boolean,
+	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
 		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
@@ -2326,6 +2293,8 @@ export class Container
 		const getSpecifiedCodeDetails = () =>
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
+
+		const existing = snapshot !== undefined;
 
 		const context = new ContainerContext(
 			this.options,
@@ -2371,8 +2340,6 @@ export class Container
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
-
-		this.emit("contextChanged", codeDetails);
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean) => {

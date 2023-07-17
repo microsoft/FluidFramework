@@ -44,7 +44,7 @@
 		"@fluidframework/build-common": "^1.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "22.2.3",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",

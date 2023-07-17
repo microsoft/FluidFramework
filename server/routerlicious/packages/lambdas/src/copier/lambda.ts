@@ -77,16 +77,15 @@ export class CopierLambda implements IPartitionLambda {
 			allProcessed.push(processP);
 		}
 
-		Promise.all(allProcessed).then(
-			() => {
+		Promise.all(allProcessed)
+			.then(() => {
 				this.currentJobs.clear();
 				this.context.checkpoint(batchOffset as IQueuedMessage);
 				this.sendPending();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.context.error(error, { restart: true });
-			},
-		);
+			});
 	}
 
 	private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {

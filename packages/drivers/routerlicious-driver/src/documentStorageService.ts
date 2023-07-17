@@ -20,7 +20,7 @@ import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorag
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 import { GitManager } from "./gitManager";
 import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;
@@ -36,7 +36,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
-		snapshotTreeCache?: ICache<INormalizedWholeSummary>,
+		snapshotTreeCache?: ICache<INormalizedWholeSnapshot>,
 		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
@@ -80,7 +80,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
-		snapshotTreeCache?: ICache<INormalizedWholeSummary>,
+		snapshotTreeCache?: ICache<INormalizedWholeSnapshot>,
 		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		public noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,

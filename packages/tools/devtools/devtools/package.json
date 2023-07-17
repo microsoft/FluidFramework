@@ -100,6 +100,16 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DevtoolsLogger": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_DevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			}
+		}
 	}
 }
