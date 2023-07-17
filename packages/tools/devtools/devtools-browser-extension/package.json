@@ -90,7 +90,6 @@
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/expect-puppeteer": "2.2.1",
-		"@types/firefox": "^0.0.30",
 		"@types/jest": "22.2.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
 		"@types/jsdom": "^21.1.1",
