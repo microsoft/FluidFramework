@@ -49,7 +49,6 @@ import {
 	useLogger,
 } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
-import { useLogger } from "./TelemetryUtils";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -487,10 +486,8 @@ function Menu(props: MenuProps): React.ReactElement {
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
-	const logger = useLogger();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
-		logger?.sendTelemetryEvent({ eventName: "containerClicked", containerKey });
 		setSelection({ type: "containerMenuSelection", containerKey });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
@@ -499,7 +496,6 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	function onTelemetryClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "telemetryClicked" });
 		setSelection({ type: "telemetryMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
@@ -508,7 +504,6 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	function onSettingsClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "settingsClicked" });
 		setSelection({ type: "settingsMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
@@ -517,7 +512,6 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	function onHomeClicked(): void {
-		logger?.sendTelemetryEvent({ eventName: "homeClicked" });
 		setSelection({ type: "homeMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
