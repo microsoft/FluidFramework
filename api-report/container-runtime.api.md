@@ -98,11 +98,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
-    get clientDetails(): IClientDetails;
+    readonly clientDetails: IClientDetails;
     // (undocumented)
     get clientId(): string | undefined;
     // (undocumented)
-    get closeFn(): (error?: ICriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
         logger?: ITelemetryLoggerExt;
         runSweep?: boolean;
@@ -128,7 +128,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    get disposeFn(): (error?: ICriticalContainerError) => void;
+    readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -136,7 +136,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get flushMode(): FlushMode;
     readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
-    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
@@ -180,7 +180,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
-    get options(): ILoaderOptions;
+    readonly options: ILoaderOptions;
     // (undocumented)
     orderSequentially<T>(callback: () => T): T;
     // (undocumented)

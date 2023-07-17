@@ -6,7 +6,7 @@ import { Octokit } from "@octokit/core";
 import { CommandLogger } from "../logging";
 
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
-const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
+const COMMIT_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
@@ -24,7 +24,7 @@ export async function pullRequestExists(
 	repo: string,
 	log: CommandLogger,
 ): Promise<boolean> {
-	log.verbose("Checking if pull request exists----------------");
+	log.verbose(`Checking if pull request with title="${title}" exists----------------`);
 	const octokit = new Octokit({ auth: token });
 	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 
@@ -36,7 +36,7 @@ export async function pullRequestExists(
  * @param token - GitHub authentication token
  * @param commit_sha - Commit id for which we need pull request information
  */
-export async function pullRequestInfo(
+export async function getCommitInfo(
 	token: string,
 	owner: string,
 	repo: string,
@@ -45,7 +45,7 @@ export async function pullRequestInfo(
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
 
-	const prInfo = await octokit.request(PULL_REQUEST_INFO, {
+	const prInfo = await octokit.request(COMMIT_INFO, {
 		owner,
 		repo,
 		ref: commit_sha,
@@ -102,7 +102,6 @@ export async function createPullRequest(
 		repo: pr.repo,
 		pull_number: newPr.data.number,
 		reviewers: pr.reviewers,
-		team_reviewers: [""],
 	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);
