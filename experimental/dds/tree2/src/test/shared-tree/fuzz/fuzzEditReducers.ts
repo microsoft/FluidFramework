@@ -14,9 +14,7 @@ import {
 	FieldEdit,
 	FuzzDelete,
 	FuzzFieldChange,
-	FuzzNodeEditChange,
 	FuzzTransactionType,
-	NodeEdit,
 	Operation,
 } from "./operationTypes";
 
@@ -27,12 +25,6 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 			case "fieldEdit": {
 				const tree = state.channel;
 				applyFieldEdit(tree, contents);
-				break;
-			}
-			case "nodeEdit": {
-				const change = operation.contents as NodeEdit;
-				const tree = state.channel;
-				applyNodeEdit(tree, change.edit);
 				break;
 			}
 			default:
@@ -131,18 +123,6 @@ function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
-	switch (change.type) {
-		case "sequence":
-		case "value":
-		case "optional": {
-			tree.editor.setValue(change.edit.path, change.edit.value);
-			break;
-		}
-		default:
-			fail("Invalid edit.");
-	}
-}
 function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {

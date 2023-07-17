@@ -6,7 +6,6 @@
 
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
@@ -37,6 +36,7 @@ import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-defini
 import { RequestParser } from '@fluidframework/runtime-utils';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
@@ -119,12 +119,9 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;

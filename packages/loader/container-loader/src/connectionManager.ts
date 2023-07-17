@@ -4,7 +4,8 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICriticalContainerError,

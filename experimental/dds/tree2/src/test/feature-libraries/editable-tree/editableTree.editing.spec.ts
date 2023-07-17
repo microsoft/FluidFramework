@@ -40,7 +40,6 @@ import {
 	stringSchema,
 	Int32,
 	getPerson,
-	globalFieldSymbolSequencePhones,
 	SimplePhones,
 	complexPhoneSchema,
 	ComplexPhone,
@@ -206,19 +205,6 @@ describe("editable-tree: editing", () => {
 			}
 		}
 
-		const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;
-		maybePerson.address[globalPhonesKey] = ["111"];
-		// TODO: fix typing of property access in EditableTree (broken by assignment support) and remove this "as"
-		const globalPhones = maybePerson.address[globalPhonesKey] as UnwrappedEditableField;
-		assert(isEditableField(globalPhones));
-		globalPhones[0] = "222";
-		globalPhones[1] = "333";
-		// explicitly check and delete the global field as `clone` (used below)
-		// does not support symbols as property keys
-		assert.deepEqual([...globalPhones], ["222", "333"]);
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete maybePerson.address[globalPhonesKey];
-
 		const clonedPerson = clone(maybePerson);
 		assert.deepEqual(clonedPerson, {
 			name: "Peter",
@@ -252,12 +238,6 @@ describe("editable-tree: editing", () => {
 
 		// check initial data
 		{
-			// explicitly check the global field as `clone` does not support symbols as field keys
-			assert.deepEqual(clone(person.address?.[globalFieldSymbolSequencePhones]), {
-				"0": "115",
-				"1": "116",
-			});
-			delete person.address?.[globalFieldSymbolSequencePhones];
 			const clonedPerson = clone(person);
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",
@@ -367,30 +347,6 @@ describe("editable-tree: editing", () => {
 				"2": 3,
 			});
 		}
-	});
-
-	it("validates schema of values", () => {
-		const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
-		const schemaData = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, stringSchema),
-		);
-		const tree = createSharedTreeView().schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: "x",
-			schema: schemaData,
-		});
-		const root = tree.context.root.content;
-		assert(isEditableTree(root));
-		// Confirm stetting value to a string does not error
-		root[valueSymbol] = "hi";
-		// Conform setting value to something out of schema does error
-		assert.throws(() => (root[valueSymbol] = { kate: "kate" }));
-		assert.throws(() => (root[valueSymbol] = 5));
-		assert.throws(() => (root[valueSymbol] = true));
-		assert.throws(() => (root[valueSymbol] = undefined));
-		// This is not dynamic delete: valueSymbol is a constant symbol.
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		assert.throws(() => delete root[valueSymbol]);
 	});
 
 	describe(`can move nodes`, () => {
@@ -644,10 +600,6 @@ describe("editable-tree: editing", () => {
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
 
-				// edit using valueSymbol
-				field.getNode(0)[valueSymbol] = "via symbol";
-				assert.equal(root[fieldKey], "via symbol");
-
 				// edit using indexing
 				field[0] = "replaced";
 				assert.equal(root[fieldKey], "replaced");
@@ -713,10 +665,6 @@ describe("editable-tree: editing", () => {
 				// edit using assignment
 				root[fieldKey] = "bar";
 				assert.equal(root[fieldKey], "bar");
-
-				// edit using valueSymbol
-				field.getNode(0)[valueSymbol] = "via symbol";
-				assert.equal(root[fieldKey], "via symbol");
 
 				// edit using indexing
 				field[0] = "replaced";

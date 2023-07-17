@@ -107,6 +107,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -863,6 +864,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1300,6 +1302,30 @@ use_old_EnumDeclaration_RuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SubmitSummaryFailureData": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SubmitSummaryFailureData():
+    TypeOnly<old.SubmitSummaryFailureData>;
+declare function use_current_InterfaceDeclaration_SubmitSummaryFailureData(
+    use: TypeOnly<current.SubmitSummaryFailureData>);
+use_current_InterfaceDeclaration_SubmitSummaryFailureData(
+    get_old_InterfaceDeclaration_SubmitSummaryFailureData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SubmitSummaryFailureData": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SubmitSummaryFailureData():
+    TypeOnly<current.SubmitSummaryFailureData>;
+declare function use_old_InterfaceDeclaration_SubmitSummaryFailureData(
+    use: TypeOnly<old.SubmitSummaryFailureData>);
+use_old_InterfaceDeclaration_SubmitSummaryFailureData(
+    get_current_InterfaceDeclaration_SubmitSummaryFailureData());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SubmitSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SubmitSummaryResult():
@@ -1416,6 +1442,30 @@ declare function use_old_ClassDeclaration_SummaryCollection(
     use: TypeOnly<old.SummaryCollection>);
 use_old_ClassDeclaration_SummaryCollection(
     get_current_ClassDeclaration_SummaryCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SummaryStage": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SummaryStage():
+    TypeOnly<old.SummaryStage>;
+declare function use_current_TypeAliasDeclaration_SummaryStage(
+    use: TypeOnly<current.SummaryStage>);
+use_current_TypeAliasDeclaration_SummaryStage(
+    get_old_TypeAliasDeclaration_SummaryStage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SummaryStage": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SummaryStage():
+    TypeOnly<current.SummaryStage>;
+declare function use_old_TypeAliasDeclaration_SummaryStage(
+    use: TypeOnly<old.SummaryStage>);
+use_old_TypeAliasDeclaration_SummaryStage(
+    get_current_TypeAliasDeclaration_SummaryStage());
 
 /*
 * Validate forward compat by using old type in place of current type

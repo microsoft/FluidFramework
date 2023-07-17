@@ -4,7 +4,6 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
 	ChildLogger,
@@ -17,6 +16,7 @@ import {
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryBaseLogger,
 	FluidObject,
 	IFluidRouter,
 	IRequest,

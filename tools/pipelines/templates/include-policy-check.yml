@@ -56,3 +56,15 @@ stages:
             workingDir: ${{ parameters.buildDirectory }}
             customCommand: 'run ${{ check }}'
           condition: succeededOrFailed()
+
+      - task: Bash@3
+        displayName: Check for extraneous modified files
+        inputs:
+          targetType: 'inline'
+          script: |
+            git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+            if [ `cat git_status.log | wc -l` != "0" ]; then
+              cat git_status.log
+              echo "##vso[task.logissue type=error]Build should not create extraneous files"
+              exit -1;
+            fi

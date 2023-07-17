@@ -4,7 +4,7 @@
  */
 
 import { IEvent } from "@fluidframework/common-definitions";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IFluidHandle,
 	IFluidLoadable,
@@ -27,11 +27,9 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * @typeParam I - The optional input types used to strongly type the data object
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-	extends EventForwarder<I["Events"] & IEvent>
+	extends TypedEventEmitter<I["Events"] & IEvent>
 	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
 {
-	private _disposed = false;
-
 	/**
 	 * This is your FluidDataStoreRuntime object
 	 */
@@ -54,10 +52,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	protected initProps?: I["InitialState"];
 
 	protected initializeP: Promise<void> | undefined;
-
-	public get disposed() {
-		return this._disposed;
-	}
 
 	public get id() {
 		return this.runtime.id;
@@ -101,12 +95,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
-
-		// Container event handlers
-		this.runtime.once("dispose", () => {
-			this._disposed = true;
-			this.dispose();
-		});
 	}
 
 	// #region IFluidRouter
@@ -187,11 +175,4 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * Called every time the data store is initialized after create or existing.
 	 */
 	protected async hasInitialized(): Promise<void> {}
-
-	/**
-	 * Called when the host container closes and disposes itself
-	 */
-	public dispose(): void {
-		super.dispose();
-	}
 }

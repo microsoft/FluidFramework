@@ -240,14 +240,20 @@ const editNodesWithIndividualTransactions = (
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
+	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
 	for (let i = 0; i < numChildrenToEdit; i++) {
 		tree.transaction.start();
-		const childPath = {
-			parent: rootPath,
-			parentField: childrenFieldKey,
-			parentIndex: i,
-		};
-		tree.editor.setValue(childPath, editPayload);
+		editor.delete(i, 1);
+		editor.insert(
+			i,
+			singleTextCursor({
+				type: childSchema.name,
+				value: editPayload,
+				fields: {
+					data: [{ value: "", type: stringSchema.name }],
+				},
+			}),
+		);
 		tree.transaction.commit();
 		provider.processMessages();
 	}
@@ -264,14 +270,20 @@ const editNodesWithSingleTransaction = (
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
+	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
 	tree.transaction.start();
 	for (let i = 0; i < numChildrenToEdit; i++) {
-		const childPath = {
-			parent: rootPath,
-			parentField: childrenFieldKey,
-			parentIndex: i,
-		};
-		tree.editor.setValue(childPath, editPayload);
+		editor.delete(i, 1);
+		editor.insert(
+			i,
+			singleTextCursor({
+				type: childSchema.name,
+				value: editPayload,
+				fields: {
+					data: [{ value: "", type: stringSchema.name }],
+				},
+			}),
+		);
 	}
 	tree.transaction.commit();
 	provider.processMessages();

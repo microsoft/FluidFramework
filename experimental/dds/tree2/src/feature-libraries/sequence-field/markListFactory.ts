@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../../core";
 import { Mark, MarkList, NoopMark } from "./format";
-import { MoveEffectTable } from "./moveEffectTable";
 import { isNoopMark, tryExtendMark } from "./utils";
 
 /**
@@ -19,12 +17,7 @@ export class MarkListFactory<TNodeChange> {
 	private offset = 0;
 	public readonly list: MarkList<TNodeChange> = [];
 
-	public constructor(
-		// TODO: Is there a usage of MarkListFactory where we need a non-undefined revision?
-		private readonly revision?: RevisionTag | undefined,
-		private readonly moveEffects?: MoveEffectTable<TNodeChange>,
-		private readonly recordMerges: boolean = false,
-	) {}
+	public constructor() {}
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
@@ -47,7 +40,7 @@ export class MarkListFactory<TNodeChange> {
 		}
 		const prev = this.list[this.list.length - 1];
 		if (prev !== undefined && prev.type === mark.type) {
-			if (tryExtendMark(prev, mark, this.revision, this.moveEffects, this.recordMerges)) {
+			if (tryExtendMark(prev, mark)) {
 				return;
 			}
 		}

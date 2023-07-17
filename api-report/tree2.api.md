@@ -340,8 +340,8 @@ export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy,
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
-    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeEntry<T> | undefined;
+    set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
 }
 
 // @alpha (undocumented)
@@ -492,7 +492,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     readonly [proxyTargetSymbol]: object;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: NamedTreeSchema;
-    [valueSymbol]: Value;
+    readonly [valueSymbol]: Value;
     [key: FieldKey]: UnwrappedEditableField;
 }
 
@@ -511,7 +511,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 
 // @alpha
 export interface EditableTreeEvents {
-    changing(upPath: UpPath, value: Value): void;
+    changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
@@ -842,7 +842,6 @@ export interface HasListeners<E extends Events<E>> {
 interface HasModifications<TTree = ProtoNode> {
     // (undocumented)
     readonly fields?: FieldMarks<TTree>;
-    readonly setValue?: Value;
 }
 
 // @alpha (undocumented)
@@ -874,15 +873,11 @@ export interface IDecoder<TDecoded, TEncoded> {
 export interface IDefaultEditBuilder {
     // (undocumented)
     addNodeExistsConstraint(path: UpPath): void;
-    // (undocumented)
-    addValueConstraint(path: UpPath, value: Value): void;
     move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destinationIndex: number): void;
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
-    // (undocumented)
-    setValue(path: UpPath, value: Value): void;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
@@ -1200,11 +1195,13 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 local: {
-[x: string]: FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 };
@@ -1229,7 +1226,9 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 };
 
 // @alpha (undocumented)
-export const jsonNull: TreeSchema<"Json.Null", {}>;
+export const jsonNull: TreeSchema<"Json.Null", {
+local: {};
+}>;
 
 // @alpha (undocumented)
 export const jsonNumber: TreeSchema<"Json.Number", {
@@ -1240,11 +1239,13 @@ value: ValueSchema.Number;
 export const jsonObject: TreeSchema<"Json.Object", {
 extraLocalFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
 local: {
-[x: string]: FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 };
@@ -1252,7 +1253,9 @@ value: ValueSchema.Boolean;
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
-}>, TreeSchema<"Json.Null", {}>, TreeSchema<"Json.Boolean", {
+}>, TreeSchema<"Json.Null", {
+local: {};
+}>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
 }>;
@@ -1277,6 +1280,9 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @alpha
+export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha (undocumented)
@@ -1290,6 +1296,12 @@ export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Ke
 
 // @alpha
 export const localNodeKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
+
+// @alpha
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
 // @alpha
 interface MakeNominal {
@@ -1417,10 +1429,6 @@ state?: NodeExistenceState) => NodeChangeset | undefined;
 export interface NodeChangeset extends HasFieldChanges {
     // (undocumented)
     nodeExistsConstraint?: NodeExistsConstraint;
-    // (undocumented)
-    valueChange?: ValueChange;
-    // (undocumented)
-    valueConstraint?: ValueConstraint;
 }
 
 // @alpha
@@ -1550,7 +1558,6 @@ export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-    onSetValue(path: UpPath, value: Value): void;
 }
 
 // @alpha
@@ -1573,6 +1580,16 @@ type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
+
+// @alpha
+export interface RangeEntry<T> {
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    start: number;
+    // (undocumented)
+    value: T;
+}
 
 // @alpha
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
@@ -1670,6 +1687,16 @@ export class SchemaBuilder {
     constructor(name: string, ...libraries: SchemaLibrary[]);
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
+        local: {
+            [""]: T;
+        };
+    }>;
+    fieldNodeRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        local: {
+            [""]: T;
+        };
+    }>;
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
@@ -1677,12 +1704,27 @@ export class SchemaBuilder {
     globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
+    leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
+        value: T;
+    }>;
+    map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
+        extraLocalFields: T;
+    }>;
+    mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        extraLocalFields: T;
+    }>;
     // (undocumented)
     readonly name: string;
     object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
     primitive<Name extends string, T extends InternalTypes_2.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
+    }>;
+    struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
+        local: T;
+    }>;
+    structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+        local: T;
     }>;
 }
 
@@ -2170,20 +2212,6 @@ export type UpPathDefault = UpPath;
 
 // @alpha
 export type Value = undefined | TreeValue;
-
-// @alpha (undocumented)
-export interface ValueChange {
-    revision?: RevisionTag;
-    value?: Value;
-}
-
-// @alpha (undocumented)
-export interface ValueConstraint {
-    // (undocumented)
-    value: Value;
-    // (undocumented)
-    violated: boolean;
-}
 
 // @alpha (undocumented)
 export interface ValueFieldEditBuilder {

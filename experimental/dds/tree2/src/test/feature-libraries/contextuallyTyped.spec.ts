@@ -67,7 +67,7 @@ describe("ContextuallyTyped", () => {
 		const builder = new SchemaBuilder("applyTypesFromContext");
 		const numberSchema = builder.primitive("number", ValueSchema.Number);
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
-		const numbersObject = builder.object("numbers", { local: { numbers: numberSequence } });
+		const numbersObject = builder.struct("numbers", { numbers: numberSequence });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
 			numbers: [],
@@ -80,7 +80,7 @@ describe("ContextuallyTyped", () => {
 		const builder = new SchemaBuilder("applyTypesFromContext");
 		const numberSchema = builder.primitive("number", ValueSchema.Number);
 		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
-		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
+		const primaryObject = builder.struct("numbers", { [EmptyKey]: numberSequence });
 		const schema = builder.intoDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };

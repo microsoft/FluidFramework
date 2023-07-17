@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IErrorEvent,
-	IEventProvider,
-	IEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -125,10 +121,7 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  */
-export interface IDeltaManager<T, U>
-	extends IEventProvider<IDeltaManagerEvents>,
-		IDeltaSender,
-		IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/** The queue of inbound delta messages */
 	readonly inbound: IDeltaQueue<T>;
 
