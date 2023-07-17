@@ -894,7 +894,7 @@ export class MergeTree {
 		localSeq?: number,
 	): number {
 		// todo: somewhat-ugly hack checking constructor name
-		if (node.isLeaf() && node.isEndpoint && node.constructor.name === "StartOfTreeSegment") {
+		if (node.isLeaf() && node.isStartEndpoint) {
 			return 0;
 		}
 

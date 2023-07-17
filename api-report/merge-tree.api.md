@@ -107,7 +107,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, canSlideToEndpoint: boolean, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -591,6 +591,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     // (undocumented)
     clone(): ISegment;
     readonly isEndpoint?: boolean;
+    readonly isStartEndpoint?: boolean;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -666,7 +667,7 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     clear(): void;
     // @internal (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, canSlideToEndpoint: boolean, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
@@ -688,7 +689,7 @@ export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     // (undocumented)
-    readonly canSlideToEndpoint: boolean;
+    readonly canSlideToEndpoint?: boolean;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }

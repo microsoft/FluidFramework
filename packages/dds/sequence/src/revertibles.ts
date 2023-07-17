@@ -570,7 +570,6 @@ function revertLocalSequenceRemove(
 					pos.segment as SharedStringSegment,
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-					false,
 					{ revertible: revertibleRef.revertible },
 				);
 				revertibleRef.revertible.start = newRef;
@@ -580,7 +579,6 @@ function revertLocalSequenceRemove(
 					pos.segment as SharedStringSegment,
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-					false,
 					{ revertible: revertibleRef.revertible },
 				);
 				revertibleRef.revertible.end = newRef;

@@ -287,6 +287,7 @@ declare function get_old_InterfaceDeclaration_ISerializedInterval():
 declare function use_current_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<current.ISerializedInterval>);
 use_current_InterfaceDeclaration_ISerializedInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISerializedInterval());
 
 /*
@@ -503,6 +504,7 @@ declare function get_old_InterfaceDeclaration_IntervalLocator():
 declare function use_current_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<current.IntervalLocator>);
 use_current_InterfaceDeclaration_IntervalLocator(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IntervalLocator());
 
 /*
@@ -551,6 +553,7 @@ declare function get_old_TypeAliasDeclaration_IntervalRevertible():
 declare function use_current_TypeAliasDeclaration_IntervalRevertible(
     use: TypeOnly<current.IntervalRevertible>);
 use_current_TypeAliasDeclaration_IntervalRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IntervalRevertible());
 
 /*
@@ -695,6 +698,7 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -791,6 +795,7 @@ declare function get_old_TypeAliasDeclaration_SerializedIntervalDelta():
 declare function use_current_TypeAliasDeclaration_SerializedIntervalDelta(
     use: TypeOnly<current.SerializedIntervalDelta>);
 use_current_TypeAliasDeclaration_SerializedIntervalDelta(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SerializedIntervalDelta());
 
 /*
@@ -959,6 +964,7 @@ declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
 declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
     use: TypeOnly<current.SharedStringRevertible>);
 use_current_TypeAliasDeclaration_SharedStringRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedStringRevertible());
 
 /*

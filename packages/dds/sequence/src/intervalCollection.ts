@@ -530,9 +530,9 @@ export class SequenceInterval implements ISerializableInterval {
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
-		public readonly isExclusive: boolean,
 		props?: PropertySet,
 		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
+		public readonly isExclusive: boolean = false,
 	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
@@ -612,9 +612,9 @@ export class SequenceInterval implements ISerializableInterval {
 			this.start,
 			this.end,
 			this.intervalType,
-			this.isExclusive,
 			this.properties,
 			this.stickiness,
+			this.isExclusive,
 		);
 	}
 
@@ -686,6 +686,8 @@ export class SequenceInterval implements ISerializableInterval {
 			minReferencePosition(this.start, b.start),
 			maxReferencePosition(this.end, b.end),
 			this.intervalType,
+			undefined,
+			(this.stickiness | b.stickiness) as IntervalStickiness,
 			this.isExclusive,
 		);
 	}
@@ -774,9 +776,9 @@ export class SequenceInterval implements ISerializableInterval {
 			startRef,
 			endRef,
 			this.intervalType,
-			this.isExclusive,
 			undefined,
 			this.stickiness,
+			this.isExclusive,
 		);
 		if (this.properties) {
 			newInterval.initializeProperties();
@@ -956,9 +958,9 @@ export function createSequenceInterval(
 		startLref,
 		endLref,
 		intervalType,
-		canBeExclusive,
 		rangeProp,
 		stickiness,
+		canBeExclusive,
 	);
 	return ival;
 }
@@ -2434,7 +2436,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		op: ISequencedDocumentMessage,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
-		// throw new Error();
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
@@ -2650,8 +2651,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			return;
 		}
 
-		const canBeExclusive = false;
-
 		const newStart = this.getSlideToSegment(interval.start);
 		const newEnd = this.getSlideToSegment(interval.end);
 
@@ -2696,7 +2695,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
-					canBeExclusive &&
+					interval.isExclusive &&
 						startReferenceSlidingPreference(interval.stickiness) ===
 							SlidingPreference.BACKWARD,
 				);
@@ -2719,7 +2718,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
-					canBeExclusive &&
+					interval.isExclusive &&
 						endReferenceSlidingPreference(interval.stickiness) ===
 							SlidingPreference.FORWARD,
 				);

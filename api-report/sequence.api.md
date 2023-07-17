@@ -114,7 +114,7 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness): TInterval;
+    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -158,7 +158,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
+    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
 }
 
 // @public (undocumented)
@@ -322,10 +322,11 @@ export interface ISerializableInterval extends IInterval {
 export interface ISerializedInterval {
     end: number;
     intervalType: IntervalType;
+    // (undocumented)
+    isExclusive: boolean;
     properties?: PropertySet;
     sequenceNumber: number;
     start: number;
-    // (undocumented)
     stickiness?: IntervalStickiness;
 }
 
@@ -391,7 +392,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness);
+    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, isExclusive?: boolean);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @deprecated (undocumented)
@@ -405,8 +406,10 @@ export class SequenceInterval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
+    // (undocumented)
+    readonly isExclusive: boolean;
     // @deprecated
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number, stickiness?: IntervalStickiness): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
@@ -506,7 +509,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
     protected client: Client;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     protected didAttach(): void;
     getContainingSegment(pos: number): {

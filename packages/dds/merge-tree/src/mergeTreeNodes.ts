@@ -137,6 +137,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * end of the tree
 	 */
 	readonly isEndpoint?: boolean;
+	/**
+	 * Whether or not this segment is a special segment denoting the start of
+	 * the tree. This being true implies `isEndpoint` is true.
+	 */
+	readonly isStartEndpoint?: boolean;
 
 	/**
 	 * The length of the contents of the node.

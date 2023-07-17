@@ -125,6 +125,25 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISerializedInterval": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IntervalLocator": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IntervalRevertible": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceInterval": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SerializedIntervalDelta": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringRevertible": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
