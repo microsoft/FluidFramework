@@ -24,7 +24,6 @@ export class DeltaService implements IDeltaService {
 		documentId: string,
 		from?: number,
 		to?: number,
-		caller?: string,
 	): Promise<ISequencedDocumentMessage[]> {
 		// Create an optional filter to restrict the delta range
 		const query: any = { documentId, tenantId };
