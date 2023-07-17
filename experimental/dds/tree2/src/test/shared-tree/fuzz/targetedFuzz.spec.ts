@@ -20,13 +20,21 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
+import { SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
+import { fuzzComposedVsIndividualReducer, fuzzReducer } from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
 import { Operation, TreeOperation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	firstAnchor?: Anchor;
+}
+
+/**
+ * This interface is meant to be used for tests that require you to store a branch of a tree
+ */
+export interface BranchedTreeFuzzTestState extends FuzzTestState {
+	branch?: SharedTreeView;
 }
 
 /**
@@ -103,9 +111,11 @@ describe("Fuzz - Targeted", () => {
 		start: 0,
 		commit: 0,
 	};
+	
 	describe("Composed vs individual changes converge to the same tree", () => {
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
+		const generator = generatorFactory() as AsyncGenerator<TreeOperation, BranchedTreeFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -113,19 +123,21 @@ describe("Fuzz - Targeted", () => {
 		> = {
 			workloadName: "SharedTree",
 			factory: new SharedTreeTestFactory(onCreate),
-			generatorFactory,
-			reducer: fuzzReducer,
+			generatorFactory: () => generator,
+			reducer: fuzzComposedVsIndividualReducer,
 			validateConsistency: () => {},
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (initialState: DDSFuzzTestState<SharedTreeTestFactory>) => {
-			initialState.clients[0].channel.transaction.start();
+		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
+			initialState.branch = initialState.clients[0].channel.fork()
+			initialState.branch.transaction.start()
 		});
-		emitter.on("testEnd", (finalState: DDSFuzzTestState<SharedTreeTestFactory>) => {
-			const treeViewBeforeCommit = toJsonableTree(finalState.clients[0].channel);
-			finalState.clients[0].channel.transaction.commit();
-			assert(treeViewBeforeCommit !== undefined);
-			validateTree(finalState.clients[0].channel, treeViewBeforeCommit);
+		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
+			assert(finalState.branch !== undefined)
+			const childTreeView = toJsonableTree(finalState.branch);
+			finalState.branch.transaction.commit();
+			finalState.clients[0].channel.merge(finalState.branch)	
+			validateTree(finalState.clients[0].channel, childTreeView);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

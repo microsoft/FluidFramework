@@ -8,7 +8,7 @@ import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { toJsonableTree } from "../../utils";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
 import {
 	FieldEdit,
@@ -17,6 +17,7 @@ import {
 	FuzzTransactionType,
 	Operation,
 } from "./operationTypes";
+import { BranchedTreeFuzzTestState } from "./targetedFuzz.spec";
 
 export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
@@ -24,6 +25,29 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		switch (contents.type) {
 			case "fieldEdit": {
 				const tree = state.channel;
+				applyFieldEdit(tree, contents);
+				break;
+			}
+			default:
+				break;
+		}
+		return state;
+	},
+	transaction: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyTransactionEdit(tree, contents);
+		return state;
+	},
+});
+
+export const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
+	edit: async (state, operation) => {
+		const { contents } = operation;
+		switch (contents.type) {
+			case "fieldEdit": {
+				const tree = state.branch;
+				assert(tree!== undefined)
 				applyFieldEdit(tree, contents);
 				break;
 			}
@@ -50,7 +74,7 @@ export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	}
 }
 
-function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
+function applyFieldEdit(tree: ISharedTree | ISharedTreeView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
@@ -66,7 +90,7 @@ function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
 	}
 }
 
-function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+function applySequenceFieldEdit(tree: ISharedTree | ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
 			const field = tree.editor.sequenceField({ parent: change.parent, field: change.field });
@@ -89,7 +113,7 @@ function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
+function applyValueFieldEdit(tree: ISharedTree | ISharedTreeView, change: FuzzDelete): void {
 	const fieldPath: FieldUpPath = {
 		parent: change.firstNode?.parent,
 		field: change.firstNode?.parentField,
@@ -98,7 +122,7 @@ function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
 	field.delete(change.firstNode?.parentIndex, change.count);
 }
 
-function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+function applyOptionalFieldEdit(tree: ISharedTree | ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
 			const fieldPath: FieldUpPath = {
@@ -123,7 +147,7 @@ function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
+function applyTransactionEdit(tree: ISharedTree | ISharedTreeView, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();
