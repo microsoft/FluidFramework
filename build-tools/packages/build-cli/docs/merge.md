@@ -16,7 +16,8 @@ USAGE
 
 FLAGS
   -b, --batchSize=<value>  (required) Maximum number of commits to include in the pull request
-  -p, --pat=<value>        (required) GitHub Personal Access Token
+  -p, --pat=<value>        (required) GitHub Personal Access Token. This parameter should be passed using the GITHUB_PAT
+                           environment variable for security purposes.
   -r, --remote=<value>     [default: origin]
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name

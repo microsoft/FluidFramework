@@ -18,8 +18,8 @@ import {
 import {
 	describeNoCompat,
 	itExpects,
-	itExpectsSkipsOnFailure,
-	itSkipsOnFailure,
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
@@ -83,7 +83,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		await provider.ensureSynchronized();
 	};
 
-	itExpectsSkipsOnFailure(
+	itExpectsSkipsFailureOnSpecificDrivers(
 		"Should close the container when submitting an op while processing a batch",
 		[
 			{
@@ -124,7 +124,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		itSkipsOnFailure(
+		itSkipsFailureOnSpecificDrivers(
 			`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`,
