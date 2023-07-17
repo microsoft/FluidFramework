@@ -13,7 +13,7 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
@@ -37,7 +37,7 @@ import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl }
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -60,7 +60,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
-	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary> = new NullCache();
+	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
 	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
 
 	constructor(
@@ -77,7 +77,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
 		if (this.driverPolicies.enableInternalSummaryCaching) {
 			if (this.driverPolicies.enableWholeSummaryUpload) {
-				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSummary>(
+				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
 					snapshotCacheExpiryMs,
 				);
 			} else {

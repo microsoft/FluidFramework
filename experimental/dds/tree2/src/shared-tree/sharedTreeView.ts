@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from "@fluidframework/common-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -14,6 +15,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
 	UndoRedoManager,
+	LocalCommitSource,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -37,10 +39,10 @@ import {
 	LocalNodeKey,
 	ForestRepairDataStore,
 	ModularChangeset,
+	nodeKeyFieldKey,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
-import { TransactionResult } from "../util";
-import { nodeKeyFieldKey } from "../domains";
+import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
@@ -57,6 +59,24 @@ export interface ViewEvents {
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
 	 */
 	afterBatch(): void;
+
+	/**
+	 * A revertible change has been made to this view.
+	 *
+	 * @remarks
+	 * This event is made available to allow consumers to manage reverting changes to different DDSes.
+	 * The event along with the {@link LocalCommitSource} communicates a change has been made that can be undone or redone on
+	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
+	 * stack which cannot be modified and no additional information about the change is provided.
+	 *
+	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
+	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
+	 *
+	 * @privateRemarks
+	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the
+	 * local branch which cannot be rebased onto another branch.
+	 */
+	revertible(source: LocalCommitSource): void;
 }
 
 /**
@@ -122,12 +142,22 @@ export interface ISharedTreeView extends AnchorLocator {
 
 	/**
 	 * Undoes the last completed transaction made by the client.
+	 *
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
+	 * undo stack.
+	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	undo(): void;
 
 	/**
 	 * Redoes the last completed undo made by the client.
+	 *
+	 * @remarks
+	 * Calling this does nothing if there are no transactions in the
+	 * redo stack. New local transactions will not clear the redo stack.
+	 *
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	redo(): void;
@@ -172,9 +202,19 @@ export interface ISharedTreeView extends AnchorLocator {
 
 	/**
 	 * Apply all the new changes on the given view to this view.
-	 * @param view - a view which was created by a call to `fork()`. It is not modified by this operation.
+	 * @param view - a view which was created by a call to `fork()`.
+	 * It is automatically disposed after the merge completes.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
 	merge(view: SharedTreeView): void;
+
+	/**
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - a view which was created by a call to `fork()`.
+	 * @param disposeView - whether or not to dispose `view` after the merge completes.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 */
+	merge(view: SharedTreeView, disposeView: boolean): void;
 
 	/**
 	 * Rebase the given view onto this view.
@@ -269,7 +309,7 @@ export function createSharedTreeView(args?: {
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	nodeKeyManager?: NodeKeyManager;
-	nodeKeyIndex?: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
@@ -295,8 +335,13 @@ export function createSharedTreeView(args?: {
 			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
-	const context = getEditableTreeContext(forest, branch.editor, nodeKeyManager, nodeKeyFieldKey);
-	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(nodeKeyFieldKey);
+	const context = getEditableTreeContext(
+		forest,
+		branch.editor,
+		nodeKeyManager,
+		brand(nodeKeyFieldKey),
+	);
+	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(brand(nodeKeyFieldKey));
 	const events = args?.events ?? createEmitter();
 	return SharedTreeView[create](
 		branch,
@@ -322,7 +367,7 @@ export class SharedTreeView implements ISharedTreeView {
 		private readonly _forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		private readonly _nodeKeyManager: NodeKeyManager,
-		private readonly _nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		private readonly _nodeKeyIndex: NodeKeyIndex,
 		private readonly _events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
@@ -335,6 +380,9 @@ export class SharedTreeView implements ISharedTreeView {
 				this._events.emit("afterBatch");
 			}
 		});
+		branch.on("revertible", (type) => {
+			this._events.emit("revertible", type);
+		});
 	}
 
 	// SharedTreeView is a public type, but its instantiation is internal
@@ -345,7 +393,7 @@ export class SharedTreeView implements ISharedTreeView {
 		forest: IEditableForest,
 		context: EditableTreeContext,
 		_nodeKeyManager: NodeKeyManager,
-		nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>,
+		nodeKeyIndex: NodeKeyIndex,
 		events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>,
 	): SharedTreeView {
 		return new SharedTreeView(
@@ -455,6 +503,10 @@ export class SharedTreeView implements ISharedTreeView {
 		);
 	}
 
+	public rebase(view: SharedTreeView): void {
+		view.branch.rebaseOnto(this.branch);
+	}
+
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
@@ -463,12 +515,20 @@ export class SharedTreeView implements ISharedTreeView {
 		view.rebase(this);
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.branch.merge(fork.branch);
-	}
-
-	public rebase(fork: SharedTreeView): void {
-		fork.branch.rebaseOnto(this.branch);
+	public merge(view: SharedTreeView): void;
+	public merge(view: SharedTreeView, disposeView: boolean): void;
+	public merge(view: SharedTreeView, disposeView = true): void {
+		assert(
+			!this.transaction.inProgress() || disposeView,
+			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
+		);
+		while (view.transaction.inProgress()) {
+			view.transaction.commit();
+		}
+		this.branch.merge(view.branch);
+		if (disposeView) {
+			view.dispose();
+		}
 	}
 
 	public get root(): UnwrappedEditableField {

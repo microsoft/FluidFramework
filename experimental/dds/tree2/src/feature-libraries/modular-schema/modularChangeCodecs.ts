@@ -108,17 +108,10 @@ function makeV0Codec(
 
 	function encodeNodeChangesForJson(change: NodeChangeset): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
-		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = change;
-		if (valueChange !== undefined) {
-			encodedChange.valueChange = valueChange;
-		}
+		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
 			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges);
-		}
-
-		if (valueConstraint !== undefined) {
-			encodedChange.valueConstraint = valueConstraint;
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -152,20 +145,10 @@ function makeV0Codec(
 
 	function decodeNodeChangesetFromJson(encodedChange: EncodedNodeChangeset): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = encodedChange;
-		if (valueChange) {
-			decodedChange.valueChange = valueChange;
-		}
+		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
 			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges);
-		}
-
-		if (valueConstraint !== undefined) {
-			decodedChange.valueConstraint = {
-				value: valueConstraint.value,
-				violated: valueConstraint.violated,
-			};
 		}
 
 		if (nodeExistsConstraint !== undefined) {

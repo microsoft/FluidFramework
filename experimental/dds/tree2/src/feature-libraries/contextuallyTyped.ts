@@ -26,17 +26,11 @@ import {
 	symbolFromKey,
 } from "../core";
 // TODO:
-// This module currently is assuming use of defaultFieldKinds.
+// This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./defaultFieldKinds";
-import {
-	AllowedTypes,
-	FieldKind,
-	FieldSchema,
-	Multiplicity,
-	TreeSchema,
-	allowedTypesToTypeSet,
-} from "./modular-schema";
+import { fieldKinds } from "./default-field-kinds";
+import { FieldKind, Multiplicity } from "./modular-schema";
+import { AllowedTypes, FieldSchema, TreeSchema, allowedTypesToTypeSet } from "./typed-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { areCursors, isPrimitive } from "./editable-tree";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";

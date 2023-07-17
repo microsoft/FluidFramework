@@ -26,11 +26,9 @@ import {
 	fieldSchema,
 	GlobalFieldKey,
 	SchemaData,
+	UpPath,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-
-// eslint-disable-next-line import/no-internal-modules
-import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
@@ -146,7 +144,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 	});
 }
 
-function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath): void {
+function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: UpPath): void {
 	// Apply an edit to the tree which inserts a node with a value.
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
@@ -193,7 +191,7 @@ export function getInsertsSummaryTree(numberOfNodes: number, shape: TreeShape): 
 function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
 	const seed = 0;
 	const random = makeRandom(seed);
-	let path: PlacePath = {
+	let path: UpPath = {
 		parent: undefined,
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,

@@ -12,7 +12,7 @@ import {
 	setInRangeMap,
 } from "../../util";
 import * as Delta from "./delta";
-import { FieldKey, Value } from "./types";
+import { FieldKey } from "./types";
 
 /**
  * Implementation notes:
@@ -102,7 +102,6 @@ export interface DeltaVisitor {
 	onInsert(index: number, content: Delta.ProtoNodes): void;
 	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
 	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-	onSetValue(value: Value): void;
 	// TODO: better align this with ITreeCursor:
 	// maybe rename its up and down to enter / exit? Maybe Also)?
 	// Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
@@ -145,17 +144,9 @@ function visitModify(
 	config: PassConfig,
 ): boolean {
 	let containsMovesOrDeletes = false;
-	// Note that `hasOwnProperty` returns true for properties that are present on the object even if they
-	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-	// `undefined` as opposed to leaving the value untouched.
-	const hasValueChange =
-		config.applyValueChanges && Object.prototype.hasOwnProperty.call(modify, "setValue");
 
-	if (hasValueChange || modify.fields !== undefined) {
+	if (modify.fields !== undefined) {
 		visitor.enterNode(index);
-		if (hasValueChange) {
-			visitor.onSetValue(modify.setValue);
-		}
 		if (modify.fields !== undefined) {
 			const result = visitFieldMarks(modify.fields, visitor, config);
 			containsMovesOrDeletes ||= result;
@@ -166,14 +157,14 @@ function visitModify(
 }
 
 function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
-	let containsMoves = false;
+	let listHasMoveOrDelete = false;
 	let index = 0;
 	for (const mark of delta) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
 		} else {
-			let result = false;
+			let markHasMoveOrDelete = false;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
@@ -181,11 +172,11 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					// Handled in the second pass
 					visitModify(index, mark, visitor, config);
 					index += mark.count;
-					result = true;
+					markHasMoveOrDelete = true;
 					break;
 				case Delta.MarkType.MoveOut:
-					result = visitModify(index, mark, visitor, config);
-					if (result) {
+					markHasMoveOrDelete = visitModify(index, mark, visitor, config);
+					if (markHasMoveOrDelete) {
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
 					visitor.onMoveOut(index, mark.count, mark.moveId);
@@ -197,25 +188,26 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					);
 					break;
 				case Delta.MarkType.Modify:
-					result = visitModify(index, mark, visitor, config);
+					markHasMoveOrDelete = visitModify(index, mark, visitor, config);
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
 					visitor.onInsert(index, mark.content);
-					result = visitModify(index, mark, visitor, config);
+					markHasMoveOrDelete =
+						visitModify(index, mark, visitor, config) || (mark.isTransient ?? false);
 					index += mark.content.length;
 					break;
 				case Delta.MarkType.MoveIn:
 					// Handled in the second pass
-					result = true;
+					markHasMoveOrDelete = true;
 					break;
 				default:
 					unreachableCase(type);
 			}
-			containsMoves ||= result;
+			listHasMoveOrDelete ||= markHasMoveOrDelete;
 		}
 	}
-	return containsMoves;
+	return listHasMoveOrDelete;
 }
 
 function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
@@ -241,7 +233,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					break;
 				case Delta.MarkType.Insert:
 					visitModify(index, mark, visitor, config);
-					if (mark.isTransient === true) {
+					if (mark.isTransient ?? false) {
 						visitor.onDelete(index, mark.content.length);
 					} else {
 						index += mark.content.length;
@@ -253,7 +245,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						extractFromOpaque(mark.moveId),
 						mark.count,
 					);
-					assert(entry !== undefined, "Expected a move out for this move in");
+					assert(entry !== undefined, 0x6d7 /* Expected a move out for this move in */);
 					visitor.onMoveIn(index, entry.length, entry.value);
 					let endIndex = index + entry.length;
 
@@ -278,7 +270,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 
 						assert(
 							entry !== undefined && entry.start === nextId,
-							"Expected a move out for the remaining portion of this move in",
+							0x6d8 /* Expected a move out for the remaining portion of this move in */,
 						);
 
 						lastEntryId = entry.start + entry.length - 1;

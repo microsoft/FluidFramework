@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -23,12 +24,16 @@ import {
 	itExpects,
 } from "@fluid-internal/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
@@ -77,8 +82,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		const blobOpP = new Promise<void>((resolve, reject) =>
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -208,8 +216,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			const blobOpP = new Promise<void>((resolve, reject) =>
 				dataStore._context.containerRuntime.on("op", (op) => {
 					if (op.type === ContainerMessageType.BlobAttach) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-						op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+						if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+							resolve();
+						} else {
+							reject(new Error("no op metadata"));
+						}
 					}
 				}),
 			);
@@ -250,9 +261,15 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
-				if (op.contents?.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+				if (
+					(op.contents as { type?: unknown } | undefined)?.type ===
+					ContainerMessageType.BlobAttach
+				) {
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -330,7 +347,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
 				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+					return assert.rejects(
+						attachP,
+						(err: IErrorBase) => err.message === usageErrorMessage,
+					);
 				}
 				await attachP;
 
@@ -386,55 +406,64 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
-		const detachedBlobStorage = new MockDetachedBlobStorage();
-		const loader = provider.makeTestLoader({
-			...testContainerConfig,
-			loaderProps: { detachedBlobStorage },
-		});
-		const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		// test with and without offline load enabled
+		const offlineCfg = configProvider({ "Fluid.Container.enableOfflineLoad": true });
+		for (const cfg of [undefined, offlineCfg]) {
+			const detachedBlobStorage = new MockDetachedBlobStorage();
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps: { detachedBlobStorage, configProvider: cfg },
+			});
+			const detachedContainer = await loader.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
 
-		const text = "this is some example text";
-		const detachedDataStore = await requestFluidObject<ITestDataObject>(
-			detachedContainer,
-			"default",
-		);
+			const text = "this is some example text";
+			const detachedDataStore = await requestFluidObject<ITestDataObject>(
+				detachedContainer,
+				"default",
+			);
 
-		detachedDataStore._root.set(
-			"my blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-		);
-		detachedDataStore._root.set(
-			"my same blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-		);
-		detachedDataStore._root.set(
-			"my other blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
-		);
+			detachedDataStore._root.set(
+				"my blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+			);
+			detachedDataStore._root.set(
+				"my same blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+			);
+			detachedDataStore._root.set(
+				"my other blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
+			);
 
-		const attachP = detachedContainer.attach(
-			provider.driver.createCreateNewRequest(provider.documentId),
-		);
-		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			const attachP = detachedContainer.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
+			}
+			await attachP;
+			detachedBlobStorage.blobs.clear();
+
+			const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
+			const attachedContainer = await provider
+				.makeTestLoader(testContainerConfig)
+				.resolve({ url });
+
+			const attachedDataStore = await requestFluidObject<ITestDataObject>(
+				attachedContainer,
+				"default",
+			);
+			await provider.ensureSynchronized();
+			assert.strictEqual(
+				bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+				text,
+			);
 		}
-		await attachP;
-		detachedBlobStorage.blobs.clear();
-
-		const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
-		const attachedContainer = await provider
-			.makeTestLoader(testContainerConfig)
-			.resolve({ url });
-
-		const attachedDataStore = await requestFluidObject<ITestDataObject>(
-			attachedContainer,
-			"default",
-		);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
-			text,
-		);
 	});
 
 	itExpects("serialize/rehydrate then attach", ContainerCloseUsageError, async function () {
@@ -462,7 +491,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			return assert.rejects(attachP, (err: IErrorBase) => err.message === usageErrorMessage);
 		}
 		await attachP;
 
@@ -510,7 +539,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 

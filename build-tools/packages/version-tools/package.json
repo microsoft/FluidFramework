@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.20.0",
+	"version": "0.22.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,25 +67,25 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^2.8.6",
-		"@oclif/plugin-autocomplete": "^2.3.0",
-		"@oclif/plugin-commands": "^2.2.15",
-		"@oclif/plugin-help": "^5.2.9",
-		"@oclif/plugin-not-found": "^2.3.25",
-		"@oclif/plugin-plugins": "^3.1.2",
+		"@oclif/core": "^2.8.11",
+		"@oclif/plugin-autocomplete": "^2.3.1",
+		"@oclif/plugin-commands": "^2.2.17",
+		"@oclif/plugin-help": "^5.2.11",
+		"@oclif/plugin-not-found": "^2.3.27",
+		"@oclif/plugin-plugins": "^3.1.6",
 		"chalk": "^2.4.2",
-		"semver": "^7.5.1",
+		"semver": "^7.5.4",
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
 		"@fluid-internal/readme-command": "workspace:*",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@microsoft/api-extractor": "^7.35.3",
-		"@oclif/test": "^2.3.22",
+		"@microsoft/api-extractor": "^7.36.1",
+		"@oclif/test": "^2.3.27",
 		"@types/chai": "^4.3.5",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.51",
+		"@types/node": "^14.18.53",
 		"@types/semver": "^7.5.0",
 		"chai": "^4.3.7",
 		"concurrently": "^7.6.0",
@@ -104,7 +104,7 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
-		"tslib": "^2.5.3",
+		"tslib": "^2.6.0",
 		"typescript": "~4.5.5"
 	},
 	"engines": {

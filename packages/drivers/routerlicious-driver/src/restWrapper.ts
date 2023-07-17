@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -12,13 +12,14 @@ import {
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
 	getAuthorizationTokenFromCredentials,
 	RestLessClient,
 } from "@fluidframework/server-services-client";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -84,7 +85,7 @@ export function getPropsToLogFromResponse(headers: {
 	// We rename headers so that otel doesn't scrub them away. Otel doesn't allow
 	// certain characters in headers including '-'
 	const headersToLog: LoggingHeader[] = [
-		{ headerName: "x-correlation-id", logName: "requestCorrelationId" },
+		{ headerName: CorrelationIdHeaderName, logName: "requestCorrelationId" },
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
@@ -209,17 +210,13 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	): Promise<Record<string, string>> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
-
-		return {
+		const headers: Record<string, string> = {
 			...requestHeaders,
-			// TODO: replace header names with CorrelationIdHeaderName and DriverVersionHeaderName from services-client
-			// NOTE: Can correlationId actually be number | true?
-			"x-correlation-id": correlationId as string,
-			"x-driver-version": driverVersion,
+			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
-			"Authorization": this.getAuthorizationHeader(token),
+			Authorization: this.getAuthorizationHeader(token),
 		};
+		return headers;
 	}
 
 	public async getToken(): Promise<ITokenResponse> {

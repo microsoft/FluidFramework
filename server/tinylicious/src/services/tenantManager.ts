@@ -6,6 +6,7 @@
 import {
 	ITenant,
 	ITenantConfig,
+	ITenantConfigManager,
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
@@ -45,7 +46,7 @@ export class TinyliciousTenant implements ITenant {
 	}
 }
 
-export class TenantManager implements ITenantManager {
+export class TenantManager implements ITenantManager, ITenantConfigManager {
 	constructor(private readonly url: string) {}
 
 	public async getTenantGitManager(tenantId: string, _documentId: string): Promise<IGitManager> {
@@ -69,5 +70,9 @@ export class TenantManager implements ITenantManager {
 
 	public getKey(tenantId: string): Promise<string> {
 		throw new Error("Method not implemented.");
+	}
+
+	public async getTenantStorageName(tenantId: string): Promise<string> {
+		return tenantId;
 	}
 }
