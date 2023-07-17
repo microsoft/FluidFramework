@@ -176,7 +176,10 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
 		setInnerViewSelection(data.value);
-		usageLogger?.sendTelemetryEvent({ eventName: `${data.value}TabClicked` });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: `Container_${data.value}Tab` },
+		});
 	};
 
 	return (

@@ -442,9 +442,6 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			setCustomSearch(search);
 			usageLogger?.sendTelemetryEvent({
 				eventName: "TelemetryEventNameFilter",
-				details: {
-					eventNames: [search],
-				},
 			});
 		} else {
 			setCustomSearch("");

@@ -466,17 +466,26 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
-		usageLogger?.sendTelemetryEvent({ eventName: "TelemetryMenuSectionClicked" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Telemetry" },
+		});
 	}
 
 	function onSettingsClicked(): void {
 		setSelection({ type: "settingsMenuSelection" });
-		usageLogger?.sendTelemetryEvent({ eventName: "SettingsMeuSectionClicked" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Settings" },
+		});
 	}
 
 	function onHomeClicked(): void {
 		setSelection({ type: "homeMenuSelection" });
-		usageLogger?.sendTelemetryEvent({ eventName: "HomeMenuSectionClicked" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Home" },
+		});
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -569,7 +578,8 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						onClick={(event): void => {
 							selectContainer(`${containerKey}`);
 							usageLogger?.sendTelemetryEvent({
-								eventName: "ContainerClicked",
+								eventName: "Navigation",
+								details: { target: "Menu_Container" },
 							});
 						}}
 					/>
