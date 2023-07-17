@@ -309,17 +309,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T,
 		offset: number,
 		refType: ReferenceType,
-		canSlideToEndpoint: boolean,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this.client.createLocalReferencePosition(
 			segment,
 			offset,
 			refType,
-			canSlideToEndpoint,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 

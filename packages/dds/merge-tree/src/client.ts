@@ -382,7 +382,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		// todo: make optional everywhere and move to last argument
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
