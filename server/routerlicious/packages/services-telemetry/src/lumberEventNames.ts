@@ -51,5 +51,4 @@ export enum LumberEventName {
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 	ReprocessOps = "ReprocessOps",
 	GetDeltasFromDb = "GetDeltasFromDb",
-	GetDeltasFromStorage = "GetDeltasFromStorage",
 }
