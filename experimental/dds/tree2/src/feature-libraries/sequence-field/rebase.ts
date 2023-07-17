@@ -554,7 +554,6 @@ function makeDetachedMark<T>(
 function withoutDetachEvent<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
 	const newMark = { ...mark };
 	delete newMark.detachEvent;
-	delete newMark.lineage;
 	return newMark;
 }
 

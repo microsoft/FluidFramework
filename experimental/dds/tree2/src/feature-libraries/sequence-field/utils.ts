@@ -98,10 +98,7 @@ export function getCellId(
 ): CellId | undefined {
 	if (isNewAttach(mark)) {
 		const rev = mark.revision ?? revision;
-		if (rev !== undefined) {
-			return { revision: rev, localId: mark.id };
-		}
-		return undefined;
+		return { revision: rev, localId: mark.id, lineage: mark.lineage };
 	}
 
 	return mark.detachEvent;
