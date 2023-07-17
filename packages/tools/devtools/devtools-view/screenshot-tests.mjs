@@ -25,12 +25,12 @@ const storyFilePathPattern = "src/test/screenshot-tests/*.stories.tsx";
  * Output directory under which the generated screenshots will be saved.
  * Relative to the package root.
  */
-const outputDirectoryPath = "src/test/screenshot-tests/__screenshots__";
+const outputDirectoryPath = "__screenshots__";
 
 /**
  * The supported themes in which each test "story" will be rendered.
  * A separate screenshot will be generated for each of these.
- * 
+ *
  * @remarks Note: these strings are not intended to match our "ThemeOptions" enum used in React code.
  */
 const themes = ["dark", "light", "high-contrast"];
@@ -45,7 +45,7 @@ async function generateScreenshots() {
 	});
 
 	const filePaths = await globby(storyFilePathPattern, {
-		gitignore: true,
+		gitignore: false,
 		ignore: ["**/node_modules/**"],
 		cwd,
 		followSymbolicLinks: false,
