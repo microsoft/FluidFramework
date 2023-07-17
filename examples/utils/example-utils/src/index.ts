@@ -33,7 +33,6 @@ export { Migrator, SameContainerMigrator } from "./migrator";
 export {
 	IDetachedModel,
 	IModelLoader,
-	ILoadOptions,
 	makeModelRequestHandler,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
