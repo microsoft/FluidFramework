@@ -139,7 +139,7 @@ describe("Fuzz - Targeted", () => {
 		commit: 0,
 	};
 
-	describe.only("Composed vs individual changes converge to the same tree", () => {
+	describe("Composed vs individual changes converge to the same tree", () => {
 		const generatorFactory = (): AsyncGenerator<TreeOperation, BranchedTreeFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
 
