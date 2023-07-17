@@ -11,11 +11,6 @@ import {
 	ITenantManager,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import {
-	BaseTelemetryProperties,
-	LumberEventName,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
 
 export class DeltaService implements IDeltaService {
 	constructor(
