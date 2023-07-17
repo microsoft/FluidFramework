@@ -13,6 +13,7 @@ import {
 	Client,
 	compareReferencePositions,
 	createMap,
+	getSlideToSegoff,
 	ICombiningOp,
 	ISegment,
 	MergeTreeDeltaType,
@@ -829,7 +830,7 @@ function createPositionReference(
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
-		segoff = client.getSlideToSegment(segoff);
+		segoff = getSlideToSegoff(segoff);
 	} else {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -1999,7 +2000,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = this.client.getSlideToSegment({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -2549,7 +2550,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	private getSlideToSegment(lref: LocalReferencePosition) {
+	private getSlideToSegment(
+		lref: LocalReferencePosition,
+	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
@@ -2557,7 +2560,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = this.client.getSlideToSegment(segoff);
+		const newSegoff = getSlideToSegoff(segoff);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined

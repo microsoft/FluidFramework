@@ -305,15 +305,29 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 			}
 			assert.equal(message.type, ContainerMessageType.FluidDataStoreOp);
 
-			assert.equal(message.contents.contents.type, DataStoreMessageType.ChannelOp);
+			assert.equal(
+				((message.contents as { contents: unknown }).contents as { type?: unknown }).type,
+				DataStoreMessageType.ChannelOp,
+			);
 
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedStringId,
 				"Address should be shared string",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(ops),
 				"Ops should be equal",
 			);
@@ -350,12 +364,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedMapId,
 				"Address should be shared map",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(ops),
 				"Ops should be equal",
 			);
@@ -391,17 +416,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.id,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { id?: unknown }
+				).id,
 				testChannelId,
 				"Channel id should match",
 			);
 			assert.strictEqual(
-				message.contents.contents.content.type,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { type?: unknown }
+				).type,
 				SharedMap.getFactory().type,
 				"Channel type should match",
 			);
 			assert.strictEqual(
-				message.contents.contents.type,
+				((message.contents as { contents: unknown }).contents as { type?: unknown }).type,
 				DataStoreMessageType.Attach,
 				"Op should be an attach op",
 			);
@@ -454,12 +485,12 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 					"Op should be an attach op",
 				);
 				assert.strictEqual(
-					message.contents.id,
+					(message.contents as { id?: unknown }).id,
 					comp2.context.id,
 					"DataStore id should match",
 				);
 				assert.strictEqual(
-					message.contents.type,
+					(message.contents as { type?: unknown }).type,
 					testDataStoreType,
 					"DataStore type should match",
 				);
@@ -498,12 +529,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				crcId,
 				"Address should be consensus register collection",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(op),
 				"Op should be same",
 			);
@@ -545,12 +587,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedDirectoryId,
 				"Address should be shared directory",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(op),
 				"Op should be same",
 			);
@@ -586,12 +639,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedCellId,
 				"Address should be shared directory",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(op),
 				"Op should be same",
 			);
@@ -626,17 +690,38 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedInkId,
 				"Address should be ink",
 			);
 			assert.strictEqual(
-				message.contents.contents.content.contents.type,
+				(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents: unknown }
+					).contents as { type?: unknown }
+				).type,
 				"createStroke",
 				"Op type should be same",
 			);
 			assert.strictEqual(
-				message.contents.contents.content.contents.pen.thickness,
+				(
+					(
+						(
+							(
+								(message.contents as { contents: unknown }).contents as {
+									content: unknown;
+								}
+							).content as { contents: unknown }
+						).contents as { pen: unknown }
+					).pen as { thickness?: unknown }
+				).thickness,
 				20,
 				"Thickness should be same",
 			);
@@ -678,12 +763,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				cocId,
 				"Address should be consensus queue",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(op),
 				"Op should be same",
 			);
@@ -721,21 +817,58 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sparseMatrixId,
 				"Address should be sparse matrix",
 			);
 			if (
-				message.contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT
+				(
+					(
+						(
+							(
+								(message.contents as { contents: unknown }).contents as {
+									content: unknown;
+								}
+							).content as { contents: unknown }
+						).contents as { ops: unknown[] }
+					).ops[0] as { type?: unknown }
+				).type === MergeTreeDeltaType.INSERT
 			) {
 				assert.strictEqual(
-					JSON.stringify(message.contents.contents.content.contents.ops[0].seg),
+					JSON.stringify(
+						(
+							(
+								(
+									(
+										(message.contents as { contents: unknown }).contents as {
+											content: unknown;
+										}
+									).content as { contents: unknown }
+								).contents as { ops: unknown[] }
+							).ops[0] as { seg?: unknown }
+						).seg,
+					),
 					JSON.stringify(seg),
 					"Seg should be same",
 				);
 			} else {
 				assert.strictEqual(
-					JSON.stringify(message.contents.contents.content.contents.ops[1].seg),
+					JSON.stringify(
+						(
+							(
+								(
+									(
+										(message.contents as { contents: unknown }).contents as {
+											content: unknown;
+										}
+									).content as { contents: unknown }
+								).contents as { ops: unknown[] }
+							).ops[1] as { seg?: unknown }
+						).seg,
+					),
 					JSON.stringify(seg),
 					"Seg should be same",
 				);
@@ -774,12 +907,23 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				return;
 			}
 			assert.strictEqual(
-				message.contents.contents.content.address,
+				(
+					((message.contents as { contents: unknown }).contents as { content: unknown })
+						.content as { address?: unknown }
+				).address,
 				sharedMatrixId,
 				"Address should be shared matrix",
 			);
 			assert.strictEqual(
-				JSON.stringify(message.contents.contents.content.contents),
+				JSON.stringify(
+					(
+						(
+							(message.contents as { contents: unknown }).contents as {
+								content: unknown;
+							}
+						).content as { contents?: unknown }
+					).contents,
+				),
 				JSON.stringify(op),
 				"Op should be same",
 			);

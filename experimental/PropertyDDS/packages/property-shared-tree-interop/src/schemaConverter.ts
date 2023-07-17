@@ -42,6 +42,11 @@ const numberTypes = new Set<string>([
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
 
+/**
+ * Key under which a map for arbitrary "NodeProperty" data is stored.
+ */
+export const nodePropertyField = "properties";
+
 type PropertyDDSContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
 
 const singleContext: PropertyDDSContext = brand("single");
@@ -79,7 +84,7 @@ function buildTreeSchema(
 	allChildrenByType: InheritingChildrenByType,
 	type: string,
 ): LazyTreeSchema {
-	assert(type !== basePropertyType, `"BaseProperty" shall not be used in schemas.`);
+	assert(type !== basePropertyType, 0x6ff /* "BaseProperty" shall not be used in schemas. */);
 	const { typeid, context, isEnum } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
 		fail(`Unknown context "${context}" in typeid "${type}"`);
@@ -105,20 +110,31 @@ function buildTreeSchema(
 		if (TypeIdHelper.isPrimitiveType(type)) {
 			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
 		} else {
-			assert(type === typeid, "Unexpected typeid discrepancy");
+			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { treeSchema?: TreeSchema } = {};
-			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
-			const local = buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, {});
+			treeSchemaMap.set(typeid, () => cache.treeSchema ?? fail("missing schema"));
+			const fields = new Map<string, FieldSchema>();
+			buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
-				buildLocalFields(builder, treeSchemaMap, allChildrenByType, inheritanceType, local);
+				buildLocalFields(
+					builder,
+					treeSchemaMap,
+					allChildrenByType,
+					inheritanceType,
+					fields,
+				);
 			}
-			cache.treeSchema = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
-				? builder.object(typeid, {
-						local,
-						extraLocalFields: SchemaBuilder.fieldOptional(Any),
-				  })
-				: builder.struct(typeid, local);
+			if (typeid === nodePropertyType) {
+				cache.treeSchema = nodePropertySchema;
+				return cache.treeSchema;
+			}
+			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
+				assert(!fields.has(nodePropertyField), "name collision for nodePropertyField");
+				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
+			}
+			const fieldsObject = mapToObject(fields);
+			cache.treeSchema = builder.struct(typeid, fieldsObject);
 			return cache.treeSchema;
 		}
 	} else {
@@ -127,7 +143,7 @@ function buildTreeSchema(
 		const isAnyType = TypeIdHelper.extractTypeId(type) === "" && typeid === basePropertyType;
 		assert(
 			typeid !== basePropertyType || isAnyType,
-			`"BaseProperty" shall not be used in schemas.`,
+			0x701 /* "BaseProperty" shall not be used in schemas. */,
 		);
 		const currentTypeid = TypeIdHelper.createSerializationTypeId(
 			isAnyType ? Any : typeid,
@@ -140,7 +156,7 @@ function buildTreeSchema(
 		}
 		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: TreeSchema } = {};
-		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
+		treeSchemaMap.set(currentTypeid, () => cache.treeSchema ?? fail("missing schema"));
 		const fieldSchema = buildFieldSchema(
 			builder,
 			treeSchemaMap,
@@ -163,13 +179,30 @@ function buildTreeSchema(
 	}
 }
 
+function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapValue> {
+	const objectMap: Record<string, MapValue> = {};
+	for (const [key, value] of map.entries()) {
+		// This code has to be careful to avoid assigned to __proto__ or similar built in fields.
+		Object.defineProperty(objectMap, key, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value,
+		});
+	}
+	return objectMap;
+}
+
+/**
+ * Adds fields to the provided map.
+ */
 function buildLocalFields(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	typeid: string,
-	local: { [key: string]: FieldSchema },
-): { readonly [key: string]: FieldSchema } {
+	local: Map<string, FieldSchema>,
+): void {
 	const schemaTemplate = PropertyFactory.getTemplate(typeid);
 	if (schemaTemplate === undefined) {
 		fail(`Unknown typeid "${typeid}"`);
@@ -188,7 +221,7 @@ function buildLocalFields(
 			} else {
 				assert(
 					property.typeid !== basePropertyType,
-					`"BaseProperty" shall not be used in schemas.`,
+					0x702 /* "BaseProperty" shall not be used in schemas. */,
 				);
 				const currentTypeid =
 					property.context && property.context !== singleContext
@@ -198,17 +231,19 @@ function buildLocalFields(
 								false,
 						  )
 						: property.typeid ?? Any;
-				local[property.id] = buildFieldSchema(
-					builder,
-					treeSchemaMap,
-					allChildrenByType,
-					property.optional ? FieldKinds.optional : FieldKinds.value,
-					currentTypeid,
+				local.set(
+					property.id,
+					buildFieldSchema(
+						builder,
+						treeSchemaMap,
+						allChildrenByType,
+						property.optional ? FieldKinds.optional : FieldKinds.value,
+						currentTypeid,
+					),
 				);
 			}
 		}
 	}
-	return local;
 }
 
 function buildPrimitiveSchema(
@@ -233,7 +268,7 @@ function buildPrimitiveSchema(
 		// as unknown primitives should be issued there otherwise.
 		fail(`Unknown primitive typeid "${typeid}"`);
 	}
-	const treeSchema = builder.primitive(typeid, valueSchema);
+	const treeSchema = builder.leaf(typeid, valueSchema);
 	treeSchemaMap.set(typeid, treeSchema);
 	return treeSchema;
 }
@@ -265,6 +300,16 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 		: SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
+const builtinBuilder = new SchemaBuilder("PropertyDDS to SharedTree builtin schema builder");
+// TODO:
+// It might make sense for all builtins (not specific to the particular schema being processed),
+// to be put into one library like this.
+export const nodePropertySchema = builtinBuilder.map(
+	nodePropertyType,
+	SchemaBuilder.fieldOptional(Any),
+);
+const builtinLibrary = builtinBuilder.intoLibrary();
+
 /**
  * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
@@ -279,7 +324,7 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder");
+	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder", builtinLibrary);
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
