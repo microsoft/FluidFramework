@@ -25,7 +25,6 @@ import {
 	timeoutPromise,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -322,11 +321,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						deltaManager.lastSequenceNumber,
 						loadedSeqNum,
 						"deltaManager.lastSequenceNumber === loadedSeqNum",
-					);
-					assert.strictEqual(
-						storageOnlyContainer.connectionState,
-						ConnectionState.Disconnected,
-						"storageOnlyContainer.connectionState === ConnectionState.Disconnected",
 					);
 				}
 			}

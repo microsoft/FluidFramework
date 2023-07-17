@@ -39,7 +39,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
@@ -456,7 +455,6 @@ export class Loader implements IHostLoader {
 		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
 			| string
 			| undefined;
-		const shouldFreeze = request.headers[LoaderHeader.loadMode]?.freezeAfterLoad === true;
 
 		if (opsBeforeReturn === "sequenceNumber" && fromSequenceNumber < 0) {
 			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
@@ -481,42 +479,6 @@ export class Loader implements IHostLoader {
 			}
 		} else {
 			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
-		}
-
-		if (shouldFreeze) {
-			if (
-				opsBeforeReturn === "sequenceNumber" &&
-				container.deltaManager.lastSequenceNumber > fromSequenceNumber
-			) {
-				// If we are trying to freeze the container at a specific sequence number, then we need to throw an
-				// error if the latest snapshot is past the specified sequence number.
-				throw new Error(
-					"Cannot satisfy request to freeze the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
-				);
-			}
-			// Force readonly mode - this will ensure we don't receive an error for the lack of join op
-			container.forceReadonly(true);
-		}
-
-		// If we have not yet reached `fromSequenceNumber`, we will wait for ops to arrive until we reach it
-		if (container.deltaManager.lastSequenceNumber < fromSequenceNumber) {
-			await new Promise<void>((resolve, reject) => {
-				function opHandler(message: ISequencedDocumentMessage) {
-					if (message.sequenceNumber >= fromSequenceNumber) {
-						if (shouldFreeze) {
-							// Disconnect the container now that we have finished loading.
-							container.disconnect();
-						}
-						resolve();
-						container.removeListener("op", opHandler);
-					}
-				}
-
-				container.on("op", opHandler);
-			});
-		} else if (shouldFreeze) {
-			// Disconnect the container now that we have finished loading.
-			container.disconnect();
 		}
 
 		return { container, parsed };

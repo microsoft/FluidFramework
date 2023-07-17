@@ -362,7 +362,8 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
+		const { version, pendingLocalState, loadMode, resolvedUrl, loadToSequenceNumber } =
+			loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -391,13 +392,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(
-							version,
-							mode,
-							resolvedUrl,
-							pendingLocalState,
-							loadProps.loadToSequenceNumber,
-						)
+						.load(version, mode, resolvedUrl, pendingLocalState, loadToSequenceNumber)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -1433,8 +1428,8 @@ export class Container
 		specifiedVersion: string | undefined,
 		loadMode: IContainerLoadMode,
 		resolvedUrl: IResolvedUrl,
-		pendingLocalState?: IPendingContainerState,
-		loadToSequenceNumber?: number,
+		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined,
 	) {
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
@@ -1505,16 +1500,43 @@ export class Container
 
 		let opsBeforeReturnP: Promise<void> | undefined;
 
-		const freezeAtSeqNumListener = (message: ISequencedDocumentMessage) => {
-			assert(loadToSequenceNumber !== undefined, "loadToSequenceNumber should be defined");
-			if (message.sequenceNumber >= loadToSequenceNumber) {
-				// Immediately pause the inbound queue and disconnect the container.
+		// Handle frozen container load mode
+		if (loadMode.freezeAfterLoad === true) {
+			// If we are trying to freeze at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
+			if (loadMode.opsBeforeReturn === "sequenceNumber") {
+				assert(loadToSequenceNumber !== undefined, "Sequence number should be defined");
+				if (this.deltaManager.lastSequenceNumber > loadToSequenceNumber) {
+					throw new Error(
+						"Cannot satisfy request to freeze the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					);
+				}
+			}
+
+			// Force readonly mode - this will ensure we don't receive an error for the lack of join op
+			this.forceReadonly(true);
+
+			// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
+			const opHandler = (message: ISequencedDocumentMessage) => {
+				if (loadToSequenceNumber === undefined) {
+					// If there is no specified sequence number, we should freeze after all ops are processed.
+					// TODO: is this the best way to check we are done processing?
+					if (this.deltaManager.inbound.length !== 0) {
+						return;
+					}
+				} else {
+					// If there is a specified sequence number, keep processing until we reach it.
+					if (message.sequenceNumber < loadToSequenceNumber) {
+						return;
+					}
+				}
+
+				// Pause op processing
 				void this.deltaManager.inbound.pause();
 				void this.deltaManager.outbound.pause();
-				this.disconnect();
-				this.off("op", freezeAtSeqNumListener);
-			}
-		};
+				this.off("op", opHandler);
+			};
+			this.on("op", opHandler);
+		}
 
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
@@ -1528,11 +1550,6 @@ export class Container
 				);
 				break;
 			case "sequenceNumber":
-				if (loadMode.freezeAfterLoad === true) {
-					// If we plan on freezing the container, we need to setup a listener to stop op processing
-					// exactly at the specified sequence number.
-					this.on("op", freezeAtSeqNumListener);
-				}
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "sequenceNumber");
 				break;
 			case "cached":
@@ -1594,15 +1611,6 @@ export class Container
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this._deltaManager.inbound.pause();
-
-				if (
-					loadMode.opsBeforeReturn === "sequenceNumber" &&
-					loadMode.freezeAfterLoad === true
-				) {
-					// Ensure this listener was turned off. It could technically be left on if the sequence number
-					// provided by the user has not been reached yet by any client.
-					this.off("op", freezeAtSeqNumListener);
-				}
 			}
 
 			switch (loadMode.deltaConnection) {
@@ -1626,6 +1634,20 @@ export class Container
 				default:
 					unreachableCase(loadMode.deltaConnection);
 			}
+		}
+
+		// If we have not yet reached `fromSequenceNumber`, we will wait for ops to arrive until we reach it
+		const fromSequenceNumber = loadToSequenceNumber ?? -1;
+		if (this.deltaManager.lastSequenceNumber < fromSequenceNumber) {
+			await new Promise<void>((resolve, reject) => {
+				const opHandler = (message: ISequencedDocumentMessage) => {
+					if (message.sequenceNumber >= fromSequenceNumber) {
+						resolve();
+						this.off("op", opHandler);
+					}
+				};
+				this.on("op", opHandler);
+			});
 		}
 
 		// Safety net: static version of Container.load() should have learned about it through "closed" handler.
