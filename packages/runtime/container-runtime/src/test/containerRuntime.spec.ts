@@ -57,6 +57,7 @@ describe("Runtime", () => {
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	});
 
 	describe("Container Runtime", () => {
@@ -133,6 +134,7 @@ describe("Runtime", () => {
 							},
 							connected: true,
 							clientId: "fakeClientId",
+							getLoadedFromVersion: () => undefined,
 						};
 					};
 
@@ -497,6 +499,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					});
 
 					beforeEach(async () => {
@@ -559,6 +562,7 @@ describe("Runtime", () => {
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -640,6 +644,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (_dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					};
 				};
 			const getMockPendingStateManager = (): PendingStateManager => {
@@ -1166,6 +1171,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -1274,6 +1280,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 

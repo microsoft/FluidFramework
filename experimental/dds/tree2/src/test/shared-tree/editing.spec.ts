@@ -388,6 +388,35 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
+		it("can rebase node deletion over cross-field move of descendant", () => {
+			const tree1 = makeTreeFromJson({
+				foo: ["A"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const rootField = { parent: undefined, field: rootFieldKeySymbol };
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+
+			// Move A out of foo.
+			tree1.editor.move({ parent: fooList, field: brand("") }, 0, 1, rootField, 0);
+
+			// Delete root.
+			tree2.editor.sequenceField(rootField).delete(0, 1);
+
+			const expectedState: JsonCompatible = ["A"];
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
 		it("can rebase edit over cross-field move of changed node", () => {
 			const tree1 = makeTreeFromJson({
 				foo: [{ baz: "A" }],

@@ -9,6 +9,7 @@ import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	Changeset,
+	Insert,
 	LineageEvent,
 	Mark,
 	MoveId,
@@ -62,12 +63,14 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-	): Changeset<never> =>
-		markAtIndex(index, {
+	): Changeset<never> => {
+		const mark: Insert<never> = {
 			type: "Insert",
 			content: cursors.map(jsonableTreeFromCursor),
 			id,
-		}),
+		};
+		return markAtIndex(index, mark);
+	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
 	revive: (
@@ -78,8 +81,6 @@ export const sequenceFieldEditor = {
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		// Revives are typically created to undo a delete from the prior revision.
-		// When that's the case, we know the content used to be at the index at which it is being revived.
 		const detachEvent = { revision: detachedBy, localId: detachId };
 		const mark: Reattach<never> = {
 			type: "Revive",

@@ -11019,7 +11019,6 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
-      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
       '@fluid-experimental/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.5.2.0
       '@fluid-tools/build-cli': 0.21.0
@@ -11028,6 +11027,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9
       '@types/chai': 4.3.5

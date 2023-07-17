@@ -198,10 +198,8 @@ describe("Node Key Index", () => {
 
 	it("is disabled if node type is not in the tree schema", () => {
 		const builder2 = new SchemaBuilder("node key index test");
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		// This is missing the global node key field
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
