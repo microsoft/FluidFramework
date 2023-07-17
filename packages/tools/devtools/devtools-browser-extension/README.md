@@ -12,18 +12,9 @@ It is currently compatible with [Chromium](https://www.chromium.org/Home/)-based
 
 Note: this package does not generate any library artifacts, so it is marked as `private` in its `package.json`.
 
-## Testing Local Changes
+## Background
 
-To use a local build of this extension in your browser:
-
-1. Build this package and its dependencies.
-   Your extension files should be generated under the build output directory (`dist/bundle`) in this package directory.
-2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
-    - For [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
-      In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
-    - If you are working in a [Codespace](https://code.visualstudio.com/docs/remote/codespaces) with Visual Studio Code, you can download the build artifacts by right-clicking on `dist/bundle` in the `Explorer` view and clicking `download`. This will download the files to your local machine, which you can upload to the browser.
-
-## Devtools Extensions
+### Devtools Extensions
 
 This package runs as a [Devtools Extension](https://developer.chrome.com/docs/extensions/mv3/devtools/) in Chromium-based browsers that support them.
 
@@ -33,7 +24,7 @@ For an overview on how Devtools extensions work, see [here](https://developer.ch
 
 For a helpful how-to guide for making a Devtools Extension, see [here](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/devtools-extension).
 
-### Initialization Flow
+#### Initialization Flow
 
 These details are covered by the above articles, but they are a bit obfuscated, so we'll elaborate here for clarity.
 
@@ -80,6 +71,40 @@ sequenceDiagram
    deactivate Content Script
    deactivate Devtools Script
 ```
+
+## Working in the Package
+
+### Building
+
+To build the package, run `npm run build` in a terminal at the root directory of this package.
+
+### Testing
+
+#### Automated Testing
+
+This package uses two different testing libraries for its unit vs end-to-end tests.
+To run all of the automated tests, run `npm run test` in a terminal from the root directory of this package.
+
+##### Unit Tests
+
+This package uses [mocha](https://mochajs.org/) for its unit tests.
+To run just the unit tests, run `npm run test:unit` in a terminal from the root directory of this package.
+
+##### End-To-End Tests
+
+This package uses [jest](https://jestjs.io/) and a small backing test app to test end-to-end scenarios in a browser environment.
+To run the automated end-to-end tests, run `npm run test:end-to-end` in a terminal from the root directory of this package.
+
+#### Local Extension Testing
+
+To use a local build of this extension in your browser:
+
+1. Build this package and its dependencies.
+   Your extension files should be generated under the build output directory (`dist/bundle`) in this package directory.
+2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
+    - For [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
+      In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
+    - If you are working in a [Codespace](https://code.visualstudio.com/docs/remote/codespaces) with Visual Studio Code, you can download the build artifacts by right-clicking on `dist/bundle` in the `Explorer` view and clicking `download`. This will download the files to your local machine, which you can upload to the browser.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
