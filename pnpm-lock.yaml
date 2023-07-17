@@ -5223,7 +5223,7 @@ importers:
       body-parser: ^1.18.3
       chai: ^4.2.0
       chai-as-promised: 7.1.1
-      chalk: 2.4.1
+      chalk: ^2.4.2
       cls-hooked: 4.2.2
       cross-env: ^7.0.3
       cypress-multi-reporters: 1.1.23
@@ -5276,7 +5276,7 @@ importers:
       async: 3.2.4
       basicauth-middleware: 2.0.0
       body-parser: 1.20.2
-      chalk: 2.4.1
+      chalk: 2.4.2
       cls-hooked: 4.2.2
       empty-dir: 0.2.1
       express: 4.18.2
@@ -27085,6 +27085,7 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
+    dev: true
 
   /chalk/2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -37016,7 +37017,7 @@ packages:
       mocha: '*'
     dependencies:
       babel-runtime: 6.26.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       diff: 3.5.0
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
@@ -37740,7 +37741,7 @@ packages:
     hasBin: true
     dependencies:
       ansi-styles: 3.2.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       cross-spawn: 6.0.5
       memorystream: 0.3.1
       minimatch: 3.1.2
