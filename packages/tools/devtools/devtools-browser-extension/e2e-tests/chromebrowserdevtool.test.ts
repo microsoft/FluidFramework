@@ -34,13 +34,14 @@ describe("End to end tests", () => {
 		await page.waitForSelector(".text-area");
 	});
 
-	it("Verify textarea is created", async () => {
+	it("Smoke: verify test app can be launched", async () => {
+		// Verify by checking for text area associated with the SharedString.
 		const textArea = await getValue(0, "");
 		expect(textArea).toEqual("");
 	});
 
-	// it("Verify Devtools extension is opened", async () => {
-	// 	//TODO
+	// TODO
+	// it("Smoke: verify Devtools extension view can be launched", async () => {
 	// 	const targets = await browser.targets();
 	// 	console.log(targets);
 	// 	// chrome-extension://inmobceohkedafljagjfnbojplmlmgbk/devtools_app.html
