@@ -300,6 +300,9 @@ export function createChildLogger(props?: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt {
+	if (props === undefined) {
+		return new TelemetryNullLogger();
+	}
 	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
 }
 
