@@ -47,7 +47,6 @@ export function create(storage: IDocumentStorage): Router {
 			id,
 			summary,
 			sequenceNumber,
-			1,
 			defaultHash,
 			`http://${request.hostname}`,
 			`http://${request.hostname}`,

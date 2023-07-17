@@ -7,7 +7,13 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import { Repository, createPullRequest, pullRequestExists, pullRequestInfo } from "../../lib";
+import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../lib";
+
+interface CleanupBranch {
+	branch: string;
+	local: boolean;
+	remote: boolean;
+}
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -19,9 +25,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 	static flags = {
 		pat: Flags.string({
-			description: "GitHub Personal Access Token",
+			description:
+				"GitHub Personal Access Token. This parameter should be passed using the GITHUB_PAT environment variable for security purposes.",
 			char: "p",
 			required: true,
+			env: "GITHUB_PAT",
 		}),
 		source: Flags.string({
 			description: "Source branch name",
@@ -48,18 +56,26 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 			multiple: true,
 		}),
+		createPr: Flags.boolean({
+			description: "Use --no-createPr to skip creating a PR. Useful for testing.",
+			hidden: true,
+			default: true,
+			allowNo: true,
+		}),
 		...BaseCommand.flags,
 	};
 
 	/**
-	 * The branch that the command was run from. This is used to checkout the branch in the case of a failure.
+	 * The branch that the command was run from. This is used to checkout the branch in the case of a failure, so the user
+	 * is on the starting branch.
 	 */
 	private initialBranch: string = "";
 
 	/**
-	 * A list of branches that should be deleted if the command fails.
+	 * A list of local branches that should be deleted if the command fails. The local/remote booleans indicate whether
+	 * the branch should be cleaned up locally, remotely, or both.
 	 */
-	private readonly branchesToCleanup: string[] = [];
+	private readonly branchesToCleanup: CleanupBranch[] = [];
 
 	private gitRepo: Repository | undefined;
 	private remote: string | undefined;
@@ -72,18 +88,21 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
 
 		if (this.gitRepo === undefined) {
-			this.log(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
+			this.errorLog(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
-		this.log(`owner: ${owner} and repo: ${repo}`);
+		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await this.gitRepo.gitClient.status()).current ?? "main";
 
-		this.remote = flags.remote;
+		this.remote =
+			flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
+		this.verbose(`Remote is: ${this.remote}`);
 
+		// Check if a branch integration PR exists already, based on its **name**.
 		const prExists: boolean = await pullRequestExists(
 			flags.pat,
 			prTitle,
@@ -93,15 +112,22 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 
 		if (prExists) {
-			this.verbose(`Open pull request exists`);
-			return;
+			this.log(`Open pull request exists`);
+			this.exit(0);
 			// eslint-disable-next-line no-warning-comments
 			// TODO: notify the author
+		} else {
+			this.log(`No open pull request.`);
 		}
 
+		// Find the last merged commit between the source and target branches. Use the remote refs since we don't need to
+		// check out local versions of the branches yet.
+		const remoteSourceBranch = `refs/remotes/${this.remote}/${flags.source}`;
 		const remoteTargetBranch = `refs/remotes/${this.remote}/${flags.target}`;
-
-		const lastMergedCommit = await this.gitRepo.getMergeBase(flags.source, remoteTargetBranch);
+		const lastMergedCommit = await this.gitRepo.getMergeBase(
+			remoteSourceBranch,
+			remoteTargetBranch,
+		);
 		this.log(
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
@@ -111,35 +137,41 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			flags.source,
 		);
 
-		this.log(`Unmerged commit list: ${unmergedCommitList}`);
-
 		if (unmergedCommitList.length === 0) {
 			this.log(
 				chalk.green(
 					`${flags.source} and ${flags.target} branches are in sync. No commits to merge`,
 				),
 			);
-			return;
+			this.exit(0);
 		}
 
 		this.log(
 			`There are ${unmergedCommitList.length} unmerged commits between the ${flags.source} and ${flags.target} branches`,
 		);
+		this.verbose(`Unmerged commit list: ${unmergedCommitList.map((c) => shortCommit(c))}`);
 
-		const commitSize = Math.min(flags.batchSize, unmergedCommitList.length);
-		// `tempBranchToCheckConflicts` is used to check the conflicts of each commit with the target branch.
+		/**
+		 * tempBranchToCheckConflicts is used to check the conflicts of each commit with the target branch.
+		 */
 		const tempBranchToCheckConflicts = `${flags.target}-automation`;
-		this.branchesToCleanup.push(tempBranchToCheckConflicts);
+		this.branchesToCleanup.push({
+			branch: tempBranchToCheckConflicts,
+			local: true,
+			remote: false,
+		});
 
+		// Check out a new temp branch at the same commit as the target branch.
 		await this.gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, remoteTargetBranch);
 
+		const commitBatchSize = Math.min(flags.batchSize, unmergedCommitList.length);
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(
-			unmergedCommitList.slice(0, commitSize),
+			unmergedCommitList.slice(0, commitBatchSize),
 			this.gitRepo,
 			this.logger,
 		);
 		this.verbose(
-			`conflicting commit: ${unmergedCommitList[conflictingCommitIndex]} at index ${conflictingCommitIndex}`,
+			`Conflicting commit: ${unmergedCommitList[conflictingCommitIndex]} at index ${conflictingCommitIndex}`,
 		);
 
 		/**
@@ -171,98 +203,84 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			prWillConflict = false;
 		}
 
-		const branchName = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
-		this.branchesToCleanup.push(branchName);
-
-		this.log(
-			`Creating and checking out branch: ${branchName} at commit ${shortCommit(
-				prHeadCommit,
-			)}`,
-		);
-
-		await this.gitRepo.gitClient
-			.checkoutBranch(branchName, prHeadCommit)
-			.push(this.remote, branchName)
-			.branch(["--set-upstream-to", `${this.remote}/${branchName}`]);
-
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
 		await this.gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
 
-		/**
-		 * The below description is intended for PRs which has merge conflicts with next.
-		 */
-		let description: string = `## ${flags.source}-${flags.target} integrate PR
-		The aim of this pull request is to sync ${flags.source} and ${flags.target} branch. This commit has **MERGE CONFLICTS** with ${flags.target}. The expectation from the assignee is as follows:
+		// Create a new local branch to serve as the merge HEAD, at the prHeadCommit found earlier.
+		const mergeBranch = `${flags.source}-${flags.target}-${shortCommit(prHeadCommit)}`;
+		this.log(
+			`Creating and checking out new branch: ${mergeBranch} at commit ${shortCommit(
+				prHeadCommit,
+			)}`,
+		);
+		await this.gitRepo.gitClient.checkoutBranch(mergeBranch, prHeadCommit);
+		// Only clean up this branch locally
+		this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: false });
 
-		> - Acknowledge the pull request by adding a comment -- "Actively working on it".
-
-		> - Merge ${flags.target} into this ${branchName}.
-
-		> - Resolve any merge conflicts between ${branchName} and ${flags.target} and push the resolution to this branch: ${branchName}. **Do NOT rebase or squash this branch: its history must be preserved**.
-
-		> - Ensure CI is passing for this PR, fixing any issues.
-
-		> - Recommended git commands:
-		git checkout ${branchName}
-		git merge ${flags.target}
-		**RESOLVE MERGE CONFLICTS**
-		git add .
-		git commit -m ${prTitle}
-		git push`;
-
+		// If we determined that the PR won't conflict, merge the remote target branch with the HEAD (which is mergeBranch
+		// that we created and checked out earlier). We will create the PR at the new commit; in other words, the PR will
+		// already contain a merge, and once CI has passed, the target branch can be fast-forwarded directly to it to close
+		// and merge the PR.
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
 				.fetch(this.remote)
-				.merge([`${this.remote}/${flags.target}`, "-m", prTitle])
-				.push(this.remote, branchName);
-
-			/**
-			 * The below description is intended for PRs which may have CI failures with next.
-			 */
-			description = `## ${flags.source}-${flags.target} integrate PR
-			The aim of this pull request is to sync ${flags.source} and ${flags.target} branch. The expectation from the assignee is as follows:
-
-			> - Acknowledge the pull request by adding a comment -- "Actively working on it".
-
-			> - Resolve any CI failures between ${branchName} and ${flags.target} thereby pushing the resolution to this branch: ${branchName}. **Do NOT rebase or squash this branch: its history must be preserved**.
-
-			> - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
-
-			> - Recommended git commands:
-			git checkout ${branchName}
-			**FIX THE CI FAILURES**
-			git commit --amend -m ${prTitle}
-			git push --force-with-lease`;
+				.merge([remoteTargetBranch, "-m", prTitle]);
 		}
 
-		/**
-		 * fetch name of owner associated to the pull request
-		 */
-		const pr = await pullRequestInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
-		if (pr === undefined) {
-			this.warning(`Unable to add assignee`);
+		// To determine who to assign the PR to, we look up the commit details on GitHub.
+		// TODO: Can't we get the author info from the local commit?
+		const commitInfo = await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
+		if (commitInfo === undefined) {
+			this.warning(
+				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
+			);
 		}
-		const username = pr.data.author.login;
-		this.info(
-			`Fetching pull request info for commit id ${prHeadCommit} and assignee ${username}`,
-		);
+		const assignee = commitInfo.data.author.login;
 
+		// The PR description differs based on whether we expect a conflict or not.
+		const getDescription = prWillConflict
+			? getMergeConflictsDescription
+			: getMaybeCiFailuresDescription;
+		const description: string = getDescription({
+			source: flags.source,
+			target: flags.target,
+			mergeBranch,
+			prTitle,
+		});
+
+		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
 			token: flags.pat,
 			owner,
 			repo,
-			source: branchName,
+			source: mergeBranch,
 			target: flags.target,
-			assignee: username,
+			assignee,
 			title: prTitle,
 			description,
 			reviewers: flags.reviewers,
 		};
+		this.verbose(`PR object: ${JSON.stringify(prObject)}}`);
 
-		this.log(`Initiate PR creation: ${JSON.stringify(prObject)}}`);
-
-		const prNumber = await createPullRequest(prObject, this.logger);
-		this.verbose(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
+		// We're about to create the PR, so we need to push mergeBranch upstream
+		// Also push the local branch to the remote and set its upstream.
+		await this.gitRepo.gitClient
+			.push(this.remote, mergeBranch)
+			.branch(["--set-upstream-to", `${this.remote}/${mergeBranch}`]);
+		if (flags.createPr) {
+			let prNumber = "";
+			try {
+				prNumber = await createPullRequest(prObject, this.logger);
+			} catch (error: unknown) {
+				// There was an error when creating the pull request, so clean up the remote branch.
+				this.errorLog(`Error creating pull request: ${error}`);
+				this.branchesToCleanup.push({ branch: mergeBranch, local: true, remote: true });
+				throw error;
+			}
+			this.log(`Opened pull request ${prNumber} for commit id ${prHeadCommit}`);
+		} else {
+			this.error(`Skipped opening pull request.`);
+		}
 	}
 
 	/**
@@ -276,17 +294,17 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		}
 
 		// Check out the initial branch
-		this.warning(`CLEANUP: checking out initial branch ${this.initialBranch}`);
+		this.warning(`CLEANUP: Checking out initial branch ${this.initialBranch}`);
 		await this.gitRepo.gitClient.checkout(this.initialBranch);
 
 		// Delete the branches we created
 		this.warning(`CLEANUP: Deleting local branches: ${this.branchesToCleanup.join(", ")}`);
 		await this.gitRepo.gitClient.deleteLocalBranches(
-			this.branchesToCleanup,
+			this.branchesToCleanup.filter((b) => b.local).map((b) => b.branch),
 			true /* forceDelete */,
 		);
 
-		// Delete the remote branches we created
+		// Delete any remote branches we created
 		const promises: Promise<unknown>[] = [];
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const deleteFunc = async (branch: string) => {
@@ -297,8 +315,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				this.verbose(`CLEANUP: FAILED to delete remote branch ${this.remote}/${branch}`);
 			}
 		};
-		for (const branch of this.branchesToCleanup) {
-			promises.push(deleteFunc(branch));
+		for (const branch of this.branchesToCleanup.filter((b) => b.remote)) {
+			promises.push(deleteFunc(branch.branch));
 		}
 		await Promise.all(promises);
 		throw err;
@@ -336,4 +354,57 @@ async function hasConflicts(
 
 function shortCommit(commit: string): string {
 	return commit.slice(0, 7);
+}
+
+/**
+ * The below description is intended for PRs which has merge conflicts with next.
+ */
+function getMergeConflictsDescription(props: {
+	source: string;
+	target: string;
+	mergeBranch: string;
+	prTitle: string;
+}): string {
+	const { source, target, mergeBranch, prTitle } = props;
+	return `
+## ${source}-${target} integrate PR
+
+The aim of this pull request is to sync ${source} and ${target} branch. This branch has **MERGE CONFLICTS** with ${target} due to this commit. If this PR is assigned to you, you need to do the following:
+
+- Acknowledge the pull request by adding a comment -- "Actively working on it".
+- Merge ${target} into this branch, ${mergeBranch}.
+- Resolve any merge conflicts between ${mergeBranch} and ${target} and then push the results to upstream. **Do NOT rebase or squash this branch: its history must be preserved**.
+- Address any CI failures.
+- Recommended git commands:
+  - \`git checkout ${mergeBranch}\` -- check out the PR branch.
+  - \`git merge ${target}\` -- merge ${target} into ${mergeBranch}
+  - **RESOLVE MERGE CONFLICTS**
+  - \`git add .\` -- stage all the local changes
+  - \`git commit -m ${prTitle}\` -- commit the merge
+  - \`git push upstream\` -- and push it to upstream (your upstream remote name may be different)`;
+}
+
+/**
+ * The below description is intended for PRs which may have CI failures with next.
+ */
+function getMaybeCiFailuresDescription(props: {
+	source: string;
+	target: string;
+	mergeBranch: string;
+	prTitle: string;
+}): string {
+	const { source, target, mergeBranch, prTitle } = props;
+	return `
+## ${source}-${target} integrate PR
+
+The aim of this pull request is to sync ${source} and ${target} branch. If this PR is assigned to you, you need to do the following:
+
+- Acknowledge the pull request by adding a comment -- "Actively working on it".
+- Resolve any CI failures between ${mergeBranch} and ${target} and push the results to upstream. **Do NOT rebase or squash this branch: its history must be preserved**.
+- Address any CI failures. Ignore any **Real service e2e test** and **Stress test** failures because they are **non-required** CI workflows.
+- Recommended git commands:
+  - \`git checkout ${mergeBranch}\` -- check out the PR branch.
+  - **FIX ANY CI FAILURES**
+  - git commit --amend -m ${prTitle}
+  - git push --force-with-lease`;
 }
