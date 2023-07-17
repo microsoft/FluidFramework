@@ -318,10 +318,6 @@ export async function start(
 
 	// Load and render the Fluid object.
 	await getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv);
-	// Handle the code upgrade scenario (which fires contextChanged)
-	container1.on("contextChanged", () => {
-		getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => {});
-	});
 
 	// We have rendered the Fluid object. If the container is detached, attach it now.
 	if (container1.attachState === AttachState.Detached) {
@@ -363,11 +359,6 @@ export async function start(
 		containers.push(container2);
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
-		// Handle the code upgrade scenario (which fires contextChanged)
-		container2.on("contextChanged", () => {
-			assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
-			getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => {});
-		});
 	}
 }
 
@@ -483,12 +474,6 @@ async function attachContainer(
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.
 				await getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv);
-				// Handle the code upgrade scenario (which fires contextChanged)
-				currentContainer.on("contextChanged", () => {
-					getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv).catch(
-						() => {},
-					);
-				});
 			};
 		};
 

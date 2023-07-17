@@ -27,7 +27,6 @@ export const codePoint: NamedTreeSchema = {
 	localFields: emptyMap,
 	globalFields: emptySet,
 	extraLocalFields: emptyField,
-	extraGlobalFields: false,
 	value: ValueSchema.Number,
 };
 
@@ -37,7 +36,6 @@ export const codePoint: NamedTreeSchema = {
 export const string: TreeStoredSchema = {
 	globalFields: emptySet,
 	extraLocalFields: emptyField,
-	extraGlobalFields: false,
 	localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
 	value: ValueSchema.Nothing,
 };

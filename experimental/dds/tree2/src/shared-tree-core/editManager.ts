@@ -285,7 +285,7 @@ export class EditManager<
 					// TODO:#4918: Investigate if we can handle this case more gracefully by including the origin commit in `sequenceMap`
 					(this.trunkBranches.size === 1 &&
 						this.trunkBranches.minKey() === minimumPossibleSequenceNumber),
-				"Expected no outstanding branches when clearing trunk",
+				0x711 /* Expected no outstanding branches when clearing trunk */,
 			);
 			this.trunk.setHead(this.trunkBase);
 			this.sequenceMap.clear();
