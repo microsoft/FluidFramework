@@ -6,14 +6,13 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	createChildLogger,
 	DebugLogger,
 	IConfigProviderBase,
-	loggerToMonitoringContext,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 	sessionStorageConfigProvider,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBaseLogger,
@@ -343,9 +342,10 @@ export class Loader implements IHostLoader {
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger: this.services.subLogger, namespace: "Loader" }),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.services.subLogger,
+			namespace: "Loader",
+		});
 	}
 
 	public get IFluidRouter(): IFluidRouter {

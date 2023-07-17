@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 export {
+	createChildMonitoringContext,
 	MonitoringContext,
 	IConfigProviderBase,
 	sessionStorageConfigProvider,

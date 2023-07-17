@@ -5,8 +5,7 @@
 
 import {
 	ITelemetryLoggerExt,
-	createChildLogger,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
@@ -100,9 +99,7 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger: params.logger, namespace: "Outbox" }),
-		);
+		this.mc = createChildMonitoringContext({ logger: params.logger, namespace: "Outbox" });
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;

@@ -93,7 +93,7 @@ import {
 	connectedEventName,
 	normalizeError,
 	MonitoringContext,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
@@ -807,9 +807,7 @@ export class Container
 		});
 
 		// Prefix all events in this file with container-loader
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger: this.subLogger, namespace: "Container" }),
-		);
+		this.mc = createChildMonitoringContext({ logger: this.subLogger, namespace: "Container" });
 
 		this._deltaManager = this.createDeltaManager();
 

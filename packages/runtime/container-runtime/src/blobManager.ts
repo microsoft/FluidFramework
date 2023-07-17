@@ -30,8 +30,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	createChildLogger,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -232,9 +231,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		private readonly closeContainer: (error?: ICriticalContainerError) => void,
 	) {
 		super();
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger: this.runtime.logger, namespace: "BlobManager" }),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.runtime.logger,
+			namespace: "BlobManager",
+		});
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&

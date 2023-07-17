@@ -25,13 +25,12 @@ import {
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	createChildLogger,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	EventEmitterWithErrorHandling,
 	normalizeError,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -137,9 +136,7 @@ export class DocumentDeltaConnection
 			);
 		});
 
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger, namespace: "DeltaConnection" }),
-		);
+		this.mc = createChildMonitoringContext({ logger, namespace: "DeltaConnection" });
 
 		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);

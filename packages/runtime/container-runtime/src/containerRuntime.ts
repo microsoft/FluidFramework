@@ -40,9 +40,9 @@ import {
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
-	loggerToMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -1093,9 +1093,10 @@ export class ContainerRuntime
 		this.innerDeltaManager = context.deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
-		this.mc = loggerToMonitoringContext(
-			createChildLogger({ logger: this.logger, namespace: "ContainerRuntime" }),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "ContainerRuntime",
+		});
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,

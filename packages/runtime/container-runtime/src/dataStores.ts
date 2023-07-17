@@ -42,11 +42,10 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	createChildLogger,
-	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
 	TelemetryDataTag,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -137,7 +136,7 @@ export class DataStores implements IDisposable {
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
-		this.mc = loggerToMonitoringContext(createChildLogger({ logger: baseLogger }));
+		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.containerRuntimeHandle = new FluidObjectHandle(
 			this.runtime,
 			"/",
