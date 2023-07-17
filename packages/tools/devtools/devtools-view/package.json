@@ -90,7 +90,7 @@
 		"jest-junit": "^10.0.0",
 		"playwright": "^1.36.0",
 		"prettier": "~2.6.2",
-		"prop-types": "^15.8.1",
+		"prop-types": "^15.7.2",
 		"rimraf": "^4.4.0",
 		"ts-jest": "^26.4.4",
 		"typescript": "~4.5.5",

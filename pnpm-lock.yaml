@@ -11220,7 +11220,7 @@ importers:
       jest-junit: ^10.0.0
       playwright: ^1.36.0
       prettier: ~2.6.2
-      prop-types: ^15.8.1
+      prop-types: ^15.7.2
       react: ^17.0.1
       react-dom: ^17.0.1
       react-split-pane: ^0.1.92
