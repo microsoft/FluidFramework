@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { ILoggingError } from "@fluidframework/core-interfaces";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -108,9 +109,9 @@ describe("Runtime", () => {
 				try {
 					fn();
 					throw Error(`${failMsg}: Expected to fail`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -125,9 +126,9 @@ describe("Runtime", () => {
 				try {
 					await fn();
 					throw Error(`${failMsg}: Expected to reject`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -531,7 +532,9 @@ describe("Runtime", () => {
 								readAndParseBlob,
 								logger,
 							),
-						(error: any) => {
+						(
+							error: ILoggingError & { inProgressSummaryRefSeq: number | undefined },
+						) => {
 							const correctErrorMessage =
 								error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =

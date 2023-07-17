@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
 import { Deferred, gitHashFile, IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -675,7 +675,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob1Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob1Handle),
-				(error: any) => {
+				(error: IErrorBase & { code: number | undefined }) => {
 					const blob1Id = blob1Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
@@ -688,7 +688,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob2Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob2Handle),
-				(error: any) => {
+				(error: IErrorBase & { code: number | undefined }) => {
 					const blob2Id = blob2Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;
