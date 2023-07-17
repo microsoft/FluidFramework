@@ -10,17 +10,11 @@ Alias needs to happen for datastores which:
 
 -   must be referenced by a custom id
 -   must never be garbage collected (as they are bound to a custom id which may be stored by the client, they must always be available to be referenced)
--   must be singletons
+-   must be singletons in the container
 
-The legacy way of creating root datastores was vulnerable to name conflicts, as two clients attempting to create the same root datastore with the same id risks corrupting the document. Aliasing changed the way to achieve the same goal, by enabling an asynchronous 'aliasing' operation on any newly created datastore. So in order to create such a datastore, the client needs to create an anonymous datastore (which will receive a newly generated UUID) and then explicitly attempt to bind it to a custom id (the alias) within a different operation which is decoupled from its creation.
+Creating root datastores was vulnerable to name conflicts, as two clients attempting to create the same root datastore with the same id risks corrupting the document. Aliasing changed the way to achieve the same goal, by enabling an asynchronous 'aliasing' operation on any newly created datastore. So in order to create such a datastore, the client needs to create an anonymous datastore (which will receive a newly generated UUID) and then explicitly attempt to bind it to a custom id (the alias) within a different operation which is decoupled from its creation.
 
-## Legacy API
-
-A root datastore can be created by calling `IContainerRuntime._createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid(), isRoot = false): Promise<IFluidRouter>` with a custom id and the `isRoot` parameter set to `true`.
-
-The function call is vulnerable to creating a name conflict, which propagates as a `DataCorruptionError` with the `duplicateDataStoreCreatedWithExistingId` error code. This error corrupts the document, due to the fact that uncoordinated clients would call the same API independently, first client will succeed in creating the datastore and the second will fail as the name was already allocated. The failure happens when the datastore is attached, as it produces an op of type 'attach' which when processed tries to ensure that there are no two datastores with the same id. The failing op is then committed, leading to the permanent failure of the container. **This method is dangerous, deprecated, and should not be used.**
-
-## Current API
+## Aliasing API
 
 The process of aliasing a datastore is split in two parts:
 
