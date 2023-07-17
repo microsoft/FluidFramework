@@ -170,7 +170,7 @@ export function create(
 			Lumberjack.info(
 				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
-	
+
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
 
