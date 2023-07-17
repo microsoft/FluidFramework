@@ -285,7 +285,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 				default:
 					// If we encounter a tag we don't recognize
 					// then we must assume we should scrub.
-					newEvent[key] = `REDACTED (unknown tag)`;
+					newEvent[key] = "REDACTED (unknown tag)";
 					break;
 			}
 		}
