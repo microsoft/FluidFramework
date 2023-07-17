@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
@@ -24,7 +23,6 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -115,18 +113,6 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public @deprecated
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
-    // @deprecated (undocumented)
-    reason: string;
-    // @deprecated (undocumented)
-    version: string;
-}
-
 // @public
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
@@ -173,21 +159,13 @@ export interface IContainerContext {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
-    // @deprecated (undocumented)
-    readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-    // @deprecated
-    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -197,8 +175,6 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // @deprecated (undocumented)
-    readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
@@ -246,22 +222,10 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public @deprecated
-export interface IDeltaHandlerStrategy {
-    // @deprecated
-    process: (message: ISequencedDocumentMessage) => void;
-    // @deprecated
-    processSignal: (message: ISignalMessage) => void;
-}
-
 // @public
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -287,11 +251,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     // @deprecated (undocumented)
-    (event: "allSentOpsAckd", listener: () => void): any;
-    // @deprecated (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
-    // @deprecated (undocumented)
-    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;

@@ -85,7 +85,7 @@
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.20.0",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.5.2.0",
@@ -113,6 +113,17 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }

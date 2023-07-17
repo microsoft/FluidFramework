@@ -35,8 +35,6 @@ export {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	RootDataObject,
-	RootDataObjectProps,
 	ServiceAudience,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
