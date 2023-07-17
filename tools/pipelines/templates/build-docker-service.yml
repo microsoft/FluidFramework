@@ -227,10 +227,10 @@ stages:
           fi
 
     # for npm ci in component detection and set version
-    - template: include-use-node-version.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        version: '16.16.0'
+    - task: UseNode@1
+      displayName: Use Node 16.x
+      inputs:
+        version: 16.x
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:

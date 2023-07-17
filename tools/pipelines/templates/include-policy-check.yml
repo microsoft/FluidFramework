@@ -29,10 +29,10 @@ stages:
   - job:
     displayName: Run checks
     steps:
-    - template: include-use-node-version.yml
-      parameters:
-        buildDirectory: $(Build.SourcesDirectory)
-        version: '16.16.0'
+    - task: UseNode@1
+      displayName: Use Node 16.x
+      inputs:
+        version: 16.x
 
     - template: include-install-pnpm.yml
       parameters:
