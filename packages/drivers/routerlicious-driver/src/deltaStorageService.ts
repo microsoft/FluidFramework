@@ -22,7 +22,7 @@ import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 
-const MaxBatchDeltas = 5000; // Maximum number of ops we can fetch at a time
+const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
