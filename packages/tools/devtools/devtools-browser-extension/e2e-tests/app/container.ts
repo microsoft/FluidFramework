@@ -70,7 +70,7 @@ class CollaborativeText extends DataObject {
 	}
 
 	public static get Name() {
-		return "@fluid-example/collaborative-textarea";
+		return "browser-extension-test-app";
 	}
 
 	private static readonly factory = new DataObjectFactory(
