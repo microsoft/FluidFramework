@@ -56,6 +56,7 @@ describe("Runtime", () => {
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	});
 
 	describe("Container Runtime", () => {
@@ -132,6 +133,7 @@ describe("Runtime", () => {
 							},
 							connected: true,
 							clientId: "fakeClientId",
+							getLoadedFromVersion: () => undefined,
 						};
 					};
 
@@ -496,6 +498,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					});
 
 					beforeEach(async () => {
@@ -558,6 +561,7 @@ describe("Runtime", () => {
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -639,6 +643,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (_dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					};
 				};
 			const getMockPendingStateManager = (): PendingStateManager => {
@@ -1165,6 +1170,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -1182,7 +1188,7 @@ describe("Runtime", () => {
 					gcAllowed: true,
 				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-				enableBatchRebasing: true,
+				enableGroupedBatching: true,
 			};
 
 			const defaultRuntimeOptions = {
@@ -1199,7 +1205,6 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
-				enableBatchRebasing: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -1218,7 +1223,6 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
 							idCompressorEnabled: false,
-							enableBatchRebasing: true,
 						}),
 					},
 				]);
@@ -1230,7 +1234,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
-					"Fluid.ContainerRuntime.DisableBatchRebasing": true,
+					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1249,8 +1253,8 @@ describe("Runtime", () => {
 							disableOpReentryCheck: false,
 							disableChunking: true,
 							idCompressorEnabled: true,
-							enableBatchRebasing: false,
 						}),
+						groupedBatchingEnabled: false,
 					},
 				]);
 			});
@@ -1275,6 +1279,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 

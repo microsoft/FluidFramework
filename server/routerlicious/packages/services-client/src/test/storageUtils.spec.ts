@@ -9,7 +9,7 @@ import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	convertWholeSummaryTreeToSummaryTree,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 } from "../storageUtils";
 
 import {
@@ -214,7 +214,7 @@ describe("Storage Utils", () => {
 		});
 	});
 
-	describe("convertWholeSummaryTreeToSummaryTree()", () => {
+	describe("convertFirstSummaryWholeSummaryTreeToSummaryTree()", () => {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: 0,
 			sequenceNumber: 1,
@@ -232,7 +232,7 @@ describe("Storage Utils", () => {
 					type: SummaryType.Blob,
 				},
 				quorumProposals: {
-					content: JSON.stringify([]),
+					content: fromUtf8ToBase64("This is a test"),
 					type: SummaryType.Blob,
 				},
 				quorumValues: {
@@ -243,9 +243,70 @@ describe("Storage Utils", () => {
 			type: SummaryType.Tree,
 		};
 
+		const summaryWithUnreferencedNode: ISummaryTree = {
+			type: SummaryType.Tree,
+			tree: {
+				default: {
+					type: SummaryType.Tree,
+					tree: {
+						".component": {
+							type: SummaryType.Blob,
+							content: JSON.stringify("defaultDataStore"),
+						},
+						"root": {
+							type: SummaryType.Tree,
+							tree: {
+								attributes: {
+									type: SummaryType.Blob,
+									content: JSON.stringify("rootattributes"),
+								},
+							},
+						},
+						"unref": {
+							type: SummaryType.Tree,
+							tree: {},
+							unreferenced: true,
+						},
+					},
+				},
+			},
+		};
+
 		it("Validate summary tree conversion", () => {
-			const test = convertSummaryTreeToWholeSummaryTree(undefined, summaryTree, "", "");
-			assert.deepStrictEqual(convertWholeSummaryTreeToSummaryTree(test), summaryTree);
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				summaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, summaryTree);
+		});
+
+		it("Validate summary with unreferenced node tree conversion", () => {
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				summaryWithUnreferencedNode,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, summaryWithUnreferencedNode);
+		});
+
+		it("Validate empty summary tree conversion", () => {
+			const emptySummaryTree: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+			const wholeSummaryTree = convertSummaryTreeToWholeSummaryTree(
+				undefined,
+				emptySummaryTree,
+				"",
+				"",
+			);
+			const newSummaryTree =
+				convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree);
+			assert.deepStrictEqual(newSummaryTree, emptySummaryTree);
 		});
 	});
 });

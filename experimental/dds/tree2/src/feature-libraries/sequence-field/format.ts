@@ -5,7 +5,13 @@
 
 import { TSchema, Type } from "@sinclair/typebox";
 import { ITreeCursorSynchronous, JsonableTree, RevisionTag, RevisionTagSchema } from "../../core";
-import { ChangesetLocalId, ChangesetLocalIdSchema, NodeChangeset } from "../modular-schema";
+import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	NodeChangeset,
+} from "../modular-schema";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
 // Currently, types in this file are largely used for both.
@@ -69,6 +75,8 @@ export enum Effects {
  */
 export interface LineageEvent {
 	readonly revision: RevisionTag;
+	readonly id: ChangesetLocalId;
+	readonly count: number;
 
 	/**
 	 * The position of this mark within a range of nodes which were detached in this revision.
@@ -132,25 +140,6 @@ export const HasReattachFields = Type.Intersect([
 ]);
 
 /**
- * Identifies an empty cell.
- */
-export interface DetachEvent {
-	/**
-	 * The intention of edit which last emptied the cell.
-	 */
-	revision: RevisionTag;
-
-	/**
-	 * The absolute position of the node in this cell in the input context of the revision which emptied it.
-	 */
-	index: number;
-}
-export const DetachEvent = Type.Object({
-	revision: RevisionTagSchema,
-	index: Type.Number(),
-});
-
-/**
  * Mark which targets a range of existing cells instead of creating new cells.
  */
 export interface CellTargetingMark {
@@ -158,7 +147,7 @@ export interface CellTargetingMark {
 	 * Describes the detach which last emptied target cells.
 	 * Undefined if the target cells are not empty in this mark's input context.
 	 */
-	detachEvent?: DetachEvent;
+	detachEvent?: ChangeAtomId;
 
 	/**
 	 * Lineage of detaches adjacent to the cells since `detachEvent`.
@@ -167,7 +156,7 @@ export interface CellTargetingMark {
 	lineage?: LineageEvent[];
 }
 export const CellTargetingMark = Type.Object({
-	detachEvent: Type.Optional(DetachEvent),
+	detachEvent: Type.Optional(EncodedChangeAtomId),
 	lineage: Type.Optional(Type.Array(LineageEvent)),
 });
 
@@ -189,11 +178,11 @@ export const NoopMark = Type.Intersect([
 ]);
 
 export interface DetachedCellMark extends CellTargetingMark {
-	detachEvent: DetachEvent;
+	detachEvent: ChangeAtomId;
 }
 export const DetachedCellMark = Type.Intersect([
 	CellTargetingMark,
-	Type.Object({ detachEvent: DetachEvent }),
+	Type.Object({ detachEvent: EncodedChangeAtomId }),
 ]);
 
 export interface HasTiebreakPolicy extends HasPlaceFields {
@@ -223,9 +212,21 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
+export interface Transient {
+	/**
+	 * The details of the change that deletes the transient content.
+	 */
+	transientDetach: ChangeAtomId;
+}
+export const Transient = Type.Object({ detachedBy: EncodedChangeAtomId });
+
+export type CanBeTransient = Partial<Transient>;
+export const CanBeTransient = Type.Partial(Transient);
+
 export interface Insert<TNodeChange = NodeChangeType>
 	extends HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
@@ -240,6 +241,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasTiebreakPolicy,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		Type.Object({
 			type: Type.Literal("Insert"),
@@ -278,7 +280,9 @@ export interface Delete<TNodeChange = NodeChangeType>
 		CellTargetingMark {
 	type: "Delete";
 	count: NodeCount;
+	id: ChangesetLocalId;
 }
+
 // Note: inconsistent naming here is to avoid shadowing Effects.Delete
 export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
@@ -287,6 +291,7 @@ export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("Delete"),
+			id: ChangesetLocalIdSchema,
 			count: NodeCount,
 		}),
 	]);
@@ -314,6 +319,7 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 export interface Revive<TNodeChange = NodeChangeType>
 	extends HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "Revive";
@@ -324,6 +330,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasReattachFields,
 		HasRevisionTag,
+		CanBeTransient,
 		HasChanges(tNodeChange),
 		CellTargetingMark,
 		Type.Object({

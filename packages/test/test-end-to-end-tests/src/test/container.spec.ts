@@ -19,6 +19,7 @@ import {
 	Loader,
 	ILoaderProps,
 	waitContainerToCatchUp,
+	IContainerExperimental,
 } from "@fluidframework/container-loader";
 import {
 	DriverErrorType,
@@ -331,7 +332,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer(testContainerConfig);
+		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
+			testContainerConfig,
+		);
 
 		const pendingLocalState: IPendingLocalState = JSON.parse(
 			container.closeAndGetPendingLocalState(),

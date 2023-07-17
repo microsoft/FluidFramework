@@ -8,5 +8,6 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 		"import/no-nodejs-modules": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

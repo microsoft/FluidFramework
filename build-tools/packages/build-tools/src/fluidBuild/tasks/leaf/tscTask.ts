@@ -65,7 +65,9 @@ export class TscTask extends LeafTask {
 		// Keep a list of files that need to be compiled based on the command line flags and config, and
 		// remove the files that we sees from the tsBuildInfo.  The remaining files are
 		// new files that need to be rebuilt.
-		const configFileNames = new Set(config.fileNames);
+		const configFileNames = new Set(
+			config.fileNames.map((p) => TscUtils.getCanonicalFileName(path.normalize(p))),
+		);
 
 		// Check dependencies file hashes
 		const fileNames = tsBuildInfo.program.fileNames;
@@ -93,7 +95,7 @@ export class TscTask extends LeafTask {
 				}
 
 				// Remove files that we have built before
-				configFileNames.delete(fullPath);
+				configFileNames.delete(TscUtils.getCanonicalFileName(path.normalize(fullPath)));
 			} catch (e: any) {
 				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
 				return false;

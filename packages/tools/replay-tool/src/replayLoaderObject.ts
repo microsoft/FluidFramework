@@ -22,7 +22,7 @@ export class ReplayUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		if (!this.cache.has(request.url)) {
-			return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
+			throw new Error(`ContainerUrlResolver can't resolve ${request}`);
 		}
 		return this.cache.get(request.url);
 	}

@@ -31,13 +31,13 @@ import {
 	cursorFromContextualData,
 	cursorsFromContextualData,
 } from "../contextuallyTyped";
-import { FieldKinds } from "../defaultFieldKinds";
-import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
+	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../defaultChangeFamily";
+} from "../default-field-kinds";
+import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,

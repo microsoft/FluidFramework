@@ -12,6 +12,7 @@ import {
 	FieldKindSpecifier,
 	TreeTypeSet,
 } from "../../core";
+import { brand } from "../../util";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
@@ -144,4 +145,35 @@ export enum Multiplicity {
 	 * See {@link emptyField} for a constant, reusable field using Forbidden.
 	 */
 	Forbidden,
+}
+
+/**
+ * @alpha
+ */
+export type BrandedFieldKind<
+	TName extends string,
+	TMultiplicity extends Multiplicity,
+	TEditor extends FieldEditor<any>,
+> = FieldKind<TEditor, TMultiplicity> & {
+	identifier: TName & FieldKindIdentifier;
+};
+
+export function brandedFieldKind<
+	TName extends string,
+	TMultiplicity extends Multiplicity,
+	TEditor extends FieldEditor<any>,
+>(
+	identifier: TName,
+	multiplicity: TMultiplicity,
+	changeHandler: FieldChangeHandler<any, TEditor>,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
+	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
+): BrandedFieldKind<TName, TMultiplicity, TEditor> {
+	return new FieldKind<TEditor, TMultiplicity>(
+		brand(identifier),
+		multiplicity,
+		changeHandler,
+		allowsTreeSupersetOf,
+		handlesEditsFrom,
+	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }

@@ -91,16 +91,16 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 				try {
 					const result = await this.externalStorageManager.read(this.repoName, sha);
 					if (!result) {
-						return Promise.reject(err);
+						throw err;
 					}
 					return this.getCommits(sha, count, externalWriterConfig);
 				} catch (bridgeError) {
 					// If file does not exist or error trying to look up commit, return the original error.
 					Lumberjack.error("BridgeError", lumberjackProperties, bridgeError);
-					return Promise.reject(err);
+					throw err;
 				}
 			}
-			return Promise.reject(err);
+			throw err;
 		}
 	}
 
@@ -262,7 +262,7 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 				try {
 					const result = await this.externalStorageManager.read(this.repoName, fileName);
 					if (!result) {
-						return Promise.reject(err);
+						throw err;
 					}
 					return this.getRef(refId, externalWriterConfig);
 				} catch (bridgeError) {
@@ -271,10 +271,10 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 						lumberjackProperties,
 						bridgeError,
 					);
-					return Promise.reject(err);
+					throw err;
 				}
 			}
-			return Promise.reject(err);
+			throw err;
 		}
 	}
 
