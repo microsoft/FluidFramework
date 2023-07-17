@@ -116,17 +116,16 @@ export function create(
 				getParam(request.params, "tenantId") || appTenants[0].id,
 				getParam(request.params, "id"),
 			);
-			documentP.then(
-				(document) => {
+			documentP
+				.then((document) => {
 					if (!document || document.scheduledDeletionTime) {
 						response.status(404);
 					}
 					response.status(200).json(document);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(400).json(error);
-				},
-			);
+				});
 		},
 	);
 

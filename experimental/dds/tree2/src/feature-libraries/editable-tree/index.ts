@@ -48,7 +48,6 @@ export {
 	BindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,

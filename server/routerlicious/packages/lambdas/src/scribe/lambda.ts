@@ -44,6 +44,7 @@ import {
 	logCommonSessionEndMetrics,
 	CheckpointReason,
 	ICheckpoint,
+	IServerMetadata,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
@@ -214,7 +215,7 @@ export class ScribeLambda implements IPartitionLambda {
 				// skip summarize messages that deli already acked
 				if (
 					value.operation.type === MessageType.Summarize &&
-					!value.operation.serverMetadata?.deliAcked
+					!(value.operation.serverMetadata as IServerMetadata | undefined)?.deliAcked
 				) {
 					// ensure the client is requesting a summary for a state that scribe can achieve
 					// the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
@@ -585,8 +586,8 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP = clearCache
 			? this.checkpointManager.delete(this.protocolHead, true)
 			: this.writeCheckpoint(checkpoint);
-		this.pendingP.then(
-			() => {
+		this.pendingP
+			.then(() => {
 				this.pendingP = undefined;
 				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 
@@ -597,16 +598,15 @@ export class ScribeLambda implements IPartitionLambda {
 					this.pendingCheckpointOffset = undefined;
 					this.checkpointCore(pendingScribe, pendingOffset, clearCache);
 				}
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				const message = "Checkpoint error";
 				Lumberjack.error(
 					message,
 					getLumberBaseProperties(this.documentId, this.tenantId),
 					error,
 				);
-			},
-		);
+			});
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {

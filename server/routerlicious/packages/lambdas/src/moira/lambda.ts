@@ -85,16 +85,15 @@ export class MoiraLambda implements IPartitionLambda {
 			allProcessed.push(processP);
 		}
 
-		Promise.all(allProcessed).then(
-			() => {
+		Promise.all(allProcessed)
+			.then(() => {
 				this.current.clear();
 				this.context.checkpoint(batchOffset as IQueuedMessage);
 				this.sendPending();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.context.error(error, { restart: true });
-			},
-		);
+			});
 	}
 
 	private createDerivedGuid(referenceGuid: string, identifier: string) {
@@ -110,7 +109,7 @@ export class MoiraLambda implements IPartitionLambda {
 
 		for (const message of messages) {
 			if (message?.operation?.type === "op") {
-				const contents = JSON.parse(message.operation.contents);
+				const contents = JSON.parse(message.operation.contents as string);
 				const opData = contents.contents?.contents?.content?.contents;
 				if (opData && opData.op === 0 && opData.changeSet !== undefined) {
 					// At this point is checked to be submitted to Moira

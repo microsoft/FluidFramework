@@ -90,6 +90,7 @@ export {
 	FieldAdapter,
 	TreeAdapter,
 	MapTree,
+	LocalCommitSource,
 } from "./core";
 
 export {
@@ -131,7 +132,7 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeKeyFieldKey,
+	nodeKeyField,
 	nodeKeySchema,
 } from "./domains";
 
@@ -271,7 +272,6 @@ export {
 	VisitorBindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,
@@ -282,6 +282,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	nodeKeyFieldKey,
 } from "./feature-libraries";
 
 export {

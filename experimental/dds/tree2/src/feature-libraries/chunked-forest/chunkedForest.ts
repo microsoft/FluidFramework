@@ -16,7 +16,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Value,
 	Delta,
 	UpPath,
 	Anchor,
@@ -152,10 +151,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				moves.delete(id);
 				const countMoved = moveIn(index, toAttach);
 				assert(countMoved === count, 0x533 /* counts must match */);
-			},
-			onSetValue: (value: Value): void => {
-				assert(mutableChunk !== undefined, 0x534 /* should be in node */);
-				mutableChunk.value = value;
 			},
 			enterNode: (index: number): void => {
 				assert(mutableChunk === undefined, 0x535 /* should be in field */);

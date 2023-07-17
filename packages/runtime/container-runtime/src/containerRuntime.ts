@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
+	IBatchMessage,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -29,11 +30,11 @@ import {
 import {
 	assert,
 	delay,
-	LazyPromise,
 	Trace,
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -173,6 +174,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ScheduleManager } from "./scheduleManager";
 import {
 	BatchMessage,
+	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
@@ -183,6 +185,7 @@ import {
 	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { IBatchMetadata } from "./metadata";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -437,24 +440,9 @@ export interface IContainerRuntimeOptions {
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
 	 *
-	 * For safety, {@link IContainerRuntimeOptions#enableBatchRebasing} needs to also be enabled to ensure
-	 * consistency across clients.
-	 *
 	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
-	/**
-	 * Configures if the runtime should rebase a batch of ops when it detects op reentrancy,
-	 * when an op is created as the result of processing another op. Usually this is the case
-	 * when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the
-	 * reentrant op will have a different reference sequence number  than the rest of the ops in
-	 * the batch, resulting in  a different view of the state of the data model. Therefore all ops
-	 * must be resubmitted and rebased to the current reference sequence number to be in agreement
-	 * about the state of the data model.
-	 *
-	 * @experimental Not ready for use.
-	 */
-	readonly enableBatchRebasing?: boolean;
 }
 
 /**
@@ -597,6 +585,30 @@ export function getDeviceSpec() {
 }
 
 /**
+ * Older loader doesn't have a submitBatchFn member, this is the older way of submitting a batch.
+ * Rather than exposing the submitFn (now deprecated) and IDeltaManager (dangerous to hand out) to the Outbox,
+ * we can provide a partially-applied function to keep those items private to the ContainerRuntime.
+ */
+export const makeLegacySendBatchFn =
+	(
+		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
+	) =>
+	(batch: IBatch) => {
+		for (const message of batch.content) {
+			submitFn(
+				MessageType.Operation,
+				// For back-compat (submitFn only works on deserialized content)
+				message.contents === undefined ? undefined : JSON.parse(message.contents),
+				true, // batch
+				message.metadata,
+			);
+		}
+
+		deltaManager.flush();
+	};
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
@@ -702,7 +714,6 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
-			enableBatchRebasing = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -801,7 +812,6 @@ export class ContainerRuntime
 				enableRuntimeIdCompressor,
 				enableOpReentryCheck,
 				enableGroupedBatching,
-				enableBatchRebasing,
 			},
 			containerScope,
 			logger,
@@ -824,44 +834,48 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public get options(): ILoaderOptions {
-		return this.context.options;
-	}
+	public readonly options: ILoaderOptions;
 
+	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
-		return this.context.clientId;
+		return this._getClientId();
 	}
 
-	public get clientDetails(): IClientDetails {
-		return this.context.clientDetails;
-	}
+	public readonly clientDetails: IClientDetails;
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
 	}
 
-	public get reSubmitFn(): (
-		type: ContainerMessageType,
-		content: any,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) => void {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		return this.reSubmitCore;
+	/** @deprecated - The functionality is no longer exposed publicly */
+	public get reSubmitFn() {
+		return (
+			type: ContainerMessageType,
+			contents: any,
+			localOpMetadata: unknown,
+			opMetadata: Record<string, unknown> | undefined,
+		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
 	}
 
-	public get disposeFn(): (error?: ICriticalContainerError) => void {
-		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		return this.context.disposeFn ?? this.context.closeFn;
-	}
-
-	public get closeFn(): (error?: ICriticalContainerError) => void {
-		// Also call disposeFn to retain functionality of runtime being disposed on close
-		return (error?: ICriticalContainerError) => {
-			this.context.closeFn(error);
-			this.context.disposeFn?.(error);
-		};
-	}
+	private readonly submitFn: (
+		type: MessageType,
+		contents: any,
+		batch: boolean,
+		appData?: any,
+	) => number;
+	/**
+	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
+	 */
+	private readonly submitBatchFn:
+		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
+		| undefined;
+	private readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
+	private readonly submitSignalFn: (contents: any) => void;
+	public readonly disposeFn: (error?: ICriticalContainerError) => void;
+	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;
@@ -875,8 +889,9 @@ export class ContainerRuntime
 		return this.registry;
 	}
 
+	private readonly _getAttachState: () => AttachState;
 	public get attachState(): AttachState {
-		return this.context.attachState;
+		return this._getAttachState();
 	}
 
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
@@ -1068,10 +1083,20 @@ export class ContainerRuntime
 	private readonly idCompressorEnabled: boolean;
 
 	/**
+	 * Whether this client is the summarizer client itself (type is summarizerClientType)
+	 */
+	private readonly isSummarizerClient: boolean;
+
+	/**
+	 * The id of the version used to initially load this runtime, or undefined if it's newly created.
+	 */
+	private readonly loadedFromVersionId: string | undefined;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
-		private readonly context: IContainerContext,
+		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
 		metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
@@ -1098,8 +1123,65 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.innerDeltaManager = context.deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
+		const {
+			options,
+			clientDetails,
+			connected,
+			baseSnapshot,
+			submitFn,
+			submitBatchFn,
+			submitSummaryFn,
+			submitSignalFn,
+			disposeFn,
+			closeFn,
+			deltaManager,
+			quorum,
+			audience,
+			loader,
+			pendingLocalState,
+			supportedFeatures,
+		} = context;
+
+		this.innerDeltaManager = deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+
+		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
+		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
+		this.submitFn = submitFn;
+		this.submitBatchFn = submitBatchFn;
+		this.submitSummaryFn = submitSummaryFn;
+		this.submitSignalFn = submitSignalFn;
+
+		this.options = options;
+		this.clientDetails = clientDetails;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+		this._getClientId = () => context.clientId;
+		this._getAttachState = () => context.attachState;
+		this.getAbsoluteUrl = async (relativeUrl: string) => {
+			if (context.getAbsoluteUrl === undefined) {
+				throw new Error("Driver does not implement getAbsoluteUrl");
+			}
+			if (this.attachState !== AttachState.Attached) {
+				return undefined;
+			}
+			return context.getAbsoluteUrl(relativeUrl);
+		};
+		// TODO: Consider that the Container could just listen to these events itself, or even more appropriately maybe the
+		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
+		this.on("dirty", () => context.updateDirtyContainerState(true));
+		this.on("saved", () => context.updateDirtyContainerState(false));
+
+		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+		this.disposeFn = disposeFn ?? closeFn;
+		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
+		this.closeFn = this.isSummarizerClient
+			? this.disposeFn
+			: (error?: ICriticalContainerError) => {
+					closeFn(error);
+					// Also call disposeFn to retain functionality of runtime being disposed on close
+					disposeFn?.(error);
+			  };
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
@@ -1133,7 +1215,9 @@ export class ContainerRuntime
 
 		this.messageAtLastSummary = metadata?.message;
 
-		this._connected = this.context.connected;
+		// Note that we only need to pull the *initial* connected state from the context.
+		// Later updates come through calls to setConnectionState.
+		this._connected = connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
@@ -1162,7 +1246,7 @@ export class ContainerRuntime
 
 		const opSplitter = new OpSplitter(
 			chunks,
-			this.context.submitBatchFn,
+			this.submitBatchFn,
 			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1203,7 +1287,7 @@ export class ContainerRuntime
 
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+			supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
@@ -1212,7 +1296,7 @@ export class ContainerRuntime
 			this._flushMode = runtimeOptions.flushMode;
 		}
 
-		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -1228,12 +1312,12 @@ export class ContainerRuntime
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
 			gcOptions: this.runtimeOptions.gcOptions,
-			baseSnapshot: context.baseSnapshot,
+			baseSnapshot,
 			baseLogger: this.mc.logger,
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
+			isSummarizerClient: this.isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
@@ -1251,7 +1335,7 @@ export class ContainerRuntime
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
 			// Summary reference sequence number, undefined if no summary yet
-			context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
@@ -1268,14 +1352,14 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
-		if (context.baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(context.baseSnapshot);
+		if (baseSnapshot) {
+			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
 		}
 
 		this.dataStores = new DataStores(
-			getSummaryForDatastores(context.baseSnapshot, metadata),
+			getSummaryForDatastores(baseSnapshot, metadata),
 			this,
-			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
+			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
 				(
 					summarizeInternal: SummarizeInternalFn,
@@ -1302,10 +1386,14 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-						localId,
-						blobId,
-					});
+					this.submit(
+						{ type: ContainerMessageType.BlobAttach, contents: undefined },
+						undefined,
+						{
+							localId,
+							blobId,
+						},
+					);
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
@@ -1316,7 +1404,7 @@ export class ContainerRuntime
 		);
 
 		this.scheduleManager = new ScheduleManager(
-			context.deltaManager,
+			this.innerDeltaManager,
 			this,
 			() => this.clientId,
 			ChildLogger.create(this.logger, "ScheduleManager"),
@@ -1330,8 +1418,10 @@ export class ContainerRuntime
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
 				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
 			},
 			pendingRuntimeState?.pending,
+			this.logger,
 		);
 
 		const disableCompression = this.mc.config.getBoolean(
@@ -1348,20 +1438,21 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
-		const enableBatchRebasing =
-			runtimeOptions.enableBatchRebasing &&
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchRebasing") !== true;
+
+		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
+
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			containerContext: this.context,
+			submitBatchFn: this.submitBatchFn,
+			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				enableBatchRebasing,
+				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1374,9 +1465,13 @@ export class ContainerRuntime
 			closeContainer: this.closeFn,
 		});
 
-		this.context.quorum.on("removeMember", (clientId: string) => {
+		this._quorum = quorum;
+		this._quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._audience = audience!;
 
 		this.summaryStateUpdateMethod = this.mc.config.getString(
 			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
@@ -1392,9 +1487,9 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.context.attachState !== AttachState.Attached ||
+			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingMessages();
-		this.context.updateDirtyContainerState(this.dirtyContainer);
+		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
@@ -1402,13 +1497,13 @@ export class ContainerRuntime
 			const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
 			const orderedClientCollection = new OrderedClientCollection(
 				orderedClientLogger,
-				this.context.deltaManager,
-				this.context.quorum,
+				this.innerDeltaManager,
+				this._quorum,
 			);
 			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				orderedClientCollection,
-				electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 			);
 
@@ -1419,7 +1514,7 @@ export class ContainerRuntime
 				this.maxOpsSinceLastSummary,
 			);
 
-			if (this.context.clientDetails.type === summarizerClientType) {
+			if (this.isSummarizerClient) {
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1434,9 +1529,7 @@ export class ContainerRuntime
 							() => this.innerDeltaManager.active,
 						),
 				);
-			} else if (
-				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
-			) {
+			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
@@ -1463,7 +1556,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(this.context.loader),
+					this.formRequestSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1532,17 +1625,16 @@ export class ContainerRuntime
 				idCompressorEnabled: this.idCompressorEnabled,
 				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
-				enableBatchRebasing,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
-			if (this.context.clientDetails.type === summarizerClientType) {
+			if (this.isSummarizerClient) {
 				assert(
 					this._summarizer !== undefined,
 					0x5bf /* Summarizer object is undefined in a summarizer client */,
@@ -1856,14 +1948,11 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	private parseOpContent(serializedContent?: string): {
-		type: ContainerMessageType;
-		contents: unknown;
-	} {
+	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const parsed = JSON.parse(serializedContent);
-		assert(parsed.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
+		const { type, contents } = JSON.parse(serializedContent);
+		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
+		return { type, contents };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
@@ -2006,6 +2095,12 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
+	/**
+	 * Direct the message to the correct subsystem for processing, and implement other side effects
+	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
+	 * @param local - Did this client send the op?
+	 * @param runtimeMessage - Does this appear like a current ContainerRuntimeMessage?  If true, certain validation will occur.
+	 */
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -2065,7 +2160,7 @@ export class ContainerRuntime
 								local,
 								type: message.type,
 								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 								compression: message.compression,
 							},
 						);
@@ -2296,13 +2391,14 @@ export class ContainerRuntime
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
+	private readonly _quorum: IQuorumClients;
 	public getQuorum(): IQuorumClients {
-		return this.context.quorum;
+		return this._quorum;
 	}
 
+	private readonly _audience: IAudience;
 	public getAudience(): IAudience {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.context.audience!;
+		return this._audience;
 	}
 
 	/**
@@ -2313,7 +2409,7 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+	private isContainerMessageDirtyable({ type, contents }: ContainerRuntimeMessage) {
 		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
 		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
 		if (type === ContainerMessageType.Attach) {
@@ -2362,12 +2458,12 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: any) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.context.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope);
 	}
 
 	public submitDataStoreSignal(address: string, type: string, content: any) {
 		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.context.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -2419,15 +2515,7 @@ export class ContainerRuntime
 		return summarizeResult.summary;
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-		if (this.context.getAbsoluteUrl === undefined) {
-			throw new Error("Driver does not implement getAbsoluteUrl");
-		}
-		if (this.attachState !== AttachState.Attached) {
-			return undefined;
-		}
-		return this.context.getAbsoluteUrl(relativeUrl);
-	}
+	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 
 	private async summarizeInternal(
 		fullTree: boolean,
@@ -2896,7 +2984,7 @@ export class ContainerRuntime
 			} else if (lastAck === undefined) {
 				summaryContext = {
 					proposalHandle: undefined,
-					ackHandle: this.context.getLoadedFromVersion()?.id,
+					ackHandle: this.loadedFromVersionId,
 					referenceSequenceNumber: summaryRefSeqNum,
 				};
 			} else {
@@ -2997,7 +3085,6 @@ export class ContainerRuntime
 		this.dirtyContainer = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
-			this.context.updateDirtyContainerState(dirty);
 		}
 	}
 
@@ -3010,7 +3097,10 @@ export class ContainerRuntime
 			address: id,
 			contents,
 		};
-		this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+		this.submit(
+			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
+			localOpMetadata,
+		);
 	}
 
 	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
@@ -3019,7 +3109,7 @@ export class ContainerRuntime
 			throw new UsageError("malformedDataStoreAliasMessage");
 		}
 
-		this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
+		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
 	}
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -3062,8 +3152,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		type: ContainerMessageType,
-		contents: any,
+		containerRuntimeMessage: ContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
 	): void {
@@ -3076,7 +3165,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const serializedContent = JSON.stringify({ type, contents });
+		const serializedContent = JSON.stringify(containerRuntimeMessage);
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
@@ -3087,6 +3176,7 @@ export class ContainerRuntime
 			});
 		}
 
+		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
 			type,
@@ -3128,6 +3218,9 @@ export class ContainerRuntime
 				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
+			} else if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
 				this.outbox.submit(message);
 			}
@@ -3142,7 +3235,7 @@ export class ContainerRuntime
 			throw error;
 		}
 
-		if (this.isContainerMessageDirtyable(type, contents)) {
+		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
 			this.updateDocumentDirtyState(true);
 		}
 	}
@@ -3198,9 +3291,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
 
 		// back-compat: ADO #1385: Make this call unconditional in the future
-		return this.context.submitSummaryFn !== undefined
-			? this.context.submitSummaryFn(contents, referenceSequenceNumber)
-			: this.context.submitFn(MessageType.Summarize, contents, false);
+		return this.submitSummaryFn !== undefined
+			? this.submitSummaryFn(contents, referenceSequenceNumber)
+			: this.submitFn(MessageType.Summarize, contents, false);
 	}
 
 	/**
@@ -3255,38 +3348,38 @@ export class ContainerRuntime
 
 	private reSubmit(message: IPendingBatchMessage) {
 		// Need to parse from string for back-compat
-		const { contents, type } = this.parseOpContent(message.content);
-		this.reSubmitCore(type, contents, message.localOpMetadata, message.opMetadata);
+		const containerRuntimeMessage = this.parseOpContent(message.content);
+		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
-	 * @param content - The content of the original message.
+	 * @param message - The original ContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmitCore(
-		type: ContainerMessageType,
-		content: any,
+		message: ContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		switch (type) {
+		const contents = message.contents;
+		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
+				this.dataStores.resubmitDataStoreOp(contents, localOpMetadata);
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Remove the stashedState from the op if it's a stashed op
-				if (content.stashedState !== undefined) {
-					delete content.stashedState;
+				if (contents.stashedState !== undefined) {
+					delete contents.stashedState;
 				}
-				this.submit(type, content, localOpMetadata);
+				this.submit(message, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				throw new Error(`chunkedOp not expected here`);
@@ -3294,10 +3387,13 @@ export class ContainerRuntime
 				this.blobManager.reSubmit(opMetadata);
 				break;
 			case ContainerMessageType.Rejoin:
-				this.submit(type, content);
+				this.submit(message);
 				break;
 			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+				unreachableCase(
+					message.type,
+					`Unknown ContainerMessageType [type: ${message.type}]`,
+				);
 		}
 	}
 
@@ -3527,8 +3623,6 @@ export class ContainerRuntime
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
 		if (this.summaryStateUpdateMethod === "restart") {
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3538,14 +3632,13 @@ export class ContainerRuntime
 					versionId: versionId != null ? versionId : undefined,
 					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
-				error,
+				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
-			throw error;
 		}
 
 		return snapshotResults;
@@ -3569,7 +3662,7 @@ export class ContainerRuntime
 	}
 
 	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-		if (this.clientDetails.type === summarizerClientType) {
+		if (this.isSummarizerClient) {
 			return this.summarizer.summarizeOnDemand(...args);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.summarizeOnDemand(...args);
@@ -3582,7 +3675,7 @@ export class ContainerRuntime
 	};
 
 	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
-		if (this.clientDetails.type === summarizerClientType) {
+		if (this.isSummarizerClient) {
 			return this.summarizer.enqueueSummarize(...args);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.enqueueSummarize(...args);

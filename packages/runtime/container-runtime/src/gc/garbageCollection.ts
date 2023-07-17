@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, Timer } from "@fluidframework/common-utils";
+import { Timer } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {

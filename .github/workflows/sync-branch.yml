@@ -5,8 +5,12 @@ on:
     - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
 
 env:
-  TARGET_BRANCH: test-next
+  TARGET_BRANCH: next
   SOURCE_BRANCH: main
+  USERNAME: msfluid-bot
+  EMAIL: banana-bot@outlook.com
+  BATCH: 10
+  REVIEWER1: sonalideshpandemsft
 
 jobs:
   sync-branches:
@@ -33,6 +37,20 @@ jobs:
           # add the bin dir of build-cli to the path
           cd packages/build-cli/bin
           echo "$(pwd)" >> $GITHUB_PATH
+
+      # the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL 
+      # with a custom URL that includes a secret token for secure authentication and authorization during Git operations, 
+      # such as pushing to a remote repository on GitHub.
+      # https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
+      - name: Set Git config
+        env: 
+          TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git config url.https://${{ env.TOKEN }}@github.com/.insteadOf https://github.com/ 
       
       - name: Run merge command
-        run: flub merge branches -a ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 10
+        env: 
+          TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+        run: flub merge branches -p $TOKEN -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v

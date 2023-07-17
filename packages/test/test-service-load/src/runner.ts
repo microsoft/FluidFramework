@@ -10,7 +10,7 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState } from "@fluidframework/container-loader";
+import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -301,6 +301,8 @@ async function runnerProcess(
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
+			// clear stashed op in case of error
+			stashedOpP = undefined;
 			runConfig.logger.sendErrorEvent(
 				{
 					eventName: "RunnerFailed",
@@ -446,7 +448,7 @@ function scheduleContainerClose(
 
 async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
-	container: IContainer,
+	container: IContainerExperimental,
 	runConfig: IRunConfig,
 	offlineDelayMinMs: number,
 	offlineDelayMaxMs: number,

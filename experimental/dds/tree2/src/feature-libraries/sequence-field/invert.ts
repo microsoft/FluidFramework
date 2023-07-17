@@ -6,17 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
 import {
-	Changeset,
-	DetachEvent,
-	Mark,
-	MarkList,
-	Modify,
-	ReturnFrom,
-	NoopMarkType,
-	MoveOut,
-} from "./format";
+	ChangeAtomId,
+	CrossFieldManager,
+	CrossFieldTarget,
+	IdAllocator,
+	NodeReviver,
+} from "../modular-schema";
+import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -109,11 +106,34 @@ function invertMark<TNodeChange>(
 			return [mark];
 		}
 		case "Insert": {
-			const inverse = withNodeChange(
-				{ type: "Delete", count: mark.content.length },
-				invertNodeChange(mark.changes, inputIndex, invertChild),
-			);
-			return [inverse];
+			if (mark.transientDetach !== undefined) {
+				assert(revision !== undefined, "Unable to revert to undefined revision");
+				return [
+					withNodeChange(
+						{
+							type: "Revive",
+							detachEvent: {
+								revision: mark.transientDetach.revision ?? revision,
+								localId: mark.transientDetach.localId,
+							},
+							content: reviver(revision, inputIndex, mark.content.length),
+							count: mark.content.length,
+							inverseOf: mark.revision ?? revision,
+							transientDetach: {
+								revision: mark.revision ?? revision,
+								localId: mark.id,
+							},
+						},
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					),
+				];
+			} else {
+				const inverse = withNodeChange(
+					{ type: "Delete", count: mark.content.length, id: mark.id },
+					invertNodeChange(mark.changes, inputIndex, invertChild),
+				);
+				return [inverse];
+			}
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -121,7 +141,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
-						detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
+						detachEvent: { revision: mark.revision ?? revision, localId: mark.id },
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: mark.revision ?? revision,
@@ -136,24 +156,66 @@ function invertMark<TNodeChange>(
 		}
 		case "Revive": {
 			if (!isReattachConflicted(mark)) {
+				assert(
+					mark.detachEvent !== undefined,
+					0x707 /* Active reattach should have a detach event */,
+				);
+				if (mark.transientDetach !== undefined) {
+					assert(revision !== undefined, "Unable to revert to undefined revision");
+					return [
+						withNodeChange(
+							{
+								type: "Revive",
+								detachEvent: {
+									revision: mark.transientDetach.revision ?? revision,
+									localId: mark.transientDetach.localId,
+								},
+								content: reviver(revision, inputIndex, mark.count),
+								count: mark.count,
+								inverseOf: mark.revision ?? revision,
+								transientDetach: {
+									revision: mark.revision ?? revision,
+									localId: mark.detachEvent.localId,
+								},
+							},
+							invertNodeChange(mark.changes, inputIndex, invertChild),
+						),
+					];
+				}
 				const inverse = withNodeChange(
 					{
 						type: "Delete",
 						count: mark.count,
+						id: mark.detachEvent.localId,
 					},
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
 				return [inverse];
 			}
-			return [
-				invertModifyOrSkip(
-					mark.count,
-					mark.changes,
-					inputIndex,
-					invertChild,
-					mark.detachEvent,
-				),
-			];
+			return mark.transientDetach !== undefined
+				? invertMark(
+						{
+							type: "Delete",
+							count: mark.count,
+							revision: mark.transientDetach.revision ?? revision,
+							changes: mark.changes,
+							id: mark.transientDetach.localId,
+						},
+						inputIndex,
+						revision,
+						reviver,
+						invertChild,
+						crossFieldManager,
+				  )
+				: [
+						invertModifyOrSkip(
+							mark.count,
+							mark.changes,
+							inputIndex,
+							invertChild,
+							mark.detachEvent,
+						),
+				  ];
 		}
 		case "Modify": {
 			if (mark.detachEvent === undefined) {
@@ -198,7 +260,7 @@ function invertMark<TNodeChange>(
 					count: mark.count,
 					detachEvent: {
 						revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-						index: inputIndex,
+						localId: mark.id,
 					},
 				},
 			];
@@ -287,7 +349,7 @@ function invertModifyOrSkip<TNodeChange>(
 	changes: TNodeChange | undefined,
 	index: number,
 	inverter: NodeChangeInverter<TNodeChange>,
-	detachEvent?: DetachEvent,
+	detachEvent?: ChangeAtomId,
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
