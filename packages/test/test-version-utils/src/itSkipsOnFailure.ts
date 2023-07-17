@@ -7,6 +7,7 @@ import { TestObjectProvider } from "@fluidframework/test-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ExpectedEvents, itExpects } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
 	skippedDrivers: TestDriverTypes[],
@@ -36,6 +37,13 @@ export type SkippedTestWithDriverType = (
 	test: Mocha.AsyncFunc,
 ) => Mocha.Test;
 
+export type SkippedErrorExpectingTestWithDriverType = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+) => Mocha.Test;
+
 /**
  * Similar to mocha's it function, but allow skipping for some if the error
  * happens on the specific drivers
@@ -45,3 +53,15 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 	skippedDrivers: TestDriverTypes[],
 	test: Mocha.AsyncFunc,
 ): Mocha.Test => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+
+/**
+ * Similar to the ItExpects function, but allow skipping for some if the error
+ * happens on the specific drivers
+ */
+export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test =>
+	itExpects(name, orderedExpectedEvents, createSkippedTestsWithDriverType(skippedDrivers, test));
