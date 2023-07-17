@@ -162,14 +162,15 @@ export function create(
 				? uuid()
 				: (request.body.id as string) || uuid();
 
-			Lumberjack.info(
-				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
-			);
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
 				: request.body.summary;
 
+			Lumberjack.info(
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
+	
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
 
