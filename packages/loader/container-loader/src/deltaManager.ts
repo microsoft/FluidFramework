@@ -8,13 +8,11 @@ import { v4 as uuid } from "uuid";
 import { IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
-	IDeltaHandlerStrategy,
+	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -45,7 +43,11 @@ import {
 	DataProcessingError,
 	UsageError,
 } from "@fluidframework/container-utils";
-import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+import {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
 

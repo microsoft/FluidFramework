@@ -221,7 +221,7 @@ export class SnapshotLoader {
 		const mergeTree = this.mergeTree;
 		const append = (segments: ISegment[], cli: number, seq: number) => {
 			mergeTree.insertSegments(
-				mergeTree.root.cachedLength,
+				mergeTree.root.cachedLength ?? 0,
 				segments,
 				/* refSeq: */ UniversalSequenceNumber,
 				cli,
