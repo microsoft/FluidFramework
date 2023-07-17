@@ -31,40 +31,22 @@ export class DeltaService implements IDeltaService {
 		to?: number,
 		caller?: string,
 	): Promise<ISequencedDocumentMessage[]> {
-		const metricProperties = {
-			[BaseTelemetryProperties.tenantId]: tenantId,
-			[BaseTelemetryProperties.documentId]: documentId,
-			from,
-			to,
-			caller,
-		};
-		const metric = Lumberjack.newLumberMetric(
-			LumberEventName.GetDeltasFromDb,
-			metricProperties,
-		);
-		try {
-			// Create an optional filter to restrict the delta range
-			const query: any = { documentId, tenantId };
-			if (from !== undefined || to !== undefined) {
-				query["operation.sequenceNumber"] = {};
+		// Create an optional filter to restrict the delta range
+		const query: any = { documentId, tenantId };
+		if (from !== undefined || to !== undefined) {
+			query["operation.sequenceNumber"] = {};
 
-				if (from !== undefined) {
-					query["operation.sequenceNumber"].$gt = from;
-				}
-
-				if (to !== undefined) {
-					query["operation.sequenceNumber"].$lt = to;
-				}
+			if (from !== undefined) {
+				query["operation.sequenceNumber"].$gt = from;
 			}
 
-			const sort = { "operation.sequenceNumber": 1 };
-			const deltas = this.queryDeltas(collectionName, query, sort);
-			metric.success("getDeltasFromDb succeeded");
-			return deltas;
-		} catch (err) {
-			metric.error("getDeltasFromDb failed", err);
-			throw err;
+			if (to !== undefined) {
+				query["operation.sequenceNumber"].$lt = to;
+			}
 		}
+
+		const sort = { "operation.sequenceNumber": 1 };
+		return this.queryDeltas(collectionName, query, sort);
 	}
 
 	public async getDeltasFromStorage(

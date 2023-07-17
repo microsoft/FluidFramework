@@ -50,5 +50,4 @@ export enum LumberEventName {
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 	ReprocessOps = "ReprocessOps",
-	GetDeltasFromDb = "GetDeltasFromDb",
 }
