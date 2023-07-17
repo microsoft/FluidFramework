@@ -84,7 +84,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "22.2.3",
 		"@types/lodash": "^4.14.118",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/underscore": "^1.11.4",
 		"async": "^3.2.2",
 		"babel-eslint": "^10.0.1",

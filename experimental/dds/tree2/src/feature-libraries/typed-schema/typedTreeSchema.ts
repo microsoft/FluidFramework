@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFieldSchema, ITreeSchema } from "../view";
+import { IFieldSchema, ITreeSchema } from "../modular-schema";
 import {
 	GlobalFieldKey,
 	GlobalFieldKeySymbol,
@@ -14,9 +14,9 @@ import {
 	TreeTypeSet,
 	ValueSchema,
 	symbolFromKey,
-} from "../../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../../util";
-import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
+} from "../../core";
+import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
+import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
@@ -67,7 +67,6 @@ export class TreeSchema<
 	>;
 
 	public readonly extraLocalFields: FieldSchema;
-	public readonly extraGlobalFields: boolean;
 	public readonly value: WithDefault<
 		Assume<T, TreeSchemaSpecification>["value"],
 		ValueSchema.Nothing
@@ -85,7 +84,6 @@ export class TreeSchema<
 		);
 		this.localFields = objectToMapTyped(this.localFieldsObject);
 		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
-		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
 		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
 			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
@@ -164,6 +162,10 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
+/**
+ * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
+ * @alpha
+ */
 export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
 }
@@ -176,7 +178,6 @@ export interface TreeSchemaSpecification {
 	readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
 	readonly global?: FlexList<GlobalFieldSchema>;
 	readonly extraLocalFields?: FieldSchema;
-	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
 
@@ -204,6 +205,10 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {
 		return undefined;

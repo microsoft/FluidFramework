@@ -4,31 +4,17 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { Delta, ITreeCursor, TaggedChange, ITreeCursorSynchronous, tagChange } from "../../core";
+import { fail, Mutable } from "../../util";
+import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
-	FieldKindIdentifier,
-	Delta,
-	ITreeCursor,
-	TaggedChange,
-	ITreeCursorSynchronous,
-	tagChange,
-	FieldStoredSchema,
-	TreeTypeSet,
-} from "../core";
-import { brand, fail, Mutable } from "../util";
-import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
-import {
-	FieldKind,
-	Multiplicity,
-	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeRebaser,
-	FieldChangeHandler,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	referenceFreeFieldChangeRebaser,
 	NodeReviver,
 	IdAllocator,
 	CrossFieldManager,
@@ -36,66 +22,13 @@ import {
 	getIntention,
 	NodeExistenceState,
 	ChangesetLocalId,
-} from "./modular-schema";
-import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { populateChildModifications } from "./deltaUtils";
-import { makeOptionalFieldCodecFamily, noChangeCodecFamily } from "./defaultFieldChangeCodecs";
+	FieldChangeHandler,
+} from "../modular-schema";
+import { populateChildModifications } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
-/**
- * @alpha
- */
-export type BrandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
-> = FieldKind<TEditor, TMultiplicity> & {
-	identifier: TName & FieldKindIdentifier;
-};
-
-function brandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
->(
-	identifier: TName,
-	multiplicity: TMultiplicity,
-	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
-	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor, TMultiplicity>(
-		brand(identifier),
-		multiplicity,
-		changeHandler,
-		allowsTreeSupersetOf,
-		handlesEditsFrom,
-	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}
-
-/**
- * ChangeHandler that only handles no-op / identity changes.
- */
-export const noChangeHandler: FieldChangeHandler<0> = {
-	rebaser: referenceFreeFieldChangeRebaser({
-		compose: (changes: 0[]) => 0,
-		invert: (changes: 0) => 0,
-		rebase: (change: 0, over: 0) => 0,
-	}),
-	codecsFactory: () => noChangeCodecFamily,
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
-	isEmpty: (change: 0) => true,
-};
-
-export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
-	/**
-	 * Creates a change which replaces the current value of the field with `newValue`.
-	 */
-	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
-}
-
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
+export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
@@ -337,7 +270,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	): OptionalChangeset;
 }
 
-const optionalFieldEditor: OptionalFieldEditor = {
+export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
 		newContent: ITreeCursor | undefined,
 		wasEmpty: boolean,
@@ -402,7 +335,7 @@ function deltaForDelete(
 	return [deleteDelta];
 }
 
-function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
+export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
 	if (change.fieldChange === undefined) {
 		if (change.deletedBy === undefined && change.childChange !== undefined) {
 			return [deltaFromChild(change.childChange)];
@@ -431,182 +364,13 @@ function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDel
 	return [...deleteDelta, ...insertDelta];
 }
 
-/**
- * 0 or 1 items.
- */
-export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, OptionalFieldEditor> =
-	brandedFieldKind(
-		"Optional",
-		Multiplicity.Optional,
-		{
-			rebaser: optionalChangeRebaser,
-			codecsFactory: makeOptionalFieldCodecFamily,
-			editor: optionalFieldEditor,
+export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
+	rebaser: optionalChangeRebaser,
+	codecsFactory: makeOptionalFieldCodecFamily,
+	editor: optionalFieldEditor,
 
-			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
-				optionalFieldIntoDelta(change, deltaFromChild),
-			isEmpty: (change: OptionalChangeset) =>
-				change.childChange === undefined && change.fieldChange === undefined,
-		},
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === optional.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set([]),
-	);
-
-const valueFieldEditor: ValueFieldEditor = {
-	...optionalFieldEditor,
-	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
-		optionalFieldEditor.set(newContent, false, id),
+	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
+		optionalFieldIntoDelta(change, deltaFromChild),
+	isEmpty: (change: OptionalChangeset) =>
+		change.childChange === undefined && change.fieldChange === undefined,
 };
-
-const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
-	...optional.changeHandler,
-	editor: valueFieldEditor,
-};
-
-/**
- * Exactly one item.
- */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
-	brandedFieldKind(
-		"Value",
-		Multiplicity.Value,
-		valueChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeKey.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set(),
-	);
-
-/**
- * 0 or more items.
- */
-export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, SequenceFieldEditor> =
-	brandedFieldKind(
-		"Sequence",
-		Multiplicity.Sequence,
-		sequenceFieldChangeHandler,
-		(types, other) =>
-			other.kind.identifier === sequence.identifier &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		// TODO: add normalizer/importers for handling ops from other kinds.
-		new Set([]),
-	);
-
-/**
- * Exactly one identifier.
- */
-export const nodeKey: BrandedFieldKind<
-	"NodeKey",
-	Multiplicity.Value,
-	FieldEditor<0>
-> = brandedFieldKind(
-	"NodeKey",
-	Multiplicity.Value,
-	noChangeHandler,
-	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === value.identifier ||
-			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKey.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
-);
-
-/**
- * Exactly 0 items.
- *
- * Using Forbidden makes what types are listed for allowed in a field irrelevant
- * since the field will never have values in it.
- *
- * Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
- * and having no allowed types (or only never types).
- * Because of this, its possible to express everything constraint wise without Forbidden,
- * but using Forbidden can be more semantically clear than optional with no allowed types.
- *
- * For view schema, this can be useful if you need to:
- * - run a specific out of schema handler when a field is present,
- * but otherwise are ignoring or tolerating (ex: via extra fields) unmentioned fields.
- * - prevent a specific field from being used as an extra field
- * (perhaps for some past of future compatibility reason)
- * - keep a field in a schema for metadata purposes
- * (ex: for improved error messaging, error handling or documentation)
- * that is not used in this specific version of the schema (ex: to document what it was or will be used for).
- *
- * For stored schema, this can be useful if you need to:
- * - have a field which can have its schema updated to Optional or Sequence of any type.
- * - to exclude a field from extra fields
- * - for the schema system to use as a default for fields which aren't declared
- * (ex: when updating a field that did not exist into one that does)
- *
- * See {@link emptyField} for a constant, reusable field using Forbidden.
- */
-export const forbidden = brandedFieldKind(
-	"Forbidden",
-	Multiplicity.Forbidden,
-	noChangeHandler,
-	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Value,
-	new Set(),
-);
-
-/**
- * Default field kinds by identifier
- */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
-);
-
-// Create named Aliases for nicer intellisense.
-
-// TODO: Find a way to make docs like {@inheritDoc value} work in vscode.
-// TODO: ensure thy work in generated docs.
-// TODO: add these comments to the rest of the cases below.
-/**
- * @alpha
- */
-export interface ValueFieldKind
-	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
-/**
- * @alpha
- */
-export interface Optional
-	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
-/**
- * @alpha
- */
-export interface Sequence
-	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
-/**
- * @alpha
- */
-export interface NodeKeyFieldKind
-	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
-/**
- * @alpha
- */
-export interface Forbidden
-	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
-
-/**
- * Default FieldKinds with their editor types erased.
- * @alpha
- */
-export const FieldKinds: {
-	// TODO: inheritDoc for these somehow
-	readonly value: ValueFieldKind;
-	readonly optional: Optional;
-	readonly sequence: Sequence;
-	readonly nodeKey: NodeKeyFieldKind;
-	readonly forbidden: Forbidden;
-} = { value, optional, sequence, nodeKey, forbidden };
-
-/**
- * @alpha
- */
-export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];

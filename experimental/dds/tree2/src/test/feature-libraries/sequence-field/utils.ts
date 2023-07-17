@@ -34,8 +34,11 @@ export function composeNoVerify(
 	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
-export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, TestChange.compose);
+export function compose(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, TestChange.compose, revInfos);
 }
 
 export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {

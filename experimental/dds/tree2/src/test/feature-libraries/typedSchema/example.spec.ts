@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema } from "../../../../core";
-import { FieldKinds, SchemaBuilder } from "../../../../feature-libraries";
+import { ValueSchema } from "../../../core";
+import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder("example");
 
@@ -27,14 +27,8 @@ const invalidChildSchema = ballSchema.localFields.get("z");
 
 // Declare an recursive aggregate type via local fields.
 // Note that the type name can be used instead of the schema to allow recursion.
-const diagramSchema = builder.objectRecursive("Diagram", {
-	local: {
-		children: SchemaBuilder.fieldRecursive(
-			FieldKinds.sequence,
-			() => diagramSchema,
-			ballSchema,
-		),
-	},
+const diagramSchema = builder.structRecursive("Diagram", {
+	children: SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => diagramSchema, ballSchema),
 });
 
 const rootField = SchemaBuilder.fieldOptional(diagramSchema);
