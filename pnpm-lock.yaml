@@ -10868,7 +10868,6 @@ importers:
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
-      '@types/firefox': ^0.0.30
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': ^21.1.1
@@ -10944,7 +10943,6 @@ importers:
       '@types/chai': 4.3.5
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
-      '@types/firefox': 0.0.30
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': 21.1.1
@@ -21817,10 +21815,6 @@ packages:
 
   /@types/filewriter/0.0.29:
     resolution: {integrity: sha512-BsPXH/irW0ht0Ji6iw/jJaK8Lj3FJemon2gvEqHKpCdDCeemHa+rI3WBGq5z7cDMZgoLjY40oninGxqk+8NzNQ==}
-    dev: true
-
-  /@types/firefox/0.0.30:
-    resolution: {integrity: sha512-Y6Bs036XutwerwekFx4j+M2h78H/GDlNcWbtT+DBlPX5VcpIctGai6RoSJZp7hqABEbUVI3FmA66gmgV4n+Aew==}
     dev: true
 
   /@types/fs-extra/5.1.0:
