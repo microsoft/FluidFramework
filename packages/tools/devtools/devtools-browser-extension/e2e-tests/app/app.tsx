@@ -9,6 +9,7 @@ import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/r
 import { ContainerKey, DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
 import { FluidContainer, IFluidContainer, RootDataObject } from "@fluidframework/fluid-static";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
 
 // Initialize the Devtools logger
