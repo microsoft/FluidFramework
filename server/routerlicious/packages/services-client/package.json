@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-client",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid server isomorphic services for communicating with Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
