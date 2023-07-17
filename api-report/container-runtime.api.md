@@ -190,8 +190,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
+    // @deprecated (undocumented)
+    get reSubmitFn(): (type: ContainerMessageType, contents: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)

@@ -610,8 +610,6 @@ export class RunningSummarizer implements IDisposable {
 					throw new UsageError("Invalid number of attempts.");
 				}
 
-				let lastResult: { message: string; error: any } | undefined;
-
 				for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts; ) {
 					if (this.cancellationToken.cancelled) {
 						return;
@@ -655,7 +653,6 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptPhase++;
 						summaryAttemptsPerPhase = 0;
 					}
-					lastResult = result;
 
 					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
@@ -669,16 +666,6 @@ export class RunningSummarizer implements IDisposable {
 						await delay(delaySeconds * 1000);
 					}
 				}
-
-				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "FailToSummarize",
-						reason,
-						message: lastResult?.message,
-					},
-					lastResult?.error,
-				);
 
 				this.stopSummarizerCallback("failToSummarize");
 			},

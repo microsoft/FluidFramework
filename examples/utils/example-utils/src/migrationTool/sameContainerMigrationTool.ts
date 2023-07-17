@@ -365,7 +365,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
 			// TODO: Consider if there is any better way to watch this happen
 			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
 					// Or maybe set that up in ensureQuorumCodeDetails().
 					this.context.deltaManager.off("op", watchForQuorumProposal);
@@ -385,7 +388,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// TODO: Consider if there is any better way to watch this happen
 			const proposalSequenceNumbers: number[] = [];
 			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					proposalSequenceNumbers.push(op.sequenceNumber);
 				}
 				if (

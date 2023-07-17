@@ -1087,6 +1087,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
+    merge(view: SharedTreeView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
@@ -1707,7 +1708,6 @@ export class SchemaBuilder {
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
     static fieldValue<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.value, T>;
-    globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
     leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
@@ -1721,11 +1721,6 @@ export class SchemaBuilder {
     }>;
     // (undocumented)
     readonly name: string;
-    object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    primitive<Name extends string, T extends PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
-        value: T;
-    }>;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
         local: T;
     }>;
@@ -1846,11 +1841,13 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
-    merge(fork: SharedTreeView): void;
+    merge(view: SharedTreeView): void;
+    // (undocumented)
+    merge(view: SharedTreeView, disposeView: boolean): void;
     // (undocumented)
     readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
-    rebase(fork: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
     // (undocumented)
     redo(): void;
@@ -1971,8 +1968,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly builder: Named<string>;
     // (undocumented)
-    readonly extraGlobalFields: boolean;
-    // (undocumented)
     readonly extraLocalFields: FieldSchema;
     // (undocumented)
     get globalFields(): ReadonlySet<GlobalFieldKey>;
@@ -1991,8 +1986,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
 // @alpha
 export interface TreeSchemaBuilder {
     // (undocumented)
-    readonly extraGlobalFields?: boolean;
-    // (undocumented)
     readonly extraLocalFields: FieldStoredSchema;
     // (undocumented)
     readonly globalFields?: Iterable<GlobalFieldKey>;
@@ -2010,8 +2003,6 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 // @alpha
 interface TreeSchemaSpecification {
     // (undocumented)
-    readonly extraGlobalFields?: boolean;
-    // (undocumented)
     readonly extraLocalFields?: FieldSchema;
     // (undocumented)
     readonly global?: FlexList<GlobalFieldSchema>;
@@ -2023,7 +2014,6 @@ interface TreeSchemaSpecification {
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
-    readonly extraGlobalFields: boolean;
     readonly extraLocalFields: FieldStoredSchema;
     readonly globalFields: ReadonlySet<GlobalFieldKey>;
     readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;

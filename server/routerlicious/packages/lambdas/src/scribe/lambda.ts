@@ -586,8 +586,8 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP = clearCache
 			? this.checkpointManager.delete(this.protocolHead, true)
 			: this.writeCheckpoint(checkpoint);
-		this.pendingP.then(
-			() => {
+		this.pendingP
+			.then(() => {
 				this.pendingP = undefined;
 				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 
@@ -598,16 +598,15 @@ export class ScribeLambda implements IPartitionLambda {
 					this.pendingCheckpointOffset = undefined;
 					this.checkpointCore(pendingScribe, pendingOffset, clearCache);
 				}
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				const message = "Checkpoint error";
 				Lumberjack.error(
 					message,
 					getLumberBaseProperties(this.documentId, this.tenantId),
 					error,
 				);
-			},
-		);
+			});
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {
