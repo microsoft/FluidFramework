@@ -44,7 +44,6 @@
 		"@fluidframework/server-local-server": "1.0.0-175213",
 		"@fluidframework/server-memory-orderer": "1.0.0-175213",
 		"@fluidframework/server-services-client": "1.0.0-175213",
-		"@fluidframework/server-services": "1.0.0-175213",
 		"@fluidframework/server-services-core": "1.0.0-175213",
 		"@fluidframework/server-services-shared": "1.0.0-175213",
 		"@fluidframework/server-services-telemetry": "1.0.0-175213",
