@@ -11,7 +11,14 @@ module.exports = {
 		usedPortAction: "error",
 	},
 	launch: {
-		args: ["--no-sandbox", "--disable-setuid-sandbox", "--load-extension=./dist/bundle"],
+		args: [
+			// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
+			"--no-sandbox",
+			"--disable-setuid-sandbox",
+
+			// Ensure our extension is loaded into the browser environment
+			"--load-extension=./dist/bundle",
+		],
 		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined, // output browser console to cmd line
 		// slowMo: 500, // slows down process for easier viewing
 		// headless: false, // run in the browser
