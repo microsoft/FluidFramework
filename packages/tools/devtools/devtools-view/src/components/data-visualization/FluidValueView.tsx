@@ -8,7 +8,6 @@ import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devto
 import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
-// import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";
 
 /**
@@ -26,7 +25,6 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	// const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<>
-			{/* <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} /> */}
 			<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
 		</>
 	);

@@ -5,39 +5,37 @@
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { EditType } from "../CommonInterfaces";
-
-// Ideas:
-// - Hold onto previous summary and only transmit diff?
-
-// TODOs:
-// - Dependency tracking
-//   - When a particular DDS is no longer reachable via the input data, we need to remove it from the map and stop
-//     emitting updates.
+import { EditType, FluidObjectId } from "../CommonInterfaces";
 
 /**
- * The type of a shared object.
- *
- * @remarks
- *
- * This can be acquired via {@link @fluidframework/datastore-definitions#IChannelFactory.Type} field of
- * your shared object's factory class.
- */
-export type SharedObjectType = string;
-
-/**
- * Generates a visual description of the provided {@link @fluidframework/shared-object-base#ISharedObject}'s
+ * Generates a description of the edit to be applied to {@link @fluidframework/shared-object-base#ISharedObject}'s
  * current state.
  *
- * @param sharedObject - The object whose data will be rendered.
- * @param visualizeChildData - Callback to render child content of the shared object.
- *
- * @returns A visual tree representation of the provided `sharedObject`.
+ * @param sharedObject - The {@link ISharedObject} whose data will be edited.
+ * @param edit - Describes what changes will be made using {@link Edit}.
+ * @returns - Nothing.
  *
  * @public
  */
-export type EditSharedObject = (
-	sharedObject: ISharedObject,
-	data: Serializable,
-	type: EditType,
-) => Promise<void>;
+export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
+
+/**
+ * Interface to contain information necesary for an edit
+ * @public
+ */
+export interface Edit {
+	/**
+	 * Contains the {@link FluidObjectId} of the DDS that will be edited
+	 */
+	fluidId: FluidObjectId;
+
+	/**
+	 * Type contains the {@link EditType} of the edit being preformed
+	 */
+	type: EditType;
+
+	/**
+	 * Data contains the new data that will be edited into the DDS
+	 */
+	data: Serializable;
+}

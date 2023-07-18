@@ -7,7 +7,6 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
@@ -15,6 +14,7 @@ import {
 	DataVisualizerGraph,
 	defaultVisualizers,
 	defaultEditors,
+	Edit,
 	EditSharedObject,
 	FluidObjectNode,
 	RootHandleNode,
@@ -348,7 +348,12 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[SendEditData.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as SendEditData.Message;
 			if (message.data.containerKey === this.containerKey) {
-				await this.editData(message.data.fluidObjectId, message.data.newData);
+				await this.editData({
+					fluidId: message.data.fluidObjectId,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					data: message.data.newData,
+					type: message.data.editType,
+				});
 				return true;
 			}
 			return false;
@@ -588,7 +593,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 
-	private async editData(fluidObjectId: FluidObjectId, newData: Serializable): Promise<void> {
-		return this.dataVisualizer?.preformEdit(fluidObjectId, newData);
+	/**
+	 * Begins the process of changing data inside a DDS by using {@link Edit} 
+	 */
+	private async editData(edit: Edit): Promise<void> {
+		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

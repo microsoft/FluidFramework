@@ -8,35 +8,22 @@
  * implementations for our DDSs.
  */
 
-import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { EditSharedObject } from "./DataEditing";
-
-/**
- * Default {@link EditSharedObject} for {@link SharedCell}.
- */
-export const editSharedCell: EditSharedObject = async (
-	sharedObject: ISharedObject,
-	newData: Serializable,
-): Promise<void> => {
-	const sharedCell = sharedObject as SharedCell<unknown>;
-	const data = sharedCell.get();
-	console.log(data);
-};
+import { Edit, EditSharedObject } from "./DataEditing";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
  */
 export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
-	newData: number,
+	editProp: Edit,
 ): Promise<void> => {
+	if (typeof editProp.data !== "number") return;
 	const sharedCounter = sharedObject as SharedCounter;
-	sharedCounter.increment(Math.floor(newData) - sharedCounter.value);
+	sharedCounter.increment(Math.floor(editProp.data) - sharedCounter.value);
 	console.log(sharedCounter);
 };
 
@@ -45,31 +32,21 @@ export const editSharedCounter: EditSharedObject = async (
  */
 export const editSharedString: EditSharedObject = async (
 	sharedObject: ISharedObject,
-	newData: string,
+	editProp: Edit,
 ): Promise<void> => {
+	if (typeof editProp.data !== "string") return;
 	const sharedString = sharedObject as SharedString;
-	if (newData === "") {
+	if (editProp.data === "") {
 		sharedString.removeText(0, sharedString.getLength());
 	} else {
-		sharedString.replaceText(0, sharedString.getLength(), newData);
+		sharedString.replaceText(0, sharedString.getLength(), editProp.data);
 	}
-	return;
-};
-
-/**
- * {@link EditSharedObject} for unrecognized {@link ISharedObject}s.
- */
-export const editUnknownSharedObject: EditSharedObject = async (
-	sharedObject: ISharedObject,
-): Promise<void> => {
-	console.log("Editing unknown shared object");
 };
 
 /**
  * List of default editors included in the library.
  */
 export const defaultEditors: Record<string, EditSharedObject> = {
-	[SharedCell.getFactory().type]: editSharedCell,
 	[SharedCounter.getFactory().type]: editSharedCounter,
 	[SharedString.getFactory().type]: editSharedString,
 

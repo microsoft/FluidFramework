@@ -224,7 +224,17 @@ export namespace DisconnectContainer {
 }
 
 // @public
-export type EditSharedObject = (sharedObject: ISharedObject, data: Serializable, type: EditType) => Promise<void>;
+export interface Edit {
+    // (undocumented)
+    data: Serializable;
+    // (undocumented)
+    fluidId: FluidObjectId;
+    // (undocumented)
+    type: EditType;
+}
+
+// @public
+export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 // @public
 export enum EditType {
@@ -366,7 +376,7 @@ export interface HasContainerKey {
 // @internal
 export interface HasEditType {
     // (undocumented)
-    editType: EditType[];
+    editType: EditType;
 }
 
 // @internal
@@ -377,7 +387,7 @@ export interface HasFluidObjectId {
 // @internal
 export interface HasNewData {
     // (undocumented)
-    newData: string | number;
+    newData: Serializable;
 }
 
 // @internal

@@ -24,17 +24,19 @@
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
 export {
 	ContainerKey,
+	EditType,
 	FluidObjectId,
 	HasContainerKey,
-	HasFluidObjectId,
 	HasEditType,
+	HasFluidObjectId,
 	HasNewData,
-	EditType,
 } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
+	Edit,
+	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -54,7 +56,6 @@ export {
 	VisualizeChildData,
 	VisualizeSharedObject,
 	UnknownObjectNode,
-	EditSharedObject,
 } from "./data-visualization";
 export {
 	ContainerDevtoolsFeature,
@@ -102,8 +103,8 @@ export {
 	isDevtoolsMessage,
 	MessageLoggingOptions,
 	RootDataVisualizations,
+	SendEditData,
 	TelemetryEvent,
 	TelemetryHistory,
-	SendEditData,
 } from "./messaging";
 export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

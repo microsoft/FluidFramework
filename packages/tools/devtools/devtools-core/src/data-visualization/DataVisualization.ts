@@ -8,8 +8,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { EditType, FluidObjectId } from "../CommonInterfaces";
+import { FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
@@ -20,8 +19,7 @@ import {
 	RootHandleNode,
 	unknownObjectNode,
 } from "./VisualTree";
-import { EditSharedObject } from "./DataEditing";
-import { editUnknownSharedObject } from "./DefaultEditors";
+import { Edit, EditSharedObject } from "./DataEditing";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
@@ -226,8 +224,8 @@ export class DataVisualizerGraph
 		return this.visualizerNodes.get(fluidObjectId)?.render() ?? undefined;
 	}
 
-	public async preformEdit(fluidObjectId: FluidObjectId, newData: Serializable): Promise<void> {
-		return this.visualizerNodes.get(fluidObjectId)?.preformEdit(newData);
+	public async applyEdit(edit: Edit): Promise<void> {
+		return this.visualizerNodes.get(edit.fluidId)?.applyEdit(edit);
 	}
 
 	/**
@@ -243,10 +241,8 @@ export class DataVisualizerGraph
 					: visualizeUnknownSharedObject;
 
 			// Create visualizer node for the shared object
-			const editorFunction =
-				this.editors[sharedObject.attributes.type] !== undefined
-					? this.editors[sharedObject.attributes.type]
-					: editUnknownSharedObject;
+			const editorFunction = this.editors[sharedObject.attributes.type];
+
 			const visualizerNode = new VisualizerNode(
 				sharedObject,
 				visualizationFunction,
@@ -416,9 +412,8 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		);
 	}
 
-	public async preformEdit(value: Serializable): Promise<void> {
-		// eslint-disable-next-line no-void
-		void this.editSharedObject(this.sharedObject, value, EditType.string);
+	public async applyEdit(edit: Edit): Promise<void> {
+		return this.editSharedObject(this.sharedObject, edit);
 	}
 
 	/**

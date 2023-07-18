@@ -5,11 +5,12 @@
 
 import React from "react";
 
-import { Dropdown, Input, InputOnChangeData, Option, tokens } from "@fluentui/react-components";
+import { Input, InputOnChangeData } from "@fluentui/react-components";
 import { EditType, FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../../MessageRelayContext";
+
 /**
- * Input to {@link TreeItem}
+ * Input to {@link EditableValueView}
  */
 export interface EditableValueViewProps {
 	node: FluidObjectValueNode;
@@ -17,18 +18,29 @@ export interface EditableValueViewProps {
 }
 
 /**
- * Constructs a tree element from the provided header and child contents.
- *
- * Intended to be used inside an outer {@link @fluentui/react-components/unstable#Tree} context.
+ * Constructs a editable text field to allow editing of a DDS' content.
  */
 export function EditableValueView(props: EditableValueViewProps): React.ReactElement {
 	const { node, containerKey } = props;
 	const messageRelay = useMessageRelay();
+
+	/**
+	 * value is the current value of the text field.
+	 */
 	const [value, setValue] = React.useState<string>(String(node.value));
+
+	/**
+	 * isEditing is whether or not the user is currently attempting to edit a value. If they are it will not update so their changes are not overwritten
+	 */
 	const [isEditing, setIsEditing] = React.useState<boolean>(false);
+
+	/**
+	 * isTextBox is whether or not the area should allow text or numbers only.
+	 */
 	const [isTextBox, setIsTextBox] = React.useState<boolean>(
 		node.typeMetadata === "number" || node.typeMetadata === "SharedCounter" ? false : true,
 	);
+	console.log(setIsTextBox);
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
@@ -58,82 +70,46 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 		setIsEditing(false);
 	}, [node.value]);
 
+	const commitChanges = React.useCallback(() => {
+		messageRelay.postMessage(
+			SendEditData.createMessage({
+				containerKey,
+				fluidObjectId: node.fluidObjectId,
+				newData: value,
+				editType: EditType.string,
+			}),
+		);
+	}, [containerKey, messageRelay, node.fluidObjectId, value]);
+
 	const onKeyDown = React.useCallback(
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
 			const key = event.key;
-			function commitChanges(): void {
-				messageRelay.postMessage(
-					SendEditData.createMessage({
-						containerKey,
-						fluidObjectId: node.fluidObjectId,
-						newData: value,
-						editType: [EditType.string],
-					}),
-				);
-			}
+
 			if (key === "Enter") {
 				commitChanges();
 				event.currentTarget.blur();
 			}
-			console.log(key);
+
+			if (key === "Escape") {
+				event.currentTarget.blur();
+			}
 		},
-		[containerKey, messageRelay, node.fluidObjectId, value],
+		[commitChanges],
 	);
 
-	const dropdownStyle = {
-		fontSize: "10px",
-		color: tokens.colorPaletteRedBorderActive,
-		minWidth: "30px",
-	};
-
 	return (
-		<>
-			<div>
-				data <span style={dropdownStyle}>({node.typeMetadata}) </span>:
-				{/* {node.editProps?.editTypes?.length !== undefined &&
-				node.editProps?.editTypes?.length > 1 ? (
-					<Dropdown
-						style={dropdownStyle}
-						size="small"
-						defaultValue={
-							node.typeMetadata === undefined ? "" : ` (${node.typeMetadata})`
-						}
-						onClick={(event): void => event.preventDefault()}
-						appearance="underline"
-						color={tokens.colorPaletteRedBorderActive}
-						onOptionSelect={(): void => {
-							return;
-						}}
-					>
-						{node.editProps?.editTypes?.map((option) => (
-							<Option
-								style={{
-									color: tokens.colorPaletteRedBorderActive,
-									fontSize: "10px",
-								}}
-								key={option}
-							>
-								{option}
-							</Option>
-						))}
-					</Dropdown>
-				) : (
-					<span style={dropdownStyle}>({node.typeMetadata})</span>
-				)} */}
-			</div>
-			<Input
-				size="small"
-				appearance="underline"
-				contentEditable
-				ref={textAreaRef}
-				onClick={(event): void => event.preventDefault()}
-				value={value}
-				onChange={onChange}
-				onFocus={onFocus}
-				onBlur={onBlur}
-				onKeyDown={onKeyDown}
-				type={isTextBox ? "text" : "number"}
-			/>
-		</>
+		<Input
+			size="small"
+			appearance="underline"
+			contentEditable
+			ref={textAreaRef}
+			onClick={(event): void => event.preventDefault()}
+			value={value}
+			onChange={onChange}
+			onFocus={onFocus}
+			onBlur={onBlur}
+			onKeyDown={onKeyDown}
+			type={isTextBox ? "text" : "number"}
+		/>
 	);
 }

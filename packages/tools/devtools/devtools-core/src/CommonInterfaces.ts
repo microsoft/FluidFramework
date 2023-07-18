@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Serializable } from "@fluidframework/datastore-definitions";
+
 /**
  * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
  *
@@ -64,7 +66,7 @@ export enum EditType {
  * @internal
  */
 export interface HasEditType {
-	editType: EditType[];
+	editType: EditType;
 }
 
 /**
@@ -73,5 +75,5 @@ export interface HasEditType {
  * @internal
  */
 export interface HasNewData {
-	newData: string | number;
+	newData: Serializable;
 }

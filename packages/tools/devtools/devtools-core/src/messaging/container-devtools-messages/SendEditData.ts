@@ -13,23 +13,23 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace SendEditData {
 	/**
-	 * {@link GetDataVisualization.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link SendEditData.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @internal
 	 */
 	export const MessageType = "SEND_EDIT_DATA";
 
 	/**
-	 * Message data format used by {@link GetDataVisualization.Message}.
+	 * Message data format used by {@link SendEditData.Message}.
 	 *
 	 * @internal
 	 */
 	export type MessageData = HasContainerKey & HasFluidObjectId & HasNewData & HasEditType;
 
 	/**
-	 * Inbound message requesting a visualization for a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.
+	 * Inbound message for editing a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.
 	 *
-	 * Will result in the {@link DataVisualization.Message} message being posted.
+	 * Will result in the DDS being edited.
 	 *
 	 * @internal
 	 */

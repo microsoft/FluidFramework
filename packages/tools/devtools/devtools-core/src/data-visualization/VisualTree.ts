@@ -70,17 +70,8 @@ export interface VisualNodeBase {
 	nodeKind: VisualNodeKind | string;
 
 	/**
-	 * The "kind" of tree node.
-	 *
-	 * @remarks
-	 *
-	 * This will generally be {@link VisualNodeKind}, but for forwards/backwards compatability reasons,
-	 * we allow this to be an arbitrary string.
-	 * Consumers of this value should attempt to handle unrecognized values gracefully.
-	 */
-
-	/**
-	 * (optional) The types of edits allowed
+	 * (optional) If editProps is present it indicates the node is editable.
+	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
 	 */
 	editProps?: { editTypes?: EditType[] };
 }
