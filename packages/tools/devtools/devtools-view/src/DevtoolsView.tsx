@@ -462,6 +462,10 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Container" },
+		});
 	}
 
 	function onTelemetryClicked(): void {
@@ -560,7 +564,6 @@ interface ContainersMenuSectionProps {
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
 	const { containers, selectContainer, currentContainerSelection } = props;
-	const usageLogger = useLogger();
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
@@ -577,10 +580,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						text={containerKey}
 						onClick={(event): void => {
 							selectContainer(`${containerKey}`);
-							usageLogger?.sendTelemetryEvent({
-								eventName: "Navigation",
-								details: { target: "Menu_Container" },
-							});
 						}}
 					/>
 				))}
