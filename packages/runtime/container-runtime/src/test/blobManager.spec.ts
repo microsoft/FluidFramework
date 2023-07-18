@@ -49,6 +49,12 @@ class DedupeStorage extends BaseMockBlobStorage {
 	}
 }
 
+class MockFailDedupeStorage extends BaseMockBlobStorage {
+	public async createBlob(blob: ArrayBufferLike) {
+		throw new Error("fake error ");
+	}
+}
+
 class NonDedupeStorage extends BaseMockBlobStorage {
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = this.blobs.size.toString();
@@ -87,11 +93,14 @@ class MockRuntime
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
+			: this.rejectCreateBlob
+			? this.rejectStorage
 			: this.attachedStorage) as unknown as IDocumentStorageService;
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
+	public rejectCreateBlob = false;
 
 	public getStorage() {
 		return {
@@ -144,6 +153,7 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
+	public rejectStorage = new MockFailDedupeStorage();
 	public logger = this.mc.logger;
 
 	private ops: any[] = [];
@@ -384,6 +394,49 @@ describe("BlobManager", () => {
 			const blob = IsoBuffer.from("blob", "utf8");
 			handleP = runtime.createBlob(blob, ac.signal);
 			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			await runtime.processAll();
+			assert.fail("Should not succeed");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "aborted while uploading");
+		}
+		assert(handleP);
+		await assert.rejects(handleP);
+	});
+
+	it("abort while upload fails", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		runtime.rejectCreateBlob = true;
+		const ac = new AbortController();
+		let handleP;
+		try {
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			await runtime.processAll();
+			assert.fail("Should not succeed");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "aborted while uploading");
+		}
+		assert(handleP);
+		await assert.rejects(handleP);
+	});
+
+	it("disconnect after abort", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const ac = new AbortController();
+		let handleP;
+		try {
+			const blob = IsoBuffer.from("blob", "utf8");
+			handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			runtime.disconnect();
+			await runtime.processBlobs();
+			await handleP;
+			await runtime.connect();
 			await runtime.processAll();
 			assert.fail("Should not succeed");
 		} catch (error: any) {
@@ -453,6 +506,23 @@ describe("BlobManager", () => {
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
+		await runtime.connect();
+		await runtime.processAll();
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
+	it("aborts while upload offline", async () => {
+		// this should throw once we remove resolving while offline
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/4550
+		await runtime.attach();
+		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		await handle;
+		const ac = new AbortController();
+		ac.abort();
 		await runtime.connect();
 		await runtime.processAll();
 
