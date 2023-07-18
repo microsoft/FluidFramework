@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fluidapp-odsp-urlresolver",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "Url Resolver for Fluid app urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,7 +51,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",

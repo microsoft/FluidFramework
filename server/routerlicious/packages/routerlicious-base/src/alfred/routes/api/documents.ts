@@ -28,6 +28,7 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
@@ -166,7 +167,13 @@ export function create(
 				`Whole summary length= ${JSON.stringify(request.body.summary).length}.`,
 			);
 			// Summary information
-			const summary = convertWholeSummaryTreeToSummaryTree(request.body.summary);
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
+
+			Lumberjack.info(
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 
 			Lumberjack.info(`SummaryTree length = ${JSON.stringify(summary).length}.`);
 			// Protocol state

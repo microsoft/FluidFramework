@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-ordering-zookeeper",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid server services zookeeper client implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {

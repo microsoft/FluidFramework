@@ -135,6 +135,7 @@ export interface IDataStore extends IFluidRouter {
 	 * by the supplied alias and will not be garbage collected.
 	 *
 	 * @param alias - Given alias for this datastore.
+	 * @returns A promise with the {@link AliasResult}
 	 */
 	trySetAlias(alias: string): Promise<AliasResult>;
 

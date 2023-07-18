@@ -187,9 +187,6 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - template: templates/include-use-node-version.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-            version: '16.16.0'
 
         - template: templates/include-install-pnpm.yml
           parameters:
@@ -238,9 +235,6 @@ stages:
           clean: true
 
         - template: templates/include-use-node-version.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-            version: '16.16.0'
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

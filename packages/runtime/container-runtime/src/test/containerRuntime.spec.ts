@@ -10,6 +10,7 @@ import {
 	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
+	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -942,7 +943,7 @@ describe("Runtime", () => {
 				};
 				assert.throws(
 					codeBlock,
-					(e) =>
+					(e: IErrorBase) =>
 						e.errorType === ContainerErrorType.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);

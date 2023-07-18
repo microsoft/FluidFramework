@@ -56,9 +56,6 @@ jobs:
           - download: current
             artifact: pack
           - template: include-use-node-version.yml
-            parameters:
-              buildDirectory: .
-              version: '16.16.0'
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}
