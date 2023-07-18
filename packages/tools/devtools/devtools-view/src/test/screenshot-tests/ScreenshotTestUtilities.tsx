@@ -17,7 +17,7 @@ import { getFluentUIThemeToUse } from "../../ThemeHelper";
  * {@link TestContexts} input props.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type TestContextsProps = React.PropsWithChildren<{}>;
+type TestContextsProps = React.PropsWithChildren<{}>;
 
 /**
  * Wraps the input children in the contexts required by Devtools view components.
@@ -28,7 +28,7 @@ export type TestContextsProps = React.PropsWithChildren<{}>;
  *
  * 3. The required FluentUI theming context
  */
-export function TestContexts(props: TestContextsProps): React.ReactElement {
+function TestContexts(props: TestContextsProps): React.ReactElement {
 	const { children } = props;
 
 	const themeInfo = getFluentUIThemeToUse();
