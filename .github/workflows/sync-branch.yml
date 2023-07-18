@@ -3,6 +3,7 @@ name: Sync branches
 on:
   schedule:
     - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
+  workflow_dispatch:
 
 env:
   TARGET_BRANCH: next
