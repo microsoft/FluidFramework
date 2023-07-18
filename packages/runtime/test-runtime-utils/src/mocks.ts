@@ -131,13 +131,11 @@ export class MockContainerRuntime {
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		const deltaConnection =
-			this.dataStoreRuntime.createDeltaConnection?.() ??
-			new MockDeltaConnection(
-				(messageContent: any, localOpMetadata: unknown) =>
-					this.submit(messageContent, localOpMetadata),
-				() => this.dirty(),
-			);
+		assert(
+			this.dataStoreRuntime.createDeltaConnection !== undefined,
+			"Unsupported datastore runtime version",
+		);
+		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
@@ -537,7 +535,11 @@ export class MockFluidDataStoreRuntime
 	}
 
 	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
-		return this.containerRuntime?.submit(messageContent, localOpMetadata) ?? 0;
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.submit(messageContent, localOpMetadata);
 	}
 
 	public submitMessage(type: MessageType, content: any) {
@@ -545,7 +547,11 @@ export class MockFluidDataStoreRuntime
 	}
 
 	private setChannelDirty(): void {
-		return this.containerRuntime?.dirty();
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.dirty();
 	}
 
 	public submitSignal(type: string, content: any) {
