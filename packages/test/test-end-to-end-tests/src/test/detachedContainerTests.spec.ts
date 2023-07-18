@@ -179,10 +179,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 			?.get();
 		assert(directory2 !== undefined, "Directory is not available in the second client");
 
-		directory2.on("valueChanged", (event, local) => {
-			console.log("directory2", event, local);
-		});
-
 		const foo2 = directory2.getWorkingDirectory("foo");
 		assert(foo2 !== undefined, "Unable to get foo subdirectory");
 		foo2.set("key1", "value5");
