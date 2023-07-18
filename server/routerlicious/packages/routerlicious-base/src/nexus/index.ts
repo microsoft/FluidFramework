@@ -4,7 +4,7 @@
  */
 
 export { IAlfredResourcesCustomizations } from "./customizations";
-export { AlfredRunner } from "./runner";
+export { NexusRunner } from "./runner";
 export {
 	AlfredResources,
 	AlfredResourcesFactory,

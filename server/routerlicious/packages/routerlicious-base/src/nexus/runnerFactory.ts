@@ -20,14 +20,9 @@ import { Provider } from "nconf";
 import * as Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants } from "../utils";
-import { AlfredRunner } from "./runner";
+import { NexusRunner } from "./runner";
 import {
-	DeltaService,
 	StorageNameAllocator,
-	IDocumentDeleteService,
-	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 
@@ -85,28 +80,21 @@ export class AlfredResources implements core.IResources {
 
 	constructor(
 		public config: Provider,
-		public producer: core.IProducer,
 		public redisConfig: any,
 		public clientManager: core.IClientManager,
 		public webSocketLibrary: string,
 		public orderManager: core.IOrdererManager,
 		public tenantManager: core.ITenantManager,
-		public restTenantThrottlers: Map<string, core.IThrottler>,
-		public restClusterThrottlers: Map<string, core.IThrottler>,
 		public socketConnectTenantThrottler: core.IThrottler,
 		public socketConnectClusterThrottler: core.IThrottler,
 		public socketSubmitOpThrottler: core.IThrottler,
 		public socketSubmitSignalThrottler: core.IThrottler,
 		public singleUseTokenCache: core.ICache,
 		public storage: core.IDocumentStorage,
-		public appTenants: IAlfredTenant[],
 		public mongoManager: core.MongoManager,
-		public deltaService: core.IDeltaService,
 		public port: any,
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
-		public documentRepository: core.IDocumentRepository,
-		public documentDeleteService: IDocumentDeleteService,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
@@ -126,12 +114,11 @@ export class AlfredResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
 			: Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
+		await Promise.all([mongoClosedP, tokenRevocationManagerP]);
 	}
 }
 
@@ -335,63 +322,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			);
 		};
 
-		// Per-tenant Rest API Throttlers
-		const restApiTenantThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerTenant:generalRestCall"),
-		);
-		const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
-
-		const restApiTenantCreateDocThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerTenant:createDoc"),
-		);
-		const restTenantCreateDocThrottler = configureThrottler(
-			restApiTenantCreateDocThrottleConfig,
-		);
-
-		const restApiTenantGetDeltasThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerTenant:getDeltas"),
-		);
-		const restTenantGetDeltasThrottler = configureThrottler(
-			restApiTenantGetDeltasThrottleConfig,
-		);
-
-		const restApiTenantGetSessionThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerTenant:getSession"),
-		);
-		const restTenantGetSessionThrottler = configureThrottler(
-			restApiTenantGetSessionThrottleConfig,
-		);
-
-		const restTenantThrottlers = new Map<string, core.IThrottler>();
-		restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
-		restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
-		restTenantThrottlers.set(
-			Constants.getSessionThrottleIdPrefix,
-			restTenantGetSessionThrottler,
-		);
-		restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
-
-		// Per-cluster Rest API Throttlers
-		const restApiCreateDocThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerCluster:createDoc"),
-		);
-		const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
-
-		const restApiGetDeltasThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerCluster:getDeltas"),
-		);
-		const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
-
-		const restApiGetSessionThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:restCallsPerCluster:getSession"),
-		);
-		const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
-
-		const restClusterThrottlers = new Map<string, core.IThrottler>();
-		restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
-		restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
-		restClusterThrottlers.set(Constants.getSessionThrottleIdPrefix, restGetSessionThrottler);
-
 		// Socket Connection Throttler
 		const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
 			config.get("alfred:throttling:socketConnectionsPerTenant"),
@@ -534,15 +464,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaOrdererFactory,
 		);
 
-		// Tenants attached to the apps this service exposes
-		const appTenants = config.get("alfred:tenants") as { id: string; key: string }[];
-
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
-
-		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
-		const documentDeleteService =
-			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
 		/**
@@ -569,28 +492,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		return new AlfredResources(
 			config,
-			producer,
 			redisConfig,
 			clientManager,
 			webSocketLibrary,
 			orderManager,
 			tenantManager,
-			restTenantThrottlers,
-			restClusterThrottlers,
 			socketConnectTenantThrottler,
 			socketConnectClusterThrottler,
 			socketSubmitOpThrottler,
 			socketSubmitSignalThrottler,
 			redisJwtCache,
 			storage,
-			appTenants,
 			operationsDbMongoManager,
-			deltaService,
 			port,
 			documentsCollectionName,
 			metricClientConfig,
-			documentRepository,
-			documentDeleteService,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
@@ -603,27 +519,19 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
 	public async create(resources: AlfredResources): Promise<core.IRunner> {
-		return new AlfredRunner(
+		return new NexusRunner(
 			resources.webServerFactory,
 			resources.config,
 			resources.port,
 			resources.orderManager,
 			resources.tenantManager,
-			resources.restTenantThrottlers,
-			resources.restClusterThrottlers,
 			resources.socketConnectTenantThrottler,
 			resources.socketConnectClusterThrottler,
 			resources.socketSubmitOpThrottler,
 			resources.socketSubmitSignalThrottler,
-			resources.singleUseTokenCache,
 			resources.storage,
 			resources.clientManager,
-			resources.appTenants,
-			resources.deltaService,
-			resources.producer,
-			resources.metricClientConfig,
-			resources.documentRepository,
-			resources.documentDeleteService,
+		        resources.metricClientConfig,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
