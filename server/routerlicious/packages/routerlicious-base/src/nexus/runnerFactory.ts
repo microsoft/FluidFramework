@@ -75,7 +75,7 @@ export class OrdererManager implements core.IOrdererManager {
 	}
 }
 
-export class AlfredResources implements core.IResources {
+export class NexusResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
 	constructor(
@@ -122,17 +122,18 @@ export class AlfredResources implements core.IResources {
 	}
 }
 
-export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
+export class NexusResourcesFactory implements core.IResourcesFactory<NexusResources> {
 	public async create(
 		config: Provider,
 		customizations?: IAlfredResourcesCustomizations,
-	): Promise<AlfredResources> {
-		// Producer used to publish messages
+	): Promise<NexusResources> {
+
+		const metricClientConfig = config.get("metric");
+	    // Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
 		const kafkaLibrary = config.get("kafka:lib:name");
 		const kafkaClientId = config.get("alfred:kafkaClientId");
 		const topic = config.get("alfred:topic");
-		const metricClientConfig = config.get("metric");
 		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
@@ -155,8 +156,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const redisConfig = config.get("redis");
-		const webSocketLibrary = config.get("alfred:webSocketLib");
-		const authEndpoint = config.get("auth:endpoint");
+
+
 
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
@@ -262,7 +263,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			config.get("mongo:collectionNames:reservations"),
 		);
 
-		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+	        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+	        const authEndpoint = config.get("auth:endpoint");
 		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
 		// Redis connection for throttling.
@@ -490,7 +492,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 
-		return new AlfredResources(
+         	const webSocketLibrary = config.get("alfred:webSocketLib");
+	    
+		return new NexusResources(
 			config,
 			redisConfig,
 			clientManager,
@@ -517,8 +521,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 	}
 }
 
-export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
-	public async create(resources: AlfredResources): Promise<core.IRunner> {
+export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
+	public async create(resources: NexusResources): Promise<core.IRunner> {
 		return new NexusRunner(
 			resources.webServerFactory,
 			resources.config,
