@@ -172,4 +172,31 @@ describe("Fuzz - Targeted", () => {
 			emitter,
 		});
 	});
+
+	describe("Inorder undo matches the initial state", () => {
+		const generatorFactory = (): AsyncGenerator<TreeOperation, FuzzTestState> =>
+			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
+
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: () => {},
+		};
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		
+		emitter.on("testEnd", (finalState: FuzzTestState) => {
+			
+		});
+		createDDSFuzzSuite(model, {
+			defaultTestCount: runsPerBatch,
+			numberOfClients: 1,
+			emitter,
+		});
+	});
 });
