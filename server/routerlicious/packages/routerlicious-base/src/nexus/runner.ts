@@ -8,17 +8,14 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
-	IDeltaService,
 	IDocumentStorage,
 	IOrdererManager,
-	IProducer,
 	IRunner,
 	ITenantManager,
 	IThrottler,
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
-	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
 	IRevokedTokenChecker,
@@ -26,13 +23,11 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
-import { IDocumentDeleteService } from "./services";
 
-export class AlfredRunner implements IRunner {
+export class NexusRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
 	private stopped: boolean = false;
@@ -44,21 +39,13 @@ export class AlfredRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottlers: Map<string, IThrottler>,
-		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly socketConnectTenantThrottler: IThrottler,
 		private readonly socketConnectClusterThrottler: IThrottler,
 		private readonly socketSubmitOpThrottler: IThrottler,
 		private readonly socketSubmitSignalThrottler: IThrottler,
-		private readonly singleUseTokenCache: ICache,
 		private readonly storage: IDocumentStorage,
 		private readonly clientManager: IClientManager,
-		private readonly appTenants: IAlfredTenant[],
-		private readonly deltaService: IDeltaService,
-		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
-		private readonly documentRepository: IDocumentRepository,
-		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -74,18 +61,6 @@ export class AlfredRunner implements IRunner {
 		// Create the HTTP server and attach alfred to it
 		const alfred = app.create(
 			this.config,
-			this.tenantManager,
-			this.restTenantThrottlers,
-			this.restClusterThrottlers,
-			this.singleUseTokenCache,
-			this.storage,
-			this.appTenants,
-			this.deltaService,
-			this.producer,
-			this.documentRepository,
-			this.documentDeleteService,
-			this.tokenRevocationManager,
-			this.revokedTokenChecker,
 		);
 		alfred.set("port", this.port);
 
