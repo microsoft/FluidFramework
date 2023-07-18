@@ -80,7 +80,7 @@
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.20.0",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",

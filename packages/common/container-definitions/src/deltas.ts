@@ -7,12 +7,10 @@ import { IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-defi
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	ConnectionMode,
 	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
@@ -36,47 +34,6 @@ export interface IConnectionDetails {
 	 * that is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
-}
-
-/**
- * Internal version of IConnectionDetails with props are only exposed internally
- * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
- */
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	mode: ConnectionMode;
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	version: string;
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	initialClients: ISignalClient[];
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	reason: string;
-}
-
-/**
- * Interface used to define a strategy for handling incoming delta messages
- * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
- */
-export interface IDeltaHandlerStrategy {
-	/**
-	 * Processes the message.
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	process: (message: ISequencedDocumentMessage) => void;
-
-	/**
-	 * Processes the signal.
-	 * @deprecated 2.0.0-internal.5.2.0 - Intended for internal use only and will be removed in an upcoming relase.
-	 */
-	processSignal: (message: ISignalMessage) => void;
 }
 
 /**
@@ -123,17 +80,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	/**
 	 * @deprecated No replacement API recommended.
 	 */
-	(event: "allSentOpsAckd", listener: () => void);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
 	(event: "pong", listener: (latency: number) => void);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "processTime", listener: (latency: number) => void);
 
 	/**
 	 * Emitted when the {@link IDeltaManager} completes connecting to the Fluid service.
@@ -224,18 +171,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
 	/** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
 	submitSignal(content: any): void;
-
-	/**
-	 * @deprecated - 2.0.0-internal.5.3.0 - The IDeltaManager's dispose state is not recommended for observation
-	 * and will be removed in an upcoming release.
-	 */
-	readonly disposed: boolean;
-
-	/**
-	 * @deprecated - 2.0.0-internal.5.3.0 - Disposing the IDeltaManager results in inconsistent system state.
-	 * This member will be removed in an upcoming release.
-	 */
-	dispose(error?: Error): void;
 }
 
 /**

@@ -39,6 +39,7 @@
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",
 		"@fluentui/react-components": "~9.19.1",
+		"@fluentui/react-hooks": "^8.6.24",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
@@ -55,7 +56,7 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/core-interfaces": "workspace:~",
