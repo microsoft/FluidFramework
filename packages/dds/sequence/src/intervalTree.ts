@@ -54,8 +54,8 @@ export interface IInterval {
 	 */
 	modify(
 		label: string,
-		start: number | undefined,
-		end: number | undefined,
+		start: number | "start" | undefined,
+		end: number | "end" | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	): IInterval | undefined;

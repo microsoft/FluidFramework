@@ -188,6 +188,9 @@
 			"RemovedFunctionDeclaration_ordinalToArray": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -300,6 +300,7 @@ declare function get_current_InterfaceDeclaration_ISerializedInterval():
 declare function use_old_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<old.ISerializedInterval>);
 use_old_InterfaceDeclaration_ISerializedInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISerializedInterval());
 
 /*
@@ -808,6 +809,7 @@ declare function get_current_TypeAliasDeclaration_SerializedIntervalDelta():
 declare function use_old_TypeAliasDeclaration_SerializedIntervalDelta(
     use: TypeOnly<old.SerializedIntervalDelta>);
 use_old_TypeAliasDeclaration_SerializedIntervalDelta(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SerializedIntervalDelta());
 
 /*

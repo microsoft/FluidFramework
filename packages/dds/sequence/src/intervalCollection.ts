@@ -95,9 +95,9 @@ export interface ISerializedInterval {
 	 */
 	sequenceNumber: number;
 	/** Start position of the interval */
-	start: number;
+	start: number | "start";
 	/** End position of the interval */
-	end: number;
+	end: number | "end";
 	/** Interval type to create */
 	intervalType: IntervalType;
 	/**
@@ -126,8 +126,16 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  * [start, end, sequenceNumber, intervalType, properties, stickiness?]
  */
 export type CompressedSerializedInterval =
-	| [number, number, number, IntervalType, PropertySet, IntervalStickiness, boolean]
-	| [number, number, number, IntervalType, PropertySet];
+	| [
+			number | "start",
+			number | "end",
+			number,
+			IntervalType,
+			PropertySet,
+			IntervalStickiness,
+			boolean,
+	  ]
+	| [number | "start", number | "end", number, IntervalType, PropertySet];
 
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
@@ -235,8 +243,8 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 */
 	create(
 		label: string,
-		start: number | undefined,
-		end: number | undefined,
+		start: number | "start" | undefined,
+		end: number | "end" | undefined,
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
@@ -842,7 +850,7 @@ export function createPositionReferenceFromSegoff(
 
 function createPositionReference(
 	client: Client,
-	pos: number,
+	pos: number | "start" | "end",
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
@@ -851,16 +859,11 @@ function createPositionReference(
 	exclusive: boolean = false,
 ): LocalReferencePosition {
 	let segoff;
-	if (
-		exclusive &&
-		slidingPreference === SlidingPreference.FORWARD &&
-		pos === client.getLength()
-	) {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		segoff = { segment: client["_mergeTree"]["endOfTree"], offset: 0 };
-	} else if (exclusive && slidingPreference === SlidingPreference.BACKWARD && pos === 0) {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		segoff = { segment: client["_mergeTree"]["startOfTree"], offset: 0 };
+
+	if (pos === "start") {
+		segoff = { segment: client.startOfTreeSegment, offset: 0 };
+	} else if (pos === "end") {
+		segoff = { segment: client.endOfTreeSegment, offset: 0 };
 	} else if (op) {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) !== 0,
@@ -893,8 +896,8 @@ function createPositionReference(
 
 export function createSequenceInterval(
 	label: string,
-	start: number,
-	end: number,
+	start: number | "start",
+	end: number | "end",
 	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
@@ -1326,7 +1329,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		]);
 	}
 
-	public createLegacyId(start: number, end: number): string {
+	public createLegacyId(start: number | "start", end: number | "end"): string {
 		// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
 		// without ID's.
 		return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
@@ -1381,8 +1384,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public createInterval(
-		start: number,
-		end: number,
+		start: number | "start",
+		end: number | "end",
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
@@ -1402,8 +1405,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public addInterval(
-		start: number,
-		end: number,
+		start: number | "start",
+		end: number | "end",
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
@@ -1464,8 +1467,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
 	public changeInterval(
 		interval: TInterval,
-		start: number | undefined,
-		end: number | undefined,
+		start: number | "start" | undefined,
+		end: number | "end" | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
@@ -2038,7 +2041,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	private rebasePositionWithSegmentSlide(
-		pos: number,
+		pos: number | "start" | "end",
 		seqNumberFrom: number,
 		localSeq: number,
 	): number | undefined {
@@ -2046,14 +2049,27 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("mergeTree client must exist");
 		}
 		const { clientId } = this.client.getCollabWindow();
-		const { segment, offset } = this.client.getContainingSegment(
-			pos,
-			{
-				referenceSequenceNumber: seqNumberFrom,
-				clientId: this.client.getLongClientId(clientId),
-			},
-			localSeq,
-		);
+		let segment: ISegment | undefined;
+		let offset: number | undefined;
+
+		if (pos === "start") {
+			segment = this.client.startOfTreeSegment;
+			offset = 0;
+		} else if (pos === "end") {
+			segment = this.client.endOfTreeSegment;
+			offset = 0;
+		} else {
+			const containingSegment = this.client.getContainingSegment(
+				pos,
+				{
+					referenceSequenceNumber: seqNumberFrom,
+					clientId: this.client.getLongClientId(clientId),
+				},
+				localSeq,
+			);
+			segment = containingSegment.segment;
+			offset = containingSegment.offset;
+		}
 
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
@@ -2197,8 +2213,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add(
-		start: number,
-		end: number,
+		_start: number,
+		_end: number,
 		intervalType: IntervalType,
 		props?: PropertySet,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
@@ -2211,9 +2227,28 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("Can not add transient intervals");
 		}
 		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
+			// todo: re-enable
 			// throw new UsageError(
 			// 	"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
 			// );
+		}
+
+		let start;
+
+		if (stickiness & IntervalStickiness.START && canBeExclusive) {
+			// todo: should we automatically change the pos in this case?
+			start = _start === 0 ? "start" : _start;
+		} else {
+			start = _start;
+		}
+
+		let end;
+
+		if (stickiness & IntervalStickiness.END && canBeExclusive) {
+			// todo: should we automatically change the pos in this case?
+			end = _end === this.client?.getLength() ? "end" : _end;
+		} else {
+			end = _end;
 		}
 
 		const interval: TInterval = this.localCollection.addInterval(
@@ -2472,8 +2507,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		} else {
 			// If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
 			// should be the winning change.
-			let start: number | undefined;
-			let end: number | undefined;
+			let start: number | "start" | undefined;
+			let end: number | "end" | undefined;
 			// Track pending start/end independently of one another.
 			if (!this.hasPendingChangeStart(id)) {
 				start = serializedInterval.start;

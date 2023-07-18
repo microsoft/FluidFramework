@@ -103,7 +103,7 @@ export interface IInterval {
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
     // @internal
-    modify(label: string, start: number | undefined, end: number | undefined, op?: ISequencedDocumentMessage, localSeq?: number): IInterval | undefined;
+    modify(label: string, start: number | "start" | undefined, end: number | "end" | undefined, op?: ISequencedDocumentMessage, localSeq?: number): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // @internal
@@ -158,7 +158,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
+    create(label: string, start: number | "start" | undefined, end: number | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
 }
 
 // @public (undocumented)
@@ -320,13 +320,13 @@ export interface ISerializableInterval extends IInterval {
 
 // @internal
 export interface ISerializedInterval {
-    end: number;
+    end: number | "end";
     intervalType: IntervalType;
     // (undocumented)
     isExclusive: boolean;
     properties?: PropertySet;
     sequenceNumber: number;
-    start: number;
+    start: number | "start";
     stickiness?: IntervalStickiness;
 }
 

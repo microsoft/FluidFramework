@@ -132,6 +132,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * @internal
+	 */
+	public get startOfTreeSegment() {
+		return this._mergeTree.startOfTree;
+	}
+
+	/**
+	 * @internal
+	 */
+	public get endOfTreeSegment() {
+		return this._mergeTree.endOfTree;
+	}
+
+	/**
 	 * The merge tree maintains a queue of segment groups for each local operation.
 	 * These segment groups track segments modified by an operation.
 	 * This method peeks the tail of that queue, and returns the segments groups there.

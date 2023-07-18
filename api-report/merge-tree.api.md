@@ -110,6 +110,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
+    // Warning: (ae-forgotten-export) The symbol "EndOfTreeSegment" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    get endOfTreeSegment(): EndOfTreeSegment;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
@@ -180,6 +184,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
+    // Warning: (ae-forgotten-export) The symbol "StartOfTreeSegment" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    get startOfTreeSegment(): StartOfTreeSegment;
     // (undocumented)
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
     // (undocumented)
@@ -590,6 +598,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
+    readonly isEndEndpoint?: boolean;
     readonly isEndpoint?: boolean;
     readonly isStartEndpoint?: boolean;
     localRefs?: LocalReferenceCollection;

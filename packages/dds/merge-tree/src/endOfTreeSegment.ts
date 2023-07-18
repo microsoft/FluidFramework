@@ -29,6 +29,7 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 	type: string = "EndOfTreeSegment";
 	readonly isEndpoint = true;
+	readonly isEndEndpoint = true;
 	constructor(private readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
