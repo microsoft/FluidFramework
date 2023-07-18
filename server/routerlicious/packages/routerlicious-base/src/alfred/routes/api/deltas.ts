@@ -36,7 +36,8 @@ export function create(
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
-	const getDeltasRequestMaxOpsRange = config.get("alfred:getDeltasRequestMaxOpsRange") ?? 2000;
+	const getDeltasRequestMaxOpsRange =
+		(config.get("alfred:getDeltasRequestMaxOpsRange") as number) ?? 2000;
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -147,12 +148,12 @@ export function create(
 		(request, response, next) => {
 			let from = stringToSequenceNumber(request.query.from);
 			let to = stringToSequenceNumber(request.query.to);
-			if (!from && !to) {
+			if (from === undefined && to === undefined) {
 				from = 0;
 				to = from + getDeltasRequestMaxOpsRange + 1;
-			} else if (!to) {
+			} else if (to === undefined) {
 				to = from + getDeltasRequestMaxOpsRange + 1;
-			} else if (!from) {
+			} else if (from === undefined) {
 				from = Math.max(0, to - getDeltasRequestMaxOpsRange - 1);
 			}
 
