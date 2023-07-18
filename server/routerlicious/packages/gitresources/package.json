@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/gitresources",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Git resource definitions for Fluid services",
 	"homepage": "https://fluidframework.com",
 	"repository": {

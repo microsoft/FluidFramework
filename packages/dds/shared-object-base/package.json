@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-object-base",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "Fluid base class for shared distributed data structures",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -87,7 +87,7 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/benchmark": "^2.1.0",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"benchmark": "^2.1.4",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

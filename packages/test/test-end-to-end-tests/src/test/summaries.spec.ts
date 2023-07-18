@@ -381,7 +381,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			// In summarizer, load the data store should fail.
 			await assert.rejects(
 				requestFluidObject<TestDataObject1>(createSummarizerResult.container, "/"),
-				(e) =>
+				(e: Error) =>
 					e.message ===
 					"Non interactive/summarizer client's data object should not be initialized",
 				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",

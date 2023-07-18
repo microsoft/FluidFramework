@@ -49,9 +49,6 @@ jobs:
 
     # Install
     - template: include-use-node-version.yml
-      parameters:
-        buildDirectory: ${{ parameters.testWorkspace }}
-        version: '16.16.0'
 
     - task: Bash@3
       displayName: Print Parameters
