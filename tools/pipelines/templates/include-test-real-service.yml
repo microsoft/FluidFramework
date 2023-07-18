@@ -66,9 +66,6 @@ parameters:
   type: stepList
   default: []
 
-variables:
-  - template: include-vars-node-version.yml
-
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -163,8 +160,6 @@ jobs:
             "
 
       - template: include-use-node-version.yml
-        parameters:
-          version: ${{ variables.nodeVersion }}
 
       # Download artifact
       - task: DownloadPipelineArtifact@2

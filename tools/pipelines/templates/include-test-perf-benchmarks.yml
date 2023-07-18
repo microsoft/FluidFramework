@@ -21,9 +21,6 @@ parameters:
   type: number
   default: 60
 
-variables:
-  - template: include-vars-node-version.yml
-
 jobs:
   - job: runTests
     displayName: Run tests
@@ -52,8 +49,6 @@ jobs:
 
     # Install
     - template: include-use-node-version.yml
-      parameters:
-        version: ${{ variables.nodeVersion }}
 
     - task: Bash@3
       displayName: Print Parameters

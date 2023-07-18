@@ -20,9 +20,6 @@ parameters:
   - policy-check
   - layer-check
 
-variables:
-  - template: include-vars-node-version.yml
-
 stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
@@ -33,8 +30,6 @@ stages:
     displayName: Run checks
     steps:
     - template: include-use-node-version.yml
-      parameters:
-        version: ${{ variables.nodeVersion }}
 
     - template: include-install-pnpm.yml
       parameters:

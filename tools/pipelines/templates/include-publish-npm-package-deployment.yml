@@ -39,9 +39,6 @@ parameters:
   type: string
   default:
 
-variables:
-  - template: include-vars-node-version.yml
-
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -59,8 +56,6 @@ jobs:
           - download: current
             artifact: pack
           - template: include-use-node-version.yml
-            parameters:
-              version: ${{ variables.nodeVersion }}
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}

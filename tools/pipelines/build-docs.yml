@@ -80,7 +80,6 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
-  - template: include-vars-node-version.yml
 
 # no PR triggers
 trigger:
@@ -188,8 +187,6 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - template: templates/include-use-node-version.yml
-          parameters:
-            version: ${{ variables.nodeVersion }}
 
         - template: templates/include-install-pnpm.yml
           parameters:
@@ -238,8 +235,6 @@ stages:
           clean: true
 
         - template: templates/include-use-node-version.yml
-          parameters:
-            version: ${{ variables.nodeVersion }}
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

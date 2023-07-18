@@ -51,9 +51,6 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
-variables:
-  - template: include-vars-node-version.yml
-
 jobs:
   # Job - Build
   - job: build
@@ -92,8 +89,6 @@ jobs:
           "
 
     - template: include-use-node-version.yml
-      parameters:
-        version: ${{ variables.nodeVersion }}
 
     - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml
