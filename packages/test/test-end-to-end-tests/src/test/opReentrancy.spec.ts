@@ -14,10 +14,10 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	timeoutAwait,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
-	itExpects,
 	itExpectsSkipsFailureOnSpecificDrivers,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-internal/test-version-utils";
@@ -93,12 +93,17 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		],
 		["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 		async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
+			await timeoutAwait(
+				setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableOpReentryCheck: true,
+					},
+				}),
+				{
+					errorMsg: "Timeout waiting for containers to be set up",
 				},
-			});
+			);
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -111,7 +116,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			});
 
 			sharedMap2.set("key2", "2");
-			await provider.ensureSynchronized();
+			await timeoutAwait(provider.ensureSynchronized(), {
+				errorMsg: "Timeout waiting for containers to synchronize",
+			});
 
 			// The offending container is closed
 			assert.ok(container1.closed);
@@ -130,17 +137,23 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			} batches`,
 			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 			async () => {
-				await setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						enableGroupedBatching,
+				await timeoutAwait(
+					setupContainers({
+						...testContainerConfig,
+						runtimeOptions: {
+							enableGroupedBatching,
+						},
+					}),
+					{
+						errorMsg: "Timeout waiting for containers to be set up",
 					},
-				});
+				);
 
 				sharedString1.insertText(0, "ad");
 				sharedString1.insertText(1, "c");
-				await provider.ensureSynchronized();
-
+				await timeoutAwait(provider.ensureSynchronized(), {
+					errorMsg: "Timeout waiting for containers to synchronize",
+				});
 				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 						sharedString2.insertText(3, "x");
@@ -162,11 +175,15 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				sharedString1.insertText(1, "b");
 				sharedString2.insertText(0, "y");
-				await provider.ensureSynchronized();
+				await timeoutAwait(provider.ensureSynchronized(), {
+					errorMsg: "Timeout waiting for containers to synchronize",
+				});
 
 				// The offending container is still alive
 				sharedString2.insertText(0, "z");
-				await provider.ensureSynchronized();
+				await timeoutAwait(provider.ensureSynchronized(), {
+					errorMsg: "Timeout waiting for containers to synchronize",
+				});
 
 				assert.strictEqual(sharedString1.getText(), "zyabxcd");
 				assert.strictEqual(
@@ -191,7 +208,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	});
 
 	describe("Reentry safeguards", () => {
-		itExpects(
+		itExpectsSkipsFailureOnSpecificDrivers(
 			"Flushing is not supported",
 			[
 				{
@@ -199,13 +216,19 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					error: "Flushing is not supported inside DDS event handlers",
 				},
 			],
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 			async () => {
-				await setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						flushMode: FlushMode.Immediate,
+				await timeoutAwait(
+					setupContainers({
+						...testContainerConfig,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+						},
+					}),
+					{
+						errorMsg: "Timeout waiting for containers to be set up",
 					},
-				});
+				);
 
 				sharedString1.on("sequenceDelta", () =>
 					assert.throws(() =>
@@ -216,7 +239,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				);
 
 				assert.throws(() => sharedString1.insertText(0, "ad"));
-				await provider.ensureSynchronized();
+				await timeoutAwait(provider.ensureSynchronized(), {
+					errorMsg: "Timeout waiting for containers to synchronize",
+				});
 			},
 		);
 
