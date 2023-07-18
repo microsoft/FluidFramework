@@ -88,8 +88,6 @@ async function generateScreenshots() {
 				throw error;
 			}
 
-			// await preview.stop();
-
 			console.log(chalk.green(`${testName} screenshot generated successfully!`));
 			console.group();
 			console.debug(`Saved to "${screenshotFilePath}".`);
