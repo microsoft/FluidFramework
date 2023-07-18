@@ -80,6 +80,7 @@ describe("Routerlicious", () => {
 					const testSecretManager = new TestSecretManager(
 						crypto.randomBytes(32).toString("base64"),
 					);
+					const testFetchTenantKeyMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
 						testCollectionName,
@@ -89,6 +90,7 @@ describe("Routerlicious", () => {
 						testExtHistorianUrl,
 						testIntHistorianUrl,
 						testSecretManager,
+						testFetchTenantKeyMetricIntervalMs,
 					);
 					supertest = request(app);
 				});
