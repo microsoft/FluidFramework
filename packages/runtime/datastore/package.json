@@ -69,7 +69,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
+		"@fluidframework/protocol-base": "1.0.0-175213",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
@@ -79,7 +79,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.20.0",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/datastore-previous": "npm:@fluidframework/datastore@2.0.0-internal.5.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -103,6 +103,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }
