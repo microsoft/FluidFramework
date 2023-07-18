@@ -14,7 +14,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	timeoutAwait,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -93,17 +92,12 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		],
 		["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 		async () => {
-			await timeoutAwait(
-				setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
-				}),
-				{
-					errorMsg: "Timeout waiting for containers to be set up",
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					enableOpReentryCheck: true,
 				},
-			);
+			});
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -116,9 +110,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			});
 
 			sharedMap2.set("key2", "2");
-			await timeoutAwait(provider.ensureSynchronized(), {
-				errorMsg: "Timeout waiting for containers to synchronize",
-			});
+			await provider.ensureSynchronized();
 
 			// The offending container is closed
 			assert.ok(container1.closed);
@@ -137,23 +129,17 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			} batches`,
 			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 			async () => {
-				await timeoutAwait(
-					setupContainers({
-						...testContainerConfig,
-						runtimeOptions: {
-							enableGroupedBatching,
-						},
-					}),
-					{
-						errorMsg: "Timeout waiting for containers to be set up",
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
 					},
-				);
+				});
 
 				sharedString1.insertText(0, "ad");
 				sharedString1.insertText(1, "c");
-				await timeoutAwait(provider.ensureSynchronized(), {
-					errorMsg: "Timeout waiting for containers to synchronize",
-				});
+				await provider.ensureSynchronized();
+
 				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 						sharedString2.insertText(3, "x");
@@ -175,15 +161,11 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 				sharedString1.insertText(1, "b");
 				sharedString2.insertText(0, "y");
-				await timeoutAwait(provider.ensureSynchronized(), {
-					errorMsg: "Timeout waiting for containers to synchronize",
-				});
+				await provider.ensureSynchronized();
 
 				// The offending container is still alive
 				sharedString2.insertText(0, "z");
-				await timeoutAwait(provider.ensureSynchronized(), {
-					errorMsg: "Timeout waiting for containers to synchronize",
-				});
+				await provider.ensureSynchronized();
 
 				assert.strictEqual(sharedString1.getText(), "zyabxcd");
 				assert.strictEqual(
@@ -218,17 +200,12 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			],
 			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 			async () => {
-				await timeoutAwait(
-					setupContainers({
-						...testContainerConfig,
-						runtimeOptions: {
-							flushMode: FlushMode.Immediate,
-						},
-					}),
-					{
-						errorMsg: "Timeout waiting for containers to be set up",
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
 					},
-				);
+				});
 
 				sharedString1.on("sequenceDelta", () =>
 					assert.throws(() =>
@@ -239,9 +216,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				);
 
 				assert.throws(() => sharedString1.insertText(0, "ad"));
-				await timeoutAwait(provider.ensureSynchronized(), {
-					errorMsg: "Timeout waiting for containers to synchronize",
-				});
+				await provider.ensureSynchronized();
 			},
 		);
 
@@ -320,12 +295,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`,
 				["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 				async () => {
-					await timeoutAwait(
-						setupContainers(testConfig.options, testConfig.featureGates),
-						{
-							errorMsg: "Timeout waiting for containers to be set up",
-						},
-					);
+					await setupContainers(testConfig.options, testConfig.featureGates);
 
 					sharedMap1.on("valueChanged", (changed) => {
 						if (changed.key !== "key2") {
@@ -340,9 +310,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 					sharedMap1.set("key1", "1");
 					sharedMap2.set("key2", "2");
-					await timeoutAwait(provider.ensureSynchronized(), {
-						errorMsg: "Timeout waiting for containers to synchronize",
-					});
+					await provider.ensureSynchronized();
 
 					// The offending container is not closed
 					assert.ok(!container1.closed);
@@ -362,12 +330,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`,
 				["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 				async () => {
-					await timeoutAwait(
-						setupContainers(testConfig.options, testConfig.featureGates),
-						{
-							errorMsg: "Timeout waiting for containers to be set up",
-						},
-					);
+					await setupContainers(testConfig.options, testConfig.featureGates);
 
 					await container1.deltaManager.inbound.pause();
 					await container1.deltaManager.outbound.pause();
@@ -387,9 +350,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 					container1.deltaManager.inbound.resume();
 					container1.deltaManager.outbound.resume();
-					await timeoutAwait(provider.ensureSynchronized(), {
-						errorMsg: "Timeout waiting for containers to synchronize",
-					});
+					await provider.ensureSynchronized();
 
 					// The offending container is not closed
 					assert.ok(!container1.closed);
