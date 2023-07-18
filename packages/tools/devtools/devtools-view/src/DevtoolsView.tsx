@@ -39,6 +39,7 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
+import { useLogger } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
@@ -455,6 +456,7 @@ interface MenuProps {
  */
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
 
@@ -464,14 +466,26 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Telemetry" },
+		});
 	}
 
 	function onSettingsClicked(): void {
 		setSelection({ type: "settingsMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Settings" },
+		});
 	}
 
 	function onHomeClicked(): void {
 		setSelection({ type: "homeMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Home" },
+		});
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -546,7 +560,7 @@ interface ContainersMenuSectionProps {
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
 	const { containers, selectContainer, currentContainerSelection } = props;
-
+	const usageLogger = useLogger();
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
@@ -563,6 +577,10 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						text={containerKey}
 						onClick={(event): void => {
 							selectContainer(`${containerKey}`);
+							usageLogger?.sendTelemetryEvent({
+								eventName: "Navigation",
+								details: { target: "Menu_Container" },
+							});
 						}}
 					/>
 				))}
@@ -586,6 +604,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -596,6 +615,7 @@ function RefreshButton(): React.ReactElement {
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
+		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
 	}
 
 	return (

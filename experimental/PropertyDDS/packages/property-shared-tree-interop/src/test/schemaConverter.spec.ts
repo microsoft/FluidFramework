@@ -163,7 +163,7 @@ describe("schema converter", () => {
 		it(`throws at unknown typeid`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["Test:Optional-1.0.0"])),
-				(e) => validateAssertionError(e, `Unknown typeid "Test:Optional-1.0.0"`),
+				(e: Error) => validateAssertionError(e, `Unknown typeid "Test:Optional-1.0.0"`),
 				"Expected exception was not thrown",
 			);
 		});
@@ -171,7 +171,7 @@ describe("schema converter", () => {
 		it(`throws at unknown context`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["custom<Test:Optional-1.0.0>"])),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						`Unknown context "custom" in typeid "custom<Test:Optional-1.0.0>"`,
@@ -183,12 +183,14 @@ describe("schema converter", () => {
 		it(`throws when using "BaseProperty"`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["array<BaseProperty>"])),
-				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				(e: Error) =>
+					validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["BaseProperty"])),
-				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				(e: Error) =>
+					validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 		});
@@ -218,7 +220,7 @@ describe("schema converter", () => {
 		it(`does not support types with nested properties`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["Test:NestedProperties-1.0.0"])),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						`Nested properties are not supported yet (in property "withNestedProperties" of type "Test:NestedProperties-1.0.0")`,
@@ -333,7 +335,7 @@ describe("schema converter", () => {
 		it(`"set" context is not supported`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, new Set(["set<Test:Optional-1.0.0>"])),
-				(e) => validateAssertionError(e, `Context "set" is not supported yet`),
+				(e: Error) => validateAssertionError(e, `Context "set" is not supported yet`),
 				"Expected exception was not thrown",
 			);
 		});
@@ -464,7 +466,8 @@ describe("schema converter", () => {
 		it(`throws when using "BaseProperty" in properties`, () => {
 			assert.throws(
 				() => convertSchema(FieldKinds.optional, Any, new Set(["Test:BaseProperty-1.0.0"])),
-				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				(e: Error) =>
+					validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 
@@ -475,7 +478,8 @@ describe("schema converter", () => {
 						Any,
 						new Set(["Test:BasePropertyCollection-1.0.0"]),
 					),
-				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				(e: Error) =>
+					validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 		});
