@@ -63,7 +63,7 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      # internal/msinternal/example packages are deleted for official releases, but in case something goes wrong with that,
+      # internal/example packages are deleted for official releases, but in case something goes wrong with that,
       # using the `dev` registry is safe.
       devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
       feedName: https://registry.npmjs.org
