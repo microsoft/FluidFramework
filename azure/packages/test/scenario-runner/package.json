@@ -82,7 +82,7 @@
 		"mocha": "^10.2.0",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "0.7.2",
+		"tinylicious": "^1.0.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
