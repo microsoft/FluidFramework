@@ -55,6 +55,8 @@ async function generateScreenshots() {
 		filePaths,
 	});
 
+	console.debug(`Found ${components.length} test stories. Generating screenshots...`);
+
 	// Run screenshot generation on each detected component
 	// TODO: aggregate errors and list at the end.
 	for (const component of components) {
@@ -88,7 +90,7 @@ async function generateScreenshots() {
 				throw error;
 			}
 
-			console.log(chalk.green(`${testName} screenshot generated successfully!`));
+			console.debug(chalk.green(`${testName} screenshot generated successfully!`));
 			console.group();
 			console.debug(`Saved to "${screenshotFilePath}".`);
 			console.groupEnd();
@@ -129,7 +131,11 @@ function forcedColorsFromTheme(theme) {
 
 generateScreenshots().then(
 	() => {
-		console.log(chalk.green("SUCCESS: Story screenshots generated!"));
+		console.log(
+			chalk.green(
+				`SUCCESS: Story screenshots generated! They can be found under "${outputDirectoryPath}".`,
+			),
+		);
 		console.info(
 			chalk.blue(
 				"If any screenshots were added or changed, verify that the changes are expected and check them in alongside your code changes.",
