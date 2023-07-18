@@ -316,74 +316,88 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				name: "Enabled by options, disabled by feature gate",
 			},
 		].forEach((testConfig) => {
-			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
-				await setupContainers(testConfig.options, testConfig.featureGates);
-
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
-
-				const outOfOrderObservations: string[] = [];
-				sharedMap1.on("valueChanged", (changed) => {
-					outOfOrderObservations.push(changed.key);
-				});
-
-				sharedMap1.set("key1", "1");
-				sharedMap2.set("key2", "2");
-				await provider.ensureSynchronized();
-
-				// The offending container is not closed
-				assert.ok(!container1.closed);
-				assert.equal(sharedMap1.get("key2"), "1 updated");
-
-				// The other container is also fine
-				assert.equal(sharedMap2.get("key1"), "1");
-				assert.equal(sharedMap2.get("key2"), "1 updated");
-
-				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
-				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
-			});
-
-			it(`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`, async () => {
-				await setupContainers(
-					{
-						...testContainerConfig,
-						runtimeOptions: {
-							enableOpReentryCheck: true,
+			itSkipsFailureOnSpecificDrivers(
+				`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`,
+				["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+				async () => {
+					await timeoutAwait(
+						setupContainers(testConfig.options, testConfig.featureGates),
+						{
+							errorMsg: "Timeout waiting for containers to be set up",
 						},
-					},
-					{ "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-				);
+					);
 
-				await container1.deltaManager.inbound.pause();
-				await container1.deltaManager.outbound.pause();
+					sharedMap1.on("valueChanged", (changed) => {
+						if (changed.key !== "key2") {
+							sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
+						}
+					});
 
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
+					const outOfOrderObservations: string[] = [];
+					sharedMap1.on("valueChanged", (changed) => {
+						outOfOrderObservations.push(changed.key);
+					});
 
-				const outOfOrderObservations: string[] = [];
-				sharedMap1.on("valueChanged", (changed) => {
-					outOfOrderObservations.push(changed.key);
-				});
+					sharedMap1.set("key1", "1");
+					sharedMap2.set("key2", "2");
+					await timeoutAwait(provider.ensureSynchronized(), {
+						errorMsg: "Timeout waiting for containers to synchronize",
+					});
 
-				sharedMap1.set("key1", "1");
+					// The offending container is not closed
+					assert.ok(!container1.closed);
+					assert.equal(sharedMap1.get("key2"), "1 updated");
 
-				container1.deltaManager.inbound.resume();
-				container1.deltaManager.outbound.resume();
-				await provider.ensureSynchronized();
+					// The other container is also fine
+					assert.equal(sharedMap2.get("key1"), "1");
+					assert.equal(sharedMap2.get("key2"), "1 updated");
 
-				// The offending container is not closed
-				assert.ok(!container1.closed);
+					// The second event handler didn't receive the events in the actual order of changes
+					assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+					assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+				},
+			);
 
-				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
-				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
-			});
+			itSkipsFailureOnSpecificDrivers(
+				`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`,
+				["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+				async () => {
+					await timeoutAwait(
+						setupContainers(testConfig.options, testConfig.featureGates),
+						{
+							errorMsg: "Timeout waiting for containers to be set up",
+						},
+					);
+
+					await container1.deltaManager.inbound.pause();
+					await container1.deltaManager.outbound.pause();
+
+					sharedMap1.on("valueChanged", (changed) => {
+						if (changed.key !== "key2") {
+							sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
+						}
+					});
+
+					const outOfOrderObservations: string[] = [];
+					sharedMap1.on("valueChanged", (changed) => {
+						outOfOrderObservations.push(changed.key);
+					});
+
+					sharedMap1.set("key1", "1");
+
+					container1.deltaManager.inbound.resume();
+					container1.deltaManager.outbound.resume();
+					await timeoutAwait(provider.ensureSynchronized(), {
+						errorMsg: "Timeout waiting for containers to synchronize",
+					});
+
+					// The offending container is not closed
+					assert.ok(!container1.closed);
+
+					// The second event handler didn't receive the events in the actual order of changes
+					assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+					assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+				},
+			);
 		}));
 });
