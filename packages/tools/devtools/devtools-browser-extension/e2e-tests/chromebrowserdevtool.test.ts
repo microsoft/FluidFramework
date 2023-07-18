@@ -7,21 +7,26 @@ import { globals } from "../jest.config";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("End to end tests", () => {
-	const getValue = async (index: number, expectedValue: string) =>
-		retryWithEventualValue(
-			() =>
-				page.evaluate((i: number) => {
+	/**
+	 * Gets the value of the text form backed by our CollaborativeTextArea.
+	 *
+	 * @remarks Assumes there is only one `text-area` element on the page.
+	 *
+	 * @param expectedValue - The value we expect the value of the text area to be.
+	 */
+	async function getTextFormValue(expectedValue: string): Promise<string> {
+		return retryWithEventualValue(
+			/* callback: */ () =>
+				page.evaluate(() => {
 					const divs = document.getElementsByClassName("text-area");
-					const textAreaElements = divs[i].getElementsByTagName("textarea");
+					const textAreaElements = divs[0].getElementsByTagName("textarea");
 					const textarea = textAreaElements[0] as HTMLTextAreaElement;
-					if (textarea) {
-						return textarea.value;
-					}
-					return "-----undefined-----";
-				}, index),
-			(actualValue) => actualValue === expectedValue,
-			"not propagated" /* defaultValue */,
+					return textarea?.value;
+				}),
+			/* check: */ (actualValue) => actualValue === expectedValue,
+			/* defaultValue: */ "not propagated",
 		);
+	}
 
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
@@ -37,7 +42,7 @@ describe("End to end tests", () => {
 
 	it("Smoke: verify test app can be launched", async () => {
 		// Verify by checking for text area associated with the SharedString.
-		const textArea = await getValue(0, "");
+		const textArea = await getTextFormValue("");
 		expect(textArea).toEqual("");
 	});
 
