@@ -88,12 +88,12 @@ To run all of the automated tests, run `npm run test` in a terminal from the roo
 ##### Unit Tests
 
 This package uses [mocha](https://mochajs.org/) for its unit tests.
-To run just the unit tests, run `npm run test:unit` in a terminal from the root directory of this package.
+To run just the unit tests, run `npm run test:mocha` in a terminal from the root directory of this package.
 
 ##### End-To-End Tests
 
 This package uses [jest](https://jestjs.io/) and a small backing test app to test end-to-end scenarios in a browser environment.
-To run the automated end-to-end tests, run `npm run test:end-to-end` in a terminal from the root directory of this package.
+To run the automated end-to-end tests, run `npm run test:jest` in a terminal from the root directory of this package.
 
 #### Local Extension Testing
 
