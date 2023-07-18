@@ -153,6 +153,49 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		}
 	});
 
+	it("directory repro", async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		await container.attach(request);
+		const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
+		const directory1 = SharedDirectory.create(dsClient1.runtime);
+		dsClient1.root.set("directory", directory1.handle);
+		const foo = directory1.createSubDirectory("foo");
+		foo.set("key1", "value1");
+		foo.set("key2", "value2");
+		const bar = directory1.createSubDirectory("bar");
+		bar.set("key3", "value3");
+		foo.set("key4", "value4");
+
+		let valueChangedCount = 0;
+		directory1.on("valueChanged", () => {
+			valueChangedCount++;
+		});
+
+		const url: any = await container.getAbsoluteUrl("");
+		const container2 = await loader.resolve({ url });
+		const dsClient2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		const directory2 = await dsClient2.root
+			.get<IFluidHandle<SharedDirectory>>("directory")
+			?.get();
+		assert(directory2 !== undefined, "Directory is not available in the second client");
+
+		directory2.on("valueChanged", (event, local) => {
+			console.log("directory2", event, local);
+		});
+
+		const foo2 = directory2.getWorkingDirectory("foo");
+		assert(foo2 !== undefined, "Unable to get foo subdirectory");
+		foo2.set("key1", "value5");
+		const bar2 = directory2.getWorkingDirectory("bar");
+		assert(bar2 !== undefined, "Unable to get bar subdirectory");
+		bar2.set("key3", "value6");
+
+		await provider.ensureSynchronized();
+		assert(foo.get("key1") === foo2.get("key1"));
+		assert(bar.get("key3") === bar2.get("key3"));
+		assert(valueChangedCount === 2);
+	});
+
 	it("DataStores in detached container", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
