@@ -36,6 +36,7 @@ export function create(
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
+	const defaultUnknownOpCount = 2000;
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -144,9 +145,19 @@ export function create(
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-			const from = stringToSequenceNumber(request.query.from);
-			const to = stringToSequenceNumber(request.query.to);
+			let from = stringToSequenceNumber(request.query.from);
+			let to = stringToSequenceNumber(request.query.to);
+			if (from === undefined && to === undefined) {
+				from = 0;
+				to = from + defaultUnknownOpCount + 1;
+			} else if (to === undefined) {
+				to = from + defaultUnknownOpCount + 1;
+			} else if (from === undefined) {
+				from = Math.max(0, to - defaultUnknownOpCount - 1);
+			}
+
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+			const caller = request.query.caller?.toString();
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
@@ -155,6 +166,7 @@ export function create(
 				getParam(request.params, "id"),
 				from,
 				to,
+				caller,
 			);
 
 			handleResponse(deltasP, response, undefined, 500);
