@@ -155,7 +155,7 @@ export function create(
 			} else if (!from) {
 				from = Math.max(0, to - getDeltasRequestMaxOpsRange - 1);
 			}
-			
+
 			const clientRequestSize = to - from - 1;
 			if (clientRequestSize > getDeltasRequestMaxOpsRange) {
 				return handleResponse(
