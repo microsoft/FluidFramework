@@ -83,7 +83,7 @@
 		"@fluid-internal/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.20.0",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.20.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.5.2.0",
@@ -109,6 +109,86 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_BlockAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_BlockUpdateActions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IHierBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IMergeBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IMergeNode": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalBlockAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_IncrementalMapState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalSegmentAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IncrementalSegmentActions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_MergeBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_NodeAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SegmentActions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_InsertContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeNodeCommon": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISegmentChanges": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_IncrementalExecOp": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_MaxNodesInBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_MinListener": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SearchResult": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_ordinalToArray": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
