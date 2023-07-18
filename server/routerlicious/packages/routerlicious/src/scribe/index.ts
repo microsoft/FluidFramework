@@ -62,12 +62,18 @@ export async function scribeCreate(
 		(config.get("scribe:restartOnCheckpointFailure") as boolean) ?? true;
 	const kafkaCheckpointOnReprocessingOp =
 		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
+	const getDeltasRequestMaxOpsRange =
+		(config.get("alfred:getDeltasRequestMaxOpsRange") as number) ?? 2000;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl);
 
-	const deltaManager = new DeltaManager(authEndpoint, internalAlfredUrl);
+	const deltaManager = new DeltaManager(
+		authEndpoint,
+		internalAlfredUrl,
+		getDeltasRequestMaxOpsRange,
+	);
 	const factory = await getDbFactory(config);
 
 	const checkpointHeuristics = config.get(
