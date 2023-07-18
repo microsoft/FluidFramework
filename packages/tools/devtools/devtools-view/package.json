@@ -34,6 +34,7 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:mocha": "npm run test:screenshots",
 		"test:screenshots": "node ./screenshot-tests.mjs",
 		"tsc": "tsc"
 	},
