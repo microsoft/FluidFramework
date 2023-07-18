@@ -18,7 +18,6 @@ import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -128,7 +127,7 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-	private useCacheForOps = true;
+	private firstCacheMiss = false;
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
@@ -147,7 +146,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		) => Promise<ISequencedDocumentMessage[]>,
 		private readonly requestFromSocket: (from: number, to: number) => void,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
-		private readonly storageManagerGetter: () => OdspDocumentStorageService | undefined,
 	) {}
 
 	public fetchMessages(
@@ -163,13 +161,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		// Better implementation would be to return only what we have in cache, but that also breaks API
 		assert(!cachedOnly || toTotal === undefined, 0x1e3);
 
-		const isFirstSnapshotFromNetwork = this.storageManagerGetter()?.isFirstSnapshotFromNetwork;
-		assert(
-			isFirstSnapshotFromNetwork !== undefined,
-			"snapshot should have been fetched by now!",
-		);
-		// Don't use cache for ops is snapshot is fetched from network.
-		this.useCacheForOps = !isFirstSnapshotFromNetwork;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;
@@ -196,13 +187,13 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			this.requestFromSocket(from, to);
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
-			// This saves a bit of processing time.
-			if (this.useCacheForOps) {
+			// This saves a bit of processing time
+			if (!this.firstCacheMiss) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
 				// Set the firstCacheMiss as true in case we didn't get all the ops.
 				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
-				this.useCacheForOps = from + messagesFromCache.length >= to;
+				this.firstCacheMiss = from + messagesFromCache.length < to;
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
 					return {
