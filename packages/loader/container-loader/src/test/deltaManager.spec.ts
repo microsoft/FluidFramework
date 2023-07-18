@@ -505,8 +505,7 @@ describe("Loader", () => {
 									};
 								});
 
-								// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-								throw new Error((abortSignal as any).reason);
+								throw new Error(abortSignal.reason);
 							},
 						};
 					},

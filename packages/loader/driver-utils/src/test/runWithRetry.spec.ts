@@ -188,8 +188,7 @@ describe("runWithRetry Tests", () => {
 		const abortController = new AbortController();
 
 		const api = () => {
-			// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-			(abortController as any).abort("Sample abort reason");
+			abortController.abort("Sample abort reason");
 			const error = new Error("aborted");
 			(error as any).canRetry = true;
 			throw error;

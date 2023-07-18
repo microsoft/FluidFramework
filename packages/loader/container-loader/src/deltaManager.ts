@@ -623,8 +623,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
 			if (!opsFromFetch && cancelFetch(op)) {
-				// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-				(controller as any).abort("DeltaManager getDeltas fetch cancelled");
+				controller.abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}
 		};
@@ -633,9 +632,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
 			this.closeAbortController.signal.onabort = () =>
-				// Remove case to any when @types/node is upgraded to 16 (AB#4884)
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				(controller as any).abort((this.closeAbortController.signal as any).reason);
+				controller.abort(this.closeAbortController.signal.reason);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -663,8 +661,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.logger.sendTelemetryEvent({
 					eventName: "DeltaManager_GetDeltasAborted",
 					fetchReason,
-					// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-					reason: (controller.signal as any).reason,
+					reason: controller.signal.reason,
 				});
 			}
 			this.closeAbortController.signal.onabort = null;
@@ -721,8 +718,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues() {
-		// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-		(this.closeAbortController as any).abort("DeltaManager was closed");
+		this.closeAbortController.abort("DeltaManager was closed");
 
 		this._inbound.clear();
 		this._inboundSignal.clear();

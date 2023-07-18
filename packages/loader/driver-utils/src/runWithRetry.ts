@@ -80,8 +80,7 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
-						// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-						reason: (progress.cancel as any).reason,
+						reason: progress.cancel.reason,
 					},
 					err,
 				);
@@ -91,8 +90,7 @@ export async function runWithRetry<T>(
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						// Remove case to any when @types/node is upgraded to 16 (AB#4884)
-						reason: (progress.cancel as any).reason,
+						reason: progress.cancel.reason,
 					},
 				);
 			}
