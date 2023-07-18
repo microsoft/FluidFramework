@@ -79,13 +79,15 @@ export class TenantManager {
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
-		setInterval(() => {
-			if (!this.apiCounter.countersAreActive) {
-				return;
-			}
-			Lumberjack.info("Fetch tenant key api counters", this.apiCounter.getCounters());
-			this.apiCounter.resetAllCounters();
-		}, this.fetchTenantKeyMetricInterval);
+		if (fetchTenantKeyMetricInterval) {
+			setInterval(() => {
+				if (!this.apiCounter.countersAreActive) {
+					return;
+				}
+				Lumberjack.info("Fetch tenant key api counters", this.apiCounter.getCounters());
+				this.apiCounter.resetAllCounters();
+			}, this.fetchTenantKeyMetricInterval);
+		}
 	}
 
 	/**
