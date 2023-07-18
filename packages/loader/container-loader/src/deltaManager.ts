@@ -5,11 +5,8 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import {
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-} from "@fluidframework/common-definitions";
+import { IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	IDeltaHandlerStrategy,
 	IDeltaManager,
@@ -68,6 +65,13 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
 	(event: "establishingConnection", listener: (reason: string) => void);
 	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
+}
+
+/**
+ * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
+ */
+interface IBatchMetadata {
+	batch?: boolean;
 }
 
 /**
@@ -293,13 +297,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				batch[0].metadata?.batch === undefined,
+				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
-			assert(batch[0].metadata?.batch === true, 0x3ca /* no start batch markup */);
 			assert(
-				batch[batch.length - 1].metadata?.batch === false,
+				(batch[0].metadata as IBatchMetadata)?.batch === true,
+				0x3ca /* no start batch markup */,
+			);
+			assert(
+				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}

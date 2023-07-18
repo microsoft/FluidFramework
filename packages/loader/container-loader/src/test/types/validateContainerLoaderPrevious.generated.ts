@@ -83,6 +83,7 @@ declare function get_current_InterfaceDeclaration_IContainerExperimental():
 declare function use_old_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<old.IContainerExperimental>);
 use_old_InterfaceDeclaration_IContainerExperimental(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*

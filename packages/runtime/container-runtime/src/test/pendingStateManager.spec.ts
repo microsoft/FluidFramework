@@ -112,8 +112,10 @@ describe("Pending State Manager", () => {
 					connected: () => true,
 					reSubmit: () => {},
 					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
 				},
-				undefined,
+				undefined /* initialLocalState */,
+				undefined /* logger */,
 			);
 		});
 
@@ -286,8 +288,10 @@ describe("Pending State Manager", () => {
 					connected: () => true,
 					reSubmit: () => {},
 					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
 				},
 				{ pendingStates },
+				undefined /* logger */,
 			);
 		}
 

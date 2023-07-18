@@ -147,7 +147,6 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
 
-		// Note: we should not need an itExpects here as this error should not have fired.
 		itExpects(
 			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
 				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"

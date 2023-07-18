@@ -25,12 +25,12 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
+import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;

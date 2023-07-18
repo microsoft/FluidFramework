@@ -8,6 +8,14 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ContainerMessageType } from "..";
 import { IBatch } from "./definitions";
 
+/**
+ * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
+ */
+interface IGroupedBatchMessageContents {
+	type: typeof OpGroupingManager.groupedBatchOp;
+	contents: IGroupedMessage[];
+}
+
 interface IGroupedMessage {
 	contents?: unknown;
 	metadata?: Record<string, unknown>;
@@ -15,7 +23,7 @@ interface IGroupedMessage {
 }
 
 export class OpGroupingManager {
-	static groupedBatchOp = "groupedBatch";
+	static readonly groupedBatchOp = "groupedBatch";
 
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
@@ -25,10 +33,6 @@ export class OpGroupingManager {
 		}
 
 		for (const message of batch.content) {
-			// Blob attaches cannot be grouped (grouped batching would hide metadata)
-			if (message.type === ContainerMessageType.BlobAttach) {
-				return batch;
-			}
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
@@ -64,11 +68,14 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (op.contents?.type !== OpGroupingManager.groupedBatchOp) {
+		if (
+			(op.contents as { type?: unknown } | undefined)?.type !==
+			OpGroupingManager.groupedBatchOp
+		) {
 			return [op];
 		}
 
-		const messages = op.contents.contents as IGroupedMessage[];
+		const messages = (op.contents as IGroupedBatchMessageContents).contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Value, ValueSchema } from "../../core";
+import { Value, ValueSchema, PrimitiveValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
 
@@ -18,12 +18,6 @@ export type TypedValue<TValue extends ValueSchema> = {
 	[ValueSchema.Boolean]: boolean;
 	[ValueSchema.Serializable]: Value;
 }[TValue];
-
-/**
- * {@link ValueSchema} for privative types.
- * @alpha
- */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
 {
 	type PrimitiveValue2 = TypedValue<PrimitiveValueSchema>;

@@ -67,6 +67,8 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
+	lookupGlobalFieldSchema,
+	lookupTreeSchema,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -88,6 +90,7 @@ export {
 	FieldAdapter,
 	TreeAdapter,
 	MapTree,
+	LocalCommitSource,
 } from "./core";
 
 export {
@@ -129,7 +132,7 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
-	nodeKeyFieldKey,
+	nodeKeyField,
 	nodeKeySchema,
 } from "./domains";
 
@@ -145,7 +148,6 @@ export {
 	FieldEditor,
 	FieldChangeRebaser,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChangeset,
 	FieldChange,
@@ -206,7 +208,6 @@ export {
 	HasFieldChanges,
 	EditableTreeEvents,
 	on,
-	ValueConstraint,
 	InternalTypedSchemaTypes,
 	SchemaAware,
 	ArrayLikeMut,
@@ -243,6 +244,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	LazyTreeSchema,
 	FieldGenerator,
 	TreeDataContext,
 	NodeExistenceState,
@@ -270,7 +272,6 @@ export {
 	VisitorBindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,
@@ -281,6 +282,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	nodeKeyFieldKey,
 } from "./feature-libraries";
 
 export {

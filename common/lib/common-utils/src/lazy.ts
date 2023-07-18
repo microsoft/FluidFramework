@@ -5,6 +5,8 @@
 
 /**
  * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable.
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export class Lazy<T> {
 	private _value: T | undefined;

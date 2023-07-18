@@ -15,7 +15,12 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import {
+	describeNoCompat,
+	itExpects,
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
@@ -78,7 +83,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		await provider.ensureSynchronized();
 	};
 
-	itExpects(
+	itExpectsSkipsFailureOnSpecificDrivers(
 		"Should close the container when submitting an op while processing a batch",
 		[
 			{
@@ -86,6 +91,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
 			},
 		],
+		["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
 		async () => {
 			await setupContainers({
 				...testContainerConfig,
@@ -118,99 +124,69 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	);
 
 	[false, true].forEach((enableGroupedBatching) => {
-		// ADO:4537 Enable only after rebasing is supported by the DDS
-		it.skip(`Eventual consistency with op reentry - ${
-			enableGroupedBatching ? "Grouped" : "Regular"
-		} batches`, async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching,
-					enableBatchRebasing: true,
-				},
-			});
+		itSkipsFailureOnSpecificDrivers(
+			`Eventual consistency with op reentry - ${
+				enableGroupedBatching ? "Grouped" : "Regular"
+			} batches`,
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
 
-			sharedString1.insertText(0, "ad");
-			sharedString1.insertText(1, "c");
-			await provider.ensureSynchronized();
+				sharedString1.insertText(0, "ad");
+				sharedString1.insertText(1, "c");
+				await provider.ensureSynchronized();
 
-			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-					sharedString2.insertText(3, "x");
-				}
-			});
-			sharedMap2.on("valueChanged", (changed1) => {
-				if (changed1.key !== "key2" && changed1.key !== "key3") {
-					sharedMap2.on("valueChanged", (changed2) => {
-						if (changed2.key !== "key3") {
-							sharedMap2.set("key3", `${sharedMap1.get("key1")} updated`);
-						}
-					});
+				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+						sharedString2.insertText(3, "x");
+					}
+				});
+				sharedMap2.on("valueChanged", (changed1) => {
+					if (changed1.key !== "key2" && changed1.key !== "key3") {
+						sharedMap2.on("valueChanged", (changed2) => {
+							if (changed2.key !== "key3") {
+								sharedMap2.set("key3", `${sharedMap1.get("key1")} updated`);
+							}
+						});
 
-					sharedMap2.set("key2", "3");
-				}
-			});
+						sharedMap2.set("key2", "3");
+					}
+				});
 
-			sharedMap1.set("key1", "1");
+				sharedMap1.set("key1", "1");
 
-			sharedString1.insertText(1, "b");
-			sharedString2.insertText(0, "y");
-			await provider.ensureSynchronized();
+				sharedString1.insertText(1, "b");
+				sharedString2.insertText(0, "y");
+				await provider.ensureSynchronized();
 
-			// The offending container is still alive
-			sharedString2.insertText(0, "z");
-			await provider.ensureSynchronized();
+				// The offending container is still alive
+				sharedString2.insertText(0, "z");
+				await provider.ensureSynchronized();
 
-			assert.strictEqual(sharedString1.getText(), "zyabxcd");
-			assert.strictEqual(
-				sharedString1.getText(),
-				sharedString2.getText(),
-				"SharedString eventual consistency broken",
-			);
+				assert.strictEqual(sharedString1.getText(), "zyabxcd");
+				assert.strictEqual(
+					sharedString1.getText(),
+					sharedString2.getText(),
+					"SharedString eventual consistency broken",
+				);
 
-			assert.strictEqual(sharedMap1.get("key1"), "1");
-			assert.strictEqual(sharedMap1.get("key2"), "3");
-			assert.strictEqual(sharedMap1.get("key3"), "1 updated");
-			assert.ok(
-				mapsAreEqual(sharedMap1, sharedMap2),
-				"SharedMap eventual consistency broken",
-			);
+				assert.strictEqual(sharedMap1.get("key1"), "1");
+				assert.strictEqual(sharedMap1.get("key2"), "3");
+				assert.strictEqual(sharedMap1.get("key3"), "1 updated");
+				assert.ok(
+					mapsAreEqual(sharedMap1, sharedMap2),
+					"SharedMap eventual consistency broken",
+				);
 
-			// Both containers are alive at the end
-			assert.ok(!container1.closed, "Local container is closed");
-			assert.ok(!container2.closed, "Remote container is closed");
-		});
-	});
-
-	it("Eventual consistency broken with op reentry, grouped batches and batch rebasing disabled", async () => {
-		await setupContainers(
-			{
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching: true,
-					enableBatchRebasing: true,
-				},
+				// Both containers are alive at the end
+				assert.ok(!container1.closed, "Local container is closed");
+				assert.ok(!container2.closed, "Remote container is closed");
 			},
-			{ "Fluid.ContainerRuntime.DisableBatchRebasing": true },
-		);
-
-		sharedString1.insertText(0, "ad");
-		await provider.ensureSynchronized();
-
-		sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-			if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-				sharedString2.insertText(3, "x");
-			}
-		});
-
-		sharedString1.insertText(1, "b");
-		sharedString1.insertText(2, "c");
-		await provider.ensureSynchronized();
-
-		assert.notStrictEqual(
-			sharedString1.getText(),
-			sharedString2.getText(),
-			"Unexpected eventual consistency",
 		);
 	});
 

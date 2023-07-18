@@ -6,12 +6,11 @@ import { Octokit } from "@octokit/core";
 import { CommandLogger } from "../logging";
 
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
-const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls";
+const COMMIT_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
-const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
-const GET_USER = "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users";
+const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 
 /**
  *
@@ -24,12 +23,21 @@ export async function pullRequestExists(
 	owner: string,
 	repo: string,
 	log: CommandLogger,
-): Promise<boolean> {
-	log.verbose("Checking if pull request exists----------------");
+): Promise<{ found: boolean; url?: string; number?: number }> {
+	log.verbose(`Checking if pull request with title="${title}" exists----------------`);
 	const octokit = new Octokit({ auth: token });
 	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 
-	return response.data.some((d) => d.title === title);
+	const found = response.data.find((d) => d.title === title);
+	if (found === undefined) {
+		return { found: false };
+	}
+
+	return {
+		found: true,
+		url: found.html_url,
+		number: found.number,
+	};
 }
 
 /**
@@ -37,7 +45,7 @@ export async function pullRequestExists(
  * @param token - GitHub authentication token
  * @param commit_sha - Commit id for which we need pull request information
  */
-export async function pullRequestInfo(
+export async function getCommitInfo(
 	token: string,
 	owner: string,
 	repo: string,
@@ -45,37 +53,15 @@ export async function pullRequestInfo(
 	log: CommandLogger,
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
-	const prInfo = await octokit.request(PULL_REQUEST_INFO, {
+
+	const prInfo = await octokit.request(COMMIT_INFO, {
 		owner,
 		repo,
-		commit_sha,
+		ref: commit_sha,
 	});
 
-	log.verbose(`Get pull request info for ${commit_sha}: ${JSON.stringify(prInfo)}`);
+	log.verbose(`Get info from ref: ${JSON.stringify(prInfo)}`);
 	return prInfo;
-}
-
-/**
- *
- * @param token - GitHub authentication token
- * @returns Lists the user who have push access to this branch
- */
-export async function getUserAccess(
-	token: string,
-	owner: string,
-	repo: string,
-	log: CommandLogger,
-): Promise<any> {
-	const octokit = new Octokit({ auth: token });
-
-	const user = await octokit.request(GET_USER, {
-		owner,
-		repo,
-		branch: "main",
-	});
-
-	log.verbose(`Get list of users with push access ${JSON.stringify(user)}`);
-	return user;
 }
 
 /**
@@ -96,6 +82,7 @@ export async function createPullRequest(
 		assignee: string;
 		title: string;
 		description: string;
+		reviewers: string[];
 	},
 	log: CommandLogger,
 ): Promise<any> {
@@ -118,12 +105,12 @@ export async function createPullRequest(
 		assignees: [pr.assignee],
 	});
 
-	log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
+	log.log(`Adding reviewer to pull request ${newPr.data.number}`);
 	await octokit.request(REVIEWER, {
 		owner: pr.owner,
 		repo: pr.repo,
 		pull_number: newPr.data.number,
-		reviewer: [],
+		reviewers: pr.reviewers,
 	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);

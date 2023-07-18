@@ -22,8 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	ChildLogger,
@@ -73,6 +72,8 @@ export class DocumentDeltaConnection
 	private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	private _details: IConnected | undefined;
+
+	private trackLatencyTimeout: number | undefined;
 
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -138,7 +139,7 @@ export class DocumentDeltaConnection
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(logger, "DeltaConnection"));
 
-		this.on("newListener", (event, listener) => {
+		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
 			// Some events are already forwarded - see this.addTrackedListener() calls in initialize().
@@ -161,9 +162,29 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
-				this.addTrackedListener(event, (...args: any[]) => {
-					this.emit(event, ...args);
-				});
+				if (event === "pong") {
+					// Empty callback for tracking purposes in this class
+					this.trackedListeners.set("pong", () => {});
+
+					const sendPingLoop = () => {
+						const start = Date.now();
+
+						this.socket.volatile?.emit("ping", () => {
+							this.emit("pong", Date.now() - start);
+
+							// Schedule another ping event in 1 minute
+							this.trackLatencyTimeout = setTimeout(() => {
+								sendPingLoop();
+							}, 1000 * 60);
+						});
+					};
+
+					sendPingLoop();
+				} else {
+					this.addTrackedListener(event, (...args: any[]) => {
+						this.emit(event, ...args);
+					});
+				}
 			}
 		});
 	}
@@ -360,6 +381,11 @@ export class DocumentDeltaConnection
 		// "dispose" event.
 		if (this._disposed) {
 			return;
+		}
+
+		if (this.trackLatencyTimeout !== undefined) {
+			clearTimeout(this.trackLatencyTimeout);
+			this.trackLatencyTimeout = undefined;
 		}
 
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by

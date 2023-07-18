@@ -28,10 +28,10 @@ describe("Editing", () => {
 			insert(addX, 1, "x");
 			insert(addY, 3, "y");
 
-			tree.merge(delAB);
-			tree.merge(delCD);
-			tree.merge(addX);
-			tree.merge(addY);
+			tree.merge(delAB, false);
+			tree.merge(delCD, false);
+			tree.merge(addX, false);
+			tree.merge(addY, false);
 
 			delAB.rebaseOnto(tree);
 			delCD.rebaseOnto(tree);
@@ -41,25 +41,27 @@ describe("Editing", () => {
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
 		});
 
-		it.skip("can rebase a change under a node whose insertion is also rebased", () => {
+		it("can rebase a change under a node whose insertion is also rebased", () => {
 			const tree1 = makeTreeFromJson(["B"]);
 			const tree2 = tree1.fork();
 			const tree3 = tree1.fork();
 
 			insert(tree2, 1, "C");
-			insert(tree3, 0, "A");
-			tree3.editor.setValue(
-				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 },
-				"a",
-			);
+			tree3.editor
+				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
+				.insert(0, singleTextCursor({ type: jsonObject.name, fields: { foo: [] } }));
 
-			tree1.merge(tree2);
-			tree1.merge(tree3);
+			const rootPath = { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
+			const aEditor = tree3.editor.sequenceField({ parent: rootPath, field: brand("foo") });
+			aEditor.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+
+			tree1.merge(tree2, false);
+			tree1.merge(tree3, false);
 
 			tree2.rebaseOnto(tree1);
 			tree3.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2, tree3], ["a", "B", "C"]);
+			expectJsonTree([tree1, tree2, tree3], [{ foo: "a" }, "B", "C"]);
 		});
 
 		it("can handle competing deletes", () => {
@@ -74,9 +76,9 @@ describe("Editing", () => {
 				remove(tree2, index, 1);
 				remove(tree3, index, 1);
 
-				tree.merge(tree1);
-				tree.merge(tree2);
-				tree.merge(tree3);
+				tree.merge(tree1, false);
+				tree.merge(tree2, false);
+				tree.merge(tree3, false);
 
 				tree1.rebaseOnto(tree);
 				tree2.rebaseOnto(tree);
@@ -107,7 +109,7 @@ describe("Editing", () => {
 			const anchor = cursor.buildAnchor();
 			cursor.free();
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
@@ -129,7 +131,7 @@ describe("Editing", () => {
 			remove(delY, 1, 1);
 			insert(addW, 0, "w");
 
-			addW.merge(delY);
+			addW.merge(delY, false);
 			delY.rebaseOnto(addW);
 
 			expectJsonTree([addW, delY], ["w", "x"]);
@@ -145,9 +147,9 @@ describe("Editing", () => {
 			insert(rst, 0, "r", "s", "t");
 			insert(xyz, 0, "x", "y", "z");
 
-			tree.merge(xyz);
-			tree.merge(rst);
-			tree.merge(abc);
+			tree.merge(xyz, false);
+			tree.merge(rst, false);
+			tree.merge(abc, false);
 
 			xyz.rebaseOnto(tree);
 			rst.rebaseOnto(tree);
@@ -186,9 +188,9 @@ describe("Editing", () => {
 			tree.merge(s);
 			tree.merge(b);
 			tree.merge(y);
-			tree.merge(c);
-			tree.merge(z);
-			tree.merge(t);
+			tree.merge(c, false);
+			tree.merge(z, false);
+			tree.merge(t, false);
 
 			c.rebaseOnto(tree);
 			t.rebaseOnto(tree);
@@ -256,7 +258,7 @@ describe("Editing", () => {
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
 		});
 
 		it("intra-field move", () => {
@@ -272,7 +274,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		it.skip("can rebase intra-field move over insert", () => {
+		it("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();
 
@@ -285,21 +287,19 @@ describe("Editing", () => {
 				})
 				.move(0, 1, 1);
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 			expectJsonTree(tree1, ["B", "A", "C"]);
 			expectJsonTree(tree2, ["B", "A", "C"]);
 		});
 
-		it("can concurrently change node's value and move node", () => {
-			const tree1 = makeTreeFromJson(["A", "B"]);
+		it("can concurrently edit and move a subtree", () => {
+			const tree1 = makeTreeFromJson(["A", { foo: "B" }]);
 			const tree2 = tree1.fork();
 
-			// Change value of B to C
-			tree1.editor.setValue(
-				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
-				"C",
-			);
+			const parent = { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 };
+			const editor = tree1.editor.valueField({ parent, field: brand("foo") });
+			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
 
 			// Move B before A.
 			tree2.editor.move(
@@ -310,16 +310,16 @@ describe("Editing", () => {
 				0,
 			);
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
-			const expectedState: JsonCompatible = ["C", "A"];
+			const expectedState: JsonCompatible = [{ foo: "C" }, "A"];
 			expectJsonTree(tree1, expectedState);
 			expectJsonTree(tree2, expectedState);
 		});
 
-		it("can concurrently move node and change node's value", () => {
-			const tree1 = makeTreeFromJson(["A", "B"]);
+		it("can concurrently edit and move a subtree (Move first)", () => {
+			const tree1 = makeTreeFromJson(["A", { foo: "B" }]);
 			const tree2 = tree1.fork();
 
 			// Move B before A.
@@ -331,23 +331,21 @@ describe("Editing", () => {
 				0,
 			);
 
-			// Change value of B to C
-			tree2.editor.setValue(
-				{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 1 },
-				"C",
-			);
+			const parent = { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
+			const editor = tree1.editor.valueField({ parent, field: brand("foo") });
+			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
-			const expectedState: JsonCompatible = ["C", "A"];
+			const expectedState: JsonCompatible = [{ foo: "C" }, "A"];
 			expectJsonTree(tree1, expectedState);
 			expectJsonTree(tree2, expectedState);
 		});
 
-		it("can rebase cross-field move over value change of moved node", () => {
+		it("can rebase cross-field move over edit of moved node", () => {
 			const tree1 = makeTreeFromJson({
-				foo: ["A"],
+				foo: [{ baz: "A" }],
 				bar: ["B"],
 			});
 			const tree2 = tree1.fork();
@@ -362,7 +360,11 @@ describe("Editing", () => {
 			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
 
 			// Change value of A to C
-			tree1.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+			const editor = tree1.editor.valueField({
+				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
+				field: brand("baz"),
+			});
+			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
 
 			// Move A after B.
 			tree2.editor.move(
@@ -376,19 +378,48 @@ describe("Editing", () => {
 			const expectedState: JsonCompatible = [
 				{
 					foo: [],
-					bar: ["B", "C"],
+					bar: ["B", { baz: "C" }],
 				},
 			];
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it("can rebase value change over cross-field move of changed node", () => {
+		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
+			});
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const rootField = { parent: undefined, field: rootFieldKeySymbol };
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+
+			// Move A out of foo.
+			tree1.editor.move({ parent: fooList, field: brand("") }, 0, 1, rootField, 0);
+
+			// Delete root.
+			tree2.editor.sequenceField(rootField).delete(0, 1);
+
+			const expectedState: JsonCompatible = ["A"];
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
+		it("can rebase edit over cross-field move of changed node", () => {
+			const tree1 = makeTreeFromJson({
+				foo: [{ baz: "A" }],
 				bar: ["B"],
 			});
 			const tree2 = tree1.fork();
@@ -412,16 +443,20 @@ describe("Editing", () => {
 			);
 
 			// Change value of A to C
-			tree2.editor.setValue({ parent: fooList, parentField: brand(""), parentIndex: 0 }, "C");
+			const editor = tree2.editor.valueField({
+				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
+				field: brand("baz"),
+			});
+			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: [],
-					bar: ["B", "C"],
+					bar: ["B", { baz: "C" }],
 				},
 			];
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 			expectJsonTree([tree1, tree2], expectedState);
 		});
@@ -489,8 +524,292 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
 		});
 
+		// Moving a node into a concurrently deleted subtree should result in the moved node being deleted
+		it("ancestor of move destination deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete destination's ancestor concurrently
+			sequence.delete(1, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		// Tests that a move is aborted if the moved node has been concurrently deleted
+		it("ancestor of move source deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("ancestor of move source deleted then revived", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+			// Revive the ancestor
+			tree.undo();
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
+		});
+
+		it("node being concurrently moved and deleted with source ancestor revived", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+			// Revive source's ancestor
+			tree.undo();
+			// Delete "a"
+			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, {}]);
+		});
+
+		it("node being concurrently moved and revived with source ancestor deleted", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const tree2 = tree.fork();
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete "a"
+			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+			// Revive "a"
+			tree.undo();
+			// Delete source's ancestor concurrently
+			sequence.delete(0, 1);
+
+			tree2.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("delete ancestor of return source", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			// Move to bar: [{}, { bar: ["a"] }}]
+			tree.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			const tree2 = tree.fork();
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete ancestor of "a"
+			sequence.delete(1, 1);
+			// Undo move to bar
+			tree2.undo();
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
+		it("delete ancestor of return destination", () => {
+			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKeySymbol,
+			};
+
+			const second: UpPath = {
+				parent: undefined,
+				parentIndex: 1,
+				parentField: rootFieldKeySymbol,
+			};
+
+			// Move to bar: [{}, { bar: ["a"] }}]
+			tree.editor.move(
+				{ parent: first, field: brand("foo") },
+				0,
+				1,
+				{ parent: second, field: brand("bar") },
+				0,
+			);
+
+			const tree2 = tree.fork();
+
+			const sequence = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKeySymbol,
+			});
+
+			// Delete destination ancestor
+			sequence.delete(0, 1);
+			// Undo move to bar
+			tree2.undo();
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}]);
+		});
+
 		it("rebase changes to field untouched by base", () => {
-			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, "B"] });
+			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, { baz: "B" }] });
 			const tree1 = tree.fork();
 			const tree2 = tree.fork();
 
@@ -515,15 +834,17 @@ describe("Editing", () => {
 				parentIndex: 1,
 			};
 
-			tree1.editor.setValue(nodeB, "b");
+			tree1.editor
+				.valueField({ parent: nodeB, field: brand("baz") })
+				.set(singleTextCursor({ type: jsonString.name, value: "b" }));
 			tree2.editor.sequenceField({ parent: foo1, field: brand("bar") }).delete(0, 1);
 
-			tree.merge(tree1);
-			tree.merge(tree2);
+			tree.merge(tree1, false);
+			tree.merge(tree2, false);
 			tree1.rebaseOnto(tree);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, "b"] }]);
+			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
 		describe.skip("Exhaustive removal tests", () => {
@@ -759,18 +1080,19 @@ describe("Editing", () => {
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				})
-				.set(singleJsonCursor("42"), true);
+				.set(singleJsonCursor({ foo: "42" }), true);
 
-			tree2.editor.setValue(rootPath, "43");
+			const editor = tree2.editor.valueField({ parent: rootPath, field: brand("foo") });
+			editor.set(singleTextCursor({ type: jsonString.name, value: "43" }));
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2], ["43"]);
+			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
 		});
 
 		it("can rebase a node edit over the node being replaced and restored", () => {
-			const tree1 = makeTreeFromJson(["40"]);
+			const tree1 = makeTreeFromJson([{ foo: "40" }]);
 			const tree2 = tree1.fork();
 
 			const rootPath = {
@@ -784,16 +1106,17 @@ describe("Editing", () => {
 					parent: undefined,
 					field: rootFieldKeySymbol,
 				})
-				.set(singleJsonCursor("41"), false);
+				.set(singleJsonCursor({ foo: "41" }), false);
 
 			tree1.undo();
 
-			tree2.editor.setValue(rootPath, "42");
+			const editor = tree2.editor.valueField({ parent: rootPath, field: brand("foo") });
+			editor.set(singleTextCursor({ type: jsonString.name, value: "42" }));
 
-			tree1.merge(tree2);
+			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
-			expectJsonTree([tree1, tree2], ["42"]);
+			expectJsonTree([tree1, tree2], [{ foo: "42" }]);
 		});
 
 		it("can replace and restore a node", () => {
@@ -828,12 +1151,12 @@ describe("Editing", () => {
 				.optionalField({ parent: undefined, field: rootFieldKeySymbol })
 				.set(undefined, false);
 
-			tree.merge(tree2);
+			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
 			tree2.undo();
 
-			tree.merge(tree2);
+			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], ["43"]);
@@ -884,7 +1207,7 @@ describe("Editing", () => {
 				tree2Sequence.insert(1, singleJsonCursor("b"));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{ foo: "bar" }, "b"]);
@@ -929,7 +1252,7 @@ describe("Editing", () => {
 				tree2Sequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], []);
@@ -963,7 +1286,7 @@ describe("Editing", () => {
 				);
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], ["a"]);
@@ -993,7 +1316,7 @@ describe("Editing", () => {
 				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "c" }));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], ["c", "a", "b"]);
@@ -1025,10 +1348,12 @@ describe("Editing", () => {
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
-				tree2.editor.setValue(path, "b");
+				tree2.editor
+					.sequenceField({ parent: path, field: brand("bar") })
+					.insert(0, singleJsonCursor(1));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{}]);
@@ -1062,13 +1387,15 @@ describe("Editing", () => {
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
-				tree2.editor.setValue(path, "b");
+				tree2.editor
+					.sequenceField({ parent: path, field: brand("bar") })
+					.insert(0, singleJsonCursor(1));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree, tree2], [{ foo: "x" }]);
+				expectJsonTree([tree, tree2], [{ foo: "x", bar: 1 }]);
 			});
 
 			it("existence constraint on node inserted in prior transaction", () => {
@@ -1109,7 +1436,7 @@ describe("Editing", () => {
 					singleTextCursor({ type: jsonString.name, value: "c" }),
 				);
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], ["c", "a", "b"]);
@@ -1154,7 +1481,7 @@ describe("Editing", () => {
 				});
 				tree2Sequence.insert(1, singleTextCursor({ type: jsonString.name, value: "c" }));
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{ foo: "a" }, "c", "b"]);
@@ -1254,7 +1581,7 @@ describe("Editing", () => {
 				tree2RootSequence.insert(2, singleTextCursor({ type: jsonObject.name }));
 				tree2.transaction.commit();
 
-				tree.merge(tree2);
+				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{ foo2: ["a"] }, {}]);
@@ -1320,221 +1647,6 @@ describe("Editing", () => {
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{}]);
-			});
-		});
-
-		describe("Value changed constraint", () => {
-			it("transaction dropped when constraint violated", () => {
-				const tree = makeTreeFromJson(["a"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				tree.editor.setValue(rootPath, "c");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.setValue(rootPath, "b");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["c"]);
-			});
-
-			it("transaction successful when constraint not violated", () => {
-				const tree = makeTreeFromJson(["a"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				tree.editor.setValue(rootPath, "a");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.setValue(rootPath, "b");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b"]);
-			});
-
-			it("transaction successful when constraint eventually fixed", () => {
-				const tree = makeTreeFromJson(["a"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				tree.editor.setValue(rootPath, "c");
-				tree.editor.setValue(rootPath, "d");
-				tree.editor.setValue(rootPath, "a");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.setValue(rootPath, "b");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b"]);
-			});
-
-			it("transaction dropped with violated constraints on different fields", () => {
-				const tree = makeTreeFromJson(["a", "x"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-				const rootPath2 = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 1,
-				};
-
-				tree.editor.setValue(rootPath, "b");
-				tree.editor.setValue(rootPath2, "y");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.addValueConstraint(rootPath2, "x");
-				tree2.editor.setValue(rootPath, "c");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b", "y"]);
-			});
-
-			it("transaction successful with constraints eventually fixed on different fields", () => {
-				const tree = makeTreeFromJson(["a", "x"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-				const rootPath2 = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 1,
-				};
-
-				tree.editor.setValue(rootPath, "b");
-				tree.editor.setValue(rootPath2, "y");
-
-				tree.transaction.start();
-				tree.editor.setValue(rootPath, "a");
-				tree.editor.setValue(rootPath2, "x");
-				tree.transaction.commit();
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.addValueConstraint(rootPath2, "x");
-				tree2.editor.setValue(rootPath, "c");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["c", "x"]);
-			});
-
-			it("constraints violated delta is propagated", () => {
-				const tree = makeTreeFromJson(["a", "x"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-				const rootPath2 = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 1,
-				};
-
-				tree.editor.setValue(rootPath, "b");
-				tree.editor.setValue(rootPath2, "y");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.setValue(rootPath, "c");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b", "y"]);
-			});
-
-			it("uses first defined constraint for node in transaction", () => {
-				const tree = makeTreeFromJson(["a"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				tree.editor.setValue(rootPath, "a");
-
-				tree2.transaction.start();
-				tree2.editor.addValueConstraint(rootPath, "a");
-				tree2.editor.addValueConstraint(rootPath, "ignored");
-				tree2.editor.setValue(rootPath, "b");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b"]);
-			});
-
-			it("ignores constraint on node after a node is changed in the same transaction", () => {
-				const tree = makeTreeFromJson(["a"]);
-				const tree2 = tree.fork();
-
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-
-				tree.editor.setValue(rootPath, "a");
-
-				tree2.transaction.start();
-				tree2.editor.setValue(rootPath, "b");
-				// This constraint will always be true and should be ignored
-				tree2.editor.addValueConstraint(rootPath, "b");
-				tree2.transaction.commit();
-
-				tree.merge(tree2);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["b"]);
 			});
 		});
 	});
