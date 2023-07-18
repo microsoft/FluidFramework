@@ -51,7 +51,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-services-client": "^0.1038.4000",
+		"@fluidframework/server-services-client": "^1.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^0.26.0"
 	},
@@ -60,7 +60,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.5.2.0",
 		"@fluidframework/azure-local-service": "workspace:~",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
