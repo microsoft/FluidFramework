@@ -36,7 +36,7 @@ export function create(
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
-	const getDeltasRequestMaxOpsRange = config.get("alfred:getDeltasRequestMaxOpsRange");
+	const getDeltasRequestMaxOpsRange = config.get("alfred:getDeltasRequestMaxOpsRange") ?? 2000;
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -145,11 +145,17 @@ export function create(
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-			const from = stringToSequenceNumber(request.query.from);
-			const to = stringToSequenceNumber(request.query.to);
-			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-			const caller = request.query.caller?.toString();
-
+			let from = stringToSequenceNumber(request.query.from);
+			let to = stringToSequenceNumber(request.query.to);
+			if (!from && !to) {
+				from = 0;
+				to = from + getDeltasRequestMaxOpsRange + 1;
+			} else if (!to) {
+				to = from + getDeltasRequestMaxOpsRange + 1;
+			} else if (!from) {
+				from = Math.max(0, to - getDeltasRequestMaxOpsRange - 1);
+			}
+			
 			const clientRequestSize = to - from - 1;
 			if (clientRequestSize > getDeltasRequestMaxOpsRange) {
 				return handleResponse(
@@ -162,6 +168,9 @@ export function create(
 					response,
 				);
 			}
+
+			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+			const caller = request.query.caller?.toString();
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
