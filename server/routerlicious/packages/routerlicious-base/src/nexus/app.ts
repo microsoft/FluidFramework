@@ -3,23 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDeltaService,
-	IDocumentStorage,
-	IProducer,
-	ITenantManager,
-	IThrottler,
-	ICache,
-	IDocumentRepository,
-	ITokenRevocationManager,
-	IRevokedTokenChecker,
-} from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { Provider } from "nconf";
-import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
+import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
@@ -28,23 +17,10 @@ import {
 import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
-import { IDocumentDeleteService } from "./services";
-import * as alfredRoutes from "./routes";
+
 
 export function create(
 	config: Provider,
-	tenantManager: ITenantManager,
-	tenantThrottlers: Map<string, IThrottler>,
-	clusterThrottlers: Map<string, IThrottler>,
-	singleUseTokenCache: ICache,
-	storage: IDocumentStorage,
-	appTenants: IAlfredTenant[],
-	deltaService: IDeltaService,
-	producer: IProducer,
-	documentRepository: IDocumentRepository,
-	documentDeleteService: IDocumentDeleteService,
-	tokenRevocationManager?: ITokenRevocationManager,
-	revokedTokenChecker?: IRevokedTokenChecker,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -89,24 +65,6 @@ export function create(
 
 	app.use(bindCorrelationId());
 
-	// Bind routes
-	const routes = alfredRoutes.create(
-		config,
-		tenantManager,
-		tenantThrottlers,
-		clusterThrottlers,
-		singleUseTokenCache,
-		deltaService,
-		storage,
-		producer,
-		appTenants,
-		documentRepository,
-		documentDeleteService,
-		tokenRevocationManager,
-		revokedTokenChecker,
-	);
-
-	app.use(routes.api);
 
 	// Catch 404 and forward to error handler
 	app.use(catch404());
