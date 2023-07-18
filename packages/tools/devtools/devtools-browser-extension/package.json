@@ -37,8 +37,8 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:mocha": "npm run mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
-		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
 		"test:unit": "npm run test:mocha",
+		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
 		"tsc": "tsc",
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
