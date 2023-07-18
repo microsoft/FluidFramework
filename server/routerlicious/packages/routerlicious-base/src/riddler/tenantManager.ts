@@ -350,20 +350,28 @@ export class TenantManager {
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
-				const cachedKey = await this.getKeyFromCache(tenantId);
-
-				if (cachedKey) {
-					retrievedFromCache = true;
-					const tenantKeys = this.decryptCachedKeys(cachedKey);
-					// This is an edge case where the used encryption key is not valid.
-					// If both decrypted tenant keys are null, it means it hits this case,
-					// then we should read from database and set new values in cache.
-					if (tenantKeys.key1 || tenantKeys.key2) {
-						return tenantKeys;
+				try {
+					const cachedKey = await this.getKeyFromCache(tenantId);
+					if (cachedKey) {
+						retrievedFromCache = true;
+						const tenantKeys = this.decryptCachedKeys(cachedKey);
+						// This is an edge case where the used encryption key is not valid.
+						// If both decrypted tenant keys are null, it means it hits this case,
+						// then we should read from database and set new values in cache.
+						if (tenantKeys.key1 || tenantKeys.key2) {
+							return tenantKeys;
+						}
+						Lumberjack.info(
+							"Retrieved from cache but both decrypted tenant keys are null.",
+							lumberProperties,
+						);
 					}
-					Lumberjack.info(
-						"Retrieved from cache but both decrypted tenant keys are null.",
-						lumberProperties,
+				} catch (error) {
+					// Catch if there is an error reading from redis so we can continue to use the database
+					Lumberjack.error(
+						`Error getting tenant keys from cache. Falling back to database.`,
+						{ [BaseTelemetryProperties.tenantId]: tenantId },
+						error,
 					);
 				}
 			}
