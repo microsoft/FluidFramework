@@ -96,9 +96,6 @@ export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDo
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
-// @internal @deprecated
-export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
-
 // @internal
 export interface CombinedAppAndProtocolSummary extends ISummaryTree {
     // (undocumented)
