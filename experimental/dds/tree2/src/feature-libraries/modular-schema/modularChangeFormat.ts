@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
+import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import {
 	FieldKindIdentifierSchema,
 	GlobalFieldKeySchema,
@@ -16,6 +16,8 @@ import {
 	JsonCompatibleReadOnlySchema,
 } from "../../util";
 import { ChangesetLocalId } from "./modularChangeTypes";
+
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
@@ -30,7 +32,7 @@ export const EncodedChangeAtomId = Type.Object(
 		 */
 		localId: ChangesetLocalIdSchema,
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 const EncodedValueChange = Type.Object(
@@ -38,7 +40,7 @@ const EncodedValueChange = Type.Object(
 		revision: Type.Optional(RevisionTagSchema),
 		value: Type.Optional(JsonCompatibleReadOnlySchema),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 type EncodedValueChange = Static<typeof EncodedValueChange>;
 
@@ -47,19 +49,22 @@ const EncodedValueConstraint = Type.Object(
 		value: Type.Optional(JsonCompatibleReadOnlySchema),
 		violated: Type.Boolean(),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
-const EncodedFieldChange = Type.Object({
-	fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
-	keyIsGlobal: Type.Boolean(),
-	fieldKind: FieldKindIdentifierSchema,
-	// Implementation note: node and field change encoding is mutually recursive.
-	// This field marks a boundary in that recursion to avoid constructing excessively complex
-	// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
-	change: JsonCompatibleReadOnlySchema,
-});
+const EncodedFieldChange = Type.Object(
+	{
+		fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
+		keyIsGlobal: Type.Boolean(),
+		fieldKind: FieldKindIdentifierSchema,
+		// Implementation note: node and field change encoding is mutually recursive.
+		// This field marks a boundary in that recursion to avoid constructing excessively complex
+		// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
+		change: JsonCompatibleReadOnlySchema,
+	},
+	noAdditionalProps,
+);
 
 export interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
 	/**
@@ -85,27 +90,36 @@ const EncodedNodeExistsConstraint = Type.Object({
 });
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
-export const EncodedNodeChangeset = Type.Object({
-	valueChange: Type.Optional(EncodedValueChange),
-	fieldChanges: Type.Optional(EncodedFieldChangeMap),
-	valueConstraint: Type.Optional(EncodedValueConstraint),
-	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
-});
+export const EncodedNodeChangeset = Type.Object(
+	{
+		valueChange: Type.Optional(EncodedValueChange),
+		fieldChanges: Type.Optional(EncodedFieldChangeMap),
+		valueConstraint: Type.Optional(EncodedValueConstraint),
+		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+	},
+	noAdditionalProps,
+);
 
 /**
  * Format for encoding as json.
  */
 export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
-const EncodedRevisionInfo = Type.Object({
-	revision: Type.Readonly(RevisionTagSchema),
-	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
-});
+const EncodedRevisionInfo = Type.Object(
+	{
+		revision: Type.Readonly(RevisionTagSchema),
+		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+	},
+	noAdditionalProps,
+);
 
-export const EncodedModularChangeset = Type.Object({
-	maxId: Type.Optional(ChangesetLocalIdSchema),
-	changes: EncodedFieldChangeMap,
-	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
-});
+export const EncodedModularChangeset = Type.Object(
+	{
+		maxId: Type.Optional(ChangesetLocalIdSchema),
+		changes: EncodedFieldChangeMap,
+		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+	},
+	noAdditionalProps,
+);
 
 export type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;

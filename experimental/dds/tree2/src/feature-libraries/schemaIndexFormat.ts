@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
+import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifierSchema,
@@ -29,26 +29,28 @@ const FieldSchemaFormatBase = Type.Object({
 	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
 });
 
-const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const NamedLocalFieldSchemaFormat = Type.Intersect(
+const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+
+const NamedLocalFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
 			name: LocalFieldKeySchema,
 		}),
 	],
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
-const NamedGlobalFieldSchemaFormat = Type.Intersect(
+const NamedGlobalFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
 			name: GlobalFieldKeySchema,
 		}),
 	],
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 const TreeSchemaFormat = Type.Object(
@@ -60,7 +62,7 @@ const TreeSchemaFormat = Type.Object(
 		// TODO: don't use external type here.
 		value: Type.Enum(ValueSchema),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 /**
@@ -78,7 +80,7 @@ const Format = Type.Object(
 		treeSchema: Type.Array(TreeSchemaFormat),
 		globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 type Format = Static<typeof Format>;
