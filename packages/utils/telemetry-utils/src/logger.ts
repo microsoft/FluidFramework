@@ -403,8 +403,13 @@ export class ChildLogger extends TelemetryLogger {
 export function createMultiSinkLogger(props: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
+	loggers?: (ITelemetryBaseLogger | undefined)[];
 }): ITelemetryLoggerExt {
-	return new MultiSinkLogger(props.namespace, props.properties);
+	return new MultiSinkLogger(
+		props.namespace,
+		props.properties,
+		props.loggers?.filter((l): l is ITelemetryBaseLogger => l !== undefined),
+	);
 }
 
 /**
@@ -413,14 +418,16 @@ export function createMultiSinkLogger(props: {
  * @deprecated - use createMultiSinkLogger instead
  */
 export class MultiSinkLogger extends TelemetryLogger {
-	protected loggers: ITelemetryBaseLogger[] = [];
-
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
 	 */
-	constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
+	constructor(
+		namespace?: string,
+		properties?: ITelemetryLoggerPropertyBags,
+		protected loggers: ITelemetryBaseLogger[] = [],
+	) {
 		super(namespace, properties);
 	}
 

@@ -61,6 +61,7 @@ export function createDebugLogger(props: {
 export function createMultiSinkLogger(props: {
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
+    loggers?: (ITelemetryBaseLogger | undefined)[];
 }): ITelemetryLoggerExt;
 
 // @public @deprecated
@@ -277,7 +278,7 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
 
 // @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
+    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[]);
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];

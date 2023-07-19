@@ -31,7 +31,7 @@ import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-defini
 import { v4 as uuid } from "uuid";
 import {
 	createChildLogger,
-	MultiSinkLogger,
+	createMultiSinkLogger,
 	TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
@@ -339,15 +339,13 @@ export class TestObjectProvider implements ITestObjectProvider {
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		const multiSinkLogger = new MultiSinkLogger();
-		multiSinkLogger.addLogger(this.logger);
-		if (loaderProps?.logger !== undefined) {
-			multiSinkLogger.addLogger(loaderProps.logger);
-		}
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
 
 		const loader = new this.LoaderConstructor({
 			...loaderProps,
-			logger: multiSinkLogger,
+			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
 			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
 			documentServiceFactory:

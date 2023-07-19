@@ -1988,8 +1988,3 @@ describe("Routerlicious", () => {
 		}).timeout(testTimeout);
 	});
 });
-function createDebugLogger(
-	arg0: string,
-): import("@fluidframework/telemetry-utils").ITelemetryLoggerExt {
-	throw new Error("Function not implemented.");
-}
