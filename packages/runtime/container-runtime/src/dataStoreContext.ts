@@ -60,10 +60,9 @@ import {
 	packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	createChildMonitoringContext,
 	generateStack,
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
 	TelemetryDataTag,
@@ -316,9 +315,10 @@ export abstract class FluidDataStoreContext
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "FluidDataStoreContext",
+		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,

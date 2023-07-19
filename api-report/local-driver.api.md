@@ -52,8 +52,8 @@ export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 
 // @public
 export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
-    constructor(socket: Socket, documentId: string);
-    static create(tenantId: string, id: string, token: string, client: IClient, webSocketServer: IWebSocketServer, timeoutMs?: number): Promise<LocalDocumentDeltaConnection>;
+    constructor(socket: Socket, documentId: string, logger?: ITelemetryBaseLogger);
+    static create(tenantId: string, id: string, token: string, client: IClient, webSocketServer: IWebSocketServer, timeoutMs?: number, logger?: ITelemetryBaseLogger): Promise<LocalDocumentDeltaConnection>;
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;

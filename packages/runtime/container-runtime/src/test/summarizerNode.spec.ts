@@ -19,7 +19,7 @@ import {
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
 import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } from "../summary";
 // eslint-disable-next-line import/no-internal-modules
@@ -36,7 +36,7 @@ describe("Runtime", () => {
 			let midNode: ISummarizerNode | undefined;
 			let leafNode: ISummarizerNode | undefined;
 
-			const logger = new TelemetryNullLogger();
+			const logger = createChildLogger();
 			let summarizeCalls = [0, 0, 0];
 			function assertSummarizeCalls(...expected: [root: number, mid: number, leaf: number]) {
 				for (let i = 0; i < expected.length; i++) {

@@ -20,7 +20,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerExt,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -61,7 +61,10 @@ export class RemoteChannelContext implements IChannelContext {
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
-		this.subLogger = ChildLogger.create(runtime.logger, "RemoteChannelContext");
+		this.subLogger = createChildLogger({
+			logger: runtime.logger,
+			namespace: "RemoteChannelContext",
+		});
 
 		this.services = createChannelServiceEndpoints(
 			dataStoreContext.connected,
