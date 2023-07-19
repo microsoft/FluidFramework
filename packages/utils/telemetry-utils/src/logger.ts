@@ -298,6 +298,9 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 /**
  * Create a child logger based on the provided props object
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ *
+ * @remarks
+ * Passing in no props object (i.e. undefined) will return a logger that is effectively a no-op.
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
