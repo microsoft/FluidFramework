@@ -347,6 +347,7 @@ export function enrichOdspError(
 		}
 	}
 	error.addTelemetryProperties(props);
+	error.endpointReachable = response !== undefined;
 	return error;
 }
 

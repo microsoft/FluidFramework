@@ -11,6 +11,7 @@ import {
 	AuthorizationError,
 } from "@fluidframework/driver-utils";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
 
 /**
  * Routerlicious Error types
@@ -67,7 +68,9 @@ export function createR11sNetworkError(
 	errorMessage: string,
 	statusCode?: number,
 	retryAfterMs?: number,
-): R11sError {
+	endpointReachable?: boolean,
+): IFluidErrorBase & R11sError {
+	let error: IFluidErrorBase & R11sError;
 	const props = { statusCode, driverVersion };
 	switch (statusCode) {
 		case undefined:
@@ -77,13 +80,13 @@ export function createR11sNetworkError(
 			// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 			// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 			if (errorMessage.includes("failed, reason: self signed certificate")) {
-				return new NonRetryableError(
+				error = new NonRetryableError(
 					errorMessage,
 					RouterliciousErrorType.sslCertError,
 					props,
 				);
 			}
-			return new GenericNetworkError(
+			error = new GenericNetworkError(
 				errorMessage,
 				errorMessage.startsWith("NetworkError"),
 				props,
@@ -92,27 +95,39 @@ export function createR11sNetworkError(
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
 		// so we treat repeat 401s the same as 403.
 		case 403:
-			return new AuthorizationError(errorMessage, undefined, undefined, props);
+			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 		case 404:
 			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
-			return new NonRetryableError(errorMessage, errorType, props);
+			error = new NonRetryableError(errorMessage, errorType, props);
 		case 429:
-			return createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
+			error = createGenericNetworkError(
+				errorMessage,
+				{ canRetry: true, retryAfterMs },
+				props,
+			);
 		case 500:
 		case 502:
-			return new GenericNetworkError(errorMessage, true, props);
+			error = new GenericNetworkError(errorMessage, true, props);
 		default:
 			const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
-			return createGenericNetworkError(errorMessage, retryInfo, props);
+			error = createGenericNetworkError(errorMessage, retryInfo, props);
 	}
+	error.endpointReachable = endpointReachable;
+	return error;
 }
 
 export function throwR11sNetworkError(
 	errorMessage: string,
 	statusCode?: number,
 	retryAfterMs?: number,
+	endpointReachable?: boolean,
 ): never {
-	const networkError = createR11sNetworkError(errorMessage, statusCode, retryAfterMs);
+	const networkError = createR11sNetworkError(
+		errorMessage,
+		statusCode,
+		retryAfterMs,
+		endpointReachable,
+	);
 
 	// eslint-disable-next-line @typescript-eslint/no-throw-literal
 	throw networkError;
@@ -127,5 +142,5 @@ export function errorObjectFromSocketError(
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
-	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs);
+	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs, true);
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
 import { delay, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
@@ -107,8 +107,10 @@ export async function runWithRetry<T>(
 			numRetries++;
 			lastError = err;
 			// If the error is throttling error, then wait for the specified time before retrying.
-			// If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-			retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
+			// If the waitTime is not specified, then we start with retrying immediately to max of 8s or 30s.
+			retryAfterMs =
+				getRetryDelayFromError(err) ??
+				Math.min(retryAfterMs * 2, calculateMaxWaitTime(lastError));
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
@@ -128,4 +130,16 @@ export async function runWithRetry<T>(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return result!;
+}
+
+// In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some transient error
+// not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
+// to when endpoint is reachable in which case it is 30s.
+const MaxReconnectDelayInMsWhenEndpointIsReachable = 30000;
+const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
+
+export function calculateMaxWaitTime(error: unknown): number {
+	return isFluidError(error) && error.getTelemetryProperties().endpointReachable === true
+		? MaxReconnectDelayInMsWhenEndpointIsReachable
+		: MaxReconnectDelayInMsWhenEndpointIsNotReachable;
 }

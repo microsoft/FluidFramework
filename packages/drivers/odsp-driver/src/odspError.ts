@@ -33,6 +33,7 @@ export function errorObjectFromSocketError(
 		);
 
 		error.addTelemetryProperties({ odspError: true, relayServiceError: true });
+		error.endpointReachable = true;
 		return error;
 	} catch (error) {
 		return new NonRetryableError(

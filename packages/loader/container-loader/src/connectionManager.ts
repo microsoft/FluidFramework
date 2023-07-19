@@ -27,6 +27,7 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
+	calculateMaxWaitTime,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -47,7 +48,6 @@ import {
 import {
 	ITelemetryLoggerExt,
 	TelemetryLogger,
-	isFluidError,
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
@@ -55,7 +55,6 @@ import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const MaxReconnectDelayInMs = 30000;
 const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
@@ -615,15 +614,9 @@ export class ConnectionManager implements IConnectionManager {
 					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
 					await new Promise<void>((resolve) => {
 						setTimeout(resolve, delayMs);
-						// If the error has some status code, it means we probably reached to endpoint and got some error. In that case
-						// set the max time to be 8s as we want to retry at faster pace. Otherwise, wait for MaxReconnectDelayInMs at max.
-						delayMs = Math.min(
-							delayMs * 2,
-							isFluidError(origError) &&
-								origError.getTelemetryProperties().statusCode !== undefined
-								? 8000
-								: MaxReconnectDelayInMs,
-						);
+						// If the endpoint is reachable, then set max limit to 30s as we are not able to get proper response even after
+						// reaching the endpoint, otherwise max wait is 8s.
+						delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
 					});
 				}
 
