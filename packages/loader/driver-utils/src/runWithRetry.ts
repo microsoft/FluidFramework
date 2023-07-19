@@ -132,12 +132,16 @@ export async function runWithRetry<T>(
 	return result!;
 }
 
-// In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some transient error
-// not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
-// to when endpoint is reachable in which case it is 30s.
 const MaxReconnectDelayInMsWhenEndpointIsReachable = 30000;
 const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
 
+/**
+ * In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some transient error
+ * not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
+ * to when endpoint is reachable in which case it is 30s.
+ * @param error - error based on which we decide max wait time.
+ * @returns - Max wait time.
+ */
 export function calculateMaxWaitTime(error: unknown): number {
 	return isFluidError(error) && error.getTelemetryProperties().endpointReachable === true
 		? MaxReconnectDelayInMsWhenEndpointIsReachable
