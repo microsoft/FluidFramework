@@ -70,8 +70,6 @@ import { LoadableObjectRecord } from '@fluidframework/fluid-static';
 import { LocalValueMaker } from '@fluidframework/map';
 import { MapFactory } from '@fluidframework/map';
 import { MemberChangedListener } from '@fluidframework/fluid-static';
-import { RootDataObject } from '@fluidframework/fluid-static';
-import { RootDataObjectProps } from '@fluidframework/fluid-static';
 import { SequenceDeltaEvent } from '@fluidframework/sequence';
 import { SequenceEvent } from '@fluidframework/sequence';
 import { SequenceInterval } from '@fluidframework/sequence';
@@ -221,10 +219,6 @@ export { LocalValueMaker }
 export { MapFactory }
 
 export { MemberChangedListener }
-
-export { RootDataObject }
-
-export { RootDataObjectProps }
 
 export { SequenceDeltaEvent }
 
