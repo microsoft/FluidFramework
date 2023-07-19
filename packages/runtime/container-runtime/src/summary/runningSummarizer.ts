@@ -201,7 +201,7 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// Note: summarizeCount (from createChildLogger definition) may be 0,
+			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
