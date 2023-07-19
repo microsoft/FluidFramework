@@ -97,7 +97,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		});
 	});
 
-	describe("Send errors using a createChildLogger", () => {
+	describe("Send errors using a logger from createChildLogger", () => {
 		it("Send and receive a GenericError.", () => {
 			const childLogger = createChildLogger({
 				logger: mockLogger,
