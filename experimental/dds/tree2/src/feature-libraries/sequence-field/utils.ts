@@ -407,6 +407,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
 			) {
+				lhsReturnTo.count += rhs.count;
+				return true;
 			}
 		}
 		case "Delete": {
