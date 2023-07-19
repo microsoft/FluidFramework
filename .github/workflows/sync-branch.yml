@@ -24,7 +24,7 @@ on:
     # At 0 minutes past the hour, every 2 hours, Monday through Friday. Cron timezone is in UTC.
     - cron: "0 */1 * * 1-5"
   
-  # Eacj commit to next should trigger a run, so we create new Prs as quickly as possible.
+  # Each commit to next should trigger a run, so we create new PRs as quickly as possible.
   push:
     branches:
       - "next"
