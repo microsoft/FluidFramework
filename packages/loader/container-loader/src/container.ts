@@ -82,7 +82,6 @@ import {
 	ISummaryTree,
 	IVersion,
 	MessageType,
-	SignalType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {

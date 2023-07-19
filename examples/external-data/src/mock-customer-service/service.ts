@@ -108,14 +108,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * Expected input data format:
 	 *
 	 * ```json
-	 *	{
-	 *		taskList: {
-	 *			[id: string]: {
-	 *				name: string,
-	 * 				priority: number
-	 *			}
-	 *		}
-	 *	}
+	 * {
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
+	 * }
 	 * ```
 	 *
 	 * This data will be forwarded to our own subscribers.

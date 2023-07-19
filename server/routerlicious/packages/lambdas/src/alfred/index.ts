@@ -14,7 +14,6 @@ import {
 	ISignalMessage,
 	NackErrorType,
 	ScopeType,
-	SignalType,
 } from "@fluidframework/protocol-definitions";
 import {
 	canSummarize,
@@ -638,7 +637,7 @@ export function configureWebSocketServices(
 				const signalMessageRuntimeMessage : ISignalMessage = {
 					clientId: null, // system signal
 					content: JSON.stringify({
-						type: "RuntimeMessage"
+						type: "RuntimeMessage",
 						contents: {
 							content: {
 								type: "ExternalDataChanged",
