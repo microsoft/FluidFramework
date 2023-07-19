@@ -75,6 +75,9 @@ export class ScribeLambda implements IPartitionLambda {
 	// Refs of the service summaries generated since the last client generated summary.
 	private validParentSummaries: string[] | undefined;
 
+	// Is the document marked as corrupted
+	private isDocumentCorrupt: boolean = false;
+
 	// Indicates whether cache needs to be cleaned after processing a message
 	private clearCache: boolean = false;
 
@@ -445,20 +448,32 @@ export class ScribeLambda implements IPartitionLambda {
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state
-				this.prepareCheckpoint(message, checkpointReason);
+				if (this.isDocumentCorrupt) {
+					this.prepareCheckpoint(message, checkpointReason, true);
+				} else {
+					this.prepareCheckpoint(message, checkpointReason);
+				}
 			} else {
 				this.updateCheckpointIdleTimer();
 			}
 		}
 	}
 
-	public prepareCheckpoint(message: IQueuedMessage, checkpointReason: CheckpointReason) {
+	public prepareCheckpoint(
+		message: IQueuedMessage,
+		checkpointReason: CheckpointReason,
+		bypassKafka: boolean = false,
+	) {
 		// Get checkpoint context
 		const checkpoint = this.generateScribeCheckpoint(message.offset);
 		this.updateCheckpointMessages(message);
 
 		// write the checkpoint with the current up-to-date state
-		this.checkpoint(checkpointReason);
+		if (!bypassKafka) {
+			// kafka checkpoint
+			this.checkpoint(checkpointReason);
+		}
+		// database checkpoint
 		this.checkpointCore(checkpoint, message, this.clearCache);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
@@ -530,6 +545,8 @@ export class ScribeLambda implements IPartitionLambda {
 					this.protocolHandler.processMessage(message, false);
 				}
 			} catch (error) {
+				// We should mark the document as corrupt here
+				this.markDocumentAsCorrupt(message);
 				this.context.log?.error(`Protocol error ${error}`, {
 					messageMetaData: {
 						documentId: this.documentId,
@@ -544,6 +561,12 @@ export class ScribeLambda implements IPartitionLambda {
 				throw new Error(`Protocol error ${error} for ${this.documentId} ${this.tenantId}`);
 			}
 		}
+	}
+
+	private markDocumentAsCorrupt(message: IQueuedMessage) {
+		this.isDocumentCorrupt = true;
+		// updates the checkpoint in the database only to persist the corrupted document flag
+		this.prepareCheckpoint(message, CheckpointReason.MarkAsCorrupt, true);
 	}
 
 	private revertProtocolState(
@@ -564,6 +587,7 @@ export class ScribeLambda implements IPartitionLambda {
 			protocolState,
 			sequenceNumber: this.sequenceNumber,
 			validParentSummaries: this.validParentSummaries,
+			isCorrupt: this.isDocumentCorrupt,
 		};
 		return checkpoint;
 	}
@@ -589,8 +613,9 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP
 			.then(() => {
 				this.pendingP = undefined;
-				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
-
+				if (!this.isDocumentCorrupt) {
+					this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
+				}
 				const pendingScribe = this.pendingCheckpointScribe;
 				const pendingOffset = this.pendingCheckpointOffset;
 				if (pendingScribe && pendingOffset) {
@@ -724,6 +749,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.lastClientSummaryHead = scribe.lastClientSummaryHead;
 		this.lastSummarySequenceNumber = scribe.lastSummarySequenceNumber;
 		this.validParentSummaries = scribe.validParentSummaries;
+		this.isDocumentCorrupt = scribe.isCorrupt;
 	}
 
 	private updateCheckpointMessages(message: IQueuedMessage) {
