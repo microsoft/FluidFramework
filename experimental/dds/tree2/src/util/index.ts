@@ -21,7 +21,6 @@ export {
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
-	mapNestedMap,
 	NestedMap,
 	SizedNestedMap,
 	setInNestedMap,
