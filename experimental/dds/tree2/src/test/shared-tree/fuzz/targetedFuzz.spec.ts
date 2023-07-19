@@ -24,7 +24,7 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { SharedTreeView } from "../../../shared-tree";
+import { ISharedTree, SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { applyFieldEdit, applyTransactionEdit, fuzzReducer } from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
@@ -39,6 +39,13 @@ interface AbortFuzzTestState extends FuzzTestState {
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: SharedTreeView;
+}
+
+/**
+ * This interface is meant to be used for tests that require you to store a branch of a tree
+ */
+interface FuzzTestStateWithInitialTree extends FuzzTestState {
+	initialTreeState?: ISharedTree;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -173,9 +180,16 @@ describe("Fuzz - Targeted", () => {
 		});
 	});
 
-	describe("Inorder undo matches the initial state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, FuzzTestState> =>
-			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
+	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		insert: 1,
+		delete: 1,
+		start: 0,
+		commit: 0,
+	};
+
+	describe("Inorder undo/redo matches the initial/final state", () => {
+		const generatorFactory = (): AsyncGenerator<TreeOperation, FuzzTestStateWithInitialTree> =>
+			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
@@ -189,9 +203,22 @@ describe("Fuzz - Targeted", () => {
 			validateConsistency: () => {},
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		
-		emitter.on("testEnd", (finalState: FuzzTestState) => {
-			
+		emitter.on("testStart", (initialState: FuzzTestStateWithInitialTree) => {
+			initialState.initialTreeState = initialState.clients[0].channel;
+		});
+		emitter.on("testEnd", (finalState: FuzzTestStateWithInitialTree) => {
+			const tree = finalState.clients[0].channel;
+			const finalTree = toJsonableTree(tree);
+
+			// validates that the tree matches initial state after inorder undo
+			while (tree.undo() !== undefined) {}
+			assert(finalState.initialTreeState !== undefined);
+			const initialTree = toJsonableTree(finalState.initialTreeState);
+			validateTree(tree, initialTree);
+
+			// validates that the tree matches the final state after inorder redo
+			while (tree.redo() !== undefined) {}
+			validateTree(tree, finalTree);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
