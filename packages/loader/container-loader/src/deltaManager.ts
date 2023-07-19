@@ -93,6 +93,17 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 }
 
 /**
+ * Type is used to cast AbortController to represent new version of DOM API and prevent build issues
+ * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+ */
+type AbortControllerReasonCast = AbortController & { abort(reason?: any): void };
+/**
+ * Type is used to cast AbortSignal to represent new version of DOM API and prevent build issues
+ * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+ */
+type AbortSignalReasonCast = AbortSignal & { reason: any };
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -623,7 +634,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
 			if (!opsFromFetch && cancelFetch(op)) {
-				controller.abort("DeltaManager getDeltas fetch cancelled");
+				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+				(controller as AbortControllerReasonCast).abort(
+					"DeltaManager getDeltas fetch cancelled",
+				);
 				this._inbound.off("push", opListener);
 			}
 		};
@@ -632,8 +646,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
 			this.closeAbortController.signal.onabort = () =>
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				controller.abort(this.closeAbortController.signal.reason);
+				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+				(controller as AbortControllerReasonCast).abort(
+					(this.closeAbortController.signal as AbortSignalReasonCast).reason,
+				);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -661,7 +677,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.logger.sendTelemetryEvent({
 					eventName: "DeltaManager_GetDeltasAborted",
 					fetchReason,
-					reason: controller.signal.reason,
+					// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+					reason: (controller.signal as AbortSignalReasonCast).reason,
 				});
 			}
 			this.closeAbortController.signal.onabort = null;
@@ -718,7 +735,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues() {
-		this.closeAbortController.abort("DeltaManager was closed");
+		// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+		(this.closeAbortController as AbortControllerReasonCast).abort("DeltaManager was closed");
 
 		this._inbound.clear();
 		this._inboundSignal.clear();

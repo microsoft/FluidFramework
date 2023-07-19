@@ -505,7 +505,10 @@ describe("Loader", () => {
 									};
 								});
 
-								throw new Error(abortSignal.reason);
+								throw new Error(
+									// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+									(abortSignal as AbortSignal & { reason: any }).reason,
+								);
 							},
 						};
 					},

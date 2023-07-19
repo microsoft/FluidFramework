@@ -80,7 +80,8 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
 					},
 					err,
 				);
@@ -90,7 +91,8 @@ export async function runWithRetry<T>(
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
 					},
 				);
 			}
