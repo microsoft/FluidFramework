@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/common-utils";
@@ -107,7 +107,7 @@ async function runTestNoTimer(
 
 	const cache = new OpsCache(
 		initialSeq,
-		createChildLogger(),
+		new TelemetryUTLogger(),
 		mockCache,
 		batchSize,
 		-1, // timerGranularity
@@ -147,7 +147,7 @@ export async function runTestWithTimer(
 
 	const cache = new OpsCache(
 		initialSeq,
-		createChildLogger(),
+		new TelemetryUTLogger(),
 		mockCache,
 		batchSize,
 		1, // timerGranularity
@@ -310,7 +310,7 @@ describe("OpsCache", () => {
 
 		const cache = new OpsCache(
 			initialSeq,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			mockCache,
 			5 /* batchSize */,
 			-1, // timerGranularity
@@ -396,7 +396,7 @@ describe("OdspDeltaStorageWithCache", () => {
 
 		const storage = new OdspDeltaStorageWithCache(
 			snapshotOps,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			batchSize,
 			concurrency,
 			// getFromStorage

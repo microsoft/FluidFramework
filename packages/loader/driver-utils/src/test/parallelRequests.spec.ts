@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { ParallelRequests } from "../parallelRequests";
 
@@ -32,7 +32,7 @@ describe("Parallel Requests", () => {
 			from,
 			knownTo ? to : undefined,
 			payloadSize,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			async (request: number, _from: number, _to: number) => {
 				let length = _to - _from;
 				requests++;
@@ -101,7 +101,7 @@ describe("Parallel Requests", () => {
 			from,
 			to,
 			payloadSize,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			async (request: number, _from: number, _to: number) => {
 				const length = _to - _from;
 				requests++;
@@ -201,7 +201,7 @@ describe("Parallel Requests", () => {
 			1,
 			100,
 			10,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			async (request: number, _from: number, _to: number) => {
 				throw new Error("request");
 			},
@@ -225,7 +225,7 @@ describe("Parallel Requests", () => {
 			1,
 			100,
 			10,
-			createChildLogger(),
+			new TelemetryUTLogger(),
 			async (request: number, _from: number, _to: number) => {
 				return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
 			},

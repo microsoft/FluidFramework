@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
@@ -60,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			return newToken;
 		};
 
-		const logger = createChildLogger();
+		const logger = new TelemetryUTLogger();
 		restWrapper = await RouterliciousOrdererRestWrapper.load(
 			toInstrumentedR11sOrdererTokenFetcher(
 				"dummytenantid",

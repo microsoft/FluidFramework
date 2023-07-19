@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -76,7 +76,7 @@ describe("Odsp Create Container Test", () => {
 		summary: ISummaryTree,
 		resolved: IOdspResolvedUrl,
 	): Promise<IDocumentService> =>
-		odspDocumentServiceFactory.createContainer(summary, resolved, createChildLogger());
+		odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger());
 
 	beforeEach(() => {
 		resolver = new OdspDriverUrlResolver();
@@ -89,7 +89,11 @@ describe("Odsp Create Container Test", () => {
 		const summary = createSummary(true, true);
 		const docService = await mockFetchOk(
 			async () =>
-				odspDocumentServiceFactory.createContainer(summary, resolved, createChildLogger()),
+				odspDocumentServiceFactory.createContainer(
+					summary,
+					resolved,
+					new TelemetryUTLogger(),
+				),
 			expectedResponse,
 			{ "x-fluid-epoch": "epoch1" },
 		);

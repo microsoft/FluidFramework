@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
@@ -37,7 +37,7 @@ describe("DeltaStorageService", () => {
 	const fileEntry = { docId: "docId", resolvedUrl };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
-		const logger = createChildLogger();
+		const logger = new TelemetryUTLogger();
 		const deltaStorageService = new OdspDeltaStorageService(
 			testDeltaStorageUrl,
 			async (_refresh) => "?access_token=123",
@@ -87,7 +87,7 @@ describe("DeltaStorageService", () => {
 
 		let deltaStorageService: OdspDeltaStorageService;
 		before(() => {
-			const logger = createChildLogger();
+			const logger = new TelemetryUTLogger();
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
@@ -157,7 +157,7 @@ describe("DeltaStorageService", () => {
 
 		let deltaStorageService: OdspDeltaStorageService;
 		before(() => {
-			const logger = createChildLogger();
+			const logger = new TelemetryUTLogger();
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
@@ -196,7 +196,7 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("DeltaStorageServiceWith Cache Tests", () => {
-		const logger = createChildLogger();
+		const logger = new TelemetryUTLogger();
 
 		it("FirstCacheMiss should update to first miss op seq number correctly", async () => {
 			const deltasFetchResult: IDeltasFetchResult = { messages: [], partialResult: false };
