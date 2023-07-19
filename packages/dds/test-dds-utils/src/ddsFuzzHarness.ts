@@ -598,8 +598,10 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
 	clientId: string,
+	dataStoreRuntimeOptions: { [key: string]: unknown } = {},
 ): Client<TChannelFactory> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
@@ -677,7 +679,12 @@ export async function runTestForSeed<
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
 	const random = makeRandom(seed);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
+	const summarizerClient = createClient(
+		containerRuntimeFactory,
+		model.factory,
+		"summarizer",
+		model.dataStoreRuntimeOptions,
+	);
 
 	const clients = await Promise.all(
 		Array.from({ length: options.numberOfClients }, async (_, index) =>
