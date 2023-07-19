@@ -198,9 +198,9 @@ export class Repository {
 		try {
 			console.log(`Checking merge conflicts for: ${commit}`);
 			mergeResult = await this.git.merge([commit, "--no-commit", "--no-ff"]);
-			console.log(`Git merge result: ${mergeResult}`);
 			await this.git.merge(["--abort"]);
 		} catch {
+			console.log(`Merge conflicts exists for: ${commit}`);
 			await this.git.merge(["--abort"]);
 			return false;
 		}

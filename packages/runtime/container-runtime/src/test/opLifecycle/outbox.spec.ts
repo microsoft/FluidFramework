@@ -30,6 +30,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ICompressionRuntimeOptions,
+	makeLegacySendBatchFn,
 } from "../../containerRuntime";
 
 describe("Outbox", () => {
@@ -185,11 +186,16 @@ describe("Outbox", () => {
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		enableGroupedBatching?: boolean;
-	}) =>
-		new Outbox({
+	}) => {
+		const { submitFn, submitBatchFn, deltaManager } = params.context;
+
+		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, deltaManager);
+
+		return new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			containerContext: params.context,
+			submitBatchFn,
+			legacySendBatchFn,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,
@@ -208,6 +214,7 @@ describe("Outbox", () => {
 			opReentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
+	};
 
 	beforeEach(() => {
 		state.deltaManagerFlushCalls = 0;

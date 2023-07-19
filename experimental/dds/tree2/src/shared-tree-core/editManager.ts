@@ -285,7 +285,7 @@ export class EditManager<
 					// TODO:#4918: Investigate if we can handle this case more gracefully by including the origin commit in `sequenceMap`
 					(this.trunkBranches.size === 1 &&
 						this.trunkBranches.minKey() === minimumPossibleSequenceNumber),
-				"Expected no outstanding branches when clearing trunk",
+				0x711 /* Expected no outstanding branches when clearing trunk */,
 			);
 			this.trunk.setHead(this.trunkBase);
 			this.sequenceMap.clear();
@@ -401,6 +401,25 @@ export class EditManager<
 		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map(
 			(c) => c.change,
 		);
+	}
+
+	/**
+	 * @returns The length of the longest branch maintained by this EditManager.
+	 * This may be the length of a peer branch or the local branch.
+	 * The length is counted from the lowest common ancestor with the trunk such that a fully sequenced branch would
+	 * have length zero.
+	 */
+	public getLongestBranchLength(): number {
+		let max = 0;
+		const trunkHead = this.trunk.getHead();
+		for (const branch of this.peerLocalBranches.values()) {
+			const branchPath = getPathFromBase(branch.getHead(), trunkHead);
+			if (branchPath.length > max) {
+				max = branchPath.length;
+			}
+		}
+		const localPath = getPathFromBase(this.localBranch.getHead(), trunkHead);
+		return Math.max(max, localPath.length);
 	}
 
 	/**

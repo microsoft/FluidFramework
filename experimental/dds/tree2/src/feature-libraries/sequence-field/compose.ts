@@ -14,7 +14,16 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, EmptyInputCellMark, Modify, MoveId, CellId } from "./format";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	EmptyInputCellMark,
+	Modify,
+	MoveId,
+	NoopMarkType,
+	CellId,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -48,6 +57,9 @@ import {
 	withRevision,
 	markEmptiesCells,
 	splitMark,
+	markIsTransient,
+	GenerativeMark,
+	isGenerativeMark,
 	areOverlappingIdRanges,
 } from "./utils";
 
@@ -165,6 +177,51 @@ function composeMarks<TNodeChange>(
 		composeChild,
 	);
 
+	if (markIsTransient(newMark)) {
+		return withNodeChange(baseMark, nodeChange);
+	}
+	if (markIsTransient(baseMark)) {
+		if (isGenerativeMark(newMark)) {
+			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
+			const nonTransient = withNodeChange(
+				baseMark,
+				nodeChange,
+			) as GenerativeMark<TNodeChange>;
+			delete nonTransient.transientDetach;
+			return nonTransient;
+		}
+		// Modify and Placeholder marks must be muted because the node they target has been deleted.
+		// Detach marks must be muted because the cell is empty.
+		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
+			assert(
+				newMark.detachEvent !== undefined,
+				"Invalid node-targeting mark after transient",
+			);
+			return baseMark;
+		}
+		if (newMark.type === "ReturnTo") {
+			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
+			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
+			// knew about the node, and tried to move it out and return it.
+			// Why muted: until we support replacing a node within a cell, only a single specific node will ever occupy
+			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
+			// attempt to move a deleted node end up being muted.
+			assert(
+				newMark.isSrcConflicted ?? false,
+				"Invalid active ReturnTo mark after transient",
+			);
+			return baseMark;
+		}
+		// Because of the rebase sandwich, it is possible for a MoveIn mark to target an already existing cell.
+		// This occurs when a branch with a move get rebased over some other branch.
+		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
+		// because no concurrent change has the ability to refer to such a cell.
+		// Therefore, a MoveIn mark cannot occur after a transient.
+		assert(newMark.type !== "MoveIn", "Invalid MoveIn after transient");
+		assert(newMark.type === NoopMarkType, "Unexpected mark type after transient");
+		return baseMark;
+	}
+
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
 		if (isNoopMark(baseMark)) {
 			return withNodeChange(newMark, nodeChange);
@@ -191,15 +248,7 @@ function composeMarks<TNodeChange>(
 		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
-		const moveInId = getMarkMoveId(baseMark);
-		const moveOutId = getMarkMoveId(newMark);
-
-		if (moveInId !== undefined && moveOutId !== undefined) {
-			assert(
-				isMoveMark(baseMark) && isMoveMark(newMark),
-				0x68f /* Only move marks have move IDs */,
-			);
-
+		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
@@ -237,8 +286,7 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		if (moveInId !== undefined) {
-			assert(isMoveMark(baseMark), 0x690 /* Only move marks have move IDs */);
+		if (isMoveMark(baseMark)) {
 			setReplacementMark(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -250,9 +298,7 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		if (moveOutId !== undefined) {
-			assert(isMoveMark(newMark), 0x691 /* Only move marks have move IDs */);
-
+		if (isMoveMark(newMark)) {
 			// The nodes attached by `baseMark` have been moved by `newMark`.
 			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
 			setReplacementMark(
@@ -265,8 +311,21 @@ function composeMarks<TNodeChange>(
 			);
 			return { count: 0 };
 		}
-		// TODO: Create modify mark for transient node.
-		return { count: 0 };
+
+		assert(isDeleteMark(newMark), "Unexpected mark type");
+		assert(isGenerativeMark(baseMark), "Expected generative mark");
+		const newMarkRevision = newMark.revision ?? newRev;
+		assert(newMarkRevision !== undefined, "Unable to compose anonymous marks");
+		return withNodeChange(
+			{
+				...baseMark,
+				transientDetach: {
+					revision: newMarkRevision,
+					localId: newMark.id,
+				},
+			},
+			nodeChange,
+		);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
@@ -495,7 +554,9 @@ export class ComposeQueue<T> {
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			let baseCellId: ChangeAtomId;
-			if (markEmptiesCells(baseMark)) {
+			if (markIsTransient(baseMark)) {
+				baseCellId = baseMark.transientDetach;
+			} else if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
@@ -518,7 +579,7 @@ export class ComposeQueue<T> {
 			} else if (baseMark.type === "MoveIn") {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
-				assert(baseIntention !== undefined, "Base mark must have an intention");
+				assert(baseIntention !== undefined, 0x706 /* Base mark must have an intention */);
 				baseCellId = { revision: baseIntention, localId: baseMark.id };
 			} else {
 				assert(

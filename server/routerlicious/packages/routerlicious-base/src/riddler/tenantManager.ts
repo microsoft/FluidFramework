@@ -18,11 +18,8 @@ import {
 	ICache,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import {
-	BaseTelemetryProperties,
-	LumberEventName,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -58,8 +55,19 @@ export interface ITenantDocument {
 	scheduledDeletionTime?: string;
 }
 
+enum FetchTenantKeyMetric {
+	RetrieveFromCacheSucess = "retrieveFromCacheSuccess",
+	NotFoundInCache = "notFoundInCache",
+	RetrieveFromCacheError = "retrieveFromCacheError",
+	SetKeyInCacheSuccess = "settingKeyInCacheSucceeded",
+	SetKeyInCacheFailure = "settingKeyInCacheFailed",
+}
+
 export class TenantManager {
 	private readonly isCacheEnabled;
+	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(FetchTenantKeyMetric),
+	);
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly collectionName: string,
@@ -67,9 +75,19 @@ export class TenantManager {
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
 		private readonly secretManager: ISecretManager,
+		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
+		if (fetchTenantKeyMetricInterval) {
+			setInterval(() => {
+				if (!this.apiCounter.countersAreActive) {
+					return;
+				}
+				Lumberjack.info("Fetch tenant key api counters", this.apiCounter.getCounters());
+				this.apiCounter.resetAllCounters();
+			}, this.fetchTenantKeyMetricInterval);
+		}
 	}
 
 	/**
@@ -341,29 +359,31 @@ export class TenantManager {
 			includeDisabledTenant,
 			bypassCache,
 		};
-		const fetchTenantKeyMetric = Lumberjack.newLumberMetric(
-			LumberEventName.RiddlerFetchTenantKey,
-		);
-		let uncaughtException;
-		let retrievedFromCache = false;
 
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
-				const cachedKey = await this.getKeyFromCache(tenantId);
-
-				if (cachedKey) {
-					retrievedFromCache = true;
-					const tenantKeys = this.decryptCachedKeys(cachedKey);
-					// This is an edge case where the used encryption key is not valid.
-					// If both decrypted tenant keys are null, it means it hits this case,
-					// then we should read from database and set new values in cache.
-					if (tenantKeys.key1 || tenantKeys.key2) {
-						return tenantKeys;
+				try {
+					const cachedKey = await this.getKeyFromCache(tenantId);
+					if (cachedKey) {
+						const tenantKeys = this.decryptCachedKeys(cachedKey);
+						// This is an edge case where the used encryption key is not valid.
+						// If both decrypted tenant keys are null, it means it hits this case,
+						// then we should read from database and set new values in cache.
+						if (tenantKeys.key1 || tenantKeys.key2) {
+							return tenantKeys;
+						}
+						Lumberjack.info(
+							"Retrieved from cache but both decrypted tenant keys are null.",
+							lumberProperties,
+						);
 					}
-					Lumberjack.info(
-						"Retrieved from cache but both decrypted tenant keys are null.",
-						lumberProperties,
+				} catch (error) {
+					// Catch if there is an error reading from redis so we can continue to use the database
+					Lumberjack.error(
+						`Error getting tenant keys from cache. Falling back to database.`,
+						{ [BaseTelemetryProperties.tenantId]: tenantId },
+						error,
 					);
 				}
 			}
@@ -418,11 +438,7 @@ export class TenantManager {
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
-				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-				fetchTenantKeyMetric.setProperty(
-					"settingKeyInCacheSucceeded",
-					setKeyInCacheSucceeded,
-				);
+				await this.setKeyInCache(tenantId, cacheKeys);
 			}
 
 			return {
@@ -430,18 +446,8 @@ export class TenantManager {
 				key2: tenantKey2,
 			};
 		} catch (error) {
-			uncaughtException = error;
+			Lumberjack.error(`Error getting tenant keys.`, error);
 			throw error;
-		} finally {
-			fetchTenantKeyMetric.setProperty("retrievedFromCache", retrievedFromCache);
-			if (!uncaughtException) {
-				fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
-			} else {
-				fetchTenantKeyMetric.error(
-					`Error trying to retrieve tenant keys.`,
-					uncaughtException,
-				);
-			}
 		}
 	}
 
@@ -700,7 +706,19 @@ export class TenantManager {
 	}
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
-		return this.cache?.get(`tenantKeys:${tenantId}`);
+		try {
+			const cachedKey = await this.cache?.get(`tenantKeys:${tenantId}`);
+			if (cachedKey == null) {
+				this.apiCounter.incrementCounter(FetchTenantKeyMetric.NotFoundInCache);
+			} else {
+				this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheSucess);
+			}
+			return cachedKey;
+		} catch (error) {
+			Lumberjack.error(`Error trying to retreive tenant keys from the cache.`, error);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.RetrieveFromCacheError);
+			throw error;
+		}
 	}
 
 	private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
@@ -711,10 +729,11 @@ export class TenantManager {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		try {
 			await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
-			Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheSuccess);
 			return true;
 		} catch (error) {
 			Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
+			this.apiCounter.incrementCounter(FetchTenantKeyMetric.SetKeyInCacheFailure);
 			return false;
 		}
 	}

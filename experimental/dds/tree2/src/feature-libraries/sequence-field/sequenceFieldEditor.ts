@@ -11,6 +11,7 @@ import { brand } from "../../util";
 import {
 	CellId,
 	Changeset,
+	Insert,
 	Mark,
 	MoveId,
 	NodeChangeType,
@@ -61,12 +62,14 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-	): Changeset<never> =>
-		markAtIndex(index, {
+	): Changeset<never> => {
+		const mark: Insert<never> = {
 			type: "Insert",
 			content: cursors.map(jsonableTreeFromCursor),
 			id,
-		}),
+		};
+		return markAtIndex(index, mark);
+	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
 
