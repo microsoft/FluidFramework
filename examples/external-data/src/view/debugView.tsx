@@ -7,7 +7,7 @@ import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, ITaskData } from "../model-interface";
+import type { ITaskData } from "../model-interface";
 
 // Hardcoding a taskListId here for now. In a real scenario this would be provided by the user when creating a task list component in the container.
 
@@ -43,16 +43,6 @@ async function pollForServiceUpdates(
 }
 
 /**
- * {@link DebugView} input props.
- */
-export interface IDebugViewProps {
-	/**
-	 * The Task List app model to be visualized.
-	 */
-	model: IAppModel;
-}
-
-/**
  * "Debug" view of external data source.
  *
  * @remarks
@@ -62,10 +52,10 @@ export interface IDebugViewProps {
  *
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: React.FC = () => {
 	return (
 		<div>
-			<ControlsView model={props.model} />
+			<ControlsView />
 			<ExternalDataDebugView />
 		</div>
 	);
@@ -121,10 +111,6 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	);
 };
 
-interface IControlsViewProps {
-	model: IAppModel;
-}
-
 /**
  * Invoke service function to reset the external data source to its original contents.
  */
@@ -143,11 +129,11 @@ function debugResetExternalData(): void {
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
-const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+const ControlsView: React.FC = () => {
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-			<ExternalServerTaskListView model={props.model} />
+			<ExternalServerTaskListView />
 			<h3>Debug controls</h3>
 			<div style={{ margin: "10px 0" }}>
 				<button onClick={debugResetExternalData}>Reset external data</button>
@@ -207,10 +193,6 @@ const ExternalServerTaskRow: React.FC<IExternalServerTaskRowProps> = (
 	);
 };
 
-interface ExternalServerTaskListViewProps {
-	model: IAppModel;
-}
-
 /**
  * Model for external task data
  */
@@ -223,10 +205,7 @@ export interface ExternalServerDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProps> = (
-	props: ExternalServerTaskListViewProps,
-) => {
-	const { model } = props;
+export const ExternalServerTaskListView: React.FC = () => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
@@ -258,12 +237,10 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 				},
 			);
 		} catch (error) {
-			console.error(`Task list submition failed due to an error:\n${error}`);
+			console.error(`Task list submission failed due to an error:\n${error}`);
 
 			// TODO: display error status to user?
 		}
-		// Send signal to simulate RuntimeSignal that will get sent from alfred in the dev branch
-		model.sendCustomDebugSignal();
 	};
 
 	return (

@@ -360,7 +360,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				},
 			);
 		} catch (error) {
-			console.error(`Task list submition failed due to an error:\n${error}`);
+			console.error(`Task list submission failed due to an error:\n${error}`);
 
 			// TODO: display error status to user?
 		}
