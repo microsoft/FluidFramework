@@ -8,6 +8,6 @@ This change deprecates our internal TelemetryLogger implementations and unifies 
 
 For the deprecated implementations the following replacement function should be used:
 
--   replace ChildLogger.create with createChildLogger
+-   replace ChildLogger.create, new TelemetryNullLogger, and new BaseTelemetryNullLogger with createChildLogger
 -   replace DebugLogger.create with createDebugLogger
 -   replace new MultiSinkLogger with createMultiSinkLogger
