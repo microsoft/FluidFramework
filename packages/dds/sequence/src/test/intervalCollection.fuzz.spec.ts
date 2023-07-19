@@ -36,6 +36,12 @@ import {
 	defaultOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { SharedString } from "../sharedString";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
@@ -212,6 +218,24 @@ export function makeOperationGenerator(
 	]);
 }
 
+class IntervalCollectionFuzzFactory extends SharedStringFactory {
+	options = { intervalStickinessEnabled: true };
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
+}
+
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -222,7 +246,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new IntervalCollectionFuzzFactory(),
 	dataStoreRuntimeOptions: { intervalStickinessEnabled: true },
 };
 
