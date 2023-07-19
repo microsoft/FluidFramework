@@ -73,7 +73,7 @@ describe("SequenceField - Invert", () => {
 	it("delete => revive", () => {
 		const input = composeAnonChanges([Change.modify(0, childChange1), Change.delete(0, 2)]);
 		const expected = composeAnonChanges([
-			Change.revive(0, 2, tag1, brand(0)),
+			Change.revive(0, 2, { revision: tag1, localId: brand(0) }),
 			Change.modify(0, inverseChildChange1),
 		]);
 		const actual = invert(input);
@@ -81,7 +81,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("revert-only active revive => delete", () => {
-		const revive = Change.revive(0, 2, tag1, brand(0));
+		const revive = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
 		const modify = Change.modify(0, childChange1);
 		const input = composeAnonChanges([revive, modify]);
 		const expected = composeAnonChanges([
@@ -93,7 +93,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("intentional active revive => delete", () => {
-		const input = Change.intentionalRevive(0, 2, tag1, brand(0));
+		const input = Change.intentionalRevive(0, 2, { revision: tag1, localId: brand(0) });
 		const expected = Change.delete(0, 2);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -103,7 +103,7 @@ describe("SequenceField - Invert", () => {
 		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 3)]);
 		const expected = composeAnonChanges([
 			Change.modify(3, inverseChildChange1),
-			Change.return(3, 2, 0, tag1, brand(0)),
+			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
 		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -113,7 +113,7 @@ describe("SequenceField - Invert", () => {
 		const input = composeAnonChanges([Change.modify(3, childChange1), Change.move(2, 2, 0)]);
 		const expected = composeAnonChanges([
 			Change.modify(1, inverseChildChange1),
-			Change.return(0, 2, 2, tag1, brand(0)),
+			Change.return(0, 2, 2, { revision: tag1, localId: brand(0) }),
 		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -122,11 +122,11 @@ describe("SequenceField - Invert", () => {
 	it("return => return", () => {
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.return(0, 2, 3, tag1, brand(0)),
+			Change.return(0, 2, 3, { revision: tag1, localId: brand(0) }),
 		]);
 		const expected = composeAnonChanges([
 			Change.modify(3, inverseChildChange1),
-			Change.return(3, 2, 0, tag1, brand(0)),
+			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
 		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -205,7 +205,12 @@ describe("SequenceField - Invert", () => {
 		it("revert-only blocked revive => no-op", () => {
 			const input = composeAnonChanges([
 				Change.modify(0, childChange1),
-				Change.blockedRevive(1, 2, tag1, tag2, brand(0)),
+				Change.blockedRevive(
+					1,
+					2,
+					{ revision: tag1, localId: brand(0) },
+					{ revision: tag2, localId: brand(0) },
+				),
 				Change.modify(1, childChange2),
 			]);
 			const expected = composeAnonChanges([
@@ -219,7 +224,13 @@ describe("SequenceField - Invert", () => {
 		it("intentional redundant revive => skip", () => {
 			const input = composeAnonChanges([
 				Change.modify(0, childChange1),
-				Change.redundantRevive(1, 1, tag1, brand(0), undefined, true),
+				Change.redundantRevive(
+					1,
+					1,
+					{ revision: tag1, localId: brand(0) },
+					undefined,
+					true,
+				),
 				Change.modify(2, childChange2),
 			]);
 			const expected = composeAnonChanges([

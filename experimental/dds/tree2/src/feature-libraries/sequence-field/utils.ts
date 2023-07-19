@@ -8,7 +8,6 @@ import { RevisionTag, TaggedChange } from "../../core";
 import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
-	ChangeAtomId,
 	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
@@ -20,7 +19,6 @@ import {
 	Detach,
 	HasChanges,
 	HasRevisionTag,
-	HasTiebreakPolicy,
 	Insert,
 	LineageEvent,
 	Mark,
@@ -42,6 +40,8 @@ import {
 	DetachedCellMark,
 	CellTargetingMark,
 	CellId,
+	HasPlaceFields,
+	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -88,8 +88,13 @@ export function isReturnMuted(mark: ReturnTo): boolean {
 	return mark.isSrcConflicted ?? isReattachConflicted(mark);
 }
 
-export function areEqualDetachEvents(a: CellId, b: CellId): boolean {
-	return a.localId === b.localId && a.revision === b.revision && areSameLineage(a.lineage, b.lineage);
+export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+	return (
+		a.localId === b.localId && a.revision === b.revision && areSameLineage(a.lineage, b.lineage)
+	);
 }
 
 export function getCellId(
@@ -109,18 +114,25 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}
-	if (isAttach(clone) && clone.lineage !== undefined) {
-		clone.lineage = [...clone.lineage];
+	if (isNewAttach(clone)) {
+		if (clone.lineage !== undefined) {
+			clone.lineage = [...clone.lineage];
+		}
+	} else if (clone.detachEvent !== undefined) {
+		clone.detachEvent = { ...clone.detachEvent };
+		if (clone.detachEvent.lineage !== undefined) {
+			clone.detachEvent.lineage = [...clone.detachEvent.lineage];
+		}
 	}
 	return clone;
 }
 
 /**
- * @returns `true` iff `lhs` and `rhs`'s `HasTiebreakPolicy` fields are structurally equal.
+ * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
  */
 export function isEqualPlace(
-	lhs: Readonly<HasTiebreakPolicy>,
-	rhs: Readonly<HasTiebreakPolicy>,
+	lhs: Readonly<HasPlaceFields>,
+	rhs: Readonly<HasPlaceFields>,
 ): boolean {
 	return (
 		lhs.heed === rhs.heed &&
@@ -129,7 +141,17 @@ export function isEqualPlace(
 	);
 }
 
-function areSameLineage(lineage1: LineageEvent[] | undefined, lineage2: LineageEvent[] | undefined): boolean {
+function haveEqualReattachFields(
+	lhs: Readonly<HasReattachFields>,
+	rhs: Readonly<HasReattachFields>,
+): boolean {
+	return lhs.inverseOf === rhs.inverseOf && areEqualCellIds(lhs.detachEvent, rhs.detachEvent);
+}
+
+function areSameLineage(
+	lineage1: LineageEvent[] | undefined,
+	lineage2: LineageEvent[] | undefined,
+): boolean {
 	if (lineage1 === undefined && lineage2 === undefined) {
 		return true;
 	}
@@ -137,7 +159,7 @@ function areSameLineage(lineage1: LineageEvent[] | undefined, lineage2: LineageE
 	if (lineage1 === undefined || lineage2 === undefined) {
 		return false;
 	}
-	
+
 	if (lineage1.length !== lineage2.length) {
 		return false;
 	}
@@ -366,9 +388,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			}
 			break;
 		}
-		case "MoveIn":
-		case "ReturnTo": {
-			const lhsMoveIn = lhs as MoveIn | ReturnTo;
+		case "MoveIn": {
+			const lhsMoveIn = lhs as MoveIn;
 			if (
 				isEqualPlace(lhsMoveIn, rhs) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
@@ -378,6 +399,15 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				return true;
 			}
 			break;
+		}
+		case "ReturnTo": {
+			const lhsReturnTo = lhs as ReturnTo;
+			if (
+				haveEqualReattachFields(lhsReturnTo, rhs) &&
+				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
+				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
+			) {
+			}
 		}
 		case "Delete": {
 			const lhsDetach = lhs as Detach;

@@ -15,7 +15,10 @@ import { ChangeMaker as Change } from "./testEdits";
 const encodingTestData: [string, Changeset<TestChange>][] = [
 	["with child change", Change.modify(1, TestChange.mint([], 1))],
 	["without child change", Change.delete(2, 2)],
-	["with repair data", Change.revive(0, 1, mintRevisionTag(), brand(10), fakeRepair)],
+	[
+		"with repair data",
+		Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }, fakeRepair),
+	],
 ];
 
 describe("SequenceField encoding", () => {

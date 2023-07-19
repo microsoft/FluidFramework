@@ -818,7 +818,7 @@ function compareCellPositions(
 	);
 	if (offsetInNew !== undefined) {
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
-	}		
+	}
 
 	const cmp = compareLineages(baseCellId.lineage, newCellId.lineage);
 	if (cmp !== 0) {

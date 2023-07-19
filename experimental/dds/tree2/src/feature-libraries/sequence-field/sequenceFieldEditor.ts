@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor, RevisionTag } from "../../core";
+import { ITreeCursor } from "../../core";
 import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
+	CellId,
 	Changeset,
-	LineageEvent,
 	Mark,
 	MoveId,
 	NodeChangeType,
@@ -25,8 +26,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	revive(
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 		reviver: NodeReviver,
 		isIntention?: true,
 	): Changeset<never>;
@@ -48,8 +48,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 	): Changeset<never>;
 }
 
@@ -70,25 +69,23 @@ export const sequenceFieldEditor = {
 		}),
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+
 	revive: (
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		// Revives are typically created to undo a delete from the prior revision.
-		// When that's the case, we know the content used to be at the index at which it is being revived.
-		const detachEvent = { revision: detachedBy, localId: detachId };
+		assert(detachEvent.revision !== undefined, "Detach event must have a revision");
 		const mark: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachedBy, detachId, count),
+			content: reviver(detachEvent.revision, detachEvent.localId, count),
 			count,
 			detachEvent,
 		};
 		if (!isIntention) {
-			mark.inverseOf = detachedBy;
+			mark.inverseOf = detachEvent.revision;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
@@ -118,15 +115,12 @@ export const sequenceFieldEditor = {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
-		lineage?: LineageEvent[],
+		detachEvent: CellId,
 	): Changeset<never> {
 		if (count === 0) {
 			return [];
 		}
 
-		const detachEvent = { revision: detachedBy, localId: detachId };
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFrom<never> = {
 			type: "ReturnFrom",
@@ -140,10 +134,6 @@ export const sequenceFieldEditor = {
 			count,
 			detachEvent,
 		};
-
-		if (lineage !== undefined) {
-			returnTo.lineage = lineage;
-		}
 
 		const factory = new MarkListFactory<never>();
 		if (sourceIndex < destIndex) {

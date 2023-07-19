@@ -45,6 +45,7 @@ import {
 	Modify,
 	EmptyInputCellMark,
 	NoopMarkType,
+	HasLineage,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -683,10 +684,11 @@ function handleLineage<T>(
 	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
 	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
 	// e.g., if the inverse of the lineage event is muted after rebasing.
-	tryRemoveLineageEvents(rebasedMark, baseIntention);
+	const lineageHolder = getLineageHolder(rebasedMark);
+	tryRemoveLineageEvents(lineageHolder, baseIntention);
 
 	for (const entry of lineageEntries) {
-		addLineageEntry(rebasedMark, baseIntention, entry.id, entry.count, entry.count);
+		addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
 	}
 
 	lineageRecipients.push(rebasedMark);
@@ -699,33 +701,33 @@ function addLineageToRecipients(
 	count: number,
 ) {
 	for (const mark of recipients) {
-		addLineageEntry(mark, revision, id, count, 0);
+		addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
 	}
 }
 
 function addLineageEntry(
-	mark: Mark<unknown>,
+	lineageHolder: HasLineage,
 	revision: RevisionTag,
 	id: ChangesetLocalId,
 	count: number,
 	offset: number,
 ) {
-	if (mark.lineage === undefined) {
-		mark.lineage = [];
+	if (lineageHolder.lineage === undefined) {
+		lineageHolder.lineage = [];
 	}
 
-	if (mark.lineage.length > 0) {
-		const lastEntry = mark.lineage[mark.lineage.length - 1];
+	if (lineageHolder.lineage.length > 0) {
+		const lastEntry = lineageHolder.lineage[lineageHolder.lineage.length - 1];
 		if (lastEntry.revision === revision && (lastEntry.id as number) + lastEntry.count === id) {
 			if (lastEntry.offset === lastEntry.count) {
-				mark.lineage[mark.lineage.length - 1] = {
+				lineageHolder.lineage[lineageHolder.lineage.length - 1] = {
 					...lastEntry,
 					count: lastEntry.count + count,
 					offset: lastEntry.offset + offset,
 				};
 				return;
 			} else if (offset === 0) {
-				mark.lineage[mark.lineage.length - 1] = {
+				lineageHolder.lineage[lineageHolder.lineage.length - 1] = {
 					...lastEntry,
 					count: lastEntry.count + count,
 				};
@@ -734,18 +736,29 @@ function addLineageEntry(
 		}
 	}
 
-	mark.lineage.push({ revision, id, count, offset });
+	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvents<T>(mark: Mark<T>, revisionToRemove: RevisionTag) {
-	if (mark.lineage === undefined) {
+function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: RevisionTag) {
+	if (lineageHolder.lineage === undefined) {
 		return;
 	}
 
-	mark.lineage = mark.lineage.filter((event) => event.revision !== revisionToRemove);
-	if (mark.lineage.length === 0) {
-		delete mark.lineage;
+	lineageHolder.lineage = lineageHolder.lineage.filter(
+		(event) => event.revision !== revisionToRemove,
+	);
+	if (lineageHolder.lineage.length === 0) {
+		delete lineageHolder.lineage;
 	}
+}
+
+function getLineageHolder(mark: Mark<unknown>): HasLineage {
+	if (isNewAttach(mark)) {
+		return mark;
+	}
+
+	assert(mark.detachEvent !== undefined, "Attached cells cannot have lineage");
+	return mark.detachEvent;
 }
 
 /**
@@ -793,7 +806,6 @@ function compareCellPositions(
 			return newOffset > 0 ? -newOffset : Infinity;
 		}
 	}
-
 
 	if (newId !== undefined) {
 		const cmp = compareLineages(baseId.lineage, newId.lineage);

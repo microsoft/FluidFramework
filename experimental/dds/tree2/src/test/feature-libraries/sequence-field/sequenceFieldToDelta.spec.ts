@@ -93,7 +93,7 @@ describe("SequenceField - toDelta", () => {
 			assert.equal(count, 1);
 			return contentCursor;
 		}
-		const changeset = Change.revive(0, 1, tag, brand(0), reviver);
+		const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, reviver);
 		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
