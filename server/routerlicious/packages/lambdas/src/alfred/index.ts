@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import {
 	ConnectionMode,
 	IClient,
@@ -231,6 +232,8 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	httpServer?: core.IHttpServer,
+	eventEmitter?: EventEmitter,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -617,6 +620,34 @@ export function configureWebSocketServices(
 					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
 					socket,
 				);
+			}
+
+			// Send signal to room from broadcast-signal endpoint
+			if (httpServer !== undefined && eventEmitter !== undefined) {
+				eventEmitter.on("broadcast-signal", (_, containerUrl) => {
+					const documentId = containerUrl.split("/")[containerUrl.split("/").length - 1];
+					const tenantId = containerUrl.split("/")[containerUrl.split("/").length - 2];
+					const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
+
+					const signalMessageRuntimeMessage: ISignalMessage = {
+						clientId: null, // system signal
+						content: JSON.stringify({
+							type: "RuntimeMessage",
+							contents: {
+								content: {
+									type: "ExternalDataChanged",
+									content: "Data has changed upstream. Please import new data.",
+								},
+								type: "RuntimeMessage",
+							},
+						}),
+					};
+					socket.emitToRoom(
+						getRoomId(roomFromBroadcastSignal),
+						"signal",
+						signalMessageRuntimeMessage,
+					);
+				});
 			}
 
 			return {
