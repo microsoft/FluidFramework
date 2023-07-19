@@ -21,7 +21,7 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"build:tsc": "tsc --pretty",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"_api-extractor-temp\" \"nyc\" \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",

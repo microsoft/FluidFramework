@@ -15,7 +15,7 @@
 		"build:compile": "lerna run build:compile --stream",
 		"build:genver": "lerna run build:genver --stream --parallel",
 		"ci:eslint": "lerna run eslint --no-sort --stream",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",
