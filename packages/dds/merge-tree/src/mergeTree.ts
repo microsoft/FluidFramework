@@ -624,13 +624,14 @@ function getSlideToSegment(
  */
 export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
-	mergeTree: MergeTree,
+	client: Client,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 ) {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference, mergeTree);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference, client["_mergeTree"]);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -893,7 +894,6 @@ export class MergeTree {
 		clientId: number,
 		localSeq?: number,
 	): number {
-		// todo: somewhat-ugly hack checking constructor name
 		if (node.isLeaf() && node.isStartEndpoint) {
 			return 0;
 		}
@@ -1067,7 +1067,7 @@ export class MergeTree {
 				return;
 			}
 
-		 	const [slideToSegment, maybeEndpoint] = getSlideToSegment(
+			const [slideToSegment, maybeEndpoint] = getSlideToSegment(
 				segment,
 				slidingPreference,
 				this,

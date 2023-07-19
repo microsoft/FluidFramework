@@ -320,10 +320,9 @@ export interface ISerializableInterval extends IInterval {
 
 // @internal
 export interface ISerializedInterval {
+    canBeExclusive?: boolean;
     end: number | "end";
     intervalType: IntervalType;
-    // (undocumented)
-    isExclusive: boolean;
     properties?: PropertySet;
     sequenceNumber: number;
     start: number | "start";

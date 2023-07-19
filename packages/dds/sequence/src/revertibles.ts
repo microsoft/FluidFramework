@@ -19,6 +19,7 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
 	getSlideToSegoff,
+	Client,
 } from "@fluidframework/merge-tree";
 import { IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
@@ -135,7 +136,6 @@ export function appendDeleteIntervalToRevertibles(
 		startSeg,
 		interval.start.getOffset(),
 		startType,
-		false,
 		undefined,
 		interval.start.slidingPreference,
 	);
@@ -143,7 +143,6 @@ export function appendDeleteIntervalToRevertibles(
 		endSeg,
 		interval.end.getOffset(),
 		endType,
-		false,
 		undefined,
 		interval.end.slidingPreference,
 	);
@@ -187,7 +186,6 @@ export function appendChangeIntervalToRevertibles(
 		startSeg,
 		previousInterval.start.getOffset(),
 		startType,
-		false,
 		undefined,
 		previousInterval.start.slidingPreference,
 	);
@@ -195,7 +193,6 @@ export function appendChangeIntervalToRevertibles(
 		endSeg,
 		previousInterval.end.getOffset(),
 		endType,
-		false,
 		undefined,
 		previousInterval.end.slidingPreference,
 	);
@@ -387,9 +384,15 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-function getSlidePosition(string: SharedString, lref: LocalReferencePosition, pos: number): number {
+function getSlidePosition(
+	string: SharedString,
+	lref: LocalReferencePosition,
+	pos: number,
+	client: Client,
+): number {
 	const slide = getSlideToSegoff(
 		{ segment: lref.getSegment(), offset: undefined },
+		client,
 		lref.slidingPreference,
 	);
 	return slide?.segment !== undefined &&
@@ -426,9 +429,11 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(string, revertible.start, start);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const startSlidePos = getSlidePosition(string, revertible.start, start, string["client"]);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(string, revertible.end, end);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const endSlidePos = getSlidePosition(string, revertible.end, end, string["client"]);
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
@@ -454,9 +459,11 @@ function revertLocalChange(
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	const startSlidePos = getSlidePosition(string, revertible.start, start);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const startSlidePos = getSlidePosition(string, revertible.start, start, string["client"]);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const endSlidePos = getSlidePosition(string, revertible.end, end);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const endSlidePos = getSlidePosition(string, revertible.end, end, string["client"]);
 	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
 	collection.change(id, startSlidePos, endSlidePos);
 

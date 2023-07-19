@@ -1123,7 +1123,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @deprecated Use getSlideToSegoff function instead.
 	 */
 	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		return getSlideToSegoff(segoff, this._mergeTree);
+		return getSlideToSegoff(segoff, this);
 	}
 
 	getPropertiesAtPosition(pos: number) {

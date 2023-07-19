@@ -104,7 +104,11 @@ export interface ISerializedInterval {
 	 * The stickiness of this interval
 	 */
 	stickiness?: IntervalStickiness;
-	isExclusive: boolean;
+	/**
+	 * Whether or not the endpoints of this interval can be exclusive. Exclusivity
+	 * is based on stickiness
+	 */
+	canBeExclusive?: boolean;
 	/** Any properties the interval has */
 	properties?: PropertySet;
 }
@@ -158,8 +162,7 @@ function decompressInterval(
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness: interval[5],
-		// todo: no ?? false
-		isExclusive: interval[6] ?? false,
+		canBeExclusive: interval[6],
 	};
 }
 
@@ -359,8 +362,6 @@ export class Interval implements ISerializableInterval {
 			intervalType: 0,
 			sequenceNumber: 0,
 			start: this.start,
-			// todo: remove
-			isExclusive: false,
 		};
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
@@ -598,7 +599,7 @@ export class SequenceInterval implements ISerializableInterval {
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			isExclusive: this.isExclusive,
+			canBeExclusive: this.isExclusive,
 		};
 
 		if (this.properties) {
@@ -873,7 +874,7 @@ function createPositionReference(
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
-		segoff = getSlideToSegoff(segoff);
+		segoff = getSlideToSegoff(segoff, client);
 	} else {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -2074,7 +2075,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }, this.client) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -2269,7 +2270,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				start,
 				stickiness,
-				isExclusive: canBeExclusive,
+				canBeExclusive,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -2591,7 +2592,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const { intervalType, properties, stickiness, isExclusive } = serializedInterval;
+		const {
+			intervalType,
+			properties,
+			stickiness,
+			canBeExclusive: isExclusive,
+		} = serializedInterval;
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
@@ -2606,7 +2612,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 			properties,
 			stickiness,
-			isExclusive,
+			canBeExclusive: isExclusive,
 		};
 
 		if (
@@ -2658,7 +2664,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(segoff);
+		const newSegoff = getSlideToSegoff(segoff, this.client);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined

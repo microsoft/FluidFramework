@@ -127,7 +127,6 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ISerializedInterval": {
-				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IntervalLocator": {
@@ -140,7 +139,6 @@
 				"forwardCompat": false
 			},
 			"TypeAliasDeclaration_SerializedIntervalDelta": {
-				"forwardCompat": false,
 				"backCompat": false
 			},
 			"TypeAliasDeclaration_SharedStringRevertible": {

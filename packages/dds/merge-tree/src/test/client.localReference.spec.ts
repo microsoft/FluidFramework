@@ -25,7 +25,7 @@ function getSlideOnRemoveReferencePosition(
 		referenceSequenceNumber: op.referenceSequenceNumber,
 		clientId: op.clientId,
 	});
-	segoff = getSlideToSegoff(segoff);
+	segoff = getSlideToSegoff(segoff, client);
 	return segoff;
 }
 

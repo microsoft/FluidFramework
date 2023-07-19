@@ -152,7 +152,7 @@ export class StartOfTreeSegment implements ISegment, IRemovalInfo {
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
 	private getStartSegProps() {
-		let firstSegment: ISegment | undefined;
+		let firstSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
