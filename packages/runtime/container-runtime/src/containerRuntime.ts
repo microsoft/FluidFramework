@@ -183,6 +183,7 @@ import {
 	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { IBatchMetadata } from "./metadata";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -2033,7 +2034,7 @@ export class ContainerRuntime
 								local,
 								type: message.type,
 								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 								compression: message.compression,
 							},
 						);
