@@ -14,7 +14,11 @@ import { TenantManager } from "./tenant";
  * Manager to fetch deltas from Alfred using the internal URL.
  */
 export class DeltaManager implements IDeltaService {
-	constructor(private readonly authEndpoint, private readonly internalAlfredUrl: string) {}
+	constructor(
+		private readonly authEndpoint,
+		private readonly internalAlfredUrl: string,
+		private readonly getDeltasRequestMaxOpsRange: number,
+	) {}
 
 	public async getDeltas(
 		_collectionName: string,
@@ -26,11 +30,29 @@ export class DeltaManager implements IDeltaService {
 	): Promise<ISequencedDocumentMessage[]> {
 		const baseUrl = `${this.internalAlfredUrl}`;
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
-		const resultP = restWrapper.get<ISequencedDocumentMessage[]>(
-			`/deltas/${tenantId}/${documentId}`,
-			{ from, to, caller },
-		);
-		return resultP;
+		// if requested size > getDeltasRequestMaxOpsRange, breakdown into chunks of size getDeltasRequestMaxOpsRange
+		if (to - from - 1 > this.getDeltasRequestMaxOpsRange) {
+			let getDeltasFrom = from;
+			let getDeltasTo = from + this.getDeltasRequestMaxOpsRange + 1;
+			const chunkResultP: Promise<ISequencedDocumentMessage[]>[] = [];
+			while (getDeltasTo <= to && getDeltasTo - getDeltasFrom - 1 > 0) {
+				chunkResultP.push(
+					restWrapper.get<ISequencedDocumentMessage[]>(
+						`/deltas/${tenantId}/${documentId}`,
+						{ getDeltasFrom, getDeltasTo, caller },
+					),
+				);
+				getDeltasFrom = getDeltasTo - 1;
+				getDeltasTo = Math.min(to, getDeltasFrom + this.getDeltasRequestMaxOpsRange + 1);
+			}
+			return (await Promise.all(chunkResultP)).flat();
+		} else {
+			const resultP = restWrapper.get<ISequencedDocumentMessage[]>(
+				`/deltas/${tenantId}/${documentId}`,
+				{ from, to, caller },
+			);
+			return resultP;
+		}
 	}
 
 	public async getDeltasFromStorage(
