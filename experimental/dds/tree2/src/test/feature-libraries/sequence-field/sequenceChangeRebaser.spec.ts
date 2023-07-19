@@ -66,20 +66,15 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"Revive",
 		(i, max) =>
-			Change.revive(
-				2,
-				2,
-				{
-					revision: tag1,
-					localId: brand(i),
-					lineage: generateLineage(tag1, brand(i), 2, max),
-				},
-				undefined,
-			),
+			Change.revive(2, 2, {
+				revision: tag1,
+				localId: brand(i),
+				lineage: generateLineage(tag1, brand(i), 2, max),
+			}),
 	],
 	[
 		"ConflictedRevive",
-		(i) => Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }, undefined),
+		(i) => Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
 	],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
