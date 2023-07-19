@@ -60,7 +60,7 @@ describe("editable-tree utilities", () => {
 		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
 		assert.throws(
 			() => getFieldSchema(brand(rootFieldKey), fullSchema),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"The field is a local field, a parent schema is required.",
