@@ -656,10 +656,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
 		const pendingEntry = this.pendingBlobs.get(localId);
 
-		// if (pendingEntry?.abortSignal?.aborted) {
-		// 	return this.sendBlobAttachOp(localId, blobId);
-		// }
-
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
