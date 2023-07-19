@@ -2968,6 +2968,7 @@ importers:
       cross-env: ^7.0.3
       debug: ^4.1.1
       eslint: ~8.6.0
+      eslint-import-resolver-typescript: ^3.5.5
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -2994,7 +2995,7 @@ importers:
       '@fluid-tools/build-cli': 0.21.0_@types+node@14.18.47
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_@types+node@14.18.47
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_3t6p3jtubdnp6bfaldycrpk3ru
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
@@ -3005,6 +3006,7 @@ importers:
       concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
+      eslint-import-resolver-typescript: 3.5.5_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
