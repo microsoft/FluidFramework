@@ -136,7 +136,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @internal
 	 */
-	public get startOfTreeSegment() {
+	public get startOfTreeSegment(): ISegment {
 		return this._mergeTree.startOfTree;
 	}
 
@@ -145,7 +145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @internal
 	 */
-	public get endOfTreeSegment() {
+	public get endOfTreeSegment(): ISegment {
 		return this._mergeTree.endOfTree;
 	}
 
