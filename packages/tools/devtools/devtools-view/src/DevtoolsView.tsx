@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-
 import {
 	Button,
 	FluentProvider,
@@ -13,7 +12,6 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
-
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
 import {
@@ -29,6 +27,7 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
+import { pkgVersion } from "./packageVersion";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -468,7 +467,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "telemetryMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Telemetry" },
+			details: { target: "Menu_Telemetry", pkgVersion },
 		});
 	}
 
@@ -476,7 +475,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "settingsMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Settings" },
+			details: { target: "Menu_Settings", pkgVersion },
 		});
 	}
 
@@ -484,7 +483,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "homeMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Home" },
+			details: { target: "Menu_Home", pkgVersion },
 		});
 	}
 
