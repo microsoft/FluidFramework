@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
 	IDocumentStorage,
 	IOrdererManager,
@@ -52,7 +53,8 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-		const alfred = app.create(this.config, this.storage, this.mongoManager);
+		const eventEmitter = new EventEmitter();
+		const alfred = app.create(this.config, this.storage, this.mongoManager, eventEmitter);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
@@ -66,6 +68,23 @@ export class TinyliciousRunner implements IRunner {
 			new TestClientManager(),
 			new DefaultMetricClient(),
 			winston,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			httpServer,
+			eventEmitter,
 		);
 
 		// Listen on provided port, on all network interfaces.
