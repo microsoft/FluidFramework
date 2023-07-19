@@ -18,8 +18,8 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
 function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
-	containerUrl: string,
 	externalTaskListId: string,
+	containerUrl: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
@@ -147,8 +147,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
-					externalTaskListId,
 					containerUrl,
+					externalTaskListId,
 				);
 				console.log(
 					formatLogMessage(
