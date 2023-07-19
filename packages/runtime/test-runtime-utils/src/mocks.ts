@@ -168,21 +168,22 @@ export class MockContainerRuntime {
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
-		const clientSequenceNumber =
-			this.clientSequenceNumber + (this.runtimeOptions.enableGroupedBatching ? 0 : 1);
+		if (!this.runtimeOptions.enableGroupedBatching) {
+			this.clientSequenceNumber++;
+		}
 
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				const msg: Partial<ISequencedDocumentMessage> = {
 					clientId: this.clientId,
-					clientSequenceNumber,
+					clientSequenceNumber: this.clientSequenceNumber,
 					contents: messageContent,
 					referenceSequenceNumber: this.referenceSequenceNumber,
 					type: MessageType.Operation,
 				};
 				this.factory.pushMessage(msg);
 
-				this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+				this.addPendingMessage(messageContent, localOpMetadata, this.clientSequenceNumber);
 				break;
 			}
 			case FlushMode.TurnBased: {
@@ -196,7 +197,7 @@ export class MockContainerRuntime {
 				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
 		}
 
-		return clientSequenceNumber;
+		return this.clientSequenceNumber;
 	}
 
 	public dirty(): void {}
