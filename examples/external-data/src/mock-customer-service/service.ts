@@ -147,8 +147,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
-					containerUrl,
 					externalTaskListId,
+					containerUrl,
 				);
 				console.log(
 					formatLogMessage(
