@@ -4,13 +4,19 @@ on:
   schedule:
     - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
   workflow_dispatch:
+    inputs:
+      batchSize:
+        description: The maximum number of commits to include in a single PR.
+        type: number
+        default: 10
+        required: true
 
 env:
   TARGET_BRANCH: next
   SOURCE_BRANCH: main
   USERNAME: msfluid-bot
   EMAIL: banana-bot@outlook.com
-  BATCH: 10
+  BATCH: ${{ inputs.batchSize }}
   REVIEWER1: sonalideshpandemsft
 
 jobs:
