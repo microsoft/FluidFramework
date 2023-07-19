@@ -31,7 +31,11 @@ export class DeltaManager implements IDeltaService {
 		const baseUrl = `${this.internalAlfredUrl}`;
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
 		// if requested size > getDeltasRequestMaxOpsRange, breakdown into chunks of size getDeltasRequestMaxOpsRange
-		if (to - from - 1 > this.getDeltasRequestMaxOpsRange) {
+		if (
+			to != undefined &&
+			from != undefined &&
+			to - from - 1 > this.getDeltasRequestMaxOpsRange
+		) {
 			let getDeltasFrom = from;
 			let getDeltasTo = from + this.getDeltasRequestMaxOpsRange + 1;
 			const chunkResultP: Promise<ISequencedDocumentMessage[]>[] = [];
