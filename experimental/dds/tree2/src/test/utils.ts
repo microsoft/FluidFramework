@@ -83,7 +83,7 @@ import {
 	TaggedChange,
 } from "../core";
 import { JsonCompatible, Mutable, brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
@@ -749,7 +749,9 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ *
+ * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
  * they require assert.deepEqual to be a valid comparison.
  * This can be problematic for some cases (for example edits containing cursors).
@@ -769,6 +771,15 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
+			// A common pattern to avoid validating the same portion of encoded data multiple times
+			// is for a codec to either validate its data is in schema itself and not return `encodedSchema`,
+			// or for it to not validate its own data but return an `encodedSchema` and let the caller use that.
+			// This block makes sure we still validate the encoded data schema for codecs following the latter
+			// pattern.
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -776,11 +787,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 						() => {
 							for (const [name, data] of encodingTestData.successes) {
 								it(name, () => {
-									let encoded = codec.json.encode(data);
+									let encoded = jsonCodec.encode(data);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = codec.json.decode(encoded);
+									const decoded = jsonCodec.decode(encoded);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -804,7 +815,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData] of failureCases) {
 						it(name, () => {
-							assert.throws(() => codec.json.decode(encodedData as JsonCompatible));
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
 						});
 					}
 				});

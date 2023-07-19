@@ -1701,7 +1701,7 @@ describe("SharedTree", () => {
 			pushTestValueDirect(fork, 42);
 			assert.throws(
 				() => view.merge(fork, false),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"A view that is merged into an in-progress transaction must be disposed",
@@ -1727,7 +1727,7 @@ describe("SharedTree", () => {
 			const fork = view.fork();
 			assert.throws(
 				() => fork.transaction.commit(),
-				(e) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
 			);
 		});
 

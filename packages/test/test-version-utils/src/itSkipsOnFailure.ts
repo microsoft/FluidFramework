@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TestObjectProvider } from "@fluidframework/test-utils";
+import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
 	skippedDrivers: TestDriverTypes[],
@@ -18,7 +19,7 @@ function createSkippedTestsWithDriverType(
 			throw new Error("Expected __fluidTestProvider on this");
 		}
 		try {
-			await test.bind(this)();
+			await timeoutAwait(test.bind(this)());
 		} catch (error) {
 			if (skippedDrivers.includes(provider.driver.type)) {
 				provider.logger.sendErrorEvent({ eventName: "TestFailedbutSkipped" }, error);
@@ -36,12 +37,37 @@ export type SkippedTestWithDriverType = (
 	test: Mocha.AsyncFunc,
 ) => Mocha.Test;
 
+export type SkippedErrorExpectingTestWithDriverType = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+) => Mocha.Test;
+
 /**
  * Similar to mocha's it function, but allow skipping for some if the error
  * happens on the specific drivers
  */
-export const itSkipsOnFailure: SkippedTestWithDriverType = (
+export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 	name: string,
 	skippedDrivers: TestDriverTypes[],
 	test: Mocha.AsyncFunc,
 ): Mocha.Test => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+
+/**
+ * Similar to the ItExpects function, but allow skipping for some if the error
+ * happens on the specific drivers
+ */
+export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test =>
+	it(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);

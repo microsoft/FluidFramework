@@ -58,6 +58,9 @@
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000
+	},
 	"alfred": {
 		"kafkaClientId": "alfred",
 		"maxMessageSize": "16KB",

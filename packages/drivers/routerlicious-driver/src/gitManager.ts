@@ -5,12 +5,12 @@
 
 import * as resources from "@fluidframework/gitresources";
 import {
-	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { IGitManager, IHistorian } from "./storageContracts";
 import { IR11sResponse, createR11sResponseFromContent } from "./restWrapper";
+import { IWholeFlatSnapshot } from "./contracts";
 
 export class GitManager implements IGitManager {
 	private readonly blobCache = new Map<string, resources.IBlob>();
@@ -110,7 +110,7 @@ export class GitManager implements IGitManager {
 		return this.historian.createSummary(summary, initial);
 	}
 
-	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
-		return this.historian.getSummary(sha);
+	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+		return this.historian.getSnapshot(sha);
 	}
 }
