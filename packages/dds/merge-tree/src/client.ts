@@ -132,6 +132,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * The start of tree segment for this client.
+	 *
 	 * @internal
 	 */
 	public get startOfTreeSegment() {
@@ -139,6 +141,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * The end of tree segment for this client.
+	 *
 	 * @internal
 	 */
 	public get endOfTreeSegment() {

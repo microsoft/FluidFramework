@@ -66,6 +66,10 @@ export interface LocalReferencePosition extends ReferencePosition {
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this reference position can slide onto one of the two
+	 * special segments representing the position before or after the tree
+	 */
 	readonly canSlideToEndpoint?: boolean;
 }
 
