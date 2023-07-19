@@ -21,7 +21,7 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -119,7 +119,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -247,8 +247,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`,
 			);
 		}
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver", {
-			all: { driverVersion },
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+			properties: {
+				all: { driverVersion },
+			},
 		});
 
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
