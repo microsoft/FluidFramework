@@ -241,6 +241,8 @@ describe("SharedString interval collections", () => {
 
 		describe("interval stickiness", () => {
 			it("has start stickiness", () => {
+				// (-Xabc)-
+				// (-Xdefabc)-
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "Xabc");
 				containerRuntimeFactory.processAllMessages();
@@ -267,6 +269,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("has start stickiness during delete inside interval", () => {
+				// (-Xabc)-
+				// (-Xdefabc)-
+				// (-Xfabc)-
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "Xabc");
 				containerRuntimeFactory.processAllMessages();
@@ -299,7 +304,7 @@ describe("SharedString interval collections", () => {
 				sharedString.insertText(0, "abcXdef");
 				containerRuntimeFactory.processAllMessages();
 				const interval1 = collection.add(
-					3,
+					4,
 					6,
 					IntervalType.SlideOnRemove,
 					undefined,
@@ -363,7 +368,7 @@ describe("SharedString interval collections", () => {
 				containerRuntimeFactory.processAllMessages();
 				const interval1 = collection.add(
 					0,
-					2,
+					1,
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.FULL,
@@ -393,7 +398,7 @@ describe("SharedString interval collections", () => {
 				containerRuntimeFactory.processAllMessages();
 				const interval1 = collection.add(
 					0,
-					3,
+					2,
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.END,
@@ -501,12 +506,15 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("full stickiness doesn't slide off string when entire string is deleted incrementally", () => {
+				// -(abc)-
+				// (--)
+				// (-XXX-)
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
 				const interval1 = collection.add(
 					1,
-					2,
+					1,
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.FULL,
@@ -538,8 +546,8 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("doesn't have left stickiness when spanning whole string and insertion at index 0", () => {
-				// (abc]
-				// X(abc]
+				// -[abc-)
+				// -X[abc-)
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
@@ -562,7 +570,7 @@ describe("SharedString interval collections", () => {
 
 				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
 
-				assertIntervals(sharedString, collection, [{ start: 1, end: 3 }], false);
+				assertIntervals(sharedString, collection, [{ start: 1, end: 4 }], false);
 			});
 
 			it("slides to endpoint after deleting all text to left of start-sticky+exclusive reference", () => {
@@ -591,13 +599,13 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("has end stickiness", () => {
-				// [abc)
+				// -[abc)-
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
 				const interval1 = collection.add(
 					0,
-					2,
+					1,
 					IntervalType.SlideOnRemove,
 					undefined,
 					IntervalStickiness.END,

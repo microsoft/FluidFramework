@@ -2233,11 +2233,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			);
 		}
 
+		// if the interval has exclusive endpoints, automatically move the
+		// endpoints over based on stickiness
+
 		let start;
 
 		if (stickiness & IntervalStickiness.START && canBeExclusive) {
-			// todo: should we automatically change the pos in this case?
-			start = _start === 0 ? "start" : _start;
+			start = _start === 0 ? "start" : _start - 1;
 		} else {
 			start = _start;
 		}
@@ -2245,8 +2247,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		let end;
 
 		if (stickiness & IntervalStickiness.END && canBeExclusive) {
-			// todo: should we automatically change the pos in this case?
-			end = _end === this.client?.getLength() ? "end" : _end;
+			end = _end === (this.client?.getLength() ?? 0) - 1 ? "end" : _end + 1;
 		} else {
 			end = _end;
 		}
