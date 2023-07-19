@@ -27,7 +27,6 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-import { pkgVersion } from "./packageVersion";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -467,7 +466,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "telemetryMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Telemetry", pkgVersion },
+			details: { target: "Menu_Telemetry" },
 		});
 	}
 
@@ -475,7 +474,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "settingsMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Settings", pkgVersion },
+			details: { target: "Menu_Settings" },
 		});
 	}
 
@@ -483,7 +482,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "homeMenuSelection" });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: { target: "Menu_Home", pkgVersion },
+			details: { target: "Menu_Home" },
 		});
 	}
 
