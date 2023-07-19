@@ -28,7 +28,6 @@ import {
 	toDelta,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
-import { merge } from "../../objMerge";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

@@ -13,7 +13,18 @@ import {
 	IdAllocator,
 	NodeReviver,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut, Revive, Delete, ReturnTo } from "./format";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	Modify,
+	ReturnFrom,
+	NoopMarkType,
+	MoveOut,
+	Revive,
+	Delete,
+	ReturnTo,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -153,7 +164,9 @@ function invertMark<TNodeChange>(
 					revive.lineage = mark.detachLineageOverride;
 				}
 
-				return [withNodeChange(revive, invertNodeChange(mark.changes, inputIndex, invertChild))];
+				return [
+					withNodeChange(revive, invertNodeChange(mark.changes, inputIndex, invertChild)),
+				];
 			}
 			// TODO: preserve modifications to the removed nodes.
 			return [];
@@ -186,7 +199,7 @@ function invertMark<TNodeChange>(
 							invertNodeChange(mark.changes, inputIndex, invertChild),
 						),
 					];
-				}				
+				}
 
 				const deleteMark: Delete<TNodeChange> = {
 					type: "Delete",
@@ -199,7 +212,9 @@ function invertMark<TNodeChange>(
 					deleteMark.detachLineageOverride = mark.lineage;
 				}
 
-				const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, inputIndex, invertChild),
+				const inverse = withNodeChange(
+					deleteMark,
+					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
 				return [inverse];
 			}
@@ -264,21 +279,21 @@ function invertMark<TNodeChange>(
 					true,
 				);
 			}
-			
+
 			const detachEvent =
-			mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
-				? mark.detachIdOverride
-				: {
-						revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-						localId: mark.id,
-				  };
+				mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
+					? mark.detachIdOverride
+					: {
+							revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+							localId: mark.id,
+					  };
 
 			const returnTo: ReturnTo = {
 				type: "ReturnTo",
 				id: mark.id,
 				count: mark.count,
 				detachEvent,
-			}
+			};
 
 			if (mark.type === "ReturnFrom" && mark.detachLineageOverride !== undefined) {
 				returnTo.lineage = mark.detachLineageOverride;
