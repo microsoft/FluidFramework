@@ -42,9 +42,11 @@ USAGE
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
 * [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub test-only-filter`](docs/test-only-filter.md) - FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 
 <!-- commandsstop -->

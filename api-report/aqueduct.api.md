@@ -6,6 +6,7 @@
 
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
+import type { EventEmitter } from 'events';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -17,6 +18,7 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IEvent } from '@fluidframework/common-definitions';
+import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -124,10 +126,13 @@ export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableVi
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideExperimentalFluidGCInfo {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
+    // @deprecated
     dispose(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
+    // @deprecated (undocumented)
+    protected forwardEvent(source: EventEmitter | IEventProvider<I["Events"] & IEvent>, ...events: string[]): void;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     get handle(): IFluidHandle<this>;
@@ -149,10 +154,14 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)
     protected initProps?: I["InitialState"];
+    // @deprecated (undocumented)
+    protected static isEmitterEvent(event: string): boolean;
     protected preInitialize(): Promise<void>;
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
     protected readonly runtime: IFluidDataStoreRuntime;
+    // @deprecated (undocumented)
+    protected unforwardEvent(source: EventEmitter | IEventProvider<I["Events"] & IEvent>, ...events: string[]): void;
 }
 
 // @public

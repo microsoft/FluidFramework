@@ -12,14 +12,23 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export {
+	addCrossFieldQuery,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	idAllocatorFromMaxId,
+	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
+export {
+	FieldKind,
+	FullSchemaPolicy,
+	Multiplicity,
+	BrandedFieldKind,
+	brandedFieldKind,
+} from "./fieldKind";
 export {
 	IdAllocator,
 	FieldChangeHandler,
@@ -44,8 +53,6 @@ export {
 	ModularChangeset,
 	NodeChangeset,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
@@ -57,17 +64,3 @@ export {
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
 export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
-
-export {
-	SchemaBuilder,
-	TreeSchema,
-	FieldSchema,
-	GlobalFieldSchema,
-	Any,
-	AllowedTypes,
-	InternalTypedSchemaTypes,
-	allowedTypesToTypeSet,
-	TypedSchemaCollection,
-	SchemaLibrary,
-	SchemaLibraryData,
-} from "./typedSchema";

@@ -26,7 +26,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -245,7 +245,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 				// Modifying a testDataObject substantiated from the request pattern should fail!
 				assert.throws(
 					() => dataObject._root.set("send", "op"),
-					(error) => {
+					(error: IErrorBase) => {
 						const correctErrorType = error.errorType === "dataCorruptionError";
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is tombstoned`) === true;
@@ -327,7 +327,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 				// Sending a signal from a testDataObject substantiated from the request pattern should fail!
 				assert.throws(
 					() => dataObject._runtime.submitSignal("send", "signal"),
-					(error) => {
+					(error: IErrorBase) => {
 						const correctErrorType = error.errorType === "dataCorruptionError";
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is tombstoned`) === true;
@@ -1201,7 +1201,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 			const summary2 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCStateFromSummary(summary2.summaryTree),
-				(e) => validateAssertionError(e, "GC state is not a blob"),
+				(e: Error) => validateAssertionError(e, "GC state is not a blob"),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1213,7 +1213,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 			const summary3 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
-				(e) => validateAssertionError(e, "GC data should be a tree"),
+				(e: Error) => validateAssertionError(e, "GC data should be a tree"),
 			);
 		});
 
@@ -1276,7 +1276,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 				const unreferencedId = newDataStore._context.id;
 				await assert.rejects(
 					async () => requestFluidObject<ITestDataObject>(container2, unreferencedId),
-					(error) => {
+					(error: any) => {
 						const correctErrorType = error.code === 404;
 						const correctErrorMessage =
 							error.message === `DataStore was deleted: ${unreferencedId}`;

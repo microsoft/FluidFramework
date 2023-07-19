@@ -25,13 +25,17 @@ import {
 	TokenFetchOptions,
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import { ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
-import { getWithRetryForTokenRefresh, TokenFetchOptionsEx } from "./odspUtils";
+import {
+	getJoinSessionCacheKey,
+	getWithRetryForTokenRefresh,
+	TokenFetchOptionsEx,
+} from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -79,7 +83,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
-		this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
+		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
 	}
 
 	public get resolvedUrl(): IResolvedUrl {

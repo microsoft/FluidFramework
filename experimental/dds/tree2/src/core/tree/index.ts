@@ -38,6 +38,7 @@ export {
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
+	topDownPath,
 	getDepth,
 	UpPath,
 	FieldUpPath,
@@ -58,13 +59,7 @@ export {
 	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
-export {
-	EncodedFieldMapObject,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
-	EncodedJsonableTree,
-	EncodedNodeData,
-} from "./persistedTreeTextFormat";
+export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
 	FieldKey,

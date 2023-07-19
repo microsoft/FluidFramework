@@ -2,15 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export {
-	DefaultChangeset,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-	IDefaultEditBuilder,
-	ValueFieldEditBuilder,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-} from "./defaultChangeFamily";
+
 export {
 	EditableField,
 	EditableTree,
@@ -30,6 +22,41 @@ export {
 	on,
 	contextSymbol,
 	NewFieldContent,
+	localNodeKeySymbol,
+	createDataBinderBuffering,
+	createDataBinderDirect,
+	createDataBinderInvalidating,
+	createBinderOptions,
+	createFlushableBinderOptions,
+	DataBinder,
+	BinderOptions,
+	Flushable,
+	FlushableBinderOptions,
+	FlushableDataBinder,
+	MatchPolicy,
+	BindSyntaxTree,
+	indexSymbol,
+	BindTree,
+	BindTreeDefault,
+	DownPath,
+	BindPath,
+	PathStep,
+	BindingType,
+	BindingContextType,
+	BindingContext,
+	VisitorBindingContext,
+	DeleteBindingContext,
+	InsertBindingContext,
+	BatchBindingContext,
+	InvalidationBindingContext,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
@@ -74,8 +101,6 @@ export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
-
 export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
@@ -86,7 +111,6 @@ export {
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeset,
-	ValueChange,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -109,13 +133,18 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	ValueConstraint,
-	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
 	SchemaCollection,
 	IFieldSchema,
 	ITreeSchema,
+	Sourced,
+	NodeExistsConstraint,
+	NodeExistenceState,
+	BrandedFieldKind,
+} from "./modular-schema";
+
+export {
 	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
@@ -125,10 +154,9 @@ export {
 	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	Sourced,
-	NodeExistsConstraint,
-	NodeExistenceState,
-} from "./modular-schema";
+	LazyTreeSchema,
+	InternalTypedSchemaTypes,
+} from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -139,20 +167,38 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
-
-export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export {
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	StableNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
+} from "./node-key";
 
 export {
 	FieldKinds,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,
-	NodeIdentifierFieldKind,
+	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
-} from "./defaultFieldKinds";
+	DefaultChangeset,
+	DefaultChangeFamily,
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+	SequenceFieldEditBuilder,
+	defaultSchemaPolicy,
+	emptyField,
+	neverField,
+	neverTree,
+} from "./default-field-kinds";
 
 export {
 	UntypedField,

@@ -266,7 +266,6 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly activeConnection: () => boolean;
-	readonly getContainerDiagnosticId: () => string;
 }
 
 export interface IGCRuntimeOptions {

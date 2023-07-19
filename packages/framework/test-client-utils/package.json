@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-client-utils",
-	"version": "2.0.0-internal.5.1.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "Fluid client development and test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,7 +22,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -33,7 +33,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -42,11 +42,11 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0-166151",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.5.0.0",
+		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",

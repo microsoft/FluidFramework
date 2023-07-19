@@ -583,7 +583,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
 		// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
 		// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
-		const pathVisitors: Map<PathNode, PathVisitor[]> = new Map();
+		const pathVisitors: Map<PathNode, Set<PathVisitor>> = new Map();
 
 		const visitor: DeltaVisitor = {
 			onDelete: (start: number, count: number): void => {
@@ -664,17 +664,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				moveTable.delete(id);
 				this.moveChildren(sourcePath, { parent, parentField, parentIndex: start }, count);
 			},
-			onSetValue: (value: Value): void => {
-				maybeWithNode((p) => {
-					p.events.emit("valueChanging", p, value);
-				});
-				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
-				for (const visitors of pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.onSetValue(parent, value);
-					}
-				}
-			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
@@ -686,11 +675,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 							"subtreeChanging",
 							p,
 						);
-						if (visitors.length > 0)
+						if (visitors.length > 0) {
 							pathVisitors.set(
 								p,
-								visitors.filter((v): v is PathVisitor => v !== undefined),
+								new Set(visitors.filter((v): v is PathVisitor => v !== undefined)),
 							);
+						}
 					}
 				});
 			},

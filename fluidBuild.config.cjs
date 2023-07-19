@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// For "typetests:gen", it is only needed to be done before the tsc command
-// that will build the generated files.  Most of the time it is "build:test"
-// but sometimes it is "tsc".  Just include in all of them.
-
-const tscDependsOn = ["^tsc", "build:genver", "typetests:gen"];
+const tscDependsOn = ["^tsc", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -43,7 +39,7 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "tsc"],
+		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
@@ -119,20 +115,31 @@ module.exports = {
 			"tools/markdown-magic/test",
 			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 		],
+		// Exclusion per handler
+		handlerExclusions: {
+			"npm-package-json-script-clean": [
+				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
+				"common/build/eslint-config-fluid/package.json",
+				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
+				"tools/markdown-magic/package.json",
+			],
+		},
 		dependencies: {
-			// Packages require tilde dependencies
-			requireTilde: [
-				"@typescript-eslint/eslint-plugin",
-				"@typescript-eslint/parser",
-				"eslint-config-prettier",
-				"eslint-plugin-eslint-comments",
-				"eslint-plugin-import",
-				"eslint-plugin-unicorn",
-				"eslint-plugin-unused-imports",
-				"eslint",
-				"prettier",
-				"typescript",
-				"webpack-dev-server",
+			// use by npm-package-json-script-dep policy
+			// A list of script commands and the package that contains the command
+			commandPackages: [
+				["api-extractor", "@microsoft/api-extractor"],
+				["mocha", "mocha"],
+				["rimraf", "rimraf"],
+				["tsc", "typescript"],
+				["eslint", "eslint"],
+				["prettier", "prettier"],
+				["webpack", "webpack"],
+				["nyc", "nyc"],
+				["gf", "good-fences"],
+				["cross-env", "cross-env"],
+				["flub", "@fluid-tools/build-cli"],
+				["fluid-build", "@fluidframework/build-tools"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

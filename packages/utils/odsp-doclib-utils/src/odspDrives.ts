@@ -88,7 +88,7 @@ export async function getDriveItemByServerRelativePath(
 		pathParts.shift();
 	}
 	if (pathParts.length === 0) {
-		return Promise.reject(new Error(`Invalid serverRelativePath ${serverRelativePath}`));
+		throw new Error(`Invalid serverRelativePath ${serverRelativePath}`);
 	}
 	if (
 		pathParts.length >= 2 &&

@@ -35,17 +35,16 @@ import {
 	buildForest,
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
-	EditableTree,
 	SchemaEditor,
-	NodeIdentifierIndex,
-	NodeIdentifier,
-	ModularChangeset,
+	NodeKeyIndex,
+	createNodeKeyManager,
 	NewFieldContent,
+	ModularChangeset,
+	nodeKeyFieldKey,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
-import { nodeIdentifierKey } from "../domains";
-import { SchematizeConfiguration } from "./schematizedTree";
+import { JsonCompatibleReadOnly, brand } from "../util";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
@@ -64,7 +63,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
- * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
@@ -77,7 +75,7 @@ export class SharedTree
 		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -109,14 +107,15 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.identifierIndex = new NodeIdentifierIndex(nodeIdentifierKey);
+		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
 			schema,
 			forest,
 			repairProvider,
-			identifierIndex: this.identifierIndex,
+			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyIndex: this.nodeKeyIndex,
 			events: this._events,
 		});
 	}
@@ -137,10 +136,6 @@ export class SharedTree
 		return this.view.forest;
 	}
 
-	public get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree> {
-		return this.view.identifiedNodes;
-	}
-
 	public get root(): UnwrappedEditableField {
 		return this.view.root;
 	}
@@ -157,26 +152,28 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public generateNodeIdentifier(): NodeIdentifier {
-		return this.view.generateNodeIdentifier();
-	}
-
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return this.view.schematize(config);
+		return schematizeView(this, config);
 	}
 
 	public get transaction(): SharedTreeView["transaction"] {
 		return this.view.transaction;
 	}
 
+	public get nodeKey(): SharedTreeView["nodeKey"] {
+		return this.view.nodeKey;
+	}
+
 	public fork(): SharedTreeView {
 		return this.view.fork();
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.view.merge(fork);
+	public merge(view: SharedTreeView): void;
+	public merge(view: SharedTreeView, disposeView: boolean): void;
+	public merge(view: SharedTreeView, disposeView = true): void {
+		this.view.merge(view, disposeView);
 	}
 
 	public rebase(fork: SharedTreeView): void {
@@ -219,7 +216,7 @@ export class SharedTree
 		await super.loadCore(services);
 		// The identifier index must be populated after both the schema and forest have loaded.
 		// TODO: Create an ISummarizer for the identifier index and ensure it loads after the other indexes.
-		this.identifierIndex.scanIdentifiers(this.context);
+		this.nodeKeyIndex.scanKeys(this.context);
 		this._events.emit("afterBatch");
 	}
 }

@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { validateMessages } from "@fluidframework/driver-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
@@ -128,7 +128,7 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-	private firstCacheMiss = Number.MAX_SAFE_INTEGER;
+	private firstCacheMiss = false;
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
@@ -189,9 +189,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
 			// This saves a bit of processing time
-			if (from < this.firstCacheMiss) {
+			if (!this.firstCacheMiss) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
+				// Set the firstCacheMiss as true in case we didn't get all the ops.
+				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
+				this.firstCacheMiss = from + messagesFromCache.length < to;
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
 					return {
@@ -199,7 +202,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 						partialResult: true,
 					};
 				}
-				this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
 			}
 
 			if (cachedOnly) {
@@ -238,6 +240,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					opsFromSnapshot,
 					opsFromCache,
 					opsFromStorage,
+					reason: fetchReason,
 				});
 			}
 		});

@@ -9,6 +9,8 @@
  * Takes in and runs a callback during idle time. Fallback to setTimeout if window doesn't
  * support requestIdleCallback.
  * @returns A promise pertaining to the callback that was passed in.
+ *
+ * @deprecated Not used outside this package.
  */
 export async function scheduleIdleTask<T>(callback: () => T, timeout: number): Promise<T> {
 	return new Promise((resolve, reject) => {

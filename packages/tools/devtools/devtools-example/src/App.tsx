@@ -19,12 +19,20 @@ import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experiment
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer, SharedObjectClass } from "@fluidframework/fluid-static";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-
+import {
+	AllowedUpdateType,
+	FieldKinds,
+	ISharedTree,
+	SchemaBuilder,
+	ValueSchema,
+	SharedTreeFactory,
+	valueSymbol,
+} from "@fluid-experimental/tree2";
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
 
@@ -42,9 +50,38 @@ const sharedTextKey = "shared-text";
 const sharedCounterKey = "shared-counter";
 
 /**
+ * Key in the app's `rootMap` under which the SharedTree object is stored.
+ */
+const sharedTreeKey = "shared-tree";
+
+/**
  * Key in the app's `rootMap` under which the SharedCell object is stored.
  */
 const emojiMatrixKey = "emoji-matrix";
+
+/**
+ * Function to create an instance which contains getFactory method returning SharedTreeFactory.
+ * The example application calls container.create() to create a new DDS, and the method requires:
+ * #1. static factory method
+ * #2. class object with a constructor returning a type with a handle field
+ *
+ * The function below satisfies the requirements to populate the SharedTree within the application.
+ */
+function castSharedTreeType(): SharedObjectClass<ISharedTree> {
+	/**
+	 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class SharedTree {
+		public static getFactory(): SharedTreeFactory {
+			return new SharedTreeFactory();
+		}
+	}
+
+	return SharedTree as unknown as SharedObjectClass<ISharedTree>;
+}
+
+const sharedTreeObject = castSharedTreeType();
 
 /**
  * Schema used by the app.
@@ -53,7 +90,14 @@ const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCell, SharedCounter, SharedMap, SharedMatrix, SharedString],
+	dynamicObjectTypes: [
+		SharedCell,
+		SharedCounter,
+		SharedMap,
+		SharedMatrix,
+		SharedString,
+		sharedTreeObject,
+	],
 };
 
 /**
@@ -94,6 +138,59 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
+
+	// Set up SharedTree for visualization
+	const sharedTree = await container.create(sharedTreeObject);
+
+	const builder = new SchemaBuilder("Devtools_Example_SharedTree");
+
+	const stringSchema = builder.leaf("string-property", ValueSchema.String);
+	const numberSchema = builder.leaf("number-property", ValueSchema.Number);
+	const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
+
+	const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
+
+	const leafSchema = builder.struct("leaf-item", {
+		leafField: SchemaBuilder.fieldValue(serializableSchema),
+	});
+
+	const childSchema = builder.struct("child-item", {
+		childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+		childData: SchemaBuilder.fieldOptional(leafSchema),
+	});
+
+	const rootNodeSchema = builder.struct("root-item", {
+		childrenOne: SchemaBuilder.fieldSequence(childSchema),
+		childrenTwo: SchemaBuilder.fieldValue(numberSchema),
+	});
+
+	const schema = builder.intoDocumentSchema(
+		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
+	);
+
+	sharedTree.schematize({
+		schema,
+		allowedSchemaModifications: AllowedUpdateType.None,
+		initialTree: {
+			childrenOne: [
+				{
+					childField: "Hello world!",
+					childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+				},
+				{
+					childField: true,
+					childData: {
+						leafField: {
+							[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+						},
+					},
+				},
+			],
+			childrenTwo: 32,
+		},
+	});
+
+	rootMap.set(sharedTreeKey, sharedTree.handle);
 
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);
@@ -247,7 +344,7 @@ const useStyles = makeStyles({
  * Initializes the Fluid Container and displays app view once it is ready.
  */
 export function App(): React.ReactElement {
-	// Initialize the Fluid Debugger logger
+	// Initialize the Devtools logger
 	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
 	// Initialize Devtools

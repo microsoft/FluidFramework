@@ -2,41 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
-import { jsonSchema, jsonString, singleJsonCursor } from "../../domains";
-import { rootFieldKeySymbol, fieldSchema, rootFieldKey, SchemaData } from "../../core";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
+import { singleTextCursor } from "../../feature-libraries";
+import { jsonString } from "../../domains";
+import { rootFieldKeySymbol, UpPath } from "../../core";
+import { ISharedTreeView } from "../../shared-tree";
+import { brand, JsonCompatible } from "../../util";
+import { expectJsonTree, makeTreeFromJson } from "../utils";
 
-const factory = new SharedTreeFactory({});
-const runtime = new MockFluidDataStoreRuntime();
-// For now, require tree to be a list of strings.
-const schema: SchemaData = {
-	treeSchema: jsonSchema.treeSchema,
-	globalFieldSchema: new Map([
-		[rootFieldKey, fieldSchema(FieldKinds.sequence, [jsonString.name])],
-	]),
+const rootPath: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKeySymbol,
+	parentIndex: 0,
 };
-
-// TODO: Dedupe with the helpers in editing.spec.ts
-function makeTree(...json: string[]): ISharedTree {
-	const tree = factory.create(runtime, "TestSharedTree");
-	tree.storedSchema.update(schema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-	if (json.length !== 0) {
-		field.insert(0, json.map(singleJsonCursor));
-	}
-	return tree;
-}
 
 const testCases: {
 	name: string;
 	edit: (undoRedoBranch: ISharedTreeView, otherBranch: ISharedTreeView) => void;
-	initialState: string[];
-	editedState: string[];
-	parentUndoState?: string[];
-	forkUndoState?: string[];
+	initialState: JsonCompatible[];
+	editedState: JsonCompatible[];
+	parentUndoState?: JsonCompatible[];
+	forkUndoState?: JsonCompatible[];
 }[] = [
 	{
 		name: "the insert of a node",
@@ -89,6 +74,22 @@ const testCases: {
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "B", "C", "D"],
 	},
+	{
+		name: "a delete of content that is concurrently edited",
+		edit: (undoRedoBranch, otherBranch) => {
+			otherBranch.editor
+				.valueField({ parent: rootPath, field: brand("child") })
+				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
+			undoRedoBranch.editor
+				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
+				.delete(0, 1);
+		},
+		initialState: [{ child: "x" }],
+		editedState: [],
+		// Undoing the insertion of A on the parent branch is a no-op because the node was deleted
+		parentUndoState: [],
+		forkUndoState: [{ child: "y" }],
+	},
 ];
 
 describe("Undo and redo", () => {
@@ -126,12 +127,12 @@ describe("Undo and redo", () => {
 			// Perform the edits where the last edit is the one to undo
 			edit(view, fork);
 
-			view.merge(fork);
+			view.merge(fork, false);
 			expectJsonTree(view, editedState);
 
 			view.undo();
 
-			view.merge(fork);
+			view.merge(fork, false);
 			expectJsonTree(view, parentUndoState ?? initialState);
 
 			view.redo();
@@ -243,27 +244,23 @@ function remove(tree: ISharedTreeView, index: number, count: number): void {
 	field.delete(index, count);
 }
 
-function expectJsonTree(actual: ISharedTreeView | ISharedTreeView[], expected: string[]): void {
-	const trees = Array.isArray(actual) ? actual : [actual];
-	for (const tree of trees) {
-		const roots = [...tree.context.root];
-		assert.deepEqual(roots, expected);
-	}
-}
-
 /**
  * Runs the given test function as two tests,
  * one where `view` is the root SharedTree view and the other where `view` is a fork.
  * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
  */
-function itView(title: string, initialData: string[], fn: (view: ISharedTreeView) => void): void {
+function itView(
+	title: string,
+	initialData: JsonCompatible[],
+	fn: (view: ISharedTreeView) => void,
+): void {
 	it(`${title} (root view)`, () => {
-		const view = makeTree(...initialData);
+		const view = makeTreeFromJson(initialData);
 		fn(view);
 	});
 
 	it(`${title} (forked view)`, () => {
-		const view = makeTree(...initialData);
+		const view = makeTreeFromJson(initialData);
 		fn(view.fork());
 	});
 }

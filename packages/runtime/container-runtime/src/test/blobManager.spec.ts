@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
 import { Deferred, gitHashFile, IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -166,7 +166,8 @@ class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		await Promise.all(handlePs);
+		const handles: IFluidHandle<ArrayBufferLike>[] = await Promise.all(handlePs);
+		handles.forEach((handle) => handle.attachGraph());
 	}
 
 	public async processAll() {
@@ -254,7 +255,7 @@ const validateSummary = (runtime: MockRuntime) => {
 };
 
 describe("BlobManager", () => {
-	const handlePs: Promise<any>[] = [];
+	const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
@@ -297,7 +298,6 @@ describe("BlobManager", () => {
 	});
 
 	afterEach(async () => {
-		await Promise.all(handlePs);
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 	});
@@ -675,7 +675,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob1Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob1Handle),
-				(error) => {
+				(error: IErrorBase & { code: number | undefined }) => {
 					const blob1Id = blob1Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
@@ -688,7 +688,7 @@ describe("BlobManager", () => {
 			runtime.deleteBlob(blob2Handle);
 			await assert.rejects(
 				async () => runtime.getBlob(blob2Handle),
-				(error) => {
+				(error: IErrorBase & { code: number | undefined }) => {
 					const blob2Id = blob2Handle.absolutePath.split("/")[2];
 					const correctErrorType = error.code === 404;
 					const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;

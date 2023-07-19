@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, Timer, assert, unreachableCase } from "@fluidframework/common-utils";
+import { Timer, assert, unreachableCase } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
