@@ -10,7 +10,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 /**
  * Summary tree assembler props
@@ -107,7 +107,7 @@ export function convertSnapshotAndBlobsToSummaryTree(
 	return assembler.summary;
 }
 
-export function evalBlobsAndTrees(snapshot: INormalizedWholeSummary) {
+export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobs.size;
 	let encodedBlobsSize = 0;

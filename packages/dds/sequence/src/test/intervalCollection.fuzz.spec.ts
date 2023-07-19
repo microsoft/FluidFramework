@@ -40,6 +40,7 @@ import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimizati
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
 
@@ -59,6 +60,12 @@ export function makeOperationGenerator(
 	function exclusiveRange(state: ClientOpState): RangeSpec {
 		const start = startPosition(state);
 		const end = state.random.integer(start + 1, state.channel.getLength());
+		return { start, end };
+	}
+
+	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
+		const start = state.random.integer(0, state.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
 		return { start, end };
 	}
 
@@ -113,6 +120,10 @@ export function makeOperationGenerator(
 
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
+	}
+
+	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
 	}
 
 	async function addInterval(state: ClientOpState): Promise<AddInterval> {
@@ -185,7 +196,15 @@ export function makeOperationGenerator(
 	const usableWeights = optionsParam?.weights ?? defaultOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
-		[removeRange, usableWeights.removeRange, hasNonzeroLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+				  })
+				: hasNonzeroLength,
+		],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],

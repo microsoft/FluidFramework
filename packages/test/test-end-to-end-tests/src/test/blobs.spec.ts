@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -81,8 +82,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		const blobOpP = new Promise<void>((resolve, reject) =>
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -212,8 +216,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			const blobOpP = new Promise<void>((resolve, reject) =>
 				dataStore._context.containerRuntime.on("op", (op) => {
 					if (op.type === ContainerMessageType.BlobAttach) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-						op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+						if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+							resolve();
+						} else {
+							reject(new Error("no op metadata"));
+						}
 					}
 				}),
 			);
@@ -254,9 +261,15 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
-				if (op.contents?.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+				if (
+					(op.contents as { type?: unknown } | undefined)?.type ===
+					ContainerMessageType.BlobAttach
+				) {
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -334,7 +347,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
 				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+					return assert.rejects(
+						attachP,
+						(err: IErrorBase) => err.message === usageErrorMessage,
+					);
 				}
 				await attachP;
 
@@ -425,7 +441,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 			detachedBlobStorage.blobs.clear();
@@ -472,7 +491,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			return assert.rejects(attachP, (err: IErrorBase) => err.message === usageErrorMessage);
 		}
 		await attachP;
 
@@ -520,7 +539,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 

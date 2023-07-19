@@ -35,10 +35,6 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
-	EncodedFieldMapObject,
-	EncodedNodeData,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
 	EncodedJsonableTree,
 	Delta,
 	rootFieldKey,
@@ -121,6 +117,7 @@ export {
 	Named,
 	FieldStoredSchema,
 	ValueSchema,
+	PrimitiveValueSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -180,4 +177,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, LocalCommitSource } from "./undo";

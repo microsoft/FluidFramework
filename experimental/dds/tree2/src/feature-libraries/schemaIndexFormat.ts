@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
+import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifierSchema,
@@ -29,26 +29,28 @@ const FieldSchemaFormatBase = Type.Object({
 	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
 });
 
-const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const NamedLocalFieldSchemaFormat = Type.Intersect(
+const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+
+const NamedLocalFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
 			name: LocalFieldKeySchema,
 		}),
 	],
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
-const NamedGlobalFieldSchemaFormat = Type.Intersect(
+const NamedGlobalFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
 			name: GlobalFieldKeySchema,
 		}),
 	],
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 const TreeSchemaFormat = Type.Object(
@@ -57,11 +59,10 @@ const TreeSchemaFormat = Type.Object(
 		localFields: Type.Array(NamedLocalFieldSchemaFormat),
 		globalFields: Type.Array(GlobalFieldKeySchema),
 		extraLocalFields: FieldSchemaFormat,
-		extraGlobalFields: Type.Boolean(),
 		// TODO: don't use external type here.
 		value: Type.Enum(ValueSchema),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 /**
@@ -79,7 +80,7 @@ const Format = Type.Object(
 		treeSchema: Type.Array(TreeSchemaFormat),
 		globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 type Format = Static<typeof Format>;
@@ -124,7 +125,6 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
-		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: encodeField(schema.extraLocalFields),
 		globalFields: [...schema.globalFields].sort(),
 		localFields: [...schema.localFields]
@@ -178,7 +178,6 @@ function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
 
 function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
 	const out: TreeStoredSchema = {
-		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: decodeField(schema.extraLocalFields),
 		globalFields: new Set(schema.globalFields),
 		localFields: new Map(

@@ -155,7 +155,7 @@ function rebaseMarkList<TNodeChange>(
 			}
 		} else if (currMark === undefined) {
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), "Only detach marks should empty cells");
+				assert(isDetachMark(baseMark), 0x708 /* Only detach marks should empty cells */);
 				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
 			} else if (isAttach(baseMark)) {
 				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
@@ -170,7 +170,7 @@ function rebaseMarkList<TNodeChange>(
 					} else {
 						factory.pushOffset(getOutputLength(baseMark));
 					}
-				} else {
+				} else if (baseMark.transientDetach === undefined) {
 					factory.pushOffset(getOutputLength(baseMark));
 				}
 				lineageRecipients.length = 0;
@@ -196,7 +196,7 @@ function rebaseMarkList<TNodeChange>(
 			// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
 			// `rebasedMark` should already have a detach event for `baseMark`.
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), "Only detach marks should empty cells");
+				assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
 				addLineageToRecipients(
 					lineageRecipients,
 					baseIntention,
@@ -211,7 +211,7 @@ function rebaseMarkList<TNodeChange>(
 			factory.push(rebasedMark);
 
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), "Only detach marks should empty cells");
+				assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
 				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
 			} else {
 				lineageRecipients.length = 0;
@@ -370,7 +370,7 @@ function rebaseMark<TNodeChange>(
 				);
 			}
 		}
-		assert(isDetachMark(baseMark), "Only detach marks should empty cells");
+		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
 		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
 		const detachEvent =
 			baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
@@ -612,7 +612,7 @@ function amendRebaseI<TNodeChange>(
 		if (baseMark === undefined) {
 			assert(
 				newMark !== undefined,
-				"Non-empty RebaseQueue should not provide two empty marks",
+				0x70c /* Non-empty RebaseQueue should not provide two empty marks */,
 			);
 			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
 		}

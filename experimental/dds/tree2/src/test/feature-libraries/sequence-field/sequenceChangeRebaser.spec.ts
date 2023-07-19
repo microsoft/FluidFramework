@@ -4,10 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
-import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
+import {
+	ChangesetLocalId,
+	SequenceField as SF,
+	singleTextCursor,
+} from "../../../feature-libraries";
+import {
+	mintRevisionTag,
+	RevisionTag,
+	tagChange,
+	tagRollbackInverse,
+	TreeSchemaIdentifier,
+} from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, isDeltaVisible } from "../../utils";
 import { brand } from "../../../util";
 import {
 	checkDeltaEquality,
@@ -20,6 +30,7 @@ import {
 import { ChangeMaker as Change } from "./testEdits";
 import { merge } from "../../objMerge";
 
+const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -56,18 +67,43 @@ function generateLineage(
 }
 
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
-	["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
+	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
 	[
 		"MInsert",
 		(i) =>
 			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
+	[
+		"TransientInsert",
+		(i) => [
+			{ count: i },
+			{
+				type: "Insert",
+				content: [singleTextCursor({ type, value: 1 })],
+				id: brand(0),
+				transientDetach: { revision: tag1, localId: brand(0) },
+			},
+		],
+	],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
 		(i, max) =>
 			Change.revive(2, 2, tag1, brand(i), undefined, generateLineage(tag1, brand(i), 2, max)),
+	],
+	[
+		"TransientRevive",
+		(i) => [
+			{ count: i },
+			{
+				type: "Revive",
+				count: 1,
+				detachEvent: { revision: tag1, localId: brand(0) },
+				content: [singleTextCursor({ type, value: 1 })],
+				transientDetach: { revision: tag1, localId: brand(0) },
+			},
+		],
 	],
 	["ConflictedRevive", (i) => Change.redundantRevive(2, 2, tag2, brand(i), undefined)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
@@ -91,6 +127,14 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, B⁻¹] === A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
+				if (
+					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Transient") && name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
@@ -121,6 +165,14 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, undo(B)] => A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
+				if (
+					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Transient") && name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				const title = `${name1} ↷ [${name2}), undo(${name2}] => ${name1}`;
 				it(title, () => {
 					const maxOffset = 4;
@@ -195,7 +247,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(isDeltaVisible(delta), false);
 			});
 		}
 	});

@@ -138,7 +138,7 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Encountered duplicate node key"),
+			(e: Error) => validateAssertionError(e, "Encountered duplicate node key"),
 		);
 	});
 
@@ -175,7 +175,8 @@ describe("Node Key Index", () => {
 					},
 					nodeSchemaData,
 				),
-			(e) => validateAssertionError(e, "Malformed value encountered in node key field"),
+			(e: Error) =>
+				validateAssertionError(e, "Malformed value encountered in node key field"),
 		);
 	});
 
@@ -191,16 +192,14 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Node key absent but required by schema"),
+			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
 
 	it("is disabled if node type is not in the tree schema", () => {
 		const builder2 = new SchemaBuilder("node key index test");
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		// This is missing the global node key field
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(

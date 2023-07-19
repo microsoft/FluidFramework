@@ -118,7 +118,7 @@ describe("EventEmitter", () => {
 		deregister();
 		assert.throws(
 			() => deregister(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Listener does not exist. Event deregistration functions may only be invoked once.",
@@ -127,7 +127,7 @@ describe("EventEmitter", () => {
 		deregisterB();
 		assert.throws(
 			() => deregister(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Event has no listeners. Event deregistration functions may only be invoked once.",
