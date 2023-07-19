@@ -459,7 +459,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 
 		if (signal?.aborted) {
-			throw Error("aborted before uploading");
+			throw new Error("aborted before uploading");
 		}
 
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
@@ -481,9 +481,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				"abort",
 				() => {
 					if (!pendingEntry.acked) {
-						pendingEntry.uploadTime
-							? pendingEntry.handleP.reject(Error("aborted while waiting on op"))
-							: pendingEntry.handleP.reject(Error("aborted while uploading"));
+						if (pendingEntry.uploadTime) {
+							pendingEntry.handleP.reject(
+								new Error("aborted blob while waiting on op"),
+							);
+						} else {
+							pendingEntry.handleP.reject(new Error("aborted blob while uploading"));
+						}
 					}
 				},
 				{ once: true }, // to remove the listener after being triggered
@@ -589,10 +593,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async onUploadReject(localId: string, error: any) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		// if (entry.abortSignal?.aborted === true) {
-		// 	this.deletePendingBlob(localId);
-		// 	return;
-		// }
+		if (entry.abortSignal?.aborted === true) {
+			this.deletePendingBlob(localId);
+			return;
+		}
 		if (!this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
@@ -671,6 +675,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
 		const localId = message.metadata?.localId;
 		const blobId = message.metadata?.blobId;
+
+		const pendingEntry = this.pendingBlobs.get(localId);
+		if (pendingEntry?.abortSignal?.aborted) {
+			console.log("entre");
+			this.deletePendingBlob(localId);
+			return;
+		}
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
 		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
@@ -678,12 +689,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Note: The check for undefined is needed for back-compat when localId was not part of the BlobAttach op that
 		// was sent when online.
 		if (localId !== undefined) {
-			// const entry = this.pendingBlobs.get(localId);
-			// if (entry?.abortSignal?.aborted) {
-			// 		this.deletePendingBlob(localId);
-			// 		return;
-			// 	}
-			
 			this.setRedirection(localId, blobId);
 		}
 		// set identity (id -> id) entry

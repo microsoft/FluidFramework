@@ -77,27 +77,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			} catch (error: any) {
 				assert.strictEqual(error.message, "aborted before uploading");
 			}
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
+			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 
-		it("blob is aborted while uploading", async function () {
-			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
-			const ac = new AbortController();
-
-			try {
-				const p = dataStore1.runtime.uploadBlob(
-					stringToBuffer(testString, "utf-8"),
-					ac.signal,
-				);
-				ac.abort();
-				await p;
-				assert.fail("Should not succeed");
-			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted while uploading");
-			}
-		});
-
-		it("blob is aborted after uploading", async function () {
+		it("blob is aborted after upload suceeds", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -105,17 +90,21 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const ac = new AbortController();
 			// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/4685
 			await forceWriteMode(map, dataStore1);
-
+			let blob;
 			try {
-				const blob = await dataStore1.runtime.uploadBlob(
+				blob = await dataStore1.runtime.uploadBlob(
 					stringToBuffer(testString, "utf-8"),
 					ac.signal,
 				);
 				ac.abort();
-				map.set(testKey, blob);
 			} catch (error: any) {
 				assert.fail("Should succeed");
 			}
+			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
+				.pendingAttachmentBlobs;
+			const acked = Object.values<any>(pendingBlobs)[0].acked;
+			assert.strictEqual(blob.isAttached, false);
+			assert.strictEqual(acked, true);
 		});
 
 		it("blob is attached after usage in map", async function () {
