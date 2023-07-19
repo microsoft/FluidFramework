@@ -271,6 +271,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			console.error(`Task list fetch failed due to an error:\n${error}`);
 
 			// TODO: Display error status to user? Attempt some number of retries on failure?
+
 			return;
 		}
 
@@ -316,7 +317,6 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			}
 		}
 	}
-
 	/**
 	 * Save the current data in the container back to the external data source.
 	 *

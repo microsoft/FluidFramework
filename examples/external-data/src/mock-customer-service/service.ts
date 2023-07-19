@@ -18,8 +18,8 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
 function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
-	externalTaskListId: string,
 	containerUrl: string,
+	externalTaskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
@@ -86,14 +86,15 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
 
+	const expressApp = express();
+	expressApp.use(express.json());
+	expressApp.use(cors());
+
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
 	const clientManager = new ClientManager<ITaskData>();
 
-	const expressApp = express();
-	expressApp.use(express.json());
-	expressApp.use(cors());
 
 	/**
 	 * Default route. Can be used to verify connectivity to the service.

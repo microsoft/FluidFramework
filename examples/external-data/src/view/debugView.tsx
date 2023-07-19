@@ -5,6 +5,7 @@
 
 import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
+
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import type { IAppModel, ITaskData } from "../model-interface";
 
@@ -42,7 +43,7 @@ async function pollForServiceUpdates(
 }
 
 /**
- * Helper function used in several of the views to fetch data form the external app
+ * {@link DebugView} input props.
  */
 export interface IDebugViewProps {
 	/**
