@@ -112,7 +112,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     createTextHelper(): IMergeTreeTextHelper;
     // Warning: (ae-forgotten-export) The symbol "EndOfTreeSegment" needs to be exported by the entry point index.d.ts
     //
-    // @internal (undocumented)
+    // @internal
     get endOfTreeSegment(): EndOfTreeSegment;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
@@ -186,7 +186,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
     // Warning: (ae-forgotten-export) The symbol "StartOfTreeSegment" needs to be exported by the entry point index.d.ts
     //
-    // @internal (undocumented)
+    // @internal
     get startOfTreeSegment(): StartOfTreeSegment;
     // (undocumented)
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
@@ -697,7 +697,6 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
-    // (undocumented)
     readonly canSlideToEndpoint?: boolean;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
