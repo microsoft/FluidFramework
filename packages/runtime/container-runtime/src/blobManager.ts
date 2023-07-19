@@ -480,11 +480,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			signal.addEventListener(
 				"abort",
 				() => {
-					if (
-						!pendingEntry.handleP.isCompleted &&
-						pendingEntry.status !== PendingBlobStatus.OnlinePendingOp
-					) {
-						pendingEntry.handleP.reject(Error("aborted while uploading"));
+					if (!pendingEntry.acked) {
+						pendingEntry.uploadTime
+							? pendingEntry.handleP.reject(Error("aborted while waiting on op"))
+							: pendingEntry.handleP.reject(Error("aborted while uploading"));
 					}
 				},
 				{ once: true }, // to remove the listener after being triggered
@@ -590,10 +589,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async onUploadReject(localId: string, error: any) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		if (entry.abortSignal?.aborted === true) {
-			this.deletePendingBlob(localId);
-			return;
-		}
+		// if (entry.abortSignal?.aborted === true) {
+		// 	this.deletePendingBlob(localId);
+		// 	return;
+		// }
 		if (!this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
@@ -653,6 +652,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
 		const pendingEntry = this.pendingBlobs.get(localId);
 
+		// if (pendingEntry?.abortSignal?.aborted) {
+		// 	return this.sendBlobAttachOp(localId, blobId);
+		// }
+
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
@@ -675,6 +678,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Note: The check for undefined is needed for back-compat when localId was not part of the BlobAttach op that
 		// was sent when online.
 		if (localId !== undefined) {
+			// const entry = this.pendingBlobs.get(localId);
+			// if (entry?.abortSignal?.aborted) {
+			// 		this.deletePendingBlob(localId);
+			// 		return;
+			// 	}
+			
 			this.setRedirection(localId, blobId);
 		}
 		// set identity (id -> id) entry

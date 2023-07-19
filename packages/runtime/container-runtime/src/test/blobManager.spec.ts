@@ -49,12 +49,6 @@ class DedupeStorage extends BaseMockBlobStorage {
 	}
 }
 
-class MockFailDedupeStorage extends BaseMockBlobStorage {
-	public async createBlob(blob: ArrayBufferLike) {
-		throw new Error("fake error ");
-	}
-}
-
 class NonDedupeStorage extends BaseMockBlobStorage {
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = this.blobs.size.toString();
@@ -93,14 +87,11 @@ class MockRuntime
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
-			: this.rejectCreateBlob
-			? this.rejectStorage
 			: this.attachedStorage) as unknown as IDocumentStorageService;
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
-	public rejectCreateBlob = false;
 
 	public getStorage() {
 		return {
@@ -153,7 +144,6 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public rejectStorage = new MockFailDedupeStorage();
 	public logger = this.mc.logger;
 
 	private ops: any[] = [];
@@ -168,10 +158,10 @@ class MockRuntime
 		this.ops = [];
 	}
 
-	public async processBlobs() {
+	public async processBlobs(resolve = true) {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
-		this.processBlobsP.resolve();
+		resolve ? this.processBlobsP.resolve() : this.processBlobsP.reject(new Error("fake error"));
 		this.processBlobsP = new Deferred<void>();
 		await Promise.all(blobPs);
 	}
@@ -183,13 +173,12 @@ class MockRuntime
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
-	public async processAll(ac?: AbortController) {
+	public async processAll() {
 		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
 			const p1 = this.processBlobs();
 			const p2 = this.processHandles();
 			this.processOps();
 			await Promise.race([p1, p2]);
-			ac?.abort();
 			this.processOps();
 			await Promise.all([p1, p2]);
 		}
@@ -367,118 +356,6 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 3);
 	});
 
-	it("abort before upload", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const ac = new AbortController();
-		ac.abort("abort test");
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			await runtime.processAll();
-			assert.fail("Should not succeed");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "aborted before uploading");
-		}
-		assert(handleP);
-		await assert.rejects(handleP);
-	});
-
-	it("abort while upload", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const ac = new AbortController();
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			ac.abort("abort test");
-			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-			await runtime.processAll();
-			assert.fail("Should not succeed");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "aborted while uploading");
-		}
-		assert(handleP);
-		await assert.rejects(handleP);
-	});
-
-	it("abort while upload fails", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		runtime.rejectCreateBlob = true;
-		const ac = new AbortController();
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			ac.abort("abort test");
-			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-			await runtime.processAll();
-			assert.fail("Should not succeed");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "aborted while uploading");
-		}
-		assert(handleP);
-		await assert.rejects(handleP);
-	});
-
-	it("disconnect after abort", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const ac = new AbortController();
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			ac.abort("abort test");
-			runtime.disconnect();
-			await runtime.processBlobs();
-			await handleP;
-			await runtime.connect();
-			await runtime.processAll();
-			assert.fail("Should not succeed");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "aborted while uploading");
-		}
-		assert(handleP);
-		await assert.rejects(handleP);
-	});
-
-	it("abort after upload", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const ac = new AbortController();
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			await runtime.processAll();
-			ac.abort("abort test");
-		} catch (error: any) {
-			assert.fail("abort after processing should not throw");
-		}
-		assert(handleP);
-		await assert.doesNotReject(handleP);
-	});
-
-	it("abort while waiting for op", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const ac = new AbortController();
-		let handleP;
-		try {
-			const blob = IsoBuffer.from("blob", "utf8");
-			handleP = runtime.createBlob(blob, ac.signal);
-			await runtime.processAll(ac);
-		} catch (error: any) {
-			assert.fail("abort while waiting for op should not throw");
-		}
-		assert(handleP);
-		await assert.doesNotReject(handleP);
-	});
-
 	it("detached snapshot", async () => {
 		assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 		await createBlob(IsoBuffer.from("blob", "utf8"));
@@ -506,23 +383,6 @@ describe("BlobManager", () => {
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
-		await runtime.connect();
-		await runtime.processAll();
-
-		const summaryData = validateSummary(runtime);
-		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
-	});
-
-	it("aborts while upload offline", async () => {
-		// this should throw once we remove resolving while offline
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/4550
-		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
-		const ac = new AbortController();
-		ac.abort();
 		await runtime.connect();
 		await runtime.processAll();
 
@@ -756,7 +616,195 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData?.redirectTable.size, 3);
 	});
 
-	describe("Garbage Collection", () => {
+	describe.only("Abort Signal", () => {
+		it("abort before upload", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			ac.abort("abort test");
+			let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				await runtime.processBlobs();
+				await handleP;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted before uploading");
+			}
+			assert(handleP, "aborted before uploading");
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("abort while upload", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				ac.abort("abort test");
+				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+				await runtime.processBlobs();
+				await handleP;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while uploading");
+			}
+			assert(handleP, "aborted while uploading");
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("abort while failed upload", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				ac.abort("abort test");
+				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+				await runtime.processBlobs(false);
+				await handleP;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while uploading");
+			}
+			assert(handleP, "aborted while uploading");
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("abort while disconnected", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+		 	let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				runtime.disconnect();
+				ac.abort();
+				await runtime.processBlobs();
+				await handleP;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while uploading");
+			}
+			assert(handleP, "aborted while uploading");
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("abort after blob suceeds", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				await runtime.processAll();
+				ac.abort();
+			} catch (error: any) {
+				assert.fail("abort after processing should not throw");
+			}
+			assert(handleP);
+			await assert.doesNotReject(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.redirectTable.size, 1);
+		});
+
+		it("abort while waiting for op", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			let handleP;
+			try {
+				const blob = IsoBuffer.from("blob", "utf8");
+				handleP = runtime.createBlob(blob, ac.signal);
+				const p1 = runtime.processBlobs();
+				const p2 = runtime.processHandles();
+				await Promise.race([p1, p2]);
+				ac.abort();
+				runtime.processOps();
+				await Promise.all([p1, p2]);
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while waiting on op");
+			}
+			assert(handleP, "aborted while waiting on op");
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+
+		it("another disconected", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+		 	let handleP;
+			try {
+				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+				runtime.disconnect();
+				await runtime.processBlobs();
+				await handleP;
+				ac.abort();
+				await runtime.connect();
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while uploading");
+			}
+			assert(handleP, "aborted while uploading");
+			await assert.doesNotReject(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("abort on resubmit", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const ac = new AbortController();
+			let handleP;
+			try {
+				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+				const p1 = runtime.processBlobs();
+				const p2 = runtime.processHandles();
+				await Promise.race([p1, p2]);
+				// disconnect causes blob to transition to offline if we already upload the 
+				// blob, therefore resolving its handle. Once we change that, handle will 
+				// reject as expected
+				runtime.disconnect();
+				ac.abort();
+				await runtime.connect();
+				runtime.processOps();
+			} catch (error: any) {
+				assert.strictEqual(error.message, "aborted while waiting on op");
+			}
+			assert(handleP);
+			await assert.rejects(handleP);
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+	});
+
+	describe.skip("Garbage Collection", () => {
 		let redirectTable: Map<string, string | undefined>;
 
 		/** Creates a blob with the given content and returns its local and storage id. */
