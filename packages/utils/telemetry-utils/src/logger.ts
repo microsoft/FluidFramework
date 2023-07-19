@@ -613,6 +613,7 @@ export class PerformanceEvent {
 /**
  * Logger that is useful for UT
  * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - Use createChildLogger instead
  */
 export class TelemetryUTLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}

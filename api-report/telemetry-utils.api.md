@@ -391,7 +391,7 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryUTLogger implements ITelemetryLoggerExt {
     // (undocumented)
     debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;

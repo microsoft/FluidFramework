@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, IEntry, snapshotKey } from "@fluidframework/odsp-driver-definitions";
 import { EpochTrackerWithRedemption } from "../epochTracker";
@@ -55,7 +55,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			new TelemetryUTLogger(),
+			createChildLogger(),
 		);
 	});
 
