@@ -22,8 +22,13 @@ name: Sync branches
 on:
   schedule:
     # At 0 minutes past the hour, every 2 hours, Monday through Friday. Cron timezone is in UTC.
-    - cron: "0 */2 * * 1-5"
+    - cron: "0 */1 * * 1-5"
   
+  # Each commit to next should trigger a run, so we create new PRs as quickly as possible.
+  push:
+    branches:
+      - "next"
+
   # Support running the workflow manually through the GitHub UI.
   workflow_dispatch:
     inputs:
@@ -38,7 +43,9 @@ env:
   SOURCE_BRANCH: main
   USERNAME: msfluid-bot
   EMAIL: banana-bot@outlook.com
-  BATCH: ${{ inputs.batchSize }}
+  # The inputs context is only available when triggered by workflow_dispatch. For the scheduled runs this uses the
+  # default value
+  BATCH: ${{ inputs.batchSize || 10 }}
   REVIEWER1: sonalideshpandemsft
 
 jobs:
@@ -46,6 +53,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'microsoft'
     steps: 
+      - run: |
+          echo "TARGET_BRANCH: $TARGET_BRANCH"
+          echo "SOURCE_BRANCH: $SOURCE_BRANCH"
+          echo "USERNAME: $USERNAME"
+          echo "EMAIL: $EMAIL"
+          echo "BATCH: $BATCH"
+          echo "REVIEWER1: $REVIEWER1"
+
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           fetch-depth: "0" # all history
@@ -81,6 +96,7 @@ jobs:
       
       - name: Run merge command
         env: 
+          # PAT is loaded automatically from env variable
           GITHUB_PAT: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
-        # PAT is loaded automatically from env variable
-        run: flub merge branches -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
+        run: |
+          flub merge branches -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH --reviewers $REVIEWER1 -v
