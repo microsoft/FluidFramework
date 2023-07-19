@@ -44,8 +44,6 @@ export function fieldSchema(
 	};
 }
 
-const defaultExtraGlobalFields = false;
-
 /**
  * See {@link TreeStoredSchema} for details.
  * @alpha
@@ -54,7 +52,6 @@ export interface TreeSchemaBuilder {
 	readonly localFields?: { [key: string]: FieldStoredSchema };
 	readonly globalFields?: Iterable<GlobalFieldKey>;
 	readonly extraLocalFields: FieldStoredSchema;
-	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
 
@@ -75,7 +72,6 @@ export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 		localFields,
 		globalFields: new Set(data.globalFields ?? []),
 		extraLocalFields: data.extraLocalFields,
-		extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
 		value: data.value ?? ValueSchema.Nothing,
 	};
 }

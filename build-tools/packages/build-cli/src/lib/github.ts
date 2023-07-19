@@ -3,38 +3,41 @@
  * Licensed under the MIT License.
  */
 import { Octokit } from "@octokit/core";
-
 import { CommandLogger } from "../logging";
 
-const OWNER = "microsoft";
-const REPO_NAME = "FluidFramework";
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
-const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls";
+const COMMIT_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
-const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
-const GET_USER = "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users";
-const DESCRIPTION = `
-        ## Main-next integrate PR
-        The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
-        > - Acknowledge the pull request by adding a comment -- "Actively working on it".
-        > - Resolve any merge conflicts between this branch and next (and push the resolution to this branch). Merge next into this branch if needed. **Do NOT rebase or squash this branch: its history must be preserved**.
-        > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
-        For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
-const TITLE = "Automate: Main Next Integrate";
+const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 
 /**
  *
  * @param token - GitHub authentication token
  * @returns Returns true if pull request exists
  */
-export async function pullRequestExists(token: string, log: CommandLogger): Promise<boolean> {
-	log.verbose("Checking if pull request exists----------------");
+export async function pullRequestExists(
+	token: string,
+	title: string,
+	owner: string,
+	repo: string,
+	log: CommandLogger,
+): Promise<{ found: boolean; url?: string; number?: number }> {
+	log.verbose(`Checking if pull request with title="${title}" exists----------------`);
 	const octokit = new Octokit({ auth: token });
-	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
+	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 
-	return response.data.some((d) => d.title === TITLE);
+	const found = response.data.find((d) => d.title === title);
+	if (found === undefined) {
+		return { found: false };
+	}
+
+	return {
+		found: true,
+		url: found.html_url,
+		number: found.number,
+	};
 }
 
 /**
@@ -42,38 +45,23 @@ export async function pullRequestExists(token: string, log: CommandLogger): Prom
  * @param token - GitHub authentication token
  * @param commit_sha - Commit id for which we need pull request information
  */
-export async function pullRequestInfo(
+export async function getCommitInfo(
 	token: string,
+	owner: string,
+	repo: string,
 	commit_sha: string,
 	log: CommandLogger,
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
-	const prInfo = await octokit.request(PULL_REQUEST_INFO, {
-		owner: OWNER,
-		repo: REPO_NAME,
-		commit_sha,
+
+	const prInfo = await octokit.request(COMMIT_INFO, {
+		owner,
+		repo,
+		ref: commit_sha,
 	});
 
-	log.verbose(`Get pull request info for ${commit_sha}: ${prInfo}`);
+	log.verbose(`Get info from ref: ${JSON.stringify(prInfo)}`);
 	return prInfo;
-}
-
-/**
- *
- * @param token - GitHub authentication token
- * @returns Lists the user who have push access to this branch
- */
-export async function getUserAccess(token: string, log: CommandLogger): Promise<any> {
-	const octokit = new Octokit({ auth: token });
-
-	const user = await octokit.request(GET_USER, {
-		owner: OWNER,
-		repo: REPO_NAME,
-		branch: "main",
-	});
-
-	log.verbose(`Get list of users with push access ${user}`);
-	return user;
 }
 
 /**
@@ -85,44 +73,50 @@ export async function getUserAccess(token: string, log: CommandLogger): Promise<
  * @returns Pull request number
  */
 export async function createPullRequest(
-	token: string,
-	source: string,
-	target: string,
-	assignee: string,
+	pr: {
+		token: string;
+		owner: string;
+		repo: string;
+		source: string;
+		target: string;
+		assignee: string;
+		title: string;
+		description: string;
+		reviewers: string[];
+	},
 	log: CommandLogger,
 ): Promise<any> {
 	log.verbose(`Creating a pull request---------------`);
-	const octokit = new Octokit({ auth: token });
-	const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
+	const octokit = new Octokit({ auth: pr.token });
 	const newPr = await octokit.request(PULL_REQUEST, {
-		owner: OWNER,
-		repo: REPO_NAME,
-		title: TITLE,
-		body: DESCRIPTION,
-		head: source,
-		base: target,
+		owner: pr.owner,
+		repo: pr.repo,
+		title: pr.title,
+		body: pr.description,
+		head: pr.source,
+		base: pr.target,
 	});
 
-	log.verbose(`Assigning ${author} to pull request ${newPr.data.number}`);
+	log.verbose(`Assigning ${pr.assignee} to pull request ${newPr.data.number}`);
 	await octokit.request(ASSIGNEE, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		issue_number: newPr.data.number,
-		assignees: [author],
+		assignees: [pr.assignee],
 	});
 
-	log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
+	log.log(`Adding reviewer to pull request ${newPr.data.number}`);
 	await octokit.request(REVIEWER, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		pull_number: newPr.data.number,
-		reviewer: [],
+		reviewers: pr.reviewers,
 	});
 
 	log.verbose(`Adding label to pull request ${newPr.data.number}`);
 	await octokit.request(LABEL, {
-		owner: OWNER,
-		repo: REPO_NAME,
+		owner: pr.owner,
+		repo: pr.repo,
 		issue_number: newPr.data.number,
 		labels: ["main-next-integrate", "do-not-squash-merge"],
 	});

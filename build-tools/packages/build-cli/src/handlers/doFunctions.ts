@@ -119,6 +119,14 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 	}
 
 	if (updatedPackages.length > 0) {
+		log?.verbose(`Running install if needed.`);
+		await FluidRepo.ensureInstalled(
+			isReleaseGroup(releaseGroup)
+				? context.packagesInReleaseGroup(releaseGroup)
+				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  [context.fullPackageMap.get(releaseGroup)!],
+			false,
+		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
 		context.repo.reload();

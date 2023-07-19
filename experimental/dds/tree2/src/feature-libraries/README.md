@@ -77,7 +77,7 @@ There are a few different usage patterns for systems with existing data:
 
 ### Misc use-case
 
-Large documents, partial checkout, permissions
+Large documents, partial view, permissions
 
 indexing / external readonly copies: update them from deltas (or maybe from change sets?)
 
@@ -133,7 +133,7 @@ rest: document specific schema perf
 
 cross document schema caching: hash -> rest service
 
-rest: need partial checkout
+rest: need partial view
 
 rest: post vs put. Constraint to prevent concurrent edits. can express cancel of modified. Json patch. Reference identifier to diff against.
 

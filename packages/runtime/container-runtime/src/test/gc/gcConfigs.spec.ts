@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError, IErrorBase } from "@fluidframework/container-definitions";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -134,7 +134,6 @@ describe("Garbage Collection configurations", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
-			getContainerDiagnosticId: () => "someDocId",
 		});
 	}
 
@@ -342,7 +341,7 @@ describe("Garbage Collection configurations", () => {
 						[gcSweepGenerationOptionName]: 1,
 					});
 				},
-				(e) => e.errorType === "usageError",
+				(e: IErrorBase) => e.errorType === "usageError",
 				"Should be unsupported",
 			);
 		});
@@ -823,7 +822,7 @@ describe("Garbage Collection configurations", () => {
 					() => {
 						gc = createGcWithPrivateMembers();
 					},
-					(e) => e.errorType === "usageError",
+					(e: IErrorBase) => e.errorType === "usageError",
 					"inactiveTimeout must not be greater than sweepTimeout",
 				);
 			});

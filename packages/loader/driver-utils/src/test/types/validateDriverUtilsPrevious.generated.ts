@@ -119,7 +119,6 @@ declare function get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError():
 declare function use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     use: TypeOnly<current.DeltaStreamConnectionForbiddenError>);
 use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
 /*
@@ -229,6 +228,30 @@ declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
     get_current_ClassDeclaration_GenericNetworkError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICompressionStorageConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICompressionStorageConfig():
+    TypeOnly<old.ICompressionStorageConfig>;
+declare function use_current_InterfaceDeclaration_ICompressionStorageConfig(
+    use: TypeOnly<current.ICompressionStorageConfig>);
+use_current_InterfaceDeclaration_ICompressionStorageConfig(
+    get_old_InterfaceDeclaration_ICompressionStorageConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICompressionStorageConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICompressionStorageConfig():
+    TypeOnly<current.ICompressionStorageConfig>;
+declare function use_old_InterfaceDeclaration_ICompressionStorageConfig(
+    use: TypeOnly<old.ICompressionStorageConfig>);
+use_old_InterfaceDeclaration_ICompressionStorageConfig(
+    get_current_InterfaceDeclaration_ICompressionStorageConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -589,6 +612,54 @@ declare function use_old_ClassDeclaration_UsageError(
     use: TypeOnly<old.UsageError>);
 use_old_ClassDeclaration_UsageError(
     get_current_ClassDeclaration_UsageError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_applyStorageCompression": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_applyStorageCompression():
+    TypeOnly<typeof old.applyStorageCompression>;
+declare function use_current_FunctionDeclaration_applyStorageCompression(
+    use: TypeOnly<typeof current.applyStorageCompression>);
+use_current_FunctionDeclaration_applyStorageCompression(
+    get_old_FunctionDeclaration_applyStorageCompression());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_applyStorageCompression": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_applyStorageCompression():
+    TypeOnly<typeof current.applyStorageCompression>;
+declare function use_old_FunctionDeclaration_applyStorageCompression(
+    use: TypeOnly<typeof old.applyStorageCompression>);
+use_old_FunctionDeclaration_applyStorageCompression(
+    get_current_FunctionDeclaration_applyStorageCompression());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobHeadersBlobName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_blobHeadersBlobName():
+    TypeOnly<typeof old.blobHeadersBlobName>;
+declare function use_current_VariableDeclaration_blobHeadersBlobName(
+    use: TypeOnly<typeof current.blobHeadersBlobName>);
+use_current_VariableDeclaration_blobHeadersBlobName(
+    get_old_VariableDeclaration_blobHeadersBlobName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobHeadersBlobName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_blobHeadersBlobName():
+    TypeOnly<typeof current.blobHeadersBlobName>;
+declare function use_old_VariableDeclaration_blobHeadersBlobName(
+    use: TypeOnly<typeof old.blobHeadersBlobName>);
+use_old_VariableDeclaration_blobHeadersBlobName(
+    get_current_VariableDeclaration_blobHeadersBlobName());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -55,6 +55,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -80,6 +81,7 @@ scribe:
   replicas: 8
   getDeltasViaAlfred: true
   verifyLastOpPersistence: false
+  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000
@@ -117,6 +119,7 @@ mongodb:
   globalDbEnabled: false
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
+  directConnection: true
   softDeletionRetentionPeriodMs: 2592000000
   offlineWindowMs: 86400000
   softDeletionEnabled: false

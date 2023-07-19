@@ -51,6 +51,26 @@ and verifying that the following expectation changes won't have any effects:
 -   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
+Grouped batching may become problematic for batches which contain reentrant ops. This is the case when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the reentrant op will have a different reference sequence number than the rest of the ops in the batch, resulting in a different view of the state of the data model.
+
+Therefore, when grouped batching is enabled, all batches with reentrant ops are rebased to the current reference sequence number and resubmitted to the data stores so that all ops are in agreement about the state of the data model and ensure eventual consistency.
+
+### How to enable
+
+**This feature is disabled by default, currently considered experimental and not ready for production usage.**
+
+If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
+
+```
+    const runtimeOptions: IContainerRuntimeOptions = {
+        (...)
+        enableGroupedBatching: true,
+        (...)
+    }
+```
+
+In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
+
 ## Chunking for compression
 
 **Op chunking for compression targets payloads which exceed the max batch size after compression.** So, only payloads which are already compressed. By default, the feature is enabled.

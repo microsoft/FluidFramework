@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.0.0-internal.5.1.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,7 +38,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -64,6 +64,7 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
@@ -79,15 +80,15 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.19.0-166151",
+		"@fluid-tools/build-cli": "^0.21.0",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.19.0-166151",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.5.0.0",
+		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/node-fetch": "^2.5.10",
 		"@types/sha.js": "^2.4.0",
 		"@types/sinon": "^7.0.13",
@@ -106,6 +107,20 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspDocumentServiceFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspDocumentServiceFactoryCore": {
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISocketStorageDiscovery": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import {
+	ReferenceType,
+	SlidingPreference,
+	reservedRangeLabelsKey,
+} from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -14,6 +18,7 @@ import {
 	MockStorage,
 	MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
@@ -1730,6 +1735,39 @@ describe("SharedString interval collections", () => {
 				assert.equal(collection.detachIndex(mockIntervalIndex), true);
 				assert.equal(collection.detachIndex(mockIntervalIndex), false);
 			});
+		});
+	});
+
+	describe("maintain consistency between the collection label and that in interval properties", () => {
+		let collection;
+
+		beforeEach(() => {
+			sharedString.initializeLocal();
+			collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "xyz");
+		});
+
+		it("can not insert the interval which does not belong to this collection", () => {
+			assert.throws(
+				() => {
+					collection.add(1, 1, IntervalType.SlideOnRemove, {
+						[reservedRangeLabelsKey]: ["test2"],
+					});
+				},
+				LoggingError,
+				"The collection is unable to add an interval which does not belong to it",
+			);
+		});
+
+		it("can not modify the interval's label after it has been inserted to the collection", () => {
+			const id = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			assert.throws(
+				() => {
+					collection.changeProperties(id, { [reservedRangeLabelsKey]: ["test2"] });
+				},
+				LoggingError,
+				"The label property of an interval should not be modified once inserted to the collection",
+			);
 		});
 	});
 });
