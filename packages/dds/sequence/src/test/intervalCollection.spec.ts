@@ -130,6 +130,7 @@ describe("SharedString interval collections", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.options = { intervalStickinessEnabled: true };
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {

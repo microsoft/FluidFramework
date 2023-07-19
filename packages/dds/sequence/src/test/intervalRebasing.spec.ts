@@ -20,6 +20,7 @@ function constructClients(
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		dataStoreRuntime.options = { intervalStickinessEnabled: true };
 		const sharedString = new SharedString(
 			dataStoreRuntime,
 			String.fromCharCode(index + 65),
