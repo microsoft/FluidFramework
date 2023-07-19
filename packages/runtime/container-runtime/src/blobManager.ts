@@ -674,7 +674,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		const pendingEntry = this.pendingBlobs.get(localId);
 		if (pendingEntry?.abortSignal?.aborted) {
-			console.log("entre");
 			this.deletePendingBlob(localId);
 			return;
 		}
