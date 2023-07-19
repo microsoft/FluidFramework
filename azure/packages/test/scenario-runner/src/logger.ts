@@ -8,7 +8,7 @@ import fs from "fs";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { createChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
@@ -22,16 +22,14 @@ export interface LoggerConfig {
 	region?: string;
 }
 
-class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private targetEvents: string[] = [];
 	private transformedEvents: Map<string, string> = new Map();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	public registerExpectedEvent(expectedEventNames: string[]) {
 		this.targetEvents = expectedEventNames;
@@ -94,7 +92,7 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 		if (typeof event.testCategoryOverride === "string") {
 			event.category = event.testCategoryOverride;
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write

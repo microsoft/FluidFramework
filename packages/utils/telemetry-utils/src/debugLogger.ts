@@ -15,6 +15,7 @@ import {
 	MultiSinkLogger,
 	createChildLogger,
 	ITelemetryLoggerPropertyBags,
+	formatTick,
 } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
@@ -123,7 +124,7 @@ export class DebugLogger extends TelemetryLogger {
 		newEvent.eventName = undefined;
 
 		let tick = "";
-		tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
+		tick = `tick=${formatTick(performance.now())}`;
 
 		// Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
 		const stack = newEvent.stack ? newEvent.stack : "";

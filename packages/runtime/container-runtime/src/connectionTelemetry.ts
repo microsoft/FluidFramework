@@ -6,7 +6,7 @@
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
-	TelemetryLogger,
+	formatTick,
 } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -183,7 +183,7 @@ class OpPerfTelemetry {
 			ops: this.gap,
 			// track time to connect only for first connection.
 			timeToConnect: this.firstConnection
-				? TelemetryLogger.formatTick(this.connectionStartTime - this.bootTime)
+				? formatTick(this.connectionStartTime - this.bootTime)
 				: undefined,
 			firstConnection: this.firstConnection,
 		});
