@@ -346,7 +346,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private processMessage() {
+	private processFirstMessage() {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
@@ -356,7 +356,9 @@ export class MockContainerRuntimeFactory {
 			JSON.stringify(this.messages.shift()),
 		) as ISequencedDocumentMessage;
 
-		this.minSeq.set(message.clientId, message.referenceSequenceNumber);
+		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (this.runtimeOptions.flushMode === FlushMode.Immediate) {
 			this.sequenceNumber++;
 		}
@@ -376,7 +378,7 @@ export class MockContainerRuntimeFactory {
 			this.sequenceNumber++;
 		}
 
-		this.processMessage();
+		this.processFirstMessage();
 	}
 
 	/**
@@ -389,7 +391,7 @@ export class MockContainerRuntimeFactory {
 		}
 
 		for (let i = 0; i < count; i++) {
-			this.processMessage();
+			this.processFirstMessage();
 		}
 	}
 
