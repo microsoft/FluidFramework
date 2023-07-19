@@ -172,7 +172,7 @@ class Document {
 	private documentSeqNumber = 0;
 	private from: number = -1;
 	private snapshotFileName: string = "";
-	private docLogger: ITelemetryLogger;
+	private docLogger: ITelemetryLoggerExt;
 	private originalSummarySeqs: number[];
 
 	public constructor(
