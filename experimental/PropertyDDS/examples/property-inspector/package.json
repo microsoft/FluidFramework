@@ -16,7 +16,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

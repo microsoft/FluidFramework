@@ -20,7 +20,7 @@
 		"build:esnext": "tsc",
 		"build:full": "concurrently npm:build npm:webpack",
 		"build:full:compile": "concurrently npm:build:compile npm:webpack",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
