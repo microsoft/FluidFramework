@@ -10,4 +10,4 @@ For the deprecated implementations the following replacement function should be 
 
 -   replace ChildLogger.create with createChildLogger
 -   replace DebugLogger.create with createDebugLogger
--   replace
+-   replace new MultiSinkLogger with createMultiSinkLogger
