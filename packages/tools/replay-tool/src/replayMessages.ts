@@ -14,13 +14,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryLogger,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
