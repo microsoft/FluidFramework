@@ -41,7 +41,7 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 // @public (undocumented)
 export const connectedEventName = "connected";
 
-// @public (undocumented)
+// @public
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
@@ -51,13 +51,13 @@ export function createChildLogger(props?: {
 // @public (undocumented)
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
-// @public (undocumented)
+// @public
 export function createDebugLogger(props: {
     namespace: string;
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;
 
-// @public (undocumented)
+// @public
 export function createMultiSinkLogger(props: {
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;

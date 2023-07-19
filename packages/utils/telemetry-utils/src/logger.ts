@@ -295,8 +295,10 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	}
 }
 
-const childLoggerType = "__fluid_child_logger" as const;
-
+/**
+ * Create a child logger based on the provided props object
+ * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
 	namespace?: string;
@@ -315,17 +317,6 @@ export function createChildLogger(props?: {
  * @deprecated - Use createChildLogger instead
  */
 export class ChildLogger extends TelemetryLogger {
-	private static is(logger?: ITelemetryBaseLogger): logger is ChildLogger {
-		if (logger instanceof ChildLogger) {
-			return true;
-		}
-		const maybe = logger as ChildLogger | undefined;
-		if (maybe?.[childLoggerType] === childLoggerType) {
-			return true;
-		}
-		return false;
-	}
-
 	/**
 	 * Create child logger
 	 * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -340,7 +331,7 @@ export class ChildLogger extends TelemetryLogger {
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
-		if (ChildLogger.is(baseLogger)) {
+		if (baseLogger instanceof ChildLogger) {
 			const combinedProperties: ITelemetryLoggerPropertyBags = {};
 			for (const extendedProps of [baseLogger.properties, properties]) {
 				if (extendedProps !== undefined) {
@@ -376,7 +367,6 @@ export class ChildLogger extends TelemetryLogger {
 		);
 	}
 
-	private readonly [childLoggerType] = childLoggerType;
 	private constructor(
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
@@ -400,6 +390,10 @@ export class ChildLogger extends TelemetryLogger {
 	}
 }
 
+/**
+ * Create a logger which logs to multiple other loggers based on the provided props object
+ * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ */
 export function createMultiSinkLogger(props: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;

@@ -18,6 +18,10 @@ import {
 } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+/**
+ * Create a logger which uses the debug library for logging
+ * @param props - namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ */
 export function createDebugLogger(props: {
 	namespace: string;
 	properties?: ITelemetryLoggerPropertyBags;
