@@ -50,7 +50,7 @@ import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimizati
 // modified in order to set the mergeTreeUseNewLengthCalculations option on the
 // underlying merge tree. This can be deleted after PR#15868 is in main.
 class RevertibleFactory extends SharedStringFactory {
-	options = { mergeTreeUseNewLengthCalculations: true };
+	options = { mergeTreeUseNewLengthCalculations: true, intervalStickinessEnabled: true };
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -58,11 +58,13 @@ class RevertibleFactory extends SharedStringFactory {
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
 		runtime.options.mergeTreeUseNewLengthCalculations = true;
+		runtime.options.intervalStickinessEnabled = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		document.options.mergeTreeUseNewLengthCalculations = true;
+		document.options.intervalStickinessEnabled = true;
 		return super.create(document, id);
 	}
 }
