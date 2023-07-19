@@ -193,10 +193,7 @@ function composeMarks<TNodeChange>(
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
 		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
-			assert(
-				newMark.detachEvent !== undefined,
-				"Invalid node-targeting mark after transient",
-			);
+			assert(newMark.cellId !== undefined, "Invalid node-targeting mark after transient");
 			return baseMark;
 		}
 		if (newMark.type === "ReturnTo") {
@@ -364,7 +361,7 @@ function createModifyMark<TNodeChange>(
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
 	if (cellId !== undefined) {
-		mark.detachEvent = cellId;
+		mark.cellId = cellId;
 	}
 	return mark;
 }
@@ -586,7 +583,7 @@ export class ComposeQueue<T> {
 					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
 					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
-				baseCellId = baseMark.detachEvent;
+				baseCellId = baseMark.cellId;
 			}
 			const cmp = compareCellPositions(
 				baseCellId,
@@ -806,11 +803,11 @@ function areInverseMovesAtIntermediateLocation(
 		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
-	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
+	if (baseMark.type === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
 		return true;
 	}
 
-	if (newMark.type === "ReturnFrom" && newMark.detachEvent?.revision === baseIntention) {
+	if (newMark.type === "ReturnFrom" && newMark.cellId?.revision === baseIntention) {
 		return true;
 	}
 

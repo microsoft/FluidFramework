@@ -402,11 +402,11 @@ function rebaseMark<TNodeChange>(
 				);
 			}
 		}
-		rebasedMark = withoutDetachEvent(rebasedMark);
+		rebasedMark = withoutCellId(rebasedMark);
 	} else if (
 		nodeExistenceState === NodeExistenceState.Alive &&
 		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
-		rebasedMark.detachEvent === undefined
+		rebasedMark.cellId === undefined
 	) {
 		setPairedMarkStatus(
 			moveEffects,
@@ -548,13 +548,13 @@ function makeDetachedMark<T>(
 		return { count: 0 };
 	}
 
-	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
-	return { ...mark, detachEvent: { revision: detachIntention, localId: detachId } };
+	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
+	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
 }
 
-function withoutDetachEvent<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
+function withoutCellId<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
 	const newMark = { ...mark };
-	delete newMark.detachEvent;
+	delete newMark.cellId;
 	return newMark;
 }
 
@@ -757,8 +757,8 @@ function getLineageHolder(mark: Mark<unknown>): HasLineage {
 		return mark;
 	}
 
-	assert(mark.detachEvent !== undefined, "Attached cells cannot have lineage");
-	return mark.detachEvent;
+	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
+	return mark.cellId;
 }
 
 /**

@@ -102,7 +102,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			{
 				type: "Revive",
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				content: [singleTextCursor({ type, value: 1 })],
 				transientDetach: { revision: tag1, localId: brand(0) },
 			},

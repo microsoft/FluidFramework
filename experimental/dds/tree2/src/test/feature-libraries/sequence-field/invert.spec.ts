@@ -141,7 +141,7 @@ describe("SequenceField - Invert", () => {
 					id: brand(0),
 					count: 1,
 					changes: childChange1,
-					detachEvent,
+					cellId: detachEvent,
 				},
 			];
 
@@ -159,7 +159,7 @@ describe("SequenceField - Invert", () => {
 					count: 1,
 					id: brand(0),
 					changes: childChange1,
-					detachEvent,
+					cellId: detachEvent,
 				},
 				{
 					type: "MoveIn",
@@ -254,7 +254,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnTo",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, localId: brand(0) },
+					cellId: { revision: tag2, localId: brand(0) },
 					inverseOf: tag1,
 				},
 				{
@@ -276,7 +276,7 @@ describe("SequenceField - Invert", () => {
 					type: "MoveOut",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, localId: brand(0) },
+					cellId: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Modify",
@@ -307,7 +307,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnFrom",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, localId: brand(0) },
+					cellId: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Modify",
@@ -317,7 +317,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnTo",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag1, localId: brand(0) },
+					cellId: { revision: tag1, localId: brand(0) },
 					isSrcConflicted: true,
 				},
 				{
@@ -339,7 +339,7 @@ describe("SequenceField - Invert", () => {
 					type: "ReturnFrom",
 					count: 1,
 					id: brand(0),
-					detachEvent: { revision: tag2, localId: brand(0) },
+					cellId: { revision: tag2, localId: brand(0) },
 					isDstConflicted: true,
 				},
 				{

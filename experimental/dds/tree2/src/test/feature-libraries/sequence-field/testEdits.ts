@@ -75,7 +75,7 @@ function createRedundantRemoveChangeset(
 	detachEvent: ChangeAtomId,
 ): SF.Changeset<never> {
 	const changeset = createDeleteChangeset(index, size);
-	(changeset[changeset.length - 1] as SF.Delete).detachEvent = detachEvent;
+	(changeset[changeset.length - 1] as SF.Delete).cellId = detachEvent;
 	return changeset;
 }
 
@@ -89,7 +89,7 @@ function createReviveChangeset(
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	if (lastDetach !== undefined) {
-		mark.detachEvent = lastDetach;
+		mark.cellId = lastDetach;
 	}
 	return markList;
 }
@@ -109,7 +109,7 @@ function createRedundantReviveChangeset(
 		isIntention,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	delete mark.detachEvent;
+	delete mark.cellId;
 	return markList;
 }
 
@@ -122,7 +122,7 @@ function createBlockedReviveChangeset(
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	mark.detachEvent = lastDetach;
+	mark.cellId = lastDetach;
 	return markList;
 }
 
@@ -137,7 +137,7 @@ function createIntentionalReviveChangeset(
 	const mark = markList[markList.length - 1] as SF.Reattach;
 
 	if (lastDetach !== undefined) {
-		mark.detachEvent = lastDetach;
+		mark.cellId = lastDetach;
 	}
 
 	return markList;
@@ -177,7 +177,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
 	const modify = changeset[changeset.length - 1] as SF.Modify;
-	modify.detachEvent = detachEvent;
+	modify.cellId = detachEvent;
 	return changeset;
 }
 

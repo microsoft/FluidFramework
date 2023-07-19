@@ -187,7 +187,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag3, localId: brand(0) },
+				cellId: { revision: tag3, localId: brand(0) },
 			},
 			{
 				type: "Revive",
@@ -215,7 +215,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag2, localId: brand(1) },
+				cellId: { revision: tag2, localId: brand(1) },
 			},
 			{
 				type: "Revive",
@@ -228,7 +228,7 @@ describe("SequenceField - Rebase", () => {
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
 				inverseOf: tag1,
-				detachEvent: { revision: tag2, localId: brand(3) },
+				cellId: { revision: tag2, localId: brand(3) },
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -295,21 +295,21 @@ describe("SequenceField - Rebase", () => {
 				type: "Delete",
 				id: brand(0),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(1) },
+				cellId: { revision: tag1, localId: brand(1) },
 			},
 			{ type: "Delete", id: brand(1), count: 1 },
 			{
 				type: "Delete",
 				id: brand(2),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(2) },
+				cellId: { revision: tag1, localId: brand(2) },
 			},
 			{ type: "Delete", id: brand(3), count: 1 },
 			{
 				type: "Delete",
 				id: brand(4),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(3) },
+				cellId: { revision: tag1, localId: brand(3) },
 			},
 		];
 		checkDeltaEquality(actual, expected);
@@ -358,7 +358,7 @@ describe("SequenceField - Rebase", () => {
 				type: "MoveOut",
 				count: 1,
 				id: brand(0),
-				detachEvent: {
+				cellId: {
 					revision: tag1,
 					localId: brand(1),
 					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
@@ -369,14 +369,14 @@ describe("SequenceField - Rebase", () => {
 				type: "MoveOut",
 				count: 1,
 				id: brand(2),
-				detachEvent: { revision: tag1, localId: brand(2) },
+				cellId: { revision: tag1, localId: brand(2) },
 			},
 			{ type: "MoveOut", count: 1, id: brand(3) },
 			{
 				type: "MoveOut",
 				count: 1,
 				id: brand(4),
-				detachEvent: {
+				cellId: {
 					revision: tag1,
 					localId: brand(3),
 					lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],

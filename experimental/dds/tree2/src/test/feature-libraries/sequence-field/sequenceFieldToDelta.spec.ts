@@ -117,7 +117,7 @@ describe("SequenceField - toDelta", () => {
 				type: "Revive",
 				content: contentCursor,
 				count: 1,
-				detachEvent: { revision: tag, localId: brand(0) },
+				cellId: { revision: tag, localId: brand(0) },
 				changes: nodeChange,
 			},
 		];
@@ -357,7 +357,7 @@ describe("SequenceField - toDelta", () => {
 					type: "Delete",
 					id: brand(0),
 					count: 2,
-					detachEvent,
+					cellId: detachEvent,
 				},
 			];
 
@@ -367,7 +367,9 @@ describe("SequenceField - toDelta", () => {
 		});
 
 		it("modify", () => {
-			const modify: TestChangeset = [{ type: "Modify", changes: childChange1, detachEvent }];
+			const modify: TestChangeset = [
+				{ type: "Modify", changes: childChange1, cellId: detachEvent },
+			];
 
 			const actual = toDelta(modify);
 			const expected: Delta.MarkList = [];
@@ -378,7 +380,7 @@ describe("SequenceField - toDelta", () => {
 			const move: TestChangeset = [
 				{ type: "MoveIn", id: brand(0), count: 1, isSrcConflicted: true },
 				{ count: 1 },
-				{ type: "MoveOut", id: brand(0), count: 1, detachEvent },
+				{ type: "MoveOut", id: brand(0), count: 1, cellId: detachEvent },
 			];
 
 			const actual = toDelta(move);
@@ -408,7 +410,7 @@ describe("SequenceField - toDelta", () => {
 					count: 1,
 					content: fakeRepairData(tag, 0, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, localId: brand(0) },
+					cellId: { revision: tag2, localId: brand(0) },
 				},
 				{
 					type: "Revive",
@@ -416,7 +418,7 @@ describe("SequenceField - toDelta", () => {
 					changes: childChange1,
 					content: fakeRepairData(tag, 1, 1),
 					inverseOf: tag1,
-					detachEvent: { revision: tag2, localId: brand(1) },
+					cellId: { revision: tag2, localId: brand(1) },
 				},
 			];
 			const actual = toDelta(changeset);

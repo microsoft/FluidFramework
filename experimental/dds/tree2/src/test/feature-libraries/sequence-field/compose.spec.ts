@@ -145,7 +145,7 @@ describe("SequenceField - Compose", () => {
 		const modify: SF.Modify<TestChange> = {
 			type: "Modify",
 			changes: TestChange.mint([], 42),
-			detachEvent: detach,
+			cellId: detach,
 		};
 		const actual = compose([makeAnonChange([insert]), makeAnonChange([modify])], revInfos);
 		assert.deepEqual(actual, [insert]);
@@ -158,7 +158,7 @@ describe("SequenceField - Compose", () => {
 		};
 		const revive: SF.Revive<never> = {
 			type: "Revive",
-			detachEvent: {
+			cellId: {
 				revision: tag1,
 				localId: brand(0),
 			},
@@ -169,7 +169,7 @@ describe("SequenceField - Compose", () => {
 		const modify: SF.Modify<TestChange> = {
 			type: "Modify",
 			changes: TestChange.mint([], 42),
-			detachEvent: detach,
+			cellId: detach,
 		};
 		const actual = compose([makeAnonChange([revive]), makeAnonChange([modify])], revInfos);
 		assert.deepEqual(actual, [revive]);
@@ -189,7 +189,7 @@ describe("SequenceField - Compose", () => {
 		const revive: SF.Revive<TestChange> = {
 			type: "Revive",
 			changes: TestChange.mint([], 42),
-			detachEvent: detach,
+			cellId: detach,
 			count: 1,
 			content: fakeRepair(tag2, 0, 1),
 		};
@@ -257,7 +257,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				changes: childChange,
 				inverseOf: tag1,
 			},
@@ -265,7 +265,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(1) },
+				cellId: { revision: tag1, localId: brand(1) },
 				inverseOf: tag1,
 			},
 		];
@@ -285,7 +285,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				changes: childChangeA,
 			},
 		];
@@ -300,7 +300,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				changes: childChangeAB,
 			},
 		];
@@ -574,14 +574,14 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(1) },
+				cellId: { revision: tag1, localId: brand(1) },
 				inverseOf: tag1,
 				transientDetach: { revision: tag2, localId: brand(0) },
 			},
@@ -589,14 +589,14 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(2) },
+				cellId: { revision: tag1, localId: brand(2) },
 				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 3, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(3) },
+				cellId: { revision: tag1, localId: brand(3) },
 				inverseOf: tag1,
 				transientDetach: { revision: tag2, localId: brand(1) },
 			},
@@ -613,7 +613,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent,
+				cellId: detachEvent,
 				changes: childChange,
 			},
 		];
@@ -624,7 +624,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent,
+				cellId: detachEvent,
 				changes: childChange,
 				revision: tag2,
 				transientDetach: { revision: tag3, localId: brand(0) },
@@ -671,7 +671,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 5),
 				count: 5,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				inverseOf: tag1,
 			},
 		];
@@ -720,7 +720,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				inverseOf: tag1,
 			},
 			{
@@ -743,7 +743,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, localId: brand(0), lineage },
+				cellId: { revision: tag2, localId: brand(0), lineage },
 				inverseOf: tag2,
 			},
 			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
@@ -764,7 +764,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, localId: brand(0), lineage },
+				cellId: { revision: tag2, localId: brand(0), lineage },
 				inverseOf: tag2,
 			},
 			{ type: "Delete", id: brand(1), count: 1, revision: tag1 },
@@ -785,7 +785,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag2, localId: brand(0), lineage },
+				cellId: { revision: tag2, localId: brand(0), lineage },
 				inverseOf: tag2,
 			},
 		];
@@ -843,14 +843,14 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, localId: brand(0) },
+				cellId: { revision: tag2, localId: brand(0) },
 				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(1), lineage },
+				cellId: { revision: tag1, localId: brand(1), lineage },
 				inverseOf: tag1,
 			},
 		];
@@ -868,21 +868,21 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, localId: brand(0) },
+				cellId: { revision: tag2, localId: brand(0) },
 				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(1), lineage },
+				cellId: { revision: tag1, localId: brand(1), lineage },
 				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 1, 1),
 				count: 1,
-				detachEvent: { revision: tag2, localId: brand(1) },
+				cellId: { revision: tag2, localId: brand(1) },
 				inverseOf: tag2,
 			},
 		];
@@ -903,14 +903,14 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(0), lineage },
+				cellId: { revision: tag1, localId: brand(0), lineage },
 				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag2, localId: brand(0) },
+				cellId: { revision: tag2, localId: brand(0) },
 				inverseOf: tag2,
 			},
 		];
@@ -926,7 +926,7 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				inverseOf: tag1,
 				revision: tag2,
 			},
@@ -955,7 +955,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag3,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 			},
 			{ count: 4 },
 			{
@@ -963,7 +963,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag4,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
@@ -973,7 +973,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag3,
 				count: 1,
 				content: fakeRepair(tag1, 0, 1),
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 			},
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			{ count: 2 },
@@ -983,7 +983,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag4,
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 			},
 			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
 		];
@@ -1079,8 +1079,8 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach1 },
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
+			{ type: "Modify", changes: nodeChange1, cellId: detach1 },
+			{ type: "Modify", changes: nodeChange2, cellId: detach2 },
 		];
 
 		assert.deepEqual(actual, expected);
@@ -1103,8 +1103,8 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach1 },
+			{ type: "Modify", changes: nodeChange2, cellId: detach2 },
+			{ type: "Modify", changes: nodeChange1, cellId: detach1 },
 		];
 
 		assert.deepEqual(actual, expected);
@@ -1127,8 +1127,8 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach1 },
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach2 },
+			{ type: "Modify", changes: nodeChange2, cellId: detach1 },
+			{ type: "Modify", changes: nodeChange1, cellId: detach2 },
 		];
 
 		assert.deepEqual(actual, expected);
@@ -1152,8 +1152,8 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach2 },
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach1 },
+			{ type: "Modify", changes: nodeChange1, cellId: detach2 },
+			{ type: "Modify", changes: nodeChange2, cellId: detach1 },
 		];
 
 		assert.deepEqual(actual, expected);
@@ -1185,7 +1185,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag5,
 				count: 5,
 				content: fakeRepair(tag1, 0, 5),
-				detachEvent: { revision: tag2, localId: brand(0) },
+				cellId: { revision: tag2, localId: brand(0) },
 				inverseOf: tag1,
 			},
 			{
@@ -1193,7 +1193,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag6,
 				count: 4,
 				content: fakeRepair(tag3, 0, 4),
-				detachEvent: { revision: tag4, localId: brand(0), lineage },
+				cellId: { revision: tag4, localId: brand(0), lineage },
 				inverseOf: tag3,
 			},
 		];

@@ -85,7 +85,7 @@ export const sequenceFieldEditor = {
 			type: "Revive",
 			content: reviver(detachEvent.revision, detachEvent.localId, count),
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
 		if (!isIntention) {
 			mark.inverseOf = detachEvent.revision;
@@ -135,7 +135,7 @@ export const sequenceFieldEditor = {
 			type: "ReturnTo",
 			id,
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
 
 		const factory = new MarkListFactory<never>();

@@ -157,13 +157,14 @@ export const HasPlaceFields = Type.Composite([
  */
 export interface CellTargetingMark {
 	/**
-	 * Describes the detach which last emptied target cells.
+	 * Describes the detach which last emptied the target cells,
+	 * or the attach which allocated the cells if the cells have never been filled.
 	 * Undefined if the target cells are not empty in this mark's input context.
 	 */
-	detachEvent?: CellId;
+	cellId?: CellId;
 }
 export const CellTargetingMark = Type.Object({
-	detachEvent: Type.Optional(CellId),
+	cellId: Type.Optional(CellId),
 });
 
 export interface HasReattachFields extends CellTargetingMark {
@@ -200,11 +201,11 @@ export const NoopMark = Type.Composite(
 );
 
 export interface DetachedCellMark extends CellTargetingMark {
-	detachEvent: CellId;
+	cellId: CellId;
 }
 export const DetachedCellMark = Type.Composite([
 	CellTargetingMark,
-	Type.Object({ detachEvent: EncodedChangeAtomId }),
+	Type.Object({ cellId: CellId }),
 ]);
 
 export enum RangeType {
