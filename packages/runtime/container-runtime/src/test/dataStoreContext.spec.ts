@@ -9,7 +9,11 @@ import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandleContext,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IBlob,
@@ -33,7 +37,7 @@ import {
 	isFluidError,
 	MockLogger,
 	TelemetryDataTag,
-	TelemetryNullLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -71,7 +75,7 @@ describe("Data Store Context Tests", () => {
 		let summarizerNode: IRootSummarizerNodeWithGC;
 
 		function createContainerRuntime(
-			logger = new TelemetryNullLogger(),
+			logger: ITelemetryBaseLogger = createChildLogger(),
 			clientDetails = {},
 			submitDataStoreOp = (id: string, contents: any, localOpMetadata: unknown) => {},
 		): ContainerRuntime {
@@ -101,12 +105,12 @@ describe("Data Store Context Tests", () => {
 
 		beforeEach(async () => {
 			summarizerNode = createRootSummarizerNodeWithGC(
-				new TelemetryNullLogger(),
+				createChildLogger(),
 				(() => undefined) as unknown as SummarizeInternalFn,
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, new TelemetryNullLogger());
+			summarizerNode.startSummary(0, createChildLogger());
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
@@ -594,12 +598,12 @@ describe("Data Store Context Tests", () => {
 		describe("Initialization - can correctly initialize and generate attributes", () => {
 			beforeEach(() => {
 				summarizerNode = createRootSummarizerNodeWithGC(
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					(() => undefined) as unknown as SummarizeInternalFn,
 					0,
 					0,
 				);
-				summarizerNode.startSummary(0, new TelemetryNullLogger());
+				summarizerNode.startSummary(0, createChildLogger());
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -739,7 +743,7 @@ describe("Data Store Context Tests", () => {
 
 			beforeEach(() => {
 				summarizerNode = createRootSummarizerNodeWithGC(
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					(() => undefined) as unknown as SummarizeInternalFn,
 					0,
 					0,
@@ -747,7 +751,7 @@ describe("Data Store Context Tests", () => {
 					undefined,
 					getRootBaseGCDetails,
 				);
-				summarizerNode.startSummary(0, new TelemetryNullLogger());
+				summarizerNode.startSummary(0, createChildLogger());
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -1045,12 +1049,12 @@ describe("Data Store Context Tests", () => {
 
 		beforeEach(async () => {
 			const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
-				new TelemetryNullLogger(),
+				createChildLogger(),
 				(() => undefined) as unknown as SummarizeInternalFn,
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, new TelemetryNullLogger());
+			summarizerNode.startSummary(0, createChildLogger());
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
@@ -1093,7 +1097,7 @@ describe("Data Store Context Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger: new TelemetryNullLogger(),
+				logger: createChildLogger(),
 				clientDetails: {},
 			} as ContainerRuntime;
 		});

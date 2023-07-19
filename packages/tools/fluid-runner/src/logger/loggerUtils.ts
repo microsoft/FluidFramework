@@ -4,7 +4,7 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { CSVFileLogger } from "./csvFileLogger";
 import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";
@@ -25,8 +25,12 @@ export function createLogger(
 			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
 			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
 
-	const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp", {
-		all: { Event_Time: () => Date.now() },
+	const logger = createChildLogger({
+		logger: fileLogger,
+		namespace: "LocalSnapshotRunnerApp",
+		properties: {
+			all: { Event_Time: () => Date.now() },
+		},
 	});
 
 	return { logger, fileLogger };
