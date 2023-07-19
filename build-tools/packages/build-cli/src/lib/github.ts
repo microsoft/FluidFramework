@@ -83,6 +83,7 @@ export async function createPullRequest(
 		title: string;
 		description: string;
 		reviewers: string[];
+		labels: string[];
 	},
 	log: CommandLogger,
 ): Promise<any> {
@@ -118,7 +119,7 @@ export async function createPullRequest(
 		owner: pr.owner,
 		repo: pr.repo,
 		issue_number: newPr.data.number,
-		labels: ["main-next-integrate", "do-not-squash-merge"],
+		labels: pr.labels,
 	});
 
 	return newPr.data.number;

@@ -261,6 +261,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			prTitle,
 		});
 
+		// label the conflicting PRs and the merged-OK PRs with different labels
+		const getLabels = prWillConflict
+			? ["merge-conflict", "main-next-integrate"]
+			: ["merge-ok", "main-next-integrate"];
+
 		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
 			token: flags.pat,
@@ -272,6 +277,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			title: prTitle,
 			description,
 			reviewers: flags.reviewers,
+			labels: getLabels,
 		};
 		this.verbose(`PR object: ${JSON.stringify(prObject)}}`);
 
