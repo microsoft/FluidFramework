@@ -33,19 +33,6 @@ import { ITestFluidObject } from "./interfaces";
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
 export class TestFluidObject implements ITestFluidObject, IFluidRouter {
-	public static async load(
-		runtime: IFluidDataStoreRuntime,
-		channel: IFluidDataStoreChannel,
-		context: IFluidDataStoreContext,
-		factoryEntries: Map<string, IChannelFactory>,
-		existing: boolean,
-	) {
-		const fluidObject = new TestFluidObject(runtime, channel, context, factoryEntries);
-		await fluidObject.initialize(existing);
-
-		return fluidObject;
-	}
-
 	public get ITestFluidObject() {
 		return this;
 	}
@@ -64,6 +51,7 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 
 	public root!: ISharedMap;
 	private readonly innerHandle: IFluidHandle<this>;
+	private initializeP: Promise<void> | undefined;
 
 	/**
 	 * Creates a new TestFluidObject.
@@ -104,19 +92,32 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
-	private async initialize(existing: boolean) {
-		if (!existing) {
-			this.root = SharedMap.create(this.runtime, "root");
+	public async initialize(existing: boolean) {
+		const doInitialization = async () => {
+			if (!existing) {
+				this.root = SharedMap.create(this.runtime, "root");
 
-			this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
-				const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
-				this.root.set(key, sharedObject.handle);
-			});
+				this.factoryEntriesMap.forEach(
+					(sharedObjectFactory: IChannelFactory, key: string) => {
+						const sharedObject = this.runtime.createChannel(
+							key,
+							sharedObjectFactory.type,
+						);
+						this.root.set(key, sharedObject.handle);
+					},
+				);
 
-			this.root.bindToContext();
+				this.root.bindToContext();
+			}
+
+			this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		};
+
+		if (this.initializeP === undefined) {
+			this.initializeP = doInitialization();
 		}
 
-		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		return this.initializeP;
 	}
 }
 
@@ -178,18 +179,16 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 		dataTypes.set(sharedMapFactory.type, sharedMapFactory);
 
 		// Add the object factories to the list to be sent to data store runtime.
-		for (const entry of this.factoryEntries) {
-			const factory = entry[1];
+		for (const [, factory] of this.factoryEntries) {
 			dataTypes.set(factory.type, factory);
 		}
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
 		const factoryEntriesMapForObject = new Map<string, IChannelFactory>();
-		for (const entry of this.factoryEntries) {
-			const id = entry[0];
+		for (const [id, factory] of this.factoryEntries) {
 			if (id !== undefined) {
-				factoryEntriesMapForObject.set(id, entry[1]);
+				factoryEntriesMapForObject.set(id, factory);
 			}
 		}
 
@@ -205,20 +204,22 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 			},
 		);
 
-		return new runtimeClass(
+		const runtime = new runtimeClass(context, dataTypes, existing, async () => {
+			await instance.initialize(true);
+			return instance;
+		});
+
+		const instance: TestFluidObject = new TestFluidObject(
+			runtime, // runtime
+			runtime, // channel
 			context,
-			dataTypes,
-			existing,
-			async (dataStoreRuntime: IFluidDataStoreRuntime) =>
-				TestFluidObject.load(
-					dataStoreRuntime,
-					// This works because 'runtime' is an instance of runtimeClass (which is a FluidDataStoreRuntime and
-					// thus implements IFluidDataStoreChannel) which passes itself as the parameter to this function.
-					dataStoreRuntime as FluidDataStoreRuntime,
-					context,
-					factoryEntriesMapForObject,
-					existing,
-				),
+			factoryEntriesMapForObject,
 		);
+
+		if (!existing) {
+			await instance.initialize(false);
+		}
+
+		return runtime;
 	}
 }
