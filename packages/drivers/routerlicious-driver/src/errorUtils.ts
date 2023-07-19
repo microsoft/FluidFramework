@@ -10,8 +10,8 @@ import {
 	createGenericNetworkError,
 	AuthorizationError,
 } from "@fluidframework/driver-utils";
-import { pkgVersion as driverVersion } from "./packageVersion";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Routerlicious Error types
