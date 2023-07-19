@@ -11,6 +11,7 @@ export { MockHandle } from "./mockHandle";
 export {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
+	MockContainerRuntimeOptions,
 	MockContainerRuntimeFactory,
 	MockDeltaConnection,
 	MockEmptyDeltaConnection,

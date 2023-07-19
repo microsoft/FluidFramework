@@ -11,6 +11,7 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -87,7 +88,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 
 // @public
 export class MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, overrides?: {
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: MockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined);
     // (undocumented)
@@ -107,6 +108,10 @@ export class MockContainerRuntime {
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
     // (undocumented)
+    flush?(): void;
+    // (undocumented)
+    protected mockContainerRuntimeOptions: MockContainerRuntimeOptions;
+    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -115,11 +120,16 @@ export class MockContainerRuntime {
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
+    rebase?(): void;
+    // (undocumented)
+    protected get referenceSequenceNumber(): number;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
 export class MockContainerRuntimeFactory {
+    constructor(mockContainerRuntimeOptions?: MockContainerRuntimeOptions);
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
@@ -136,6 +146,8 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    // (undocumented)
+    protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
@@ -154,7 +166,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 
 // @public
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, overrides?: {
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: MockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
     });
     // (undocumented)
@@ -164,6 +176,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
+}
+
+// @public (undocumented)
+export interface MockContainerRuntimeOptions {
+    // (undocumented)
+    enableGroupedBatching?: boolean;
+    // (undocumented)
+    flushMode?: FlushMode;
 }
 
 // @public
@@ -391,7 +411,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly connected = true;
     // (undocumented)
+    containerRuntime?: MockContainerRuntime;
+    // (undocumented)
     createChannel(id: string, type: string): IChannel;
+    // (undocumented)
+    createDeltaConnection?(): MockDeltaConnection;
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
@@ -444,7 +468,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly path = "";
     // (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)

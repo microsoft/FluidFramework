@@ -10,11 +10,12 @@ import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
+	MockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
 } from "./mocks";
 
 /**
- * Specalized implementation of MockContainerRuntime for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
@@ -64,9 +65,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForReconnection,
+		runtimeOptions: MockContainerRuntimeOptions = {},
 		overrides?: { minimumSequenceNumber?: number },
 	) {
-		super(dataStoreRuntime, factory, overrides);
+		super(dataStoreRuntime, factory, runtimeOptions, overrides);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -96,16 +98,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				pendingMessage !== undefined,
 				"this is impossible due to the above length check",
 			);
-			this.deltaConnections.forEach((dc) => {
-				dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
-			});
+			this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			messageCount--;
 		}
 	}
 }
 
 /**
- * Specalized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
 	public createContainerRuntime(
@@ -115,6 +115,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		const containerRuntime = new MockContainerRuntimeForReconnection(
 			dataStoreRuntime,
 			this,
+			this.runtimeOptions,
 			overrides,
 		);
 		this.runtimes.push(containerRuntime);
