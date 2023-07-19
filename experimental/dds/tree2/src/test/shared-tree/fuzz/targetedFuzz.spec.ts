@@ -26,7 +26,12 @@ import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
-import { applyFieldEdit, applyTransactionEdit, fuzzReducer } from "./fuzzEditReducers";
+import {
+	applyFieldEdit,
+	applyTransactionEdit,
+	applyUndoRedoEdit,
+	fuzzReducer,
+} from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
 import { Operation, TreeOperation } from "./operationTypes";
 
@@ -60,6 +65,12 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		const { contents } = operation;
 		const tree = state.channel;
 		applyTransactionEdit(tree, contents);
+		return state;
+	},
+	undoRedo: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
 });
