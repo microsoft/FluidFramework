@@ -160,6 +160,11 @@ export interface DDSFuzzModel<
 	factory: TChannelFactory;
 
 	/**
+	 * Options object to be passed to the data store runtime
+	 */
+	dataStoreRuntimeOptions?: { [key: string]: unknown };
+
+	/**
 	 * Factory which creates a generator for this model.
 	 * @remarks DDS model generators can decide to use the "channel" or "client" field to decide which
 	 * client to perform the operation on.
@@ -380,6 +385,7 @@ export function mixinNewClient<
 				model.factory,
 				op.addedClientId,
 				options,
+				model.dataStoreRuntimeOptions,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -618,9 +624,11 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	factory: TChannelFactory,
 	clientId: string,
 	options: Pick<DDSFuzzSuiteOptions, "emitter">,
+	dataStoreRuntimeOptions: { [key: string]: unknown } = {},
 ): Promise<Client<TChannelFactory>> {
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
 	});
@@ -679,6 +687,7 @@ export async function runTestForSeed<
 				model.factory,
 				makeFriendlyClientId(random, index),
 				options,
+				model.dataStoreRuntimeOptions,
 			),
 		),
 	);

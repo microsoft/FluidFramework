@@ -1002,7 +1002,6 @@ export class MergeTree {
 				),
 			);
 
-			// todo: further optimize by only doing if there are endpoints to add
 			if (maybeEndpoint) {
 				const localRefs = (maybeEndpoint.localRefs ??= new LocalReferenceCollection(
 					maybeEndpoint,
@@ -1022,7 +1021,6 @@ export class MergeTree {
 				} else {
 					localRefs.addAfterTombstones(...nonEndpointRefsToAdd);
 				}
-				// todo: when should this branch run and on which refs/collections
 			} else {
 				for (const collection of currentSlideGroup) {
 					for (const ref of collection) {

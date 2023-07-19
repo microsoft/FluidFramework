@@ -223,6 +223,7 @@ const baseModel: Omit<
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
 	factory: new SharedStringFactory(),
+	dataStoreRuntimeOptions: { intervalStickinessEnabled: true },
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {

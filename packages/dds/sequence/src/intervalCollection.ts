@@ -2228,10 +2228,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("Can not add transient intervals");
 		}
 		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
-			// todo: re-enable
-			// throw new UsageError(
-			// 	"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
-			// );
+			throw new UsageError(
+				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
+			);
 		}
 
 		let start;
