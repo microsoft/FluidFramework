@@ -7,10 +7,9 @@ import { default as AbortController } from "abort-controller";
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetailsInternal,
-	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -48,7 +47,12 @@ import {
 	TelemetryLogger,
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
-import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
+import {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+	ReconnectMode,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
