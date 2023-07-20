@@ -451,17 +451,22 @@ export class Loader implements IHostLoader {
 			this.cachingEnabled &&
 			request.headers[LoaderHeader.cache] !== false &&
 			pendingLocalState === undefined;
-		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
+			| number
+			| undefined;
 		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
 			| string
 			| undefined;
 
-		if (opsBeforeReturn === "sequenceNumber" && fromSequenceNumber < 0) {
+		if (
+			opsBeforeReturn === "sequenceNumber" &&
+			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
+		) {
 			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
 			// If it is negative it was either left undefined or set to a negative value. Either way we should throw an error.
 			throw new UsageError("sequenceNumber must be set to a non-negative integer");
-		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== -1) {
-			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be set to -1 (default value).
+		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
+			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
 			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
 			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
 		}

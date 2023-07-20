@@ -1573,7 +1573,18 @@ export class Container
 				void this.deltaManager.outbound.pause();
 				this.off("op", opHandler);
 			};
-			this.on("op", opHandler);
+
+			if (this.deltaManager.lastSequenceNumber === loadToSequenceNumber) {
+				// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+				assert(
+					this.deltaManager.lastMessage !== undefined,
+					"deltaManager.lastMessage should be defined",
+				);
+				opHandler(this.deltaManager.lastMessage);
+			} else {
+				// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
+				this.on("op", opHandler);
+			}
 		}
 
 		// Attach op handlers to finish initialization and be able to start processing ops
@@ -1674,8 +1685,11 @@ export class Container
 			}
 		}
 
-		// If we have not yet reached `fromSequenceNumber`, we will wait for ops to arrive until we reach it
-		if (loadToSequenceNumber !== undefined && this.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
+		// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
+		if (
+			loadToSequenceNumber !== undefined &&
+			this.deltaManager.lastSequenceNumber < loadToSequenceNumber
+		) {
 			await new Promise<void>((resolve, reject) => {
 				const opHandler = (message: ISequencedDocumentMessage) => {
 					if (message.sequenceNumber >= loadToSequenceNumber) {
