@@ -168,24 +168,25 @@ export class MockContainerRuntime {
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
-		if (!this.runtimeOptions.enableGroupedBatching) {
-			this.clientSequenceNumber++;
-		}
-
+		const clientSequenceNumber = this.clientSequenceNumber;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				const msg: Partial<ISequencedDocumentMessage> = {
+				this.factory.pushMessage({
 					clientId: this.clientId,
-					clientSequenceNumber: this.clientSequenceNumber,
+					clientSequenceNumber,
 					contents: messageContent,
 					referenceSequenceNumber: this.referenceSequenceNumber,
 					type: MessageType.Operation,
-				};
-				this.factory.pushMessage(msg);
+				});
+				this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
 
-				this.addPendingMessage(messageContent, localOpMetadata, this.clientSequenceNumber);
+				if (!this.runtimeOptions.enableGroupedBatching) {
+					this.clientSequenceNumber++;
+				}
+
 				break;
 			}
+
 			case FlushMode.TurnBased: {
 				this.outbox.push({
 					content: messageContent,
@@ -193,11 +194,12 @@ export class MockContainerRuntime {
 				});
 				break;
 			}
+
 			default:
 				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
 		}
 
-		return this.clientSequenceNumber;
+		return clientSequenceNumber;
 	}
 
 	public dirty(): void {}
@@ -359,10 +361,7 @@ export class MockContainerRuntimeFactory {
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		if (this.runtimeOptions.flushMode === FlushMode.Immediate) {
-			this.sequenceNumber++;
-		}
-
+		this.advanceForFlushMode(FlushMode.Immediate);
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {
@@ -370,14 +369,17 @@ export class MockContainerRuntimeFactory {
 		}
 	}
 
+	private advanceForFlushMode(flushMode: FlushMode) {
+		if (this.runtimeOptions.flushMode === flushMode) {
+			this.sequenceNumber++;
+		}
+	}
+
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
 	public processOneMessage() {
-		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
-			this.sequenceNumber++;
-		}
-
+		this.advanceForFlushMode(FlushMode.TurnBased);
 		this.processFirstMessage();
 	}
 
@@ -386,9 +388,7 @@ export class MockContainerRuntimeFactory {
 	 * @param count - the number of messages to process
 	 */
 	public processSomeMessages(count: number) {
-		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
-			this.sequenceNumber++;
-		}
+		this.advanceForFlushMode(FlushMode.TurnBased);
 
 		for (let i = 0; i < count; i++) {
 			this.processFirstMessage();
@@ -399,11 +399,11 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
-			this.sequenceNumber++;
-		}
+		this.advanceForFlushMode(FlushMode.TurnBased);
 
-		this.processSomeMessages(this.messages.length);
+		while (this.messages.length > 0) {
+			this.processFirstMessage();
+		}
 	}
 }
 
