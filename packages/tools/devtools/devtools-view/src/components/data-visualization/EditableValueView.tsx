@@ -37,10 +37,12 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	/**
 	 * isTextBox is whether or not the area should allow text or numbers only.
 	 */
-	const [isTextBox, setIsTextBox] = React.useState<boolean>(
-		node.typeMetadata === "number" || node.typeMetadata === "SharedCounter" ? false : true,
+	const [isType, setIsType] = React.useState<EditType>(
+		node.typeMetadata === "number" || node.typeMetadata === "SharedCounter"
+			? EditType.number
+			: EditType.string,
 	);
-	console.log(setIsTextBox);
+	console.log(setIsType);
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
@@ -71,12 +73,15 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	}, [node.value]);
 
 	const commitChanges = React.useCallback(() => {
+		const edit = {
+			fluidObjectId: node.fluidObjectId,
+			data: value,
+			type: EditType.string,
+		};
 		messageRelay.postMessage(
 			SendEditData.createMessage({
 				containerKey,
-				fluidObjectId: node.fluidObjectId,
-				newData: value,
-				editType: EditType.string,
+				edit,
 			}),
 		);
 	}, [containerKey, messageRelay, node.fluidObjectId, value]);
@@ -109,7 +114,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 			onFocus={onFocus}
 			onBlur={onBlur}
 			onKeyDown={onKeyDown}
-			type={isTextBox ? "text" : "number"}
+			type={isType === EditType.string ? "text" : "number"}
 		/>
 	);
 }

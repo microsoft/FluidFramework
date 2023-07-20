@@ -27,6 +27,7 @@ export {
 	EditType,
 	FluidObjectId,
 	HasContainerKey,
+	HasEdit,
 	HasEditType,
 	HasFluidObjectId,
 	HasNewData,

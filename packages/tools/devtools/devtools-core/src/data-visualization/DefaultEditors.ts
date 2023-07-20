@@ -12,6 +12,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { EditType } from "../CommonInterfaces";
 import { Edit, EditSharedObject } from "./DataEditing";
 
 /**
@@ -19,11 +20,11 @@ import { Edit, EditSharedObject } from "./DataEditing";
  */
 export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
-	editProp: Edit,
+	edit: Edit,
 ): Promise<void> => {
-	if (typeof editProp.data !== "number") return;
+	if (typeof edit.data !== "number" || edit.type !== EditType.number) return;
 	const sharedCounter = sharedObject as SharedCounter;
-	sharedCounter.increment(Math.floor(editProp.data) - sharedCounter.value);
+	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
 	console.log(sharedCounter);
 };
 
@@ -32,14 +33,14 @@ export const editSharedCounter: EditSharedObject = async (
  */
 export const editSharedString: EditSharedObject = async (
 	sharedObject: ISharedObject,
-	editProp: Edit,
+	edit: Edit,
 ): Promise<void> => {
-	if (typeof editProp.data !== "string") return;
+	if (typeof edit.data !== "string") return;
 	const sharedString = sharedObject as SharedString;
-	if (editProp.data === "") {
+	if (edit.data === "") {
 		sharedString.removeText(0, sharedString.getLength());
 	} else {
-		sharedString.replaceText(0, sharedString.getLength(), editProp.data);
+		sharedString.replaceText(0, sharedString.getLength(), edit.data);
 	}
 };
 

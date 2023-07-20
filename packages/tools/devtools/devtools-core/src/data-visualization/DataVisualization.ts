@@ -225,7 +225,7 @@ export class DataVisualizerGraph
 	}
 
 	public async applyEdit(edit: Edit): Promise<void> {
-		return this.visualizerNodes.get(edit.fluidId)?.applyEdit(edit);
+		return this.visualizerNodes.get(edit.fluidObjectId)?.applyEdit(edit);
 	}
 
 	/**

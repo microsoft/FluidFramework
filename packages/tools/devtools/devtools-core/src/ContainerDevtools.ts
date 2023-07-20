@@ -348,12 +348,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[SendEditData.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as SendEditData.Message;
 			if (message.data.containerKey === this.containerKey) {
-				await this.editData({
-					fluidId: message.data.fluidObjectId,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					data: message.data.newData,
-					type: message.data.editType,
-				});
+				await this.editData(message.data.edit);
 				return true;
 			}
 			return false;
@@ -565,6 +560,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			[ContainerDevtoolsFeature.ContainerData]: this.containerData !== undefined,
+			/**
+			 * Todo: When ready to enable feature set it to this.containerData !== undefined
+			 */
+			[ContainerDevtoolsFeature.ContainerDataEditing]: false,
 		};
 	}
 
@@ -594,7 +593,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	/**
-	 * Begins the process of changing data inside a DDS by using {@link Edit} 
+	 * Begins the process of changing data inside a DDS by using {@link Edit}
 	 */
 	private async editData(edit: Edit): Promise<void> {
 		return this.dataVisualizer?.applyEdit(edit);

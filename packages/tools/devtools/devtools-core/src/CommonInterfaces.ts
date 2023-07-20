@@ -4,6 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { Edit } from "./data-visualization";
 
 /**
  * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
@@ -70,10 +71,18 @@ export interface HasEditType {
 }
 
 /**
+ * Base interface used in message data for communicating edits
+ * @internal
+ */
+export interface HasEdit {
+	edit: Edit;
+}
+
+/**
  * Base interface used in message data for edit events containing the new data.
  *
  * @internal
  */
 export interface HasNewData {
-	newData: Serializable;
+	newData: Serializable<unknown>;
 }

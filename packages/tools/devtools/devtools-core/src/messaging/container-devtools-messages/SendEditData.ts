@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerKey, HasEditType, HasFluidObjectId, HasNewData } from "../../CommonInterfaces";
+import { HasContainerKey, HasEdit } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -24,7 +24,7 @@ export namespace SendEditData {
 	 *
 	 * @internal
 	 */
-	export type MessageData = HasContainerKey & HasFluidObjectId & HasNewData & HasEditType;
+	export type MessageData = HasContainerKey & HasEdit;
 
 	/**
 	 * Inbound message for editing a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.

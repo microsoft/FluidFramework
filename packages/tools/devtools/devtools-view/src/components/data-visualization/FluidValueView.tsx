@@ -5,10 +5,12 @@
 import React from "react";
 
 import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
+import { EditFlagContext } from "../../EditFlagHelper";
 import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeItem } from "./TreeItem";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link ValueView} input props.
@@ -21,11 +23,16 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
+	const { editFlagInfo } = React.useContext(EditFlagContext) ?? {};
 	console.log(label);
 	// const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<>
-			<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
+			{editFlagInfo.edit === true ? (
+				<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
+			) : (
+				<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
+			)}
 		</>
 	);
 

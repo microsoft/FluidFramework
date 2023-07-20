@@ -49,6 +49,11 @@ export enum ContainerDevtoolsFeature {
 	 * the Container.
 	 */
 	ContainerData = "container-data",
+
+	/**
+	 * thing
+	 */
+	ContainerDataEditing = "container-data-editing",
 }
 
 /**
