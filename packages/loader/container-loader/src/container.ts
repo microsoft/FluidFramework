@@ -2392,5 +2392,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState(): string;
+	closeAndGetPendingLocalState?(): string;
 }
