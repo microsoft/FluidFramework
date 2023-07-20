@@ -26,7 +26,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
-	TelemetryNullLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
@@ -376,10 +376,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 					return ackedSummary.summaryAck.contents.handle;
 				};
 
-				const sc = new SummaryCollection(
-					container1.deltaManager,
-					new TelemetryNullLogger(),
-				);
+				const sc = new SummaryCollection(container1.deltaManager, createChildLogger());
 				const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 				const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 

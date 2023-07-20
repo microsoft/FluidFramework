@@ -29,7 +29,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	createMultiSinkLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -277,12 +281,15 @@ export class TestObjectProvider implements ITestObjectProvider {
 	get logger(): EventAndErrorTrackingLogger {
 		if (this._logger === undefined) {
 			this._logger = new EventAndErrorTrackingLogger(
-				ChildLogger.create(getTestLogger?.(), undefined, {
-					all: {
-						driverType: this.driver.type,
-						driverEndpointName: this.driver.endpointName,
-						driverTenantName: this.driver.tenantName,
-						driverUserIndex: this.driver.userIndex,
+				createChildLogger({
+					logger: getTestLogger?.(),
+					properties: {
+						all: {
+							driverType: this.driver.type,
+							driverEndpointName: this.driver.endpointName,
+							driverTenantName: this.driver.tenantName,
+							driverUserIndex: this.driver.userIndex,
+						},
 					},
 				}),
 			);
@@ -332,15 +339,13 @@ export class TestObjectProvider implements ITestObjectProvider {
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		const multiSinkLogger = new MultiSinkLogger();
-		multiSinkLogger.addLogger(this.logger);
-		if (loaderProps?.logger !== undefined) {
-			multiSinkLogger.addLogger(loaderProps.logger);
-		}
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
 
 		const loader = new this.LoaderConstructor({
 			...loaderProps,
-			logger: multiSinkLogger,
+			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
 			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
 			documentServiceFactory:

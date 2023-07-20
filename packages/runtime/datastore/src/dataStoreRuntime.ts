@@ -5,13 +5,12 @@
 
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
 	generateStack,
 	LoggingError,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	raiseConnectedEvent,
 	TelemetryDataTag,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -250,11 +249,13 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.logger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
 				all: { dataStoreId: uuid() },
-			}),
-		);
+			},
+		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;

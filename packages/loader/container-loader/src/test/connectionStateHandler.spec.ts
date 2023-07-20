@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IClient,
 	IClientConfiguration,
@@ -15,6 +15,7 @@ import {
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { Audience } from "../audience";
 import { ConnectionState } from "../connectionState";
 import {
@@ -150,7 +151,7 @@ describe("ConnectionStateHandler Tests", () => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
 			connectionStateChanged: () => {},
-			logger: new TelemetryNullLogger(),
+			logger: createChildLogger(),
 			clientShouldHaveLeft: (clientId: string) => {},
 		};
 
