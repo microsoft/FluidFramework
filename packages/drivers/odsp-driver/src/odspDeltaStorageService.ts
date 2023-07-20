@@ -165,7 +165,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		assert(!cachedOnly || toTotal === undefined, 0x1e3);
 
 		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
-		this.useCacheForOps = this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
+		this.useCacheForOps =
+			this.useCacheForOps &&
+			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;
