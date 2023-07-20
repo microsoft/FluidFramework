@@ -29,7 +29,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";

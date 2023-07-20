@@ -5,11 +5,13 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { LazyPromise, assert } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
+import { createChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { pkgName, pkgVersion } from "./packageVersion";
 
 export interface LoggerConfig {
@@ -119,7 +121,7 @@ export async function getLogger(
 	config: LoggerConfig,
 	events?: string[],
 	transformEvents?: Map<string, string>,
-): Promise<TelemetryLogger> {
+): Promise<ITelemetryLogger> {
 	const baseLogger = await loggerP;
 	if (events) {
 		baseLogger.registerExpectedEvent(events);
@@ -127,12 +129,16 @@ export async function getLogger(
 	if (transformEvents) {
 		baseLogger.transformEvents(transformEvents);
 	}
-	return ChildLogger.create(baseLogger, config.namespace, {
-		all: {
-			runId: config.runId,
-			scenarioName: config.scenarioName,
-			endpoint: config.endpoint,
-			region: config.region,
+	return createChildLogger({
+		logger: baseLogger,
+		namespace: config.namespace,
+		properties: {
+			all: {
+				runId: config.runId,
+				scenarioName: config.scenarioName,
+				endpoint: config.endpoint,
+				region: config.region,
+			},
 		},
 	});
 }

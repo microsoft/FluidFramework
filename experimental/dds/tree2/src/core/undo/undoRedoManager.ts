@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../rebase";
 
@@ -12,8 +12,6 @@ import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../reba
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
-	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
-	 * data for {@link ReversibleCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 * @param headRedoableCommit - Optional commit to set as the initial redoable commit.
@@ -30,7 +28,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private headUndoableCommit?: ReversibleCommit<TChange>,
 		private headRedoableCommit?: ReversibleCommit<TChange>,
-		private readonly commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
+		private readonly commitTypes = new Map<RevisionTag, LocalCommitSource>(),
 	) {}
 
 	public get headUndoable(): ReversibleCommit<TChange> | undefined {
@@ -45,49 +43,40 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo or redo commit tree, depending on the type of commit it is.
 	 * Should be called for all commits on the relevant branch, including undo and redo commits.
 	 */
-	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
+	public trackCommit(commit: GraphCommit<TChange>, type: LocalCommitSource): void {
 		this.commitTypes.set(commit.revision, type);
 
 		const parent =
-			type === UndoRedoManagerCommitType.Undo || type === UndoRedoManagerCommitType.Redoable
-				? this.headRedoableCommit
-				: this.headUndoableCommit;
+			type === LocalCommitSource.Undo ? this.headRedoableCommit : this.headUndoableCommit;
 		const undoableOrRedoable = {
 			commit,
 			parent,
 		};
 
 		switch (type) {
-			// Both undo commits and redoable commits result in a new head redoable commit
-			// being pushed to the redoable commit stack but only undo commits need to pop from the
+			// Undo commits push a new head redoable commit to the redoable commit stack and pop from the
 			// undoable commit stack.
-			case UndoRedoManagerCommitType.Undo:
+			case LocalCommitSource.Undo:
 				this.headUndoableCommit = this.headUndoableCommit?.parent;
-			case UndoRedoManagerCommitType.Redoable:
 				this.headRedoableCommit = undoableOrRedoable;
 				break;
-			// Both redo commits and undoable commits result in a new head undoable commit
-			// being pushed to the undoable commit stack but only redo commits need to pop from the
-			// redoable commit stack.
-			case UndoRedoManagerCommitType.Redo:
+			// Redo commits pop from the redoable commit stack and all other commits push to the undoable commit stack.
+			case LocalCommitSource.Redo:
 				this.headRedoableCommit = this.headRedoableCommit?.parent;
-			case UndoRedoManagerCommitType.Undoable:
-				this.headUndoableCommit = undoableOrRedoable;
-				break;
 			default:
-				unreachableCase(type);
+				this.headUndoableCommit = undoableOrRedoable;
 		}
 	}
 
 	/**
-	 * Returns the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 * Returns the {@link LocalCommitSource} associated with the provided revision.
 	 */
-	public getCommitType(revision: RevisionTag): UndoRedoManagerCommitType | undefined {
+	public getCommitType(revision: RevisionTag): LocalCommitSource | undefined {
 		return this.commitTypes.get(revision);
 	}
 
 	/**
-	 * Removes the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 * Removes the {@link LocalCommitSource} associated with the provided revision.
 	 */
 	public untrackCommitType(revision: RevisionTag): void {
 		this.commitTypes.delete(revision);
@@ -223,21 +212,15 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		for (const commit of newCommits) {
 			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
 			if (type !== undefined) {
-				if (
-					type === UndoRedoManagerCommitType.Undoable ||
-					type === UndoRedoManagerCommitType.Redo
-				) {
-					newHeadUndoable = {
-						commit,
-						parent: newHeadUndoable,
-					};
-				} else if (
-					type === UndoRedoManagerCommitType.Redoable ||
-					type === UndoRedoManagerCommitType.Undo
-				) {
+				if (type === LocalCommitSource.Undo) {
 					newHeadRedoable = {
 						commit,
 						parent: newHeadRedoable,
+					};
+				} else {
+					newHeadUndoable = {
+						commit,
+						parent: newHeadUndoable,
 					};
 				}
 			}
@@ -259,11 +242,15 @@ export interface ReversibleCommit<TChange> {
 }
 
 /**
- * The type of a commit in the context of undo/redo manager.
+ * The source of a local commit.
+ *
+ * @alpha
  */
-export enum UndoRedoManagerCommitType {
-	Undoable,
-	Redoable,
+export enum LocalCommitSource {
+	/** A typical local commit */
+	Default,
+	/** A commit that is the result of an undo. */
 	Undo,
+	/** A commit that is the result of a redo. */
 	Redo,
 }

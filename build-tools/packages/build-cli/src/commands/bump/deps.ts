@@ -4,6 +4,7 @@
  */
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
+import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
@@ -124,21 +125,25 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
-		// can be removed once server team owns their releases
-		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
-			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
-		}
+		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
+			const { confirmed } = await prompts({
+				type: "confirm",
+				name: "confirmed",
+				message: `Server releases should be consumed in the ${chalk.bold(
+					"next",
+				)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
+				initial: false,
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			});
 
-		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
-			this.info(
-				`${chalk.red.bold(
-					"Client packages on main branch should NOT be consuming prereleases from server. Server prereleases should be consumed in next branch only",
-				)}`,
-			);
-			if (branchName !== "next") {
-				this.error(
-					`Server prereleases should be consumed in ${chalk.bold("next")} branch only`,
-				);
+			if (confirmed !== true) {
+				this.info("Cancelled");
+				this.exit(0);
 			}
 		}
 

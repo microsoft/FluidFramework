@@ -91,7 +91,7 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
 		this.setSummaryProperties(clientSummaryMetric, op);
-		const content = JSON.parse(op.contents) as ISummaryContent;
+		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
 			// two summaries at the same time. In this case the first one wins.
@@ -713,7 +713,14 @@ export class SummaryWriter implements ISummaryWriter {
 		let logTail: ISequencedDocumentMessage[] = [];
 
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
+			logTail = await this.deltaService.getDeltas(
+				"",
+				this.tenantId,
+				this.documentId,
+				gt,
+				lt,
+				"scribe",
+			);
 		} else {
 			const query = {
 				"documentId": this.documentId,

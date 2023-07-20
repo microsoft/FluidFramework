@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
@@ -33,7 +33,7 @@ export class OpSplitter {
 		logger: ITelemetryLoggerExt,
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
-		this.logger = ChildLogger.create(logger, "OpSplitter");
+		this.logger = createChildLogger({ logger, namespace: "OpSplitter" });
 	}
 
 	public get isBatchChunkingEnabled(): boolean {
@@ -52,7 +52,9 @@ export class OpSplitter {
 			};
 		}
 
-		const clientId = message.clientId;
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		const clientId = message.clientId as string;
 		const chunkedContent = message.contents as IChunkedOp;
 		this.addChunk(clientId, chunkedContent, message);
 

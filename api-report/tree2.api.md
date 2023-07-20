@@ -166,7 +166,6 @@ export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 export const BindingType: {
     readonly Delete: "delete";
     readonly Insert: "insert";
-    readonly SetValue: "setValue";
     readonly Invalidation: "invalidation";
     readonly Batch: "batch";
 };
@@ -1088,6 +1087,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
     merge(view: SharedTreeView): void;
+    merge(view: SharedTreeView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
@@ -1282,6 +1282,13 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @alpha
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
+
+// @alpha
+export enum LocalCommitSource {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
 
 // @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
@@ -1521,8 +1528,6 @@ export interface OperationBinderEvents {
     delete(context: DeleteBindingContext): void;
     // (undocumented)
     insert(context: InsertBindingContext): void;
-    // (undocumented)
-    setValue(context: SetValueBindingContext): void;
 }
 
 // @alpha (undocumented)
@@ -1599,8 +1604,6 @@ export interface RangeEntry<T> {
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
     getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-    // (undocumented)
-    getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 // @alpha
@@ -1705,7 +1708,6 @@ export class SchemaBuilder {
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
     static fieldValue<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.value, T>;
-    globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
     leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
@@ -1719,11 +1721,6 @@ export class SchemaBuilder {
     }>;
     // (undocumented)
     readonly name: string;
-    object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
-    primitive<Name extends string, T extends InternalTypes_2.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
-        value: T;
-    }>;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
         local: T;
     }>;
@@ -1808,17 +1805,6 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
-    revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
-}
-
-// @alpha
-export interface SetValueBindingContext extends BindingContext {
-    // (undocumented)
-    readonly path: UpPath;
-    // (undocumented)
-    readonly type: typeof BindingType.SetValue;
-    // (undocumented)
-    readonly value: TreeValue;
 }
 
 // @alpha
@@ -1854,11 +1840,13 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
-    merge(fork: SharedTreeView): void;
+    merge(view: SharedTreeView): void;
+    // (undocumented)
+    merge(view: SharedTreeView, disposeView: boolean): void;
     // (undocumented)
     readonly nodeKey: ISharedTreeView["nodeKey"];
     // (undocumented)
-    rebase(fork: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     rebaseOnto(view: ISharedTreeView): void;
     // (undocumented)
     redo(): void;
@@ -1979,8 +1967,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly builder: Named<string>;
     // (undocumented)
-    readonly extraGlobalFields: boolean;
-    // (undocumented)
     readonly extraLocalFields: FieldSchema;
     // (undocumented)
     get globalFields(): ReadonlySet<GlobalFieldKey>;
@@ -1999,8 +1985,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
 // @alpha
 export interface TreeSchemaBuilder {
     // (undocumented)
-    readonly extraGlobalFields?: boolean;
-    // (undocumented)
     readonly extraLocalFields: FieldStoredSchema;
     // (undocumented)
     readonly globalFields?: Iterable<GlobalFieldKey>;
@@ -2018,8 +2002,6 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 // @alpha
 interface TreeSchemaSpecification {
     // (undocumented)
-    readonly extraGlobalFields?: boolean;
-    // (undocumented)
     readonly extraLocalFields?: FieldSchema;
     // (undocumented)
     readonly global?: FlexList<GlobalFieldSchema>;
@@ -2031,7 +2013,6 @@ interface TreeSchemaSpecification {
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
-    readonly extraGlobalFields: boolean;
     readonly extraLocalFields: FieldStoredSchema;
     readonly globalFields: ReadonlySet<GlobalFieldKey>;
     readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
@@ -2258,10 +2239,11 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+    revertible(source: LocalCommitSource): void;
 }
 
 // @alpha
-export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
+export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;

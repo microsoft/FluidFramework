@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -75,7 +79,7 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		this.logger = ChildLogger.create(logger, "OpPerf");
+		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -187,7 +191,16 @@ class OpPerfTelemetry {
 
 	private recordPingTime(latency: number) {
 		this.pingLatency = latency;
-		// logging one in every 1000 pongs, including the first time, if it is a "write" client.
+
+		// Log if latency is longer than 1 min
+		if (latency > 1000 * 60) {
+			this.logger.sendErrorEvent({
+				eventName: "LatencyTooLong",
+				duration: latency,
+			});
+		}
+
+		// logging one in every 100 pongs, including the first time, if it is a "write" client.
 		if (this.pongCount % 100 === 0 && this.deltaManager.active) {
 			this.logger.sendPerformanceEvent({
 				eventName: "DeltaLatency",

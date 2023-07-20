@@ -9,7 +9,7 @@ import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
-// Re-export so developers can build loggers without pulling in common-definitions
+// Re-export so developers can build loggers without pulling in core-interfaces
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**

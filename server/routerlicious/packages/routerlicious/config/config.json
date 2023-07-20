@@ -54,8 +54,12 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
+		"checkpointsTTLInSeconds": 864000,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
+	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -110,7 +114,8 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",

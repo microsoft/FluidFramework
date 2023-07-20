@@ -9,7 +9,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createDebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IDocumentMessage,
@@ -148,7 +148,7 @@ describe("Loader", () => {
 
 			beforeEach(async () => {
 				seq = 1;
-				logger = DebugLogger.create("fluid:testDeltaManager");
+				logger = createDebugLogger({ namespace: "fluid:testDeltaManager" });
 				emitter = new EventEmitter();
 
 				clientSeqNumber = 0;

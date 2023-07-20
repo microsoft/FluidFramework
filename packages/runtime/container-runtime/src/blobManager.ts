@@ -30,9 +30,8 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	ChildLogger,
-	loggerToMonitoringContext,
 	LoggingError,
+	createChildMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -46,6 +45,7 @@ import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
+import { IBlobMetadata } from "./metadata";
 
 /**
  * This class represents blob (long string)
@@ -234,7 +234,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		private readonly closeContainer: (error?: ICriticalContainerError) => void,
 	) {
 		super();
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
+		this.mc = createChildMonitoringContext({
+			logger: this.runtime.logger,
+			namespace: "BlobManager",
+		});
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
@@ -672,8 +675,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
-		const localId = message.metadata?.localId;
-		const blobId = message.metadata?.blobId;
+		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
+		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 
 		const pendingEntry = this.pendingBlobs.get(localId);
 		if (pendingEntry?.abortSignal?.aborted) {

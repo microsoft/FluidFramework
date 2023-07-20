@@ -70,7 +70,11 @@ data:
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+            "checkpointsTTLInSeconds": {{ .Values.checkpoints.checkpointsTTLInSeconds }},
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
+        },
+        "apiCounters": {
+            "fetchTenantKeyMetricMs": 60000,
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -113,7 +117,8 @@ data:
             "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
-            }
+            },
+            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
         },
         "client": {
             "type": "browser",

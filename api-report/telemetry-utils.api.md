@@ -17,18 +17,17 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties as ITelemetryProperties_2 } from '@fluidframework/common-definitions';
-import { Lazy } from '@fluidframework/common-utils';
+import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -43,6 +42,29 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 export const connectedEventName = "connected";
 
 // @public
+export function createChildLogger(props?: {
+    logger?: ITelemetryBaseLogger;
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt;
+
+// @public (undocumented)
+export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
+
+// @public
+export function createDebugLogger(props: {
+    namespace: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt;
+
+// @public
+export function createMultiSinkLogger(props: {
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+    loggers?: (ITelemetryBaseLogger | undefined)[];
+}): ITelemetryLoggerExt;
+
+// @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
@@ -110,10 +132,10 @@ export interface IFluidErrorAnnotations {
 
 // @public
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties_2) => void;
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties_2;
+    getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;
@@ -254,9 +276,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public
+// @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
+    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[]);
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
@@ -331,7 +353,7 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
-// @public
+// @public @deprecated
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
@@ -357,7 +379,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     }, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
@@ -369,7 +391,7 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryUTLogger implements ITelemetryLoggerExt {
     // (undocumented)
     debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;

@@ -14,7 +14,6 @@ export {
 	HasMoveId,
 	HasPlaceFields,
 	HasRevisionTag,
-	HasTiebreakPolicy,
 	Insert,
 	Mark,
 	MarkList,
@@ -35,6 +34,8 @@ export {
 	LineageEvent,
 	HasReattachFields,
 	CellSpanningMark,
+	CellId,
+	HasLineage,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,

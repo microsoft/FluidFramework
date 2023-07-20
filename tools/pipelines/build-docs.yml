@@ -186,10 +186,7 @@ stages:
             artifact: api-extractor-combined
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
-        - task: UseNode@1
-          displayName: 'Use Node 16.x'
-          inputs:
-            version: 16.x
+        - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml
           parameters:
@@ -237,10 +234,7 @@ stages:
           submodules: false
           clean: true
 
-        - task: UseNode@1
-          displayName: 'Use Node 16.x'
-          inputs:
-            version: 16.x
+        - template: templates/include-use-node-version.yml
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'
