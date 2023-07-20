@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TestTreeProviderLite, initializeTestTree } from "../utils";
+import { SharedTreeTestFactory, TestTreeProviderLite, initializeTestTree } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, UpPath } from "../../core";
+import { FieldKey, UpPath, ValueSchema, rootFieldKeySymbol } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { singleTextCursor } from "../../feature-libraries";
+import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
@@ -71,6 +71,30 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 		{
 			name: "complete-3x3",
 			tree: () => generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3),
+		},
+		{
+			name: "has-handle",
+			tree: () => {
+				const builder = new SchemaBuilder("has-handle");
+				const handleSchema = builder.leaf("Handle", ValueSchema.Serializable);
+				const docSchema = builder.intoDocumentSchema(
+					SchemaBuilder.fieldOptional(handleSchema),
+				);
+				const onCreate = (tree: ISharedTree) => {
+					tree.storedSchema.update(docSchema);
+					const field = tree.editor.optionalField({
+						parent: undefined,
+						field: rootFieldKeySymbol,
+					});
+					field.set(
+						singleTextCursor({ type: handleSchema.name, value: tree.handle }),
+						true,
+					);
+				};
+
+				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
+				return provider.trees[0];
+			},
 		},
 	].map(({ name, tree }) => ({ name, tree: useDeterministicStableId(tree) }));
 }

@@ -19,7 +19,7 @@ import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -39,7 +39,7 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
 		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
 			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
@@ -57,8 +57,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		profile: string;
 		runId: number | undefined;
 	}) {
-		return ChildLogger.create(await this.loggerP, undefined, {
-			all: dimensions,
+		return createChildLogger({
+			logger: await this.loggerP,
+			properties: {
+				all: dimensions,
+			},
 		});
 	}
 
@@ -70,9 +73,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
@@ -110,7 +111,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write

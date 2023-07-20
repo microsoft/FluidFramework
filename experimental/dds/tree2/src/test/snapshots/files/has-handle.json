@@ -1,0 +1,37 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"keyIsGlobal\":true,\"fieldKind\":\"Optional\",\"change\":{\"fieldChange\":{\"id\":0,\"wasEmpty\":true,\"newContent\":{\"set\":{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/tree-provider-lite-data-store/TestSharedTree\"}}}}}}]},\"revision\":\"beefbeef-beef-4000-8000-000000000002\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Handle\",\"extraLocalFields\":{\"kind\":\"Forbidden\",\"types\":[]},\"globalFields\":[],\"localFields\":[],\"value\":4}],\"globalFieldSchema\":[{\"kind\":\"Optional\",\"types\":[\"Handle\"],\"name\":\"rootFieldKey\"}]}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "\"[{\\\"type\\\":\\\"Handle\\\",\\\"value\\\":{\\\"type\\\":\\\"__fluid_handle__\\\",\\\"url\\\":\\\"/tree-provider-lite-data-store/TestSharedTree\\\"}}]\""
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -318,6 +318,8 @@ export class ScribeLambdaFactory
 				tenantId,
 				documentId,
 				lastCheckpoint.protocolState.sequenceNumber,
+				undefined,
+				"scribe",
 			);
 		}
 		return opMessages;

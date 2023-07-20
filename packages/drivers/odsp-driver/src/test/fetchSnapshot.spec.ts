@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
@@ -56,7 +56,7 @@ describe("Tests for snapshot fetch", () => {
 
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const content: ISnapshotContents = {
@@ -83,7 +83,7 @@ describe("Tests for snapshot fetch", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			new TelemetryNullLogger(),
+			logger,
 		);
 		epochTracker.setEpoch("epoch1", true, "test");
 		const resolved = await resolver.resolve({ url: odspUrl });

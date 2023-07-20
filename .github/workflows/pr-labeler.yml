@@ -1,12 +1,17 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+    branches: [ main, next, release/* ]
 
 jobs:
   paths_label:
     runs-on: ubuntu-latest
     name: Label based on file paths
+    # Skip labeling main-next merge PRs. The area labels are noisy and distracting for main-next PRs because they can
+    # contain many commits, and thus touch nearly the whole repo in a single commit. Skipping these labels makes it
+    # easier to focus on the more relevant main-next labels.
+    if: "!contains(github.event.issue.labels.*.name, 'main-next-integrate')"
     steps:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         with:
