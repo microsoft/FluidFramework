@@ -89,13 +89,13 @@ import {
 	EventEmitterWithErrorHandling,
 	PerformanceEvent,
 	raiseConnectedEvent,
-	TelemetryLogger,
 	connectedEventName,
 	normalizeError,
 	MonitoringContext,
 	createChildMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	formatTick,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -2002,7 +2002,7 @@ export class Container
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
-				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;

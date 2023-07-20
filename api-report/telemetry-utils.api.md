@@ -89,6 +89,9 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
     stack?: string | undefined;
 };
 
+// @public (undocumented)
+export function formatTick(tick: number): number;
+
 // @public
 export function generateErrorWithStack(): Error;
 
@@ -292,6 +295,9 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
+export function numberFromString(str: string | null | undefined): string | number | undefined;
+
+// @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
     // (undocumented)
@@ -358,10 +364,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
     static readonly eventNamespaceSeparator = ":";
-    // (undocumented)
+    // @deprecated (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
     protected readonly namespace?: string | undefined;
+    // @deprecated
     static numberFromString(str: string | null | undefined): string | number | undefined;
     static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
     // (undocumented)
