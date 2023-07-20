@@ -155,6 +155,11 @@ export class MockContainerRuntime {
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+		assert(
+			this.runtimeOptions.flushMode !== FlushMode.Immediate ||
+				!this.runtimeOptions.enableGroupedBatching,
+			"Grouped batching is not compatible with FlushMode.Immediate",
+		);
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
@@ -179,11 +184,7 @@ export class MockContainerRuntime {
 					type: MessageType.Operation,
 				});
 				this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
-
-				if (!this.runtimeOptions.enableGroupedBatching) {
-					this.clientSequenceNumber++;
-				}
-
+				this.clientSequenceNumber++;
 				break;
 			}
 
@@ -349,6 +350,8 @@ export class MockContainerRuntimeFactory {
 	}
 
 	private processFirstMessage() {
+		assert(this.messages.length > 0, "The message queue should not be empty");
+
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		const message = JSON.parse(
 			JSON.stringify(this.messages.shift()),
