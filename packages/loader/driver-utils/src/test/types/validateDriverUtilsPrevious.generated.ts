@@ -736,26 +736,14 @@ use_old_VariableDeclaration_canRetryOnError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combineAppAndProtocolSummary": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_combineAppAndProtocolSummary": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_combineAppAndProtocolSummary():
-    TypeOnly<typeof old.combineAppAndProtocolSummary>;
-declare function use_current_FunctionDeclaration_combineAppAndProtocolSummary(
-    use: TypeOnly<typeof current.combineAppAndProtocolSummary>);
-use_current_FunctionDeclaration_combineAppAndProtocolSummary(
-    get_old_FunctionDeclaration_combineAppAndProtocolSummary());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combineAppAndProtocolSummary": {"backCompat": false}
+* "RemovedFunctionDeclaration_combineAppAndProtocolSummary": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_combineAppAndProtocolSummary():
-    TypeOnly<typeof current.combineAppAndProtocolSummary>;
-declare function use_old_FunctionDeclaration_combineAppAndProtocolSummary(
-    use: TypeOnly<typeof old.combineAppAndProtocolSummary>);
-use_old_FunctionDeclaration_combineAppAndProtocolSummary(
-    get_current_FunctionDeclaration_combineAppAndProtocolSummary());
 
 /*
 * Validate forward compat by using old type in place of current type
