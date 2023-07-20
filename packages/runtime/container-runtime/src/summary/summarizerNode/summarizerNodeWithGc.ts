@@ -7,6 +7,7 @@ import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
@@ -370,10 +371,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 					const error = new LoggingError("MissingGCStateInPendingSummary", {
 						proposalHandle,
 						referenceSequenceNumber,
-						id: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: this.telemetryNodeId,
-						},
+						...tagCodeArtifacts({
+							id: this.telemetryNodeId,
+						}),
 					});
 					this.logger.sendErrorEvent(
 						{

@@ -27,6 +27,7 @@ import {
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -101,12 +102,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.logger = createChildLogger({
 			logger: baseLogger,
 			properties: {
-				all: {
-					id: {
-						tag: TelemetryDataTag.CodeArtifact,
-						value: this.telemetryNodeId,
-					},
-				},
+				all: tagCodeArtifacts({ id: this.telemetryNodeId }),
 			},
 		});
 	}
@@ -812,10 +808,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
-			id: {
-				tag: TelemetryDataTag.CodeArtifact,
-				value: this.telemetryNodeId,
-			},
+			...tagCodeArtifacts({
+				id: this.telemetryNodeId,
+			}),
 		});
 		this.logger.sendErrorEvent(eventProps, error);
 		throw error;

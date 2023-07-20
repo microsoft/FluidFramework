@@ -9,8 +9,8 @@ import {
 	LoggingError,
 	MonitoringContext,
 	raiseConnectedEvent,
-	TelemetryDataTag,
 	createChildMonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -62,7 +62,6 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	requestFluidObject,
-	packagePathToTelemetryProperty,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
@@ -1099,18 +1098,12 @@ export class FluidDataStoreRuntime
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
-			channelType,
-			channelId: {
-				value: channelId,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStorePackagePath: packagePathToTelemetryProperty(
-				this.dataStoreContext.packagePath,
-			),
+			...tagCodeArtifacts({
+				channelType,
+				channelId,
+				fluidDataStoreId: this.id,
+				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+			}),
 			stack: generateStack(),
 		});
 		this.localChangesTelemetryCount--;

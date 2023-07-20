@@ -54,18 +54,14 @@ import {
 	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
-import {
-	addBlobToSummary,
-	convertSummaryTreeToITree,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
+import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
 	generateStack,
 	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
-	TelemetryDataTag,
+	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -318,6 +314,12 @@ export abstract class FluidDataStoreContext
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,
 			namespace: "FluidDataStoreContext",
+			properties: {
+				error: tagCodeArtifacts({
+					fluidDataStoreId: this.id,
+					packagePath: this.pkg?.join("/"),
+				}),
+			},
 		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
@@ -374,10 +376,13 @@ export abstract class FluidDataStoreContext
 		failedPkgPath?: string,
 		fullPackageName?: readonly string[],
 	): never {
-		throw new LoggingError(reason, {
-			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
-			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
-		});
+		throw new LoggingError(
+			reason,
+			tagCodeArtifacts({
+				failedPkgPath,
+				packagePath: fullPackageName?.join("/"),
+			}),
+		);
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
@@ -389,13 +394,12 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties({
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					packageName: packagePathToTelemetryProperty(this.pkg),
-				});
+				errorWrapped.addTelemetryProperties(
+					tagCodeArtifacts({
+						packagePath: this.pkg?.join("/"),
+						fluidDataStoreId: this.id,
+					}),
+				);
 				this.channelDeferred?.reject(errorWrapped);
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
@@ -790,10 +794,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
 				},
 				error,
 			);
@@ -917,11 +917,6 @@ export abstract class FluidDataStoreContext
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			packageName: packagePathToTelemetryProperty(this.pkg),
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(),
 		});
