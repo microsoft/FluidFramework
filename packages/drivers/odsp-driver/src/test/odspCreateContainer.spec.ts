@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -22,6 +22,7 @@ describe("Odsp Create Container Test", () => {
 	const driveId = "driveId";
 	const filePath = "path";
 	const fileName = "fileName";
+	const logger = new MockLogger();
 	let resolver: OdspDriverUrlResolver;
 	let request: IRequest;
 
@@ -76,11 +77,15 @@ describe("Odsp Create Container Test", () => {
 		summary: ISummaryTree,
 		resolved: IOdspResolvedUrl,
 	): Promise<IDocumentService> =>
-		odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger());
+		odspDocumentServiceFactory.createContainer(summary, resolved, logger);
 
 	beforeEach(() => {
 		resolver = new OdspDriverUrlResolver();
 		request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+	});
+	afterEach(() => {
+		logger.assertMatchNone([{ category: "error" }]);
+		logger.clear();
 	});
 
 	it("Check Document Service Successfully", async () => {
@@ -88,12 +93,7 @@ describe("Odsp Create Container Test", () => {
 		const docID = await getHashedDocumentId(driveId, itemId);
 		const summary = createSummary(true, true);
 		const docService = await mockFetchOk(
-			async () =>
-				odspDocumentServiceFactory.createContainer(
-					summary,
-					resolved,
-					new TelemetryUTLogger(),
-				),
+			async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
 			expectedResponse,
 			{ "x-fluid-epoch": "epoch1" },
 		);
