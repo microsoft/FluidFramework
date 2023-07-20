@@ -269,16 +269,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				.merge([tempTargetBranch, "--ff-only"]);
 		}
 
-		// To determine who to assign the PR to, we look up the commit details on GitHub.
-		// TODO: Can't we get the author info from the local commit?
-		const commitInfo = await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
-		if (commitInfo === undefined) {
-			this.warning(
-				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
-			);
-		}
-		const assignee = commitInfo.data.author.login;
-
 		// The PR description differs based on whether we expect a conflict or not.
 		const getDescription = prWillConflict
 			? getMergeConflictsDescription
@@ -296,6 +286,18 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const getLabels = prWillConflict
 			? ["merge-conflict", "main-next-integrate"]
 			: ["merge-ok", "main-next-integrate"];
+
+		// To determine who to assign the PR to, we look up the commit details on GitHub.
+		// TODO: Can't we get the author info from the local commit?
+		const commitInfo = flags.createPr
+			? await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger)
+			: undefined;
+		if (commitInfo === undefined) {
+			this.warning(
+				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
+			);
+		}
+		const assignee = commitInfo?.data.author.login;
 
 		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
