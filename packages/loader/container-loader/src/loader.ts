@@ -463,7 +463,6 @@ export class Loader implements IHostLoader {
 			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
 		) {
 			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
-			// If it is negative it was either left undefined or set to a negative value. Either way we should throw an error.
 			throw new UsageError("sequenceNumber must be set to a non-negative integer");
 		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
 			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
