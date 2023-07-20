@@ -107,6 +107,7 @@ export interface MockContainerRuntimeOptions {
 	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
 	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
 	 * and then sent them as a single batch when `flush()` is called on the runtime.
+	 *
 	 * By default, flush mode is Immediate.
 	 */
 	flushMode?: FlushMode;
