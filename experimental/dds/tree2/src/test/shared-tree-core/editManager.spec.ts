@@ -392,6 +392,73 @@ describe("EditManager", () => {
 			);
 			assert.equal(manager.localBranch.getHead(), manager.getTrunkHead());
 		});
+
+		describe("Reports correct max branch length", () => {
+			it("When there are no branches", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				assert.equal(manager.getLongestBranchLength(), 0);
+			});
+			it("When the local branch is longest", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const sequencedLocalChange = mintRevisionTag();
+				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(1),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+						sessionId: manager.localSessionId,
+					},
+					brand(2),
+					brand(0),
+				);
+				assert.equal(manager.getLongestBranchLength(), 2);
+			});
+			it("When a peer branch is longest", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const sequencedLocalChange = mintRevisionTag();
+				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+						sessionId: manager.localSessionId,
+					},
+					brand(1),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(2),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(3),
+					brand(0),
+				);
+				assert.equal(manager.getLongestBranchLength(), 2);
+			});
+		});
 	});
 
 	describe("Perf", () => {

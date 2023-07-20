@@ -9,7 +9,6 @@ import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/common-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 
 export type MyDataInput = IMessage & { data: string };
 
@@ -410,7 +409,6 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
-			() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
 		);
 
 		const stream = storage.fetchMessages(
