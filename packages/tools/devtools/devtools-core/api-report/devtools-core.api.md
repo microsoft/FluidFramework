@@ -72,7 +72,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export enum ContainerDevtoolsFeature {
-    ContainerData = "container-data"
+    ContainerData = "container-data",
+    ContainerDataEditing = "container-data-editing"
 }
 
 // @internal
@@ -223,14 +224,14 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerKey;
 }
 
-// @internal
+// @public
 export interface Edit {
     data: Serializable<unknown>;
     fluidObjectId: string;
     type: EditType;
 }
 
-// @internal
+// @public
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 // @public

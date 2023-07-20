@@ -8,6 +8,7 @@ import React from "react";
 import { Input, InputOnChangeData } from "@fluentui/react-components";
 import { EditType, FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../../MessageRelayContext";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * Input to {@link EditableValueView}
@@ -15,13 +16,14 @@ import { useMessageRelay } from "../../MessageRelayContext";
 export interface EditableValueViewProps {
 	node: FluidObjectValueNode;
 	containerKey: string;
+	label: string;
 }
 
 /**
  * Constructs a editable text field to allow editing of a DDS' content.
  */
 export function EditableValueView(props: EditableValueViewProps): React.ReactElement {
-	const { node, containerKey } = props;
+	const { node, containerKey, label } = props;
 	const messageRelay = useMessageRelay();
 
 	/**
@@ -103,18 +105,22 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	);
 
 	return (
-		<Input
-			size="small"
-			appearance="underline"
-			contentEditable
-			ref={textAreaRef}
-			onClick={(event): void => event.preventDefault()}
-			value={value}
-			onChange={onChange}
-			onFocus={onFocus}
-			onBlur={onBlur}
-			onKeyDown={onKeyDown}
-			type={isType === EditType.string ? "text" : "number"}
-		/>
+		<>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
+
+			<Input
+				size="small"
+				appearance="underline"
+				contentEditable
+				ref={textAreaRef}
+				onClick={(event): void => event.preventDefault()}
+				value={value}
+				onChange={onChange}
+				onFocus={onFocus}
+				onBlur={onBlur}
+				onKeyDown={onKeyDown}
+				type={isType === EditType.string ? "text" : "number"}
+			/>
+		</>
 	);
 }

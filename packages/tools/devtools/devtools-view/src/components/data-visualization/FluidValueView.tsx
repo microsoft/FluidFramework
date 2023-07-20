@@ -29,9 +29,17 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const header = (
 		<>
 			{editFlagInfo.edit === true ? (
-				<EditableValueView containerKey={containerKey} node={node}></EditableValueView>
+				<EditableValueView
+					label={label}
+					containerKey={containerKey}
+					node={node}
+				></EditableValueView>
 			) : (
-				<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
+				<TreeHeader
+					label={label}
+					nodeTypeMetadata={node.typeMetadata}
+					inlineValue={String(node.value)}
+				></TreeHeader>
 			)}
 		</>
 	);
