@@ -180,6 +180,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
+	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
 	 */
 	create(
 		label: string,
