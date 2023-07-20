@@ -1555,7 +1555,7 @@ export class Container
 			this.forceReadonly(true);
 
 			// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
-			const opHandler = (message: ISequencedDocumentMessage) => {
+			const opHandler = () => {
 				if (loadToSequenceNumber === undefined) {
 					// If there is no specified sequence number, pause after the inbound queue is empty.
 					if (this.deltaManager.inbound.length !== 0) {
@@ -1563,7 +1563,7 @@ export class Container
 					}
 				} else {
 					// If there is a specified sequence number, keep processing until we reach it.
-					if (message.sequenceNumber < loadToSequenceNumber) {
+					if (this.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
 						return;
 					}
 				}
@@ -1576,11 +1576,7 @@ export class Container
 
 			if (this.deltaManager.lastSequenceNumber === loadToSequenceNumber) {
 				// If we have already reached the desired sequence number, call opHandler() to pause immediately.
-				assert(
-					this.deltaManager.lastMessage !== undefined,
-					"deltaManager.lastMessage should be defined",
-				);
-				opHandler(this.deltaManager.lastMessage);
+				opHandler();
 			} else {
 				// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
 				this.on("op", opHandler);
