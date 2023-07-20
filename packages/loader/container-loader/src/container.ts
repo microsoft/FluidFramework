@@ -1540,11 +1540,10 @@ export class Container
 
 		let opsBeforeReturnP: Promise<void> | undefined;
 
-		// Handle frozen container load mode
 		if (loadMode.pauseAfterLoad === true) {
 			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
 			if (loadMode.opsBeforeReturn === "sequenceNumber") {
-				assert(loadToSequenceNumber !== undefined, "Sequence number should be defined");
+				assert(loadToSequenceNumber !== undefined, "sequenceNumber should be defined");
 				if (this.deltaManager.lastSequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
@@ -1558,8 +1557,7 @@ export class Container
 			// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
 			const opHandler = (message: ISequencedDocumentMessage) => {
 				if (loadToSequenceNumber === undefined) {
-					// If there is no specified sequence number, we should pause after all ops are processed.
-					// TODO: is this the best way to check we are done processing?
+					// If there is no specified sequence number, pause after the inbound queue is empty.
 					if (this.deltaManager.inbound.length !== 0) {
 						return;
 					}
@@ -1570,7 +1568,7 @@ export class Container
 					}
 				}
 
-				// Pause op processing
+				// Pause op processing once we have processed the desired number of ops.
 				void this.deltaManager.inbound.pause();
 				void this.deltaManager.outbound.pause();
 				this.off("op", opHandler);
