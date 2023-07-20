@@ -107,7 +107,6 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
-    // (undocumented)
     flush?(): void;
     // (undocumented)
     protected mockContainerRuntimeOptions: MockContainerRuntimeOptions;
@@ -119,7 +118,6 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
-    // (undocumented)
     rebase?(): void;
     // (undocumented)
     protected get referenceSequenceNumber(): number;
@@ -178,11 +176,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @public (undocumented)
+// @public
 export interface MockContainerRuntimeOptions {
-    // (undocumented)
     enableGroupedBatching?: boolean;
-    // (undocumented)
     flushMode?: FlushMode;
 }
 
