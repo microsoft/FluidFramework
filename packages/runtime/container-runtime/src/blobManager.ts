@@ -678,10 +678,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
 		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 
-		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry?.abortSignal?.aborted) {
-			this.deletePendingBlob(localId);
-			return;
+		if (localId) {
+			const pendingEntry = this.pendingBlobs.get(localId);
+			if (pendingEntry?.abortSignal?.aborted) {
+				this.deletePendingBlob(localId);
+				return;
+			}
 		}
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
