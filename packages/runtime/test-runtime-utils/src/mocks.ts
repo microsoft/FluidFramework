@@ -349,10 +349,6 @@ export class MockContainerRuntimeFactory {
 	}
 
 	private processFirstMessage() {
-		if (this.messages.length === 0) {
-			throw new Error("Tried to process a message that did not exist");
-		}
-
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		const message = JSON.parse(
 			JSON.stringify(this.messages.shift()),
@@ -379,6 +375,10 @@ export class MockContainerRuntimeFactory {
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
 	public processOneMessage() {
+		if (this.messages.length === 0) {
+			throw new Error("Tried to process a message that did not exist");
+		}
+
 		this.advanceForFlushMode(FlushMode.TurnBased);
 		this.processFirstMessage();
 	}
@@ -388,6 +388,10 @@ export class MockContainerRuntimeFactory {
 	 * @param count - the number of messages to process
 	 */
 	public processSomeMessages(count: number) {
+		if (count > this.messages.length) {
+			throw new Error("Tried to process more messages than exist");
+		}
+
 		this.advanceForFlushMode(FlushMode.TurnBased);
 
 		for (let i = 0; i < count; i++) {
