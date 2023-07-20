@@ -32,6 +32,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
+	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -143,6 +144,7 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
+	opsent?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -277,6 +279,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
+			assert(pendingEntry !== undefined, "Must have pending blob entry for upcoming op");
+			pendingEntry.opsent = true;
 			if (pendingEntry?.uploadTime && pendingEntry?.minTTLInSeconds) {
 				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;
 				const expired = pendingEntry.minTTLInSeconds - secondsSinceUpload < 0;
@@ -324,6 +328,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
+	private createAbortError(pending?: PendingBlob) {
+		return new LoggingError("uploadBlob aborted", {
+			acked: pending?.acked,
+			status: pending?.status,
+			uploadTime: pending?.uploadTime,
+		});
+	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
 	 */
@@ -459,7 +470,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 
 		if (signal?.aborted) {
-			throw new Error("aborted before uploading");
+			throw this.createAbortError();
 		}
 
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
@@ -473,28 +484,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			attached: false,
 			acked: false,
 			abortSignal: signal,
+			opsent: false,
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
-		if (signal) {
-			signal.addEventListener(
-				"abort",
-				() => {
-					if (!pendingEntry.acked) {
-						if (pendingEntry.uploadTime) {
-							pendingEntry.handleP.reject(
-								new Error("aborted blob while waiting on op"),
-							);
-						} else {
-							pendingEntry.handleP.reject(new Error("aborted blob while uploading"));
-						}
-					}
-				},
-				{ once: true }, // to remove the listener after being triggered
-			);
-		}
+		const abortListener = () => {
+			if (!pendingEntry.acked) {
+				pendingEntry.handleP.reject(this.createAbortError(pendingEntry));
+			}
+		};
+		signal?.addEventListener("abort", abortListener, { once: true });
 
-		return pendingEntry.handleP.promise;
+		return pendingEntry.handleP.promise.finally(() => {
+			signal?.removeEventListener("abort", abortListener);
+		});
 	}
 
 	private async uploadBlob(
@@ -538,7 +541,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (entry.abortSignal?.aborted === true) {
+		if (entry.abortSignal?.aborted === true && !entry.opsent) {
 			this.deletePendingBlob(localId);
 			return;
 		}
@@ -593,7 +596,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async onUploadReject(localId: string, error: any) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		if (entry.abortSignal?.aborted === true) {
+		if (entry.abortSignal?.aborted === true && !entry.opsent) {
 			this.deletePendingBlob(localId);
 			return;
 		}

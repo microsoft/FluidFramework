@@ -631,7 +631,9 @@ describe("BlobManager", () => {
 				await runtime.createBlob(blob, ac.signal);
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted before uploading");
+				assert.strictEqual(error.status, undefined);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, undefined);
 			}
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -652,7 +654,9 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while uploading");
+				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, false);
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -675,7 +679,9 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while uploading");
+				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, false);
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -698,7 +704,9 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while uploading");
+				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, false);
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -744,7 +752,9 @@ describe("BlobManager", () => {
 				// finish op
 				await Promise.all([p1, p2]);
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while waiting on op");
+				assert.strictEqual(error.status, 1);
+				assert.ok(error.uploadTime);
+				assert.strictEqual(error.acked, false);
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -753,24 +763,26 @@ describe("BlobManager", () => {
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
-		// tests will be changed after
+		// tests results will change after
 		// https://dev.azure.com/fluidframework/internal/_workitems/edit/4550
 		// handles won't be resolved on disconnection
-		it.skip("resubmit on aborted pending upload", async () => {
+		it("resubmit on aborted pending upload", async () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
 			let handleP;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+				// we can't reject the handle after disconnection but
+				// we can still clean the pending entries
 				runtime.disconnect();
 				await runtime.processBlobs();
 				await handleP;
 				ac.abort();
 				await runtime.connect();
-				assert.fail("Should not succeed");
+				runtime.processOps();
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while uploading");
+				assert.fail("Should succeed");
 			}
 			assert(handleP);
 			await assert.doesNotReject(handleP);
@@ -779,29 +791,27 @@ describe("BlobManager", () => {
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
-		it.skip("resubmit on aborted pending op", async () => {
+		it("resubmit on aborted pending op", async () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
 			let handleP;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				const p1 = runtime.processBlobs();
-				const p2 = runtime.processHandles();
-				// finish upload
-				await Promise.race([p1, p2]);
+				await runtime.processBlobs();
 				// disconnect causes blob to transition to offline if we already upload the
 				// blob, therefore resolving its handle. Once we change that, handle will
-				// reject as expected
+				// reject
 				runtime.disconnect();
+				await handleP;
 				ac.abort();
 				await runtime.connect();
 				runtime.processOps();
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted blob while waiting on op");
+				assert.fail("Should succeed");
 			}
 			assert(handleP);
-			await assert.rejects(handleP);
+			await assert.doesNotReject(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);

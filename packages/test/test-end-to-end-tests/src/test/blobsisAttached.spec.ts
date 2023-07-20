@@ -75,14 +75,16 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "aborted before uploading");
+				assert.strictEqual(error.status, undefined);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, undefined);
 			}
 			const pendingBlobs = (runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState)
 				.pendingAttachmentBlobs;
 			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
 		});
 
-		it("blob is aborted after upload suceeds", async function () {
+		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
