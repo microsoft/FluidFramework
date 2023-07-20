@@ -32,7 +32,7 @@ describe("Rebasing", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
-			name: "FlushMode immediate with grouped batching",
+			name: "FlushMode TurnBased with grouped batching",
 		},
 	].forEach((testConfig) => {
 		describe(`SharedMap - ${testConfig.name}`, () => {
