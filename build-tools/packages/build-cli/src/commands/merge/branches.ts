@@ -280,6 +280,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			tempTarget: tempTargetBranch,
 			mergeBranch,
 			prTitle,
+			/**
+			 * setting the remote to `upstream` as the remote repository URL may differ depending on individual setups. To accommodate this variation,
+			 * a note is added later in the description, prompting users to check their remote URL and execute the appropriate set of commands accordingly.
+			 */
 			remote: "upstream",
 		});
 
