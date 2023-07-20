@@ -258,7 +258,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
 				// Fetch the latest remote refs
-				.fetch(remote)
+				.fetch(this.remote)
 				// create tempTargetBranch locally so we have a merge base
 				.checkoutBranch(tempTargetBranch, remoteTargetBranch)
 				// Merge the source branch changes into the tempTargetBranch
@@ -289,7 +289,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			tempTarget: tempTargetBranch,
 			mergeBranch,
 			prTitle,
-			remote,
+			remote: this.remote,
 		});
 
 		// label the conflicting PRs and the merged-OK PRs with different labels
