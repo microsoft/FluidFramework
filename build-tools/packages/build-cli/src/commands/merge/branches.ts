@@ -10,8 +10,6 @@ import { strict as assert } from "node:assert";
 import { BaseCommand } from "../../base";
 import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../lib";
 
-const DEFAULT_REMOTE = "origin";
-
 interface CleanupBranch {
 	branch: string;
 	local: boolean;
@@ -106,9 +104,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		// const remote =
-		// 	flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
-
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
@@ -117,10 +112,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		this.remote =
 			flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
-		this.warning(`Remote is: ${this.remote}`);
 		if (this.remote === undefined) {
 			this.error("Remote for upstream repo not found", { exit: 1 });
 		}
+		this.info(`Remote is: ${this.remote}`);
 
 		if (flags.checkPr) {
 			// Check if a branch integration PR exists already, based on its **name**.
