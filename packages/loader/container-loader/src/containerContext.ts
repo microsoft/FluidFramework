@@ -18,7 +18,6 @@ import {
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
@@ -47,28 +46,11 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	/**
-	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
-	 */
-	public get id(): string {
-		return this._getContainerDiagnosticId() ?? "";
-	}
-
-	/**
 	 * When true, ops are free to flow
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
 		return this._getConnected();
-	}
-
-	public get serviceConfiguration(): IClientConfiguration | undefined {
-		return this._getServiceConfiguration();
-	}
-
-	private _disposed = false;
-
-	public get disposed() {
-		return this._disposed;
 	}
 
 	constructor(
@@ -101,9 +83,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
-		private readonly _getContainerDiagnosticId: () => string | undefined,
 		private readonly _getClientId: () => string | undefined,
-		private readonly _getServiceConfiguration: () => IClientConfiguration | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
 		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
@@ -112,10 +92,6 @@ export class ContainerContext implements IContainerContext {
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 	) {}
-
-	public dispose(error?: Error): void {
-		this._disposed = true;
-	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
 		return this._version;
