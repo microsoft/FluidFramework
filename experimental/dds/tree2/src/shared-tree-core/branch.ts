@@ -118,6 +118,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack<TChange>();
+	private readonly forksInTransactions: Set<SharedTreeBranch<TEditor, TChange>>[] = [];
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -220,6 +221,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
+		this.forksInTransactions.push(new Set());
 	}
 
 	/**
@@ -233,6 +235,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
 		| undefined {
 		this.assertNotDisposed();
+		if (this.isTransacting()) {
+			this.disposeForksInCurrentTransaction();
+		}
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
@@ -291,6 +296,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
+		if (this.isTransacting()) {
+			this.disposeForksInCurrentTransaction();
+		}
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
@@ -334,6 +342,18 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
 		return [startCommit, commits, repairStore];
+	}
+
+	private getForksInCurrentTransaction(): Set<SharedTreeBranch<TEditor, TChange>> {
+		this.assertIsTransacting();
+		return this.forksInTransactions[this.forksInTransactions.length - 1];
+	}
+
+	private disposeForksInCurrentTransaction(): void {
+		for (const fork of this.getForksInCurrentTransaction()) {
+			fork.dispose();
+		}
+		this.forksInTransactions.pop();
 	}
 
 	/**
@@ -401,6 +421,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.undoRedoManager?.clone(),
 			anchors,
 		);
+		if (this.isTransacting()) {
+			this.getForksInCurrentTransaction().add(fork);
+			fork.on("dispose", () => this.getForksInCurrentTransaction().delete(fork));
+		}
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -568,6 +592,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	private assertNotDisposed(): void {
 		assert(!this.disposed, 0x66e /* Branch is disposed */);
+	}
+
+	private assertIsTransacting(): void {
+		assert(this.isTransacting(), "Branch must have a transaction");
 	}
 }
 
