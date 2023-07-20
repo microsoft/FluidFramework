@@ -111,7 +111,7 @@ import {
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
+import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
@@ -1699,16 +1699,15 @@ export class Container
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
 		);
-		const codeDetails = getCodeDetailsFromQuorumValues(qValues);
 		this.initializeProtocolState(
 			attributes,
 			{
 				members: [],
 				proposals: [],
-				values:
-					codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+				values: qValues,
 			}, // IQuorumSnapShot
 		);
+		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await this.instantiateRuntime(codeDetails, snapshotTree);
 
