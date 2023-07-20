@@ -124,7 +124,7 @@ export type IBlobManagerRuntime = Pick<
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
-enum PendingBlobStatus {
+export enum PendingBlobStatus {
 	OnlinePendingUpload,
 	OnlinePendingOp,
 	OfflinePendingUpload,

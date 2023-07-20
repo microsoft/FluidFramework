@@ -23,7 +23,12 @@ import {
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
+import {
+	BlobManager,
+	IBlobManagerLoadInfo,
+	IBlobManagerRuntime,
+	PendingBlobStatus,
+} from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -654,7 +659,7 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -679,7 +684,7 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -704,7 +709,7 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, 0);
+				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -752,7 +757,7 @@ describe("BlobManager", () => {
 				// finish op
 				await Promise.all([p1, p2]);
 			} catch (error: any) {
-				assert.strictEqual(error.status, 1);
+				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingOp);
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
