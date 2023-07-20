@@ -21,7 +21,6 @@ describe("getFileLink", () => {
 
 	afterEach(() => {
 		logger.assertMatchNone([{ category: "error" }]);
-		logger.clear();
 	});
 
 	it("should return share link with existing access", async () => {

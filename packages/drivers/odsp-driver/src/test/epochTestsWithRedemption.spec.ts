@@ -63,7 +63,6 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 	afterEach(async () => {
 		await epochTracker.removeEntries().catch(() => {});
 		logger.assertMatchNone([{ category: "error" }]);
-		logger.clear();
 	});
 
 	describe("Test Suite 1", () => {

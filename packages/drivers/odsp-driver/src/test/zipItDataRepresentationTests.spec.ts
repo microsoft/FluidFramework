@@ -65,7 +65,6 @@ describe("Tree Representation tests", () => {
 	});
 	afterEach(() => {
 		logger.assertMatchNone([{ category: "error" }]);
-		logger.clear();
 	});
 
 	function validate(length = -1) {

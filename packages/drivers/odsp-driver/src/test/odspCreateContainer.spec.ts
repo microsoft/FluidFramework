@@ -85,7 +85,6 @@ describe("Odsp Create Container Test", () => {
 	});
 	afterEach(() => {
 		logger.assertMatchNone([{ category: "error" }]);
-		logger.clear();
 	});
 
 	it("Check Document Service Successfully", async () => {

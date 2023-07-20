@@ -77,7 +77,6 @@ describe("RouterliciousDriverRestWrapper", () => {
 	});
 	afterEach(() => {
 		logger.assertMatchNone([{ category: "error" }]);
-		logger.clear();
 	});
 
 	describe("get()", () => {

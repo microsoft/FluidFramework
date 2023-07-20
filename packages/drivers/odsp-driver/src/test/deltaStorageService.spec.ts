@@ -98,7 +98,6 @@ describe("DeltaStorageService", () => {
 		});
 		afterEach(() => {
 			logger.assertMatchNone([{ category: "error" }]);
-			logger.clear();
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -172,7 +171,6 @@ describe("DeltaStorageService", () => {
 		});
 		afterEach(() => {
 			logger.assertMatchNone([{ category: "error" }]);
-			logger.clear();
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -208,7 +206,6 @@ describe("DeltaStorageService", () => {
 		const logger = new MockLogger();
 		afterEach(() => {
 			logger.assertMatchNone([{ category: "error" }]);
-			logger.clear();
 		});
 
 		it("FirstCacheMiss should update to first miss op seq number correctly", async () => {
