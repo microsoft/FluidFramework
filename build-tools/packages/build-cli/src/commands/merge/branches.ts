@@ -434,9 +434,10 @@ function getMergeConflictsDescription(props: {
 	target: string;
 	tempTarget: string;
 	mergeBranch: string;
+	remote: string;
 	prTitle: string;
 }): string {
-	const { source, target, tempTarget, mergeBranch, prTitle } = props;
+	const { source, target, tempTarget, mergeBranch, prTitle, remote } = props;
 	return `
 ## ${source}-${target} integrate PR
 
@@ -445,8 +446,10 @@ The aim of this pull request is to sync ${source} and ${target} branch. This bra
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
 2. Merge ${mergeBranch} into the target branch, ${target}. **The direction of the merge matters!** You need to checkout ${target} and merge ${mergeBranch} into it, then fast-forward ${mergeBranch} to the merge commit. To do that use the following git commands:
   - \`git fetch --all\` -- this ensures your remote refs are updated
-  - \`git checkout -b ${tempTarget} upstream/${target}\` -- make a temporary branch at ${target}.
-  - \`git merge upstream/${mergeBranch}\` -- merge ${target} into ${mergeBranch}
+  - \`git remote -v\` -- displays the list of remote repositories associated with your Git repository along with their corresponding URLs. You have to choose the remote repository associated to URL: **https://github.com/microsoft/FluidFramework.git**. **Please repalce your remote accordingly.**
+  Assuming ${remote} is the remote associated to **https://github.com/microsoft/FluidFramework.git**
+  - \`git checkout -b ${tempTarget} ${remote}/${target}\` -- make a temporary branch at ${target}.
+  - \`git merge ${remote}/${mergeBranch}\` -- merge ${target} into ${mergeBranch}
 3. Resolve any merge conflicts between the branches, then commit all the changes using the following commands:
   - \`git add .\` -- stage all the local changes
   - \`git commit -m "${prTitle}"\` -- commit the merge
