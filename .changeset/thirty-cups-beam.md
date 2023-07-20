@@ -2,4 +2,6 @@
 "@fluidframework/container-runtime": minor
 ---
 
-Deprecate ContainerRuntime.reSubmitFn since this functionality needs not be exposed, and we are refactoring the signatures of related code internally.
+ContainerRuntime.reSubmitFn is deprecated
+
+The ContainerRuntime.reSubmitFn function is deprecated. The function is internal and should not be exposed. We are refactoring the signatures of related code internally.
