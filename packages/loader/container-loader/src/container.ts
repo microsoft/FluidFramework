@@ -1675,11 +1675,10 @@ export class Container
 		}
 
 		// If we have not yet reached `fromSequenceNumber`, we will wait for ops to arrive until we reach it
-		const fromSequenceNumber = loadToSequenceNumber ?? -1;
-		if (this.deltaManager.lastSequenceNumber < fromSequenceNumber) {
+		if (loadToSequenceNumber !== undefined && this.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
 			await new Promise<void>((resolve, reject) => {
 				const opHandler = (message: ISequencedDocumentMessage) => {
-					if (message.sequenceNumber >= fromSequenceNumber) {
+					if (message.sequenceNumber >= loadToSequenceNumber) {
 						resolve();
 						this.off("op", opHandler);
 					}
