@@ -99,8 +99,23 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
+/**
+ * Options for the container runtime mock.
+ */
 export interface MockContainerRuntimeOptions {
+	/**
+	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
+	 * and then sent them as a single batch when `flush()` is called on the runtime.
+	 * By default, flush mode is Immediate.
+	 */
 	flushMode?: FlushMode;
+	/**
+	 * If set to true, it will simulate group batching by forcing all ops within a batch to have
+	 * the same sequence number.
+	 *
+	 * By default, the value is `false`
+	 */
 	enableGroupedBatching?: boolean;
 }
 
@@ -205,6 +220,10 @@ export class MockContainerRuntime {
 
 	public dirty(): void {}
 
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
+	 * this method was called. Otherwise, calling the method does nothing.
+	 */
 	public flush?() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
@@ -216,6 +235,12 @@ export class MockContainerRuntime {
 		}
 	}
 
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will rebase the current batch by resubmitting them
+	 * to the data stores. Otherwise, calling the method does nothing.
+	 *
+	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
+	 */
 	public rebase?() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
@@ -253,6 +278,9 @@ export class MockContainerRuntime {
 		this.dataStoreRuntime.process(message, local, localOpMetadata);
 
 		if (this.runtimeOptions.enableGroupedBatching) {
+			// If the grouped batching scenario is enabled, we need to advance the
+			// client sequence number when we process a remote op. Sending ops will
+			// not increment this value.
 			this.clientSequenceNumber++;
 		}
 	}
