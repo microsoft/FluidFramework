@@ -1573,8 +1573,10 @@ export class Container
 				void this.deltaManager.outbound.pause();
 				this.off("op", opHandler);
 			};
-
-			if (this.deltaManager.lastSequenceNumber === loadToSequenceNumber) {
+			if (
+				(loadToSequenceNumber === undefined && this.deltaManager.inbound.length === 0) ||
+				this.deltaManager.lastSequenceNumber === loadToSequenceNumber
+			) {
 				// If we have already reached the desired sequence number, call opHandler() to pause immediately.
 				opHandler();
 			} else {
