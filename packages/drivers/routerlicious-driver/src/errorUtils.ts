@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DriverError } from "@fluidframework/driver-definitions";
+import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
 import {
 	NonRetryableError,
 	GenericNetworkError,
@@ -56,10 +56,8 @@ export interface IR11sSocketError {
 	retryAfterMs?: number;
 }
 
-export interface IR11sError {
+export interface IR11sError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: RouterliciousErrorType;
-	readonly message: string;
-	canRetry: boolean;
 }
 
 export type R11sError = DriverError | IR11sError;
@@ -79,38 +77,39 @@ export function createR11sNetworkError(
 			// the error message will start with NetworkError as defined in restWrapper.ts
 			// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 			// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-			if (errorMessage.includes("failed, reason: self signed certificate")) {
-				error = new NonRetryableError(
-					errorMessage,
-					RouterliciousErrorType.sslCertError,
-					props,
-				);
-			}
-			error = new GenericNetworkError(
-				errorMessage,
-				errorMessage.startsWith("NetworkError"),
-				props,
-			);
+			error = errorMessage.includes("failed, reason: self signed certificate")
+				? new NonRetryableError(errorMessage, RouterliciousErrorType.sslCertError, props)
+				: new GenericNetworkError(
+						errorMessage,
+						errorMessage.startsWith("NetworkError"),
+						props,
+				  );
+			break;
 		case 401:
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
 		// so we treat repeat 401s the same as 403.
 		case 403:
 			error = new AuthorizationError(errorMessage, undefined, undefined, props);
+			break;
 		case 404:
 			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
 			error = new NonRetryableError(errorMessage, errorType, props);
+			break;
 		case 429:
 			error = createGenericNetworkError(
 				errorMessage,
 				{ canRetry: true, retryAfterMs },
 				props,
 			);
+			break;
 		case 500:
 		case 502:
 			error = new GenericNetworkError(errorMessage, true, props);
+			break;
 		default:
 			const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
 			error = createGenericNetworkError(errorMessage, retryInfo, props);
+			break;
 	}
 	error.endpointReachable = endpointReachable;
 	return error;
