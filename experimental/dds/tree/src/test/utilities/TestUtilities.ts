@@ -40,7 +40,7 @@ import {
 	SessionId,
 	StableNodeId,
 } from '../../Identifiers';
-import { assertNotUndefined, fail, identity, ReplaceRecursive } from '../../Common';
+import { fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
@@ -683,6 +683,7 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = assertNotUndefined(container.closeAndGetPendingLocalState)();
+	const pendingLocalState = container.closeAndGetPendingLocalState?.();
+	assert(pendingLocalState !== undefined, 'pendingLocalState should be defined');
 	return { actionReturn, pendingLocalState };
 }
