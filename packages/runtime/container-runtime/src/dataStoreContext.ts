@@ -943,8 +943,11 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.containerRuntime.uploadBlob(blob);
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.containerRuntime.uploadBlob(blob, signal);
 	}
 }
 

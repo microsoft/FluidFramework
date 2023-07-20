@@ -3128,9 +3128,12 @@ export class ContainerRuntime
 		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		this.verifyNotClosed();
-		return this.blobManager.createBlob(blob);
+		return this.blobManager.createBlob(blob, signal);
 	}
 
 	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
