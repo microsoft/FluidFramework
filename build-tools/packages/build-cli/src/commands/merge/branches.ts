@@ -48,9 +48,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 		}),
 		remote: Flags.string({
-			description: "",
+			description:
+				"The name of the upstream remote to use to check for PRs. If not provided, the remote matching the microsoft/FluidFramework repo will be used.",
 			char: "r",
-			default: "origin",
 		}),
 		reviewers: Flags.string({
 			description: "Add reviewers to PR",
@@ -100,7 +100,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
-
 		if (this.gitRepo === undefined) {
 			this.errorLog(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
@@ -114,7 +113,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		this.remote =
 			flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
-		this.verbose(`Remote is: ${this.remote}`);
+		if (this.remote === undefined) {
+			this.error("Remote for upstream repo not found", { exit: 1 });
+		}
+		this.info(`Remote is: ${this.remote}`);
 
 		if (flags.checkPr) {
 			// Check if a branch integration PR exists already, based on its **name**.
@@ -166,12 +168,28 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		/**
 		 * tempBranchToCheckConflicts is used to check the conflicts of each commit with the target branch.
 		 */
-		const tempBranchToCheckConflicts = `${flags.target}-automation`;
-		this.branchesToCleanup.push({
-			branch: tempBranchToCheckConflicts,
-			local: true,
-			remote: false,
-		});
+		const tempBranchToCheckConflicts = `${flags.target}-check-conflicts`;
+
+		/**
+		 * tempTargetBranch is a local branch created from the target branch. We use this instead of the
+		 * target branch itself because the repo might already have a tracking branch for the target and we don't want to
+		 * change that.
+		 */
+		const tempTargetBranch = `${flags.target}-merge-head`;
+
+		// Clean up these branches on failure.
+		this.branchesToCleanup.push(
+			{
+				branch: tempBranchToCheckConflicts,
+				local: true,
+				remote: false,
+			},
+			{
+				branch: tempTargetBranch,
+				local: true,
+				remote: false,
+			},
+		);
 
 		// Check out a new temp branch at the same commit as the target branch.
 		await this.gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, remoteTargetBranch);
@@ -230,25 +248,27 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.verbose(`Deleting temp branch: ${tempBranchToCheckConflicts}`);
 		await this.gitRepo.gitClient.branch(["--delete", tempBranchToCheckConflicts, "--force"]);
 
-		// If we determined that the PR won't conflict, merge the remote target branch with the HEAD (which is mergeBranch
-		// that we created and checked out earlier). We will create the PR at the new commit; in other words, the PR will
-		// already contain a merge, and once CI has passed, the target branch can be fast-forwarded directly to it to close
-		// and merge the PR.
+		// If we determined that the PR won't conflict, check out the target branch (with a temp branch) and merge that with
+		// mergeBranch, which is the source branch we want to merge. We will create the PR at the new merge commit; in other
+		// words, the PR will already contain a merge, and once CI has passed, the target branch can be fast-forwarded
+		// directly to it to close and merge the PR.
+		//
+		// Importantly, we merge source INTO target, not the other way around. While the results are the same, merging
+		// changes IN from the source branch (main) makes the history a lot cleaner. See
+		// <https://stackoverflow.com/a/45973607/551579> for more details.
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
+				// Fetch the latest remote refs
 				.fetch(this.remote)
-				.merge([remoteTargetBranch, "-m", prTitle]);
+				// create tempTargetBranch locally so we have a merge base
+				.checkoutBranch(tempTargetBranch, remoteTargetBranch)
+				// Merge the source branch changes into the tempTargetBranch
+				.merge([mergeBranch, "-m", prTitle])
+				// checkout the mergeBranch so we can fast-forward it to the tempTargetBranch
+				.checkout(mergeBranch)
+				// fast-forward the mergeBranch to the merged commit; this is the branch we'll push to the remote.
+				.merge([tempTargetBranch, "--ff-only"]);
 		}
-
-		// To determine who to assign the PR to, we look up the commit details on GitHub.
-		// TODO: Can't we get the author info from the local commit?
-		const commitInfo = await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger);
-		if (commitInfo === undefined) {
-			this.warning(
-				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
-			);
-		}
-		const assignee = commitInfo.data.author.login;
 
 		// The PR description differs based on whether we expect a conflict or not.
 		const getDescription = prWillConflict
@@ -257,14 +277,28 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const description: string = getDescription({
 			source: flags.source,
 			target: flags.target,
+			tempTarget: tempTargetBranch,
 			mergeBranch,
 			prTitle,
+			remote: this.remote,
 		});
 
 		// label the conflicting PRs and the merged-OK PRs with different labels
 		const getLabels = prWillConflict
 			? ["merge-conflict", "main-next-integrate"]
 			: ["merge-ok", "main-next-integrate"];
+
+		// To determine who to assign the PR to, we look up the commit details on GitHub.
+		// TODO: Can't we get the author info from the local commit?
+		const commitInfo = flags.createPr
+			? await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger)
+			: undefined;
+		if (commitInfo === undefined) {
+			this.warning(
+				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
+			);
+		}
+		const assignee = commitInfo?.data.author.login;
 
 		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
@@ -398,26 +432,33 @@ function shortCommit(commit: string): string {
 function getMergeConflictsDescription(props: {
 	source: string;
 	target: string;
+	tempTarget: string;
 	mergeBranch: string;
+	remote: string;
 	prTitle: string;
 }): string {
-	const { source, target, mergeBranch, prTitle } = props;
+	const { source, target, tempTarget, mergeBranch, prTitle, remote } = props;
 	return `
 ## ${source}-${target} integrate PR
 
 The aim of this pull request is to sync ${source} and ${target} branch. This branch has **MERGE CONFLICTS** with ${target} due to this commit. If this PR is assigned to you, you need to do the following:
 
-- Acknowledge the pull request by adding a comment -- "Actively working on it".
-- Merge ${target} into this branch, ${mergeBranch}.
-- Resolve any merge conflicts between ${mergeBranch} and ${target} and then push the results to upstream. **Do NOT rebase or squash this branch: its history must be preserved**.
-- Address any CI failures.
-- Recommended git commands:
-  - \`git checkout ${mergeBranch}\` -- check out the PR branch.
-  - \`git merge ${target}\` -- merge ${target} into ${mergeBranch}
-  - **RESOLVE MERGE CONFLICTS**
+1. Acknowledge the pull request by adding a comment -- "Actively working on it".
+2. Merge ${mergeBranch} into the target branch, ${target}. **The direction of the merge matters!** You need to checkout ${target} and merge ${mergeBranch} into it, then fast-forward ${mergeBranch} to the merge commit. To do that use the following git commands:
+  - \`git fetch --all\` -- this ensures your remote refs are updated
+  - \`git checkout -b ${tempTarget} ${remote}/${target}\` -- make a temporary branch at ${target}.
+  - \`git merge ${remote}/${mergeBranch}\` -- merge ${target} into ${mergeBranch}
+3. Resolve any merge conflicts between the branches, then commit all the changes using the following commands:
   - \`git add .\` -- stage all the local changes
   - \`git commit -m ${prTitle}\` -- commit the merge
-  - \`git push upstream\` -- and push it to upstream (your upstream remote name may be different)`;
+4. Fast-forward the ${mergeBranch} branch to the merge commit and push to the remote.
+  - \`git checkout ${mergeBranch}\` -- check out the mergeBranch locally
+  - \`git merge ${tempTarget} --ff-only\` -- fast-forward to the merge commit
+  - \`git push upstream\` -- and push it to upstream (your upstream remote name may be different)
+5. Address any CI failures. If you need to make additional changes to the PR, **always amend the commit** using the following git commands:
+  - \`git commit --amend -m "${prTitle}"\`
+  - \`git push --force-with-lease\`
+`;
 }
 
 /**
@@ -426,7 +467,9 @@ The aim of this pull request is to sync ${source} and ${target} branch. This bra
 function getMaybeCiFailuresDescription(props: {
 	source: string;
 	target: string;
+	tempTarget: string;
 	mergeBranch: string;
+	remote: string;
 	prTitle: string;
 }): string {
 	const { source, target, mergeBranch, prTitle } = props;
@@ -435,12 +478,12 @@ function getMaybeCiFailuresDescription(props: {
 
 The aim of this pull request is to sync ${source} and ${target} branch. If this PR is assigned to you, you need to do the following:
 
-- Acknowledge the pull request by adding a comment -- "Actively working on it".
-- Resolve any CI failures between ${mergeBranch} and ${target} and push the results to upstream. **Do NOT rebase or squash this branch: its history must be preserved**.
-- Address any CI failures. Ignore any **Real service e2e test** and **Stress test** failures because they are **non-required** CI workflows.
-- Recommended git commands:
-  - \`git checkout ${mergeBranch}\` -- check out the PR branch.
-  - **FIX ANY CI FAILURES**
-  - git commit --amend -m ${prTitle}
-  - git push --force-with-lease`;
+1. Acknowledge the pull request by adding a comment -- "Actively working on it".
+2. If there are no CI failures, add the "msftbot: merge-next" label to the PR and one of the people with merge permissions will merge it in.
+3. If there ***are*** CI failures, check out the ${mergeBranch} branch and make code changes to fix the failures.
+  - You can ignore any failures in the **Real service e2e test** and **Stress test** pipelines. These pipelines are not required to pass to merge changes.
+4. **Do NOT rebase or squash the ${mergeBranch} branch: its history must be preserved**. Always amend the HEAD commit using the following git commands:
+  - \`git commit --amend -m "${prTitle}"\`
+  - \`git push --force-with-lease\`
+`;
 }
