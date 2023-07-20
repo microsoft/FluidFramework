@@ -23,8 +23,9 @@ import {
 	createSummarizerFromFactory,
 	mockConfigProvider,
 	timeoutAwait,
+	createSummarizer,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
@@ -201,23 +202,6 @@ const createContainer = async (
 	});
 };
 
-async function createSummarizer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	summaryVersion?: string,
-) {
-	return createSummarizerFromFactory(
-		provider,
-		container,
-		rootDataObjectFactory,
-		summaryVersion,
-		undefined /* containerRuntimeFactoryType */,
-		registryStoreEntries,
-		undefined /* logger */,
-		mockConfigProvider(settings),
-	);
-}
-
 async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	return new Promise<boolean>((resolve) => {
 		container.deltaManager.on("op", (op: ISequencedDocumentMessage) => {
@@ -255,7 +239,16 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 				rootDataObject.containerRuntime,
 			);
 			rootDataObject._root.set("dataStore2", dataObject.handle);
-			const { summarizer } = await createSummarizer(provider, container);
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				rootDataObjectFactory,
+				undefined /* summaryVersion */,
+				undefined /* containerRuntimeFactoryType */,
+				registryStoreEntries,
+				undefined /* logger */,
+				mockConfigProvider(settings),
+			);
 			await provider.ensureSynchronized();
 
 			// Summarization should fail because of a data store created during summarization which does not run GC.
@@ -294,7 +287,16 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 				rootDataObject.containerRuntime,
 			);
 			rootDataObject._root.set("dataStore2", dataObject.handle);
-			const { summarizer } = await createSummarizer(provider, container);
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				rootDataObjectFactory,
+				undefined /* summaryVersion */,
+				undefined /* containerRuntimeFactoryType */,
+				registryStoreEntries,
+				undefined /* logger */,
+				mockConfigProvider(settings),
+			);
 			await provider.ensureSynchronized();
 
 			// Summarization should fail because of a data store created during summarization which does not run GC.
@@ -578,4 +580,68 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			);
 		},
 	);
+
+	it("summarizer has pending ops during summarization", async () => {
+		// Wait for 200 ms for pending ops to be saved.
+		const pendingOpsTimeout = 200;
+		settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout"] =
+			pendingOpsTimeout;
+		const mockLogger = new MockLogger();
+		const container1 = await provider.makeTestContainer();
+		const { summarizer: summarizer1, container: summarizerContainer1 } = await createSummarizer(
+			provider,
+			container1,
+			undefined /* summaryVersion */,
+			undefined /* gcOptions */,
+			mockConfigProvider(settings),
+			mockLogger,
+		);
+
+		const defaultDataStore1 = await requestFluidObject<ITestDataObject>(
+			summarizerContainer1,
+			"default",
+		);
+
+		// Pause op processing and send ops so there are pending ops in the summarizer.
+		const pendingOpCount = 10;
+		await provider.opProcessingController.pauseProcessing(summarizerContainer1);
+		for (let i = 0; i < pendingOpCount; i++) {
+			defaultDataStore1._root.set(`key${i}`, `value${i}`);
+		}
+
+		const result = summarizer1.summarizeOnDemand({ reason: "test" });
+		const submitResult = await timeoutAwait(result.summarySubmitted);
+		if (!submitResult.success) {
+			submitResult.error.data = submitResult.data;
+			throw submitResult.error;
+		}
+		assert(
+			submitResult.data.stage === "submit",
+			"on-demand summary submitted data stage should be submit",
+		);
+		assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+		// Resume op processing after summary has been submitted so that the summary op and ack can be processed.
+		provider.opProcessingController.resumeProcessing(summarizerContainer1);
+
+		// Wait for the summary op and ack to be processed.
+		const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
+		if (!broadcastResult.success) {
+			throw broadcastResult.error;
+		}
+		const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
+		if (!ackNackResult.success) {
+			throw ackNackResult.error;
+		}
+		// We should have received a PendingOpsWhileSummarizing event with all the pending ops not saved.
+		mockLogger.assertMatch([
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:PendingOpsWhileSummarizing",
+				saved: false,
+				countBefore: pendingOpCount,
+				countAfter: pendingOpCount,
+				timeout: pendingOpsTimeout,
+			},
+		]);
+	});
 });

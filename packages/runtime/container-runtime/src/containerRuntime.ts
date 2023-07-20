@@ -2961,6 +2961,40 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		if (this.dirtyContainer) {
+			const pendingOpsTimeout = this.mc.config.getNumber(
+				"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout",
+			);
+			const pendingOpCount = this.pendingStateManager.pendingMessagesCount;
+			// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
+			// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
+			// within the timeout, continue summarizing in order to make progress. We will measure how often this
+			// happens and decide what the next steps are.
+			if (pendingOpsTimeout !== undefined) {
+				await new Promise<void>((resolve, reject) => {
+					const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
+					this.once("saved", () => {
+						clearTimeout(timeoutId);
+						resolve();
+					});
+					this.once("dispose", () => {
+						clearTimeout(timeoutId);
+						reject(new Error("Runtime is disposed while summarizing"));
+					});
+				});
+			}
+
+			// Log that there are pending ops while summarizing. This will help us gather data on how often this
+			// happens, whether we attempted to wait for these ops to be acked and what was the result.
+			summaryNumberLogger.sendTelemetryEvent({
+				eventName: "PendingOpsWhileSummarizing",
+				saved: this.dirtyContainer ? false : true,
+				timeout: pendingOpsTimeout,
+				countBefore: this.pendingStateManager.pendingMessagesCount,
+				countAfter: pendingOpCount,
+			});
+		}
+
 		const shouldPauseInboundSignal =
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
