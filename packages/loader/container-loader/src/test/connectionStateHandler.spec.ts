@@ -12,20 +12,17 @@ import {
 	ITokenClaims,
 	ISequencedClient,
 } from "@fluidframework/protocol-definitions";
-import {
-	IConnectionDetailsInternal,
-	IDeltaManager,
-	IDeltaManagerEvents,
-} from "@fluidframework/container-definitions";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { Audience } from "../audience";
 import { ConnectionState } from "../connectionState";
 import {
 	IConnectionStateHandlerInputs,
 	IConnectionStateHandler,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler";
-import { Audience } from "../audience";
+import { IConnectionDetailsInternal } from "../contracts";
 import { ProtocolHandler } from "../protocol";
 
 class MockDeltaManagerForCatchingUp
@@ -154,6 +151,7 @@ describe("ConnectionStateHandler Tests", () => {
 			},
 			connectionStateChanged: () => {},
 			logger: new TelemetryNullLogger(),
+			clientShouldHaveLeft: (clientId: string) => {},
 		};
 
 		deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
@@ -207,6 +205,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -233,6 +232,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -266,6 +266,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
+		connectionStateHandler.establishingConnection("read");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -320,6 +321,7 @@ describe("ConnectionStateHandler Tests", () => {
 			true,
 		); // readClientsWaitForJoinSignal
 
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -386,6 +388,8 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
+
+		connectionStateHandler.establishingConnection("write");
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,

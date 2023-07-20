@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	ChildLogger,
@@ -73,6 +73,8 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
+	private trackLatencyTimeout: number | undefined;
+
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
 	// Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -83,21 +85,10 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		try {
-			(Error as any).stackTraceLimit = 50;
-			assert(
-				this._disposed || this.socket.connected,
-				0x244 /* "Socket is closed, but connection is not!" */,
-			);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		} finally {
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
-		}
+		assert(
+			this._disposed || this.socket.connected,
+			0x244 /* "Socket is closed, but connection is not!" */,
+		);
 		return this._disposed;
 	}
 
@@ -136,6 +127,7 @@ export class DocumentDeltaConnection
 		protected readonly connectionId?: string,
 	) {
 		super((name, error) => {
+			this.addPropsToError(error);
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
@@ -147,7 +139,7 @@ export class DocumentDeltaConnection
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(logger, "DeltaConnection"));
 
-		this.on("newListener", (event, listener) => {
+		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
 			// Some events are already forwarded - see this.addTrackedListener() calls in initialize().
@@ -170,9 +162,29 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
-				this.addTrackedListener(event, (...args: any[]) => {
-					this.emit(event, ...args);
-				});
+				if (event === "pong") {
+					// Empty callback for tracking purposes in this class
+					this.trackedListeners.set("pong", () => {});
+
+					const sendPingLoop = () => {
+						const start = Date.now();
+
+						this.socket.volatile?.emit("ping", () => {
+							this.emit("pong", Date.now() - start);
+
+							// Schedule another ping event in 1 minute
+							this.trackLatencyTimeout = setTimeout(() => {
+								sendPingLoop();
+							}, 1000 * 60);
+						});
+					};
+
+					sendPingLoop();
+				} else {
+					this.addTrackedListener(event, (...args: any[]) => {
+						this.emit(event, ...args);
+					});
+				}
 			}
 		});
 	}
@@ -237,18 +249,7 @@ export class DocumentDeltaConnection
 	}
 
 	private checkNotDisposed() {
-		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		try {
-			(Error as any).stackTraceLimit = 50;
-			assert(!this.disposed, 0x20c /* "connection disposed" */);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		} finally {
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
-		}
+		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
 	/**
@@ -342,17 +343,6 @@ export class DocumentDeltaConnection
 	private closeSocket(error: IAnyDriverError) {
 		if (this._disposed) {
 			// This would be rare situation due to complexity around socket emitting events.
-			this.logger.sendTelemetryEvent(
-				{
-					eventName: "SocketCloseOnDisposedConnection",
-					driverVersion,
-					details: JSON.stringify({
-						...this.getConnectionDetailsProps(),
-						trackedListenerCount: this.trackedListeners.size,
-					}),
-				},
-				error,
-			);
 			return;
 		}
 		this.closeSocketCore(error);
@@ -393,6 +383,11 @@ export class DocumentDeltaConnection
 			return;
 		}
 
+		if (this.trackLatencyTimeout !== undefined) {
+			clearTimeout(this.trackLatencyTimeout);
+			this.trackLatencyTimeout = undefined;
+		}
+
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
 		// DocumentDeltaConnection to determine if emitting messages (ops) on the socket is allowed, which is
 		// important since OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it. Note that
@@ -410,17 +405,6 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-		this.logger.sendTelemetryEvent(
-			{
-				eventName: "AfterDisconnectEvent",
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-					disconnectListenerCount: this.listenerCount("disconnect"),
-				}),
-			},
-			err,
-		);
 	}
 
 	/**

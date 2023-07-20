@@ -40,8 +40,12 @@ function applyMessagesWithReconnect(
 	// log and apply all the ops created in the round
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
-		if (reconnectingClientIds.includes(message.clientId)) {
-			reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		if (reconnectingClientIds.includes(message.clientId as string)) {
+			reconnectClientMsgs
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+				.get(message.clientId as string)!
+				.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
 			clients.forEach((c) => c.applyMsg(message));
@@ -90,9 +94,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [
-				new TestClient({ mergeTreeUseNewLengthCalculations: true }),
-			];
+			const clients: TestClient[] = [new TestClient()];
 			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
 			let seq = 0;

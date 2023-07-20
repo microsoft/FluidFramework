@@ -42,7 +42,12 @@ export {
 	LocalReferencePosition,
 	SlidingPreference,
 } from "./localReference";
-export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
+export {
+	AttributionPolicy,
+	IMergeTreeAttributionOptions,
+	IMergeTreeOptions,
+	getSlideToSegoff,
+} from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -57,18 +62,13 @@ export {
 } from "./mergeTreeDeltaCallback";
 export {
 	BaseSegment,
-	BlockAction,
-	BlockUpdateActions,
 	CollaborationWindow,
 	compareNumbers,
 	compareStrings,
 	debugMarkerToString,
 	IConsensusInfo,
-	IHierBlock,
 	IJSONMarkerSegment,
 	IMarkerModifiedAction,
-	IMergeBlock,
-	IMergeNode,
 	IMergeNodeCommon,
 	IMoveInfo,
 	IncrementalBlockAction,
@@ -81,19 +81,11 @@ export {
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
-	ISegmentChanges,
 	Marker,
-	MaxNodesInBlock,
-	MergeBlock,
 	MergeNode,
-	MinListener,
-	NodeAction,
-	ordinalToArray,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SearchResult,
 	SegmentAccumulator,
-	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";

@@ -16,18 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompressedSerializedInterval": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompressedSerializedInterval": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_DeserializeCallback": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DeserializeCallback():
@@ -52,6 +40,30 @@ use_old_TypeAliasDeclaration_DeserializeCallback(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEndpointInRangeIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEndpointInRangeIndex():
+    TypeOnly<old.IEndpointInRangeIndex<any>>;
+declare function use_current_InterfaceDeclaration_IEndpointInRangeIndex(
+    use: TypeOnly<current.IEndpointInRangeIndex<any>>);
+use_current_InterfaceDeclaration_IEndpointInRangeIndex(
+    get_old_InterfaceDeclaration_IEndpointInRangeIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEndpointInRangeIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEndpointInRangeIndex():
+    TypeOnly<current.IEndpointInRangeIndex<any>>;
+declare function use_old_InterfaceDeclaration_IEndpointInRangeIndex(
+    use: TypeOnly<old.IEndpointInRangeIndex<any>>);
+use_old_InterfaceDeclaration_IEndpointInRangeIndex(
+    get_current_InterfaceDeclaration_IEndpointInRangeIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInterval": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInterval():
@@ -72,6 +84,30 @@ declare function use_old_InterfaceDeclaration_IInterval(
     use: TypeOnly<old.IInterval>);
 use_old_InterfaceDeclaration_IInterval(
     get_current_InterfaceDeclaration_IInterval());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IIntervalCollection": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IIntervalCollection():
+    TypeOnly<old.IIntervalCollection<any>>;
+declare function use_current_InterfaceDeclaration_IIntervalCollection(
+    use: TypeOnly<current.IIntervalCollection<any>>);
+use_current_InterfaceDeclaration_IIntervalCollection(
+    get_old_InterfaceDeclaration_IIntervalCollection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IIntervalCollection": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IIntervalCollection():
+    TypeOnly<current.IIntervalCollection<any>>;
+declare function use_old_InterfaceDeclaration_IIntervalCollection(
+    use: TypeOnly<old.IIntervalCollection<any>>);
+use_old_InterfaceDeclaration_IIntervalCollection(
+    get_current_InterfaceDeclaration_IIntervalCollection());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -172,6 +208,30 @@ use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOverlappingIntervalsIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOverlappingIntervalsIndex():
+    TypeOnly<old.IOverlappingIntervalsIndex<any>>;
+declare function use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
+    use: TypeOnly<current.IOverlappingIntervalsIndex<any>>);
+use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
+    get_old_InterfaceDeclaration_IOverlappingIntervalsIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOverlappingIntervalsIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOverlappingIntervalsIndex():
+    TypeOnly<current.IOverlappingIntervalsIndex<any>>;
+declare function use_old_InterfaceDeclaration_IOverlappingIntervalsIndex(
+    use: TypeOnly<old.IOverlappingIntervalsIndex<any>>);
+use_old_InterfaceDeclaration_IOverlappingIntervalsIndex(
+    get_current_InterfaceDeclaration_IOverlappingIntervalsIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequenceDeltaRange():
@@ -241,18 +301,6 @@ declare function use_old_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<old.ISerializedInterval>);
 use_old_InterfaceDeclaration_ISerializedInterval(
     get_current_InterfaceDeclaration_ISerializedInterval());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -330,6 +378,30 @@ use_old_InterfaceDeclaration_ISharedString(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IStartpointInRangeIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IStartpointInRangeIndex():
+    TypeOnly<old.IStartpointInRangeIndex<any>>;
+declare function use_current_InterfaceDeclaration_IStartpointInRangeIndex(
+    use: TypeOnly<current.IStartpointInRangeIndex<any>>);
+use_current_InterfaceDeclaration_IStartpointInRangeIndex(
+    get_old_InterfaceDeclaration_IStartpointInRangeIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IStartpointInRangeIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IStartpointInRangeIndex():
+    TypeOnly<current.IStartpointInRangeIndex<any>>;
+declare function use_old_InterfaceDeclaration_IStartpointInRangeIndex(
+    use: TypeOnly<old.IStartpointInRangeIndex<any>>);
+use_old_InterfaceDeclaration_IStartpointInRangeIndex(
+    get_current_InterfaceDeclaration_IStartpointInRangeIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IValueOpEmitter": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IValueOpEmitter():
@@ -378,30 +450,6 @@ use_old_ClassDeclaration_Interval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalCollection": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalCollection": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalCollectionIterator": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalCollectionIterator": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IntervalConflictResolver():
@@ -426,6 +474,30 @@ use_old_TypeAliasDeclaration_IntervalConflictResolver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IntervalIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IntervalIndex():
+    TypeOnly<old.IntervalIndex<any>>;
+declare function use_current_InterfaceDeclaration_IntervalIndex(
+    use: TypeOnly<current.IntervalIndex<any>>);
+use_current_InterfaceDeclaration_IntervalIndex(
+    get_old_InterfaceDeclaration_IntervalIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IntervalIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IntervalIndex():
+    TypeOnly<current.IntervalIndex<any>>;
+declare function use_old_InterfaceDeclaration_IntervalIndex(
+    use: TypeOnly<old.IntervalIndex<any>>);
+use_old_InterfaceDeclaration_IntervalIndex(
+    get_current_InterfaceDeclaration_IntervalIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IntervalLocator": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IntervalLocator():
@@ -433,7 +505,6 @@ declare function get_old_InterfaceDeclaration_IntervalLocator():
 declare function use_current_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<current.IntervalLocator>);
 use_current_InterfaceDeclaration_IntervalLocator(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IntervalLocator());
 
 /*
@@ -447,6 +518,102 @@ declare function use_old_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<old.IntervalLocator>);
 use_old_InterfaceDeclaration_IntervalLocator(
     get_current_InterfaceDeclaration_IntervalLocator());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IntervalOpType": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IntervalOpType():
+    TypeOnly<typeof old.IntervalOpType>;
+declare function use_current_VariableDeclaration_IntervalOpType(
+    use: TypeOnly<typeof current.IntervalOpType>);
+use_current_VariableDeclaration_IntervalOpType(
+    get_old_VariableDeclaration_IntervalOpType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IntervalOpType": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IntervalOpType():
+    TypeOnly<typeof current.IntervalOpType>;
+declare function use_old_VariableDeclaration_IntervalOpType(
+    use: TypeOnly<typeof old.IntervalOpType>);
+use_old_VariableDeclaration_IntervalOpType(
+    get_current_VariableDeclaration_IntervalOpType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IntervalRevertible": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IntervalRevertible():
+    TypeOnly<old.IntervalRevertible>;
+declare function use_current_TypeAliasDeclaration_IntervalRevertible(
+    use: TypeOnly<current.IntervalRevertible>);
+use_current_TypeAliasDeclaration_IntervalRevertible(
+    get_old_TypeAliasDeclaration_IntervalRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IntervalRevertible": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IntervalRevertible():
+    TypeOnly<current.IntervalRevertible>;
+declare function use_old_TypeAliasDeclaration_IntervalRevertible(
+    use: TypeOnly<old.IntervalRevertible>);
+use_old_TypeAliasDeclaration_IntervalRevertible(
+    get_current_TypeAliasDeclaration_IntervalRevertible());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IntervalStickiness": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IntervalStickiness():
+    TypeOnly<typeof old.IntervalStickiness>;
+declare function use_current_VariableDeclaration_IntervalStickiness(
+    use: TypeOnly<typeof current.IntervalStickiness>);
+use_current_VariableDeclaration_IntervalStickiness(
+    get_old_VariableDeclaration_IntervalStickiness());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IntervalStickiness": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IntervalStickiness():
+    TypeOnly<typeof current.IntervalStickiness>;
+declare function use_old_VariableDeclaration_IntervalStickiness(
+    use: TypeOnly<typeof old.IntervalStickiness>);
+use_old_VariableDeclaration_IntervalStickiness(
+    get_current_VariableDeclaration_IntervalStickiness());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IntervalStickiness": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IntervalStickiness():
+    TypeOnly<old.IntervalStickiness>;
+declare function use_current_TypeAliasDeclaration_IntervalStickiness(
+    use: TypeOnly<current.IntervalStickiness>);
+use_current_TypeAliasDeclaration_IntervalStickiness(
+    get_old_TypeAliasDeclaration_IntervalStickiness());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IntervalStickiness": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IntervalStickiness():
+    TypeOnly<current.IntervalStickiness>;
+declare function use_old_TypeAliasDeclaration_IntervalStickiness(
+    use: TypeOnly<old.IntervalStickiness>);
+use_old_TypeAliasDeclaration_IntervalStickiness(
+    get_current_TypeAliasDeclaration_IntervalStickiness());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -532,7 +699,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -546,6 +712,30 @@ declare function use_old_ClassDeclaration_SequenceInterval(
     use: TypeOnly<old.SequenceInterval>);
 use_old_ClassDeclaration_SequenceInterval(
     get_current_ClassDeclaration_SequenceInterval());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceIntervalIndexes.Overlapping": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping():
+    TypeOnly<old.SequenceIntervalIndexes.Overlapping>;
+declare function use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
+    use: TypeOnly<current.SequenceIntervalIndexes.Overlapping>);
+use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
+    get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceIntervalIndexes.Overlapping": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping():
+    TypeOnly<current.SequenceIntervalIndexes.Overlapping>;
+declare function use_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
+    use: TypeOnly<old.SequenceIntervalIndexes.Overlapping>);
+use_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
+    get_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -571,6 +761,30 @@ declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
     // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SequenceOptions():
+    TypeOnly<old.SequenceOptions>;
+declare function use_current_InterfaceDeclaration_SequenceOptions(
+    use: TypeOnly<current.SequenceOptions>);
+use_current_InterfaceDeclaration_SequenceOptions(
+    get_old_InterfaceDeclaration_SequenceOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SequenceOptions():
+    TypeOnly<current.SequenceOptions>;
+declare function use_old_InterfaceDeclaration_SequenceOptions(
+    use: TypeOnly<old.SequenceOptions>);
+use_old_InterfaceDeclaration_SequenceOptions(
+    get_current_InterfaceDeclaration_SequenceOptions());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -746,6 +960,30 @@ use_old_ClassDeclaration_SharedStringFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SharedStringRevertible": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
+    TypeOnly<old.SharedStringRevertible>;
+declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
+    use: TypeOnly<current.SharedStringRevertible>);
+use_current_TypeAliasDeclaration_SharedStringRevertible(
+    get_old_TypeAliasDeclaration_SharedStringRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SharedStringRevertible": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SharedStringRevertible():
+    TypeOnly<current.SharedStringRevertible>;
+declare function use_old_TypeAliasDeclaration_SharedStringRevertible(
+    use: TypeOnly<old.SharedStringRevertible>);
+use_old_TypeAliasDeclaration_SharedStringRevertible(
+    get_current_TypeAliasDeclaration_SharedStringRevertible());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SharedStringSegment():
@@ -794,6 +1032,246 @@ use_old_ClassDeclaration_SubSequence(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendAddIntervalToRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendAddIntervalToRevertibles():
+    TypeOnly<typeof old.appendAddIntervalToRevertibles>;
+declare function use_current_FunctionDeclaration_appendAddIntervalToRevertibles(
+    use: TypeOnly<typeof current.appendAddIntervalToRevertibles>);
+use_current_FunctionDeclaration_appendAddIntervalToRevertibles(
+    get_old_FunctionDeclaration_appendAddIntervalToRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendAddIntervalToRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendAddIntervalToRevertibles():
+    TypeOnly<typeof current.appendAddIntervalToRevertibles>;
+declare function use_old_FunctionDeclaration_appendAddIntervalToRevertibles(
+    use: TypeOnly<typeof old.appendAddIntervalToRevertibles>);
+use_old_FunctionDeclaration_appendAddIntervalToRevertibles(
+    get_current_FunctionDeclaration_appendAddIntervalToRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendChangeIntervalToRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendChangeIntervalToRevertibles():
+    TypeOnly<typeof old.appendChangeIntervalToRevertibles>;
+declare function use_current_FunctionDeclaration_appendChangeIntervalToRevertibles(
+    use: TypeOnly<typeof current.appendChangeIntervalToRevertibles>);
+use_current_FunctionDeclaration_appendChangeIntervalToRevertibles(
+    get_old_FunctionDeclaration_appendChangeIntervalToRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendChangeIntervalToRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendChangeIntervalToRevertibles():
+    TypeOnly<typeof current.appendChangeIntervalToRevertibles>;
+declare function use_old_FunctionDeclaration_appendChangeIntervalToRevertibles(
+    use: TypeOnly<typeof old.appendChangeIntervalToRevertibles>);
+use_old_FunctionDeclaration_appendChangeIntervalToRevertibles(
+    get_current_FunctionDeclaration_appendChangeIntervalToRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendDeleteIntervalToRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendDeleteIntervalToRevertibles():
+    TypeOnly<typeof old.appendDeleteIntervalToRevertibles>;
+declare function use_current_FunctionDeclaration_appendDeleteIntervalToRevertibles(
+    use: TypeOnly<typeof current.appendDeleteIntervalToRevertibles>);
+use_current_FunctionDeclaration_appendDeleteIntervalToRevertibles(
+    get_old_FunctionDeclaration_appendDeleteIntervalToRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendDeleteIntervalToRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendDeleteIntervalToRevertibles():
+    TypeOnly<typeof current.appendDeleteIntervalToRevertibles>;
+declare function use_old_FunctionDeclaration_appendDeleteIntervalToRevertibles(
+    use: TypeOnly<typeof old.appendDeleteIntervalToRevertibles>);
+use_old_FunctionDeclaration_appendDeleteIntervalToRevertibles(
+    get_current_FunctionDeclaration_appendDeleteIntervalToRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendIntervalPropertyChangedToRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles():
+    TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>;
+declare function use_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
+    use: TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>);
+use_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
+    get_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendIntervalPropertyChangedToRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles():
+    TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>;
+declare function use_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
+    use: TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>);
+use_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
+    get_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendSharedStringDeltaToRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles():
+    TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>;
+declare function use_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
+    use: TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>);
+use_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
+    get_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendSharedStringDeltaToRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles():
+    TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>;
+declare function use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
+    use: TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>);
+use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
+    get_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createEndpointInRangeIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createEndpointInRangeIndex():
+    TypeOnly<typeof old.createEndpointInRangeIndex>;
+declare function use_current_FunctionDeclaration_createEndpointInRangeIndex(
+    use: TypeOnly<typeof current.createEndpointInRangeIndex>);
+use_current_FunctionDeclaration_createEndpointInRangeIndex(
+    get_old_FunctionDeclaration_createEndpointInRangeIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createEndpointInRangeIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createEndpointInRangeIndex():
+    TypeOnly<typeof current.createEndpointInRangeIndex>;
+declare function use_old_FunctionDeclaration_createEndpointInRangeIndex(
+    use: TypeOnly<typeof old.createEndpointInRangeIndex>);
+use_old_FunctionDeclaration_createEndpointInRangeIndex(
+    get_current_FunctionDeclaration_createEndpointInRangeIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createOverlappingIntervalsIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createOverlappingIntervalsIndex():
+    TypeOnly<typeof old.createOverlappingIntervalsIndex>;
+declare function use_current_FunctionDeclaration_createOverlappingIntervalsIndex(
+    use: TypeOnly<typeof current.createOverlappingIntervalsIndex>);
+use_current_FunctionDeclaration_createOverlappingIntervalsIndex(
+    get_old_FunctionDeclaration_createOverlappingIntervalsIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createOverlappingIntervalsIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createOverlappingIntervalsIndex():
+    TypeOnly<typeof current.createOverlappingIntervalsIndex>;
+declare function use_old_FunctionDeclaration_createOverlappingIntervalsIndex(
+    use: TypeOnly<typeof old.createOverlappingIntervalsIndex>);
+use_old_FunctionDeclaration_createOverlappingIntervalsIndex(
+    get_current_FunctionDeclaration_createOverlappingIntervalsIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createOverlappingSequenceIntervalsIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex():
+    TypeOnly<typeof old.createOverlappingSequenceIntervalsIndex>;
+declare function use_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
+    use: TypeOnly<typeof current.createOverlappingSequenceIntervalsIndex>);
+use_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
+    get_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createOverlappingSequenceIntervalsIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex():
+    TypeOnly<typeof current.createOverlappingSequenceIntervalsIndex>;
+declare function use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
+    use: TypeOnly<typeof old.createOverlappingSequenceIntervalsIndex>);
+use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
+    get_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createStartpointInRangeIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createStartpointInRangeIndex():
+    TypeOnly<typeof old.createStartpointInRangeIndex>;
+declare function use_current_FunctionDeclaration_createStartpointInRangeIndex(
+    use: TypeOnly<typeof current.createStartpointInRangeIndex>);
+use_current_FunctionDeclaration_createStartpointInRangeIndex(
+    get_old_FunctionDeclaration_createStartpointInRangeIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createStartpointInRangeIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createStartpointInRangeIndex():
+    TypeOnly<typeof current.createStartpointInRangeIndex>;
+declare function use_old_FunctionDeclaration_createStartpointInRangeIndex(
+    use: TypeOnly<typeof old.createStartpointInRangeIndex>);
+use_old_FunctionDeclaration_createStartpointInRangeIndex(
+    get_current_FunctionDeclaration_createStartpointInRangeIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardSharedStringRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_discardSharedStringRevertibles():
+    TypeOnly<typeof old.discardSharedStringRevertibles>;
+declare function use_current_FunctionDeclaration_discardSharedStringRevertibles(
+    use: TypeOnly<typeof current.discardSharedStringRevertibles>);
+use_current_FunctionDeclaration_discardSharedStringRevertibles(
+    get_old_FunctionDeclaration_discardSharedStringRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardSharedStringRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_discardSharedStringRevertibles():
+    TypeOnly<typeof current.discardSharedStringRevertibles>;
+declare function use_old_FunctionDeclaration_discardSharedStringRevertibles(
+    use: TypeOnly<typeof old.discardSharedStringRevertibles>);
+use_old_FunctionDeclaration_discardSharedStringRevertibles(
+    get_current_FunctionDeclaration_discardSharedStringRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getTextAndMarkers": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getTextAndMarkers():
@@ -838,3 +1316,51 @@ declare function use_old_FunctionDeclaration_intervalLocatorFromEndpoint(
     use: TypeOnly<typeof old.intervalLocatorFromEndpoint>);
 use_old_FunctionDeclaration_intervalLocatorFromEndpoint(
     get_current_FunctionDeclaration_intervalLocatorFromEndpoint());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertSharedStringRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_revertSharedStringRevertibles():
+    TypeOnly<typeof old.revertSharedStringRevertibles>;
+declare function use_current_FunctionDeclaration_revertSharedStringRevertibles(
+    use: TypeOnly<typeof current.revertSharedStringRevertibles>);
+use_current_FunctionDeclaration_revertSharedStringRevertibles(
+    get_old_FunctionDeclaration_revertSharedStringRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertSharedStringRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_revertSharedStringRevertibles():
+    TypeOnly<typeof current.revertSharedStringRevertibles>;
+declare function use_old_FunctionDeclaration_revertSharedStringRevertibles(
+    use: TypeOnly<typeof old.revertSharedStringRevertibles>);
+use_old_FunctionDeclaration_revertSharedStringRevertibles(
+    get_current_FunctionDeclaration_revertSharedStringRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_sequenceIntervalHelpers": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_sequenceIntervalHelpers():
+    TypeOnly<typeof old.sequenceIntervalHelpers>;
+declare function use_current_VariableDeclaration_sequenceIntervalHelpers(
+    use: TypeOnly<typeof current.sequenceIntervalHelpers>);
+use_current_VariableDeclaration_sequenceIntervalHelpers(
+    get_old_VariableDeclaration_sequenceIntervalHelpers());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_sequenceIntervalHelpers": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_sequenceIntervalHelpers():
+    TypeOnly<typeof current.sequenceIntervalHelpers>;
+declare function use_old_VariableDeclaration_sequenceIntervalHelpers(
+    use: TypeOnly<typeof old.sequenceIntervalHelpers>);
+use_old_VariableDeclaration_sequenceIntervalHelpers(
+    get_current_VariableDeclaration_sequenceIntervalHelpers());

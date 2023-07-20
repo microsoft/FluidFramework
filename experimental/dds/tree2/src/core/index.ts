@@ -74,6 +74,7 @@ export {
 	getDescendant,
 	compareUpPaths,
 	clonePath,
+	topDownPath,
 	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
@@ -81,11 +82,7 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	UpPathDefault,
@@ -124,6 +121,7 @@ export {
 	Named,
 	FieldStoredSchema,
 	ValueSchema,
+	PrimitiveValueSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -183,4 +181,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, LocalCommitSource } from "./undo";

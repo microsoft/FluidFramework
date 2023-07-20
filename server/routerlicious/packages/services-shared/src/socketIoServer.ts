@@ -7,9 +7,9 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -48,6 +48,24 @@ class SocketIoSocket implements core.IWebSocket {
 	}
 }
 
+/**
+ * From https://socket.io/docs/v4/server-api/#event-connection_error
+ */
+interface ISocketIoConnectionError extends Error {
+	code: number;
+	message: string;
+	req: http.IncomingMessage;
+	context: any;
+}
+function isSocketIoConnectionError(error: unknown): error is ISocketIoConnectionError {
+	return (
+		error !== undefined &&
+		typeof (error as ISocketIoConnectionError).code == "number" &&
+		typeof (error as ISocketIoConnectionError).message == "string" &&
+		typeof (error as ISocketIoConnectionError).req == "object"
+	);
+}
+
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
 
@@ -59,6 +77,44 @@ class SocketIoServer implements core.IWebSocketServer {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
+
+			// Server side listening for ping events
+			socket.on("ping", (cb) => {
+				if (typeof cb === "function") {
+					cb();
+				}
+			});
+		});
+		this.io.engine.on("connection_error", (error) => {
+			if (isSocketIoConnectionError(error) && error.req.url !== undefined) {
+				const telemetryProperties: Record<string, any> = {
+					reason: JSON.stringify({ code: error.code, message: error.message }), // e.g. { code: 1, message: "Session ID unknown" }
+				};
+				// req.url can be just "/socket.io/?documentId=..." without protocol or host.
+				// We can prepend a dummy protocol+host in those situations since we only care about parsing query string.
+				const urlString = error.req.url.startsWith("/")
+					? `http://alfred:3000${error.req.url}`
+					: error.req.url;
+				try {
+					const url = new URL(urlString);
+					telemetryProperties.protocolVersion = url.searchParams.get("EIO"); // '2', '3', or '4'
+					telemetryProperties.transport = url.searchParams.get("transport"); // 'websocket' or 'polling'
+					telemetryProperties[BaseTelemetryProperties.tenantId] =
+						url.searchParams.get("tenantId") ?? "";
+					telemetryProperties[BaseTelemetryProperties.documentId] =
+						url.searchParams.get("documentId") ?? "";
+				} catch (e) {
+					Lumberjack.error(
+						"Unable to parse connection_error req.url",
+						{
+							...telemetryProperties,
+							url: urlString,
+						},
+						e,
+					);
+				}
+				Lumberjack.error("Socket.io Connection Error", telemetryProperties, error);
+			}
 		});
 	}
 
@@ -67,7 +123,9 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
@@ -84,15 +142,28 @@ export function create(
 		host: redisConfig.host,
 		port: redisConfig.port,
 		password: redisConfig.pass,
+		connectTimeout: redisConfig.connectTimeout,
+		enableReadyCheck: true,
+		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+		enableOfflineQueue: redisConfig.enableOfflineQueue,
 	};
+	if (redisConfig.enableAutoPipelining) {
+		/**
+		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+		 * More info: https://github.com/luin/ioredis#autopipelining
+		 */
+		options.enableAutoPipelining = true;
+		options.autoPipeliningIgnoredCommands = ["ping"];
+	}
 	if (redisConfig.tls) {
 		options.tls = {
 			servername: redisConfig.host,
 		};
 	}
 
-	const pub = new Redis(clone(options));
-	const sub = new Redis(clone(options));
+	const pub = new Redis.default(clone(options));
+	const sub = new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);

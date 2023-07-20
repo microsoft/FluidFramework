@@ -12,7 +12,6 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	IRootSummaryTreeWithStats,
 	isRuntimeMessage,
 	RuntimeMessage,
 	agentSchedulerId,
@@ -67,6 +66,8 @@ export {
 	OpActionEventListener,
 	OpActionEventName,
 	ICancellableSummarizerController,
+	SubmitSummaryFailureData,
+	SummaryStage,
 } from "./summary";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
 export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";

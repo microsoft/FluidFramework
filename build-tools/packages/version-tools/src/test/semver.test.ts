@@ -78,12 +78,6 @@ describe("semver", () => {
 			assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "patch");
 		});
 
-		it("prerelease bump type returns undefined", () => {
-			assert.isUndefined(
-				detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.1.0.0"),
-			);
-		});
-
 		it("v1 >= v2 throws", () => {
 			assert.throws(() => detectBumpType("0.0.1", "0.0.1"));
 			assert.throws(() => detectBumpType("0.0.2", "0.0.1"));

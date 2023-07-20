@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { strict as assert } from "assert";
-import { PromiseCache } from "@fluidframework/common-utils";
+import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IOdspResolvedUrl,
 	ICacheEntry,

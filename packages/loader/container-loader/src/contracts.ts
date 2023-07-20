@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
-	IDeltaQueue,
-	ReadOnlyInfo,
-	IConnectionDetailsInternal,
+	IConnectionDetails,
 	ICriticalContainerError,
+	IDeltaQueue,
 	IFluidCodeDetails,
 	isFluidPackage,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import {
 	ConnectionMode,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	IClientConfiguration,
 	IClientDetails,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { IAnyDriverError, IContainerPackageInfo } from "@fluidframework/driver-definitions";
@@ -26,6 +27,16 @@ export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
+}
+
+/**
+ * Internal version of IConnectionDetails with props are only exposed internally
+ */
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+	mode: ConnectionMode;
+	version: string;
+	initialClients: ISignalClient[];
+	reason: string;
 }
 
 /**
@@ -148,8 +159,6 @@ export interface IConnectionManagerFactoryArgs {
 
 	/**
 	 * Called whenever ping/pong messages are roundtripped on connection.
-	 *
-	 * @deprecated No replacement API intended.
 	 */
 	readonly pongHandler: (latency: number) => void;
 
@@ -167,6 +176,16 @@ export interface IConnectionManagerFactoryArgs {
 	 * `undefined` indicates that user permissions are not yet known.
 	 */
 	readonly readonlyChangeHandler: (readonly?: boolean) => void;
+
+	/**
+	 * Called whenever we try to start establishing a new connection.
+	 */
+	readonly establishConnectionHandler: (reason: string) => void;
+
+	/**
+	 * Called whenever we cancel the connection in progress.
+	 */
+	readonly cancelConnectionHandler: (reason: string) => void;
 }
 
 /**

@@ -10,7 +10,7 @@ import { createLoader, ITestFluidObject, timeoutPromise } from "@fluidframework/
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -34,7 +34,8 @@ const testConfigs = generatePairwiseOptions({
 	ddsSaveAfterAttach: [true, false],
 });
 
-describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
 		switch (provider.driver.type) {
@@ -53,8 +54,9 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 			const provider = getTestObjectProvider();
 			const timeoutDurationMs = this.timeout() / 2;
 			let containerUrl: IResolvedUrl | undefined;
+			const sharedStringFactory = SharedString.getFactory();
 			const channelFactoryRegistry: [string | undefined, IChannelFactory][] = [
-				[SharedStringFactory.Type, SharedString.getFactory()],
+				[sharedStringFactory.type, sharedStringFactory],
 			];
 			const containerConfig = { registry: channelFactoryRegistry };
 

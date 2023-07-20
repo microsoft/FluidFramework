@@ -14,6 +14,7 @@ import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
@@ -28,9 +29,9 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
@@ -38,6 +39,9 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+
+// @public
+export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;
 
 // @public
 export class AttachmentTreeEntry {
@@ -67,6 +71,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly tenantId: string | undefined;
 }
 
+// @public (undocumented)
+export const blobHeadersBlobName = ".metadata.blobHeaders";
+
 // @public
 export class BlobTreeEntry {
     constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
@@ -88,9 +95,6 @@ export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDo
 
 // @public
 export const canRetryOnError: (error: any) => boolean;
-
-// @internal @deprecated
-export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
 
 // @internal
 export interface CombinedAppAndProtocolSummary extends ISummaryTree {
@@ -115,13 +119,15 @@ export const createWriteError: (message: string, props: DriverErrorTelemetryProp
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-    constructor(message: string, props: DriverErrorTelemetryProps);
+    constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
     readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    // (undocumented)
+    readonly storageOnlyReason: string | undefined;
 }
 
 // @public (undocumented)
@@ -185,6 +191,16 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public (undocumented)
+export interface ICompressionStorageConfig {
+    // Warning: (ae-forgotten-export) The symbol "SummaryCompressionAlgorithm" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    algorithm: SummaryCompressionAlgorithm;
+    // (undocumented)
+    minSizeToCompress: number;
+}
 
 // @public
 export class InsecureUrlResolver implements IUrlResolver {

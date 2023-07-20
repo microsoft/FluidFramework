@@ -60,3 +60,51 @@ declare function use_old_FunctionDeclaration_getW3CData(
     use: TypeOnly<typeof old.getW3CData>);
 use_old_FunctionDeclaration_getW3CData(
     get_current_FunctionDeclaration_getW3CData());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_promiseRaceWithWinner": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_promiseRaceWithWinner():
+    TypeOnly<typeof old.promiseRaceWithWinner>;
+declare function use_current_FunctionDeclaration_promiseRaceWithWinner(
+    use: TypeOnly<typeof current.promiseRaceWithWinner>);
+use_current_FunctionDeclaration_promiseRaceWithWinner(
+    get_old_FunctionDeclaration_promiseRaceWithWinner());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_promiseRaceWithWinner": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_promiseRaceWithWinner():
+    TypeOnly<typeof current.promiseRaceWithWinner>;
+declare function use_old_FunctionDeclaration_promiseRaceWithWinner(
+    use: TypeOnly<typeof old.promiseRaceWithWinner>);
+use_old_FunctionDeclaration_promiseRaceWithWinner(
+    get_current_FunctionDeclaration_promiseRaceWithWinner());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateMessages": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_validateMessages():
+    TypeOnly<typeof old.validateMessages>;
+declare function use_current_FunctionDeclaration_validateMessages(
+    use: TypeOnly<typeof current.validateMessages>);
+use_current_FunctionDeclaration_validateMessages(
+    get_old_FunctionDeclaration_validateMessages());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateMessages": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_validateMessages():
+    TypeOnly<typeof current.validateMessages>;
+declare function use_old_FunctionDeclaration_validateMessages(
+    use: TypeOnly<typeof old.validateMessages>);
+use_old_FunctionDeclaration_validateMessages(
+    get_current_FunctionDeclaration_validateMessages());

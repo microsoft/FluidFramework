@@ -15,8 +15,6 @@
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -28,7 +26,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
@@ -43,9 +41,9 @@
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@0.1040.1000",
 		"concurrently": "^7.6.0",
@@ -53,6 +51,14 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"broken": {
@@ -75,6 +81,15 @@
 			},
 			"ClassDeclaration_MongoDatabaseManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISecretManager": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITokenRevocationResponse": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITokenRevocationManager": {
+				"backCompat": false
 			}
 		}
 	}

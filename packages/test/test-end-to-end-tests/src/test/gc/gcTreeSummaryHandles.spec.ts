@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
@@ -179,8 +178,13 @@ async function submitAndAckSummary(
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider) => {
+describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider, apis) => {
+	const {
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+
 	let provider: ITestObjectProvider;
+	// TODO:#4670: Make this compat-version-specific.
 	const dataObjectFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },

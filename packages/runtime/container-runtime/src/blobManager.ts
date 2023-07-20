@@ -45,6 +45,7 @@ import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
+import { IBlobMetadata } from "./metadata";
 
 /**
  * This class represents blob (long string)
@@ -61,7 +62,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	}
 
 	public get isAttached(): boolean {
-		return this.attached;
+		return this.routeContext.isAttached && this.attached;
 	}
 
 	public readonly absolutePath: string;
@@ -70,12 +71,16 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<any>,
+		private readonly onAttachGraph?: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
 	public attachGraph() {
-		this.attached = true;
+		if (!this.attached) {
+			this.attached = true;
+			this.onAttachGraph?.();
+		}
 	}
 
 	public bind(handle: IFluidHandle) {
@@ -132,14 +137,22 @@ interface PendingBlob {
 	blob: ArrayBufferLike;
 	status: PendingBlobStatus;
 	storageId?: string;
-	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
+	handleP: Deferred<BlobHandle>;
 	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
+	attached?: boolean;
+	acked?: boolean;
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds?: number };
+	[id: string]: {
+		blob: string;
+		uploadTime?: number;
+		minTTLInSeconds?: number;
+		attached?: boolean;
+		acked?: boolean;
+	};
 }
 
 export interface IBlobManagerEvents {
@@ -227,11 +240,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.runtime.on("disconnected", () => this.onDisconnected());
+
 		this.redirectTable = this.load(snapshot);
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
+			const attached = entry.attached;
+			const acked = entry.acked;
 			if (entry.minTTLInSeconds && entry.uploadTime) {
 				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
 				// stashed entries with more than half-life in storage will not be reuploaded
@@ -243,6 +259,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						uploadP: undefined,
 						uploadTime: entry.uploadTime,
 						minTTLInSeconds: entry.minTTLInSeconds,
+						attached,
+						acked,
 					});
 					return;
 				}
@@ -252,6 +270,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				status: PendingBlobStatus.OfflinePendingUpload,
 				handleP: new Deferred(),
 				uploadP: this.uploadBlob(localId, blob),
+				attached,
+				acked,
 			});
 		});
 
@@ -391,13 +411,23 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
+	private getBlobHandle(id: string): BlobHandle {
 		assert(
 			this.redirectTable.has(id) || this.pendingBlobs.has(id),
 			0x384 /* requesting handle for unknown blob */,
 		);
-		return new BlobHandle(`${BlobManager.basePath}/${id}`, this.routeContext, async () =>
-			this.getBlob(id),
+		const pending = this.pendingBlobs.get(id);
+		const callback = pending
+			? () => {
+					pending.attached = true;
+					this.deletePendingBlobMaybe(id);
+			  }
+			: undefined;
+		return new BlobHandle(
+			`${BlobManager.basePath}/${id}`,
+			this.routeContext,
+			async () => this.getBlob(id),
+			callback,
 		);
 	}
 
@@ -433,6 +463,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			status: PendingBlobStatus.OnlinePendingUpload,
 			handleP: new Deferred(),
 			uploadP: this.uploadBlob(localId, blob),
+			attached: false,
+			acked: false,
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
@@ -459,11 +491,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.redirectTable.set(fromId, toId);
 	}
 
-	private deleteAndEmitsIfEmpty(id: string) {
+	private deletePendingBlobMaybe(id: string) {
 		if (this.pendingBlobs.has(id)) {
-			this.pendingBlobs.delete(id);
-			if (!this.hasPendingBlobs) {
-				this.emit("noPendingBlobs");
+			const entry = this.pendingBlobs.get(id);
+			if (entry?.attached && entry?.acked) {
+				this.pendingBlobs.delete(id);
+				if (!this.hasPendingBlobs) {
+					this.emit("noPendingBlobs");
+				}
 			}
 		}
 	}
@@ -493,7 +528,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					// happened before and so, the server won't delete it.
 					this.setRedirection(localId, response.id);
 					entry.handleP.resolve(this.getBlobHandle(localId));
-					this.deleteAndEmitsIfEmpty(localId);
+					this.deletePendingBlobMaybe(localId);
 				} else {
 					// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 					// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
@@ -594,8 +629,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
-		const localId = message.metadata?.localId;
-		const blobId = message.metadata?.blobId;
+		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
+		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
 		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
@@ -616,23 +651,29 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// This is safe because the server will keep the blob alive and the op containing the local ID to
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
 				waitingBlobs.forEach((pendingLocalId) => {
-					const pendingBlobEntry = this.pendingBlobs.get(pendingLocalId);
+					const entry = this.pendingBlobs.get(pendingLocalId);
 					assert(
-						pendingBlobEntry !== undefined,
+						entry !== undefined,
 						0x38f /* local online BlobAttach op with no pending blob entry */,
 					);
 
 					// It's possible we transitioned to offline flow while waiting for this op.
-					if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
+					if (entry.status === PendingBlobStatus.OnlinePendingOp) {
 						this.setRedirection(pendingLocalId, blobId);
-						pendingBlobEntry.handleP.resolve(this.getBlobHandle(pendingLocalId));
-						this.deleteAndEmitsIfEmpty(pendingLocalId);
+						entry.acked = true;
+						entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+						this.deletePendingBlobMaybe(pendingLocalId);
 					}
 				});
 				this.opsInFlight.delete(blobId);
 			}
-			// For blobs that were transitioned to offline flow while waiting for this op, the entry should be deleted.
-			this.deleteAndEmitsIfEmpty(localId);
+			// offline flow does not resolve the handle (since it was already resolved)
+			// but we still need to delete the entry in case is acked and attached.
+			const localEntry = this.pendingBlobs.get(localId);
+			if (localEntry) {
+				localEntry.acked = true;
+				this.deletePendingBlobMaybe(localId);
+			}
 		}
 	}
 
@@ -905,13 +946,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = entry.minTTLInSeconds
-				? {
-						blob: bufferToString(entry.blob, "base64"),
-						uploadTime: entry.uploadTime,
-						minTTLInSeconds: entry.minTTLInSeconds,
-				  }
-				: { blob: bufferToString(entry.blob, "base64") };
+			blobs[key] = {
+				blob: bufferToString(entry.blob, "base64"),
+				attached: entry.attached,
+				acked: entry.acked,
+				minTTLInSeconds: entry.minTTLInSeconds,
+				uploadTime: entry.uploadTime,
+			};
 		}
 		return blobs;
 	}

@@ -20,9 +20,9 @@ import {
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
-
+import { DocumentMap } from "./DocumentMap.js";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
+import { DocumentMatrix } from "./DocumentMatrix.js";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
@@ -73,6 +73,8 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			return new DocumentMap(documentProps);
 		case "DocumentMultipleDataStores":
 			return new DocumentMultipleDds(documentProps);
+		case "DocumentMatrix":
+			return new DocumentMatrix(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}

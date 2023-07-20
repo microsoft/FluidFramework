@@ -20,8 +20,8 @@ import {
 } from "@fluidframework/server-services-client";
 import type {
 	ICache,
+	IRevokedTokenChecker,
 	ITenantManager,
-	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
@@ -129,6 +129,7 @@ interface IVerifyTokenOptions {
 	singleUseTokenCache: ICache | undefined;
 	enableTokenCache: boolean;
 	tokenCache: ICache | undefined;
+	revokedTokenChecker: IRevokedTokenChecker | undefined;
 }
 
 export function respondWithNetworkError(response: Response, error: NetworkError): Response {
@@ -175,6 +176,18 @@ export async function verifyToken(
 				maxTokenLifetimeSec = defaultMaxTokenLifetimeSec;
 			}
 			tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+		}
+
+		// Revoked token check
+		if (options.revokedTokenChecker && claims.jti) {
+			const isTokenRevoked = await options.revokedTokenChecker.isTokenRevoked(
+				tenantId,
+				documentId,
+				claims.jti,
+			);
+			if (isTokenRevoked) {
+				throw new NetworkError(403, "Permission denied. Access token has been revoked.");
+			}
 		}
 
 		// Check token cache first
@@ -229,13 +242,13 @@ export async function verifyToken(
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
-	tokenManager: ITokenRevocationManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
 		singleUseTokenCache: undefined,
 		enableTokenCache: false,
 		tokenCache: undefined,
+		revokedTokenChecker: undefined,
 	},
 ): RequestHandler {
 	const maxTokenLifetimeSec = getNumberFromConfig("auth:maxTokenLifetimeSec", config);
@@ -303,8 +316,8 @@ export function verifyStorageToken(
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 			}
-			if (tokenManager && claims.jti) {
-				const tokenRevoked = await tokenManager.isTokenRevoked(
+			if (options.revokedTokenChecker && claims.jti) {
+				const tokenRevoked = await options.revokedTokenChecker.isTokenRevoked(
 					tenantId,
 					documentId,
 					claims.jti,

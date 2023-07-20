@@ -17,36 +17,19 @@ import {
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	TestAnchorSet,
-	TestChangeFamily,
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
-	testChangeFamilyFactory,
 	asDelta,
+	NoOpChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
-
-type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
-
-function editManagerFactory(options: {
-	rebaser?: ChangeRebaser<TestChange>;
-	sessionId?: SessionId;
-}): {
-	manager: TestEditManager;
-	anchors: TestAnchorSet;
-	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
-} {
-	const family = testChangeFamilyFactory(options.rebaser);
-	const anchors = new TestAnchorSet();
-	const manager = new EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? localSessionId, new MockRepairDataStoreProvider(), anchors);
-	return { manager, anchors, family };
-}
+import {
+	TestEditManager,
+	editManagerFactory,
+	rebaseLocalEditsOverTrunkEdits,
+	rebasePeerEditsOverTrunkEdits,
+} from "./editManagerTestUtils";
 
 const localSessionId: SessionId = "0";
 const peer1: SessionId = "1";
@@ -347,6 +330,15 @@ describe("EditManager", () => {
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
 			});
+
+			it("disregards branches which are already forked off of the origin commit", () => {
+				// This is a regression test for an assert in trunk eviction which would throw even during the following valid scenario:
+				// There are no sequenced commits that require eviction, but there are one or more outstanding branches which are already based off of the origin commit.
+				// See "TODO:#4918:" in editManager.ts
+				editManagerFactory({}).manager.localBranch.fork().fork().dispose();
+			});
+
+			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 
 		it("Rebases anchors over local changes", () => {
@@ -402,57 +394,108 @@ describe("EditManager", () => {
 		});
 	});
 
-	describe("Avoids unnecessary rebases", () => {
-		runUnitTestScenario(
-			"Sequenced changes that are based on the trunk should not be rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 4, type: "Pull", ref: 3, from: peer2 },
-				{ seq: 5, type: "Pull", ref: 4, from: peer2 },
-				{ seq: 6, type: "Pull", ref: 5, from: peer1 },
-				{ seq: 7, type: "Pull", ref: 5, from: peer1 },
-			],
-			new UnrebasableTestChangeRebaser(),
-		);
-		runUnitTestScenario(
-			"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Push" },
-				{ seq: 2, type: "Push" },
-				{ seq: 4, type: "Push" },
-				{ seq: 1, type: "Ack" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Ack" },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
-		runUnitTestScenario(
-			"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
-			[
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-				{ seq: 4, type: "Pull", ref: 0, from: peer1 },
-			],
-			new ConstrainedTestChangeRebaser(
-				(change: TestChange, over: TaggedChange<TestChange>): boolean => {
-					// This is the only rebase that should happen
-					assert.deepEqual(change.intentions, [4]);
-					assert.deepEqual(over.change.intentions, [3]);
-					return true;
-				},
-			),
-		);
+	describe("Perf", () => {
+		describe("Avoids unnecessary rebases", () => {
+			runUnitTestScenario(
+				"Sequenced changes that are based on the trunk should not be rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 4, type: "Pull", ref: 3, from: peer2 },
+					{ seq: 5, type: "Pull", ref: 4, from: peer2 },
+					{ seq: 6, type: "Pull", ref: 5, from: peer1 },
+					{ seq: 7, type: "Pull", ref: 5, from: peer1 },
+				],
+				new UnrebasableTestChangeRebaser(),
+			);
+			runUnitTestScenario(
+				"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Push" },
+					{ seq: 2, type: "Push" },
+					{ seq: 4, type: "Push" },
+					{ seq: 1, type: "Ack" },
+					{ seq: 2, type: "Ack" },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Ack" },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+			runUnitTestScenario(
+				"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
+					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
+				],
+				new ConstrainedTestChangeRebaser(
+					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+						// This is the only rebase that should happen
+						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(over.change.intentions, [3]);
+						return true;
+					},
+				),
+			);
+		});
+
+		interface Scenario {
+			readonly rebasedEditCount: number;
+			readonly trunkEditCount: number;
+		}
+
+		const scenarios: Scenario[] = [
+			{ rebasedEditCount: 1, trunkEditCount: 1 },
+			{ rebasedEditCount: 10, trunkEditCount: 1 },
+			{ rebasedEditCount: 1, trunkEditCount: 10 },
+			{ rebasedEditCount: 7, trunkEditCount: 3 },
+		];
+
+		describe("Local commit rebasing", () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
+					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
+					assert.equal(
+						rebaser.composedCount,
+						trunkEditCount * (rebasedEditCount * 2 + 1),
+					);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+				});
+			}
+		});
+		describe("Peer commit rebasing", () => {
+			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
+				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
+					assert.equal(
+						rebaser.rebasedCount,
+						trunkEditCount * rebasedEditCount +
+							rebasedEditCount * (rebasedEditCount - 1),
+					);
+					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
+					// assert.equal(nbInverted, nbRebased - 1);
+					assert.equal(
+						rebaser.invertedCount,
+						((rebasedEditCount - 1) * rebasedEditCount) / 2,
+					);
+					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
+					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+				});
+			}
+		});
 	});
 
 	/**

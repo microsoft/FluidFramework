@@ -31,13 +31,13 @@ import {
 	cursorFromContextualData,
 	cursorsFromContextualData,
 } from "../contextuallyTyped";
-import { FieldKinds } from "../defaultFieldKinds";
-import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
+	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../defaultChangeFamily";
+} from "../default-field-kinds";
+import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -142,7 +142,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			}
 		}
 
-		return cursorsFromContextualData(this.context.schema, this.fieldSchema, content);
+		return cursorsFromContextualData(this.context, this.fieldSchema, content);
 	}
 
 	public get [proxyTargetSymbol](): FieldProxyTarget {
@@ -304,8 +304,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.insert(0, content);
 				break;
 			}
-			case FieldKinds.nodeIdentifier: {
-				fail("Cannot set identifier field: Identifiers are immutable.");
+			case FieldKinds.nodeKey: {
+				fail("Cannot set node key field: node keys are immutable.");
 			}
 			default:
 				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);
@@ -498,7 +498,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				);
 
 				const cursor = cursorFromContextualData(
-					target.context.schema,
+					target.context,
 					target.fieldSchema.types,
 					value as ContextuallyTypedNodeData,
 				);

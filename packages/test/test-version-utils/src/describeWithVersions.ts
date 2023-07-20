@@ -8,11 +8,11 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { driver, r11sEndpointName, tenantIndex } from "./compatOptions";
-import { getVersionedTestObjectProvider } from "./compatUtils";
-import { ITestObjectProviderOptions } from "./describeCompat";
-import { pkgVersion } from "./packageVersion";
-import { ensurePackageInstalled, InstalledPackage } from "./testApi";
+import { driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
+import { getVersionedTestObjectProvider } from "./compatUtils.js";
+import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed

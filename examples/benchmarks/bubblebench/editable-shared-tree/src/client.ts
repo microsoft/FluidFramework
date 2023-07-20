@@ -37,7 +37,11 @@ export class ClientWrapper implements IClient {
 		// TODO: better API
 		bubbles.insertNodes(
 			bubbles.length,
-			cursorFromContextualData(bubbles.context.schema, bubbles.fieldSchema.types, bubble),
+			cursorFromContextualData(
+				{ schema: bubbles.context.schema, fieldSource: () => undefined },
+				bubbles.fieldSchema.types,
+				bubble,
+			),
 		);
 	}
 

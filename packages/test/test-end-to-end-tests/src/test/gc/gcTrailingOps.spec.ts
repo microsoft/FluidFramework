@@ -22,8 +22,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 	const tests = (tombstoneEnabled: boolean = false) => {
@@ -147,7 +147,6 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
 
-		// Note: we should not need an itExpects here as this error should not have fired.
 		itExpects(
 			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
 				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"

@@ -9,12 +9,13 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
 	FluidContainer,
 	IFluidContainer,
-	RootDataObject,
+	IRootDataObject,
 } from "@fluidframework/fluid-static";
 import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -64,9 +65,15 @@ export class AzureClient {
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
 		const isRemoteConnection = isAzureRemoteConnectionConfig(this.props.connection);
-		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-			this.props.connection.tokenProvider,
-			{ enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
+		const origDocumentServiceFactory: IDocumentServiceFactory =
+			new RouterliciousDocumentServiceFactory(this.props.connection.tokenProvider, {
+				enableWholeSummaryUpload: isRemoteConnection,
+				enableDiscovery: isRemoteConnection,
+			});
+
+		this.documentServiceFactory = applyStorageCompression(
+			origDocumentServiceFactory,
+			props.summaryCompression,
 		);
 		this.configProvider = props.configProvider;
 	}
@@ -156,7 +163,7 @@ export class AzureClient {
 		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -241,7 +248,7 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
 		 * See {@link FluidContainer.attach}

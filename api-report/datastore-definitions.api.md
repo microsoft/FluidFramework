@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -26,7 +26,7 @@ import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export interface IChannel extends IFluidLoadable {
@@ -37,8 +37,6 @@ export interface IChannel extends IFluidLoadable {
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
-    // (undocumented)
-    readonly owner?: string;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 

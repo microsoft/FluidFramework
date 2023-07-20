@@ -55,6 +55,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -118,6 +119,7 @@ mongodb:
   globalDbEnabled: false
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
+  directConnection: true
   softDeletionRetentionPeriodMs: 2592000000
   offlineWindowMs: 86400000
   softDeletionEnabled: false
@@ -153,6 +155,7 @@ kafka:
     deltas: deltas
   url: kafka_url:port
   libname: rdkafka
+  customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
 
 ingress:
   class: nginx-prod
