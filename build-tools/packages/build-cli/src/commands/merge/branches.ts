@@ -10,6 +10,8 @@ import { strict as assert } from "node:assert";
 import { BaseCommand } from "../../base";
 import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../lib";
 
+const DEFAULT_REMOTE = "origin";
+
 interface CleanupBranch {
 	branch: string;
 	local: boolean;
@@ -50,7 +52,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		remote: Flags.string({
 			description: "",
 			char: "r",
-			default: "origin",
 		}),
 		reviewers: Flags.string({
 			description: "Add reviewers to PR",
@@ -100,11 +101,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
-
 		if (this.gitRepo === undefined) {
 			this.errorLog(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
+
+		// const remote =
+		// 	flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
 
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.verbose(`owner: ${owner} and repo: ${repo}`);
@@ -114,7 +117,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		this.remote =
 			flags.remote ?? (await this.gitRepo.getRemote(context.originRemotePartialUrl));
-		this.verbose(`Remote is: ${this.remote}`);
+		this.warning(`Remote is: ${this.remote}`);
+		if (this.remote === undefined) {
+			this.error("Remote for upstream repo not found", { exit: 1 });
+		}
 
 		if (flags.checkPr) {
 			// Check if a branch integration PR exists already, based on its **name**.
@@ -257,7 +263,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		if (prWillConflict === false) {
 			await this.gitRepo.gitClient
 				// Fetch the latest remote refs
-				.fetch(this.remote)
+				.fetch(remote)
 				// create tempTargetBranch locally so we have a merge base
 				.checkoutBranch(tempTargetBranch, remoteTargetBranch)
 				// Merge the source branch changes into the tempTargetBranch
@@ -288,7 +294,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			tempTarget: tempTargetBranch,
 			mergeBranch,
 			prTitle,
-			remote: this.remote,
+			remote,
 		});
 
 		// label the conflicting PRs and the merged-OK PRs with different labels
@@ -442,7 +448,7 @@ The aim of this pull request is to sync ${source} and ${target} branch. This bra
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
 2. Merge ${mergeBranch} into the target branch, ${target}. **The direction of the merge matters!** You need to checkout ${target} and merge ${mergeBranch} into it, then fast-forward ${mergeBranch} to the merge commit. To do that use the following git commands:
   - \`git fetch --all\` -- this ensures your remote refs are updated
-  - \`git checkout -b ${tempTarget} ${target}\` -- make a temporary branch at ${target}.
+  - \`git checkout -b ${tempTarget} ${remote}/${target}\` -- make a temporary branch at ${target}.
   - \`git merge ${remote}/${mergeBranch}\` -- merge ${target} into ${mergeBranch}
 3. Resolve any merge conflicts between the branches, then commit all the changes using the following commands:
   - \`git add .\` -- stage all the local changes
