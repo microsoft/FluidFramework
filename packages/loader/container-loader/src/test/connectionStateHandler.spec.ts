@@ -12,20 +12,17 @@ import {
 	ITokenClaims,
 	ISequencedClient,
 } from "@fluidframework/protocol-definitions";
-import {
-	IConnectionDetailsInternal,
-	IDeltaManager,
-	IDeltaManagerEvents,
-} from "@fluidframework/container-definitions";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { Audience } from "../audience";
 import { ConnectionState } from "../connectionState";
 import {
 	IConnectionStateHandlerInputs,
 	IConnectionStateHandler,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler";
-import { Audience } from "../audience";
+import { IConnectionDetailsInternal } from "../contracts";
 import { ProtocolHandler } from "../protocol";
 
 class MockDeltaManagerForCatchingUp

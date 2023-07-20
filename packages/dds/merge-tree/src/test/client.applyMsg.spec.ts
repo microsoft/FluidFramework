@@ -380,12 +380,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Local insert after acked local delete", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "ZZ", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "ZZ" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -462,12 +457,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Inconsistent shared string after pausing connection #9703", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "abcd", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "abcd" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -595,13 +585,7 @@ describe("client.applyMsg", () => {
 	 * ```
 	 */
 	it("Concurrent insert into removed segment across block boundary", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-			"D",
-		);
+		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
 
 		const logger = new TestClientLogger([clients.A, clients.C]);
 		let seq = 0;
